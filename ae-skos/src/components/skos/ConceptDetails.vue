@@ -165,7 +165,7 @@ async function loadDetails(uri: string) {
   }
 }
 
-// Load labels for related concepts
+// Load labels for related concepts and schemes
 async function loadRelatedLabels(details: ConceptDetails) {
   const endpoint = endpointStore.current
   if (!endpoint) return
@@ -181,32 +181,92 @@ async function loadRelatedLabels(details: ConceptDetails) {
 
   const uris = allRefs.map(r => `<${r.uri}>`).join(' ')
 
+  // Fetch notation, prefLabel, altLabel, hiddenLabel, and dct:title (for schemes)
   const query = withPrefixes(`
-    SELECT ?concept ?label
+    SELECT ?concept ?notation ?label ?labelLang ?labelType
     WHERE {
       VALUES ?concept { ${uris} }
-      ?concept skos:prefLabel ?label .
-      FILTER (LANG(?label) = "${languageStore.preferred}" || LANG(?label) = "${languageStore.fallback}" || LANG(?label) = "")
+      OPTIONAL { ?concept skos:notation ?notation }
+      OPTIONAL {
+        {
+          ?concept skos:prefLabel ?label .
+          BIND("prefLabel" AS ?labelType)
+        } UNION {
+          ?concept skos:altLabel ?label .
+          BIND("altLabel" AS ?labelType)
+        } UNION {
+          ?concept skos:hiddenLabel ?label .
+          BIND("hiddenLabel" AS ?labelType)
+        } UNION {
+          ?concept dct:title ?label .
+          BIND("title" AS ?labelType)
+        } UNION {
+          ?concept rdfs:label ?label .
+          BIND("rdfsLabel" AS ?labelType)
+        }
+        BIND(LANG(?label) AS ?labelLang)
+      }
     }
   `)
 
   try {
     const results = await executeSparql(endpoint, query, { retries: 0 })
 
-    const labelMap = new Map<string, string>()
-    results.results.bindings.forEach(b => {
-      const uri = b.concept?.value
-      const label = b.label?.value
-      if (uri && label && !labelMap.has(uri)) {
-        labelMap.set(uri, label)
-      }
-    })
+    // Group by concept URI
+    const conceptData = new Map<string, {
+      notation?: string
+      labels: { value: string; lang: string; type: string }[]
+    }>()
 
-    // Update refs with labels
+    for (const b of results.results.bindings) {
+      const uri = b.concept?.value
+      if (!uri) continue
+
+      if (!conceptData.has(uri)) {
+        conceptData.set(uri, { labels: [] })
+      }
+
+      const data = conceptData.get(uri)!
+
+      if (b.notation?.value && !data.notation) {
+        data.notation = b.notation.value
+      }
+
+      if (b.label?.value) {
+        data.labels.push({
+          value: b.label.value,
+          lang: b.labelLang?.value || '',
+          type: b.labelType?.value || 'prefLabel'
+        })
+      }
+    }
+
+    // Update refs with best label and notation
     allRefs.forEach(ref => {
-      const label = labelMap.get(ref.uri)
-      if (label) {
-        ref.label = label
+      const data = conceptData.get(ref.uri)
+      if (!data) return
+
+      ref.notation = data.notation
+
+      // Pick best label: prefLabel in preferred lang > fallback > any lang, then altLabel, etc.
+      const labelPriority = ['prefLabel', 'title', 'rdfsLabel', 'altLabel', 'hiddenLabel']
+      let bestLabel: string | undefined
+
+      for (const labelType of labelPriority) {
+        const labelsOfType = data.labels.filter(l => l.type === labelType)
+        if (!labelsOfType.length) continue
+
+        const preferred = labelsOfType.find(l => l.lang === languageStore.preferred)
+        const fallback = labelsOfType.find(l => l.lang === languageStore.fallback)
+        const noLang = labelsOfType.find(l => l.lang === '')
+        const any = labelsOfType[0]
+
+        bestLabel = preferred?.value || fallback?.value || noLang?.value || any?.value
+        if (bestLabel) break
+      }
+
+      if (bestLabel) {
+        ref.label = bestLabel
       }
     })
   } catch (e) {
@@ -244,9 +304,13 @@ function openExternal(uri: string) {
   window.open(uri, '_blank')
 }
 
-// Get display label for a ConceptRef
+// Get display label for a ConceptRef (notation + label if both exist)
 function getRefLabel(ref: ConceptRef): string {
-  return ref.label || ref.uri.split('/').pop() || ref.uri
+  const label = ref.label || ref.uri.split('/').pop() || ref.uri
+  if (ref.notation && ref.label) {
+    return `${ref.notation} - ${label}`
+  }
+  return ref.notation || label
 }
 
 // Watch for selected concept changes

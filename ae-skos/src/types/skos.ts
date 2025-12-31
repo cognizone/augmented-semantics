@@ -14,6 +14,7 @@ export interface ConceptScheme {
 export interface ConceptRef {
   uri: string
   label?: string
+  notation?: string
 }
 
 // Tree node with expansion state
