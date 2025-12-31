@@ -3,7 +3,7 @@ import { ref, computed, watch } from 'vue'
 import { useSchemeStore, useEndpointStore, useLanguageStore } from '../../stores'
 import { executeSparql, withPrefixes, logger } from '../../services'
 import type { ConceptScheme } from '../../types'
-import Dropdown from 'primevue/dropdown'
+import Select from 'primevue/select'
 import Button from 'primevue/button'
 import Dialog from 'primevue/dialog'
 import Message from 'primevue/message'
@@ -193,7 +193,7 @@ watch(
 
 <template>
   <div class="scheme-selector">
-    <Dropdown
+    <Select
       v-model="selectedScheme"
       :options="dropdownOptions"
       optionLabel="label"
@@ -219,7 +219,7 @@ watch(
           </span>
         </div>
       </template>
-    </Dropdown>
+    </Select>
 
     <Button
       v-if="currentScheme"
