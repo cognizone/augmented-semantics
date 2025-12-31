@@ -339,7 +339,7 @@ watch(
 watch(
   () => languageStore.preferred,
   () => {
-    if (endpointStore.current) {
+    if (endpointStore.current && schemeStore.selected) {
       loadTopConcepts()
     }
   }
