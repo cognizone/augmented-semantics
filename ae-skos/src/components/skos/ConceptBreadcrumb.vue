@@ -63,12 +63,18 @@ async function loadBreadcrumb(uri: string) {
   try {
     const results = await executeSparql(endpoint, query, { retries: 0 })
 
+    // Deduplicate by URI, keeping first occurrence (highest depth due to ORDER BY)
+    const seen = new Set<string>()
     const path: ConceptRef[] = results.results.bindings
       .map(b => ({
         uri: b.concept?.value || '',
         label: b.label?.value,
       }))
-      .filter(c => c.uri)
+      .filter(c => {
+        if (!c.uri || seen.has(c.uri)) return false
+        seen.add(c.uri)
+        return true
+      })
 
     logger.debug('Breadcrumb', `Loaded path with ${path.length} items`)
     conceptStore.setBreadcrumb(path)
