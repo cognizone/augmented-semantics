@@ -99,21 +99,22 @@ async function loadTopConcepts() {
     ? `?concept skos:inScheme <${scheme.uri}> .`
     : ''
 
+  // Query gets all labels - we pick best one in code
   const query = withPrefixes(`
-    SELECT DISTINCT ?concept ?label (COUNT(?narrower) AS ?narrowerCount)
+    SELECT DISTINCT ?concept ?label ?labelLang (COUNT(DISTINCT ?narrower) AS ?narrowerCount)
     WHERE {
       ?concept a skos:Concept .
       ${schemeFilter}
       FILTER NOT EXISTS { ?concept skos:broader ?broader }
       OPTIONAL {
         ?concept skos:prefLabel ?label .
-        FILTER (LANG(?label) = "${languageStore.preferred}" || LANG(?label) = "${languageStore.fallback}" || LANG(?label) = "")
+        BIND(LANG(?label) AS ?labelLang)
       }
       OPTIONAL { ?narrower skos:broader ?concept }
     }
-    GROUP BY ?concept ?label
-    ORDER BY ?label
-    LIMIT 500
+    GROUP BY ?concept ?label ?labelLang
+    ORDER BY ?concept ?label
+    LIMIT 1000
   `)
 
   logger.debug('ConceptTree', 'Top concepts query', { query })
@@ -121,12 +122,53 @@ async function loadTopConcepts() {
   try {
     const results = await executeSparql(endpoint, query, { retries: 1 })
 
-    const concepts: ConceptNode[] = results.results.bindings.map(b => ({
-      uri: b.concept?.value || '',
-      label: b.label?.value,
-      hasNarrower: parseInt(b.narrowerCount?.value || '0', 10) > 0,
-      expanded: false,
-    })).filter(c => c.uri)
+    // Group by concept URI and pick best label
+    const conceptMap = new Map<string, {
+      labels: { value: string; lang: string }[]
+      hasNarrower: boolean
+    }>()
+
+    for (const b of results.results.bindings) {
+      const uri = b.concept?.value
+      if (!uri) continue
+
+      if (!conceptMap.has(uri)) {
+        conceptMap.set(uri, {
+          labels: [],
+          hasNarrower: parseInt(b.narrowerCount?.value || '0', 10) > 0
+        })
+      }
+
+      const entry = conceptMap.get(uri)!
+      if (b.label?.value) {
+        entry.labels.push({
+          value: b.label.value,
+          lang: b.labelLang?.value || ''
+        })
+      }
+    }
+
+    // Convert to ConceptNode[] with best label selection
+    const concepts: ConceptNode[] = Array.from(conceptMap.entries()).map(([uri, data]) => {
+      // Pick best label: preferred > fallback > any > none
+      let bestLabel: string | undefined
+      const preferred = data.labels.find(l => l.lang === languageStore.preferred)
+      const fallback = data.labels.find(l => l.lang === languageStore.fallback)
+      const noLang = data.labels.find(l => l.lang === '')
+      const anyLabel = data.labels[0]
+
+      bestLabel = preferred?.value || fallback?.value || noLang?.value || anyLabel?.value
+
+      return {
+        uri,
+        label: bestLabel,
+        hasNarrower: data.hasNarrower,
+        expanded: false,
+      }
+    })
+
+    // Sort by label
+    concepts.sort((a, b) => (a.label || a.uri).localeCompare(b.label || b.uri))
 
     logger.info('ConceptTree', `Loaded ${concepts.length} top concepts`)
     conceptStore.setTopConcepts(concepts)
@@ -153,29 +195,67 @@ async function loadChildren(uri: string) {
   logger.debug('ConceptTree', 'Loading children', { parent: uri })
 
   const query = withPrefixes(`
-    SELECT DISTINCT ?concept ?label (COUNT(?narrower) AS ?narrowerCount)
+    SELECT DISTINCT ?concept ?label ?labelLang (COUNT(DISTINCT ?narrower) AS ?narrowerCount)
     WHERE {
       ?concept skos:broader <${uri}> .
       OPTIONAL {
         ?concept skos:prefLabel ?label .
-        FILTER (LANG(?label) = "${languageStore.preferred}" || LANG(?label) = "${languageStore.fallback}" || LANG(?label) = "")
+        BIND(LANG(?label) AS ?labelLang)
       }
       OPTIONAL { ?narrower skos:broader ?concept }
     }
-    GROUP BY ?concept ?label
-    ORDER BY ?label
-    LIMIT 200
+    GROUP BY ?concept ?label ?labelLang
+    ORDER BY ?concept ?label
+    LIMIT 500
   `)
 
   try {
     const results = await executeSparql(endpoint, query, { retries: 1 })
 
-    const children: ConceptNode[] = results.results.bindings.map(b => ({
-      uri: b.concept?.value || '',
-      label: b.label?.value,
-      hasNarrower: parseInt(b.narrowerCount?.value || '0', 10) > 0,
-      expanded: false,
-    })).filter(c => c.uri)
+    // Group by concept URI and pick best label
+    const conceptMap = new Map<string, {
+      labels: { value: string; lang: string }[]
+      hasNarrower: boolean
+    }>()
+
+    for (const b of results.results.bindings) {
+      const conceptUri = b.concept?.value
+      if (!conceptUri) continue
+
+      if (!conceptMap.has(conceptUri)) {
+        conceptMap.set(conceptUri, {
+          labels: [],
+          hasNarrower: parseInt(b.narrowerCount?.value || '0', 10) > 0
+        })
+      }
+
+      const entry = conceptMap.get(conceptUri)!
+      if (b.label?.value) {
+        entry.labels.push({
+          value: b.label.value,
+          lang: b.labelLang?.value || ''
+        })
+      }
+    }
+
+    // Convert to ConceptNode[] with best label selection
+    const children: ConceptNode[] = Array.from(conceptMap.entries()).map(([conceptUri, data]) => {
+      const preferred = data.labels.find(l => l.lang === languageStore.preferred)
+      const fallback = data.labels.find(l => l.lang === languageStore.fallback)
+      const noLang = data.labels.find(l => l.lang === '')
+      const anyLabel = data.labels[0]
+      const bestLabel = preferred?.value || fallback?.value || noLang?.value || anyLabel?.value
+
+      return {
+        uri: conceptUri,
+        label: bestLabel,
+        hasNarrower: data.hasNarrower,
+        expanded: false,
+      }
+    })
+
+    // Sort by label
+    children.sort((a, b) => (a.label || a.uri).localeCompare(b.label || b.uri))
 
     logger.debug('ConceptTree', `Loaded ${children.length} children for ${uri}`)
     conceptStore.updateNodeChildren(uri, children)
