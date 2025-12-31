@@ -1,4 +1,5 @@
 import type { SPARQLEndpoint, AppError, ErrorCode } from '../types'
+import { logger } from './logger'
 
 // SPARQL result types
 export interface SPARQLBinding {
@@ -133,11 +134,20 @@ export async function executeSparql(
 ): Promise<SPARQLResults> {
   const { timeout, retries, retryDelay } = { ...DEFAULT_CONFIG, ...config }
 
+  // Log the query (truncate for readability)
+  const queryPreview = query.trim().slice(0, 200).replace(/\s+/g, ' ')
+  logger.debug('SPARQL', `Executing query on ${endpoint.url}`, {
+    query: queryPreview + (query.length > 200 ? '...' : ''),
+    timeout,
+    retries,
+  })
+
   let lastError: AppError | null = null
 
   for (let attempt = 0; attempt <= retries; attempt++) {
     // Exponential backoff for retries
     if (attempt > 0) {
+      logger.debug('SPARQL', `Retry attempt ${attempt}/${retries}`)
       await sleep(retryDelay * Math.pow(2, attempt - 1))
     }
 
@@ -166,6 +176,10 @@ export async function executeSparql(
 
       if (!response.ok) {
         const { code, message } = mapHttpError(response.status, response.statusText)
+        logger.warn('SPARQL', `HTTP ${response.status}: ${message}`, {
+          status: response.status,
+          statusText: response.statusText,
+        })
 
         // Don't retry auth errors
         if (code === 'AUTH_REQUIRED' || code === 'AUTH_FAILED') {
@@ -178,6 +192,7 @@ export async function executeSparql(
 
       const contentType = response.headers.get('content-type') || ''
       if (!contentType.includes('json')) {
+        logger.error('SPARQL', 'Invalid response format', { contentType })
         throw createError(
           'INVALID_RESPONSE',
           'Unexpected response format',
@@ -186,16 +201,20 @@ export async function executeSparql(
       }
 
       const data = await response.json()
+      const resultCount = data?.results?.bindings?.length ?? 0
+      logger.info('SPARQL', `Query successful: ${resultCount} results`)
       return data as SPARQLResults
     } catch (error) {
       clearTimeout(timeoutId)
 
       if (error && typeof error === 'object' && 'code' in error) {
         // Already an AppError
+        logger.error('SPARQL', 'Query failed', error)
         throw error
       }
 
       if (error instanceof DOMException && error.name === 'AbortError') {
+        logger.warn('SPARQL', 'Request timed out')
         lastError = createError('TIMEOUT', 'Request timed out')
         continue // Retry
       }
@@ -203,6 +222,7 @@ export async function executeSparql(
       if (error instanceof TypeError) {
         // Network error (CORS, offline, etc.)
         const message = error.message.toLowerCase()
+        logger.error('SPARQL', 'Network error', { message: error.message })
         if (message.includes('cors') || message.includes('cross-origin')) {
           throw createError(
             'CORS_BLOCKED',
@@ -214,6 +234,7 @@ export async function executeSparql(
         continue // Retry
       }
 
+      logger.error('SPARQL', 'Unknown error', { error: String(error) })
       lastError = createError('UNKNOWN', 'Unknown error', String(error))
     }
   }

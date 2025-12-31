@@ -6,6 +6,8 @@ import Toast from 'primevue/toast'
 
 import EndpointSelector from './components/common/EndpointSelector.vue'
 import EndpointManager from './components/common/EndpointManager.vue'
+import LanguageSelector from './components/common/LanguageSelector.vue'
+import SchemeSelector from './components/skos/SchemeSelector.vue'
 
 const uiStore = useUIStore()
 const showEndpointManager = ref(false)
@@ -35,8 +37,8 @@ onUnmounted(() => {
       </div>
       <div class="header-center">
         <EndpointSelector @manage="showEndpointManager = true" />
-        <!-- Scheme, Language selectors will go here -->
-        <span class="placeholder">Scheme | Language</span>
+        <SchemeSelector />
+        <LanguageSelector />
       </div>
       <div class="header-right">
         <!-- Search will go here -->

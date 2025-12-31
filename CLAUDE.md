@@ -67,3 +67,39 @@ Browser-only tools that connect directly to SPARQL endpoints via HTTP. No backen
 | `ae-language` | Language preferences |
 | `ae-skos-scheme` | Last selected scheme |
 | `ae-skos-history` | Recently viewed concepts |
+
+## Debugging
+
+### Logger
+
+Always use the logger service for debugging. Logs are visible in browser console (F12).
+
+```typescript
+import { logger } from '@/services'
+
+// Usage
+logger.debug('ComponentName', 'Debug message', { data })
+logger.info('ComponentName', 'Info message', { data })
+logger.warn('ComponentName', 'Warning message', { data })
+logger.error('ComponentName', 'Error message', { error })
+```
+
+### Browser Console
+
+In development mode, access logger from console:
+```javascript
+__logger.dump()        // Show all recent logs
+__logger.getHistory()  // Get log array
+__logger.clearHistory() // Clear logs
+```
+
+### Best Practices
+
+1. **Always log** at entry points of async operations (API calls, data loading)
+2. **Log success and failure** - both paths should have logs
+3. **Include context** - pass relevant data as the third argument
+4. **Use appropriate levels**:
+   - `debug` - Verbose info for development
+   - `info` - Important state changes
+   - `warn` - Recoverable issues
+   - `error` - Failures that need attention
