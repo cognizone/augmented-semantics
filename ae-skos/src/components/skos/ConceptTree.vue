@@ -87,6 +87,12 @@ async function loadTopConcepts() {
   const scheme = schemeStore.selected
   if (!endpoint) return
 
+  // Require a scheme to be selected
+  if (!scheme) {
+    conceptStore.setTopConcepts([])
+    return
+  }
+
   logger.info('ConceptTree', 'Loading top concepts', {
     scheme: scheme?.uri || 'all',
     language: languageStore.preferred
