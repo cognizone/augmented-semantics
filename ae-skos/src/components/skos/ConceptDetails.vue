@@ -71,6 +71,7 @@ async function loadDetails(uri: string) {
       <${uri}> ?property ?value .
       FILTER (?property IN (
         skos:prefLabel, skos:altLabel, skos:hiddenLabel,
+        rdfs:label, dct:title,
         skos:definition, skos:scopeNote, skos:example,
         skos:notation, skos:broader, skos:narrower, skos:related,
         skos:inScheme, skos:exactMatch, skos:closeMatch,
@@ -109,6 +110,12 @@ async function loadDetails(uri: string) {
       const lang = binding.value?.['xml:lang']
 
       if (prop.endsWith('prefLabel')) {
+        details.prefLabels.push({ value: val, lang })
+      } else if (prop.endsWith('#label') || prop.endsWith('/label')) {
+        // rdfs:label - treat as fallback prefLabel
+        details.prefLabels.push({ value: val, lang })
+      } else if (prop.endsWith('title')) {
+        // dct:title - treat as fallback prefLabel
         details.prefLabels.push({ value: val, lang })
       } else if (prop.endsWith('altLabel')) {
         details.altLabels.push({ value: val, lang })
