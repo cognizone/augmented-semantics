@@ -323,8 +323,9 @@ function goToUri() {
 }
 
 // Watch for scheme/endpoint changes
+// Use selected?.uri (not selectedUri) so we react when schemes finish loading
 watch(
-  () => [schemeStore.selectedUri, endpointStore.current?.id] as const,
+  () => [schemeStore.selected?.uri, endpointStore.current?.id] as const,
   ([newScheme, newEndpoint], oldValue) => {
     const [oldScheme, oldEndpoint] = oldValue || [null, undefined]
     if (newEndpoint && (newScheme !== oldScheme || newEndpoint !== oldEndpoint)) {
