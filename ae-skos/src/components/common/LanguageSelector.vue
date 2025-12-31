@@ -2,7 +2,7 @@
 import { ref, computed, watch } from 'vue'
 import { useLanguageStore, useEndpointStore } from '../../stores'
 import { executeSparql, withPrefixes } from '../../services/sparql'
-import Dropdown from 'primevue/dropdown'
+import Select from 'primevue/select'
 import Button from 'primevue/button'
 import Dialog from 'primevue/dialog'
 import Divider from 'primevue/divider'
@@ -143,7 +143,7 @@ watch(
 
 <template>
   <div class="language-selector">
-    <Dropdown
+    <Select
       v-model="selectedLanguage"
       :options="dropdownOptions"
       optionLabel="label"
@@ -182,7 +182,7 @@ watch(
           />
         </div>
       </template>
-    </Dropdown>
+    </Select>
 
     <!-- Settings Dialog -->
     <Dialog
@@ -195,7 +195,7 @@ watch(
         <div class="setting-field">
           <label>Preferred Language</label>
           <p class="setting-help">Primary language for labels and descriptions</p>
-          <Dropdown
+          <Select
             v-model="selectedLanguage"
             :options="dropdownOptions"
             optionLabel="label"
@@ -208,7 +208,7 @@ watch(
         <div class="setting-field">
           <label>Fallback Language</label>
           <p class="setting-help">Used when preferred language is not available</p>
-          <Dropdown
+          <Select
             v-model="fallbackLanguage"
             :options="dropdownOptions"
             optionLabel="label"

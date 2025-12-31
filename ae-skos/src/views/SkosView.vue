@@ -7,7 +7,10 @@ import SearchBox from '../components/skos/SearchBox.vue'
 import RecentHistory from '../components/skos/RecentHistory.vue'
 import Splitter from 'primevue/splitter'
 import SplitterPanel from 'primevue/splitterpanel'
-import TabView from 'primevue/tabview'
+import Tabs from 'primevue/tabs'
+import TabList from 'primevue/tablist'
+import Tab from 'primevue/tab'
+import TabPanels from 'primevue/tabpanels'
 import TabPanel from 'primevue/tabpanel'
 
 const uiStore = useUIStore()
@@ -36,19 +39,26 @@ const showSidebar = computed(() => uiStore.sidebarOpen || uiStore.isDesktop)
         class="left-panel"
         v-show="showSidebar"
       >
-        <TabView class="sidebar-tabs">
-          <TabPanel value="browse" header="Browse">
-            <ConceptTree />
-          </TabPanel>
-          <TabPanel value="search" header="Search">
-            <div class="search-panel">
-              <SearchBox @select-concept="selectConcept" />
-            </div>
-          </TabPanel>
-          <TabPanel value="recent" header="Recent">
-            <RecentHistory @select-concept="selectConcept" />
-          </TabPanel>
-        </TabView>
+        <Tabs value="browse" class="sidebar-tabs">
+          <TabList>
+            <Tab value="browse">Browse</Tab>
+            <Tab value="search">Search</Tab>
+            <Tab value="recent">Recent</Tab>
+          </TabList>
+          <TabPanels>
+            <TabPanel value="browse">
+              <ConceptTree />
+            </TabPanel>
+            <TabPanel value="search">
+              <div class="search-panel">
+                <SearchBox @select-concept="selectConcept" />
+              </div>
+            </TabPanel>
+            <TabPanel value="recent">
+              <RecentHistory @select-concept="selectConcept" />
+            </TabPanel>
+          </TabPanels>
+        </Tabs>
       </SplitterPanel>
 
       <!-- Right Panel: Concept Details -->

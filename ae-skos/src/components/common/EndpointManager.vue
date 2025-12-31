@@ -12,7 +12,7 @@ import type { SPARQLEndpoint, EndpointAuth } from '../../types'
 import Dialog from 'primevue/dialog'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
-import Dropdown from 'primevue/dropdown'
+import Select from 'primevue/select'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Message from 'primevue/message'
@@ -434,7 +434,7 @@ function formatDate(dateStr?: string) {
       <!-- Authentication -->
       <div class="form-field">
         <label for="ep-auth">Authentication</label>
-        <Dropdown
+        <Select
           id="ep-auth"
           v-model="form.authType"
           :options="authOptions"

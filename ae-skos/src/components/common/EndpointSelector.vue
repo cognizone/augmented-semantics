@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useEndpointStore } from '../../stores'
-import Dropdown from 'primevue/dropdown'
+import Select from 'primevue/select'
 import Button from 'primevue/button'
 import Tag from 'primevue/tag'
 
@@ -53,7 +53,7 @@ const statusLabel = computed(() => {
 
 <template>
   <div class="endpoint-selector">
-    <Dropdown
+    <Select
       v-model="selectedId"
       :options="dropdownOptions"
       optionLabel="label"
@@ -77,7 +77,7 @@ const statusLabel = computed(() => {
           <span class="endpoint-url">{{ slotProps.option.url }}</span>
         </div>
       </template>
-    </Dropdown>
+    </Select>
     <Button
       icon="pi pi-cog"
       severity="secondary"
