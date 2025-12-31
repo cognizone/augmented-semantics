@@ -105,22 +105,31 @@ async function loadTopConcepts() {
     ? `?concept skos:inScheme <${scheme.uri}> .`
     : ''
 
-  // Query gets all labels - we pick best one in code
+  // Query gets all label types - we pick best one in code
   const query = withPrefixes(`
-    SELECT DISTINCT ?concept ?label ?labelLang (COUNT(DISTINCT ?narrower) AS ?narrowerCount)
+    SELECT DISTINCT ?concept ?label ?labelLang ?labelType (COUNT(DISTINCT ?narrower) AS ?narrowerCount)
     WHERE {
       ?concept a skos:Concept .
       ${schemeFilter}
       FILTER NOT EXISTS { ?concept skos:broader ?broader }
       OPTIONAL {
-        ?concept skos:prefLabel ?label .
+        {
+          ?concept skos:prefLabel ?label .
+          BIND("prefLabel" AS ?labelType)
+        } UNION {
+          ?concept rdfs:label ?label .
+          BIND("rdfsLabel" AS ?labelType)
+        } UNION {
+          ?concept dct:title ?label .
+          BIND("title" AS ?labelType)
+        }
         BIND(LANG(?label) AS ?labelLang)
       }
       OPTIONAL { ?narrower skos:broader ?concept }
     }
-    GROUP BY ?concept ?label ?labelLang
+    GROUP BY ?concept ?label ?labelLang ?labelType
     ORDER BY ?concept ?label
-    LIMIT 1000
+    LIMIT 2000
   `)
 
   logger.debug('ConceptTree', 'Top concepts query', { query })
@@ -130,7 +139,7 @@ async function loadTopConcepts() {
 
     // Group by concept URI and pick best label
     const conceptMap = new Map<string, {
-      labels: { value: string; lang: string }[]
+      labels: { value: string; lang: string; type: string }[]
       hasNarrower: boolean
     }>()
 
@@ -149,21 +158,30 @@ async function loadTopConcepts() {
       if (b.label?.value) {
         entry.labels.push({
           value: b.label.value,
-          lang: b.labelLang?.value || ''
+          lang: b.labelLang?.value || '',
+          type: b.labelType?.value || 'prefLabel'
         })
       }
     }
 
     // Convert to ConceptNode[] with best label selection
     const concepts: ConceptNode[] = Array.from(conceptMap.entries()).map(([uri, data]) => {
-      // Pick best label: preferred > fallback > any > none
+      // Pick best label: prefLabel > rdfsLabel > title, with language priority
+      const labelPriority = ['prefLabel', 'rdfsLabel', 'title']
       let bestLabel: string | undefined
-      const preferred = data.labels.find(l => l.lang === languageStore.preferred)
-      const fallback = data.labels.find(l => l.lang === languageStore.fallback)
-      const noLang = data.labels.find(l => l.lang === '')
-      const anyLabel = data.labels[0]
 
-      bestLabel = preferred?.value || fallback?.value || noLang?.value || anyLabel?.value
+      for (const labelType of labelPriority) {
+        const labelsOfType = data.labels.filter(l => l.type === labelType)
+        if (!labelsOfType.length) continue
+
+        const preferred = labelsOfType.find(l => l.lang === languageStore.preferred)
+        const fallback = labelsOfType.find(l => l.lang === languageStore.fallback)
+        const noLang = labelsOfType.find(l => l.lang === '')
+        const any = labelsOfType[0]
+
+        bestLabel = preferred?.value || fallback?.value || noLang?.value || any?.value
+        if (bestLabel) break
+      }
 
       return {
         uri,
@@ -201,18 +219,27 @@ async function loadChildren(uri: string) {
   logger.debug('ConceptTree', 'Loading children', { parent: uri })
 
   const query = withPrefixes(`
-    SELECT DISTINCT ?concept ?label ?labelLang (COUNT(DISTINCT ?narrower) AS ?narrowerCount)
+    SELECT DISTINCT ?concept ?label ?labelLang ?labelType (COUNT(DISTINCT ?narrower) AS ?narrowerCount)
     WHERE {
       ?concept skos:broader <${uri}> .
       OPTIONAL {
-        ?concept skos:prefLabel ?label .
+        {
+          ?concept skos:prefLabel ?label .
+          BIND("prefLabel" AS ?labelType)
+        } UNION {
+          ?concept rdfs:label ?label .
+          BIND("rdfsLabel" AS ?labelType)
+        } UNION {
+          ?concept dct:title ?label .
+          BIND("title" AS ?labelType)
+        }
         BIND(LANG(?label) AS ?labelLang)
       }
       OPTIONAL { ?narrower skos:broader ?concept }
     }
-    GROUP BY ?concept ?label ?labelLang
+    GROUP BY ?concept ?label ?labelLang ?labelType
     ORDER BY ?concept ?label
-    LIMIT 500
+    LIMIT 1000
   `)
 
   try {
@@ -220,7 +247,7 @@ async function loadChildren(uri: string) {
 
     // Group by concept URI and pick best label
     const conceptMap = new Map<string, {
-      labels: { value: string; lang: string }[]
+      labels: { value: string; lang: string; type: string }[]
       hasNarrower: boolean
     }>()
 
@@ -239,18 +266,30 @@ async function loadChildren(uri: string) {
       if (b.label?.value) {
         entry.labels.push({
           value: b.label.value,
-          lang: b.labelLang?.value || ''
+          lang: b.labelLang?.value || '',
+          type: b.labelType?.value || 'prefLabel'
         })
       }
     }
 
     // Convert to ConceptNode[] with best label selection
     const children: ConceptNode[] = Array.from(conceptMap.entries()).map(([conceptUri, data]) => {
-      const preferred = data.labels.find(l => l.lang === languageStore.preferred)
-      const fallback = data.labels.find(l => l.lang === languageStore.fallback)
-      const noLang = data.labels.find(l => l.lang === '')
-      const anyLabel = data.labels[0]
-      const bestLabel = preferred?.value || fallback?.value || noLang?.value || anyLabel?.value
+      // Pick best label: prefLabel > rdfsLabel > title, with language priority
+      const labelPriority = ['prefLabel', 'rdfsLabel', 'title']
+      let bestLabel: string | undefined
+
+      for (const labelType of labelPriority) {
+        const labelsOfType = data.labels.filter(l => l.type === labelType)
+        if (!labelsOfType.length) continue
+
+        const preferred = labelsOfType.find(l => l.lang === languageStore.preferred)
+        const fallback = labelsOfType.find(l => l.lang === languageStore.fallback)
+        const noLang = labelsOfType.find(l => l.lang === '')
+        const any = labelsOfType[0]
+
+        bestLabel = preferred?.value || fallback?.value || noLang?.value || any?.value
+        if (bestLabel) break
+      }
 
       return {
         uri: conceptUri,
