@@ -60,6 +60,8 @@ WHERE {
 
 Show full path from root to current concept.
 
+**IMPORTANT:** Breadcrumb labels MUST match the labels shown in ConceptDetails. Use the same label resolution logic everywhere.
+
 **Query (recursive path):**
 ```sparql
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
@@ -79,6 +81,44 @@ WHERE {
   }
 }
 ORDER BY DESC(?depth)
+```
+
+## Label Resolution (Consistent Across All Components)
+
+All components (Tree, Breadcrumb, Details, Search) MUST use the same label resolution logic:
+
+### Property Priority
+1. `skos:prefLabel`
+2. `rdfs:label`
+3. `dct:title`
+
+### Language Priority (for each property)
+1. Preferred language (user selected)
+2. Fallback language (user configured)
+3. No language tag (untagged literals)
+4. Any available language
+
+### Implementation
+Fetch all labels with all language tags, then pick the best one in code:
+
+```typescript
+function pickBestLabel(labels: { value: string; lang: string; type: string }[]): string | undefined {
+  const labelPriority = ['prefLabel', 'rdfsLabel', 'title']
+
+  for (const labelType of labelPriority) {
+    const labelsOfType = labels.filter(l => l.type === labelType)
+    if (!labelsOfType.length) continue
+
+    const preferred = labelsOfType.find(l => l.lang === preferredLang)
+    const fallback = labelsOfType.find(l => l.lang === fallbackLang)
+    const noLang = labelsOfType.find(l => l.lang === '')
+    const any = labelsOfType[0]
+
+    const best = preferred?.value || fallback?.value || noLang?.value || any?.value
+    if (best) return best
+  }
+  return undefined
+}
 ```
 
 ### Direct URI Lookup
