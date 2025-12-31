@@ -1,13 +1,13 @@
 import { createRouter, createWebHistory, type RouteLocationNormalized } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
+import SkosView from '../views/SkosView.vue'
 
 const router = createRouter({
   history: createWebHistory(),
   routes: [
     {
       path: '/',
-      name: 'home',
-      component: HomeView,
+      name: 'skos',
+      component: SkosView,
     },
   ],
 })

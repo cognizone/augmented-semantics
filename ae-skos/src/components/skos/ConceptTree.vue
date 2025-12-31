@@ -1,0 +1,412 @@
+<script setup lang="ts">
+import { ref, watch, computed } from 'vue'
+import { useConceptStore, useEndpointStore, useSchemeStore, useLanguageStore } from '../../stores'
+import { executeSparql, withPrefixes, logger } from '../../services'
+import type { ConceptNode } from '../../types'
+import Tree from 'primevue/tree'
+import type { TreeNode } from 'primevue/treenode'
+
+type TreeExpandedKeys = Record<string, boolean>
+type TreeSelectionKeys = Record<string, boolean>
+import Button from 'primevue/button'
+import InputText from 'primevue/inputtext'
+import Message from 'primevue/message'
+import ProgressSpinner from 'primevue/progressspinner'
+
+const conceptStore = useConceptStore()
+const endpointStore = useEndpointStore()
+const schemeStore = useSchemeStore()
+const languageStore = useLanguageStore()
+
+// Local state
+const error = ref<string | null>(null)
+const loadingChildren = ref<Set<string>>(new Set())
+const gotoUri = ref('')
+
+// Convert our ConceptNode[] to PrimeVue tree format
+const treeNodes = computed((): TreeNode[] => {
+  return conceptStore.topConcepts.map(node => convertToTreeNode(node))
+})
+
+function convertToTreeNode(node: ConceptNode): TreeNode {
+  return {
+    key: node.uri,
+    label: node.label || node.uri,
+    data: node,
+    leaf: !node.hasNarrower,
+    children: node.children?.map(child => convertToTreeNode(child)),
+  }
+}
+
+// Selected node keys for PrimeVue Tree
+const selectedKey = computed<TreeSelectionKeys | undefined>({
+  get: () => {
+    if (conceptStore.selectedUri) {
+      return { [conceptStore.selectedUri]: true }
+    }
+    return undefined
+  },
+  set: (keys) => {
+    if (keys) {
+      const uri = Object.keys(keys)[0]
+      if (uri) {
+        selectConcept(uri)
+      }
+    }
+  },
+})
+
+// Expanded keys for PrimeVue Tree
+const expandedKeys = computed<TreeExpandedKeys>({
+  get: () => {
+    const keys: TreeExpandedKeys = {}
+    conceptStore.expanded.forEach(uri => {
+      keys[uri] = true
+    })
+    return keys
+  },
+  set: (keys) => {
+    // Sync expanded state
+    const newExpanded = new Set(Object.keys(keys || {}))
+    conceptStore.expanded.forEach(uri => {
+      if (!newExpanded.has(uri)) {
+        conceptStore.collapseNode(uri)
+      }
+    })
+    newExpanded.forEach(uri => {
+      if (!conceptStore.expanded.has(uri)) {
+        conceptStore.expandNode(uri)
+      }
+    })
+  },
+})
+
+// Load top concepts for selected scheme
+async function loadTopConcepts() {
+  const endpoint = endpointStore.current
+  const scheme = schemeStore.selected
+  if (!endpoint) return
+
+  logger.info('ConceptTree', 'Loading top concepts', {
+    scheme: scheme?.uri || 'all',
+    language: languageStore.preferred
+  })
+
+  conceptStore.setLoadingTree(true)
+  error.value = null
+
+  const schemeFilter = scheme
+    ? `?concept skos:inScheme <${scheme.uri}> .`
+    : ''
+
+  const query = withPrefixes(`
+    SELECT DISTINCT ?concept ?label (COUNT(?narrower) AS ?narrowerCount)
+    WHERE {
+      ?concept a skos:Concept .
+      ${schemeFilter}
+      FILTER NOT EXISTS { ?concept skos:broader ?broader }
+      OPTIONAL {
+        ?concept skos:prefLabel ?label .
+        FILTER (LANG(?label) = "${languageStore.preferred}" || LANG(?label) = "${languageStore.fallback}" || LANG(?label) = "")
+      }
+      OPTIONAL { ?narrower skos:broader ?concept }
+    }
+    GROUP BY ?concept ?label
+    ORDER BY ?label
+    LIMIT 500
+  `)
+
+  logger.debug('ConceptTree', 'Top concepts query', { query })
+
+  try {
+    const results = await executeSparql(endpoint, query, { retries: 1 })
+
+    const concepts: ConceptNode[] = results.results.bindings.map(b => ({
+      uri: b.concept?.value || '',
+      label: b.label?.value,
+      hasNarrower: parseInt(b.narrowerCount?.value || '0', 10) > 0,
+      expanded: false,
+    })).filter(c => c.uri)
+
+    logger.info('ConceptTree', `Loaded ${concepts.length} top concepts`)
+    conceptStore.setTopConcepts(concepts)
+  } catch (e: unknown) {
+    const errMsg = e && typeof e === 'object' && 'message' in e
+      ? (e as { message: string }).message
+      : 'Unknown error'
+    logger.error('ConceptTree', 'Failed to load top concepts', { error: e })
+    error.value = `Failed to load concepts: ${errMsg}`
+    conceptStore.setTopConcepts([])
+  } finally {
+    conceptStore.setLoadingTree(false)
+  }
+}
+
+// Load children for a node
+async function loadChildren(uri: string) {
+  const endpoint = endpointStore.current
+  if (!endpoint) return
+
+  if (loadingChildren.value.has(uri)) return
+  loadingChildren.value.add(uri)
+
+  logger.debug('ConceptTree', 'Loading children', { parent: uri })
+
+  const query = withPrefixes(`
+    SELECT DISTINCT ?concept ?label (COUNT(?narrower) AS ?narrowerCount)
+    WHERE {
+      ?concept skos:broader <${uri}> .
+      OPTIONAL {
+        ?concept skos:prefLabel ?label .
+        FILTER (LANG(?label) = "${languageStore.preferred}" || LANG(?label) = "${languageStore.fallback}" || LANG(?label) = "")
+      }
+      OPTIONAL { ?narrower skos:broader ?concept }
+    }
+    GROUP BY ?concept ?label
+    ORDER BY ?label
+    LIMIT 200
+  `)
+
+  try {
+    const results = await executeSparql(endpoint, query, { retries: 1 })
+
+    const children: ConceptNode[] = results.results.bindings.map(b => ({
+      uri: b.concept?.value || '',
+      label: b.label?.value,
+      hasNarrower: parseInt(b.narrowerCount?.value || '0', 10) > 0,
+      expanded: false,
+    })).filter(c => c.uri)
+
+    logger.debug('ConceptTree', `Loaded ${children.length} children for ${uri}`)
+    conceptStore.updateNodeChildren(uri, children)
+  } catch (e) {
+    logger.error('ConceptTree', 'Failed to load children', { parent: uri, error: e })
+  } finally {
+    loadingChildren.value.delete(uri)
+  }
+}
+
+// Handle node expand
+function onNodeExpand(node: TreeNode) {
+  const conceptNode = node.data as ConceptNode | undefined
+  if (conceptNode?.hasNarrower && !conceptNode.children && node.key) {
+    loadChildren(String(node.key))
+  }
+  if (node.key) {
+    conceptStore.expandNode(String(node.key))
+  }
+}
+
+// Handle node collapse
+function onNodeCollapse(node: TreeNode) {
+  if (node.key) {
+    conceptStore.collapseNode(String(node.key))
+  }
+}
+
+// Handle node select
+function selectConcept(uri: string) {
+  conceptStore.selectConcept(uri)
+
+  // Find label for history
+  const node = findNode(uri, conceptStore.topConcepts)
+  if (node) {
+    conceptStore.addToHistory({ uri, label: node.label || uri })
+  }
+}
+
+// Find node by URI in tree
+function findNode(uri: string, nodes: ConceptNode[]): ConceptNode | null {
+  for (const node of nodes) {
+    if (node.uri === uri) return node
+    if (node.children) {
+      const found = findNode(uri, node.children)
+      if (found) return found
+    }
+  }
+  return null
+}
+
+// Go to URI directly
+function goToUri() {
+  const uri = gotoUri.value.trim()
+  if (uri) {
+    selectConcept(uri)
+    gotoUri.value = ''
+  }
+}
+
+// Watch for scheme/endpoint changes
+watch(
+  () => [schemeStore.selectedUri, endpointStore.current?.id] as const,
+  ([newScheme, newEndpoint], oldValue) => {
+    const [oldScheme, oldEndpoint] = oldValue || [null, undefined]
+    if (newEndpoint && (newScheme !== oldScheme || newEndpoint !== oldEndpoint)) {
+      conceptStore.reset()
+      loadTopConcepts()
+    }
+  },
+  { immediate: true }
+)
+
+// Reload when language changes
+watch(
+  () => languageStore.preferred,
+  () => {
+    if (endpointStore.current) {
+      loadTopConcepts()
+    }
+  }
+)
+</script>
+
+<template>
+  <div class="concept-tree">
+    <!-- Go to URI input -->
+    <div class="goto-uri">
+      <span class="p-input-icon-left">
+        <i class="pi pi-link"></i>
+        <InputText
+          v-model="gotoUri"
+          placeholder="Go to URI..."
+          class="goto-input"
+          @keyup.enter="goToUri"
+        />
+      </span>
+      <Button
+        icon="pi pi-arrow-right"
+        severity="secondary"
+        text
+        :disabled="!gotoUri.trim()"
+        @click="goToUri"
+      />
+    </div>
+
+    <!-- Error message -->
+    <Message v-if="error" severity="error" :closable="true" @close="error = null">
+      {{ error }}
+    </Message>
+
+    <!-- Loading state -->
+    <div v-if="conceptStore.loadingTree" class="loading-container">
+      <ProgressSpinner style="width: 40px; height: 40px" />
+      <span>Loading concepts...</span>
+    </div>
+
+    <!-- Empty state -->
+    <div v-else-if="!conceptStore.topConcepts.length && !error" class="empty-state">
+      <i class="pi pi-folder-open"></i>
+      <p>No concepts found</p>
+      <small v-if="!schemeStore.selected">Select a concept scheme to browse</small>
+      <small v-else>This scheme has no top-level concepts</small>
+    </div>
+
+    <!-- Tree -->
+    <Tree
+      v-else
+      v-model:selectionKeys="selectedKey"
+      v-model:expandedKeys="expandedKeys"
+      :value="treeNodes"
+      selectionMode="single"
+      class="concept-tree-component"
+      @node-expand="onNodeExpand"
+      @node-collapse="onNodeCollapse"
+    >
+      <template #default="slotProps">
+        <div class="tree-node">
+          <span class="node-label">{{ slotProps.node.label }}</span>
+          <ProgressSpinner
+            v-if="loadingChildren.has(slotProps.node.key)"
+            style="width: 16px; height: 16px"
+          />
+        </div>
+      </template>
+    </Tree>
+  </div>
+</template>
+
+<style scoped>
+.concept-tree {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.goto-uri {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.5rem;
+  border-bottom: 1px solid var(--p-surface-200);
+}
+
+.goto-input {
+  width: 100%;
+  font-size: 0.875rem;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 2rem;
+  color: var(--p-text-muted-color);
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 2rem;
+  text-align: center;
+  color: var(--p-text-muted-color);
+}
+
+.empty-state i {
+  font-size: 2rem;
+  opacity: 0.5;
+}
+
+.empty-state p {
+  margin: 0;
+  font-weight: 500;
+}
+
+.empty-state small {
+  font-size: 0.75rem;
+}
+
+.concept-tree-component {
+  flex: 1;
+  overflow: auto;
+  padding: 0.5rem;
+}
+
+.tree-node {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.node-label {
+  flex: 1;
+}
+
+:deep(.p-tree-node-content) {
+  padding: 0.25rem 0.5rem;
+}
+
+:deep(.p-tree-node-content:hover) {
+  background: var(--p-surface-100);
+}
+
+:deep(.p-tree-node-content.p-highlight) {
+  background: var(--p-primary-100);
+  color: var(--p-primary-700);
+}
+</style>

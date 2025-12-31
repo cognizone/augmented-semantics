@@ -1,16 +1,26 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import { RouterView } from 'vue-router'
-import { useUIStore } from './stores'
+import { useUIStore, useConceptStore } from './stores'
 import Toast from 'primevue/toast'
 
 import EndpointSelector from './components/common/EndpointSelector.vue'
 import EndpointManager from './components/common/EndpointManager.vue'
 import LanguageSelector from './components/common/LanguageSelector.vue'
 import SchemeSelector from './components/skos/SchemeSelector.vue'
+import ConceptBreadcrumb from './components/skos/ConceptBreadcrumb.vue'
 
 const uiStore = useUIStore()
+const conceptStore = useConceptStore()
 const showEndpointManager = ref(false)
+
+function selectConcept(uri: string) {
+  if (uri) {
+    conceptStore.selectConcept(uri)
+  } else {
+    conceptStore.selectConcept(null)
+  }
+}
 
 onMounted(() => {
   uiStore.initResponsive()
@@ -41,21 +51,17 @@ onUnmounted(() => {
         <LanguageSelector />
       </div>
       <div class="header-right">
-        <!-- Search will go here -->
-        <span class="placeholder">Search</span>
+        <!-- Reserved for future actions -->
       </div>
     </header>
+
+    <!-- Breadcrumb -->
+    <ConceptBreadcrumb @select-concept="selectConcept" />
 
     <!-- Main Content -->
     <main class="app-main">
       <RouterView />
     </main>
-
-    <!-- Footer / Breadcrumb -->
-    <footer class="app-footer">
-      <!-- Breadcrumb will go here -->
-      <span class="placeholder">Breadcrumb</span>
-    </footer>
 
     <!-- Toast notifications -->
     <Toast />
@@ -124,17 +130,6 @@ onUnmounted(() => {
   overflow: hidden;
 }
 
-.app-footer {
-  padding: 0.5rem 1rem;
-  background: var(--p-surface-0);
-  border-top: 1px solid var(--p-surface-200);
-  flex-shrink: 0;
-}
-
-.placeholder {
-  color: var(--p-text-muted-color);
-  font-style: italic;
-}
 
 /* Mobile adjustments */
 @media (max-width: 767px) {
