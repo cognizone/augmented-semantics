@@ -39,14 +39,23 @@ async function loadBreadcrumb(uri: string) {
   logger.debug('Breadcrumb', 'Loading path', { uri })
   loading.value = true
 
-  // Query to get all broader concepts recursively
+  // Query to get all broader concepts recursively with all label types
   const query = withPrefixes(`
-    SELECT ?concept ?label ?depth
+    SELECT ?concept ?label ?labelLang ?labelType ?depth
     WHERE {
       <${uri}> skos:broader* ?concept .
       OPTIONAL {
-        ?concept skos:prefLabel ?label .
-        FILTER (LANG(?label) = "${languageStore.preferred}" || LANG(?label) = "${languageStore.fallback}" || LANG(?label) = "")
+        {
+          ?concept skos:prefLabel ?label .
+          BIND("prefLabel" AS ?labelType)
+        } UNION {
+          ?concept rdfs:label ?label .
+          BIND("rdfsLabel" AS ?labelType)
+        } UNION {
+          ?concept dct:title ?label .
+          BIND("title" AS ?labelType)
+        }
+        BIND(LANG(?label) AS ?labelLang)
       }
       {
         SELECT ?concept (COUNT(?mid) AS ?depth)
@@ -63,37 +72,90 @@ async function loadBreadcrumb(uri: string) {
   try {
     const results = await executeSparql(endpoint, query, { retries: 0 })
 
-    // Deduplicate by URI, keeping first occurrence (highest depth due to ORDER BY)
-    const seen = new Set<string>()
-    const path: ConceptRef[] = results.results.bindings
-      .map(b => ({
-        uri: b.concept?.value || '',
-        label: b.label?.value,
-      }))
-      .filter(c => {
-        if (!c.uri || seen.has(c.uri)) return false
-        seen.add(c.uri)
-        return true
+    // Group by concept URI and pick best label
+    const conceptMap = new Map<string, {
+      labels: { value: string; lang: string; type: string }[]
+      depth: number
+    }>()
+
+    for (const b of results.results.bindings) {
+      const conceptUri = b.concept?.value
+      if (!conceptUri) continue
+
+      const depth = parseInt(b.depth?.value || '0', 10)
+
+      if (!conceptMap.has(conceptUri)) {
+        conceptMap.set(conceptUri, { labels: [], depth })
+      }
+
+      const entry = conceptMap.get(conceptUri)!
+      if (b.label?.value) {
+        entry.labels.push({
+          value: b.label.value,
+          lang: b.labelLang?.value || '',
+          type: b.labelType?.value || 'prefLabel'
+        })
+      }
+    }
+
+    // Convert to path with best label selection
+    const path: ConceptRef[] = Array.from(conceptMap.entries())
+      .sort((a, b) => b[1].depth - a[1].depth) // Sort by depth descending
+      .map(([conceptUri, data]) => {
+        // Pick best label: prefLabel > rdfsLabel > title, with language priority
+        const labelPriority = ['prefLabel', 'rdfsLabel', 'title']
+        let bestLabel: string | undefined
+
+        for (const labelType of labelPriority) {
+          const labelsOfType = data.labels.filter(l => l.type === labelType)
+          if (!labelsOfType.length) continue
+
+          const preferred = labelsOfType.find(l => l.lang === languageStore.preferred)
+          const fallback = labelsOfType.find(l => l.lang === languageStore.fallback)
+          const noLang = labelsOfType.find(l => l.lang === '')
+          const any = labelsOfType[0]
+
+          bestLabel = preferred?.value || fallback?.value || noLang?.value || any?.value
+          if (bestLabel) break
+        }
+
+        return { uri: conceptUri, label: bestLabel }
       })
 
     logger.debug('Breadcrumb', `Loaded path with ${path.length} items`)
     conceptStore.setBreadcrumb(path)
   } catch (e) {
     logger.warn('Breadcrumb', 'Failed to load path, using simple fallback', { error: e })
-    // Fallback: just show the current concept
+    // Fallback: just show the current concept with any available label
     const simpleQuery = withPrefixes(`
-      SELECT ?label
+      SELECT ?label ?labelLang
       WHERE {
-        <${uri}> skos:prefLabel ?label .
-        FILTER (LANG(?label) = "${languageStore.preferred}" || LANG(?label) = "${languageStore.fallback}" || LANG(?label) = "")
+        {
+          <${uri}> skos:prefLabel ?label .
+        } UNION {
+          <${uri}> rdfs:label ?label .
+        } UNION {
+          <${uri}> dct:title ?label .
+        }
+        BIND(LANG(?label) AS ?labelLang)
       }
-      LIMIT 1
     `)
 
     try {
       const results = await executeSparql(endpoint, simpleQuery, { retries: 0 })
-      const label = results.results.bindings[0]?.label?.value
-      conceptStore.setBreadcrumb([{ uri, label }])
+      const labels = results.results.bindings.map(b => ({
+        value: b.label?.value || '',
+        lang: b.labelLang?.value || ''
+      })).filter(l => l.value)
+
+      // Pick best label
+      const preferred = labels.find(l => l.lang === languageStore.preferred)
+      const fallback = labels.find(l => l.lang === languageStore.fallback)
+      const noLang = labels.find(l => l.lang === '')
+      const any = labels[0]
+      const bestLabel = preferred?.value || fallback?.value || noLang?.value || any?.value
+
+      conceptStore.setBreadcrumb([{ uri, label: bestLabel }])
     } catch {
       conceptStore.setBreadcrumb([{ uri }])
     }
