@@ -166,8 +166,8 @@ async function loadTopConcepts() {
 
     // Convert to ConceptNode[] with best label selection
     const concepts: ConceptNode[] = Array.from(conceptMap.entries()).map(([uri, data]) => {
-      // Pick best label: prefLabel > rdfsLabel > title, with language priority
-      const labelPriority = ['prefLabel', 'rdfsLabel', 'title']
+      // Pick best label: prefLabel > title > rdfsLabel, with language priority
+      const labelPriority = ['prefLabel', 'title', 'rdfsLabel']
       let bestLabel: string | undefined
 
       for (const labelType of labelPriority) {
@@ -274,8 +274,8 @@ async function loadChildren(uri: string) {
 
     // Convert to ConceptNode[] with best label selection
     const children: ConceptNode[] = Array.from(conceptMap.entries()).map(([conceptUri, data]) => {
-      // Pick best label: prefLabel > rdfsLabel > title, with language priority
-      const labelPriority = ['prefLabel', 'rdfsLabel', 'title']
+      // Pick best label: prefLabel > title > rdfsLabel, with language priority
+      const labelPriority = ['prefLabel', 'title', 'rdfsLabel']
       let bestLabel: string | undefined
 
       for (const labelType of labelPriority) {

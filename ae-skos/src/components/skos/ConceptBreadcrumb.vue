@@ -102,8 +102,8 @@ async function loadBreadcrumb(uri: string) {
     const path: ConceptRef[] = Array.from(conceptMap.entries())
       .sort((a, b) => b[1].depth - a[1].depth) // Sort by depth descending
       .map(([conceptUri, data]) => {
-        // Pick best label: prefLabel > rdfsLabel > title, with language priority
-        const labelPriority = ['prefLabel', 'rdfsLabel', 'title']
+        // Pick best label: prefLabel > title > rdfsLabel, with language priority
+        const labelPriority = ['prefLabel', 'title', 'rdfsLabel']
         let bestLabel: string | undefined
 
         for (const labelType of labelPriority) {

@@ -88,9 +88,9 @@ ORDER BY DESC(?depth)
 All components (Tree, Breadcrumb, Details, Search) MUST use the same label resolution logic:
 
 ### Property Priority
-1. `skos:prefLabel`
-2. `rdfs:label`
-3. `dct:title`
+1. `skos:prefLabel` - primary SKOS label
+2. `dct:title` - common for schemes and resources
+3. `rdfs:label` - generic fallback
 
 ### Language Priority (for each property)
 1. Preferred language (user selected)
@@ -103,7 +103,7 @@ Fetch all labels with all language tags, then pick the best one in code:
 
 ```typescript
 function pickBestLabel(labels: { value: string; lang: string; type: string }[]): string | undefined {
-  const labelPriority = ['prefLabel', 'rdfsLabel', 'title']
+  const labelPriority = ['prefLabel', 'title', 'rdfsLabel']
 
   for (const labelType of labelPriority) {
     const labelsOfType = labels.filter(l => l.type === labelType)
