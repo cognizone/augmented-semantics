@@ -33,6 +33,18 @@ const preferredLabel = computed(() => {
   return findBestLabel(labels)
 })
 
+// Get display title (notation + label if both exist)
+const displayTitle = computed(() => {
+  if (!details.value) return null
+  const label = preferredLabel.value
+  const notation = details.value.notations[0]
+
+  if (notation && label) {
+    return `${notation} - ${label}`
+  }
+  return notation || label || 'Unnamed Concept'
+})
+
 // Find label in preferred language
 function findBestLabel(labels: LabelValue[]): string | null {
   if (!labels.length) return null
@@ -378,7 +390,7 @@ watch(
     <div v-else-if="details" class="details-content">
       <!-- Header -->
       <div class="details-header">
-        <h2 class="concept-label">{{ preferredLabel || 'Unnamed Concept' }}</h2>
+        <h2 class="concept-label">{{ displayTitle }}</h2>
         <div class="header-actions">
           <Button
             icon="pi pi-copy"

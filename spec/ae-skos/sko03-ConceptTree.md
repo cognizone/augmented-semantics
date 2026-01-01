@@ -98,7 +98,37 @@ All components (Tree, Breadcrumb, Details, Search) MUST use the same label resol
 3. No language tag (untagged literals)
 4. Any available language
 
+### Display Format
+
+When displaying concept labels, use the format `notation - label` when both exist:
+
+| Has Notation | Has Label | Display |
+|--------------|-----------|---------|
+| Yes | Yes | `123 - Albania` |
+| Yes | No | `123` |
+| No | Yes | `Albania` |
+| No | No | URI fragment |
+
+This format MUST be consistent across:
+- Main concept title (ConceptDetails header)
+- Breadcrumb segments
+- Narrower/broader/related concept chips
+- Search results
+
 ### Implementation
+
+```typescript
+function getDisplayLabel(notation?: string, label?: string, uri?: string): string {
+  const fallbackLabel = label || uri?.split('/').pop() || uri || 'Unknown'
+
+  if (notation && label) {
+    return `${notation} - ${label}`
+  }
+  return notation || fallbackLabel
+}
+```
+
+### Label Fetching
 Fetch all labels with all language tags, then pick the best one in code:
 
 ```typescript

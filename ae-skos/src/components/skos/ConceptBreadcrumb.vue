@@ -16,13 +16,21 @@ const languageStore = useLanguageStore()
 // Local state
 const loading = ref(false)
 
-// Convert breadcrumb to PrimeVue format
+// Convert breadcrumb to PrimeVue format with notation + label
 const breadcrumbItems = computed(() => {
-  return conceptStore.breadcrumb.map(item => ({
-    label: item.label || item.uri.split('/').pop() || item.uri,
-    uri: item.uri,
-    command: () => navigateTo(item.uri),
-  }))
+  return conceptStore.breadcrumb.map(item => {
+    const label = item.label || item.uri.split('/').pop() || item.uri
+    // Show notation + label if both exist
+    const displayLabel = item.notation && item.label
+      ? `${item.notation} - ${label}`
+      : item.notation || label
+
+    return {
+      label: displayLabel,
+      uri: item.uri,
+      command: () => navigateTo(item.uri),
+    }
+  })
 })
 
 // Home item
@@ -39,21 +47,22 @@ async function loadBreadcrumb(uri: string) {
   logger.debug('Breadcrumb', 'Loading path', { uri })
   loading.value = true
 
-  // Query to get all broader concepts recursively with all label types
+  // Query to get all broader concepts recursively with all label types and notation
   const query = withPrefixes(`
-    SELECT ?concept ?label ?labelLang ?labelType ?depth
+    SELECT ?concept ?label ?labelLang ?labelType ?notation ?depth
     WHERE {
       <${uri}> skos:broader* ?concept .
+      OPTIONAL { ?concept skos:notation ?notation }
       OPTIONAL {
         {
           ?concept skos:prefLabel ?label .
           BIND("prefLabel" AS ?labelType)
         } UNION {
-          ?concept rdfs:label ?label .
-          BIND("rdfsLabel" AS ?labelType)
-        } UNION {
           ?concept dct:title ?label .
           BIND("title" AS ?labelType)
+        } UNION {
+          ?concept rdfs:label ?label .
+          BIND("rdfsLabel" AS ?labelType)
         }
         BIND(LANG(?label) AS ?labelLang)
       }
@@ -75,6 +84,7 @@ async function loadBreadcrumb(uri: string) {
     // Group by concept URI and pick best label
     const conceptMap = new Map<string, {
       labels: { value: string; lang: string; type: string }[]
+      notation?: string
       depth: number
     }>()
 
@@ -89,6 +99,12 @@ async function loadBreadcrumb(uri: string) {
       }
 
       const entry = conceptMap.get(conceptUri)!
+
+      // Store notation (first one wins)
+      if (b.notation?.value && !entry.notation) {
+        entry.notation = b.notation.value
+      }
+
       if (b.label?.value) {
         entry.labels.push({
           value: b.label.value,
@@ -119,7 +135,7 @@ async function loadBreadcrumb(uri: string) {
           if (bestLabel) break
         }
 
-        return { uri: conceptUri, label: bestLabel }
+        return { uri: conceptUri, label: bestLabel, notation: data.notation }
       })
 
     logger.debug('Breadcrumb', `Loaded path with ${path.length} items`)
