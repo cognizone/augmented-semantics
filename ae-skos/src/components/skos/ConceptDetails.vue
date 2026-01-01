@@ -128,25 +128,45 @@ async function loadDetails(uri: string) {
       } else if (prop.endsWith('example')) {
         details.examples.push({ value: val, lang })
       } else if (prop.endsWith('notation')) {
-        details.notations.push(val)
+        if (!details.notations.includes(val)) {
+          details.notations.push(val)
+        }
       } else if (prop.endsWith('broader')) {
-        details.broader.push({ uri: val })
+        if (!details.broader.some(r => r.uri === val)) {
+          details.broader.push({ uri: val })
+        }
       } else if (prop.endsWith('narrower')) {
-        details.narrower.push({ uri: val })
+        if (!details.narrower.some(r => r.uri === val)) {
+          details.narrower.push({ uri: val })
+        }
       } else if (prop.endsWith('related')) {
-        details.related.push({ uri: val })
+        if (!details.related.some(r => r.uri === val)) {
+          details.related.push({ uri: val })
+        }
       } else if (prop.endsWith('inScheme')) {
-        details.inScheme.push({ uri: val })
+        if (!details.inScheme.some(r => r.uri === val)) {
+          details.inScheme.push({ uri: val })
+        }
       } else if (prop.endsWith('exactMatch')) {
-        details.exactMatch.push(val)
+        if (!details.exactMatch.includes(val)) {
+          details.exactMatch.push(val)
+        }
       } else if (prop.endsWith('closeMatch')) {
-        details.closeMatch.push(val)
+        if (!details.closeMatch.includes(val)) {
+          details.closeMatch.push(val)
+        }
       } else if (prop.endsWith('broadMatch')) {
-        details.broadMatch.push(val)
+        if (!details.broadMatch.includes(val)) {
+          details.broadMatch.push(val)
+        }
       } else if (prop.endsWith('narrowMatch')) {
-        details.narrowMatch.push(val)
+        if (!details.narrowMatch.includes(val)) {
+          details.narrowMatch.push(val)
+        }
       } else if (prop.endsWith('relatedMatch')) {
-        details.relatedMatch.push(val)
+        if (!details.relatedMatch.includes(val)) {
+          details.relatedMatch.push(val)
+        }
       }
     }
 

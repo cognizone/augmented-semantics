@@ -64,32 +64,76 @@ async function loadSchemes() {
   error.value = null
   endpointStore.setStatus('connecting')
 
-  // Simplified query - more compatible with different endpoints
+  // Query with all label types
   const query = withPrefixes(`
-    SELECT DISTINCT ?scheme ?label
+    SELECT DISTINCT ?scheme ?label ?labelLang ?labelType
     WHERE {
       ?scheme a skos:ConceptScheme .
-      OPTIONAL { ?scheme skos:prefLabel ?label }
-      OPTIONAL { ?scheme dct:title ?label }
-      OPTIONAL { ?scheme rdfs:label ?label }
+      OPTIONAL {
+        {
+          ?scheme skos:prefLabel ?label .
+          BIND("prefLabel" AS ?labelType)
+        } UNION {
+          ?scheme dct:title ?label .
+          BIND("title" AS ?labelType)
+        } UNION {
+          ?scheme rdfs:label ?label .
+          BIND("rdfsLabel" AS ?labelType)
+        }
+        BIND(LANG(?label) AS ?labelLang)
+      }
     }
-    LIMIT 100
+    LIMIT 500
   `)
 
   logger.debug('SchemeSelector', 'Query', { query })
 
   try {
     const results = await executeSparql(endpoint, query, { retries: 1 })
-    const schemes: ConceptScheme[] = results.results.bindings.map(b => ({
-      uri: b.scheme?.value || '',
-      label: b.label?.value,
-      description: b.description?.value,
-    })).filter(s => s.uri)
 
-    // Remove duplicates by URI
-    const uniqueSchemes = Array.from(
-      new Map(schemes.map(s => [s.uri, s])).values()
-    )
+    // Group by scheme URI and pick best label
+    const schemeMap = new Map<string, {
+      labels: { value: string; lang: string; type: string }[]
+    }>()
+
+    for (const b of results.results.bindings) {
+      const uri = b.scheme?.value
+      if (!uri) continue
+
+      if (!schemeMap.has(uri)) {
+        schemeMap.set(uri, { labels: [] })
+      }
+
+      const entry = schemeMap.get(uri)!
+      if (b.label?.value) {
+        entry.labels.push({
+          value: b.label.value,
+          lang: b.labelLang?.value || '',
+          type: b.labelType?.value || 'prefLabel'
+        })
+      }
+    }
+
+    // Convert to ConceptScheme[] with best label selection
+    const uniqueSchemes: ConceptScheme[] = Array.from(schemeMap.entries()).map(([uri, data]) => {
+      const labelPriority = ['prefLabel', 'title', 'rdfsLabel']
+      let bestLabel: string | undefined
+
+      for (const labelType of labelPriority) {
+        const labelsOfType = data.labels.filter(l => l.type === labelType)
+        if (!labelsOfType.length) continue
+
+        const preferred = labelsOfType.find(l => l.lang === languageStore.preferred)
+        const fallback = labelsOfType.find(l => l.lang === languageStore.fallback)
+        const noLang = labelsOfType.find(l => l.lang === '')
+        const any = labelsOfType[0]
+
+        bestLabel = preferred?.value || fallback?.value || noLang?.value || any?.value
+        if (bestLabel) break
+      }
+
+      return { uri, label: bestLabel }
+    })
 
     logger.info('SchemeSelector', `Loaded ${uniqueSchemes.length} schemes`, {
       schemes: uniqueSchemes.map(s => s.label || s.uri),
