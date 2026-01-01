@@ -110,10 +110,11 @@ When displaying concept labels, use the format `notation - label` when both exis
 | No | No | URI fragment |
 
 This format MUST be consistent across:
-- Main concept title (ConceptDetails header)
-- Breadcrumb segments
-- Narrower/broader/related concept chips
-- Search results
+- **Concept tree nodes** (both top concepts and children)
+- **Main concept title** (ConceptDetails header)
+- **Breadcrumb segments**
+- **Narrower/broader/related concept chips**
+- **Search results**
 
 ### Implementation
 

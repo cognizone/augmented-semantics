@@ -29,9 +29,15 @@ const treeNodes = computed((): TreeNode[] => {
 })
 
 function convertToTreeNode(node: ConceptNode): TreeNode {
+  // Display notation + label if both exist
+  const label = node.label || node.uri.split('/').pop() || node.uri
+  const displayLabel = node.notation && node.label
+    ? `${node.notation} - ${label}`
+    : node.notation || label
+
   return {
     key: node.uri,
-    label: node.label || node.uri,
+    label: displayLabel,
     data: node,
     leaf: !node.hasNarrower,
     children: node.children?.map(child => convertToTreeNode(child)),
@@ -105,29 +111,30 @@ async function loadTopConcepts() {
     ? `?concept skos:inScheme <${scheme.uri}> .`
     : ''
 
-  // Query gets all label types - we pick best one in code
+  // Query gets all label types and notation - we pick best one in code
   const query = withPrefixes(`
-    SELECT DISTINCT ?concept ?label ?labelLang ?labelType (COUNT(DISTINCT ?narrower) AS ?narrowerCount)
+    SELECT DISTINCT ?concept ?label ?labelLang ?labelType ?notation (COUNT(DISTINCT ?narrower) AS ?narrowerCount)
     WHERE {
       ?concept a skos:Concept .
       ${schemeFilter}
       FILTER NOT EXISTS { ?concept skos:broader ?broader }
+      OPTIONAL { ?concept skos:notation ?notation }
       OPTIONAL {
         {
           ?concept skos:prefLabel ?label .
           BIND("prefLabel" AS ?labelType)
         } UNION {
-          ?concept rdfs:label ?label .
-          BIND("rdfsLabel" AS ?labelType)
-        } UNION {
           ?concept dct:title ?label .
           BIND("title" AS ?labelType)
+        } UNION {
+          ?concept rdfs:label ?label .
+          BIND("rdfsLabel" AS ?labelType)
         }
         BIND(LANG(?label) AS ?labelLang)
       }
       OPTIONAL { ?narrower skos:broader ?concept }
     }
-    GROUP BY ?concept ?label ?labelLang ?labelType
+    GROUP BY ?concept ?label ?labelLang ?labelType ?notation
     ORDER BY ?concept ?label
     LIMIT 2000
   `)
@@ -140,6 +147,7 @@ async function loadTopConcepts() {
     // Group by concept URI and pick best label
     const conceptMap = new Map<string, {
       labels: { value: string; lang: string; type: string }[]
+      notation?: string
       hasNarrower: boolean
     }>()
 
@@ -155,6 +163,12 @@ async function loadTopConcepts() {
       }
 
       const entry = conceptMap.get(uri)!
+
+      // Store notation (first one wins)
+      if (b.notation?.value && !entry.notation) {
+        entry.notation = b.notation.value
+      }
+
       if (b.label?.value) {
         entry.labels.push({
           value: b.label.value,
@@ -186,6 +200,7 @@ async function loadTopConcepts() {
       return {
         uri,
         label: bestLabel,
+        notation: data.notation,
         hasNarrower: data.hasNarrower,
         expanded: false,
       }
@@ -219,25 +234,26 @@ async function loadChildren(uri: string) {
   logger.debug('ConceptTree', 'Loading children', { parent: uri })
 
   const query = withPrefixes(`
-    SELECT DISTINCT ?concept ?label ?labelLang ?labelType (COUNT(DISTINCT ?narrower) AS ?narrowerCount)
+    SELECT DISTINCT ?concept ?label ?labelLang ?labelType ?notation (COUNT(DISTINCT ?narrower) AS ?narrowerCount)
     WHERE {
       ?concept skos:broader <${uri}> .
+      OPTIONAL { ?concept skos:notation ?notation }
       OPTIONAL {
         {
           ?concept skos:prefLabel ?label .
           BIND("prefLabel" AS ?labelType)
         } UNION {
-          ?concept rdfs:label ?label .
-          BIND("rdfsLabel" AS ?labelType)
-        } UNION {
           ?concept dct:title ?label .
           BIND("title" AS ?labelType)
+        } UNION {
+          ?concept rdfs:label ?label .
+          BIND("rdfsLabel" AS ?labelType)
         }
         BIND(LANG(?label) AS ?labelLang)
       }
       OPTIONAL { ?narrower skos:broader ?concept }
     }
-    GROUP BY ?concept ?label ?labelLang ?labelType
+    GROUP BY ?concept ?label ?labelLang ?labelType ?notation
     ORDER BY ?concept ?label
     LIMIT 1000
   `)
@@ -248,6 +264,7 @@ async function loadChildren(uri: string) {
     // Group by concept URI and pick best label
     const conceptMap = new Map<string, {
       labels: { value: string; lang: string; type: string }[]
+      notation?: string
       hasNarrower: boolean
     }>()
 
@@ -263,6 +280,12 @@ async function loadChildren(uri: string) {
       }
 
       const entry = conceptMap.get(conceptUri)!
+
+      // Store notation (first one wins)
+      if (b.notation?.value && !entry.notation) {
+        entry.notation = b.notation.value
+      }
+
       if (b.label?.value) {
         entry.labels.push({
           value: b.label.value,
@@ -294,6 +317,7 @@ async function loadChildren(uri: string) {
       return {
         uri: conceptUri,
         label: bestLabel,
+        notation: data.notation,
         hasNarrower: data.hasNarrower,
         expanded: false,
       }
