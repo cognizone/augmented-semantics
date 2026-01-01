@@ -22,12 +22,38 @@ function selectConcept(uri: string) {
   }
 }
 
+// Global keyboard shortcuts
+function handleKeydown(event: KeyboardEvent) {
+  // Don't trigger if user is typing in an input
+  const target = event.target as HTMLElement
+  const isInputField = target.tagName === 'INPUT' ||
+                       target.tagName === 'TEXTAREA' ||
+                       target.contentEditable === 'true'
+
+  // "/" - Focus search (only when not in input field)
+  if (event.key === '/' && !isInputField) {
+    event.preventDefault()
+    uiStore.triggerSearchFocus()
+  }
+
+  // "Escape" - Close dialogs
+  if (event.key === 'Escape') {
+    if (showEndpointManager.value) {
+      showEndpointManager.value = false
+    } else {
+      uiStore.closeAllDialogs()
+    }
+  }
+}
+
 onMounted(() => {
   uiStore.initResponsive()
+  window.addEventListener('keydown', handleKeydown)
 })
 
 onUnmounted(() => {
   uiStore.destroyResponsive()
+  window.removeEventListener('keydown', handleKeydown)
 })
 </script>
 

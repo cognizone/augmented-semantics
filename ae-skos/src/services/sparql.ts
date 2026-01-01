@@ -432,3 +432,73 @@ export function withPrefixes(query: string): string {
   }
   return SPARQL_PREFIXES + '\n\n' + query
 }
+
+/**
+ * RDF format types for raw RDF export
+ */
+export type RdfFormat = 'turtle' | 'jsonld' | 'ntriples' | 'rdfxml'
+
+const RDF_ACCEPT_HEADERS: Record<RdfFormat, string> = {
+  turtle: 'text/turtle',
+  jsonld: 'application/ld+json',
+  ntriples: 'application/n-triples',
+  rdfxml: 'application/rdf+xml',
+}
+
+/**
+ * Fetch raw RDF data for a concept using CONSTRUCT query
+ */
+export async function fetchRawRdf(
+  endpoint: SPARQLEndpoint,
+  conceptUri: string,
+  format: RdfFormat = 'turtle',
+  config: SPARQLRequestConfig = {}
+): Promise<string> {
+  const { timeout } = { ...DEFAULT_CONFIG, ...config }
+
+  const query = withPrefixes(`
+    CONSTRUCT { <${conceptUri}> ?p ?o }
+    WHERE { <${conceptUri}> ?p ?o }
+  `)
+
+  logger.debug('SPARQL', `Fetching raw RDF for ${conceptUri}`, { format })
+
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), timeout)
+
+  try {
+    const response = await fetch(endpoint.url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        Accept: RDF_ACCEPT_HEADERS[format],
+        ...getAuthHeaders(endpoint),
+      },
+      body: `query=${encodeURIComponent(query)}`,
+      signal: controller.signal,
+    })
+
+    clearTimeout(timeoutId)
+
+    if (!response.ok) {
+      const { code, message } = mapHttpError(response.status, response.statusText)
+      throw createError(code, message)
+    }
+
+    const text = await response.text()
+    logger.info('SPARQL', `Raw RDF fetched: ${text.length} bytes`)
+    return text
+  } catch (error) {
+    clearTimeout(timeoutId)
+
+    if (error && typeof error === 'object' && 'code' in error) {
+      throw error
+    }
+
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      throw createError('TIMEOUT', 'Request timed out')
+    }
+
+    throw createError('UNKNOWN', 'Failed to fetch RDF', String(error))
+  }
+}

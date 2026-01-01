@@ -19,13 +19,18 @@
  */
 import { ref, watch, computed } from 'vue'
 import { useConceptStore, useEndpointStore, useLanguageStore } from '../../stores'
-import { executeSparql, withPrefixes, logger, isValidURI } from '../../services'
+import { executeSparql, withPrefixes, logger, isValidURI, fetchRawRdf } from '../../services'
+import type { RdfFormat } from '../../services'
 import type { ConceptDetails, LabelValue, ConceptRef } from '../../types'
 import Button from 'primevue/button'
 import Chip from 'primevue/chip'
 import Divider from 'primevue/divider'
+import Dialog from 'primevue/dialog'
 import Message from 'primevue/message'
 import ProgressSpinner from 'primevue/progressspinner'
+import Select from 'primevue/select'
+import Textarea from 'primevue/textarea'
+import Menu from 'primevue/menu'
 import { useToast } from 'primevue/usetoast'
 
 const emit = defineEmits<{
@@ -39,6 +44,29 @@ const toast = useToast()
 
 // Local state
 const error = ref<string | null>(null)
+const showHiddenLabels = ref(false)
+
+// Raw RDF dialog state
+const showRawRdfDialog = ref(false)
+const rawRdfContent = ref('')
+const rawRdfFormat = ref<RdfFormat>('turtle')
+const rawRdfLoading = ref(false)
+const rawRdfError = ref<string | null>(null)
+
+const rdfFormatOptions = [
+  { label: 'Turtle', value: 'turtle' },
+  { label: 'JSON-LD', value: 'jsonld' },
+  { label: 'N-Triples', value: 'ntriples' },
+  { label: 'RDF/XML', value: 'rdfxml' },
+]
+
+// Export menu
+const exportMenu = ref()
+const exportMenuItems = [
+  { label: 'Export as JSON', icon: 'pi pi-file', command: () => exportAsJson() },
+  { label: 'Export as Turtle', icon: 'pi pi-code', command: () => exportAsTurtle() },
+  { label: 'Export as CSV', icon: 'pi pi-table', command: () => exportAsCsv() },
+]
 
 // Computed
 const details = computed(() => conceptStore.details)
@@ -366,9 +394,155 @@ function navigateTo(ref: ConceptRef) {
   emit('selectConcept', ref.uri)
 }
 
+// Fetch and show raw RDF
+async function openRawRdfDialog() {
+  if (!details.value || !endpointStore.current) return
+
+  showRawRdfDialog.value = true
+  await loadRawRdf()
+}
+
+async function loadRawRdf() {
+  if (!details.value || !endpointStore.current) return
+
+  rawRdfLoading.value = true
+  rawRdfError.value = null
+  rawRdfContent.value = ''
+
+  try {
+    const rdf = await fetchRawRdf(
+      endpointStore.current,
+      details.value.uri,
+      rawRdfFormat.value
+    )
+    rawRdfContent.value = rdf
+  } catch (e: unknown) {
+    const errMsg = e && typeof e === 'object' && 'message' in e
+      ? (e as { message: string }).message
+      : 'Failed to fetch RDF'
+    rawRdfError.value = errMsg
+    logger.error('ConceptDetails', 'Failed to fetch raw RDF', { error: e })
+  } finally {
+    rawRdfLoading.value = false
+  }
+}
+
 // Open external link
 function openExternal(uri: string) {
   window.open(uri, '_blank')
+}
+
+// Download helper
+function downloadFile(content: string, filename: string, mimeType: string) {
+  const blob = new Blob([content], { type: mimeType })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+}
+
+// Export as JSON
+function exportAsJson() {
+  if (!details.value) return
+
+  const jsonData = {
+    uri: details.value.uri,
+    prefLabels: details.value.prefLabels,
+    altLabels: details.value.altLabels,
+    hiddenLabels: details.value.hiddenLabels,
+    notations: details.value.notations,
+    definitions: details.value.definitions,
+    scopeNotes: details.value.scopeNotes,
+    broader: details.value.broader,
+    narrower: details.value.narrower,
+    related: details.value.related,
+    inScheme: details.value.inScheme,
+    exactMatch: details.value.exactMatch,
+    closeMatch: details.value.closeMatch,
+  }
+
+  const content = JSON.stringify(jsonData, null, 2)
+  const filename = `concept-${details.value.uri.split('/').pop() || 'export'}.json`
+  downloadFile(content, filename, 'application/json')
+
+  toast.add({
+    severity: 'success',
+    summary: 'Exported',
+    detail: 'Concept exported as JSON',
+    life: 2000
+  })
+}
+
+// Export as Turtle (fetch from endpoint)
+async function exportAsTurtle() {
+  if (!details.value || !endpointStore.current) return
+
+  try {
+    const turtle = await fetchRawRdf(endpointStore.current, details.value.uri, 'turtle')
+    const filename = `concept-${details.value.uri.split('/').pop() || 'export'}.ttl`
+    downloadFile(turtle, filename, 'text/turtle')
+
+    toast.add({
+      severity: 'success',
+      summary: 'Exported',
+      detail: 'Concept exported as Turtle',
+      life: 2000
+    })
+  } catch (e) {
+    toast.add({
+      severity: 'error',
+      summary: 'Export failed',
+      detail: 'Could not export as Turtle',
+      life: 3000
+    })
+  }
+}
+
+// Export as CSV
+function exportAsCsv() {
+  if (!details.value) return
+
+  const rows: string[][] = [['Property', 'Value', 'Language']]
+
+  // Add labels
+  details.value.prefLabels.forEach(l => rows.push(['prefLabel', l.value, l.lang || '']))
+  details.value.altLabels.forEach(l => rows.push(['altLabel', l.value, l.lang || '']))
+  details.value.hiddenLabels.forEach(l => rows.push(['hiddenLabel', l.value, l.lang || '']))
+
+  // Add notations
+  details.value.notations.forEach(n => rows.push(['notation', n, '']))
+
+  // Add documentation
+  details.value.definitions.forEach(d => rows.push(['definition', d.value, d.lang || '']))
+  details.value.scopeNotes.forEach(d => rows.push(['scopeNote', d.value, d.lang || '']))
+
+  // Add relations
+  details.value.broader.forEach(r => rows.push(['broader', r.uri, '']))
+  details.value.narrower.forEach(r => rows.push(['narrower', r.uri, '']))
+  details.value.related.forEach(r => rows.push(['related', r.uri, '']))
+
+  // Add mappings
+  details.value.exactMatch.forEach(u => rows.push(['exactMatch', u, '']))
+  details.value.closeMatch.forEach(u => rows.push(['closeMatch', u, '']))
+
+  // Convert to CSV
+  const csv = rows.map(row =>
+    row.map(cell => `"${cell.replace(/"/g, '""')}"`).join(',')
+  ).join('\n')
+
+  const filename = `concept-${details.value.uri.split('/').pop() || 'export'}.csv`
+  downloadFile(csv, filename, 'text/csv')
+
+  toast.add({
+    severity: 'success',
+    summary: 'Exported',
+    detail: 'Concept exported as CSV',
+    life: 2000
+  })
 }
 
 // Get display label for a ConceptRef (notation + label if both exist)
@@ -429,6 +603,25 @@ watch(
             v-tooltip.left="'Copy label'"
             @click="copyToClipboard(preferredLabel || details.uri, 'Label')"
           />
+          <Button
+            icon="pi pi-code"
+            severity="secondary"
+            text
+            rounded
+            size="small"
+            v-tooltip.left="'View RDF'"
+            @click="openRawRdfDialog"
+          />
+          <Button
+            icon="pi pi-download"
+            severity="secondary"
+            text
+            rounded
+            size="small"
+            v-tooltip.left="'Export'"
+            @click="(event: Event) => exportMenu.toggle(event)"
+          />
+          <Menu ref="exportMenu" :model="exportMenuItems" :popup="true" />
         </div>
       </div>
 
@@ -452,8 +645,19 @@ watch(
       <Divider />
 
       <!-- Labels Section - only shown if any label or notation exists -->
-      <section v-if="details.prefLabels.length || details.altLabels.length || details.notations.length" class="details-section">
-        <h3>Labels</h3>
+      <section v-if="details.prefLabels.length || details.altLabels.length || details.hiddenLabels.length || details.notations.length" class="details-section">
+        <div class="section-header">
+          <h3>Labels</h3>
+          <Button
+            v-if="details.hiddenLabels.length"
+            :icon="showHiddenLabels ? 'pi pi-eye-slash' : 'pi pi-eye'"
+            :label="showHiddenLabels ? 'Hide hidden' : 'Show hidden'"
+            severity="secondary"
+            text
+            size="small"
+            @click="showHiddenLabels = !showHiddenLabels"
+          />
+        </div>
 
         <div v-if="details.prefLabels.length" class="property-row">
           <label>Preferred</label>
@@ -476,6 +680,20 @@ watch(
               v-for="(label, i) in details.altLabels"
               :key="i"
               class="label-value"
+            >
+              {{ label.value }}
+              <span v-if="label.lang" class="lang-tag">{{ label.lang }}</span>
+            </span>
+          </div>
+        </div>
+
+        <div v-if="showHiddenLabels && details.hiddenLabels.length" class="property-row">
+          <label>Hidden</label>
+          <div class="label-values">
+            <span
+              v-for="(label, i) in details.hiddenLabels"
+              :key="i"
+              class="label-value hidden-label"
             >
               {{ label.value }}
               <span v-if="label.lang" class="lang-tag">{{ label.lang }}</span>
@@ -716,6 +934,53 @@ watch(
         </div>
       </section>
     </div>
+
+    <!-- Raw RDF Dialog -->
+    <Dialog
+      v-model:visible="showRawRdfDialog"
+      header="Raw RDF"
+      :style="{ width: '700px', maxHeight: '80vh' }"
+      :modal="true"
+    >
+      <div class="raw-rdf-dialog">
+        <div class="format-selector">
+          <label>Format:</label>
+          <Select
+            v-model="rawRdfFormat"
+            :options="rdfFormatOptions"
+            optionLabel="label"
+            optionValue="value"
+            @change="loadRawRdf"
+          />
+          <Button
+            icon="pi pi-copy"
+            label="Copy"
+            severity="secondary"
+            size="small"
+            :disabled="!rawRdfContent"
+            @click="copyToClipboard(rawRdfContent, 'RDF')"
+          />
+        </div>
+
+        <div v-if="rawRdfLoading" class="rdf-loading">
+          <ProgressSpinner style="width: 30px; height: 30px" />
+          <span>Loading RDF...</span>
+        </div>
+
+        <Message v-if="rawRdfError" severity="error" :closable="false">
+          {{ rawRdfError }}
+        </Message>
+
+        <Textarea
+          v-if="rawRdfContent && !rawRdfLoading"
+          v-model="rawRdfContent"
+          :readonly="true"
+          class="rdf-content"
+          :autoResize="false"
+          rows="20"
+        />
+      </div>
+    </Dialog>
   </div>
 </template>
 
@@ -803,6 +1068,17 @@ watch(
   margin-bottom: 1.5rem;
 }
 
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.section-header h3 {
+  margin: 0;
+}
+
 .details-section h3 {
   margin: 0 0 0.75rem 0;
   font-size: 0.75rem;
@@ -832,6 +1108,11 @@ watch(
 
 .label-value {
   font-size: 0.875rem;
+}
+
+.label-value.hidden-label {
+  font-style: italic;
+  color: var(--p-text-muted-color);
 }
 
 .lang-tag {
@@ -900,5 +1181,38 @@ watch(
 
 .mapping-link i {
   font-size: 0.625rem;
+}
+
+/* Raw RDF Dialog */
+.raw-rdf-dialog {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.format-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.format-selector label {
+  font-weight: 500;
+}
+
+.rdf-loading {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  justify-content: center;
+  padding: 2rem;
+  color: var(--p-text-muted-color);
+}
+
+.rdf-content {
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 0.8rem;
+  width: 100%;
+  background: var(--p-surface-50);
 }
 </style>

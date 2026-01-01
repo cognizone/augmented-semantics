@@ -11,8 +11,8 @@
  *
  * @see /spec/ae-skos/sko05-SearchBox.md
  */
-import { ref, watch, computed } from 'vue'
-import { useConceptStore, useEndpointStore, useSchemeStore, useLanguageStore } from '../../stores'
+import { ref, watch, computed, nextTick } from 'vue'
+import { useConceptStore, useEndpointStore, useSchemeStore, useLanguageStore, useUIStore } from '../../stores'
 import { executeSparql, withPrefixes, logger, escapeSparqlString } from '../../services'
 import type { SearchResult } from '../../types'
 import InputText from 'primevue/inputtext'
@@ -32,9 +32,11 @@ const conceptStore = useConceptStore()
 const endpointStore = useEndpointStore()
 const schemeStore = useSchemeStore()
 const languageStore = useLanguageStore()
+const uiStore = useUIStore()
 
 // Local state
 const searchInput = ref('')
+const searchInputRef = ref<{ $el: HTMLInputElement } | null>(null)
 const showSettings = ref(false)
 const error = ref<string | null>(null)
 const debounceTimer = ref<number | null>(null)
@@ -43,7 +45,7 @@ const debounceTimer = ref<number | null>(null)
 const searchInPrefLabel = ref(true)
 const searchInAltLabel = ref(true)
 const searchInDefinition = ref(false)
-const matchMode = ref<'contains' | 'startsWith' | 'exact'>('contains')
+const matchMode = ref<'contains' | 'startsWith' | 'exact' | 'regex'>('contains')
 const searchAllSchemes = ref(false)
 
 // Computed
@@ -93,6 +95,11 @@ async function executeSearch() {
       break
     case 'exact':
       filterCondition = `LCASE(?matchedLabel) = LCASE("${escapedQuery}")`
+      break
+    case 'regex':
+      // For regex mode, only escape SPARQL string delimiters but preserve regex metacharacters
+      // Users can enter patterns like ^wheat, wheat$, (foo|bar)
+      filterCondition = `REGEX(?matchedLabel, "${escapedQuery}", "i")`
       break
     default:
       filterCondition = `CONTAINS(LCASE(?matchedLabel), LCASE("${escapedQuery}"))`
@@ -191,6 +198,17 @@ watch(
     }
   }
 )
+
+// Watch for search focus trigger (keyboard shortcut)
+watch(
+  () => uiStore.searchFocusTrigger,
+  async () => {
+    await nextTick()
+    const inputEl = searchInputRef.value?.$el
+    inputEl?.focus()
+    inputEl?.select()
+  }
+)
 </script>
 
 <template>
@@ -200,6 +218,7 @@ watch(
       <span class="p-input-icon-left p-input-icon-right search-input-wrapper">
         <i class="pi pi-search"></i>
         <InputText
+          ref="searchInputRef"
           v-model="searchInput"
           placeholder="Search concepts..."
           class="search-input"
@@ -306,6 +325,10 @@ watch(
             <div class="radio-item">
               <RadioButton v-model="matchMode" inputId="exact" value="exact" />
               <label for="exact">Exact match</label>
+            </div>
+            <div class="radio-item">
+              <RadioButton v-model="matchMode" inputId="regex" value="regex" />
+              <label for="regex">Regular expression</label>
             </div>
           </div>
         </div>

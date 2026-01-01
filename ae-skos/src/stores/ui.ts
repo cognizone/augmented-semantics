@@ -36,6 +36,9 @@ export const useUIStore = defineStore('ui', () => {
   const isMobile = ref(false)
   const isTablet = ref(false)
 
+  // State - Keyboard shortcuts
+  const searchFocusTrigger = ref(0)
+
   // Getters
   const isLoading = computed(() => (key: string) => loading.value[key] ?? false)
 
@@ -118,6 +121,11 @@ export const useUIStore = defineStore('ui', () => {
     window.removeEventListener('resize', updateBreakpoints)
   }
 
+  // Actions - Keyboard shortcuts
+  function triggerSearchFocus() {
+    searchFocusTrigger.value++
+  }
+
   return {
     // State
     loading,
@@ -150,5 +158,8 @@ export const useUIStore = defineStore('ui', () => {
     updateBreakpoints,
     initResponsive,
     destroyResponsive,
+    // Keyboard shortcuts
+    searchFocusTrigger,
+    triggerSearchFocus,
   }
 })

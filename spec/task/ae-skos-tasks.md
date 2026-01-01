@@ -45,7 +45,7 @@
 | 11 | Implement ConceptTree component | sko03-ConceptTree | done |
 | 12 | Implement ConceptDetails component | sko04-ConceptDetails | done |
 | 13 | Implement SearchBox component | sko05-SearchBox | done |
-| 14 | Implement Utilities (copy, history, raw view) | sko06-Utilities | partial |
+| 14 | Implement Utilities (copy, history, raw view) | sko06-Utilities | done |
 
 ### Phase 5: UX Polish
 
@@ -148,19 +148,16 @@ ae-skos/
 
 ---
 
-## Future Enhancements
+## Implemented Features from sko06-Utilities
 
-The following features from sko06-Utilities are not yet implemented:
+All sko06 features are now implemented:
 
-| Feature | Description | Priority |
-|---------|-------------|----------|
-| Keyboard shortcuts | `/` focus search, `Esc` close, arrows navigate | Low |
-| View raw RDF | Show concept as Turtle, JSON-LD, N-Triples | Medium |
-| Export concept | Download as JSON, Turtle, CSV | Low |
-| Regex search | Regex match mode in SearchBox | Low |
-| Hidden labels toggle | Toggle visibility of skos:hiddenLabel | Low |
-
-Currently implemented from sko06:
-- Copy URI to clipboard
-- Copy label to clipboard
-- Recently viewed history (persisted)
+| Feature | Description | Status |
+|---------|-------------|--------|
+| Copy to clipboard | Copy URI/label to clipboard | Done |
+| Recently viewed | Persisted history of viewed concepts | Done |
+| Keyboard shortcuts | `/` focus search, `Esc` close dialogs | Done |
+| View raw RDF | Show concept as Turtle, JSON-LD, N-Triples, RDF/XML | Done |
+| Export concept | Download as JSON, Turtle, CSV | Done |
+| Regex search | Regex match mode in SearchBox | Done |
+| Hidden labels toggle | Toggle visibility of skos:hiddenLabel | Done |
