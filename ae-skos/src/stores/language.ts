@@ -1,3 +1,12 @@
+/**
+ * Language Store - Language preference management
+ *
+ * Manages preferred/fallback language settings and detected languages.
+ * Persisted to localStorage under key 'ae-language'.
+ *
+ * @see /spec/ae-skos/sko01-LanguageSelector.md
+ * @see /spec/common/com02-StateManagement.md
+ */
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 

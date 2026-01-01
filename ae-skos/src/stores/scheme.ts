@@ -1,3 +1,12 @@
+/**
+ * Scheme Store - Concept scheme state management
+ *
+ * Manages available concept schemes and current selection.
+ * Persisted to localStorage under key 'ae-skos-scheme'.
+ *
+ * @see /spec/ae-skos/sko02-SchemeSelector.md
+ * @see /spec/common/com02-StateManagement.md
+ */
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { ConceptScheme } from '../types'

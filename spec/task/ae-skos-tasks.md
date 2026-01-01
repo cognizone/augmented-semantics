@@ -17,58 +17,62 @@
 
 | # | Task | Spec Reference | Status |
 |---|------|----------------|--------|
-| 1 | Initialize Vue 3 + Vite + TypeScript project | - | pending |
-| 2 | Set up PrimeVue and configure theme | - | pending |
-| 3 | Set up Pinia store structure | com02-StateManagement | pending |
-| 4 | Set up Vue Router | com04-URLRouting | pending |
-| 5 | Create project folder structure matching specs | sko00-overview | pending |
+| 1 | Initialize Vue 3 + Vite + TypeScript project | - | done |
+| 2 | Set up PrimeVue and configure theme | - | done |
+| 3 | Set up Pinia store structure | com02-StateManagement | done |
+| 4 | Set up Vue Router | com04-URLRouting | done |
+| 5 | Create project folder structure matching specs | sko00-overview | done |
 
 ### Phase 2: Core Services
 
 | # | Task | Spec Reference | Status |
 |---|------|----------------|--------|
-| 6 | Implement SPARQL service (fetch, error handling, retry) | com05-SPARQLPatterns | pending |
-| 7 | Implement security utilities (sanitize, escape, validate) | com06-Security | pending |
-| 8 | Implement EndpointManager store + UI | com01-EndpointManager | pending |
+| 6 | Implement SPARQL service (fetch, error handling, retry) | com05-SPARQLPatterns | done |
+| 7 | Implement security utilities (sanitize, escape, validate) | com06-Security | done |
+| 8 | Implement EndpointManager store + UI | com01-EndpointManager | done |
 
 ### Phase 3: Common Components
 
 | # | Task | Spec Reference | Status |
 |---|------|----------------|--------|
-| 9 | Implement LanguageSelector store + UI | sko01-LanguageSelector | pending |
-| 10 | Implement SchemeSelector store + UI | sko02-SchemeSelector | pending |
+| 9 | Implement LanguageSelector store + UI | sko01-LanguageSelector | done |
+| 10 | Implement SchemeSelector store + UI | sko02-SchemeSelector | done |
 
 ### Phase 4: SKOS Components
 
 | # | Task | Spec Reference | Status |
 |---|------|----------------|--------|
-| 11 | Implement ConceptTree component | sko03-ConceptTree | pending |
-| 12 | Implement ConceptDetails component | sko04-ConceptDetails | pending |
-| 13 | Implement SearchBox component | sko05-SearchBox | pending |
-| 14 | Implement Utilities (copy, history, raw view) | sko06-Utilities | pending |
+| 11 | Implement ConceptTree component | sko03-ConceptTree | done |
+| 12 | Implement ConceptDetails component | sko04-ConceptDetails | done |
+| 13 | Implement SearchBox component | sko05-SearchBox | done |
+| 14 | Implement Utilities (copy, history, raw view) | sko06-Utilities | partial |
 
 ### Phase 5: UX Polish
 
 | # | Task | Spec Reference | Status |
 |---|------|----------------|--------|
-| 15 | Implement responsive layout (mobile/tablet/desktop) | sko00-overview | pending |
-| 16 | Implement error handling UI (toasts, inline errors) | com03-ErrorHandling | pending |
-| 17 | Implement loading states (spinners, skeletons) | com03-ErrorHandling | pending |
+| 15 | Implement responsive layout (mobile/tablet/desktop) | sko00-overview | done |
+| 16 | Implement error handling UI (toasts, inline errors) | com03-ErrorHandling | done |
+| 17 | Implement loading states (spinners, skeletons) | com03-ErrorHandling | done |
 
 ### Phase 6: State & Persistence
 
 | # | Task | Spec Reference | Status |
 |---|------|----------------|--------|
-| 18 | Implement URL deep linking and state restoration | com04-URLRouting | pending |
-| 19 | Add localStorage persistence | com02-StateManagement | pending |
+| 18 | Implement URL deep linking and state restoration | com04-URLRouting | done |
+| 19 | Add localStorage persistence | com02-StateManagement | done |
 
 ### Phase 7: Testing & Deploy
 
 | # | Task | Spec Reference | Status |
 |---|------|----------------|--------|
-| 20 | Security review (per com06 checklist) | com06-Security | pending |
-| 21 | Test with real SPARQL endpoints | - | pending |
-| 22 | Build and deploy | - | pending |
+| 20 | Set up Vitest testing infrastructure | sko07-Testing | done |
+| 21 | Unit tests for services (sparql.ts, security.ts) | sko07-Testing | done |
+| 22 | Unit tests for stores (endpoint, concept) | sko07-Testing | done |
+| 23 | Component tests (SearchBox) | sko07-Testing | done |
+| 24 | Security review (per com06 checklist) | com06-Security | pending |
+| 25 | Test with real SPARQL endpoints | - | pending |
+| 26 | Build and deploy | - | pending |
 
 ---
 
@@ -141,3 +145,22 @@ ae-skos/
 - State structure from com02-StateManagement
 - Error handling from com03-ErrorHandling
 - Security patterns from com06-Security
+
+---
+
+## Future Enhancements
+
+The following features from sko06-Utilities are not yet implemented:
+
+| Feature | Description | Priority |
+|---------|-------------|----------|
+| Keyboard shortcuts | `/` focus search, `Esc` close, arrows navigate | Low |
+| View raw RDF | Show concept as Turtle, JSON-LD, N-Triples | Medium |
+| Export concept | Download as JSON, Turtle, CSV | Low |
+| Regex search | Regex match mode in SearchBox | Low |
+| Hidden labels toggle | Toggle visibility of skos:hiddenLabel | Low |
+
+Currently implemented from sko06:
+- Copy URI to clipboard
+- Copy label to clipboard
+- Recently viewed history (persisted)

@@ -1,3 +1,14 @@
+/**
+ * SPARQL Service - Query execution and endpoint analysis
+ *
+ * Provides:
+ * - Query execution with retry and timeout
+ * - Authentication handling (Basic, API Key, Bearer)
+ * - Endpoint analysis (graphs, duplicates, languages)
+ * - Standard SPARQL prefixes
+ *
+ * @see /spec/common/com05-SPARQLPatterns.md
+ */
 import type { SPARQLEndpoint, AppError, ErrorCode } from '../types'
 import { logger } from './logger'
 

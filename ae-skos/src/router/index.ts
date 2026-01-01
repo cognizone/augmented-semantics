@@ -1,3 +1,15 @@
+/**
+ * Router - Vue Router configuration with URL state support
+ *
+ * Supports deep linking via URL parameters:
+ * - endpoint: SPARQL endpoint URL
+ * - scheme: Selected concept scheme URI
+ * - concept: Selected concept URI
+ * - lang: Preferred language code
+ * - q: Search query
+ *
+ * @see /spec/common/com04-URLRouting.md
+ */
 import { createRouter, createWebHistory, type RouteLocationNormalized } from 'vue-router'
 import SkosView from '../views/SkosView.vue'
 

@@ -1,3 +1,15 @@
+/**
+ * UI Store - Application UI state
+ *
+ * Manages:
+ * - Loading states
+ * - Error display
+ * - Dialog visibility
+ * - Layout (sidebar, view mode, mobile tabs)
+ * - Responsive breakpoints
+ *
+ * @see /spec/common/com03-ErrorHandling.md
+ */
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { AppError } from '../types'

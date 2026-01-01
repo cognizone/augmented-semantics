@@ -1,3 +1,18 @@
+/**
+ * Concept Store - SKOS concept state management
+ *
+ * Manages:
+ * - Concept tree (top concepts, expanded nodes, children)
+ * - Selected concept and details
+ * - Breadcrumb navigation path
+ * - Search query and results
+ * - Recently viewed history (persisted to localStorage)
+ *
+ * @see /spec/ae-skos/sko03-ConceptTree.md
+ * @see /spec/ae-skos/sko04-ConceptDetails.md
+ * @see /spec/ae-skos/sko05-SearchBox.md
+ * @see /spec/common/com02-StateManagement.md
+ */
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { ConceptNode, ConceptRef, ConceptDetails, SearchResult, SearchSettings, HistoryEntry } from '../types'

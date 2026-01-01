@@ -1,11 +1,15 @@
 /**
- * Simple logger for debugging
- * Logs are visible in browser console (F12 -> Console)
+ * Logger Service - Debug logging utility
+ *
+ * Logs are visible in browser console (F12 -> Console).
+ * In development, access via console: __logger.dump()
  *
  * Usage:
  *   import { logger } from '@/services/logger'
  *   logger.debug('MyComponent', 'Loading data', { id: 123 })
  *   logger.error('MyComponent', 'Failed to load', error)
+ *
+ * @see /CLAUDE.md (Debugging section)
  */
 
 type LogLevel = 'debug' | 'info' | 'warn' | 'error'

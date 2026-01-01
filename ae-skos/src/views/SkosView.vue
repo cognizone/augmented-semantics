@@ -1,6 +1,16 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { useUIStore, useConceptStore } from '../stores'
+/**
+ * SkosView - Main SKOS browser view
+ *
+ * Layout with splitter: left panel (tree/search/history) + right panel (details).
+ * Handles URL state synchronization for deep linking.
+ *
+ * @see /spec/common/com04-URLRouting.md
+ */
+import { computed, watch, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useUIStore, useConceptStore, useSchemeStore, useLanguageStore, useEndpointStore } from '../stores'
+import { URL_PARAMS } from '../router'
 import ConceptTree from '../components/skos/ConceptTree.vue'
 import ConceptDetails from '../components/skos/ConceptDetails.vue'
 import SearchBox from '../components/skos/SearchBox.vue'
@@ -13,8 +23,13 @@ import Tab from 'primevue/tab'
 import TabPanels from 'primevue/tabpanels'
 import TabPanel from 'primevue/tabpanel'
 
+const route = useRoute()
+const router = useRouter()
 const uiStore = useUIStore()
 const conceptStore = useConceptStore()
+const schemeStore = useSchemeStore()
+const languageStore = useLanguageStore()
+const endpointStore = useEndpointStore()
 
 // Handle concept selection from any component
 function selectConcept(uri: string) {
@@ -27,6 +42,109 @@ function selectConcept(uri: string) {
 
 // Computed
 const showSidebar = computed(() => uiStore.sidebarOpen || uiStore.isDesktop)
+
+// --- URL State Synchronization ---
+
+// Flag to prevent circular updates
+let isUpdatingFromUrl = false
+
+// Update URL when state changes
+function updateUrl() {
+  if (isUpdatingFromUrl) return
+
+  const query: Record<string, string> = {}
+
+  // Add current endpoint URL (not ID) for shareability
+  if (endpointStore.current) {
+    query[URL_PARAMS.ENDPOINT] = endpointStore.current.url
+  }
+
+  // Add scheme URI
+  if (schemeStore.selectedUri) {
+    query[URL_PARAMS.SCHEME] = schemeStore.selectedUri
+  }
+
+  // Add concept URI
+  if (conceptStore.selectedUri) {
+    query[URL_PARAMS.CONCEPT] = conceptStore.selectedUri
+  }
+
+  // Add language if different from default
+  if (languageStore.preferred && languageStore.preferred !== 'en') {
+    query[URL_PARAMS.LANG] = languageStore.preferred
+  }
+
+  // Add search query
+  if (conceptStore.searchQuery) {
+    query[URL_PARAMS.SEARCH] = conceptStore.searchQuery
+  }
+
+  // Update URL without navigation
+  router.replace({ query })
+}
+
+// Restore state from URL on mount
+function restoreFromUrl() {
+  isUpdatingFromUrl = true
+
+  const params = route.query
+
+  // Restore language
+  const lang = params[URL_PARAMS.LANG] as string | undefined
+  if (lang) {
+    languageStore.setPreferred(lang)
+  }
+
+  // Restore endpoint by URL
+  const endpointUrl = params[URL_PARAMS.ENDPOINT] as string | undefined
+  if (endpointUrl) {
+    const endpoint = endpointStore.endpoints.find(e => e.url === endpointUrl)
+    if (endpoint) {
+      endpointStore.selectEndpoint(endpoint.id)
+    }
+  }
+
+  // Restore scheme (will be applied after schemes load)
+  const schemeUri = params[URL_PARAMS.SCHEME] as string | undefined
+  if (schemeUri) {
+    // Store for later when schemes are loaded
+    schemeStore.selectScheme(schemeUri)
+  }
+
+  // Restore concept (will be applied after tree loads)
+  const conceptUri = params[URL_PARAMS.CONCEPT] as string | undefined
+  if (conceptUri) {
+    conceptStore.selectConcept(conceptUri)
+  }
+
+  // Restore search
+  const search = params[URL_PARAMS.SEARCH] as string | undefined
+  if (search) {
+    conceptStore.setSearchQuery(search)
+  }
+
+  isUpdatingFromUrl = false
+}
+
+// Watch state changes to update URL
+watch(
+  () => [
+    endpointStore.current?.url,
+    schemeStore.selectedUri,
+    conceptStore.selectedUri,
+    languageStore.preferred,
+    conceptStore.searchQuery,
+  ],
+  () => {
+    updateUrl()
+  },
+  { deep: true }
+)
+
+// Restore state from URL on mount
+onMounted(() => {
+  restoreFromUrl()
+})
 </script>
 
 <template>

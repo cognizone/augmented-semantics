@@ -1,4 +1,12 @@
 <script setup lang="ts">
+/**
+ * LanguageSelector - Language preference management
+ *
+ * Detects available languages from SKOS data and allows
+ * setting preferred and fallback languages for label display.
+ *
+ * @see /spec/ae-skos/sko01-LanguageSelector.md
+ */
 import { ref, computed, watch } from 'vue'
 import { useLanguageStore, useEndpointStore } from '../../stores'
 import { executeSparql, withPrefixes } from '../../services/sparql'

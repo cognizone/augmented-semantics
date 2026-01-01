@@ -1,4 +1,11 @@
 <script setup lang="ts">
+/**
+ * EndpointSelector - Dropdown for selecting active SPARQL endpoint
+ *
+ * Displays connection status and provides access to EndpointManager.
+ *
+ * @see /spec/common/com01-EndpointManager.md
+ */
 import { computed } from 'vue'
 import { useEndpointStore } from '../../stores'
 import Select from 'primevue/select'

@@ -1,4 +1,8 @@
-// Types from com03-ErrorHandling
+/**
+ * Error Types - Error codes and handling structures
+ *
+ * @see /spec/common/com03-ErrorHandling.md
+ */
 
 export type ErrorCode =
   | 'NETWORK_ERROR'

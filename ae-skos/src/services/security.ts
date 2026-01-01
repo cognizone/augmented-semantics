@@ -1,3 +1,15 @@
+/**
+ * Security Service - Input sanitization and validation
+ *
+ * Provides:
+ * - SPARQL injection prevention
+ * - URI validation (blocks javascript:, data:, etc.)
+ * - HTML sanitization with DOMPurify
+ * - Endpoint trust assessment
+ * - Credential storage (sessionStorage)
+ *
+ * @see /spec/common/com06-Security.md
+ */
 import DOMPurify from 'dompurify'
 
 /**

@@ -1,4 +1,12 @@
 <script setup lang="ts">
+/**
+ * ConceptBreadcrumb - Hierarchical navigation path
+ *
+ * Shows the broader concept chain from root to current concept.
+ * Uses recursive SPARQL query to build the full path.
+ *
+ * @see /spec/ae-skos/sko03-ConceptTree.md
+ */
 import { ref, watch, computed } from 'vue'
 import { useConceptStore, useEndpointStore, useLanguageStore } from '../../stores'
 import { executeSparql, withPrefixes, logger } from '../../services'

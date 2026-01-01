@@ -1,4 +1,13 @@
 <script setup lang="ts">
+/**
+ * SchemeSelector - Concept scheme selection
+ *
+ * Lists available SKOS concept schemes from the endpoint.
+ * Allows selecting a scheme to filter the concept tree,
+ * or "All Schemes" to show all concepts.
+ *
+ * @see /spec/ae-skos/sko02-SchemeSelector.md
+ */
 import { ref, computed, watch } from 'vue'
 import { useSchemeStore, useEndpointStore, useLanguageStore } from '../../stores'
 import { executeSparql, withPrefixes, logger } from '../../services'

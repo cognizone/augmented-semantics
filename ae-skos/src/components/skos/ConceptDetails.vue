@@ -1,4 +1,22 @@
 <script setup lang="ts">
+/**
+ * ConceptDetails - SKOS concept property display
+ *
+ * Shows comprehensive concept information organized in sections.
+ * Each section and property is only displayed if values exist.
+ *
+ * Sections:
+ * - Labels: prefLabel, altLabel, notation (if any exist)
+ * - Documentation: definition, scopeNote, historyNote, changeNote,
+ *   editorialNote, example (if any exist)
+ * - Hierarchy: broader, narrower (if any exist)
+ * - Relations: related (if any exist)
+ * - Mappings: exactMatch, closeMatch, broadMatch, narrowMatch,
+ *   relatedMatch (if any exist)
+ * - Schemes: inScheme (if any exist)
+ *
+ * @see /spec/ae-skos/sko04-ConceptDetails.md
+ */
 import { ref, watch, computed } from 'vue'
 import { useConceptStore, useEndpointStore, useLanguageStore } from '../../stores'
 import { executeSparql, withPrefixes, logger } from '../../services'
@@ -84,7 +102,8 @@ async function loadDetails(uri: string) {
       FILTER (?property IN (
         skos:prefLabel, skos:altLabel, skos:hiddenLabel,
         rdfs:label, dct:title,
-        skos:definition, skos:scopeNote, skos:example,
+        skos:definition, skos:scopeNote, skos:historyNote,
+        skos:changeNote, skos:editorialNote, skos:example,
         skos:notation, skos:broader, skos:narrower, skos:related,
         skos:inScheme, skos:exactMatch, skos:closeMatch,
         skos:broadMatch, skos:narrowMatch, skos:relatedMatch
@@ -102,6 +121,9 @@ async function loadDetails(uri: string) {
       hiddenLabels: [],
       definitions: [],
       scopeNotes: [],
+      historyNotes: [],
+      changeNotes: [],
+      editorialNotes: [],
       examples: [],
       notations: [],
       broader: [],
@@ -137,6 +159,12 @@ async function loadDetails(uri: string) {
         details.definitions.push({ value: val, lang })
       } else if (prop.endsWith('scopeNote')) {
         details.scopeNotes.push({ value: val, lang })
+      } else if (prop.endsWith('historyNote')) {
+        details.historyNotes.push({ value: val, lang })
+      } else if (prop.endsWith('changeNote')) {
+        details.changeNotes.push({ value: val, lang })
+      } else if (prop.endsWith('editorialNote')) {
+        details.editorialNotes.push({ value: val, lang })
       } else if (prop.endsWith('example')) {
         details.examples.push({ value: val, lang })
       } else if (prop.endsWith('notation')) {
@@ -422,8 +450,8 @@ watch(
 
       <Divider />
 
-      <!-- Labels Section -->
-      <section v-if="details.prefLabels.length || details.altLabels.length" class="details-section">
+      <!-- Labels Section - only shown if any label or notation exists -->
+      <section v-if="details.prefLabels.length || details.altLabels.length || details.notations.length" class="details-section">
         <h3>Labels</h3>
 
         <div v-if="details.prefLabels.length" class="property-row">
@@ -463,7 +491,7 @@ watch(
       </section>
 
       <!-- Documentation Section -->
-      <section v-if="details.definitions.length || details.scopeNotes.length || details.examples.length" class="details-section">
+      <section v-if="details.definitions.length || details.scopeNotes.length || details.historyNotes.length || details.changeNotes.length || details.editorialNotes.length || details.examples.length" class="details-section">
         <h3>Documentation</h3>
 
         <div v-if="details.definitions.length" class="property-row">
@@ -485,6 +513,48 @@ watch(
           <div class="doc-values">
             <p
               v-for="(note, i) in details.scopeNotes"
+              :key="i"
+              class="doc-value"
+            >
+              {{ note.value }}
+              <span v-if="note.lang" class="lang-tag">{{ note.lang }}</span>
+            </p>
+          </div>
+        </div>
+
+        <div v-if="details.historyNotes.length" class="property-row">
+          <label>History Note</label>
+          <div class="doc-values">
+            <p
+              v-for="(note, i) in details.historyNotes"
+              :key="i"
+              class="doc-value"
+            >
+              {{ note.value }}
+              <span v-if="note.lang" class="lang-tag">{{ note.lang }}</span>
+            </p>
+          </div>
+        </div>
+
+        <div v-if="details.changeNotes.length" class="property-row">
+          <label>Change Note</label>
+          <div class="doc-values">
+            <p
+              v-for="(note, i) in details.changeNotes"
+              :key="i"
+              class="doc-value"
+            >
+              {{ note.value }}
+              <span v-if="note.lang" class="lang-tag">{{ note.lang }}</span>
+            </p>
+          </div>
+        </div>
+
+        <div v-if="details.editorialNotes.length" class="property-row">
+          <label>Editorial Note</label>
+          <div class="doc-values">
+            <p
+              v-for="(note, i) in details.editorialNotes"
               :key="i"
               class="doc-value"
             >

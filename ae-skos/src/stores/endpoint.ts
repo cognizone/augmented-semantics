@@ -1,3 +1,12 @@
+/**
+ * Endpoint Store - SPARQL endpoint state management
+ *
+ * Manages saved endpoints, current selection, and connection status.
+ * Persisted to localStorage under key 'ae-endpoints'.
+ *
+ * @see /spec/common/com01-EndpointManager.md
+ * @see /spec/common/com02-StateManagement.md
+ */
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { SPARQLEndpoint, EndpointStatus, AppError } from '../types'

@@ -1,4 +1,12 @@
 <script setup lang="ts">
+/**
+ * RecentHistory - Recently viewed concepts
+ *
+ * Displays the last 10 concepts viewed with relative timestamps.
+ * Persisted across sessions in localStorage.
+ *
+ * @see /spec/ae-skos/sko06-Utilities.md
+ */
 import { computed } from 'vue'
 import { useConceptStore } from '../../stores'
 import Button from 'primevue/button'

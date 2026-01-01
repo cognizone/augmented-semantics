@@ -1,4 +1,11 @@
-// Types from sko02, sko03, sko04, sko05
+/**
+ * SKOS Types - Domain models for SKOS vocabulary
+ *
+ * @see /spec/ae-skos/sko02-SchemeSelector.md
+ * @see /spec/ae-skos/sko03-ConceptTree.md
+ * @see /spec/ae-skos/sko04-ConceptDetails.md
+ * @see /spec/ae-skos/sko05-SearchBox.md
+ */
 
 export interface ConceptScheme {
   uri: string
@@ -31,6 +38,9 @@ export interface ConceptDetails {
   hiddenLabels: LabelValue[]
   definitions: LabelValue[]
   scopeNotes: LabelValue[]
+  historyNotes: LabelValue[]
+  changeNotes: LabelValue[]
+  editorialNotes: LabelValue[]
   examples: LabelValue[]
   notations: string[]
   broader: ConceptRef[]

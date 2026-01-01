@@ -112,6 +112,19 @@ WHERE {
 }
 ```
 
+## Display Behavior
+
+Properties and sections are **only displayed when they have values**:
+
+- **Labels section**: shown if any of prefLabel, altLabel, or notation exists
+- **Documentation section**: shown if any of definition, scopeNote, historyNote, changeNote, editorialNote, or example exists
+- **Hierarchy section**: shown if broader or narrower exists
+- **Relations section**: shown if related exists
+- **Mappings section**: shown if any of exactMatch, closeMatch, broadMatch, narrowMatch, or relatedMatch exists
+- **Schemes section**: shown if inScheme exists
+
+Within each section, individual properties are only displayed if they have values.
+
 ## UI Component
 
 ```

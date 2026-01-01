@@ -1,4 +1,15 @@
 <script setup lang="ts">
+/**
+ * EndpointManager - SPARQL endpoint configuration and management
+ *
+ * Provides CRUD operations for SPARQL endpoints with:
+ * - Connection testing and analysis
+ * - Authentication support (Basic, API Key, Bearer)
+ * - Named graph detection
+ * - Language detection
+ *
+ * @see /spec/common/com01-EndpointManager.md
+ */
 import { ref, reactive, computed } from 'vue'
 import { useEndpointStore } from '../../stores'
 import { testConnection, analyzeEndpoint } from '../../services/sparql'

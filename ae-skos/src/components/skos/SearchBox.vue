@@ -1,4 +1,16 @@
 <script setup lang="ts">
+/**
+ * SearchBox - SKOS concept search
+ *
+ * Full-text search with:
+ * - Multiple match modes (contains, startsWith, exact)
+ * - Search scope (prefLabel, altLabel, definition)
+ * - Scheme filtering
+ * - Debounced input (300ms)
+ * - Result highlighting
+ *
+ * @see /spec/ae-skos/sko05-SearchBox.md
+ */
 import { ref, watch, computed } from 'vue'
 import { useConceptStore, useEndpointStore, useSchemeStore, useLanguageStore } from '../../stores'
 import { executeSparql, withPrefixes, logger } from '../../services'

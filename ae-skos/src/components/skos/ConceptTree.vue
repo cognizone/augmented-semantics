@@ -1,4 +1,16 @@
 <script setup lang="ts">
+/**
+ * ConceptTree - Hierarchical SKOS concept browser
+ *
+ * Displays concepts as an expandable tree with:
+ * - Lazy loading of narrower concepts on expand
+ * - Label resolution: prefLabel > dct:title > rdfs:label
+ * - Language priority: preferred > fallback > no lang > any
+ * - Notation + label display format
+ * - Direct URI lookup input
+ *
+ * @see /spec/ae-skos/sko03-ConceptTree.md
+ */
 import { ref, watch, computed } from 'vue'
 import { useConceptStore, useEndpointStore, useSchemeStore, useLanguageStore } from '../../stores'
 import { executeSparql, withPrefixes, logger } from '../../services'

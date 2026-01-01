@@ -1,4 +1,8 @@
-// Types from com01-EndpointManager
+/**
+ * Endpoint Types - SPARQL endpoint configuration
+ *
+ * @see /spec/common/com01-EndpointManager.md
+ */
 
 export interface SPARQLEndpoint {
   id: string
