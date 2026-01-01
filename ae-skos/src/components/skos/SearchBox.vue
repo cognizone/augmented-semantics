@@ -14,7 +14,7 @@
 import { ref, watch, computed, nextTick } from 'vue'
 import { useConceptStore, useEndpointStore, useSchemeStore, useLanguageStore, useUIStore } from '../../stores'
 import { executeSparql, withPrefixes, logger, escapeSparqlString } from '../../services'
-import { useDelayedLoading } from '../../composables'
+import { useDelayedLoading, useLabelResolver } from '../../composables'
 import type { SearchResult } from '../../types'
 import InputText from 'primevue/inputtext'
 import Button from 'primevue/button'
@@ -34,6 +34,7 @@ const endpointStore = useEndpointStore()
 const schemeStore = useSchemeStore()
 const languageStore = useLanguageStore()
 const uiStore = useUIStore()
+const { shouldShowLangTag } = useLabelResolver()
 
 // Local state
 const searchInput = ref('')
@@ -134,14 +135,16 @@ async function executeSearch() {
     : ''
 
   const sparqlQuery = withPrefixes(`
-    SELECT DISTINCT ?concept ?label ?matchedLabel ?matchType
+    SELECT DISTINCT ?concept ?label ?labelLang ?notation ?matchedLabel ?matchType
     WHERE {
       ?concept a skos:Concept .
       ${schemeFilter}
       ${labelUnion}
       FILTER (${filterCondition})
+      OPTIONAL { ?concept skos:notation ?notation }
       OPTIONAL {
         ?concept skos:prefLabel ?label .
+        BIND(LANG(?label) AS ?labelLang)
         FILTER (LANG(?label) = "${languageStore.preferred}" || LANG(?label) = "${languageStore.fallback}" || LANG(?label) = "")
       }
     }
@@ -157,6 +160,8 @@ async function executeSearch() {
     const searchResults: SearchResult[] = results.results.bindings.map(b => ({
       uri: b.concept?.value || '',
       label: b.label?.value || b.matchedLabel?.value || '',
+      notation: b.notation?.value,
+      lang: b.labelLang?.value || undefined,
       matchedIn: (b.matchType?.value as SearchResult['matchedIn']) || 'prefLabel',
       matchedValue: b.matchedLabel?.value,
     })).filter(r => r.uri)
@@ -183,7 +188,12 @@ async function executeSearch() {
 // Handle result selection
 function selectResult(result: SearchResult) {
   emit('selectConcept', result.uri)
-  conceptStore.addToHistory({ uri: result.uri, label: result.label })
+  conceptStore.addToHistory({
+    uri: result.uri,
+    label: result.label,
+    notation: result.notation,
+    lang: result.lang,
+  })
 }
 
 // Clear search
@@ -270,7 +280,14 @@ watch(
       >
         <template #option="slotProps">
           <div class="result-item">
-            <div class="result-label">{{ slotProps.option.label }}</div>
+            <div class="result-label">
+              {{ slotProps.option.notation && slotProps.option.label
+                ? `${slotProps.option.notation} - ${slotProps.option.label}`
+                : slotProps.option.notation || slotProps.option.label }}
+              <span v-if="slotProps.option.lang && shouldShowLangTag(slotProps.option.lang)" class="lang-tag">
+                {{ slotProps.option.lang }}
+              </span>
+            </div>
             <div class="result-meta">
               <span class="result-uri">{{ slotProps.option.uri }}</span>
               <span v-if="slotProps.option.matchedIn !== 'prefLabel'" class="match-type">
@@ -402,7 +419,7 @@ watch(
   display: flex;
   flex-direction: column;
   max-height: 400px;
-  overflow: hidden;
+  overflow: auto;
 }
 
 .results-header {
@@ -426,6 +443,15 @@ watch(
 
 .result-label {
   font-weight: 500;
+}
+
+.lang-tag {
+  font-size: 0.625rem;
+  font-weight: normal;
+  background: var(--p-surface-200);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  margin-left: 0.25rem;
 }
 
 .result-meta {

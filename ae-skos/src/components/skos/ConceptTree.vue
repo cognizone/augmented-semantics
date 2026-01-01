@@ -14,7 +14,7 @@
 import { ref, watch, computed } from 'vue'
 import { useConceptStore, useEndpointStore, useSchemeStore, useLanguageStore } from '../../stores'
 import { executeSparql, withPrefixes, logger } from '../../services'
-import { useDelayedLoading } from '../../composables'
+import { useDelayedLoading, useLabelResolver } from '../../composables'
 import type { ConceptNode } from '../../types'
 import Tree from 'primevue/tree'
 import type { TreeNode } from 'primevue/treenode'
@@ -30,6 +30,7 @@ const conceptStore = useConceptStore()
 const endpointStore = useEndpointStore()
 const schemeStore = useSchemeStore()
 const languageStore = useLanguageStore()
+const { shouldShowLangTag } = useLabelResolver()
 
 // Delayed loading - show spinner only after 300ms to prevent flicker
 const showTreeLoading = useDelayedLoading(computed(() => conceptStore.loadingTree))
@@ -54,7 +55,10 @@ function convertToTreeNode(node: ConceptNode): TreeNode {
   return {
     key: node.uri,
     label: displayLabel,
-    data: node,
+    data: {
+      ...node,
+      showLangTag: node.lang ? shouldShowLangTag(node.lang) : false,
+    },
     leaf: !node.hasNarrower,
     children: node.children?.map(child => convertToTreeNode(child)),
   }
@@ -199,6 +203,7 @@ async function loadTopConcepts() {
       // Pick best label: prefLabel > title > rdfsLabel, with language priority
       const labelPriority = ['prefLabel', 'title', 'rdfsLabel']
       let bestLabel: string | undefined
+      let bestLabelLang: string | undefined
 
       for (const labelType of labelPriority) {
         const labelsOfType = data.labels.filter(l => l.type === labelType)
@@ -209,13 +214,18 @@ async function loadTopConcepts() {
         const noLang = labelsOfType.find(l => l.lang === '')
         const any = labelsOfType[0]
 
-        bestLabel = preferred?.value || fallback?.value || noLang?.value || any?.value
-        if (bestLabel) break
+        const selected = preferred || fallback || noLang || any
+        if (selected) {
+          bestLabel = selected.value
+          bestLabelLang = selected.lang || undefined
+          break
+        }
       }
 
       return {
         uri,
         label: bestLabel,
+        lang: bestLabelLang,
         notation: data.notation,
         hasNarrower: data.hasNarrower,
         expanded: false,
@@ -316,6 +326,7 @@ async function loadChildren(uri: string) {
       // Pick best label: prefLabel > title > rdfsLabel, with language priority
       const labelPriority = ['prefLabel', 'title', 'rdfsLabel']
       let bestLabel: string | undefined
+      let bestLabelLang: string | undefined
 
       for (const labelType of labelPriority) {
         const labelsOfType = data.labels.filter(l => l.type === labelType)
@@ -326,13 +337,18 @@ async function loadChildren(uri: string) {
         const noLang = labelsOfType.find(l => l.lang === '')
         const any = labelsOfType[0]
 
-        bestLabel = preferred?.value || fallback?.value || noLang?.value || any?.value
-        if (bestLabel) break
+        const selected = preferred || fallback || noLang || any
+        if (selected) {
+          bestLabel = selected.value
+          bestLabelLang = selected.lang || undefined
+          break
+        }
       }
 
       return {
         uri: conceptUri,
         label: bestLabel,
+        lang: bestLabelLang,
         notation: data.notation,
         hasNarrower: data.hasNarrower,
         expanded: false,
@@ -373,10 +389,15 @@ function onNodeCollapse(node: TreeNode) {
 function selectConcept(uri: string) {
   conceptStore.selectConcept(uri)
 
-  // Find label for history
+  // Find node for history (includes notation and lang)
   const node = findNode(uri, conceptStore.topConcepts)
   if (node) {
-    conceptStore.addToHistory({ uri, label: node.label || uri })
+    conceptStore.addToHistory({
+      uri,
+      label: node.label || uri,
+      notation: node.notation,
+      lang: node.lang,
+    })
   }
 }
 
@@ -480,7 +501,12 @@ watch(
     >
       <template #default="slotProps">
         <div class="tree-node">
-          <span class="node-label">{{ slotProps.node.label }}</span>
+          <span class="node-label">
+            {{ slotProps.node.label }}
+            <span v-if="slotProps.node.data?.showLangTag" class="lang-tag">
+              {{ slotProps.node.data.lang }}
+            </span>
+          </span>
           <ProgressSpinner
             v-if="loadingChildren.has(slotProps.node.key)"
             style="width: 16px; height: 16px"
@@ -561,6 +587,19 @@ watch(
 
 .node-label {
   flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.lang-tag {
+  font-size: 0.625rem;
+  font-weight: normal;
+  background: var(--p-surface-200);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  margin-left: 0.25rem;
 }
 
 :deep(.p-tree-node-content) {

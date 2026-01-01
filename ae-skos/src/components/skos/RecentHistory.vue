@@ -9,6 +9,7 @@
  */
 import { computed } from 'vue'
 import { useConceptStore } from '../../stores'
+import { useLabelResolver } from '../../composables'
 import Button from 'primevue/button'
 import Listbox from 'primevue/listbox'
 
@@ -17,6 +18,7 @@ const emit = defineEmits<{
 }>()
 
 const conceptStore = useConceptStore()
+const { shouldShowLangTag } = useLabelResolver()
 
 // Computed
 const history = computed(() => conceptStore.recentHistory)
@@ -82,7 +84,14 @@ function clearHistory() {
     >
       <template #option="slotProps">
         <div class="history-item">
-          <span class="item-label">{{ slotProps.option.label }}</span>
+          <span class="item-label">
+            {{ slotProps.option.notation && slotProps.option.label
+              ? `${slotProps.option.notation} - ${slotProps.option.label}`
+              : slotProps.option.notation || slotProps.option.label }}
+            <span v-if="slotProps.option.lang && shouldShowLangTag(slotProps.option.lang)" class="lang-tag">
+              {{ slotProps.option.lang }}
+            </span>
+          </span>
           <span class="item-time">{{ formatRelativeTime(slotProps.option.accessedAt) }}</span>
         </div>
       </template>
@@ -140,6 +149,15 @@ function clearHistory() {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.lang-tag {
+  font-size: 0.625rem;
+  font-weight: normal;
+  background: var(--p-surface-200);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  margin-left: 0.25rem;
 }
 
 .item-time {

@@ -10,6 +10,7 @@
 export interface ConceptScheme {
   uri: string
   label?: string
+  labelLang?: string
   description?: string
   title?: string
   creator?: string
@@ -22,6 +23,7 @@ export interface ConceptRef {
   uri: string
   label?: string
   notation?: string
+  lang?: string
 }
 
 // Tree node with expansion state
@@ -52,6 +54,23 @@ export interface ConceptDetails {
   broadMatch: string[]
   narrowMatch: string[]
   relatedMatch: string[]
+  // SKOS-XL extended labels
+  prefLabelsXL: XLLabel[]
+  altLabelsXL: XLLabel[]
+  hiddenLabelsXL: XLLabel[]
+  // Other properties (non-SKOS predicates)
+  otherProperties: OtherProperty[]
+}
+
+export interface OtherProperty {
+  predicate: string
+  values: PropertyValue[]
+}
+
+export interface PropertyValue {
+  value: string
+  lang?: string
+  isUri: boolean
 }
 
 export interface LabelValue {
@@ -59,9 +78,23 @@ export interface LabelValue {
   lang?: string
 }
 
+// SKOS-XL Extended Labels
+export interface XLLabel {
+  uri: string
+  literalForm: LabelValue
+  labelRelations?: XLLabelRelation[]
+}
+
+export interface XLLabelRelation {
+  type: 'broader' | 'narrower' | 'related'
+  target: XLLabel
+}
+
 export interface SearchResult {
   uri: string
   label: string
+  notation?: string
+  lang?: string
   matchedIn: 'prefLabel' | 'altLabel' | 'definition' | 'notation'
   matchedValue?: string
   scheme?: ConceptRef
@@ -81,5 +114,7 @@ export interface SearchSettings {
 export interface HistoryEntry {
   uri: string
   label: string
+  notation?: string
+  lang?: string
   accessedAt: string
 }

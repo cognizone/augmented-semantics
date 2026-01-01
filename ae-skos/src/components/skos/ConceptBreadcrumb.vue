@@ -10,6 +10,7 @@
 import { ref, watch, computed } from 'vue'
 import { useConceptStore, useEndpointStore, useLanguageStore } from '../../stores'
 import { executeSparql, withPrefixes, logger } from '../../services'
+import { useLabelResolver } from '../../composables'
 import type { ConceptRef } from '../../types'
 import Breadcrumb from 'primevue/breadcrumb'
 
@@ -20,11 +21,12 @@ const emit = defineEmits<{
 const conceptStore = useConceptStore()
 const endpointStore = useEndpointStore()
 const languageStore = useLanguageStore()
+const { shouldShowLangTag } = useLabelResolver()
 
 // Local state
 const loading = ref(false)
 
-// Convert breadcrumb to PrimeVue format with notation + label
+// Convert breadcrumb to PrimeVue format with notation + label + lang
 const breadcrumbItems = computed(() => {
   return conceptStore.breadcrumb.map(item => {
     const label = item.label || item.uri.split('/').pop() || item.uri
@@ -36,6 +38,8 @@ const breadcrumbItems = computed(() => {
     return {
       label: displayLabel,
       uri: item.uri,
+      lang: item.lang,
+      showLangTag: item.lang ? shouldShowLangTag(item.lang) : false,
       command: () => navigateTo(item.uri),
     }
   })
@@ -129,6 +133,7 @@ async function loadBreadcrumb(uri: string) {
         // Pick best label: prefLabel > title > rdfsLabel, with language priority
         const labelPriority = ['prefLabel', 'title', 'rdfsLabel']
         let bestLabel: string | undefined
+        let bestLabelLang: string | undefined
 
         for (const labelType of labelPriority) {
           const labelsOfType = data.labels.filter(l => l.type === labelType)
@@ -139,11 +144,15 @@ async function loadBreadcrumb(uri: string) {
           const noLang = labelsOfType.find(l => l.lang === '')
           const any = labelsOfType[0]
 
-          bestLabel = preferred?.value || fallback?.value || noLang?.value || any?.value
-          if (bestLabel) break
+          const selected = preferred || fallback || noLang || any
+          if (selected) {
+            bestLabel = selected.value
+            bestLabelLang = selected.lang || undefined
+            break
+          }
         }
 
-        return { uri: conceptUri, label: bestLabel, notation: data.notation }
+        return { uri: conceptUri, label: bestLabel, lang: bestLabelLang, notation: data.notation }
       })
 
     logger.debug('Breadcrumb', `Loaded path with ${path.length} items`)
@@ -213,7 +222,10 @@ watch(
       <template #item="{ item }">
         <a class="breadcrumb-link" @click.prevent="() => item.command && item.command({} as never)">
           <i v-if="item.icon" :class="item.icon"></i>
-          <span v-else>{{ item.label }}</span>
+          <span v-else>
+            {{ item.label }}
+            <span v-if="item.showLangTag" class="lang-tag">{{ item.lang }}</span>
+          </span>
         </a>
       </template>
     </Breadcrumb>
@@ -241,6 +253,15 @@ watch(
 
 .breadcrumb-link:hover {
   color: var(--p-primary-color);
+}
+
+.lang-tag {
+  font-size: 0.625rem;
+  font-weight: normal;
+  background: var(--p-surface-200);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  margin-left: 0.25rem;
 }
 
 :deep(.p-breadcrumb-list) {

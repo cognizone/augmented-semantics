@@ -11,6 +11,7 @@
 import { ref, computed, watch } from 'vue'
 import { useSchemeStore, useEndpointStore, useLanguageStore } from '../../stores'
 import { executeSparql, withPrefixes, logger, isValidURI } from '../../services'
+import { useLabelResolver } from '../../composables'
 import type { ConceptScheme } from '../../types'
 import Select from 'primevue/select'
 import Button from 'primevue/button'
@@ -20,6 +21,7 @@ import Message from 'primevue/message'
 const schemeStore = useSchemeStore()
 const endpointStore = useEndpointStore()
 const languageStore = useLanguageStore()
+const { shouldShowLangTag } = useLabelResolver()
 
 // Update endpoint connection status based on query results
 function setConnected() {
@@ -40,15 +42,18 @@ const selectedSchemeDetails = ref<ConceptScheme | null>(null)
 
 // Computed
 const dropdownOptions = computed(() => {
-  const options: { label: string; value: string | null; uri: string | null }[] = [
-    { label: 'All Schemes', value: null, uri: null },
+  const options: { label: string; value: string | null; uri: string | null; lang?: string; showLangTag: boolean }[] = [
+    { label: 'All Schemes', value: null, uri: null, showLangTag: false },
   ]
 
   schemeStore.sortedSchemes.forEach(scheme => {
+    const showTag = scheme.labelLang ? shouldShowLangTag(scheme.labelLang) : false
     options.push({
       label: scheme.label || scheme.uri,
       value: scheme.uri,
       uri: scheme.uri,
+      lang: scheme.labelLang,
+      showLangTag: showTag,
     })
   })
 
@@ -127,6 +132,7 @@ async function loadSchemes() {
     const uniqueSchemes: ConceptScheme[] = Array.from(schemeMap.entries()).map(([uri, data]) => {
       const labelPriority = ['prefLabel', 'title', 'rdfsLabel']
       let bestLabel: string | undefined
+      let bestLabelLang: string | undefined
 
       for (const labelType of labelPriority) {
         const labelsOfType = data.labels.filter(l => l.type === labelType)
@@ -137,11 +143,15 @@ async function loadSchemes() {
         const noLang = labelsOfType.find(l => l.lang === '')
         const any = labelsOfType[0]
 
-        bestLabel = preferred?.value || fallback?.value || noLang?.value || any?.value
-        if (bestLabel) break
+        const selected = preferred || fallback || noLang || any
+        if (selected) {
+          bestLabel = selected.value
+          bestLabelLang = selected.lang || undefined
+          break
+        }
       }
 
-      return { uri, label: bestLabel }
+      return { uri, label: bestLabel, labelLang: bestLabelLang }
     })
 
     logger.info('SchemeSelector', `Loaded ${uniqueSchemes.length} schemes`, {
@@ -260,13 +270,21 @@ watch(
         <div class="selected-scheme">
           <span v-if="slotProps.value">
             {{ currentScheme?.label || 'Scheme' }}
+            <span v-if="currentScheme?.labelLang && shouldShowLangTag(currentScheme.labelLang)" class="lang-tag">
+              {{ currentScheme.labelLang }}
+            </span>
           </span>
           <span v-else>All Schemes</span>
         </div>
       </template>
       <template #option="slotProps">
         <div class="scheme-option">
-          <span class="scheme-label">{{ slotProps.option.label }}</span>
+          <div class="scheme-label-row">
+            <span class="scheme-label">{{ slotProps.option.label }}</span>
+            <span v-if="slotProps.option.showLangTag" class="lang-tag">
+              {{ slotProps.option.lang }}
+            </span>
+          </div>
           <span v-if="slotProps.option.uri" class="scheme-uri">
             {{ slotProps.option.uri }}
           </span>
@@ -367,8 +385,22 @@ watch(
   gap: 0.125rem;
 }
 
+.scheme-label-row {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
 .scheme-label {
   font-weight: 500;
+}
+
+.lang-tag {
+  font-size: 0.625rem;
+  font-weight: normal;
+  background: var(--p-surface-200);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
 }
 
 .scheme-uri {

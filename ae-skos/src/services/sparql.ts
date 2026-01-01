@@ -48,6 +48,7 @@ const DEFAULT_CONFIG: Required<Omit<SPARQLRequestConfig, 'signal'>> = {
 // Standard prefixes
 export const SPARQL_PREFIXES = `
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX skosxl: <http://www.w3.org/2008/05/skos-xl#>
 PREFIX dct: <http://purl.org/dc/terms/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>

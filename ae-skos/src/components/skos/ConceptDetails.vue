@@ -20,7 +20,7 @@
 import { ref, watch, computed } from 'vue'
 import { useConceptStore, useEndpointStore, useLanguageStore } from '../../stores'
 import { executeSparql, withPrefixes, logger, isValidURI, fetchRawRdf } from '../../services'
-import { useDelayedLoading } from '../../composables'
+import { useDelayedLoading, useLabelResolver } from '../../composables'
 import type { RdfFormat } from '../../services'
 import type { ConceptDetails, LabelValue, ConceptRef } from '../../types'
 import Button from 'primevue/button'
@@ -33,6 +33,7 @@ import Select from 'primevue/select'
 import Textarea from 'primevue/textarea'
 import Menu from 'primevue/menu'
 import { useToast } from 'primevue/usetoast'
+import XLLabelDisplay from '../common/XLLabelDisplay.vue'
 
 const emit = defineEmits<{
   selectConcept: [uri: string]
@@ -42,6 +43,7 @@ const conceptStore = useConceptStore()
 const endpointStore = useEndpointStore()
 const languageStore = useLanguageStore()
 const toast = useToast()
+const { selectLabel, sortLabels, shouldShowLangTag } = useLabelResolver()
 
 // Local state
 const error = ref<string | null>(null)
@@ -76,11 +78,25 @@ const loading = computed(() => conceptStore.loadingDetails)
 // Delayed loading - show spinner only after 300ms to prevent flicker
 const showLoading = useDelayedLoading(loading)
 
-// Get preferred label
-const preferredLabel = computed(() => {
+// Get preferred label (full LabelValue for language info)
+const preferredLabelObj = computed(() => {
   if (!details.value) return null
-  const labels = details.value.prefLabels
-  return findBestLabel(labels)
+  return selectLabel(details.value.prefLabels)
+})
+
+// Get preferred label string
+const preferredLabel = computed(() => {
+  return preferredLabelObj.value?.value || null
+})
+
+// Get language of displayed label (for showing lang tag)
+const displayLang = computed(() => {
+  return preferredLabelObj.value?.lang || null
+})
+
+// Should we show the language tag in header?
+const showHeaderLangTag = computed(() => {
+  return displayLang.value && shouldShowLangTag(displayLang.value)
 })
 
 // Get display title (notation + label if both exist)
@@ -95,26 +111,42 @@ const displayTitle = computed(() => {
   return notation || label || 'Unnamed Concept'
 })
 
-// Find label in preferred language
-function findBestLabel(labels: LabelValue[]): string | null {
-  if (!labels.length) return null
+// Sorted label arrays (preferred lang first, then fallback, then rest alphabetically)
+const sortedPrefLabels = computed(() => {
+  return details.value ? sortLabels(details.value.prefLabels) : []
+})
 
-  // Try preferred language
-  const preferred = labels.find(l => l.lang === languageStore.preferred)
-  if (preferred) return preferred.value
+const sortedAltLabels = computed(() => {
+  return details.value ? sortLabels(details.value.altLabels) : []
+})
 
-  // Try fallback
-  const fallback = labels.find(l => l.lang === languageStore.fallback)
-  if (fallback) return fallback.value
+const sortedHiddenLabels = computed(() => {
+  return details.value ? sortLabels(details.value.hiddenLabels) : []
+})
 
-  // Try no language
-  const noLang = labels.find(l => !l.lang)
-  if (noLang) return noLang.value
+const sortedDefinitions = computed(() => {
+  return details.value ? sortLabels(details.value.definitions) : []
+})
 
-  // Return first
-  const first = labels[0]
-  return first?.value || null
-}
+const sortedScopeNotes = computed(() => {
+  return details.value ? sortLabels(details.value.scopeNotes) : []
+})
+
+const sortedHistoryNotes = computed(() => {
+  return details.value ? sortLabels(details.value.historyNotes) : []
+})
+
+const sortedChangeNotes = computed(() => {
+  return details.value ? sortLabels(details.value.changeNotes) : []
+})
+
+const sortedEditorialNotes = computed(() => {
+  return details.value ? sortLabels(details.value.editorialNotes) : []
+})
+
+const sortedExamples = computed(() => {
+  return details.value ? sortLabels(details.value.examples) : []
+})
 
 
 // Load concept details
@@ -167,6 +199,10 @@ async function loadDetails(uri: string) {
       broadMatch: [],
       narrowMatch: [],
       relatedMatch: [],
+      prefLabelsXL: [],
+      altLabelsXL: [],
+      hiddenLabelsXL: [],
+      otherProperties: [],
     }
 
     // Process results
@@ -244,6 +280,12 @@ async function loadDetails(uri: string) {
 
     // Load labels for related concepts
     await loadRelatedLabels(details)
+
+    // Load SKOS-XL extended labels
+    await loadXLLabels(uri, details)
+
+    // Load other (non-SKOS) properties
+    await loadOtherProperties(uri, details)
 
     logger.info('ConceptDetails', 'Loaded details', {
       labels: details.prefLabels.length,
@@ -370,6 +412,125 @@ async function loadRelatedLabels(details: ConceptDetails) {
     })
   } catch (e) {
     logger.warn('ConceptDetails', 'Failed to load related labels', { error: e })
+  }
+}
+
+// Load SKOS-XL extended labels
+async function loadXLLabels(uri: string, details: ConceptDetails) {
+  const endpoint = endpointStore.current
+  if (!endpoint) return
+
+  // Query for XL labels
+  const query = withPrefixes(`
+    SELECT ?xlLabel ?labelType ?literalForm ?literalLang
+    WHERE {
+      {
+        <${uri}> skosxl:prefLabel ?xlLabel .
+        BIND("prefLabel" AS ?labelType)
+      } UNION {
+        <${uri}> skosxl:altLabel ?xlLabel .
+        BIND("altLabel" AS ?labelType)
+      } UNION {
+        <${uri}> skosxl:hiddenLabel ?xlLabel .
+        BIND("hiddenLabel" AS ?labelType)
+      }
+      ?xlLabel skosxl:literalForm ?literalForm .
+      BIND(LANG(?literalForm) AS ?literalLang)
+    }
+  `)
+
+  try {
+    const results = await executeSparql(endpoint, query, { retries: 0 })
+
+    for (const binding of results.results.bindings) {
+      const xlUri = binding.xlLabel?.value
+      const labelType = binding.labelType?.value
+      const literalForm = binding.literalForm?.value
+      const literalLang = binding.literalLang?.value
+
+      if (!xlUri || !literalForm) continue
+
+      const xlLabel = {
+        uri: xlUri,
+        literalForm: {
+          value: literalForm,
+          lang: literalLang || undefined,
+        },
+      }
+
+      if (labelType === 'prefLabel') {
+        details.prefLabelsXL.push(xlLabel)
+      } else if (labelType === 'altLabel') {
+        details.altLabelsXL.push(xlLabel)
+      } else if (labelType === 'hiddenLabel') {
+        details.hiddenLabelsXL.push(xlLabel)
+      }
+    }
+
+    logger.debug('ConceptDetails', 'Loaded XL labels', {
+      prefLabelsXL: details.prefLabelsXL.length,
+      altLabelsXL: details.altLabelsXL.length,
+      hiddenLabelsXL: details.hiddenLabelsXL.length,
+    })
+  } catch (e) {
+    // SKOS-XL may not be supported by all endpoints, silently skip
+    logger.debug('ConceptDetails', 'SKOS-XL labels not available or query failed', { error: e })
+  }
+}
+
+// Load other (non-SKOS) properties
+async function loadOtherProperties(uri: string, details: ConceptDetails) {
+  const endpoint = endpointStore.current
+  if (!endpoint) return
+
+  // Query for all properties not in SKOS/SKOS-XL namespaces
+  const query = withPrefixes(`
+    SELECT ?predicate ?value
+    WHERE {
+      <${uri}> ?predicate ?value .
+      FILTER (
+        !STRSTARTS(STR(?predicate), STR(skos:)) &&
+        !STRSTARTS(STR(?predicate), STR(skosxl:)) &&
+        !STRSTARTS(STR(?predicate), STR(rdf:)) &&
+        ?predicate != rdfs:label &&
+        ?predicate != dct:title
+      )
+    }
+    LIMIT 100
+  `)
+
+  try {
+    const results = await executeSparql(endpoint, query, { retries: 0 })
+
+    // Group by predicate
+    const propMap = new Map<string, { value: string; lang?: string; isUri: boolean }[]>()
+
+    for (const binding of results.results.bindings) {
+      const predicate = binding.predicate?.value
+      const value = binding.value?.value
+      const lang = binding.value?.['xml:lang']
+      const isUri = binding.value?.type === 'uri'
+
+      if (!predicate || !value) continue
+
+      if (!propMap.has(predicate)) {
+        propMap.set(predicate, [])
+      }
+      propMap.get(predicate)!.push({ value, lang, isUri })
+    }
+
+    // Convert to OtherProperty array
+    details.otherProperties = Array.from(propMap.entries()).map(([predicate, values]) => ({
+      predicate,
+      values,
+    }))
+
+    logger.debug('ConceptDetails', 'Loaded other properties', {
+      count: details.otherProperties.length,
+    })
+  } catch (e) {
+    // Silently skip if query fails
+    logger.debug('ConceptDetails', 'Failed to load other properties', { error: e })
   }
 }
 
@@ -596,17 +757,11 @@ watch(
     <div v-else-if="details" class="details-content">
       <!-- Header -->
       <div class="details-header">
-        <h2 class="concept-label">{{ displayTitle }}</h2>
+        <h2 class="concept-label">
+          {{ displayTitle }}
+          <span v-if="showHeaderLangTag" class="header-lang-tag">{{ displayLang }}</span>
+        </h2>
         <div class="header-actions">
-          <Button
-            icon="pi pi-copy"
-            severity="secondary"
-            text
-            rounded
-            size="small"
-            v-tooltip.left="'Copy label'"
-            @click="copyToClipboard(preferredLabel || details.uri, 'Label')"
-          />
           <Button
             icon="pi pi-code"
             severity="secondary"
@@ -649,11 +804,11 @@ watch(
       <Divider />
 
       <!-- Labels Section - only shown if any label or notation exists -->
-      <section v-if="details.prefLabels.length || details.altLabels.length || details.hiddenLabels.length || details.notations.length" class="details-section">
+      <section v-if="details.prefLabels.length || details.altLabels.length || details.hiddenLabels.length || details.notations.length || details.prefLabelsXL.length || details.altLabelsXL.length || details.hiddenLabelsXL.length" class="details-section">
         <div class="section-header">
           <h3>Labels</h3>
           <Button
-            v-if="details.hiddenLabels.length"
+            v-if="details.hiddenLabels.length || details.hiddenLabelsXL.length"
             :icon="showHiddenLabels ? 'pi pi-eye-slash' : 'pi pi-eye'"
             :label="showHiddenLabels ? 'Hide hidden' : 'Show hidden'"
             severity="secondary"
@@ -663,45 +818,60 @@ watch(
           />
         </div>
 
-        <div v-if="details.prefLabels.length" class="property-row">
+        <div v-if="details.prefLabels.length || details.prefLabelsXL.length" class="property-row">
           <label>Preferred</label>
           <div class="label-values">
             <span
-              v-for="(label, i) in details.prefLabels"
+              v-for="(label, i) in sortedPrefLabels"
               :key="i"
               class="label-value"
             >
               {{ label.value }}
               <span v-if="label.lang" class="lang-tag">{{ label.lang }}</span>
             </span>
+            <XLLabelDisplay
+              v-for="(xlLabel, i) in details.prefLabelsXL"
+              :key="`xl-${i}`"
+              :label="xlLabel"
+            />
           </div>
         </div>
 
-        <div v-if="details.altLabels.length" class="property-row">
+        <div v-if="details.altLabels.length || details.altLabelsXL.length" class="property-row">
           <label>Alternative</label>
           <div class="label-values">
             <span
-              v-for="(label, i) in details.altLabels"
+              v-for="(label, i) in sortedAltLabels"
               :key="i"
               class="label-value"
             >
               {{ label.value }}
               <span v-if="label.lang" class="lang-tag">{{ label.lang }}</span>
             </span>
+            <XLLabelDisplay
+              v-for="(xlLabel, i) in details.altLabelsXL"
+              :key="`xl-${i}`"
+              :label="xlLabel"
+            />
           </div>
         </div>
 
-        <div v-if="showHiddenLabels && details.hiddenLabels.length" class="property-row">
+        <div v-if="showHiddenLabels && (details.hiddenLabels.length || details.hiddenLabelsXL.length)" class="property-row">
           <label>Hidden</label>
           <div class="label-values">
             <span
-              v-for="(label, i) in details.hiddenLabels"
+              v-for="(label, i) in sortedHiddenLabels"
               :key="i"
               class="label-value hidden-label"
             >
               {{ label.value }}
               <span v-if="label.lang" class="lang-tag">{{ label.lang }}</span>
             </span>
+            <XLLabelDisplay
+              v-for="(xlLabel, i) in details.hiddenLabelsXL"
+              :key="`xl-${i}`"
+              :label="xlLabel"
+            />
           </div>
         </div>
 
@@ -721,7 +891,7 @@ watch(
           <label>Definition</label>
           <div class="doc-values">
             <p
-              v-for="(def, i) in details.definitions"
+              v-for="(def, i) in sortedDefinitions"
               :key="i"
               class="doc-value"
             >
@@ -735,7 +905,7 @@ watch(
           <label>Scope Note</label>
           <div class="doc-values">
             <p
-              v-for="(note, i) in details.scopeNotes"
+              v-for="(note, i) in sortedScopeNotes"
               :key="i"
               class="doc-value"
             >
@@ -749,7 +919,7 @@ watch(
           <label>History Note</label>
           <div class="doc-values">
             <p
-              v-for="(note, i) in details.historyNotes"
+              v-for="(note, i) in sortedHistoryNotes"
               :key="i"
               class="doc-value"
             >
@@ -763,7 +933,7 @@ watch(
           <label>Change Note</label>
           <div class="doc-values">
             <p
-              v-for="(note, i) in details.changeNotes"
+              v-for="(note, i) in sortedChangeNotes"
               :key="i"
               class="doc-value"
             >
@@ -777,7 +947,7 @@ watch(
           <label>Editorial Note</label>
           <div class="doc-values">
             <p
-              v-for="(note, i) in details.editorialNotes"
+              v-for="(note, i) in sortedEditorialNotes"
               :key="i"
               class="doc-value"
             >
@@ -791,7 +961,7 @@ watch(
           <label>Example</label>
           <div class="doc-values">
             <p
-              v-for="(ex, i) in details.examples"
+              v-for="(ex, i) in sortedExamples"
               :key="i"
               class="doc-value example"
             >
@@ -937,6 +1107,42 @@ watch(
           </div>
         </div>
       </section>
+
+      <!-- Other Properties Section -->
+      <section v-if="details.otherProperties.length" class="details-section other-properties">
+        <h3>Other Properties</h3>
+        <div v-for="prop in details.otherProperties" :key="prop.predicate" class="property-row">
+          <label class="predicate-label">
+            <a
+              v-if="isValidURI(prop.predicate)"
+              :href="prop.predicate"
+              target="_blank"
+              class="predicate-link"
+            >
+              {{ prop.predicate.split('/').pop()?.split('#').pop() }}
+              <i class="pi pi-external-link"></i>
+            </a>
+            <span v-else>{{ prop.predicate.split('/').pop()?.split('#').pop() }}</span>
+          </label>
+          <div class="other-values">
+            <template v-for="(val, i) in prop.values" :key="i">
+              <a
+                v-if="val.isUri && isValidURI(val.value)"
+                :href="val.value"
+                target="_blank"
+                class="other-value uri-value"
+              >
+                {{ val.value.split('/').pop()?.split('#').pop() }}
+                <i class="pi pi-external-link"></i>
+              </a>
+              <span v-else class="other-value">
+                {{ val.value }}
+                <span v-if="val.lang" class="lang-tag">{{ val.lang }}</span>
+              </span>
+            </template>
+          </div>
+        </div>
+      </section>
     </div>
 
     <!-- Raw RDF Dialog -->
@@ -1040,6 +1246,16 @@ watch(
   font-size: 1.25rem;
   font-weight: 600;
   word-break: break-word;
+}
+
+.header-lang-tag {
+  font-size: 0.625rem;
+  font-weight: normal;
+  background: var(--p-surface-200);
+  padding: 0.1rem 0.4rem;
+  border-radius: 3px;
+  margin-left: 0.5rem;
+  vertical-align: middle;
 }
 
 .header-actions {
@@ -1185,6 +1401,63 @@ watch(
 
 .mapping-link i {
   font-size: 0.625rem;
+}
+
+/* Other Properties */
+.other-properties {
+  background: var(--p-surface-50);
+  border-radius: 4px;
+  padding: 1rem;
+}
+
+.predicate-label {
+  font-family: monospace;
+  font-size: 0.8rem;
+}
+
+.predicate-link {
+  color: var(--p-primary-color);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.predicate-link:hover {
+  text-decoration: underline;
+}
+
+.predicate-link i {
+  font-size: 0.5rem;
+}
+
+.other-values {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.other-value {
+  font-size: 0.875rem;
+  background: var(--p-surface-100);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+.other-value.uri-value {
+  color: var(--p-primary-color);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.other-value.uri-value:hover {
+  text-decoration: underline;
+}
+
+.other-value.uri-value i {
+  font-size: 0.5rem;
 }
 
 /* Raw RDF Dialog */
