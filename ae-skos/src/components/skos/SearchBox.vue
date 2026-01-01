@@ -13,7 +13,7 @@
  */
 import { ref, watch, computed } from 'vue'
 import { useConceptStore, useEndpointStore, useSchemeStore, useLanguageStore } from '../../stores'
-import { executeSparql, withPrefixes, logger } from '../../services'
+import { executeSparql, withPrefixes, logger, escapeSparqlString } from '../../services'
 import type { SearchResult } from '../../types'
 import InputText from 'primevue/inputtext'
 import Button from 'primevue/button'
@@ -83,8 +83,8 @@ async function executeSearch() {
   conceptStore.setSearchQuery(query)
   error.value = null
 
-  // Build FILTER conditions
-  const escapedQuery = query.replace(/"/g, '\\"')
+  // Build FILTER conditions - properly escape for SPARQL injection prevention
+  const escapedQuery = escapeSparqlString(query)
   let filterCondition: string
 
   switch (matchMode.value) {

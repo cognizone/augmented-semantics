@@ -19,7 +19,7 @@
  */
 import { ref, watch, computed } from 'vue'
 import { useConceptStore, useEndpointStore, useLanguageStore } from '../../stores'
-import { executeSparql, withPrefixes, logger } from '../../services'
+import { executeSparql, withPrefixes, logger, isValidURI } from '../../services'
 import type { ConceptDetails, LabelValue, ConceptRef } from '../../types'
 import Button from 'primevue/button'
 import Chip from 'primevue/chip'
@@ -433,10 +433,11 @@ watch(
       </div>
 
       <div class="concept-uri">
-        <a :href="details.uri" target="_blank" class="uri-link">
+        <a v-if="isValidURI(details.uri)" :href="details.uri" target="_blank" class="uri-link">
           {{ details.uri }}
           <i class="pi pi-external-link"></i>
         </a>
+        <span v-else class="uri-text">{{ details.uri }}</span>
         <Button
           icon="pi pi-copy"
           severity="secondary"
@@ -635,80 +636,65 @@ watch(
         <div v-if="details.exactMatch.length" class="property-row">
           <label>Exact Match</label>
           <div class="mapping-links">
-            <a
-              v-for="uri in details.exactMatch"
-              :key="uri"
-              :href="uri"
-              target="_blank"
-              class="mapping-link"
-            >
-              {{ uri.split('/').pop() }}
-              <i class="pi pi-external-link"></i>
-            </a>
+            <template v-for="uri in details.exactMatch" :key="uri">
+              <a v-if="isValidURI(uri)" :href="uri" target="_blank" class="mapping-link">
+                {{ uri.split('/').pop() }}
+                <i class="pi pi-external-link"></i>
+              </a>
+              <span v-else class="mapping-text">{{ uri.split('/').pop() }}</span>
+            </template>
           </div>
         </div>
 
         <div v-if="details.closeMatch.length" class="property-row">
           <label>Close Match</label>
           <div class="mapping-links">
-            <a
-              v-for="uri in details.closeMatch"
-              :key="uri"
-              :href="uri"
-              target="_blank"
-              class="mapping-link"
-            >
-              {{ uri.split('/').pop() }}
-              <i class="pi pi-external-link"></i>
-            </a>
+            <template v-for="uri in details.closeMatch" :key="uri">
+              <a v-if="isValidURI(uri)" :href="uri" target="_blank" class="mapping-link">
+                {{ uri.split('/').pop() }}
+                <i class="pi pi-external-link"></i>
+              </a>
+              <span v-else class="mapping-text">{{ uri.split('/').pop() }}</span>
+            </template>
           </div>
         </div>
 
         <div v-if="details.broadMatch.length" class="property-row">
           <label>Broad Match</label>
           <div class="mapping-links">
-            <a
-              v-for="uri in details.broadMatch"
-              :key="uri"
-              :href="uri"
-              target="_blank"
-              class="mapping-link"
-            >
-              {{ uri.split('/').pop() }}
-              <i class="pi pi-external-link"></i>
-            </a>
+            <template v-for="uri in details.broadMatch" :key="uri">
+              <a v-if="isValidURI(uri)" :href="uri" target="_blank" class="mapping-link">
+                {{ uri.split('/').pop() }}
+                <i class="pi pi-external-link"></i>
+              </a>
+              <span v-else class="mapping-text">{{ uri.split('/').pop() }}</span>
+            </template>
           </div>
         </div>
 
         <div v-if="details.narrowMatch.length" class="property-row">
           <label>Narrow Match</label>
           <div class="mapping-links">
-            <a
-              v-for="uri in details.narrowMatch"
-              :key="uri"
-              :href="uri"
-              target="_blank"
-              class="mapping-link"
-            >
-              {{ uri.split('/').pop() }}
-              <i class="pi pi-external-link"></i>
-            </a>
+            <template v-for="uri in details.narrowMatch" :key="uri">
+              <a v-if="isValidURI(uri)" :href="uri" target="_blank" class="mapping-link">
+                {{ uri.split('/').pop() }}
+                <i class="pi pi-external-link"></i>
+              </a>
+              <span v-else class="mapping-text">{{ uri.split('/').pop() }}</span>
+            </template>
           </div>
         </div>
 
         <div v-if="details.relatedMatch.length" class="property-row">
           <label>Related Match</label>
           <div class="mapping-links">
-            <a
-              v-for="uri in details.relatedMatch"
-              :key="uri"
-              :href="uri"
-              target="_blank"
-              class="mapping-link"
-            >
-              {{ uri.split('/').pop() }}
-              <i class="pi pi-external-link"></i>
-            </a>
+            <template v-for="uri in details.relatedMatch" :key="uri">
+              <a v-if="isValidURI(uri)" :href="uri" target="_blank" class="mapping-link">
+                {{ uri.split('/').pop() }}
+                <i class="pi pi-external-link"></i>
+              </a>
+              <span v-else class="mapping-text">{{ uri.split('/').pop() }}</span>
+            </template>
           </div>
         </div>
       </section>

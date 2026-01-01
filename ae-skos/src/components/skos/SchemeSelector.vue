@@ -10,7 +10,7 @@
  */
 import { ref, computed, watch } from 'vue'
 import { useSchemeStore, useEndpointStore, useLanguageStore } from '../../stores'
-import { executeSparql, withPrefixes, logger } from '../../services'
+import { executeSparql, withPrefixes, logger, isValidURI } from '../../services'
 import type { ConceptScheme } from '../../types'
 import Select from 'primevue/select'
 import Button from 'primevue/button'
@@ -300,10 +300,11 @@ watch(
       <div v-if="selectedSchemeDetails" class="scheme-details">
         <div class="detail-row">
           <label>URI</label>
-          <a :href="selectedSchemeDetails.uri" target="_blank" class="uri-link">
+          <a v-if="isValidURI(selectedSchemeDetails.uri)" :href="selectedSchemeDetails.uri" target="_blank" class="uri-link">
             {{ selectedSchemeDetails.uri }}
             <i class="pi pi-external-link"></i>
           </a>
+          <span v-else class="uri-text">{{ selectedSchemeDetails.uri }}</span>
         </div>
 
         <div v-if="selectedSchemeDetails.label" class="detail-row">

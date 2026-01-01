@@ -70,7 +70,7 @@
 | 21 | Unit tests for services (sparql.ts, security.ts) | sko07-Testing | done |
 | 22 | Unit tests for stores (endpoint, concept) | sko07-Testing | done |
 | 23 | Component tests (SearchBox) | sko07-Testing | done |
-| 24 | Security review (per com06 checklist) | com06-Security | pending |
+| 24 | Security review (per com06 checklist) | com06-Security | done |
 | 25 | Test with real SPARQL endpoints | - | pending |
 | 26 | Build and deploy | - | pending |
 
