@@ -14,6 +14,7 @@
 import { ref, watch, computed, nextTick } from 'vue'
 import { useConceptStore, useEndpointStore, useSchemeStore, useLanguageStore, useUIStore } from '../../stores'
 import { executeSparql, withPrefixes, logger, escapeSparqlString } from '../../services'
+import { useDelayedLoading } from '../../composables'
 import type { SearchResult } from '../../types'
 import InputText from 'primevue/inputtext'
 import Button from 'primevue/button'
@@ -52,6 +53,9 @@ const searchAllSchemes = ref(false)
 const results = computed(() => conceptStore.searchResults)
 const loading = computed(() => conceptStore.loadingSearch)
 const hasQuery = computed(() => searchInput.value.trim().length >= 2)
+
+// Delayed loading - show spinner only after 300ms to prevent flicker
+const showLoading = useDelayedLoading(loading)
 
 // Debounced search
 function onSearchInput() {
@@ -242,8 +246,8 @@ watch(
       />
     </div>
 
-    <!-- Loading indicator -->
-    <div v-if="loading" class="loading-indicator">
+    <!-- Loading indicator (delayed to prevent flicker) -->
+    <div v-if="showLoading" class="loading-indicator">
       <ProgressSpinner style="width: 20px; height: 20px" />
       <span>Searching...</span>
     </div>

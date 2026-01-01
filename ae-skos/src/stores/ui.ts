@@ -39,6 +39,10 @@ export const useUIStore = defineStore('ui', () => {
   // State - Keyboard shortcuts
   const searchFocusTrigger = ref(0)
 
+  // State - ARIA announcements (for screen readers)
+  const loadingAnnouncement = ref('')
+  const errorAnnouncement = ref('')
+
   // Getters
   const isLoading = computed(() => (key: string) => loading.value[key] ?? false)
 
@@ -126,6 +130,37 @@ export const useUIStore = defineStore('ui', () => {
     searchFocusTrigger.value++
   }
 
+  // Actions - ARIA announcements
+  function announceLoading(message: string) {
+    loadingAnnouncement.value = message
+    // Clear after a delay to allow repeat announcements
+    setTimeout(() => {
+      if (loadingAnnouncement.value === message) {
+        loadingAnnouncement.value = ''
+      }
+    }, 1000)
+  }
+
+  function announceError(message: string) {
+    errorAnnouncement.value = message
+    // Clear after a delay to allow repeat announcements
+    setTimeout(() => {
+      if (errorAnnouncement.value === message) {
+        errorAnnouncement.value = ''
+      }
+    }, 5000)
+  }
+
+  function announceSuccess(message: string) {
+    // Use loading region for success (polite)
+    loadingAnnouncement.value = message
+    setTimeout(() => {
+      if (loadingAnnouncement.value === message) {
+        loadingAnnouncement.value = ''
+      }
+    }, 3000)
+  }
+
   return {
     // State
     loading,
@@ -161,5 +196,11 @@ export const useUIStore = defineStore('ui', () => {
     // Keyboard shortcuts
     searchFocusTrigger,
     triggerSearchFocus,
+    // ARIA announcements
+    loadingAnnouncement,
+    errorAnnouncement,
+    announceLoading,
+    announceError,
+    announceSuccess,
   }
 })

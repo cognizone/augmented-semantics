@@ -14,6 +14,7 @@
 import { ref, watch, computed } from 'vue'
 import { useConceptStore, useEndpointStore, useSchemeStore, useLanguageStore } from '../../stores'
 import { executeSparql, withPrefixes, logger } from '../../services'
+import { useDelayedLoading } from '../../composables'
 import type { ConceptNode } from '../../types'
 import Tree from 'primevue/tree'
 import type { TreeNode } from 'primevue/treenode'
@@ -29,6 +30,9 @@ const conceptStore = useConceptStore()
 const endpointStore = useEndpointStore()
 const schemeStore = useSchemeStore()
 const languageStore = useLanguageStore()
+
+// Delayed loading - show spinner only after 300ms to prevent flicker
+const showTreeLoading = useDelayedLoading(computed(() => conceptStore.loadingTree))
 
 // Local state
 const error = ref<string | null>(null)
@@ -449,14 +453,14 @@ watch(
       {{ error }}
     </Message>
 
-    <!-- Loading state -->
-    <div v-if="conceptStore.loadingTree" class="loading-container">
+    <!-- Loading state (delayed to prevent flicker) -->
+    <div v-if="showTreeLoading" class="loading-container">
       <ProgressSpinner style="width: 40px; height: 40px" />
       <span>Loading concepts...</span>
     </div>
 
     <!-- Empty state -->
-    <div v-else-if="!conceptStore.topConcepts.length && !error" class="empty-state">
+    <div v-else-if="!conceptStore.loadingTree && !conceptStore.topConcepts.length && !error" class="empty-state">
       <i class="pi pi-folder-open"></i>
       <p>No concepts found</p>
       <small v-if="!schemeStore.selected">Select a concept scheme to browse</small>

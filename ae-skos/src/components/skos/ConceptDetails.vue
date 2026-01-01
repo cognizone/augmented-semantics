@@ -20,6 +20,7 @@
 import { ref, watch, computed } from 'vue'
 import { useConceptStore, useEndpointStore, useLanguageStore } from '../../stores'
 import { executeSparql, withPrefixes, logger, isValidURI, fetchRawRdf } from '../../services'
+import { useDelayedLoading } from '../../composables'
 import type { RdfFormat } from '../../services'
 import type { ConceptDetails, LabelValue, ConceptRef } from '../../types'
 import Button from 'primevue/button'
@@ -71,6 +72,9 @@ const exportMenuItems = [
 // Computed
 const details = computed(() => conceptStore.details)
 const loading = computed(() => conceptStore.loadingDetails)
+
+// Delayed loading - show spinner only after 300ms to prevent flicker
+const showLoading = useDelayedLoading(loading)
 
 // Get preferred label
 const preferredLabel = computed(() => {
@@ -570,14 +574,14 @@ watch(
 
 <template>
   <div class="concept-details">
-    <!-- Loading state -->
-    <div v-if="loading" class="loading-container">
+    <!-- Loading state (delayed to prevent flicker) -->
+    <div v-if="showLoading" class="loading-container">
       <ProgressSpinner style="width: 40px; height: 40px" />
       <span>Loading details...</span>
     </div>
 
     <!-- Empty state -->
-    <div v-else-if="!details && !error" class="empty-state">
+    <div v-else-if="!loading && !details && !error" class="empty-state">
       <i class="pi pi-info-circle"></i>
       <p>No concept selected</p>
       <small>Select a concept from the tree or search</small>

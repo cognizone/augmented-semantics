@@ -58,6 +58,8 @@ Browser-only tools that connect directly to SPARQL endpoints via HTTP. No backen
 - Spec file prefix: `com` (common), `sko` (skos), `rdf` (rdf), `owl` (owl), `sha` (shacl)
 - Vue components: `<script setup lang="ts">` syntax
 - State: Pinia stores per com02-StateManagement
+- Composables: Reusable logic in `composables/` folder (e.g., `useDelayedLoading`)
+- Spec references: All components/services include `@see /spec/...` JSDoc comments
 
 ## Storage Keys
 
@@ -67,6 +69,41 @@ Browser-only tools that connect directly to SPARQL endpoints via HTTP. No backen
 | `ae-language` | Language preferences |
 | `ae-skos-scheme` | Last selected scheme |
 | `ae-skos-history` | Recently viewed concepts |
+
+## Implementation Patterns
+
+### Delayed Loading (com03)
+
+Show spinners only after 300ms delay to prevent flicker on fast operations:
+
+```typescript
+import { useDelayedLoading } from '@/composables'
+
+const loading = computed(() => store.loading)
+const showLoading = useDelayedLoading(loading)  // Shows after 300ms
+```
+
+### Error Boundary (com03)
+
+Wrap content with ErrorBoundary to catch unexpected JavaScript errors:
+
+```vue
+<ErrorBoundary>
+  <RouterView />
+</ErrorBoundary>
+```
+
+### ARIA Accessibility (com03)
+
+Use UIStore for screen reader announcements:
+
+```typescript
+uiStore.announceLoading('Loading concepts...')
+uiStore.announceError('Failed to load data')
+uiStore.announceSuccess('Data loaded')
+```
+
+Live regions in App.vue announce these to screen readers.
 
 ## Debugging
 

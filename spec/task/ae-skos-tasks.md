@@ -76,7 +76,7 @@
 
 ---
 
-## Folder Structure (Target)
+## Folder Structure (Actual)
 
 ```
 ae-skos/
@@ -84,31 +84,46 @@ ae-skos/
 │   ├── components/
 │   │   ├── common/
 │   │   │   ├── EndpointManager.vue
-│   │   │   ├── LanguageSelector.vue
-│   │   │   └── ErrorDisplay.vue
+│   │   │   ├── EndpointSelector.vue
+│   │   │   ├── ErrorBoundary.vue
+│   │   │   └── LanguageSelector.vue
 │   │   └── skos/
 │   │       ├── SchemeSelector.vue
 │   │       ├── ConceptTree.vue
 │   │       ├── ConceptDetails.vue
+│   │       ├── ConceptBreadcrumb.vue
 │   │       ├── SearchBox.vue
-│   │       └── Breadcrumb.vue
+│   │       └── RecentHistory.vue
+│   ├── composables/
+│   │   ├── index.ts
+│   │   └── useDelayedLoading.ts
 │   ├── stores/
 │   │   ├── endpoint.ts
 │   │   ├── language.ts
 │   │   ├── scheme.ts
 │   │   ├── concept.ts
-│   │   └── ui.ts
+│   │   ├── ui.ts
+│   │   └── index.ts
 │   ├── services/
 │   │   ├── sparql.ts
-│   │   └── security.ts
+│   │   ├── security.ts
+│   │   ├── logger.ts
+│   │   └── index.ts
 │   ├── types/
 │   │   ├── endpoint.ts
 │   │   ├── skos.ts
-│   │   └── state.ts
+│   │   ├── errors.ts
+│   │   └── index.ts
+│   ├── views/
+│   │   └── SkosView.vue
 │   ├── router/
 │   │   └── index.ts
+│   ├── test-utils/
+│   │   ├── mocks.ts
+│   │   └── setup.ts
 │   ├── App.vue
-│   └── main.ts
+│   ├── main.ts
+│   └── style.css
 ├── index.html
 ├── package.json
 ├── tsconfig.json

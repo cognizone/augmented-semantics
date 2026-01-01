@@ -6,6 +6,7 @@ import Toast from 'primevue/toast'
 
 import EndpointSelector from './components/common/EndpointSelector.vue'
 import EndpointManager from './components/common/EndpointManager.vue'
+import ErrorBoundary from './components/common/ErrorBoundary.vue'
 import LanguageSelector from './components/common/LanguageSelector.vue'
 import SchemeSelector from './components/skos/SchemeSelector.vue'
 import ConceptBreadcrumb from './components/skos/ConceptBreadcrumb.vue'
@@ -86,7 +87,9 @@ onUnmounted(() => {
 
     <!-- Main Content -->
     <main class="app-main">
-      <RouterView />
+      <ErrorBoundary>
+        <RouterView />
+      </ErrorBoundary>
     </main>
 
     <!-- Toast notifications -->
@@ -94,6 +97,14 @@ onUnmounted(() => {
 
     <!-- Endpoint Manager Dialog -->
     <EndpointManager v-model:visible="showEndpointManager" />
+
+    <!-- ARIA live regions for screen readers -->
+    <div class="sr-only" role="status" aria-live="polite">
+      {{ uiStore.loadingAnnouncement }}
+    </div>
+    <div class="sr-only" role="alert" aria-live="assertive">
+      {{ uiStore.errorAnnouncement }}
+    </div>
   </div>
 </template>
 
