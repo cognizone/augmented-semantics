@@ -1,9 +1,12 @@
 <script setup lang="ts">
 /**
- * LanguageSelector - Language preference management
+ * LanguageSelector - Per-endpoint language preference management
  *
- * Detects available languages from SKOS data and allows
- * setting preferred and fallback languages for label display.
+ * Provides:
+ * - Quick language selection dropdown
+ * - Priority ordering dialog
+ * - Add/remove languages from priorities
+ * - Current override option
  *
  * @see /spec/ae-skos/sko01-LanguageSelector.md
  */
@@ -21,7 +24,7 @@ const endpointStore = useEndpointStore()
 // Local state
 const loading = ref(false)
 const showSettings = ref(false)
-const languagesWithCount = ref<{ lang: string; count: number }[]>([])
+const localPriorities = ref<string[]>([])
 
 // Language display names
 const languageNames: Record<string, string> = {
@@ -55,42 +58,83 @@ const languageNames: Record<string, string> = {
   lt: 'Lietuvių',
   mt: 'Malti',
   ga: 'Gaeilge',
+  rm: 'Rumantsch',
 }
 
 function getLanguageName(code: string): string {
   return languageNames[code] || code.toUpperCase()
 }
 
-// Computed
+function getLanguageCount(code: string): number {
+  const found = languageStore.detectedWithCount.find(d => d.lang === code)
+  return found?.count || 0
+}
+
+// Dropdown options - all detected languages plus current override option
 const dropdownOptions = computed(() => {
-  if (languagesWithCount.value.length > 0) {
-    return languagesWithCount.value.map(lc => ({
-      label: `${getLanguageName(lc.lang)} (${lc.count.toLocaleString()})`,
-      value: lc.lang,
-      count: lc.count,
-    }))
+  const options: { label: string; value: string | null; count?: number }[] = []
+
+  // Add "Use priority order" option
+  options.push({
+    label: '(Use priority order)',
+    value: null,
+  })
+
+  // Add detected languages
+  if (languageStore.detectedWithCount.length > 0) {
+    for (const lc of languageStore.detectedWithCount) {
+      options.push({
+        label: `${getLanguageName(lc.lang)} (${lc.count.toLocaleString()})`,
+        value: lc.lang,
+        count: lc.count,
+      })
+    }
+  } else if (languageStore.detected.length > 0) {
+    for (const lang of languageStore.detected) {
+      options.push({
+        label: getLanguageName(lang),
+        value: lang,
+      })
+    }
   }
 
-  // Fall back to detected languages without count
-  return languageStore.detected.map(lang => ({
-    label: getLanguageName(lang),
-    value: lang,
-    count: 0,
+  return options
+})
+
+// Available languages (detected but not in priorities)
+const availableLanguages = computed(() => {
+  return languageStore.detected.filter(
+    lang => !localPriorities.value.includes(lang)
+  )
+})
+
+// Priority items with display info
+const priorityItems = computed(() => {
+  return localPriorities.value.map(lang => ({
+    lang,
+    name: getLanguageName(lang),
+    count: getLanguageCount(lang),
   }))
 })
 
 const selectedLanguage = computed({
-  get: () => languageStore.preferred,
-  set: (lang: string) => languageStore.setPreferred(lang),
+  get: () => languageStore.current,
+  set: (lang: string | null) => languageStore.setCurrent(lang),
 })
 
-const fallbackLanguage = computed({
-  get: () => languageStore.fallback,
-  set: (lang: string) => languageStore.setFallback(lang),
+const displayLabel = computed(() => {
+  if (languageStore.current) {
+    return getLanguageName(languageStore.current)
+  }
+  const firstPriority = languageStore.priorities[0]
+  if (firstPriority) {
+    return getLanguageName(firstPriority)
+  }
+  return 'Language'
 })
 
 const hasLanguages = computed(() =>
-  languagesWithCount.value.length > 0 || languageStore.detected.length > 0
+  languageStore.detectedWithCount.length > 0 || languageStore.detected.length > 0
 )
 
 // Detect languages from SKOS concepts
@@ -121,28 +165,79 @@ async function detectSkosLanguages() {
       }))
       .filter(lc => lc.lang.length > 0)
 
-    languagesWithCount.value = detected
-    languageStore.setDetected(detected.map(lc => lc.lang))
+    languageStore.setDetectedWithCount(detected)
 
-    // Auto-select first language if none set
-    const firstLang = detected[0]
-    if (firstLang && !languageStore.detected.includes(languageStore.preferred)) {
-      languageStore.setPreferred(firstLang.lang)
+    // Initialize priorities if empty
+    const firstDetected = detected[0]
+    if (languageStore.priorities.length === 0 && firstDetected) {
+      languageStore.setPriorities([firstDetected.lang])
     }
   } catch (error) {
     console.error('Failed to detect languages:', error)
-    languagesWithCount.value = []
   } finally {
     loading.value = false
   }
 }
 
-// Watch for endpoint changes
+// Open settings dialog
+function openSettings() {
+  localPriorities.value = [...languageStore.priorities]
+  showSettings.value = true
+}
+
+// Save settings
+function saveSettings() {
+  languageStore.setPriorities(localPriorities.value)
+  showSettings.value = false
+}
+
+// Add language to priorities
+function addToPriorities(lang: string) {
+  if (!localPriorities.value.includes(lang)) {
+    localPriorities.value.push(lang)
+  }
+}
+
+// Remove language from priorities
+function removeFromPriorities(lang: string) {
+  if (localPriorities.value.length > 1) {
+    localPriorities.value = localPriorities.value.filter(l => l !== lang)
+  }
+}
+
+// Move priority up
+function movePriorityUp(index: number) {
+  if (index > 0) {
+    const newPriorities = [...localPriorities.value]
+    const removed = newPriorities.splice(index, 1)
+    if (removed[0]) {
+      newPriorities.splice(index - 1, 0, removed[0])
+      localPriorities.value = newPriorities
+    }
+  }
+}
+
+// Move priority down
+function movePriorityDown(index: number) {
+  if (index < localPriorities.value.length - 1) {
+    const newPriorities = [...localPriorities.value]
+    const removed = newPriorities.splice(index, 1)
+    if (removed[0]) {
+      newPriorities.splice(index + 1, 0, removed[0])
+      localPriorities.value = newPriorities
+    }
+  }
+}
+
+// Watch for endpoint changes - initialize language config
 watch(
   () => endpointStore.current?.id,
   (newId, oldId) => {
     if (newId && newId !== oldId) {
+      languageStore.setEndpoint(newId)
       detectSkosLanguages()
+    } else if (!newId) {
+      languageStore.clearEndpoint()
     }
   },
   { immediate: true }
@@ -161,17 +256,23 @@ watch(
       :disabled="!hasLanguages && !loading"
       class="language-dropdown"
     >
-      <template #value="slotProps">
+      <template #value>
         <div class="selected-lang">
           <i class="pi pi-globe"></i>
-          <span v-if="slotProps.value">{{ getLanguageName(slotProps.value) }}</span>
-          <span v-else-if="loading">Detecting...</span>
-          <span v-else>Language</span>
+          <span v-if="loading">Detecting...</span>
+          <span v-else>{{ displayLabel }}</span>
+          <span v-if="!languageStore.current && languageStore.priorities.length > 1" class="priority-indicator">
+            (priority)
+          </span>
         </div>
       </template>
       <template #option="slotProps">
         <div class="lang-option">
-          <span class="lang-name">{{ getLanguageName(slotProps.option.value) }}</span>
+          <span class="lang-name">
+            <i v-if="slotProps.option.value === null" class="pi pi-list option-icon"></i>
+            <i v-else-if="slotProps.option.value === languageStore.current" class="pi pi-check option-icon"></i>
+            {{ slotProps.option.value === null ? slotProps.option.label : getLanguageName(slotProps.option.value) }}
+          </span>
           <span v-if="slotProps.option.count" class="lang-count">
             {{ slotProps.option.count.toLocaleString() }}
           </span>
@@ -186,7 +287,7 @@ watch(
             text
             size="small"
             class="settings-button"
-            @click="showSettings = true"
+            @click="openSettings"
           />
         </div>
       </template>
@@ -196,13 +297,14 @@ watch(
     <Dialog
       v-model:visible="showSettings"
       header="Language Settings"
-      :style="{ width: '400px' }"
+      :style="{ width: '450px' }"
       :modal="true"
     >
       <div class="settings-content">
+        <!-- Current Override -->
         <div class="setting-field">
-          <label>Preferred Language</label>
-          <p class="setting-help">Primary language for labels and descriptions</p>
+          <label>Current Language Override</label>
+          <p class="setting-help">Select a specific language to display, or use priority order</p>
           <Select
             v-model="selectedLanguage"
             :options="dropdownOptions"
@@ -213,24 +315,74 @@ watch(
           />
         </div>
 
+        <Divider />
+
+        <!-- Priority List -->
         <div class="setting-field">
-          <label>Fallback Language</label>
-          <p class="setting-help">Used when preferred language is not available</p>
-          <Select
-            v-model="fallbackLanguage"
-            :options="dropdownOptions"
-            optionLabel="label"
-            optionValue="value"
-            placeholder="Select fallback"
-            class="w-full"
-          />
+          <label>Priority Order</label>
+          <p class="setting-help">Languages are checked in this order when no override is set</p>
+
+          <div class="priority-list">
+            <div
+              v-for="(item, index) in priorityItems"
+              :key="item.lang"
+              class="priority-item"
+            >
+              <div class="priority-rank">{{ index + 1 }}</div>
+              <div class="priority-info">
+                <span class="priority-name">{{ item.name }}</span>
+                <span v-if="item.count" class="priority-count">({{ item.count.toLocaleString() }})</span>
+              </div>
+              <div class="priority-actions">
+                <Button
+                  icon="pi pi-arrow-up"
+                  text
+                  rounded
+                  size="small"
+                  :disabled="index === 0"
+                  @click="movePriorityUp(index)"
+                  v-tooltip.top="'Move up'"
+                />
+                <Button
+                  icon="pi pi-arrow-down"
+                  text
+                  rounded
+                  size="small"
+                  :disabled="index === localPriorities.length - 1"
+                  @click="movePriorityDown(index)"
+                  v-tooltip.top="'Move down'"
+                />
+                <Button
+                  icon="pi pi-times"
+                  text
+                  rounded
+                  size="small"
+                  severity="danger"
+                  :disabled="localPriorities.length <= 1"
+                  @click="removeFromPriorities(item.lang)"
+                  v-tooltip.top="'Remove'"
+                />
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div v-if="languageStore.detected.length > 0" class="detected-info">
-          <label>Detected Languages</label>
-          <p class="detected-list">
-            {{ languageStore.detected.join(', ') }}
-          </p>
+        <!-- Available Languages -->
+        <div v-if="availableLanguages.length > 0" class="setting-field">
+          <label>Available Languages</label>
+          <p class="setting-help">Click to add to priority list</p>
+          <div class="available-list">
+            <Button
+              v-for="lang in availableLanguages"
+              :key="lang"
+              :label="`${getLanguageName(lang)} (${getLanguageCount(lang).toLocaleString()})`"
+              icon="pi pi-plus"
+              text
+              size="small"
+              class="available-item"
+              @click="addToPriorities(lang)"
+            />
+          </div>
         </div>
       </div>
 
@@ -244,8 +396,9 @@ watch(
           @click="detectSkosLanguages"
         />
         <Button
-          label="Close"
-          @click="showSettings = false"
+          label="Save"
+          icon="pi pi-check"
+          @click="saveSettings"
         />
       </template>
     </Dialog>
@@ -259,7 +412,7 @@ watch(
 }
 
 .language-dropdown {
-  min-width: 150px;
+  min-width: 180px;
 }
 
 .selected-lang {
@@ -272,6 +425,11 @@ watch(
   color: var(--p-primary-color);
 }
 
+.priority-indicator {
+  font-size: 0.7rem;
+  color: var(--p-text-muted-color);
+}
+
 .lang-option {
   display: flex;
   justify-content: space-between;
@@ -280,7 +438,15 @@ watch(
 }
 
 .lang-name {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   font-weight: 500;
+}
+
+.option-icon {
+  font-size: 0.75rem;
+  color: var(--p-primary-color);
 }
 
 .lang-count {
@@ -304,7 +470,7 @@ watch(
 .settings-content {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1rem;
 }
 
 .setting-field {
@@ -328,20 +494,67 @@ watch(
   width: 100%;
 }
 
-.detected-info {
-  padding: 1rem;
+.priority-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.priority-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem;
   background: var(--p-surface-50);
+  border: 1px solid var(--p-surface-200);
   border-radius: 6px;
 }
 
-.detected-info label {
+.priority-rank {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--p-primary-100);
+  color: var(--p-primary-color);
+  border-radius: 50%;
+  font-size: 0.75rem;
   font-weight: 600;
-  font-size: 0.875rem;
 }
 
-.detected-list {
-  margin: 0.5rem 0 0 0;
-  font-size: 0.875rem;
+.priority-info {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.priority-name {
+  font-weight: 500;
+}
+
+.priority-count {
+  font-size: 0.75rem;
   color: var(--p-text-muted-color);
+}
+
+.priority-actions {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.available-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.available-item {
+  font-size: 0.875rem;
 }
 </style>

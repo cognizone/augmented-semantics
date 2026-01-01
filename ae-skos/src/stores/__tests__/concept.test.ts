@@ -48,8 +48,8 @@ describe('concept store', () => {
     it('sets top concepts', () => {
       const store = useConceptStore()
       const concepts: ConceptNode[] = [
-        { uri: 'http://ex.org/c1', label: 'Concept 1', hasChildren: true },
-        { uri: 'http://ex.org/c2', label: 'Concept 2', hasChildren: false },
+        { uri: 'http://ex.org/c1', label: 'Concept 1', hasNarrower: true, expanded: false },
+        { uri: 'http://ex.org/c2', label: 'Concept 2', hasNarrower: false, expanded: false },
       ]
 
       store.setTopConcepts(concepts)
@@ -86,17 +86,18 @@ describe('concept store', () => {
     it('updates node children', () => {
       const store = useConceptStore()
       const concepts: ConceptNode[] = [
-        { uri: 'http://ex.org/c1', label: 'Parent', hasChildren: true },
+        { uri: 'http://ex.org/c1', label: 'Parent', hasNarrower: true, expanded: false },
       ]
       store.setTopConcepts(concepts)
 
       const children: ConceptNode[] = [
-        { uri: 'http://ex.org/c1-1', label: 'Child 1', hasChildren: false },
-        { uri: 'http://ex.org/c1-2', label: 'Child 2', hasChildren: false },
+        { uri: 'http://ex.org/c1-1', label: 'Child 1', hasNarrower: false, expanded: false },
+        { uri: 'http://ex.org/c1-2', label: 'Child 2', hasNarrower: false, expanded: false },
       ]
 
       store.updateNodeChildren('http://ex.org/c1', children)
-      expect(store.topConcepts[0].children).toEqual(children)
+      const firstConcept = store.topConcepts[0]
+      expect(firstConcept?.children).toEqual(children)
     })
 
     it('updates nested node children', () => {
@@ -105,20 +106,22 @@ describe('concept store', () => {
         {
           uri: 'http://ex.org/c1',
           label: 'Parent',
-          hasChildren: true,
+          hasNarrower: true,
+          expanded: false,
           children: [
-            { uri: 'http://ex.org/c1-1', label: 'Child', hasChildren: true },
+            { uri: 'http://ex.org/c1-1', label: 'Child', hasNarrower: true, expanded: false },
           ],
         },
       ]
       store.setTopConcepts(concepts)
 
       const grandchildren: ConceptNode[] = [
-        { uri: 'http://ex.org/c1-1-1', label: 'Grandchild', hasChildren: false },
+        { uri: 'http://ex.org/c1-1-1', label: 'Grandchild', hasNarrower: false, expanded: false },
       ]
 
       store.updateNodeChildren('http://ex.org/c1-1', grandchildren)
-      expect(store.topConcepts[0].children![0].children).toEqual(grandchildren)
+      const firstConcept = store.topConcepts[0]
+      expect(firstConcept?.children?.[0]?.children).toEqual(grandchildren)
     })
   })
 
@@ -147,6 +150,9 @@ describe('concept store', () => {
         prefLabels: [{ value: 'Test', lang: 'en' }],
         altLabels: [],
         hiddenLabels: [],
+        prefLabelsXL: [],
+        altLabelsXL: [],
+        hiddenLabelsXL: [],
         definitions: [],
         scopeNotes: [],
         historyNotes: [],
@@ -193,7 +199,7 @@ describe('concept store', () => {
     it('sets search results', () => {
       const store = useConceptStore()
       const results = [
-        { uri: 'http://ex.org/c1', label: 'Result 1', matchType: 'prefLabel' as const },
+        { uri: 'http://ex.org/c1', label: 'Result 1', matchedIn: 'prefLabel' as const },
       ]
 
       store.setSearchResults(results)
@@ -212,7 +218,7 @@ describe('concept store', () => {
       const store = useConceptStore()
 
       store.setSearchQuery('test')
-      store.setSearchResults([{ uri: 'http://ex.org/c1', label: 'Result', matchType: 'prefLabel' as const }])
+      store.setSearchResults([{ uri: 'http://ex.org/c1', label: 'Result', matchedIn: 'prefLabel' as const }])
 
       store.clearSearch()
       expect(store.searchQuery).toBe('')
@@ -226,8 +232,8 @@ describe('concept store', () => {
 
       store.addToHistory({ uri: 'http://ex.org/c1', label: 'Concept 1' })
       expect(store.history).toHaveLength(1)
-      expect(store.history[0].uri).toBe('http://ex.org/c1')
-      expect(store.history[0].accessedAt).toBeDefined()
+      expect(store.history[0]?.uri).toBe('http://ex.org/c1')
+      expect(store.history[0]?.accessedAt).toBeDefined()
     })
 
     it('adds to front of history', () => {
@@ -236,8 +242,8 @@ describe('concept store', () => {
       store.addToHistory({ uri: 'http://ex.org/c1', label: 'Concept 1' })
       store.addToHistory({ uri: 'http://ex.org/c2', label: 'Concept 2' })
 
-      expect(store.history[0].uri).toBe('http://ex.org/c2')
-      expect(store.history[1].uri).toBe('http://ex.org/c1')
+      expect(store.history[0]?.uri).toBe('http://ex.org/c2')
+      expect(store.history[1]?.uri).toBe('http://ex.org/c1')
     })
 
     it('removes duplicate before adding', () => {
@@ -248,7 +254,7 @@ describe('concept store', () => {
       store.addToHistory({ uri: 'http://ex.org/c1', label: 'Concept 1' })
 
       expect(store.history).toHaveLength(2)
-      expect(store.history[0].uri).toBe('http://ex.org/c1')
+      expect(store.history[0]?.uri).toBe('http://ex.org/c1')
     })
 
     it('limits history to MAX_HISTORY entries', () => {
@@ -299,7 +305,7 @@ describe('concept store', () => {
 
       const store = useConceptStore()
       expect(store.history).toHaveLength(1)
-      expect(store.history[0].label).toBe('Stored')
+      expect(store.history[0]?.label).toBe('Stored')
     })
   })
 
@@ -334,7 +340,7 @@ describe('concept store', () => {
       const store = useConceptStore()
 
       // Set up some state
-      store.setTopConcepts([{ uri: 'http://ex.org/c1', label: 'Test', hasChildren: false }])
+      store.setTopConcepts([{ uri: 'http://ex.org/c1', label: 'Test', hasNarrower: false, expanded: false }])
       store.expandNode('http://ex.org/c1')
       store.selectConcept('http://ex.org/c1')
       store.setSearchQuery('test')

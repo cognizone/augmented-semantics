@@ -10,7 +10,7 @@ import { mount, flushPromises } from '@vue/test-utils'
 import { setActivePinia, createPinia } from 'pinia'
 import SearchBox from '../skos/SearchBox.vue'
 import { useConceptStore, useEndpointStore } from '../../stores'
-import { createMockEndpoint, createSparqlResults, mockFetchSuccess } from '../../test-utils/mocks'
+import { createSparqlResults, mockFetchSuccess } from '../../test-utils/mocks'
 
 // Mock the logger
 vi.mock('../../services/logger', () => ({
@@ -102,7 +102,7 @@ describe('SearchBox', () => {
         url: 'https://example.org/sparql',
         auth: { type: 'none' },
       })
-      endpointStore.selectEndpoint(endpointStore.endpoints[0].id)
+      endpointStore.selectEndpoint(endpointStore.endpoints[0]!.id)
 
       // Mock fetch
       global.fetch = mockFetchSuccess(createSparqlResults([]))
@@ -152,7 +152,7 @@ describe('SearchBox', () => {
         url: 'https://example.org/sparql',
         auth: { type: 'none' },
       })
-      endpointStore.selectEndpoint(endpointStore.endpoints[0].id)
+      endpointStore.selectEndpoint(endpointStore.endpoints[0]!.id)
 
       // Mock fetch with delay
       let resolvePromise: (value: unknown) => void
@@ -196,7 +196,7 @@ describe('SearchBox', () => {
         url: 'https://example.org/sparql',
         auth: { type: 'none' },
       })
-      endpointStore.selectEndpoint(endpointStore.endpoints[0].id)
+      endpointStore.selectEndpoint(endpointStore.endpoints[0]!.id)
 
       // Mock fetch with results
       global.fetch = mockFetchSuccess(createSparqlResults([
@@ -212,7 +212,7 @@ describe('SearchBox', () => {
       await flushPromises()
 
       expect(conceptStore.searchResults.length).toBe(2)
-      expect(conceptStore.searchResults[0].uri).toBe('http://ex.org/c1')
+      expect(conceptStore.searchResults[0]?.uri).toBe('http://ex.org/c1')
     })
   })
 
@@ -259,7 +259,7 @@ describe('SearchBox', () => {
         url: 'https://example.org/sparql',
         auth: { type: 'none' },
       })
-      endpointStore.selectEndpoint(endpointStore.endpoints[0].id)
+      endpointStore.selectEndpoint(endpointStore.endpoints[0]!.id)
 
       global.fetch = mockFetchSuccess(createSparqlResults([]))
 

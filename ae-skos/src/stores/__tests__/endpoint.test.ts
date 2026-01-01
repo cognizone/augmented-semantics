@@ -64,7 +64,7 @@ describe('endpoint store', () => {
 
       expect(result.name).toBe('My Endpoint')
       expect(result.url).toBe('https://example.org/sparql')
-      expect(result.auth.type).toBe('basic')
+      expect(result.auth?.type).toBe('basic')
     })
 
     it('sets createdAt timestamp', () => {
@@ -274,7 +274,7 @@ describe('endpoint store', () => {
 
       store.updateEndpoint('non-existent-id', { name: 'Updated' })
 
-      expect(store.endpoints[0].name).toBe('Test')
+      expect(store.endpoints[0]?.name).toBe('Test')
     })
   })
 
@@ -295,10 +295,10 @@ describe('endpoint store', () => {
       })
 
       // Select second (makes it most recent)
-      store.selectEndpoint(store.endpoints[1].id)
+      store.selectEndpoint(store.endpoints[1]!.id)
 
       // Sorted should have second first
-      expect(store.sortedEndpoints[0].name).toBe('Second')
+      expect(store.sortedEndpoints[0]?.name).toBe('Second')
     })
   })
 
@@ -349,7 +349,7 @@ describe('endpoint store', () => {
       const store = useEndpointStore()
 
       expect(store.endpoints).toHaveLength(1)
-      expect(store.endpoints[0].name).toBe('Stored Endpoint')
+      expect(store.endpoints[0]?.name).toBe('Stored Endpoint')
     })
 
     it('handles invalid JSON gracefully', () => {

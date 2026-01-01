@@ -49,9 +49,21 @@ interface EndpointState {
 }
 
 interface LanguageState {
-  preferred: string;
-  fallback: string;
+  // Per-endpoint config (keyed by endpoint ID)
+  configs: Record<string, EndpointLanguageConfig>;
+
+  // Current endpoint's effective config
+  priorities: string[];       // Ordered language list, e.g., ['en', 'fr', 'de']
+  current: string | null;     // Override language (trumps priorities), null = use priorities
+
+  // Detection results for current endpoint
   detected: string[];
+  detectedWithCount: { lang: string; count: number }[];
+}
+
+interface EndpointLanguageConfig {
+  priorities: string[];      // Ordered language list
+  current: string | null;    // Override language, null = use priorities
 }
 
 interface UIState {
@@ -114,7 +126,7 @@ Two types for concept references serve different purposes:
 | Key | Content | Sync |
 |-----|---------|------|
 | `ae-endpoints` | Saved endpoints | Cross-tab |
-| `ae-language` | Language preferences | Cross-tab |
+| `ae-language-{endpointId}` | Language config per endpoint | Cross-tab |
 | `ae-skos-scheme` | Last selected scheme | Per-endpoint |
 | `ae-skos-history` | Recently viewed | Per-endpoint |
 | `ae-skos-tree-expanded` | Expanded nodes | Per-session |
@@ -124,11 +136,33 @@ Two types for concept references serve different purposes:
 ```typescript
 // Persist on change
 persist('ae-endpoints', state.endpoint.all);
-persist('ae-language', { preferred, fallback });
+persist(`ae-language-${endpointId}`, { priorities, current });
 
 // Restore on init
 const endpoints = restore('ae-endpoints') ?? [];
-const language = restore('ae-language') ?? { preferred: 'en', fallback: 'en' };
+
+// Restore language config for endpoint (with migration from old format)
+function loadLanguageConfig(endpointId: string): EndpointLanguageConfig {
+  const key = `ae-language-${endpointId}`;
+  const stored = restore(key);
+  if (stored) return stored;
+
+  // Migrate from old global format if exists
+  const oldConfig = restore('ae-language');
+  if (oldConfig?.preferred) {
+    return {
+      priorities: [oldConfig.preferred, oldConfig.fallback].filter(Boolean),
+      current: null
+    };
+  }
+
+  // Default: browser language, then 'en'
+  const browserLang = navigator.language.split('-')[0];
+  return {
+    priorities: browserLang !== 'en' ? [browserLang, 'en'] : ['en'],
+    current: null
+  };
+}
 ```
 
 ### Per-Endpoint Storage
@@ -149,7 +183,7 @@ const key = `ae-skos-history-${endpoint.id}`;
 | `endpoint:changed` | `SPARQLEndpoint` | User selects endpoint |
 | `endpoint:connected` | `SPARQLEndpoint` | Connection successful |
 | `endpoint:error` | `AppError` | Connection failed |
-| `language:changed` | `{ preferred, fallback }` | Language settings changed |
+| `language:changed` | `{ priorities, current }` | Language config changed |
 
 ### SKOS Events
 
@@ -232,7 +266,7 @@ eventBus.on('language:changed', () => {
 ```typescript
 type Action =
   | { type: 'SET_ENDPOINT'; payload: SPARQLEndpoint }
-  | { type: 'SET_LANGUAGE'; payload: { preferred: string; fallback: string } }
+  | { type: 'SET_LANGUAGE'; payload: { priorities: string[]; current: string | null } }
   | { type: 'SELECT_SCHEME'; payload: ConceptScheme | null }
   | { type: 'SELECT_CONCEPT'; payload: string }
   | { type: 'EXPAND_NODE'; payload: string }

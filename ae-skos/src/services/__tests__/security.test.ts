@@ -378,7 +378,8 @@ describe('credential storage', () => {
     it('encodes credentials as base64', () => {
       storeCredentials('endpoint-1', { username: 'user', password: 'pass' })
       const call = vi.mocked(sessionStorage.setItem).mock.calls[0]
-      const stored = JSON.parse(call[1])
+      expect(call).toBeDefined()
+      const stored = JSON.parse(call![1])
       expect(stored['endpoint-1'].encoded).toBeDefined()
     })
   })
@@ -416,7 +417,8 @@ describe('credential storage', () => {
       clearCredentials('endpoint-1')
 
       const call = vi.mocked(sessionStorage.setItem).mock.calls[0]
-      const updated = JSON.parse(call[1])
+      expect(call).toBeDefined()
+      const updated = JSON.parse(call![1])
       expect(updated['endpoint-1']).toBeUndefined()
       expect(updated['endpoint-2']).toBeDefined()
     })

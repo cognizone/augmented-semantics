@@ -14,7 +14,6 @@ import {
   detectLanguages,
   withPrefixes,
   buildQueryWithGraphs,
-  SPARQL_PREFIXES,
 } from '../sparql'
 import {
   createMockEndpoint,
@@ -154,7 +153,8 @@ describe('executeSparql', () => {
       const endpoint = createMockEndpoint({ auth: { type: 'none' } })
       await executeSparql(endpoint, 'SELECT * WHERE { ?s ?p ?o }')
 
-      const callArgs = vi.mocked(fetch).mock.calls[0][1] as RequestInit
+      const call = vi.mocked(fetch).mock.calls[0]
+      const callArgs = call?.[1] as RequestInit
       expect(callArgs.headers).not.toHaveProperty('Authorization')
     })
   })

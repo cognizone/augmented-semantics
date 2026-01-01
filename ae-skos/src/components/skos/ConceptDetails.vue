@@ -22,7 +22,7 @@ import { useConceptStore, useEndpointStore, useLanguageStore } from '../../store
 import { executeSparql, withPrefixes, logger, isValidURI, fetchRawRdf } from '../../services'
 import { useDelayedLoading, useLabelResolver } from '../../composables'
 import type { RdfFormat } from '../../services'
-import type { ConceptDetails, LabelValue, ConceptRef } from '../../types'
+import type { ConceptDetails, ConceptRef } from '../../types'
 import Button from 'primevue/button'
 import Chip from 'primevue/chip'
 import Divider from 'primevue/divider'

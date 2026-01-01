@@ -18,6 +18,7 @@ export function createMockEndpoint(overrides: Partial<SPARQLEndpoint> = {}): SPA
     auth: { type: 'none' },
     createdAt: '2024-01-01T00:00:00Z',
     lastAccessedAt: '2024-01-01T00:00:00Z',
+    accessCount: 0,
     ...overrides,
   }
 }
@@ -58,7 +59,8 @@ export function createApiKeyEndpoint(
 // --- SPARQL Results Mocks ---
 
 export function createSparqlResults(bindings: Record<string, unknown>[]): SPARQLResults {
-  const vars = bindings.length > 0 ? Object.keys(bindings[0]) : []
+  const firstBinding = bindings[0]
+  const vars = firstBinding ? Object.keys(firstBinding) : []
   return {
     head: { vars },
     results: {
@@ -136,7 +138,6 @@ export function mockFetchNetworkError(message = 'Failed to fetch') {
 
 export function mockFetchTimeout() {
   return vi.fn().mockImplementation(() => {
-    const controller = new AbortController()
     return new Promise((_, reject) => {
       setTimeout(() => {
         const error = new DOMException('Aborted', 'AbortError')
