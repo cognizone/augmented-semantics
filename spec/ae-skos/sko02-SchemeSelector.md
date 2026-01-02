@@ -61,14 +61,61 @@ Same logic as concepts for consistency:
 
 ### Scheme Details
 
-Display metadata for selected scheme:
-- URI
-- `skos:prefLabel`
-- `dct:title`
-- `dct:description`
-- `dct:creator`
-- `dct:created`
-- `dct:modified`
+Full property display panel for selected concept scheme, organized in sections.
+
+**Implementation:** `SchemeDetails.vue` with `useSchemeData.ts` composable
+
+**Display Sections** (each shown only if properties exist):
+
+1. **Labels**
+   - `skos:prefLabel` - Preferred labels
+   - `skos:altLabel` - Alternative labels
+   - `skosxl:prefLabel` - SKOS-XL extended labels with collapsible viewer
+
+2. **Title** (if different from prefLabel)
+   - `dct:title` - Dublin Core title
+
+3. **Documentation**
+   - `skos:definition` - Formal definitions
+   - `dct:description` - General descriptions
+   - `skos:scopeNote` - Usage scope notes
+   - `skos:historyNote` - Historical information
+   - `skos:changeNote` - Change documentation
+   - `skos:editorialNote` - Editorial notes
+   - `skos:example` - Usage examples (styled italic)
+
+4. **Metadata**
+   - `dct:creator` - Creator(s) with URI links
+   - `dct:created` - Creation date (formatted)
+   - `dct:modified` - Last modified date (formatted)
+
+5. **Other Properties**
+   - Non-SKOS/non-DCT predicates
+   - Predicates resolved to `prefix:localName` format
+   - URI values shown as links
+
+**Template Rendering:**
+
+Uses config-driven approach to minimize duplication:
+- Documentation properties rendered via `documentationConfig` array
+- Label properties rendered via `labelConfig` array
+- Sorted properties use `getSorted()` helper function
+
+**Actions:**
+- Browse scheme - Navigate to concept tree filtered by this scheme
+- View RDF - Show raw RDF in multiple formats (Turtle, JSON-LD, etc.)
+- Export - Download as JSON or Turtle
+- Copy URI - Copy scheme URI to clipboard
+
+**Data Loading:**
+
+Three-phase SPARQL query pattern via `useSchemeData`:
+
+1. **Main Query** - Load core SKOS and Dublin Core properties
+2. **XL Labels Query** - Load SKOS-XL extended labels (optional)
+3. **Other Properties Query** - Load non-SKOS predicates (optional)
+
+Queries use retries for robustness. XL and Other queries fail gracefully if not supported.
 
 ### Scheme Persistence
 
@@ -125,6 +172,52 @@ interface SchemeState {
   available: ConceptScheme[];
   selected: ConceptScheme | null;  // null = all schemes
   loading: boolean;
+}
+
+// Full scheme details for property display
+interface SchemeDetails {
+  uri: string
+  // Labels
+  prefLabels: LabelValue[]
+  altLabels: LabelValue[]
+  prefLabelsXL: XLLabel[]
+  // Documentation
+  definitions: LabelValue[]
+  scopeNotes: LabelValue[]
+  historyNotes: LabelValue[]
+  changeNotes: LabelValue[]
+  editorialNotes: LabelValue[]
+  examples: LabelValue[]
+  title: LabelValue[]
+  description: LabelValue[]
+  // Metadata
+  creator: string[]
+  created?: string
+  modified?: string
+  // Other properties
+  otherProperties: OtherProperty[]
+  topConceptCount?: number
+}
+
+interface LabelValue {
+  value: string
+  lang?: string
+}
+
+interface XLLabel {
+  uri: string
+  literalForm: LabelValue
+}
+
+interface OtherProperty {
+  predicate: string
+  values: PropertyValue[]
+}
+
+interface PropertyValue {
+  value: string
+  lang?: string
+  isUri: boolean
 }
 ```
 

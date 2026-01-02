@@ -18,89 +18,41 @@
  * @see /spec/ae-skos/sko04-ConceptDetails.md
  */
 import { ref, watch, computed } from 'vue'
-import { useConceptStore, useEndpointStore, useLanguageStore, useSchemeStore, useSettingsStore } from '../../stores'
-import { executeSparql, withPrefixes, logger, isValidURI, fetchRawRdf, resolveUris, formatQualifiedName } from '../../services'
-import { useDelayedLoading, useLabelResolver } from '../../composables'
-import type { RdfFormat } from '../../services'
-import type { ConceptDetails, ConceptRef } from '../../types'
+import { useConceptStore, useSettingsStore } from '../../stores'
+import { isValidURI } from '../../services'
+import { useDelayedLoading, useLabelResolver, useConceptData, useConceptNavigation, useClipboard, useResourceExport } from '../../composables'
+import { getPredicateName, formatPropertyValue, getRefLabel } from '../../utils/displayUtils'
 import Button from 'primevue/button'
 import Divider from 'primevue/divider'
-import Dialog from 'primevue/dialog'
 import Message from 'primevue/message'
 import ProgressSpinner from 'primevue/progressspinner'
-import Select from 'primevue/select'
-import Textarea from 'primevue/textarea'
 import Menu from 'primevue/menu'
-import { useToast } from 'primevue/usetoast'
 import XLLabelsGroup from '../common/XLLabelsGroup.vue'
+import RawRdfDialog from '../common/RawRdfDialog.vue'
 
 const emit = defineEmits<{
   selectConcept: [uri: string]
 }>()
 
 const conceptStore = useConceptStore()
-const endpointStore = useEndpointStore()
-const languageStore = useLanguageStore()
-const schemeStore = useSchemeStore()
 const settingsStore = useSettingsStore()
-const toast = useToast()
 const { selectLabelWithXL, sortLabels, shouldShowLangTag } = useLabelResolver()
-
-// Helper to select best label based on language priorities
-function selectBestLabelByLanguage(
-  labels: { value: string; lang: string; type: string }[]
-): { value: string; lang: string } | undefined {
-  if (!labels.length) return undefined
-
-  // 1. Try preferred language
-  const preferred = labels.find(l => l.lang === languageStore.preferred)
-  if (preferred) return preferred
-
-  // 2. Try endpoint's language priorities in order
-  const priorities = endpointStore.current?.languagePriorities || []
-  for (const lang of priorities) {
-    const match = labels.find(l => l.lang === lang)
-    if (match) return match
-  }
-
-  // 3. Try labels without language tag
-  const noLang = labels.find(l => !l.lang || l.lang === '')
-  if (noLang) return noLang
-
-  // 4. Return first available
-  return labels[0]
-}
+const { details, loading, error, resolvedPredicates, loadDetails } = useConceptData()
+const { navigateTo, handleSchemeClick, isLocalScheme } = useConceptNavigation(emit)
+const { copyToClipboard } = useClipboard()
+const { exportAsJson, exportAsTurtle, exportAsCsv } = useResourceExport()
 
 // Local state
-const error = ref<string | null>(null)
 const showHiddenLabels = ref(false)
-const resolvedPredicates = ref<Map<string, { prefix: string; localName: string }>>(new Map())
-
-// Raw RDF dialog state
 const showRawRdfDialog = ref(false)
-const rawRdfContent = ref('')
-const rawRdfFormat = ref<RdfFormat>('turtle')
-const rawRdfLoading = ref(false)
-const rawRdfError = ref<string | null>(null)
-
-const rdfFormatOptions = [
-  { label: 'Turtle', value: 'turtle' },
-  { label: 'JSON-LD', value: 'jsonld' },
-  { label: 'N-Triples', value: 'ntriples' },
-  { label: 'RDF/XML', value: 'rdfxml' },
-]
 
 // Export menu
 const exportMenu = ref()
 const exportMenuItems = [
-  { label: 'Export as JSON', icon: 'pi pi-file', command: () => exportAsJson() },
-  { label: 'Export as Turtle', icon: 'pi pi-code', command: () => exportAsTurtle() },
-  { label: 'Export as CSV', icon: 'pi pi-table', command: () => exportAsCsv() },
+  { label: 'Export as JSON', icon: 'pi pi-file', command: () => details.value && exportAsJson(details.value) },
+  { label: 'Export as Turtle', icon: 'pi pi-code', command: () => details.value && exportAsTurtle(details.value.uri) },
+  { label: 'Export as CSV', icon: 'pi pi-table', command: () => details.value && exportAsCsv(details.value) },
 ]
-
-// Computed
-const details = computed(() => conceptStore.details)
-const loading = computed(() => conceptStore.loadingDetails)
 
 // Delayed loading - show spinner only after 300ms to prevent flicker
 const showLoading = useDelayedLoading(loading)
@@ -182,690 +134,11 @@ const sortedOtherProperties = computed(() => {
   return [...details.value.otherProperties].sort((a, b) => {
     const aResolved = resolvedPredicates.value.get(a.predicate)
     const bResolved = resolvedPredicates.value.get(b.predicate)
-    const aName = aResolved ? formatQualifiedName(aResolved) : a.predicate
-    const bName = bResolved ? formatQualifiedName(bResolved) : b.predicate
+    const aName = getPredicateName(a.predicate, aResolved)
+    const bName = getPredicateName(b.predicate, bResolved)
     return aName.localeCompare(bName)
   })
 })
-
-// Get formatted predicate name
-function getPredicateName(predicate: string): string {
-  const resolved = resolvedPredicates.value.get(predicate)
-  if (resolved) {
-    // Show qualified name if prefix exists, otherwise just localName
-    return resolved.prefix
-      ? formatQualifiedName(resolved)
-      : resolved.localName
-  }
-  // Fallback: extract local name from URI
-  return predicate.split('/').pop()?.split('#').pop() || predicate
-}
-
-// Format value with boolean translation for xsd:boolean
-function formatPropertyValue(value: string, datatype?: string): string {
-  // Handle xsd:boolean with 0/1 values (Virtuoso quirk)
-  if (datatype === 'xsd:boolean' || datatype?.endsWith('#boolean')) {
-    if (value === '0' || value === 'false') {
-      return '0 (false)'
-    }
-    if (value === '1' || value === 'true') {
-      return '1 (true)'
-    }
-  }
-  return value
-}
-
-
-// Load concept details
-async function loadDetails(uri: string) {
-  const endpoint = endpointStore.current
-  if (!endpoint) return
-
-  logger.info('ConceptDetails', 'Loading details', { uri })
-
-  conceptStore.setLoadingDetails(true)
-  error.value = null
-
-  const query = withPrefixes(`
-    SELECT ?property ?value
-    WHERE {
-      <${uri}> ?property ?value .
-      FILTER (?property IN (
-        skos:prefLabel, skos:altLabel, skos:hiddenLabel,
-        rdfs:label, dct:title,
-        skos:definition, skos:scopeNote, skos:historyNote,
-        skos:changeNote, skos:editorialNote, skos:example,
-        skos:notation, skos:broader, skos:narrower, skos:related,
-        skos:inScheme, skos:exactMatch, skos:closeMatch,
-        skos:broadMatch, skos:narrowMatch, skos:relatedMatch
-      ))
-    }
-  `)
-
-  try {
-    const results = await executeSparql(endpoint, query, { retries: 1 })
-
-    const details: ConceptDetails = {
-      uri,
-      prefLabels: [],
-      altLabels: [],
-      hiddenLabels: [],
-      definitions: [],
-      scopeNotes: [],
-      historyNotes: [],
-      changeNotes: [],
-      editorialNotes: [],
-      examples: [],
-      notations: [],
-      broader: [],
-      narrower: [],
-      related: [],
-      inScheme: [],
-      exactMatch: [],
-      closeMatch: [],
-      broadMatch: [],
-      narrowMatch: [],
-      relatedMatch: [],
-      prefLabelsXL: [],
-      altLabelsXL: [],
-      hiddenLabelsXL: [],
-      otherProperties: [],
-    }
-
-    // Process results
-    for (const binding of results.results.bindings) {
-      const prop = binding.property?.value || ''
-      const val = binding.value?.value || ''
-      const lang = binding.value?.['xml:lang']
-
-      if (prop.endsWith('prefLabel')) {
-        details.prefLabels.push({ value: val, lang })
-      } else if (prop.endsWith('#label') || prop.endsWith('/label')) {
-        // rdfs:label - treat as fallback prefLabel
-        details.prefLabels.push({ value: val, lang })
-      } else if (prop.endsWith('title')) {
-        // dct:title - treat as fallback prefLabel
-        details.prefLabels.push({ value: val, lang })
-      } else if (prop.endsWith('altLabel')) {
-        details.altLabels.push({ value: val, lang })
-      } else if (prop.endsWith('hiddenLabel')) {
-        details.hiddenLabels.push({ value: val, lang })
-      } else if (prop.endsWith('definition')) {
-        details.definitions.push({ value: val, lang })
-      } else if (prop.endsWith('scopeNote')) {
-        details.scopeNotes.push({ value: val, lang })
-      } else if (prop.endsWith('historyNote')) {
-        details.historyNotes.push({ value: val, lang })
-      } else if (prop.endsWith('changeNote')) {
-        details.changeNotes.push({ value: val, lang })
-      } else if (prop.endsWith('editorialNote')) {
-        details.editorialNotes.push({ value: val, lang })
-      } else if (prop.endsWith('example')) {
-        details.examples.push({ value: val, lang })
-      } else if (prop.endsWith('notation')) {
-        const datatype = binding.value?.datatype
-        if (!details.notations.some(n => n.value === val)) {
-          details.notations.push({ value: val, datatype })
-        }
-      } else if (prop.endsWith('broader')) {
-        if (!details.broader.some(r => r.uri === val)) {
-          details.broader.push({ uri: val })
-        }
-      } else if (prop.endsWith('narrower')) {
-        if (!details.narrower.some(r => r.uri === val)) {
-          details.narrower.push({ uri: val })
-        }
-      } else if (prop.endsWith('related')) {
-        if (!details.related.some(r => r.uri === val)) {
-          details.related.push({ uri: val })
-        }
-      } else if (prop.endsWith('inScheme')) {
-        if (!details.inScheme.some(r => r.uri === val)) {
-          details.inScheme.push({ uri: val })
-        }
-      } else if (prop.endsWith('exactMatch')) {
-        if (!details.exactMatch.includes(val)) {
-          details.exactMatch.push(val)
-        }
-      } else if (prop.endsWith('closeMatch')) {
-        if (!details.closeMatch.includes(val)) {
-          details.closeMatch.push(val)
-        }
-      } else if (prop.endsWith('broadMatch')) {
-        if (!details.broadMatch.includes(val)) {
-          details.broadMatch.push(val)
-        }
-      } else if (prop.endsWith('narrowMatch')) {
-        if (!details.narrowMatch.includes(val)) {
-          details.narrowMatch.push(val)
-        }
-      } else if (prop.endsWith('relatedMatch')) {
-        if (!details.relatedMatch.includes(val)) {
-          details.relatedMatch.push(val)
-        }
-      }
-    }
-
-    // Load labels for related concepts
-    await loadRelatedLabels(details)
-
-    // Load SKOS-XL extended labels
-    await loadXLLabels(uri, details)
-
-    // Load other (non-SKOS) properties
-    await loadOtherProperties(uri, details)
-
-    // Resolve prefixes for other properties
-    if (details.otherProperties.length > 0) {
-      const predicates = details.otherProperties.map(p => p.predicate)
-      resolvedPredicates.value = await resolveUris(predicates)
-    } else {
-      resolvedPredicates.value = new Map()
-    }
-
-    // Resolve datatypes for notations
-    const notationDatatypes = details.notations
-      .map(n => n.datatype)
-      .filter((d): d is string => !!d)
-    if (notationDatatypes.length > 0) {
-      const datatypeMap = await resolveUris(notationDatatypes)
-      details.notations.forEach(n => {
-        if (n.datatype) {
-          const resolved = datatypeMap.get(n.datatype)
-          if (resolved) {
-            n.datatype = formatQualifiedName(resolved)
-          }
-        }
-      })
-    }
-
-    logger.info('ConceptDetails', 'Loaded details', {
-      labels: details.prefLabels.length,
-      broader: details.broader.length,
-      narrower: details.narrower.length
-    })
-
-    conceptStore.setDetails(details)
-  } catch (e: unknown) {
-    const errMsg = e && typeof e === 'object' && 'message' in e
-      ? (e as { message: string }).message
-      : 'Unknown error'
-    logger.error('ConceptDetails', 'Failed to load details', { uri, error: e })
-    error.value = `Failed to load details: ${errMsg}`
-    conceptStore.setDetails(null)
-  } finally {
-    conceptStore.setLoadingDetails(false)
-  }
-}
-
-// Load labels for related concepts and schemes
-async function loadRelatedLabels(details: ConceptDetails) {
-  const endpoint = endpointStore.current
-  if (!endpoint) return
-
-  const allRefs = [
-    ...details.broader,
-    ...details.narrower,
-    ...details.related,
-    ...details.inScheme
-  ]
-
-  if (!allRefs.length) return
-
-  const uris = allRefs.map(r => `<${r.uri}>`).join(' ')
-
-  // Fetch notation, prefLabel (incl. XL), altLabel, hiddenLabel, and dct:title (for schemes)
-  const query = withPrefixes(`
-    SELECT ?concept ?notation ?label ?labelLang ?labelType
-    WHERE {
-      VALUES ?concept { ${uris} }
-      OPTIONAL { ?concept skos:notation ?notation }
-      OPTIONAL {
-        {
-          ?concept skos:prefLabel ?label .
-          BIND("prefLabel" AS ?labelType)
-        } UNION {
-          ?concept skosxl:prefLabel/skosxl:literalForm ?label .
-          BIND("xlPrefLabel" AS ?labelType)
-        } UNION {
-          ?concept skos:altLabel ?label .
-          BIND("altLabel" AS ?labelType)
-        } UNION {
-          ?concept skos:hiddenLabel ?label .
-          BIND("hiddenLabel" AS ?labelType)
-        } UNION {
-          ?concept dct:title ?label .
-          BIND("title" AS ?labelType)
-        } UNION {
-          ?concept rdfs:label ?label .
-          BIND("rdfsLabel" AS ?labelType)
-        }
-        BIND(LANG(?label) AS ?labelLang)
-      }
-    }
-  `)
-
-  try {
-    const results = await executeSparql(endpoint, query, { retries: 0 })
-
-    // Group by concept URI
-    const conceptData = new Map<string, {
-      notation?: string
-      labels: { value: string; lang: string; type: string }[]
-    }>()
-
-    for (const b of results.results.bindings) {
-      const uri = b.concept?.value
-      if (!uri) continue
-
-      if (!conceptData.has(uri)) {
-        conceptData.set(uri, { labels: [] })
-      }
-
-      const data = conceptData.get(uri)!
-
-      if (b.notation?.value && !data.notation) {
-        data.notation = b.notation.value
-      }
-
-      if (b.label?.value) {
-        data.labels.push({
-          value: b.label.value,
-          lang: b.labelLang?.value || '',
-          type: b.labelType?.value || 'prefLabel'
-        })
-      }
-    }
-
-    // Update refs with best label and notation
-    allRefs.forEach(ref => {
-      const data = conceptData.get(ref.uri)
-      if (!data) return
-
-      ref.notation = data.notation
-
-      // Pick best label: prefLabel > xlPrefLabel > title > rdfsLabel, etc.
-      const labelPriority = ['prefLabel', 'xlPrefLabel', 'title', 'rdfsLabel', 'altLabel', 'hiddenLabel']
-      let bestLabel: string | undefined
-      let bestLang: string | undefined
-
-      for (const labelType of labelPriority) {
-        const labelsOfType = data.labels.filter(l => l.type === labelType)
-        if (!labelsOfType.length) continue
-
-        const selected = selectBestLabelByLanguage(labelsOfType)
-        if (selected) {
-          bestLabel = selected.value
-          bestLang = selected.lang || undefined
-          break
-        }
-      }
-
-      if (bestLabel) {
-        ref.label = bestLabel
-        ref.lang = bestLang
-      }
-    })
-  } catch (e) {
-    logger.warn('ConceptDetails', 'Failed to load related labels', { error: e })
-  }
-}
-
-// Load SKOS-XL extended labels
-async function loadXLLabels(uri: string, details: ConceptDetails) {
-  const endpoint = endpointStore.current
-  if (!endpoint) return
-
-  // Query for XL labels
-  const query = withPrefixes(`
-    SELECT ?xlLabel ?labelType ?literalForm ?literalLang
-    WHERE {
-      {
-        <${uri}> skosxl:prefLabel ?xlLabel .
-        BIND("prefLabel" AS ?labelType)
-      } UNION {
-        <${uri}> skosxl:altLabel ?xlLabel .
-        BIND("altLabel" AS ?labelType)
-      } UNION {
-        <${uri}> skosxl:hiddenLabel ?xlLabel .
-        BIND("hiddenLabel" AS ?labelType)
-      }
-      ?xlLabel skosxl:literalForm ?literalForm .
-      BIND(LANG(?literalForm) AS ?literalLang)
-    }
-  `)
-
-  try {
-    const results = await executeSparql(endpoint, query, { retries: 0 })
-
-    // Track seen URIs to deduplicate
-    const seenXLUris = new Set<string>()
-
-    for (const binding of results.results.bindings) {
-      const xlUri = binding.xlLabel?.value
-      const labelType = binding.labelType?.value
-      const literalForm = binding.literalForm?.value
-      const literalLang = binding.literalLang?.value
-
-      if (!xlUri || !literalForm) continue
-
-      // Deduplicate by XL label URI
-      if (seenXLUris.has(xlUri)) continue
-      seenXLUris.add(xlUri)
-
-      const xlLabel = {
-        uri: xlUri,
-        literalForm: {
-          value: literalForm,
-          lang: literalLang || undefined,
-        },
-      }
-
-      if (labelType === 'prefLabel') {
-        details.prefLabelsXL.push(xlLabel)
-      } else if (labelType === 'altLabel') {
-        details.altLabelsXL.push(xlLabel)
-      } else if (labelType === 'hiddenLabel') {
-        details.hiddenLabelsXL.push(xlLabel)
-      }
-    }
-
-    logger.debug('ConceptDetails', 'Loaded XL labels', {
-      prefLabelsXL: details.prefLabelsXL.length,
-      altLabelsXL: details.altLabelsXL.length,
-      hiddenLabelsXL: details.hiddenLabelsXL.length,
-    })
-  } catch (e) {
-    // SKOS-XL may not be supported by all endpoints, silently skip
-    logger.debug('ConceptDetails', 'SKOS-XL labels not available or query failed', { error: e })
-  }
-}
-
-// Load other (non-SKOS) properties
-async function loadOtherProperties(uri: string, details: ConceptDetails) {
-  const endpoint = endpointStore.current
-  if (!endpoint) return
-
-  // Query for all properties not in SKOS/SKOS-XL namespaces
-  const query = withPrefixes(`
-    SELECT ?predicate ?value
-    WHERE {
-      <${uri}> ?predicate ?value .
-      FILTER (
-        !STRSTARTS(STR(?predicate), STR(skos:)) &&
-        !STRSTARTS(STR(?predicate), STR(skosxl:)) &&
-        !STRSTARTS(STR(?predicate), STR(rdf:)) &&
-        ?predicate != rdfs:label &&
-        ?predicate != dct:title
-      )
-    }
-    LIMIT 100
-  `)
-
-  try {
-    const results = await executeSparql(endpoint, query, { retries: 0 })
-
-    // Collect all datatypes for resolution
-    const datatypeUris = new Set<string>()
-
-    // Group by predicate with deduplication
-    const propMap = new Map<string, Map<string, { value: string; lang?: string; datatype?: string; isUri: boolean }>>()
-
-    for (const binding of results.results.bindings) {
-      const predicate = binding.predicate?.value
-      const value = binding.value?.value
-      const lang = binding.value?.['xml:lang']
-      const datatype = binding.value?.datatype
-      const isUri = binding.value?.type === 'uri'
-
-      if (!predicate || !value) continue
-
-      if (datatype) {
-        datatypeUris.add(datatype)
-      }
-
-      if (!propMap.has(predicate)) {
-        propMap.set(predicate, new Map())
-      }
-      // Deduplicate by value+lang combination
-      const key = `${value}|${lang || ''}`
-      if (!propMap.get(predicate)!.has(key)) {
-        propMap.get(predicate)!.set(key, { value, lang, datatype, isUri })
-      }
-    }
-
-    // Resolve datatype URIs to short forms
-    const datatypeMap = datatypeUris.size > 0
-      ? await resolveUris(Array.from(datatypeUris))
-      : new Map()
-
-    // Convert to OtherProperty array with resolved datatypes
-    details.otherProperties = Array.from(propMap.entries()).map(([predicate, valuesMap]) => ({
-      predicate,
-      values: Array.from(valuesMap.values()).map(v => {
-        if (v.datatype) {
-          const resolved = datatypeMap.get(v.datatype)
-          if (resolved) {
-            v.datatype = formatQualifiedName(resolved)
-          }
-        }
-        return v
-      }),
-    }))
-
-    logger.debug('ConceptDetails', 'Loaded other properties', {
-      count: details.otherProperties.length,
-    })
-  } catch (e) {
-    // Silently skip if query fails
-    logger.debug('ConceptDetails', 'Failed to load other properties', { error: e })
-  }
-}
-
-// Copy to clipboard
-async function copyToClipboard(text: string, label: string) {
-  try {
-    await navigator.clipboard.writeText(text)
-    toast.add({
-      severity: 'success',
-      summary: 'Copied',
-      detail: `${label} copied to clipboard`,
-      life: 2000
-    })
-  } catch (e) {
-    toast.add({
-      severity: 'error',
-      summary: 'Failed',
-      detail: 'Could not copy to clipboard',
-      life: 3000
-    })
-  }
-}
-
-// Navigate to concept
-function navigateTo(ref: ConceptRef) {
-  emit('selectConcept', ref.uri)
-}
-
-// Check if a scheme exists in the current endpoint
-function isLocalScheme(uri: string): boolean {
-  return schemeStore.schemes.some(s => s.uri === uri)
-}
-
-// Navigate to a scheme (select it and show its details like in tree)
-function navigateToScheme(ref: ConceptRef) {
-  schemeStore.selectScheme(ref.uri) // Switch to this scheme
-  conceptStore.selectConcept(ref.uri) // Select scheme URI to show its details
-}
-
-// Handle scheme click - navigate if local, open external otherwise
-function handleSchemeClick(ref: ConceptRef) {
-  if (isLocalScheme(ref.uri)) {
-    navigateToScheme(ref)
-  } else {
-    openExternal(ref.uri)
-  }
-}
-
-// Fetch and show raw RDF
-async function openRawRdfDialog() {
-  if (!details.value || !endpointStore.current) return
-
-  showRawRdfDialog.value = true
-  await loadRawRdf()
-}
-
-async function loadRawRdf() {
-  if (!details.value || !endpointStore.current) return
-
-  rawRdfLoading.value = true
-  rawRdfError.value = null
-  rawRdfContent.value = ''
-
-  try {
-    const rdf = await fetchRawRdf(
-      endpointStore.current,
-      details.value.uri,
-      rawRdfFormat.value
-    )
-    rawRdfContent.value = rdf
-  } catch (e: unknown) {
-    const errMsg = e && typeof e === 'object' && 'message' in e
-      ? (e as { message: string }).message
-      : 'Failed to fetch RDF'
-    rawRdfError.value = errMsg
-    logger.error('ConceptDetails', 'Failed to fetch raw RDF', { error: e })
-  } finally {
-    rawRdfLoading.value = false
-  }
-}
-
-// Open external link
-function openExternal(uri: string) {
-  window.open(uri, '_blank')
-}
-
-// Download helper
-function downloadFile(content: string, filename: string, mimeType: string) {
-  const blob = new Blob([content], { type: mimeType })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = filename
-  document.body.appendChild(a)
-  a.click()
-  document.body.removeChild(a)
-  URL.revokeObjectURL(url)
-}
-
-// Export as JSON
-function exportAsJson() {
-  if (!details.value) return
-
-  const jsonData = {
-    uri: details.value.uri,
-    prefLabels: details.value.prefLabels,
-    altLabels: details.value.altLabels,
-    hiddenLabels: details.value.hiddenLabels,
-    notations: details.value.notations,
-    definitions: details.value.definitions,
-    scopeNotes: details.value.scopeNotes,
-    broader: details.value.broader,
-    narrower: details.value.narrower,
-    related: details.value.related,
-    inScheme: details.value.inScheme,
-    exactMatch: details.value.exactMatch,
-    closeMatch: details.value.closeMatch,
-  }
-
-  const content = JSON.stringify(jsonData, null, 2)
-  const filename = `concept-${details.value.uri.split('/').pop() || 'export'}.json`
-  downloadFile(content, filename, 'application/json')
-
-  toast.add({
-    severity: 'success',
-    summary: 'Exported',
-    detail: 'Concept exported as JSON',
-    life: 2000
-  })
-}
-
-// Export as Turtle (fetch from endpoint)
-async function exportAsTurtle() {
-  if (!details.value || !endpointStore.current) return
-
-  try {
-    const turtle = await fetchRawRdf(endpointStore.current, details.value.uri, 'turtle')
-    const filename = `concept-${details.value.uri.split('/').pop() || 'export'}.ttl`
-    downloadFile(turtle, filename, 'text/turtle')
-
-    toast.add({
-      severity: 'success',
-      summary: 'Exported',
-      detail: 'Concept exported as Turtle',
-      life: 2000
-    })
-  } catch (e) {
-    toast.add({
-      severity: 'error',
-      summary: 'Export failed',
-      detail: 'Could not export as Turtle',
-      life: 3000
-    })
-  }
-}
-
-// Export as CSV
-function exportAsCsv() {
-  if (!details.value) return
-
-  const rows: string[][] = [['Property', 'Value', 'Language']]
-
-  // Add labels
-  details.value.prefLabels.forEach(l => rows.push(['prefLabel', l.value, l.lang || '']))
-  details.value.altLabels.forEach(l => rows.push(['altLabel', l.value, l.lang || '']))
-  details.value.hiddenLabels.forEach(l => rows.push(['hiddenLabel', l.value, l.lang || '']))
-
-  // Add notations
-  details.value.notations.forEach(n => rows.push(['notation', n.value, n.datatype || '']))
-
-  // Add documentation
-  details.value.definitions.forEach(d => rows.push(['definition', d.value, d.lang || '']))
-  details.value.scopeNotes.forEach(d => rows.push(['scopeNote', d.value, d.lang || '']))
-
-  // Add relations
-  details.value.broader.forEach(r => rows.push(['broader', r.uri, '']))
-  details.value.narrower.forEach(r => rows.push(['narrower', r.uri, '']))
-  details.value.related.forEach(r => rows.push(['related', r.uri, '']))
-
-  // Add mappings
-  details.value.exactMatch.forEach(u => rows.push(['exactMatch', u, '']))
-  details.value.closeMatch.forEach(u => rows.push(['closeMatch', u, '']))
-
-  // Convert to CSV
-  const csv = rows.map(row =>
-    row.map(cell => `"${cell.replace(/"/g, '""')}"`).join(',')
-  ).join('\n')
-
-  const filename = `concept-${details.value.uri.split('/').pop() || 'export'}.csv`
-  downloadFile(csv, filename, 'text/csv')
-
-  toast.add({
-    severity: 'success',
-    summary: 'Exported',
-    detail: 'Concept exported as CSV',
-    life: 2000
-  })
-}
-
-// Get display label for a ConceptRef (notation + label if both exist)
-function getRefLabel(ref: ConceptRef): string {
-  const label = ref.label || ref.uri.split('/').pop() || ref.uri
-  if (ref.notation && ref.label) {
-    return `${ref.notation} - ${label}`
-  }
-  return ref.notation || label
-}
 
 // Watch for selected concept changes
 watch(
@@ -873,8 +146,6 @@ watch(
   (uri) => {
     if (uri) {
       loadDetails(uri)
-    } else {
-      conceptStore.setDetails(null)
     }
   },
   { immediate: true }
@@ -935,7 +206,7 @@ watch(
             rounded
             size="small"
             v-tooltip.left="'View RDF'"
-            @click="openRawRdfDialog"
+            @click="showRawRdfDialog = true"
           />
           <Button
             icon="pi pi-download"
@@ -1275,10 +546,10 @@ watch(
               target="_blank"
               class="predicate-link"
             >
-              {{ getPredicateName(prop.predicate) }}
+              {{ getPredicateName(prop.predicate, resolvedPredicates.get(prop.predicate)) }}
               <i class="pi pi-external-link"></i>
             </a>
-            <span v-else>{{ getPredicateName(prop.predicate) }}</span>
+            <span v-else>{{ getPredicateName(prop.predicate, resolvedPredicates.get(prop.predicate)) }}</span>
           </label>
           <div class="other-values">
             <template v-for="(val, i) in prop.values" :key="i">
@@ -1303,51 +574,11 @@ watch(
     </div>
 
     <!-- Raw RDF Dialog -->
-    <Dialog
+    <RawRdfDialog
+      v-if="details"
       v-model:visible="showRawRdfDialog"
-      header="Raw RDF"
-      :style="{ width: '900px', maxHeight: '90vh' }"
-      :modal="true"
-    >
-      <div class="raw-rdf-dialog">
-        <div class="format-selector">
-          <label>Format:</label>
-          <Select
-            v-model="rawRdfFormat"
-            :options="rdfFormatOptions"
-            optionLabel="label"
-            optionValue="value"
-            @change="loadRawRdf"
-          />
-          <Button
-            icon="pi pi-copy"
-            label="Copy"
-            severity="secondary"
-            size="small"
-            :disabled="!rawRdfContent"
-            @click="copyToClipboard(rawRdfContent, 'RDF')"
-          />
-        </div>
-
-        <div v-if="rawRdfLoading" class="rdf-loading">
-          <ProgressSpinner style="width: 30px; height: 30px" />
-          <span>Loading RDF...</span>
-        </div>
-
-        <Message v-if="rawRdfError" severity="error" :closable="false">
-          {{ rawRdfError }}
-        </Message>
-
-        <Textarea
-          v-if="rawRdfContent && !rawRdfLoading"
-          v-model="rawRdfContent"
-          :readonly="true"
-          class="rdf-content"
-          :autoResize="false"
-          rows="28"
-        />
-      </div>
-    </Dialog>
+      :resource-uri="details.uri"
+    />
   </div>
 </template>
 
@@ -1660,38 +891,5 @@ watch(
 
 .other-value.uri-value i {
   font-size: 0.5rem;
-}
-
-/* Raw RDF Dialog */
-.raw-rdf-dialog {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.format-selector {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.format-selector label {
-  font-weight: 500;
-}
-
-.rdf-loading {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  justify-content: center;
-  padding: 2rem;
-  color: var(--p-text-muted-color);
-}
-
-.rdf-content {
-  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-  font-size: 0.7rem;
-  width: 100%;
-  background: var(--p-surface-50);
 }
 </style>
