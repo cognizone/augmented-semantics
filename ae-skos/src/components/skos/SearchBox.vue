@@ -193,6 +193,8 @@ function selectResult(result: SearchResult) {
     label: result.label,
     notation: result.notation,
     lang: result.lang,
+    endpointUrl: endpointStore.current?.url,
+    schemeUri: schemeStore.selectedUri || undefined,
   })
 }
 

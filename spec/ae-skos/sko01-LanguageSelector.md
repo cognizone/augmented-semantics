@@ -66,19 +66,28 @@ Features:
 
 ### SKOS-Specific Detection
 
-Detect languages from SKOS labels with counts.
+Detect languages from SKOS concept labels with counts.
+
+> **Note:** Collections and ConceptSchemes are ignored, but concepts typically have the same languages so this should be good enough.
 
 **Query:**
 ```sparql
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-
-SELECT DISTINCT (LANG(?label) AS ?lang) (COUNT(?label) AS ?count)
+PREFIX skosxl: <http://www.w3.org/2008/05/skos-xl#>
+SELECT ?lang (COUNT(?label) AS ?count)
 WHERE {
-  ?concept a skos:Concept ;
-           skos:prefLabel ?label .
-  FILTER (LANG(?label) != "")
+  ?concept a skos:Concept .
+  {
+    ?concept skos:prefLabel|skos:altLabel|skos:hiddenLabel|skos:definition|skos:scopeNote ?label .
+  } UNION {
+    ?concept skosxl:prefLabel/skosxl:literalForm ?label .
+  } UNION {
+    ?concept skosxl:altLabel/skosxl:literalForm ?label .
+  }
+  BIND(LANG(?label) AS ?lang)
+  FILTER(?lang != "")
 }
-GROUP BY (LANG(?label))
+GROUP BY ?lang
 ORDER BY DESC(?count)
 ```
 

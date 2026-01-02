@@ -39,8 +39,11 @@ export interface SPARQLRequestConfig {
   retryDelay?: number
 }
 
+// Global timeout for SPARQL requests (1 minute)
+const SPARQL_TIMEOUT_MS = 60000
+
 const DEFAULT_CONFIG: Required<Omit<SPARQLRequestConfig, 'signal'>> = {
-  timeout: 30000,
+  timeout: SPARQL_TIMEOUT_MS,
   retries: 3,
   retryDelay: 1000,
 }
@@ -339,19 +342,30 @@ export async function detectDuplicates(
 }
 
 /**
- * Detect available languages in endpoint
+ * Detect available languages in endpoint (SKOS concepts only).
+ * Note: Collections and ConceptSchemes are ignored, but concepts
+ * typically have the same languages so this should be good enough.
  */
 export async function detectLanguages(
   endpoint: SPARQLEndpoint
 ): Promise<{ lang: string; count: number }[]> {
   const query = `
     PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-    SELECT (LANG(?label) AS ?lang) (COUNT(?label) AS ?count)
+    PREFIX skosxl: <http://www.w3.org/2008/05/skos-xl#>
+    SELECT ?lang (COUNT(?label) AS ?count)
     WHERE {
-      ?s ?p ?label .
-      FILTER (isLiteral(?label) && LANG(?label) != "")
+      ?concept a skos:Concept .
+      {
+        ?concept skos:prefLabel|skos:altLabel|skos:hiddenLabel|skos:definition|skos:scopeNote ?label .
+      } UNION {
+        ?concept skosxl:prefLabel/skosxl:literalForm ?label .
+      } UNION {
+        ?concept skosxl:altLabel/skosxl:literalForm ?label .
+      }
+      BIND(LANG(?label) AS ?lang)
+      FILTER(?lang != "")
     }
-    GROUP BY (LANG(?label))
+    GROUP BY ?lang
     ORDER BY DESC(?count)
   `
 

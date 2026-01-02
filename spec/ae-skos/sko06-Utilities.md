@@ -77,20 +77,20 @@ WHERE { <CONCEPT_URI> ?p ?o }
 
 ### Recently Viewed
 
-Track and display recently viewed concepts.
+Track and display recently viewed concepts across all endpoints/schemes.
 
 **Storage:**
 ```
 Key: ae-skos-history
 Value: [
-  { uri: "...", label: "...", timestamp: "..." },
+  { uri: "...", label: "...", accessedAt: "...", endpointUrl: "...", schemeUri: "..." },
   ...
 ]
 ```
 
 **Features:**
-- Show last 20 concepts
-- Click to navigate
+- Show last 10 concepts (store up to 50)
+- Click to navigate (auto-switches endpoint/scheme if different)
 - Clear history button
 - Persist across sessions
 
@@ -132,7 +132,11 @@ Export selected concept data.
 interface HistoryEntry {
   uri: string;
   label: string;
-  timestamp: string;  // ISO
+  notation?: string;
+  lang?: string;
+  accessedAt: string;    // ISO timestamp
+  endpointUrl?: string;  // Endpoint URL for cross-endpoint navigation
+  schemeUri?: string;    // Scheme URI for cross-scheme navigation
 }
 
 interface UtilityState {

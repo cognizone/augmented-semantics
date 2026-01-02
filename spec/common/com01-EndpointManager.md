@@ -45,7 +45,7 @@ Optional authentication methods:
 
 | Setting | Default | Description |
 |---------|---------|-------------|
-| Timeout | 30000ms | Request timeout (AbortController) |
+| Timeout | 60000ms | Request timeout (AbortController) |
 | Method | POST | HTTP method for queries |
 | Max retries | 3 | Automatic retry attempts |
 | Retry delay | 1000ms | Initial retry delay (exponential backoff) |
@@ -163,16 +163,28 @@ Per-endpoint language settings. See [sko01-LanguageSelector](../ae-skos/sko01-La
 
 ### Language Detection
 
-Detect available languages with counts from the endpoint.
+Detect available languages with counts from SKOS concepts only.
+
+> **Note:** Collections and ConceptSchemes are ignored, but concepts typically have the same languages so this should be good enough.
 
 **Query:**
 ```sparql
-SELECT (LANG(?label) AS ?lang) (COUNT(?label) AS ?count)
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX skosxl: <http://www.w3.org/2008/05/skos-xl#>
+SELECT ?lang (COUNT(?label) AS ?count)
 WHERE {
-  ?s ?p ?label .
-  FILTER (isLiteral(?label) && LANG(?label) != "")
+  ?concept a skos:Concept .
+  {
+    ?concept skos:prefLabel|skos:altLabel|skos:hiddenLabel|skos:definition|skos:scopeNote ?label .
+  } UNION {
+    ?concept skosxl:prefLabel/skosxl:literalForm ?label .
+  } UNION {
+    ?concept skosxl:altLabel/skosxl:literalForm ?label .
+  }
+  BIND(LANG(?label) AS ?lang)
+  FILTER(?lang != "")
 }
-GROUP BY (LANG(?label))
+GROUP BY ?lang
 ORDER BY DESC(?count)
 ```
 
@@ -259,7 +271,7 @@ interface SPARQLEndpoint {
   - "Testing connection..."
   - "Analyzing endpoint structure..."
   - "Done!" or error message
-  - Elapsed time shown after 1 second (e.g., "Testing connection... (2s)")
+  - Elapsed time shown after 2 seconds (e.g., "Testing connection... (3s)")
 - Dialog stays open on error to show what went wrong
 
 #### Test Connection

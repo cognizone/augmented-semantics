@@ -18,7 +18,7 @@ const props = defineProps<{
   regularLabels?: LabelValue[]
 }>()
 
-const { shouldShowLangTag, sortLabels } = useLabelResolver()
+const { sortLabels } = useLabelResolver()
 
 // Filter out XL labels that have the same value+lang as regular labels
 const filteredLabels = computed(() => {
@@ -36,6 +36,23 @@ const filteredLabels = computed(() => {
 
 // Count of hidden XL labels (matching regular labels)
 const hiddenCount = computed(() => props.labels.length - filteredLabels.value.length)
+
+// Hidden XL labels (those matching regular labels)
+const hiddenLabels = computed(() => {
+  if (!props.regularLabels?.length) return []
+
+  const regularKeys = new Set(
+    props.regularLabels.map(l => `${l.value}|${l.lang || ''}`)
+  )
+
+  return props.labels.filter(xl => {
+    const key = `${xl.literalForm.value}|${xl.literalForm.lang || ''}`
+    return regularKeys.has(key)
+  })
+})
+
+// Toggle for showing hidden labels
+const showHiddenXL = ref(false)
 
 interface GroupedLabel {
   key: string
@@ -73,6 +90,32 @@ const groupedLabels = computed(() => {
   }).filter(Boolean)
 })
 
+// Grouped hidden labels (same structure as groupedLabels)
+const groupedHiddenLabels = computed(() => {
+  const groups = new Map<string, GroupedLabel>()
+
+  for (const label of hiddenLabels.value) {
+    const key = `${label.literalForm.value}|${label.literalForm.lang || ''}`
+    if (!groups.has(key)) {
+      groups.set(key, {
+        key,
+        literalForm: label.literalForm,
+        labels: []
+      })
+    }
+    groups.get(key)!.labels.push(label)
+  }
+
+  const values = Array.from(groups.values())
+  const labelValues = values.map(g => g.literalForm)
+  const sorted = sortLabels(labelValues)
+
+  return sorted.map(lv => {
+    const key = `${lv.value}|${lv.lang || ''}`
+    return groups.get(key)!
+  }).filter(Boolean)
+})
+
 // Track which groups are expanded
 const expandedGroups = ref<Set<string>>(new Set())
 
@@ -93,20 +136,80 @@ function isExpanded(key: string): boolean {
 
 <template>
   <div class="xl-labels-container">
-    <!-- Hidden indicator when XL labels match regular labels -->
-    <span v-if="hiddenCount > 0 && groupedLabels.length === 0" class="xl-hidden-indicator">
-      ({{ hiddenCount }} XL hidden)
-    </span>
-    <span v-else-if="hiddenCount > 0" class="xl-hidden-indicator">
-      (+{{ hiddenCount }} XL hidden)
-    </span>
+    <!-- Hidden indicator when XL labels match regular labels - clickable to expand -->
+    <button
+      v-if="hiddenCount > 0"
+      class="xl-hidden-toggle"
+      @click="showHiddenXL = !showHiddenXL"
+      :title="showHiddenXL ? 'Hide XL labels that match regular labels' : 'Show XL labels that match regular labels'"
+    >
+      <span v-if="groupedLabels.length === 0">({{ hiddenCount }} XL hidden)</span>
+      <span v-else>(+{{ hiddenCount }} XL hidden)</span>
+      <i :class="showHiddenXL ? 'pi pi-chevron-up' : 'pi pi-chevron-down'"></i>
+    </button>
+
+    <!-- Hidden XL labels (matching regular labels) - shown when expanded -->
+    <div v-if="showHiddenXL && groupedHiddenLabels.length > 0" class="xl-labels-group xl-hidden-group">
+      <div v-for="group in groupedHiddenLabels" :key="'hidden-' + group.key" class="xl-label-item xl-hidden-item">
+        <div class="xl-label-header" @click="toggleGroup('hidden-' + group.key)">
+          <span class="xl-indicator xl-hidden-badge">[XL]</span>
+          <span class="xl-literal">
+            {{ group.literalForm.value }}
+            <span v-if="group.literalForm.lang" class="lang-tag">
+              {{ group.literalForm.lang }}
+            </span>
+          </span>
+          <span v-if="group.labels.length > 1" class="collapse-count" :title="`${group.labels.length} label resources with same value`">
+            {{ group.labels.length }}
+          </span>
+          <Button
+            :icon="isExpanded('hidden-' + group.key) ? 'pi pi-chevron-up' : 'pi pi-chevron-down'"
+            severity="secondary"
+            text
+            rounded
+            size="small"
+            class="expand-btn"
+          />
+        </div>
+
+        <div v-if="isExpanded('hidden-' + group.key)" class="xl-label-details">
+          <div v-for="(label, idx) in group.labels" :key="label.uri" class="xl-label-entry">
+            <div v-if="group.labels.length > 1" class="entry-header">
+              Label {{ idx + 1 }} of {{ group.labels.length }}
+            </div>
+            <div class="xl-detail-row">
+              <span class="detail-label">URI:</span>
+              <a
+                v-if="isValidURI(label.uri)"
+                :href="label.uri"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="detail-value uri-link"
+              >
+                {{ label.uri }}
+                <i class="pi pi-external-link"></i>
+              </a>
+              <span v-else class="detail-value">{{ label.uri }}</span>
+            </div>
+            <div class="xl-detail-row">
+              <span class="detail-label">literalForm:</span>
+              <span class="detail-value">
+                {{ label.literalForm.value }}
+                <span v-if="label.literalForm.lang" class="lang-tag">{{ label.literalForm.lang }}</span>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
   <div v-if="groupedLabels.length > 0" class="xl-labels-group">
     <div v-for="group in groupedLabels" :key="group.key" class="xl-label-item">
       <div class="xl-label-header" @click="toggleGroup(group.key)">
         <span class="xl-indicator">[XL]</span>
         <span class="xl-literal">
           {{ group.literalForm.value }}
-          <span v-if="group.literalForm.lang && shouldShowLangTag(group.literalForm.lang)" class="lang-tag">
+          <span v-if="group.literalForm.lang" class="lang-tag">
             {{ group.literalForm.lang }}
           </span>
         </span>
@@ -168,11 +271,47 @@ function isExpanded(key: string): boolean {
   display: contents;
 }
 
-.xl-hidden-indicator {
+.xl-hidden-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
   font-size: 0.75rem;
   color: var(--p-text-muted-color);
   font-style: italic;
+  background: none;
+  border: none;
+  padding: 0.125rem 0.25rem;
   margin-left: 0.25rem;
+  cursor: pointer;
+  border-radius: 3px;
+  font-family: inherit;
+}
+
+.xl-hidden-toggle:hover {
+  background: var(--p-surface-100);
+  color: var(--p-text-color);
+}
+
+.xl-hidden-toggle i {
+  font-size: 0.625rem;
+}
+
+.xl-hidden-group {
+  width: 100%;
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background: var(--p-surface-50);
+  border-radius: 4px;
+  border: 1px dashed var(--p-surface-300);
+}
+
+.xl-hidden-item {
+  opacity: 0.8;
+}
+
+.xl-hidden-badge {
+  background: var(--p-surface-200) !important;
+  color: var(--p-text-muted-color) !important;
 }
 
 .xl-labels-group {

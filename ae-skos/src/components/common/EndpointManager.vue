@@ -61,6 +61,10 @@ const loadingLanguages = ref(false)
 const languagePriorities = ref<string[]>([])
 const detectedLanguages = ref<{ lang: string; count: number }[]>([])
 
+// Delete confirmation dialog state
+const showDeleteDialog = ref(false)
+const deleteTarget = ref<SPARQLEndpoint | null>(null)
+
 // Elapsed time for language detection (shows after 2 seconds)
 const languageElapsed = useElapsedTime(loadingLanguages)
 
@@ -286,9 +290,21 @@ async function handleSave() {
 }
 
 function handleDelete(endpoint: SPARQLEndpoint) {
-  if (confirm(`Delete endpoint "${endpoint.name}"?`)) {
-    endpointStore.removeEndpoint(endpoint.id)
+  deleteTarget.value = endpoint
+  showDeleteDialog.value = true
+}
+
+function confirmDelete() {
+  if (deleteTarget.value) {
+    endpointStore.removeEndpoint(deleteTarget.value.id)
   }
+  showDeleteDialog.value = false
+  deleteTarget.value = null
+}
+
+function cancelDelete() {
+  showDeleteDialog.value = false
+  deleteTarget.value = null
 }
 
 async function handleConnect(endpoint: SPARQLEndpoint) {
@@ -784,6 +800,38 @@ function onLanguageReorder(event: { value: string[] }) {
       </div>
     </template>
   </Dialog>
+
+  <!-- Delete Confirmation Dialog -->
+  <Dialog
+    v-model:visible="showDeleteDialog"
+    header="Delete Endpoint"
+    :style="{ width: '400px' }"
+    :modal="true"
+    :closable="true"
+  >
+    <div class="delete-confirmation">
+      <i class="pi pi-exclamation-triangle warning-icon"></i>
+      <p>Are you sure you want to delete <strong>{{ deleteTarget?.name }}</strong>?</p>
+      <p class="delete-warning">This action cannot be undone.</p>
+    </div>
+
+    <template #footer>
+      <div class="dialog-footer">
+        <Button
+          label="Cancel"
+          severity="secondary"
+          text
+          @click="cancelDelete"
+        />
+        <Button
+          label="Delete"
+          icon="pi pi-trash"
+          severity="danger"
+          @click="confirmDelete"
+        />
+      </div>
+    </template>
+  </Dialog>
 </template>
 
 <style scoped>
@@ -1040,5 +1088,28 @@ function onLanguageReorder(event: { value: string[] }) {
 
 :deep(.p-orderlist-list) {
   padding: 0.5rem;
+}
+
+/* Delete Confirmation Dialog */
+.delete-confirmation {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.5rem;
+}
+
+.delete-confirmation .warning-icon {
+  font-size: 3rem;
+  color: var(--p-orange-500);
+}
+
+.delete-confirmation p {
+  margin: 0;
+}
+
+.delete-confirmation .delete-warning {
+  font-size: 0.875rem;
+  color: var(--p-text-muted-color);
 }
 </style>

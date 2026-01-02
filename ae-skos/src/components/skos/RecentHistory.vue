@@ -13,8 +13,10 @@ import { useLabelResolver } from '../../composables'
 import Button from 'primevue/button'
 import Listbox from 'primevue/listbox'
 
+import type { HistoryEntry } from '../../types'
+
 const emit = defineEmits<{
-  selectConcept: [uri: string]
+  selectConcept: [entry: HistoryEntry]
 }>()
 
 const conceptStore = useConceptStore()
@@ -42,8 +44,8 @@ function formatRelativeTime(isoString: string): string {
 }
 
 // Select a history item
-function selectItem(entry: { uri: string; label: string }) {
-  emit('selectConcept', entry.uri)
+function selectItem(entry: HistoryEntry) {
+  emit('selectConcept', entry)
 }
 
 // Clear history

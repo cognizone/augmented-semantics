@@ -69,6 +69,19 @@
 - [x] documentation properties (Definition, Scope Note, etc.) show language tag first
 - [x] documentation properties use grid layout: lang tag aligned, text wraps below itself
 
+- [x] concept URI moved closer to concept label (in header)
+- [x] hidden XL labels now expandable (clicking "(N XL hidden)" shows them)
+- [x] section headers (Labels, Documentation, etc.) darker/bolder for visibility
+- [x] elapsed time delay increased to 2 seconds (was 1s)
+- [x] SPARQL timeout increased to 60 seconds (was 30s)
+- [x] language detection query now only scans SKOS concepts (not all literals)
+- [x] history entries now include endpointUrl and schemeUri for cross-endpoint navigation
+- [x] clicking recent history item auto-switches endpoint/scheme if different
+- [x] delete endpoint now uses proper PrimeVue dialog (not browser confirm())
+- [x] XL labels always show language tag (not filtered by shouldShowLangTag)
+- [x] XL labels deduplicated by URI when loading (fixes duplicate display)
+- [x] inScheme chips navigate within app if scheme is local, else open external
+
 ## Backlog
 
 (none) 

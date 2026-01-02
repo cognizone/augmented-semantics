@@ -83,6 +83,19 @@ const loading = computed(() => store.loading)
 const showLoading = useDelayedLoading(loading)  // Shows after 300ms
 ```
 
+### Elapsed Time (com03)
+
+Show elapsed seconds for long-running operations (appears after 2 seconds):
+
+```typescript
+import { useElapsedTime } from '@/composables'
+
+const loading = ref(true)
+const elapsed = useElapsedTime(loading)
+// Template: {{ stepName }}{{ elapsed ? ` (${elapsed})` : '' }}
+// After 2 seconds: "Loading... (3s)"
+```
+
 ### Error Boundary (com03)
 
 Wrap content with ErrorBoundary to catch unexpected JavaScript errors:
