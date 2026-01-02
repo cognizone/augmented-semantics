@@ -30,32 +30,7 @@ const conceptStore = useConceptStore()
 const endpointStore = useEndpointStore()
 const schemeStore = useSchemeStore()
 const languageStore = useLanguageStore()
-const { shouldShowLangTag } = useLabelResolver()
-
-// Helper to select best label based on language priorities
-function selectBestLabelByLanguage(
-  labels: { value: string; lang: string; type: string }[]
-): { value: string; lang: string } | undefined {
-  if (!labels.length) return undefined
-
-  // 1. Try preferred language
-  const preferred = labels.find(l => l.lang === languageStore.preferred)
-  if (preferred) return preferred
-
-  // 2. Try endpoint's language priorities in order
-  const priorities = endpointStore.current?.languagePriorities || []
-  for (const lang of priorities) {
-    const match = labels.find(l => l.lang === lang)
-    if (match) return match
-  }
-
-  // 3. Try labels without language tag
-  const noLang = labels.find(l => !l.lang || l.lang === '')
-  if (noLang) return noLang
-
-  // 4. Return first available
-  return labels[0]
-}
+const { shouldShowLangTag, selectLabel } = useLabelResolver()
 
 // Delayed loading - show spinner only after 300ms to prevent flicker
 const showTreeLoading = useDelayedLoading(computed(() => conceptStore.loadingTree))
@@ -266,7 +241,7 @@ async function loadTopConcepts() {
         const labelsOfType = data.labels.filter(l => l.type === labelType)
         if (!labelsOfType.length) continue
 
-        const selected = selectBestLabelByLanguage(labelsOfType)
+        const selected = selectLabel(labelsOfType)
         if (selected) {
           bestLabel = selected.value
           bestLabelLang = selected.lang || undefined
@@ -387,7 +362,7 @@ async function loadChildren(uri: string) {
         const labelsOfType = data.labels.filter(l => l.type === labelType)
         if (!labelsOfType.length) continue
 
-        const selected = selectBestLabelByLanguage(labelsOfType)
+        const selected = selectLabel(labelsOfType)
         if (selected) {
           bestLabel = selected.value
           bestLabelLang = selected.lang || undefined

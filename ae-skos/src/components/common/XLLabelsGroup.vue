@@ -20,13 +20,17 @@ const props = defineProps<{
 
 const { sortLabels } = useLabelResolver()
 
+// Helper function to create a set of keys from regular labels
+function createRegularKeysSet(regularLabels?: LabelValue[]): Set<string> {
+  if (!regularLabels?.length) return new Set()
+  return new Set(regularLabels.map(l => `${l.value}|${l.lang || ''}`))
+}
+
 // Filter out XL labels that have the same value+lang as regular labels
 const filteredLabels = computed(() => {
   if (!props.regularLabels?.length) return props.labels
 
-  const regularKeys = new Set(
-    props.regularLabels.map(l => `${l.value}|${l.lang || ''}`)
-  )
+  const regularKeys = createRegularKeysSet(props.regularLabels)
 
   return props.labels.filter(xl => {
     const key = `${xl.literalForm.value}|${xl.literalForm.lang || ''}`
@@ -41,9 +45,7 @@ const hiddenCount = computed(() => props.labels.length - filteredLabels.value.le
 const hiddenLabels = computed(() => {
   if (!props.regularLabels?.length) return []
 
-  const regularKeys = new Set(
-    props.regularLabels.map(l => `${l.value}|${l.lang || ''}`)
-  )
+  const regularKeys = createRegularKeysSet(props.regularLabels)
 
   return props.labels.filter(xl => {
     const key = `${xl.literalForm.value}|${xl.literalForm.lang || ''}`
@@ -60,11 +62,11 @@ interface GroupedLabel {
   labels: XLLabel[]
 }
 
-// Group labels by literalForm value + lang
-const groupedLabels = computed(() => {
+// Helper function to group labels by literalForm value + lang
+function groupLabelsByLiteralForm(labels: XLLabel[]): GroupedLabel[] {
   const groups = new Map<string, GroupedLabel>()
 
-  for (const label of filteredLabels.value) {
+  for (const label of labels) {
     const key = `${label.literalForm.value}|${label.literalForm.lang || ''}`
     if (!groups.has(key)) {
       groups.set(key, {
@@ -78,8 +80,6 @@ const groupedLabels = computed(() => {
 
   // Convert to array and sort by language priority
   const values = Array.from(groups.values())
-
-  // Sort using the same logic as sortLabels
   const labelValues = values.map(g => g.literalForm)
   const sorted = sortLabels(labelValues)
 
@@ -88,33 +88,13 @@ const groupedLabels = computed(() => {
     const key = `${lv.value}|${lv.lang || ''}`
     return groups.get(key)!
   }).filter(Boolean)
-})
+}
+
+// Group labels by literalForm value + lang
+const groupedLabels = computed(() => groupLabelsByLiteralForm(filteredLabels.value))
 
 // Grouped hidden labels (same structure as groupedLabels)
-const groupedHiddenLabels = computed(() => {
-  const groups = new Map<string, GroupedLabel>()
-
-  for (const label of hiddenLabels.value) {
-    const key = `${label.literalForm.value}|${label.literalForm.lang || ''}`
-    if (!groups.has(key)) {
-      groups.set(key, {
-        key,
-        literalForm: label.literalForm,
-        labels: []
-      })
-    }
-    groups.get(key)!.labels.push(label)
-  }
-
-  const values = Array.from(groups.values())
-  const labelValues = values.map(g => g.literalForm)
-  const sorted = sortLabels(labelValues)
-
-  return sorted.map(lv => {
-    const key = `${lv.value}|${lv.lang || ''}`
-    return groups.get(key)!
-  }).filter(Boolean)
-})
+const groupedHiddenLabels = computed(() => groupLabelsByLiteralForm(hiddenLabels.value))
 
 // Track which groups are expanded
 const expandedGroups = ref<Set<string>>(new Set())
