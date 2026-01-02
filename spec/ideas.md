@@ -66,6 +66,8 @@
 - [x] elapsed time shown on endpoint connecting (EndpointSelector)
 - [x] elapsed time shown on concept tree loading
 
+- [x] documentation properties (Definition, Scope Note, etc.) show language tag first
+
 ## Backlog
 
 (none) 

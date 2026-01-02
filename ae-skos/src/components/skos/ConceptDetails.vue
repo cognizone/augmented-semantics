@@ -489,6 +489,9 @@ async function loadXLLabels(uri: string, details: ConceptDetails) {
   try {
     const results = await executeSparql(endpoint, query, { retries: 0 })
 
+    // Track seen URIs to deduplicate
+    const seenXLUris = new Set<string>()
+
     for (const binding of results.results.bindings) {
       const xlUri = binding.xlLabel?.value
       const labelType = binding.labelType?.value
@@ -496,6 +499,10 @@ async function loadXLLabels(uri: string, details: ConceptDetails) {
       const literalLang = binding.literalLang?.value
 
       if (!xlUri || !literalForm) continue
+
+      // Deduplicate by XL label URI
+      if (seenXLUris.has(xlUri)) continue
+      seenXLUris.add(xlUri)
 
       const xlLabel = {
         uri: xlUri,
@@ -808,10 +815,28 @@ watch(
     <div v-else-if="details" class="details-content">
       <!-- Header -->
       <div class="details-header">
-        <h2 class="concept-label">
-          {{ displayTitle }}
-          <span v-if="showHeaderLangTag" class="header-lang-tag">{{ displayLang }}</span>
-        </h2>
+        <div class="header-left">
+          <h2 class="concept-label">
+            {{ displayTitle }}
+            <span v-if="showHeaderLangTag" class="header-lang-tag">{{ displayLang }}</span>
+          </h2>
+          <div class="concept-uri">
+            <a v-if="isValidURI(details.uri)" :href="details.uri" target="_blank" class="uri-link">
+              {{ details.uri }}
+              <i class="pi pi-external-link"></i>
+            </a>
+            <span v-else class="uri-text">{{ details.uri }}</span>
+            <Button
+              icon="pi pi-copy"
+              severity="secondary"
+              text
+              rounded
+              size="small"
+              v-tooltip.left="'Copy URI'"
+              @click="copyToClipboard(details.uri, 'URI')"
+            />
+          </div>
+        </div>
         <div class="header-actions">
           <Button
             icon="pi pi-code"
@@ -833,23 +858,6 @@ watch(
           />
           <Menu ref="exportMenu" :model="exportMenuItems" :popup="true" />
         </div>
-      </div>
-
-      <div class="concept-uri">
-        <a v-if="isValidURI(details.uri)" :href="details.uri" target="_blank" class="uri-link">
-          {{ details.uri }}
-          <i class="pi pi-external-link"></i>
-        </a>
-        <span v-else class="uri-text">{{ details.uri }}</span>
-        <Button
-          icon="pi pi-copy"
-          severity="secondary"
-          text
-          rounded
-          size="small"
-          v-tooltip.left="'Copy URI'"
-          @click="copyToClipboard(details.uri, 'URI')"
-        />
       </div>
 
       <Divider />
@@ -946,8 +954,8 @@ watch(
               :key="i"
               class="doc-value"
             >
+              <span v-if="def.lang" class="lang-tag lang-tag-first">{{ def.lang }}</span>
               {{ def.value }}
-              <span v-if="def.lang" class="lang-tag">{{ def.lang }}</span>
             </p>
           </div>
         </div>
@@ -960,8 +968,8 @@ watch(
               :key="i"
               class="doc-value"
             >
+              <span v-if="note.lang" class="lang-tag lang-tag-first">{{ note.lang }}</span>
               {{ note.value }}
-              <span v-if="note.lang" class="lang-tag">{{ note.lang }}</span>
             </p>
           </div>
         </div>
@@ -974,8 +982,8 @@ watch(
               :key="i"
               class="doc-value"
             >
+              <span v-if="note.lang" class="lang-tag lang-tag-first">{{ note.lang }}</span>
               {{ note.value }}
-              <span v-if="note.lang" class="lang-tag">{{ note.lang }}</span>
             </p>
           </div>
         </div>
@@ -988,8 +996,8 @@ watch(
               :key="i"
               class="doc-value"
             >
+              <span v-if="note.lang" class="lang-tag lang-tag-first">{{ note.lang }}</span>
               {{ note.value }}
-              <span v-if="note.lang" class="lang-tag">{{ note.lang }}</span>
             </p>
           </div>
         </div>
@@ -1002,8 +1010,8 @@ watch(
               :key="i"
               class="doc-value"
             >
+              <span v-if="note.lang" class="lang-tag lang-tag-first">{{ note.lang }}</span>
               {{ note.value }}
-              <span v-if="note.lang" class="lang-tag">{{ note.lang }}</span>
             </p>
           </div>
         </div>
@@ -1016,8 +1024,8 @@ watch(
               :key="i"
               class="doc-value example"
             >
+              <span v-if="ex.lang" class="lang-tag lang-tag-first">{{ ex.lang }}</span>
               {{ ex.value }}
-              <span v-if="ex.lang" class="lang-tag">{{ ex.lang }}</span>
             </p>
           </div>
         </div>
@@ -1292,6 +1300,12 @@ watch(
   gap: 1rem;
 }
 
+.header-left {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
 .concept-label {
   margin: 0;
   font-size: 1.25rem;
@@ -1319,7 +1333,6 @@ watch(
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin-top: 0.125rem;
 }
 
 .uri-link {
@@ -1352,9 +1365,9 @@ watch(
 .details-section h3 {
   margin: 0 0 0.75rem 0;
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
-  color: var(--p-text-muted-color);
+  color: var(--p-text-color);
   letter-spacing: 0.05em;
 }
 
@@ -1398,6 +1411,11 @@ watch(
   border-radius: 3px;
   margin-left: 0.25rem;
   vertical-align: middle;
+}
+
+.lang-tag.lang-tag-first {
+  margin-left: 0;
+  margin-right: 0.5rem;
 }
 
 .notation {
