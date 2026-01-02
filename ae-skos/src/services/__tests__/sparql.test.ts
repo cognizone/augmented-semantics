@@ -393,41 +393,40 @@ describe('detectGraphs', () => {
     vi.restoreAllMocks()
   })
 
-  it('returns graphs from endpoint', async () => {
+  it('returns graph count from endpoint', async () => {
+    // COUNT query returns count result
     const mockResults = createSparqlResults([
-      { graph: 'http://example.org/graph1' },
-      { graph: 'http://example.org/graph2' },
+      { count: '5' },
     ])
     global.fetch = mockFetchSuccess(mockResults)
 
     const endpoint = createMockEndpoint()
     const result = await detectGraphs(endpoint)
 
-    expect(result.hasNamedGraphs).toBe(true)
-    expect(result.graphs).toEqual([
-      'http://example.org/graph1',
-      'http://example.org/graph2',
-    ])
+    expect(result.supportsNamedGraphs).toBe(true)
+    expect(result.graphCount).toBe(5)
+    expect(result.graphCountExact).toBe(true)
   })
 
-  it('returns empty for endpoints without named graphs', async () => {
+  it('returns zero for endpoints without named graphs', async () => {
+    // All three steps return 0/empty, so we end up at Step 3 with no graphs
     global.fetch = mockFetchSuccess(createEmptyResults())
 
     const endpoint = createMockEndpoint()
     const result = await detectGraphs(endpoint)
 
-    expect(result.hasNamedGraphs).toBe(false)
-    expect(result.graphs).toEqual([])
+    expect(result.supportsNamedGraphs).toBe(false)
+    expect(result.graphCount).toBe(0)
   })
 
-  it('returns empty on query failure', async () => {
+  it('returns null on query failure', async () => {
     global.fetch = mockFetchError(500, 'Server Error')
 
     const endpoint = createMockEndpoint()
     const result = await detectGraphs(endpoint)
 
-    expect(result.hasNamedGraphs).toBe(false)
-    expect(result.graphs).toEqual([])
+    expect(result.supportsNamedGraphs).toBe(null)
+    expect(result.graphCount).toBe(null)
   })
 })
 
@@ -437,26 +436,23 @@ describe('detectDuplicates', () => {
   })
 
   it('detects duplicates when present', async () => {
-    const mockResults = createSparqlResults([
-      { s: 'http://example.org/s1', p: 'http://example.org/p1', o: 'value', graphCount: '2' },
-    ])
-    global.fetch = mockFetchSuccess(mockResults)
+    // ASK queries return { boolean: true/false }
+    global.fetch = mockFetchSuccess({ boolean: true })
 
     const endpoint = createMockEndpoint()
     const result = await detectDuplicates(endpoint)
 
     expect(result.hasDuplicates).toBe(true)
-    expect(result.count).toBe(1)
   })
 
   it('returns no duplicates when none found', async () => {
-    global.fetch = mockFetchSuccess(createEmptyResults())
+    // ASK queries return { boolean: true/false }
+    global.fetch = mockFetchSuccess({ boolean: false })
 
     const endpoint = createMockEndpoint()
     const result = await detectDuplicates(endpoint)
 
     expect(result.hasDuplicates).toBe(false)
-    expect(result.count).toBeUndefined()
   })
 
   it('handles query failure gracefully', async () => {
@@ -526,6 +522,33 @@ describe('detectLanguages', () => {
       { lang: 'en', count: 100 },
       { lang: 'fr', count: 50 },
     ])
+  })
+
+  it('uses GRAPH pattern when useGraphScope is true', async () => {
+    const mockResults = {
+      head: { vars: ['lang', 'count'] },
+      results: {
+        bindings: [
+          { lang: { type: 'literal', value: 'en' }, count: { type: 'literal', value: '100' } },
+        ],
+      },
+    }
+    let capturedBody = ''
+    global.fetch = vi.fn().mockImplementation((_url: string, options: RequestInit) => {
+      capturedBody = options.body as string
+      return Promise.resolve({
+        ok: true,
+        headers: new Headers({ 'content-type': 'application/sparql-results+json' }),
+        json: () => Promise.resolve(mockResults),
+      })
+    })
+
+    const endpoint = createMockEndpoint()
+    await detectLanguages(endpoint, true)
+
+    // Verify the query contains GRAPH pattern
+    const query = decodeURIComponent(capturedBody.replace('query=', ''))
+    expect(query).toContain('GRAPH ?g')
   })
 })
 

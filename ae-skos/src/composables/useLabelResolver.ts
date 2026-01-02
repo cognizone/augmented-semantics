@@ -1,34 +1,37 @@
 /**
  * useLabelResolver - Label resolution and sorting composable
  *
- * Provides consistent label selection and ordering based on language priorities.
- * Supports per-endpoint configuration with priority list and current override.
+ * Provides consistent label selection based on user's preferred language,
+ * with fallback to endpoint's language priorities.
  *
  * @see /spec/ae-skos/sko01-LanguageSelector.md
  */
-import { useLanguageStore } from '../stores'
+import { useLanguageStore, useSettingsStore, useEndpointStore } from '../stores'
 import type { LabelValue, XLLabel } from '../types'
 
 export function useLabelResolver() {
   const languageStore = useLanguageStore()
+  const settingsStore = useSettingsStore()
+  const endpointStore = useEndpointStore()
 
   /**
-   * Select the best label from an array based on language priority.
-   * If current override is set, use only that language.
-   * Otherwise, walk priority list in order, first match wins.
-   * Fallback: no-lang label, then first available.
+   * Select the best label from an array based on language priorities.
+   * Priority:
+   * 1. Preferred language (global setting)
+   * 2. Endpoint's language priorities (in order)
+   * 3. Labels without language tag
+   * 4. First available
    */
   function selectLabel(labels: LabelValue[]): LabelValue | null {
     if (!labels || labels.length === 0) return null
 
-    // If current override is set, prefer that language
-    if (languageStore.current) {
-      const current = labels.find(l => l.lang === languageStore.current)
-      if (current) return current
-    }
+    // Try preferred language first
+    const preferred = labels.find(l => l.lang === languageStore.preferred)
+    if (preferred) return preferred
 
-    // Walk priority list in order
-    for (const lang of languageStore.priorities) {
+    // Try endpoint's language priorities in order
+    const priorities = endpointStore.current?.languagePriorities || []
+    for (const lang of priorities) {
       const match = labels.find(l => l.lang === lang)
       if (match) return match
     }
@@ -44,8 +47,8 @@ export function useLabelResolver() {
   /**
    * Select the best label with SKOS-XL fallback.
    * Priority:
-   * 1. skos:prefLabel (in language priority order)
-   * 2. skosxl:prefLabel literalForm (in language priority order)
+   * 1. skos:prefLabel (in preferred language)
+   * 2. skosxl:prefLabel literalForm (in preferred language)
    * 3. Other fallbacks (no-lang, first available)
    */
   function selectLabelWithXL(
@@ -67,11 +70,12 @@ export function useLabelResolver() {
   }
 
   /**
-   * Sort and deduplicate labels by priority position:
+   * Sort and deduplicate labels:
    * 1. Deduplicate by value+lang combination
-   * 2. Languages in priority list (in order)
-   * 3. Labels without language tag
-   * 4. Remaining languages alphabetically
+   * 2. Preferred language first
+   * 3. Endpoint's language priorities (in order)
+   * 4. Labels without language tag
+   * 5. Remaining languages alphabetically
    */
   function sortLabels(labels: LabelValue[]): LabelValue[] {
     if (!labels || labels.length === 0) return []
@@ -85,25 +89,25 @@ export function useLabelResolver() {
       return true
     })
 
-    const priorities = languageStore.priorities
+    const preferred = languageStore.preferred
+    const priorities = endpointStore.current?.languagePriorities || []
 
     return deduplicated.sort((a, b) => {
       const aLang = a.lang || ''
       const bLang = b.lang || ''
 
-      const aIndex = priorities.indexOf(aLang)
-      const bIndex = priorities.indexOf(bLang)
+      // Preferred language comes first
+      if (aLang === preferred && bLang !== preferred) return -1
+      if (bLang === preferred && aLang !== preferred) return 1
 
-      // Both in priority list - sort by position
-      if (aIndex !== -1 && bIndex !== -1) {
-        return aIndex - bIndex
-      }
+      // Then by endpoint's language priorities
+      const aIdx = priorities.indexOf(aLang)
+      const bIdx = priorities.indexOf(bLang)
+      if (aIdx !== -1 && bIdx === -1) return -1
+      if (bIdx !== -1 && aIdx === -1) return 1
+      if (aIdx !== -1 && bIdx !== -1 && aIdx !== bIdx) return aIdx - bIdx
 
-      // Only one in priority list - prioritized first
-      if (aIndex !== -1) return -1
-      if (bIndex !== -1) return 1
-
-      // No-lang labels come before non-prioritized languages
+      // No-lang labels come before other languages
       if (!aLang && bLang) return -1
       if (aLang && !bLang) return 1
 
@@ -114,42 +118,28 @@ export function useLabelResolver() {
 
   /**
    * Check if language tag should be shown.
-   * Returns true if lang differs from the display language
-   * (current override or first priority).
+   * Returns true if lang differs from the preferred language,
+   * or if showPreferredLanguageTag is enabled.
    */
   function shouldShowLangTag(lang?: string): boolean {
+    if (!settingsStore.showLanguageTags) return false
     if (!lang) return false
-    return lang !== languageStore.displayLanguage
+    if (settingsStore.showPreferredLanguageTag) return true
+    return lang !== languageStore.preferred
   }
 
   /**
-   * Get the display language (current override or first priority).
+   * Get the preferred display language.
    */
   function getDisplayLanguage(): string {
-    return languageStore.displayLanguage
-  }
-
-  /**
-   * Get the priority list.
-   */
-  function getPriorities(): string[] {
-    return languageStore.priorities
-  }
-
-  /**
-   * Get the current override language.
-   */
-  function getCurrent(): string | null {
-    return languageStore.current
-  }
-
-  // Backward compatibility
-  function getPreferred(): string {
     return languageStore.preferred
   }
 
-  function getFallback(): string {
-    return languageStore.fallback
+  /**
+   * Get the preferred language.
+   */
+  function getPreferred(): string {
+    return languageStore.preferred
   }
 
   return {
@@ -158,10 +148,6 @@ export function useLabelResolver() {
     sortLabels,
     shouldShowLangTag,
     getDisplayLanguage,
-    getPriorities,
-    getCurrent,
-    // Backward compatibility
     getPreferred,
-    getFallback,
   }
 }

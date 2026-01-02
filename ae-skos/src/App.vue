@@ -1,19 +1,67 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { RouterView } from 'vue-router'
-import { useUIStore, useConceptStore } from './stores'
+import { useUIStore, useConceptStore, useSettingsStore, useLanguageStore, useEndpointStore } from './stores'
 import Toast from 'primevue/toast'
+import Button from 'primevue/button'
+import Dialog from 'primevue/dialog'
+import Checkbox from 'primevue/checkbox'
+import Select from 'primevue/select'
 
 import EndpointSelector from './components/common/EndpointSelector.vue'
 import EndpointManager from './components/common/EndpointManager.vue'
 import ErrorBoundary from './components/common/ErrorBoundary.vue'
-import LanguageSelector from './components/common/LanguageSelector.vue'
 import SchemeSelector from './components/skos/SchemeSelector.vue'
 import ConceptBreadcrumb from './components/skos/ConceptBreadcrumb.vue'
 
 const uiStore = useUIStore()
 const conceptStore = useConceptStore()
+const settingsStore = useSettingsStore()
+const languageStore = useLanguageStore()
+const endpointStore = useEndpointStore()
 const showEndpointManager = ref(false)
+const showSettingsDialog = ref(false)
+
+// Language options from current endpoint - use priorities order if available
+const languageOptions = computed(() => {
+  const endpoint = endpointStore.current
+  const detected = endpoint?.analysis?.languages || []
+
+  // Build a map of lang -> count for lookup
+  const countMap = new Map(detected.map(l => [l.lang, l.count]))
+
+  // Use saved priorities or default alphabetical with 'en' first
+  let orderedLangs: string[]
+  if (endpoint?.languagePriorities?.length) {
+    orderedLangs = endpoint.languagePriorities
+  } else {
+    orderedLangs = [...detected.map(l => l.lang)].sort((a, b) => {
+      if (a === 'en') return -1
+      if (b === 'en') return 1
+      return a.localeCompare(b)
+    })
+  }
+
+  return orderedLangs.map(lang => ({
+    label: `${lang} (${countMap.get(lang)?.toLocaleString() || 0})`,
+    value: lang,
+  }))
+})
+
+// Language display names
+const languageNames: Record<string, string> = {
+  en: 'English', nl: 'Nederlands', fr: 'Français', de: 'Deutsch',
+  es: 'Español', it: 'Italiano', pt: 'Português', pl: 'Polski',
+  ru: 'Русский', ja: '日本語', zh: '中文', ar: 'العربية', ko: '한국어',
+  sv: 'Svenska', da: 'Dansk', fi: 'Suomi', no: 'Norsk', cs: 'Čeština',
+  el: 'Ελληνικά', hu: 'Magyar', ro: 'Română', sk: 'Slovenčina',
+  bg: 'Български', hr: 'Hrvatski', sl: 'Slovenščina', et: 'Eesti',
+  lv: 'Latviešu', lt: 'Lietuvių', mt: 'Malti', ga: 'Gaeilge', rm: 'Rumantsch',
+}
+
+function getLanguageName(code: string): string {
+  return languageNames[code] || code.toUpperCase()
+}
 
 function selectConcept(uri: string) {
   if (uri) {
@@ -75,10 +123,17 @@ onUnmounted(() => {
       <div class="header-center">
         <EndpointSelector @manage="showEndpointManager = true" />
         <SchemeSelector />
-        <LanguageSelector />
       </div>
       <div class="header-right">
-        <!-- Reserved for future actions -->
+        <Button
+          :label="getLanguageName(languageStore.preferred)"
+          icon="pi pi-cog"
+          iconPos="right"
+          severity="secondary"
+          text
+          aria-label="Settings"
+          @click="showSettingsDialog = true"
+        />
       </div>
     </header>
 
@@ -97,6 +152,81 @@ onUnmounted(() => {
 
     <!-- Endpoint Manager Dialog -->
     <EndpointManager v-model:visible="showEndpointManager" />
+
+    <!-- Settings Dialog -->
+    <Dialog
+      v-model:visible="showSettingsDialog"
+      header="Settings"
+      :style="{ width: '400px' }"
+      :modal="true"
+    >
+      <div class="settings-content">
+        <div class="setting-group">
+          <label class="setting-group-label">Preferred Language</label>
+          <Select
+            v-model="languageStore.preferred"
+            :options="languageOptions"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Select language"
+            class="language-select"
+            @change="(e: any) => languageStore.setPreferred(e.value)"
+          />
+          <span v-if="!languageOptions.length" class="setting-hint">
+            Connect to an endpoint and run analysis to detect languages
+          </span>
+        </div>
+
+        <div class="setting-item">
+          <Checkbox
+            v-model="settingsStore.showDatatypes"
+            inputId="showDatatypes"
+            :binary="true"
+          />
+          <label for="showDatatypes" class="setting-label">
+            Show datatypes
+            <span class="setting-description">Display datatype tags (e.g., xsd:date) on property values</span>
+          </label>
+        </div>
+
+        <div class="setting-item">
+          <Checkbox
+            v-model="settingsStore.showLanguageTags"
+            inputId="showLanguageTags"
+            :binary="true"
+          />
+          <label for="showLanguageTags" class="setting-label">
+            Show language tags
+            <span class="setting-description">Display language tags on labels when different from preferred</span>
+          </label>
+        </div>
+
+        <div v-if="settingsStore.showLanguageTags" class="setting-item nested">
+          <Checkbox
+            v-model="settingsStore.showPreferredLanguageTag"
+            inputId="showPreferredLanguageTag"
+            :binary="true"
+          />
+          <label for="showPreferredLanguageTag" class="setting-label">
+            Include preferred language
+            <span class="setting-description">Also show tag when label matches preferred language</span>
+          </label>
+        </div>
+      </div>
+
+      <template #footer>
+        <Button
+          label="Reset to defaults"
+          severity="secondary"
+          text
+          @click="settingsStore.resetToDefaults()"
+        />
+        <Button
+          label="Close"
+          @click="showSettingsDialog = false"
+        />
+      </template>
+    </Dialog>
 
     <!-- ARIA live regions for screen readers -->
     <div class="sr-only" role="status" aria-live="polite">
@@ -173,5 +303,55 @@ onUnmounted(() => {
   .header-center {
     display: none;
   }
+}
+
+/* Settings dialog */
+.settings-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.setting-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.setting-item.nested {
+  margin-left: 1.75rem;
+}
+
+.setting-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  cursor: pointer;
+}
+
+.setting-description {
+  font-size: 0.75rem;
+  color: var(--p-text-muted-color);
+}
+
+.setting-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.setting-group-label {
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.language-select {
+  width: 100%;
+}
+
+.setting-hint {
+  font-size: 0.75rem;
+  color: var(--p-text-muted-color);
+  font-style: italic;
 }
 </style>

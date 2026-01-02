@@ -82,6 +82,9 @@ const showSidebar = computed(() => uiStore.sidebarOpen || uiStore.isDesktop)
 // Flag to prevent circular updates
 let isUpdatingFromUrl = false
 
+// Track previous concept for history push detection
+let previousConceptUri: string | null = null
+
 // Update URL when state changes
 function updateUrl() {
   if (isUpdatingFromUrl) return
@@ -113,8 +116,15 @@ function updateUrl() {
     query[URL_PARAMS.SEARCH] = conceptStore.searchQuery
   }
 
-  // Update URL without navigation
-  router.replace({ query })
+  // Use push for concept navigation (enables back button), replace for other updates
+  const conceptChanged = conceptStore.selectedUri !== previousConceptUri
+  previousConceptUri = conceptStore.selectedUri
+
+  if (conceptChanged && conceptStore.selectedUri) {
+    router.push({ query })
+  } else {
+    router.replace({ query })
+  }
 }
 
 // Restore state from URL on mount
@@ -149,6 +159,8 @@ function restoreFromUrl() {
   const conceptUri = params[URL_PARAMS.CONCEPT] as string | undefined
   if (conceptUri) {
     conceptStore.selectConcept(conceptUri)
+    // Initialize tracking to avoid pushing history on restore
+    previousConceptUri = conceptUri
   }
 
   // Restore search
@@ -173,6 +185,29 @@ watch(
     updateUrl()
   },
   { deep: true }
+)
+
+// Watch route changes (back/forward navigation)
+watch(
+  () => route.query,
+  (newQuery, oldQuery) => {
+    // Only restore if concept changed (back/forward navigation)
+    const newConcept = newQuery[URL_PARAMS.CONCEPT] as string | undefined
+    const oldConcept = oldQuery?.[URL_PARAMS.CONCEPT] as string | undefined
+
+    if (newConcept !== oldConcept) {
+      isUpdatingFromUrl = true
+      previousConceptUri = newConcept || null
+
+      if (newConcept) {
+        conceptStore.selectConcept(newConcept)
+      } else {
+        conceptStore.selectConcept(null)
+      }
+
+      isUpdatingFromUrl = false
+    }
+  }
 )
 
 // Restore state from URL on mount

@@ -330,6 +330,68 @@ describe('endpoint store', () => {
     })
   })
 
+  describe('languagePriorities', () => {
+    it('stores languagePriorities on endpoint', () => {
+      const store = useEndpointStore()
+
+      const endpoint = store.addEndpoint({
+        name: 'Test',
+        url: 'https://example.org/sparql',
+        languagePriorities: ['en', 'fr', 'de'],
+      })
+
+      expect(endpoint.languagePriorities).toEqual(['en', 'fr', 'de'])
+    })
+
+    it('updates languagePriorities via updateEndpoint', () => {
+      const store = useEndpointStore()
+
+      const endpoint = store.addEndpoint({
+        name: 'Test',
+        url: 'https://example.org/sparql',
+        languagePriorities: ['en'],
+      })
+
+      store.updateEndpoint(endpoint.id, {
+        languagePriorities: ['fr', 'de', 'en'],
+      })
+
+      const updated = store.endpoints.find(e => e.id === endpoint.id)
+      expect(updated?.languagePriorities).toEqual(['fr', 'de', 'en'])
+    })
+
+    it('preserves languagePriorities when updating other fields', () => {
+      const store = useEndpointStore()
+
+      const endpoint = store.addEndpoint({
+        name: 'Test',
+        url: 'https://example.org/sparql',
+        languagePriorities: ['en', 'fr'],
+      })
+
+      store.updateEndpoint(endpoint.id, {
+        name: 'Updated Name',
+      })
+
+      const updated = store.endpoints.find(e => e.id === endpoint.id)
+      expect(updated?.name).toBe('Updated Name')
+      expect(updated?.languagePriorities).toEqual(['en', 'fr'])
+    })
+
+    it('current endpoint has languagePriorities accessible', () => {
+      const store = useEndpointStore()
+
+      const endpoint = store.addEndpoint({
+        name: 'Test',
+        url: 'https://example.org/sparql',
+        languagePriorities: ['nl', 'en'],
+      })
+
+      store.selectEndpoint(endpoint.id)
+      expect(store.current?.languagePriorities).toEqual(['nl', 'en'])
+    })
+  })
+
   describe('persistence', () => {
     it('loads from localStorage on init', () => {
       const storedEndpoints = [
@@ -350,6 +412,25 @@ describe('endpoint store', () => {
 
       expect(store.endpoints).toHaveLength(1)
       expect(store.endpoints[0]?.name).toBe('Stored Endpoint')
+    })
+
+    it('loads languagePriorities from localStorage', () => {
+      const storedEndpoints = [
+        {
+          id: 'stored-1',
+          name: 'Stored Endpoint',
+          url: 'https://stored.org/sparql',
+          auth: { type: 'none' },
+          createdAt: '2024-01-01T00:00:00Z',
+          accessCount: 5,
+          languagePriorities: ['de', 'en', 'fr'],
+        },
+      ]
+
+      vi.mocked(localStorage.getItem).mockReturnValue(JSON.stringify(storedEndpoints))
+
+      const store = useEndpointStore()
+      expect(store.endpoints[0]?.languagePriorities).toEqual(['de', 'en', 'fr'])
     })
 
     it('handles invalid JSON gracefully', () => {

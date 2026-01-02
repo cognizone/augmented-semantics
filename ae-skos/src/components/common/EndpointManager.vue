@@ -11,8 +11,8 @@
  * @see /spec/common/com01-EndpointManager.md
  */
 import { ref, reactive, computed } from 'vue'
-import { useEndpointStore, useLanguageStore } from '../../stores'
-import { testConnection, analyzeEndpoint, detectLanguages } from '../../services/sparql'
+import { useEndpointStore } from '../../stores'
+import { testConnection, analyzeEndpoint, detectLanguages, detectGraphs, detectDuplicates } from '../../services/sparql'
 import {
   isValidEndpointUrl,
   checkEndpointSecurity,
@@ -41,7 +41,6 @@ const emit = defineEmits<{
 }>()
 
 const endpointStore = useEndpointStore()
-const languageStore = useLanguageStore()
 
 // Dialog state
 const showAddDialog = ref(false)
@@ -57,16 +56,27 @@ const analyzeElapsed = useElapsedTime(analyzing)
 // Language settings dialog state
 const showLanguageDialog = ref(false)
 const languageEndpoint = ref<SPARQLEndpoint | null>(null)
-const loadingLanguages = ref(false)
 const languagePriorities = ref<string[]>([])
-const detectedLanguages = ref<{ lang: string; count: number }[]>([])
 
 // Delete confirmation dialog state
 const showDeleteDialog = ref(false)
 const deleteTarget = ref<SPARQLEndpoint | null>(null)
 
-// Elapsed time for language detection (shows after 2 seconds)
-const languageElapsed = useElapsedTime(loadingLanguages)
+// SPARQL capabilities dialog state
+const showCapabilitiesDialog = ref(false)
+const capabilitiesEndpoint = ref<SPARQLEndpoint | null>(null)
+const reanalyzing = ref(false)
+const reanalyzeStep = ref<string | null>(null)
+const reanalyzeDuration = ref<number | null>(null) // Total analysis time in seconds
+const reanalyzeElapsed = useElapsedTime(reanalyzing)
+
+// Analysis log entries
+interface AnalysisLogEntry {
+  message: string
+  status: 'pending' | 'success' | 'warning' | 'error' | 'info'
+}
+const analysisLog = ref<AnalysisLogEntry[]>([])
+
 
 // Form state
 const form = reactive({
@@ -262,10 +272,10 @@ async function handleSave() {
 
       endpointStore.updateEndpoint(newEndpoint.id, {
         analysis: {
-          hasNamedGraphs: analysis.hasNamedGraphs,
-          graphs: analysis.graphs,
+          supportsNamedGraphs: analysis.supportsNamedGraphs,
+          graphCount: analysis.graphCount,
+          graphCountExact: analysis.graphCountExact,
           hasDuplicateTriples: analysis.hasDuplicateTriples,
-          duplicateCount: analysis.duplicateCount,
           analyzedAt: analysis.analyzedAt,
         },
       })
@@ -326,85 +336,243 @@ function formatDate(dateStr?: string) {
 }
 
 // Language settings functions
-async function openLanguageDialog(endpoint: SPARQLEndpoint) {
+function openLanguageDialog(endpoint: SPARQLEndpoint) {
   languageEndpoint.value = endpoint
-  showLanguageDialog.value = true
-  loadingLanguages.value = true
-
-  // Load existing config for this endpoint
-  const config = languageStore.configs[endpoint.id] || { priorities: ['en'], current: null }
-  languagePriorities.value = [...config.priorities]
-
-  // Detect languages from endpoint
-  try {
-    detectedLanguages.value = await detectLanguages(endpoint)
-
-    // Auto-add detected languages not in priorities (sorted alphabetically)
-    const newLangs = detectedLanguages.value
-      .map(d => d.lang)
-      .filter(lang => !languagePriorities.value.includes(lang))
-      .sort((a, b) => a.localeCompare(b))
-
-    if (newLangs.length > 0) {
-      languagePriorities.value = [...languagePriorities.value, ...newLangs]
-    }
-  } catch (e) {
-    console.error('Failed to detect languages:', e)
-    detectedLanguages.value = []
-  } finally {
-    loadingLanguages.value = false
+  // Load existing priorities or default to alphabetical with 'en' first
+  const detected = endpoint.analysis?.languages?.map(l => l.lang) || []
+  if (endpoint.languagePriorities?.length) {
+    languagePriorities.value = [...endpoint.languagePriorities]
+  } else {
+    // Default: alphabetical, but 'en' always first
+    const sorted = [...detected].sort((a, b) => {
+      if (a === 'en') return -1
+      if (b === 'en') return 1
+      return a.localeCompare(b)
+    })
+    languagePriorities.value = sorted
   }
+  showLanguageDialog.value = true
 }
 
 function closeLanguageDialog() {
   showLanguageDialog.value = false
   languageEndpoint.value = null
   languagePriorities.value = []
-  detectedLanguages.value = []
 }
 
-function saveLanguageSettings() {
+function saveLanguagePriorities() {
   if (!languageEndpoint.value) return
-
-  // Save to language store
-  languageStore.configs[languageEndpoint.value.id] = {
-    priorities: languagePriorities.value,
-    current: null
-  }
-
-  // Persist to localStorage
-  const key = `ae-language-${languageEndpoint.value.id}`
-  localStorage.setItem(key, JSON.stringify({
-    priorities: languagePriorities.value,
-    current: null
-  }))
-
-  // If this is the current endpoint, update active config
-  if (languageEndpoint.value.id === endpointStore.currentId) {
-    languageStore.setEndpoint(languageEndpoint.value.id)
-  }
-
+  endpointStore.updateEndpoint(languageEndpoint.value.id, {
+    languagePriorities: languagePriorities.value,
+  })
   closeLanguageDialog()
-}
-
-function getLanguageCount(lang: string): number | undefined {
-  const found = detectedLanguages.value.find(d => d.lang === lang)
-  return found?.count
-}
-
-function removeLanguageFromPriorities(lang: string) {
-  languagePriorities.value = languagePriorities.value.filter(l => l !== lang)
-}
-
-function addLanguageToPriorities(lang: string) {
-  if (!languagePriorities.value.includes(lang)) {
-    languagePriorities.value = [...languagePriorities.value, lang]
-  }
 }
 
 function onLanguageReorder(event: { value: string[] }) {
   languagePriorities.value = event.value
 }
+
+// Computed: languages from current endpoint's analysis with counts
+const endpointLanguages = computed(() => {
+  return languageEndpoint.value?.analysis?.languages || []
+})
+
+// Get count for a language code
+function getLanguageCount(lang: string): number | undefined {
+  return endpointLanguages.value.find(l => l.lang === lang)?.count
+}
+
+// SPARQL capabilities dialog functions
+function openCapabilitiesDialog(endpoint: SPARQLEndpoint) {
+  capabilitiesEndpoint.value = endpoint
+  showCapabilitiesDialog.value = true
+}
+
+function closeCapabilitiesDialog() {
+  showCapabilitiesDialog.value = false
+  capabilitiesEndpoint.value = null
+}
+
+// Helper to format query method for display
+function formatQueryMethod(method: string): string {
+  switch (method) {
+    case 'empty-pattern': return 'empty graph pattern'
+    case 'blank-node-pattern': return 'triple pattern'
+    case 'fallback-limit': return 'enumeration'
+    case 'none': return 'not supported'
+    default: return method
+  }
+}
+
+// Add entry to analysis log
+function logStep(message: string, status: AnalysisLogEntry['status'] = 'pending') {
+  analysisLog.value.push({ message, status })
+}
+
+// Update last log entry status
+function updateLastLog(message: string, status: AnalysisLogEntry['status']) {
+  const last = analysisLog.value[analysisLog.value.length - 1]
+  if (last) {
+    last.message = message
+    last.status = status
+  }
+}
+
+async function reanalyzeEndpoint() {
+  if (!capabilitiesEndpoint.value) return
+
+  const endpoint = capabilitiesEndpoint.value
+  const endpointId = endpoint.id
+  const startTime = performance.now()
+  reanalyzing.value = true
+  analysisLog.value = [] // Clear previous log
+  reanalyzeStep.value = 'Analyzing...'
+
+  try {
+    // Step 1: Detect graphs
+    logStep('(1/3) Detecting named graphs...', 'pending')
+    const graphResult = await detectGraphs(endpoint)
+    console.log('Graph detection result:', graphResult)
+
+    if (graphResult.supportsNamedGraphs === null) {
+      updateLastLog(`(1/3) Graphs: not supported`, 'warning')
+    } else if (graphResult.supportsNamedGraphs === false) {
+      updateLastLog(`(1/3) Graphs: none found`, 'info')
+    } else {
+      const countStr = graphResult.graphCountExact
+        ? `${graphResult.graphCount} graphs`
+        : `${graphResult.graphCount}+ graphs`
+      updateLastLog(`(1/3) Graphs: ${countStr} (${formatQueryMethod(graphResult.queryMethod)})`, 'success')
+    }
+
+    // Step 2: Detect duplicates (only if multiple graphs exist)
+    let hasDuplicateTriples: boolean | null = null
+    if (graphResult.supportsNamedGraphs === true && graphResult.graphCount && graphResult.graphCount > 1) {
+      logStep('(2/3) Checking for duplicates...', 'pending')
+      const duplicateResult = await detectDuplicates(endpoint)
+      console.log('Duplicate detection result:', duplicateResult)
+      hasDuplicateTriples = duplicateResult.hasDuplicates
+      if (hasDuplicateTriples) {
+        updateLastLog(`(2/3) Duplicates: found across graphs`, 'warning')
+      } else {
+        updateLastLog(`(2/3) Duplicates: none`, 'success')
+      }
+    } else if (graphResult.supportsNamedGraphs === null) {
+      // Graphs not supported = no duplicates possible
+      hasDuplicateTriples = false
+      logStep('(2/3) Duplicates: not applicable (no graph support)', 'info')
+    } else {
+      // No graphs or single graph = no duplicates possible
+      hasDuplicateTriples = false
+      logStep('(2/3) Duplicates: none (single graph)', 'info')
+    }
+
+    // Step 3: Detect languages
+    // Use GRAPH scope if duplicates exist to ensure concept+labels are in same graph
+    const useGraphScope = hasDuplicateTriples === true
+    const queryMode = useGraphScope ? 'graph-scoped' : 'default'
+    logStep(`(3/3) Detecting languages (${queryMode})...`, 'pending')
+    const languages = await detectLanguages(endpoint, useGraphScope)
+    console.log('Language detection result:', languages)
+    updateLastLog(`(3/3) Languages: found ${languages.length} (${queryMode})`, 'success')
+
+    // Calculate total duration
+    reanalyzeDuration.value = Math.round((performance.now() - startTime) / 1000)
+
+    const analysis = {
+      supportsNamedGraphs: graphResult.supportsNamedGraphs,
+      graphCount: graphResult.graphCount,
+      graphCountExact: graphResult.graphCountExact,
+      hasDuplicateTriples,
+      languages,
+      analyzedAt: new Date().toISOString(),
+    }
+    console.log('Saving analysis:', analysis)
+
+    endpointStore.updateEndpoint(endpointId, { analysis })
+
+    // Refresh the reference to get updated data
+    const updated = endpointStore.endpoints.find(e => e.id === endpointId)
+    if (updated) {
+      capabilitiesEndpoint.value = updated
+    }
+
+    reanalyzeStep.value = null
+    reanalyzing.value = false
+  } catch (e) {
+    console.error('Reanalyze error:', e)
+    logStep(`Error: ${e instanceof Error ? e.message : 'Analysis failed'}`, 'error')
+    reanalyzeDuration.value = Math.round((performance.now() - startTime) / 1000)
+    reanalyzeStep.value = null
+    reanalyzing.value = false
+  }
+}
+
+// Format number with thousand separator
+function formatCount(n: number): string {
+  return n.toLocaleString('de-DE') // Uses period as thousand separator
+}
+
+// Computed properties for capabilities display
+const graphStatus = computed(() => {
+  const analysis = capabilitiesEndpoint.value?.analysis
+  if (!analysis) return 'Unknown'
+  if (analysis.supportsNamedGraphs === null) return 'Not supported'
+  if (analysis.supportsNamedGraphs === false) return 'None'
+  if (analysis.graphCount == null) return 'Detected'
+  if (analysis.graphCountExact) return `${formatCount(analysis.graphCount)} graphs`
+  return `${formatCount(analysis.graphCount)}+ graphs`
+})
+
+const graphSeverity = computed(() => {
+  const analysis = capabilitiesEndpoint.value?.analysis
+  if (!analysis) return 'secondary'
+  if (analysis.supportsNamedGraphs === null || analysis.supportsNamedGraphs === false) return 'secondary'
+  return 'info'
+})
+
+const graphIcon = computed(() => {
+  const analysis = capabilitiesEndpoint.value?.analysis
+  if (!analysis) return 'pi pi-minus-circle muted-icon'
+  if (analysis.supportsNamedGraphs === null || analysis.supportsNamedGraphs === false) {
+    return 'pi pi-minus-circle muted-icon'
+  }
+  return 'pi pi-check-circle success-icon'
+})
+
+const graphDescription = computed(() => {
+  const analysis = capabilitiesEndpoint.value?.analysis
+  if (!analysis) return null
+  if (analysis.supportsNamedGraphs === null) return 'This endpoint doesn\'t support named graph queries'
+  if (analysis.supportsNamedGraphs === false) return null
+  if (analysis.graphCountExact === false) return 'This endpoint uses named graphs (exact count unavailable)'
+  return 'This endpoint uses named graphs to organize data'
+})
+
+const duplicateStatus = computed(() => {
+  const analysis = capabilitiesEndpoint.value?.analysis
+  if (!analysis || analysis.hasDuplicateTriples === null) return 'Unknown'
+  return analysis.hasDuplicateTriples ? 'Detected' : 'None'
+})
+
+const duplicateSeverity = computed(() => {
+  const analysis = capabilitiesEndpoint.value?.analysis
+  if (!analysis || analysis.hasDuplicateTriples === null) return 'secondary'
+  return analysis.hasDuplicateTriples ? 'warn' : 'success'
+})
+
+const duplicateIcon = computed(() => {
+  const analysis = capabilitiesEndpoint.value?.analysis
+  if (!analysis || analysis.hasDuplicateTriples === null) return 'pi pi-minus-circle muted-icon'
+  return analysis.hasDuplicateTriples ? 'pi pi-exclamation-triangle warning-icon' : 'pi pi-check-circle success-icon'
+})
+
+const duplicateDescription = computed(() => {
+  const analysis = capabilitiesEndpoint.value?.analysis
+  if (!analysis || analysis.hasDuplicateTriples === null) return null
+  if (analysis.hasDuplicateTriples) return 'Same triples exist in multiple graphs. This may cause duplicate results.'
+  return null
+})
 </script>
 
 <template>
@@ -501,6 +669,16 @@ function onLanguageReorder(event: { value: string[] }) {
                 aria-label="Language settings"
                 v-tooltip.top="'Language settings'"
                 @click="openLanguageDialog(data)"
+              />
+              <Button
+                icon="pi pi-sitemap"
+                severity="info"
+                text
+                rounded
+                size="small"
+                aria-label="SPARQL capabilities"
+                v-tooltip.top="'SPARQL capabilities'"
+                @click="openCapabilitiesDialog(data)"
               />
               <Button
                 icon="pi pi-pencil"
@@ -715,72 +893,40 @@ function onLanguageReorder(event: { value: string[] }) {
   <!-- Language Settings Dialog -->
   <Dialog
     v-model:visible="showLanguageDialog"
-    :header="`Language Settings - ${languageEndpoint?.name || ''}`"
-    :style="{ width: '500px' }"
+    :header="`Language Priority - ${languageEndpoint?.name || ''}`"
+    :style="{ width: '450px' }"
     :modal="true"
     :closable="true"
     @hide="closeLanguageDialog"
   >
     <div class="language-settings">
-      <div v-if="loadingLanguages" class="loading-languages">
-        <i class="pi pi-spin pi-spinner"></i>
-        <span>
-          Detecting languages...
-          <span v-if="languageElapsed.show.value" class="elapsed-time">({{ languageElapsed.elapsed.value }}s)</span>
-        </span>
+      <div v-if="!endpointLanguages.length" class="no-languages">
+        <i class="pi pi-info-circle"></i>
+        <p>No languages detected.</p>
+        <p class="hint">Run "Re-analyze" from SPARQL Capabilities to detect languages.</p>
       </div>
 
-      <template v-else>
-        <div class="language-section">
-          <h4>Language Priority</h4>
-          <p class="section-description">
-            Drag to reorder. First language is the default display language.
-          </p>
+      <div v-else>
+        <p class="section-description">
+          Use the buttons to reorder. First language is used when preferred is unavailable.
+        </p>
 
-          <OrderList
-            v-model="languagePriorities"
-            dataKey="value"
-            :listStyle="{ height: 'auto', maxHeight: '300px' }"
-            @reorder="onLanguageReorder"
-          >
-            <template #item="{ item, index }">
-              <div class="language-item">
-                <span class="language-rank">{{ index + 1 }}.</span>
-                <span class="language-code">{{ item }}</span>
-                <span v-if="getLanguageCount(item)" class="language-count">
-                  ({{ getLanguageCount(item)?.toLocaleString() }})
-                </span>
-                <Button
-                  v-if="languagePriorities.length > 1"
-                  icon="pi pi-times"
-                  severity="danger"
-                  text
-                  rounded
-                  size="small"
-                  class="remove-btn"
-                  @click.stop="removeLanguageFromPriorities(item)"
-                />
-              </div>
-            </template>
-          </OrderList>
-        </div>
-
-        <div v-if="detectedLanguages.some(d => !languagePriorities.includes(d.lang))" class="language-section">
-          <h4>Available Languages</h4>
-          <div class="available-languages">
-            <Button
-              v-for="lang in detectedLanguages.filter(d => !languagePriorities.includes(d.lang))"
-              :key="lang.lang"
-              :label="`${lang.lang} (${lang.count.toLocaleString()})`"
-              icon="pi pi-plus"
-              severity="secondary"
-              outlined
-              size="small"
-              @click="addLanguageToPriorities(lang.lang)"
-            />
-          </div>
-        </div>
-      </template>
+        <OrderList
+          v-model="languagePriorities"
+          :listStyle="{ height: 'auto', maxHeight: '350px' }"
+          @reorder="onLanguageReorder"
+        >
+          <template #item="{ item, index }">
+            <div class="language-item">
+              <span class="language-rank">{{ index + 1 }}.</span>
+              <span class="language-code">{{ item }}</span>
+              <span v-if="getLanguageCount(item)" class="language-count">
+                ({{ getLanguageCount(item)?.toLocaleString() }})
+              </span>
+            </div>
+          </template>
+        </OrderList>
+      </div>
     </div>
 
     <template #footer>
@@ -794,8 +940,8 @@ function onLanguageReorder(event: { value: string[] }) {
         <Button
           label="Save"
           icon="pi pi-check"
-          :disabled="languagePriorities.length === 0"
-          @click="saveLanguageSettings"
+          :disabled="!languagePriorities.length"
+          @click="saveLanguagePriorities"
         />
       </div>
     </template>
@@ -828,6 +974,88 @@ function onLanguageReorder(event: { value: string[] }) {
           icon="pi pi-trash"
           severity="danger"
           @click="confirmDelete"
+        />
+      </div>
+    </template>
+  </Dialog>
+
+  <!-- SPARQL Capabilities Dialog -->
+  <Dialog
+    v-model:visible="showCapabilitiesDialog"
+    :header="`SPARQL Capabilities - ${capabilitiesEndpoint?.name || ''}`"
+    :style="{ width: '500px' }"
+    :modal="true"
+    :closable="true"
+    @hide="closeCapabilitiesDialog"
+  >
+    <div class="capabilities-info">
+      <!-- Named Graphs -->
+      <div class="capability-item">
+        <div class="capability-row">
+          <i :class="graphIcon"></i>
+          <span class="capability-label">Named Graphs</span>
+          <Tag :severity="graphSeverity">{{ graphStatus }}</Tag>
+        </div>
+        <p v-if="graphDescription" class="capability-description">
+          {{ graphDescription }}
+        </p>
+      </div>
+
+      <!-- Duplicate Triples -->
+      <div class="capability-item">
+        <div class="capability-row">
+          <i :class="duplicateIcon"></i>
+          <span class="capability-label">Duplicate Triples</span>
+          <Tag :severity="duplicateSeverity">{{ duplicateStatus }}</Tag>
+        </div>
+        <p v-if="duplicateDescription" class="capability-description">
+          {{ duplicateDescription }}
+        </p>
+      </div>
+
+      <!-- Analysis Log -->
+      <div v-if="analysisLog.length > 0" class="analysis-log">
+        <div
+          v-for="(entry, index) in analysisLog"
+          :key="index"
+          class="log-entry"
+          :class="entry.status"
+        >
+          <i v-if="entry.status === 'pending'" class="pi pi-spin pi-spinner"></i>
+          <i v-else-if="entry.status === 'success'" class="pi pi-check-circle"></i>
+          <i v-else-if="entry.status === 'warning'" class="pi pi-exclamation-triangle"></i>
+          <i v-else-if="entry.status === 'error'" class="pi pi-times-circle"></i>
+          <i v-else class="pi pi-info-circle"></i>
+          <span>{{ entry.message }}</span>
+        </div>
+        <div v-if="reanalyzing && reanalyzeElapsed.show.value" class="elapsed-time">
+          ({{ reanalyzeElapsed.elapsed.value }}s)
+        </div>
+      </div>
+
+      <!-- Analysis Timestamp -->
+      <div v-if="capabilitiesEndpoint?.analysis?.analyzedAt && analysisLog.length === 0" class="capabilities-footer">
+        <span class="capabilities-timestamp">
+          Analyzed: {{ new Date(capabilitiesEndpoint.analysis.analyzedAt).toLocaleString() }}
+          <span v-if="reanalyzeDuration !== null" class="analysis-duration">({{ reanalyzeDuration }}s)</span>
+        </span>
+      </div>
+    </div>
+
+    <template #footer>
+      <div class="dialog-footer">
+        <Button
+          label="Re-analyze"
+          icon="pi pi-refresh"
+          severity="secondary"
+          outlined
+          :loading="reanalyzing"
+          @click="reanalyzeEndpoint"
+        />
+        <Button
+          label="Close"
+          severity="secondary"
+          @click="closeCapabilitiesDialog"
         />
       </div>
     </template>
@@ -1036,24 +1264,56 @@ function onLanguageReorder(event: { value: string[] }) {
   color: var(--p-text-muted-color);
 }
 
-.language-section h4 {
-  margin: 0 0 0.25rem 0;
-  font-size: 0.875rem;
-  font-weight: 600;
-}
-
 .section-description {
   margin: 0 0 0.75rem 0;
-  font-size: 0.75rem;
+  font-size: 0.875rem;
   color: var(--p-text-muted-color);
+}
+
+.no-languages {
+  text-align: center;
+  padding: 1rem;
+  color: var(--p-text-muted-color);
+}
+
+.no-languages i {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.no-languages p {
+  margin: 0.25rem 0;
+}
+
+.no-languages .hint {
+  font-size: 0.75rem;
+}
+
+.language-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
 }
 
 .language-item {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.5rem;
-  width: 100%;
+  padding: 0.75rem;
+  border-radius: 6px;
+}
+
+.language-item.clickable {
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.language-item.clickable:hover {
+  background: var(--p-surface-100);
+}
+
+.language-item.selected {
+  background: var(--p-primary-50);
 }
 
 .language-rank {
@@ -1063,27 +1323,14 @@ function onLanguageReorder(event: { value: string[] }) {
 }
 
 .language-code {
-  font-weight: 500;
-  text-transform: uppercase;
+  font-weight: 600;
+  min-width: 2rem;
 }
 
 .language-count {
-  font-size: 0.75rem;
+  font-size: 0.875rem;
   color: var(--p-text-muted-color);
-}
-
-.remove-btn {
-  margin-left: auto;
-}
-
-.available-languages {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-:deep(.p-orderlist-controls) {
-  display: none;
+  flex: 1;
 }
 
 :deep(.p-orderlist-list) {
@@ -1111,5 +1358,101 @@ function onLanguageReorder(event: { value: string[] }) {
 .delete-confirmation .delete-warning {
   font-size: 0.875rem;
   color: var(--p-text-muted-color);
+}
+
+/* SPARQL Capabilities Dialog */
+.capabilities-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.capability-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.capability-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.capability-row .success-icon {
+  color: var(--p-green-500);
+}
+
+.capability-row .warning-icon {
+  color: var(--p-orange-500);
+}
+
+.capability-row .muted-icon {
+  color: var(--p-text-muted-color);
+}
+
+.capability-label {
+  font-weight: 500;
+  flex: 1;
+}
+
+.capability-description {
+  margin: 0;
+  padding-left: 1.5rem;
+  font-size: 0.75rem;
+  color: var(--p-text-muted-color);
+}
+
+.capabilities-footer {
+  margin-top: 0.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--p-surface-200);
+}
+
+.capabilities-timestamp {
+  font-size: 0.75rem;
+  color: var(--p-text-muted-color);
+}
+
+.analysis-log {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: var(--p-surface-100);
+  border-radius: 6px;
+  margin-top: 0.5rem;
+}
+
+.log-entry {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.log-entry.pending {
+  color: var(--p-primary-color);
+}
+
+.log-entry.success {
+  color: var(--p-green-600);
+}
+
+.log-entry.warning {
+  color: var(--p-orange-500);
+}
+
+.log-entry.error {
+  color: var(--p-red-500);
+}
+
+.log-entry.info {
+  color: var(--p-text-muted-color);
+}
+
+.analysis-duration {
+  color: var(--p-text-muted-color);
+  margin-left: 0.25rem;
 }
 </style>

@@ -143,11 +143,10 @@ async function loadBreadcrumb(uri: string) {
           if (!labelsOfType.length) continue
 
           const preferred = labelsOfType.find(l => l.lang === languageStore.preferred)
-          const fallback = labelsOfType.find(l => l.lang === languageStore.fallback)
           const noLang = labelsOfType.find(l => l.lang === '')
           const any = labelsOfType[0]
 
-          const selected = preferred || fallback || noLang || any
+          const selected = preferred || noLang || any
           if (selected) {
             bestLabel = selected.value
             bestLabelLang = selected.lang || undefined
@@ -186,10 +185,9 @@ async function loadBreadcrumb(uri: string) {
 
       // Pick best label
       const preferred = labels.find(l => l.lang === languageStore.preferred)
-      const fallback = labels.find(l => l.lang === languageStore.fallback)
       const noLang = labels.find(l => l.lang === '')
       const any = labels[0]
-      const bestLabel = preferred?.value || fallback?.value || noLang?.value || any?.value
+      const bestLabel = preferred?.value || noLang?.value || any?.value
 
       conceptStore.setBreadcrumb([{ uri, label: bestLabel }])
     } catch {

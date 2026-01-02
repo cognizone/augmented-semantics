@@ -18,13 +18,12 @@
  * @see /spec/ae-skos/sko04-ConceptDetails.md
  */
 import { ref, watch, computed } from 'vue'
-import { useConceptStore, useEndpointStore, useLanguageStore, useSchemeStore } from '../../stores'
+import { useConceptStore, useEndpointStore, useLanguageStore, useSchemeStore, useSettingsStore } from '../../stores'
 import { executeSparql, withPrefixes, logger, isValidURI, fetchRawRdf, resolveUris, formatQualifiedName } from '../../services'
 import { useDelayedLoading, useLabelResolver } from '../../composables'
 import type { RdfFormat } from '../../services'
 import type { ConceptDetails, ConceptRef } from '../../types'
 import Button from 'primevue/button'
-import Chip from 'primevue/chip'
 import Divider from 'primevue/divider'
 import Dialog from 'primevue/dialog'
 import Message from 'primevue/message'
@@ -43,8 +42,34 @@ const conceptStore = useConceptStore()
 const endpointStore = useEndpointStore()
 const languageStore = useLanguageStore()
 const schemeStore = useSchemeStore()
+const settingsStore = useSettingsStore()
 const toast = useToast()
 const { selectLabelWithXL, sortLabels, shouldShowLangTag } = useLabelResolver()
+
+// Helper to select best label based on language priorities
+function selectBestLabelByLanguage(
+  labels: { value: string; lang: string; type: string }[]
+): { value: string; lang: string } | undefined {
+  if (!labels.length) return undefined
+
+  // 1. Try preferred language
+  const preferred = labels.find(l => l.lang === languageStore.preferred)
+  if (preferred) return preferred
+
+  // 2. Try endpoint's language priorities in order
+  const priorities = endpointStore.current?.languagePriorities || []
+  for (const lang of priorities) {
+    const match = labels.find(l => l.lang === lang)
+    if (match) return match
+  }
+
+  // 3. Try labels without language tag
+  const noLang = labels.find(l => !l.lang || l.lang === '')
+  if (noLang) return noLang
+
+  // 4. Return first available
+  return labels[0]
+}
 
 // Local state
 const error = ref<string | null>(null)
@@ -106,7 +131,7 @@ const showHeaderLangTag = computed(() => {
 const displayTitle = computed(() => {
   if (!details.value) return null
   const label = preferredLabel.value
-  const notation = details.value.notations[0]
+  const notation = details.value.notations[0]?.value
 
   if (notation && label) {
     return `${notation} - ${label}`
@@ -174,6 +199,20 @@ function getPredicateName(predicate: string): string {
   }
   // Fallback: extract local name from URI
   return predicate.split('/').pop()?.split('#').pop() || predicate
+}
+
+// Format value with boolean translation for xsd:boolean
+function formatPropertyValue(value: string, datatype?: string): string {
+  // Handle xsd:boolean with 0/1 values (Virtuoso quirk)
+  if (datatype === 'xsd:boolean' || datatype?.endsWith('#boolean')) {
+    if (value === '0' || value === 'false') {
+      return '0 (false)'
+    }
+    if (value === '1' || value === 'true') {
+      return '1 (true)'
+    }
+  }
+  return value
 }
 
 
@@ -264,8 +303,9 @@ async function loadDetails(uri: string) {
       } else if (prop.endsWith('example')) {
         details.examples.push({ value: val, lang })
       } else if (prop.endsWith('notation')) {
-        if (!details.notations.includes(val)) {
-          details.notations.push(val)
+        const datatype = binding.value?.datatype
+        if (!details.notations.some(n => n.value === val)) {
+          details.notations.push({ value: val, datatype })
         }
       } else if (prop.endsWith('broader')) {
         if (!details.broader.some(r => r.uri === val)) {
@@ -321,6 +361,22 @@ async function loadDetails(uri: string) {
       resolvedPredicates.value = await resolveUris(predicates)
     } else {
       resolvedPredicates.value = new Map()
+    }
+
+    // Resolve datatypes for notations
+    const notationDatatypes = details.notations
+      .map(n => n.datatype)
+      .filter((d): d is string => !!d)
+    if (notationDatatypes.length > 0) {
+      const datatypeMap = await resolveUris(notationDatatypes)
+      details.notations.forEach(n => {
+        if (n.datatype) {
+          const resolved = datatypeMap.get(n.datatype)
+          if (resolved) {
+            n.datatype = formatQualifiedName(resolved)
+          }
+        }
+      })
     }
 
     logger.info('ConceptDetails', 'Loaded details', {
@@ -431,34 +487,23 @@ async function loadRelatedLabels(details: ConceptDetails) {
       // Pick best label: prefLabel > xlPrefLabel > title > rdfsLabel, etc.
       const labelPriority = ['prefLabel', 'xlPrefLabel', 'title', 'rdfsLabel', 'altLabel', 'hiddenLabel']
       let bestLabel: string | undefined
+      let bestLang: string | undefined
 
       for (const labelType of labelPriority) {
         const labelsOfType = data.labels.filter(l => l.type === labelType)
         if (!labelsOfType.length) continue
 
-        // Use current override if set
-        let selected: typeof labelsOfType[0] | undefined
-        if (languageStore.current) {
-          selected = labelsOfType.find(l => l.lang === languageStore.current)
+        const selected = selectBestLabelByLanguage(labelsOfType)
+        if (selected) {
+          bestLabel = selected.value
+          bestLang = selected.lang || undefined
+          break
         }
-        // Walk full priority list
-        if (!selected) {
-          for (const lang of languageStore.priorities) {
-            selected = labelsOfType.find(l => l.lang === lang)
-            if (selected) break
-          }
-        }
-        // Fallback: no-lang, then any
-        if (!selected) {
-          selected = labelsOfType.find(l => l.lang === '') || labelsOfType[0]
-        }
-
-        bestLabel = selected?.value
-        if (bestLabel) break
       }
 
       if (bestLabel) {
         ref.label = bestLabel
+        ref.lang = bestLang
       }
     })
   } catch (e) {
@@ -560,16 +605,24 @@ async function loadOtherProperties(uri: string, details: ConceptDetails) {
   try {
     const results = await executeSparql(endpoint, query, { retries: 0 })
 
+    // Collect all datatypes for resolution
+    const datatypeUris = new Set<string>()
+
     // Group by predicate with deduplication
-    const propMap = new Map<string, Map<string, { value: string; lang?: string; isUri: boolean }>>()
+    const propMap = new Map<string, Map<string, { value: string; lang?: string; datatype?: string; isUri: boolean }>>()
 
     for (const binding of results.results.bindings) {
       const predicate = binding.predicate?.value
       const value = binding.value?.value
       const lang = binding.value?.['xml:lang']
+      const datatype = binding.value?.datatype
       const isUri = binding.value?.type === 'uri'
 
       if (!predicate || !value) continue
+
+      if (datatype) {
+        datatypeUris.add(datatype)
+      }
 
       if (!propMap.has(predicate)) {
         propMap.set(predicate, new Map())
@@ -577,14 +630,27 @@ async function loadOtherProperties(uri: string, details: ConceptDetails) {
       // Deduplicate by value+lang combination
       const key = `${value}|${lang || ''}`
       if (!propMap.get(predicate)!.has(key)) {
-        propMap.get(predicate)!.set(key, { value, lang, isUri })
+        propMap.get(predicate)!.set(key, { value, lang, datatype, isUri })
       }
     }
 
-    // Convert to OtherProperty array
+    // Resolve datatype URIs to short forms
+    const datatypeMap = datatypeUris.size > 0
+      ? await resolveUris(Array.from(datatypeUris))
+      : new Map()
+
+    // Convert to OtherProperty array with resolved datatypes
     details.otherProperties = Array.from(propMap.entries()).map(([predicate, valuesMap]) => ({
       predicate,
-      values: Array.from(valuesMap.values()),
+      values: Array.from(valuesMap.values()).map(v => {
+        if (v.datatype) {
+          const resolved = datatypeMap.get(v.datatype)
+          if (resolved) {
+            v.datatype = formatQualifiedName(resolved)
+          }
+        }
+        return v
+      }),
     }))
 
     logger.debug('ConceptDetails', 'Loaded other properties', {
@@ -626,10 +692,10 @@ function isLocalScheme(uri: string): boolean {
   return schemeStore.schemes.some(s => s.uri === uri)
 }
 
-// Navigate to a scheme (select it)
+// Navigate to a scheme (select it and show its details like in tree)
 function navigateToScheme(ref: ConceptRef) {
-  schemeStore.viewScheme(ref.uri) // View scheme details
-  conceptStore.selectConcept(null) // Clear current concept
+  schemeStore.selectScheme(ref.uri) // Switch to this scheme
+  conceptStore.selectConcept(ref.uri) // Select scheme URI to show its details
 }
 
 // Handle scheme click - navigate if local, open external otherwise
@@ -761,7 +827,7 @@ function exportAsCsv() {
   details.value.hiddenLabels.forEach(l => rows.push(['hiddenLabel', l.value, l.lang || '']))
 
   // Add notations
-  details.value.notations.forEach(n => rows.push(['notation', n, '']))
+  details.value.notations.forEach(n => rows.push(['notation', n.value, n.datatype || '']))
 
   // Add documentation
   details.value.definitions.forEach(d => rows.push(['definition', d.value, d.lang || '']))
@@ -961,7 +1027,10 @@ watch(
         <div v-if="details.notations.length" class="property-row">
           <label>Notation</label>
           <div class="label-values">
-            <code v-for="(n, i) in details.notations" :key="i" class="notation">{{ n }}</code>
+            <span v-for="(n, i) in details.notations" :key="i" class="notation-wrapper">
+              <code class="notation">{{ n.value }}</code>
+              <span v-if="settingsStore.showDatatypes && n.datatype" class="datatype-tag">{{ n.datatype }}</span>
+            </span>
           </div>
         </div>
       </section>
@@ -1062,26 +1131,28 @@ watch(
         <div v-if="details.broader.length" class="property-row">
           <label>Broader</label>
           <div class="concept-chips">
-            <Chip
+            <span
               v-for="ref in details.broader"
               :key="ref.uri"
-              :label="getRefLabel(ref)"
               class="concept-chip clickable"
               @click="navigateTo(ref)"
-            />
+            >
+              {{ getRefLabel(ref) }}<span v-if="ref.lang && shouldShowLangTag(ref.lang)" class="lang-tag">{{ ref.lang }}</span>
+            </span>
           </div>
         </div>
 
         <div v-if="details.narrower.length" class="property-row">
           <label>Narrower</label>
           <div class="concept-chips">
-            <Chip
+            <span
               v-for="ref in details.narrower"
               :key="ref.uri"
-              :label="getRefLabel(ref)"
               class="concept-chip clickable"
               @click="navigateTo(ref)"
-            />
+            >
+              {{ getRefLabel(ref) }}<span v-if="ref.lang && shouldShowLangTag(ref.lang)" class="lang-tag">{{ ref.lang }}</span>
+            </span>
           </div>
         </div>
       </section>
@@ -1093,13 +1164,14 @@ watch(
         <div class="property-row">
           <label>Related</label>
           <div class="concept-chips">
-            <Chip
+            <span
               v-for="ref in details.related"
               :key="ref.uri"
-              :label="getRefLabel(ref)"
               class="concept-chip clickable"
               @click="navigateTo(ref)"
-            />
+            >
+              {{ getRefLabel(ref) }}<span v-if="ref.lang && shouldShowLangTag(ref.lang)" class="lang-tag">{{ ref.lang }}</span>
+            </span>
           </div>
         </div>
       </section>
@@ -1180,13 +1252,14 @@ watch(
         <div class="property-row">
           <label>In Scheme</label>
           <div class="concept-chips">
-            <Chip
+            <span
               v-for="ref in details.inScheme"
               :key="ref.uri"
-              :label="getRefLabel(ref)"
               :class="['concept-chip', { clickable: isLocalScheme(ref.uri) }]"
               @click="handleSchemeClick(ref)"
-            />
+            >
+              {{ getRefLabel(ref) }}<span v-if="ref.lang && shouldShowLangTag(ref.lang)" class="lang-tag">{{ ref.lang }}</span>
+            </span>
           </div>
         </div>
       </section>
@@ -1219,8 +1292,9 @@ watch(
                 <i class="pi pi-external-link"></i>
               </a>
               <span v-else class="other-value">
-                {{ val.value }}
+                {{ formatPropertyValue(val.value, val.datatype) }}
                 <span v-if="val.lang" class="lang-tag">{{ val.lang }}</span>
+                <span v-if="settingsStore.showDatatypes && val.datatype" class="datatype-tag">{{ val.datatype }}</span>
               </span>
             </template>
           </div>
@@ -1437,9 +1511,25 @@ watch(
   vertical-align: middle;
 }
 
+.datatype-tag {
+  font-size: 0.625rem;
+  font-family: monospace;
+  background: var(--p-surface-200);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  margin-left: 0.25rem;
+  vertical-align: middle;
+}
+
 .lang-tag.lang-tag-first {
   margin-left: 0;
   margin-right: 0.5rem;
+}
+
+.notation-wrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
 }
 
 .notation {
@@ -1486,7 +1576,12 @@ watch(
 }
 
 .concept-chip {
+  display: inline-flex;
+  align-items: center;
   font-size: 0.875rem;
+  background: var(--p-surface-100);
+  border-radius: 1rem;
+  padding: 0.25rem 0.75rem;
 }
 
 .concept-chip.clickable {
@@ -1544,9 +1639,11 @@ watch(
 
 .other-value {
   font-size: 0.875rem;
-  background: var(--p-surface-100);
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
+}
+
+.other-value:not(:last-child)::after {
+  content: ' · ';
+  color: var(--p-text-muted-color);
 }
 
 .other-value.uri-value {

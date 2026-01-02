@@ -11,6 +11,7 @@ export interface SPARQLEndpoint {
   auth?: EndpointAuth
   analysis?: EndpointAnalysis
   selectedGraphs?: string[]
+  languagePriorities?: string[]  // User-ordered language codes
   createdAt: string
   lastAccessedAt?: string
   accessCount: number
@@ -27,19 +28,24 @@ export interface EndpointAuth {
   }
 }
 
-export interface EndpointAnalysis {
-  hasNamedGraphs: boolean
-  graphs?: string[]
-  hasDuplicateTriples: boolean
-  duplicateCount?: number
-  analyzedAt: string
+export interface DetectedLanguage {
+  lang: string
+  count: number
 }
 
-export interface LanguagePreferences {
-  preferred: string
-  fallback: string
-  detected: string[]
-  detectedAt?: string
+export interface EndpointAnalysis {
+  // Named graphs
+  supportsNamedGraphs: boolean | null  // null = not supported by endpoint, false = none, true = has graphs
+  graphCount: number | null            // null = count failed, number = exact or estimated
+  graphCountExact: boolean             // true = exact count, false = estimated (10000+)
+
+  // Duplicates
+  hasDuplicateTriples: boolean | null  // null = detection not supported
+
+  // Languages (sorted by count descending)
+  languages?: DetectedLanguage[]
+
+  analyzedAt: string
 }
 
 export type EndpointStatus = 'disconnected' | 'connecting' | 'connected' | 'error'

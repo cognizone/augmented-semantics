@@ -48,22 +48,17 @@ interface EndpointState {
   error?: AppError;
 }
 
+// Note: SPARQLEndpoint includes languagePriorities for per-endpoint fallback order
+// See com01-EndpointManager.md for full SPARQLEndpoint definition
+
 interface LanguageState {
-  // Per-endpoint config (keyed by endpoint ID)
-  configs: Record<string, EndpointLanguageConfig>;
-
-  // Current endpoint's effective config
-  priorities: string[];       // Ordered language list, e.g., ['en', 'fr', 'de']
-  current: string | null;     // Override language (trumps priorities), null = use priorities
-
-  // Detection results for current endpoint
-  detected: string[];
-  detectedWithCount: { lang: string; count: number }[];
+  preferred: string;  // Global preferred language (e.g., 'en')
 }
 
-interface EndpointLanguageConfig {
-  priorities: string[];      // Ordered language list
-  current: string | null;    // Override language, null = use priorities
+interface SettingsState {
+  showDatatypes: boolean;           // Show datatype tags on property values
+  showLanguageTags: boolean;        // Show language tags on labels
+  showPreferredLanguageTag: boolean; // Show tag even when matching preferred
 }
 
 interface UIState {
@@ -125,8 +120,9 @@ Two types for concept references serve different purposes:
 
 | Key | Content | Sync |
 |-----|---------|------|
-| `ae-endpoints` | Saved endpoints | Cross-tab |
-| `ae-language-{endpointId}` | Language config per endpoint | Cross-tab |
+| `ae-endpoints` | Saved endpoints (includes languagePriorities) | Cross-tab |
+| `ae-language` | Global preferred language | Cross-tab |
+| `ae-skos-settings` | App settings (datatypes, language tags) | Cross-tab |
 | `ae-skos-scheme` | Last selected scheme | Per-endpoint |
 | `ae-skos-history` | Recently viewed | Per-endpoint |
 | `ae-skos-tree-expanded` | Expanded nodes | Per-session |
@@ -134,35 +130,27 @@ Two types for concept references serve different purposes:
 ### Persistence Rules
 
 ```typescript
-// Persist on change
+// Persist endpoints (includes languagePriorities per endpoint)
 persist('ae-endpoints', state.endpoint.all);
-persist(`ae-language-${endpointId}`, { priorities, current });
+
+// Persist global preferred language
+persist('ae-language', state.language.preferred);
+
+// Persist settings
+persist('ae-skos-settings', {
+  showDatatypes: state.settings.showDatatypes,
+  showLanguageTags: state.settings.showLanguageTags,
+  showPreferredLanguageTag: state.settings.showPreferredLanguageTag,
+});
 
 // Restore on init
 const endpoints = restore('ae-endpoints') ?? [];
-
-// Restore language config for endpoint (with migration from old format)
-function loadLanguageConfig(endpointId: string): EndpointLanguageConfig {
-  const key = `ae-language-${endpointId}`;
-  const stored = restore(key);
-  if (stored) return stored;
-
-  // Migrate from old global format if exists
-  const oldConfig = restore('ae-language');
-  if (oldConfig?.preferred) {
-    return {
-      priorities: [oldConfig.preferred, oldConfig.fallback].filter(Boolean),
-      current: null
-    };
-  }
-
-  // Default: browser language, then 'en'
-  const browserLang = navigator.language.split('-')[0];
-  return {
-    priorities: browserLang !== 'en' ? [browserLang, 'en'] : ['en'],
-    current: null
-  };
-}
+const preferred = restore('ae-language') ?? navigator.language.split('-')[0] ?? 'en';
+const settings = restore('ae-skos-settings') ?? {
+  showDatatypes: true,
+  showLanguageTags: true,
+  showPreferredLanguageTag: false,
+};
 ```
 
 ### Per-Endpoint Storage
@@ -183,7 +171,8 @@ const key = `ae-skos-history-${endpoint.id}`;
 | `endpoint:changed` | `SPARQLEndpoint` | User selects endpoint |
 | `endpoint:connected` | `SPARQLEndpoint` | Connection successful |
 | `endpoint:error` | `AppError` | Connection failed |
-| `language:changed` | `{ priorities, current }` | Language config changed |
+| `language:preferred` | `string` | Global preferred language changed |
+| `settings:changed` | `SettingsState` | Settings changed |
 
 ### SKOS Events
 

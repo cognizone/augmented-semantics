@@ -1,84 +1,140 @@
-# LanguageSelector
+# Language Settings
 
-UI component for selecting language preferences in AE SKOS.
+Language configuration for AE SKOS label display.
 
-## Features
+## Architecture
 
-### Per-Endpoint Language Configuration
+The language system has two levels:
 
-Each endpoint has its own language configuration:
+1. **Global Preferred Language**: User's preferred language for viewing labels (stored in Settings)
+2. **Per-Endpoint Language Priorities**: Ordered fallback list for each endpoint
 
-1. **Priority List**: Ordered list of languages (e.g., `['en', 'fr', 'de', 'it', 'rm']`)
-2. **Current Language**: Optional override that trumps the priority list
+### Label Resolution Order
 
-When resolving labels:
-- If `current` is set → use only that language
-- Else → walk priority list in order, first match wins
+When displaying a label, the system tries languages in this order:
 
-### Language Dropdown
+1. **Preferred language** (global setting)
+2. **Endpoint priorities** (in configured order)
+3. **Labels without language tag**
+4. **First available label**
 
-Quick access to change current language from toolbar.
+```typescript
+function selectLabel(labels: LabelValue[]): LabelValue | null {
+  if (!labels?.length) return null
 
-- Shows current language (or first priority if no override)
-- Dropdown lists all detected languages
-- Selected language becomes the "current" override
-- Clear option to revert to priority-based selection
+  // 1. Try preferred language
+  const preferred = labels.find(l => l.lang === languageStore.preferred)
+  if (preferred) return preferred
 
-### Priority Settings Dialog
+  // 2. Try endpoint priorities in order
+  const priorities = endpointStore.current?.languagePriorities || []
+  for (const lang of priorities) {
+    const match = labels.find(l => l.lang === lang)
+    if (match) return match
+  }
 
-Full control over language order and priorities.
+  // 3. Try labels without language tag
+  const noLang = labels.find(l => !l.lang)
+  if (noLang) return noLang
+
+  // 4. First available
+  return labels[0]
+}
+```
+
+## Global Settings
+
+### Preferred Language
+
+The user selects their preferred language in the global Settings dialog:
 
 ```
 ┌─────────────────────────────────────────────┐
-│ Language Settings                       [×] │
+│ Settings                                [×] │
 ├─────────────────────────────────────────────┤
 │                                             │
-│ Current Language Override                   │
+│ Preferred Language                          │
 │ ┌─────────────────────────────────────┐     │
-│ │ (Use priority order)            [▼] │     │
+│ │ en (12,456)                     [▼] │     │
 │ └─────────────────────────────────────┘     │
 │                                             │
-│ Priority Order (drag to reorder)            │
-│ ┌─────────────────────────────────────┐     │
-│ │ ≡ 1. English (12,456)          [×] │     │
-│ │ ≡ 2. Français (8,901)          [×] │     │
-│ │ ≡ 3. Deutsch (7,234)           [×] │     │
-│ │ ≡ 4. Italiano (5,123)          [×] │     │
-│ │ ≡ 5. Rumantsch (2,345)         [×] │     │
-│ └─────────────────────────────────────┘     │
+│ ☑ Show datatypes                            │
+│   Display datatype tags on property values  │
 │                                             │
-│ Available Languages                         │
-│ ┌─────────────────────────────────────┐     │
-│ │ [+] Nederlands (4,567)              │     │
-│ │ [+] Español (3,456)                 │     │
-│ └─────────────────────────────────────┘     │
+│ ☑ Show language tags                        │
+│   Display language tags when different      │
+│   from preferred                            │
 │                                             │
-├─────────────────────────────────────────────┤
-│               [Refresh]  [Save]             │
+│   ☑ Include preferred language              │
+│     Also show tag when matching preferred   │
+│                                             │
 └─────────────────────────────────────────────┘
 ```
 
-Features:
-- Drag-and-drop reordering of priority list
-- Add/remove languages from priority list
-- Shows label counts per language
-- Current override dropdown (or "Use priority order")
+The language dropdown shows languages detected from the current endpoint's analysis, ordered by the endpoint's language priorities.
 
-### SKOS-Specific Detection
+### Language Tag Settings
 
-Detect languages from SKOS concept labels with counts.
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `showLanguageTags` | `true` | Show language tags on labels |
+| `showPreferredLanguageTag` | `false` | Show tag even when matching preferred |
 
-> **Note:** Collections and ConceptSchemes are ignored, but concepts typically have the same languages so this should be good enough.
+## Per-Endpoint Configuration
 
-**Query:**
+### Language Priorities
+
+Each endpoint stores an ordered list of language priorities:
+
+```typescript
+interface SPARQLEndpoint {
+  // ... other fields ...
+  languagePriorities?: string[]  // e.g., ['en', 'fr', 'de']
+}
+```
+
+Users can reorder languages in the Endpoint Manager's "Language Priority" dialog:
+
+```
+┌─────────────────────────────────────────────┐
+│ Language Priority - DBpedia             [×] │
+├─────────────────────────────────────────────┤
+│                                             │
+│ Use the buttons to reorder. First language  │
+│ is used when preferred is unavailable.      │
+│                                             │
+│ ┌─────────────────────────────────────┐     │
+│ │ [▲][▼] 1. en (12,456)               │     │
+│ │ [▲][▼] 2. fr (8,901)                │     │
+│ │ [▲][▼] 3. de (7,234)                │     │
+│ │ [▲][▼] 4. it (5,123)                │     │
+│ └─────────────────────────────────────┘     │
+│                                             │
+├─────────────────────────────────────────────┤
+│                    [Cancel]  [Save]         │
+└─────────────────────────────────────────────┘
+```
+
+### Default Order
+
+When no priorities are configured, languages are ordered:
+1. `en` (English) always first
+2. Remaining languages alphabetically by code
+
+### Language Detection
+
+Languages are detected during endpoint analysis via SPARQL:
+
 ```sparql
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 PREFIX skosxl: <http://www.w3.org/2008/05/skos-xl#>
+
 SELECT ?lang (COUNT(?label) AS ?count)
 WHERE {
   ?concept a skos:Concept .
   {
-    ?concept skos:prefLabel|skos:altLabel|skos:hiddenLabel|skos:definition|skos:scopeNote ?label .
+    ?concept skos:prefLabel|skos:altLabel|skos:hiddenLabel
+             |skos:definition|skos:scopeNote ?label .
   } UNION {
     ?concept skosxl:prefLabel/skosxl:literalForm ?label .
   } UNION {
@@ -91,215 +147,82 @@ GROUP BY ?lang
 ORDER BY DESC(?count)
 ```
 
-### Auto-Add Detected Languages
+When duplicates exist across graphs, the query uses `GRAPH ?g { ... }` scope.
 
-After detecting languages, automatically add any unknown languages to the priority list:
+## Language Tag Display
 
-1. Compare detected languages against current priorities
-2. Filter out languages already in priorities
-3. Sort unknown languages **alphabetically by language code**
-4. Append sorted unknown languages to end of priority list
-5. Save updated priorities
+Language tags appear as small badges next to labels:
 
-This ensures:
-- Users don't miss languages present in the data
-- New languages appear in consistent order
-- Priority list grows automatically as data is explored
-
-## Data Model
-
-### Per-Endpoint Language Config
-
-```typescript
-interface EndpointLanguageConfig {
-  priorities: string[];      // Ordered language list, e.g., ['en', 'fr', 'de']
-  current: string | null;    // Override language, null = use priorities
-}
+```
+Economic indicators  en
 ```
 
-### Storage
+### When Tags Are Shown
 
-Language config is stored per-endpoint:
-
-```typescript
-// Key format: ae-language-{endpointId}
-interface StoredLanguageConfig {
-  priorities: string[];
-  current: string | null;
-}
-```
-
-### State
-
-```typescript
-interface LanguageState {
-  // Per-endpoint config (keyed by endpoint ID)
-  configs: Record<string, EndpointLanguageConfig>;
-
-  // Current endpoint's effective config
-  priorities: string[];       // Current endpoint's priority list
-  current: string | null;     // Current endpoint's override
-
-  // Detection results
-  detected: string[];         // All detected languages
-  detectedWithCount: { lang: string; count: number }[];
-}
-```
-
-## Label Resolution
-
-### Priority Algorithm
-
-```typescript
-function selectLabel(labels: LabelValue[]): LabelValue | null {
-  if (!labels || labels.length === 0) return null;
-
-  // If current override is set, use only that
-  if (current) {
-    return labels.find(l => l.lang === current) || labels[0];
-  }
-
-  // Walk priority list in order
-  for (const lang of priorities) {
-    const match = labels.find(l => l.lang === lang);
-    if (match) return match;
-  }
-
-  // Fallback: no-lang label, then first available
-  return labels.find(l => !l.lang) || labels[0];
-}
-```
-
-### Sort Order
-
-Labels are sorted by priority position:
-
-```typescript
-function sortLabels(labels: LabelValue[]): LabelValue[] {
-  return [...labels].sort((a, b) => {
-    const aIndex = priorities.indexOf(a.lang || '');
-    const bIndex = priorities.indexOf(b.lang || '');
-
-    // Prioritized languages first, in order
-    if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
-    if (aIndex !== -1) return -1;
-    if (bIndex !== -1) return 1;
-
-    // No-lang labels next
-    if (!a.lang && b.lang) return -1;
-    if (a.lang && !b.lang) return 1;
-
-    // Rest alphabetically
-    return (a.lang || '').localeCompare(b.lang || '');
-  });
-}
-```
-
-### Language Tag Display
-
-Show language tag only when label is not from current/first-priority language:
+Tags are shown when:
+1. `showLanguageTags` setting is enabled
+2. Label has a language tag
+3. Either:
+   - Language differs from preferred, OR
+   - `showPreferredLanguageTag` is enabled
 
 ```typescript
 function shouldShowLangTag(lang?: string): boolean {
-  if (!lang) return false;
-  const displayLang = current || priorities[0];
-  return lang !== displayLang;
+  if (!settingsStore.showLanguageTags) return false
+  if (!lang) return false
+  if (settingsStore.showPreferredLanguageTag) return true
+  return lang !== languageStore.preferred
 }
 ```
 
-## UI Component
+### Tag Styling
 
-### Toolbar Selector
-
-```
-┌────────────────────────────┐
-│ 🌐 English           [▼]   │
-├────────────────────────────┤
-│ ✓ English (12,456)         │  ← Current override
-│   Français (8,901)         │
-│   Deutsch (7,234)          │
-│ ────────────────────────── │
-│   ○ Use priority order     │  ← Clears current override
-│ ────────────────────────── │
-│   ⚙ Language settings      │
-└────────────────────────────┘
+```css
+.lang-tag {
+  font-size: 0.625rem;
+  font-weight: normal;
+  background: var(--p-surface-200);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  margin-left: 0.25rem;
+}
 ```
 
-When "Use priority order" is selected:
-- `current` is set to `null`
-- Dropdown shows first priority language
-- Label resolution uses full priority list
+## Data Storage
 
-## Events
-
-| Event | Payload | Description |
-|-------|---------|-------------|
-| `language:changed` | `{ current, priorities }` | Language config changed |
-| `language:prioritiesChanged` | `string[]` | Priority order changed |
-| `language:currentChanged` | `string \| null` | Current override changed |
-
-## Persistence
-
-### Per-Endpoint Storage
+### Settings Store
 
 ```typescript
-// Save
-const key = `ae-language-${endpoint.id}`;
-localStorage.setItem(key, JSON.stringify({
-  priorities: ['en', 'fr', 'de', 'it', 'rm'],
-  current: null
-}));
-
-// Load (with defaults)
-const stored = localStorage.getItem(key);
-if (stored) {
-  const config = JSON.parse(stored);
-  return config;
-} else {
-  // Default: browser language first, then 'en'
-  const browserLang = navigator.language.split('-')[0];
-  return {
-    priorities: browserLang !== 'en' ? [browserLang, 'en'] : ['en'],
-    current: null
-  };
+interface AppSettings {
+  showDatatypes: boolean
+  showLanguageTags: boolean
+  showPreferredLanguageTag: boolean  // NEW
 }
+// Key: ae-skos-settings
 ```
 
-### Migration
+### Language Store
 
-Old format (`ae-language`):
-```json
-{ "preferred": "en", "fallback": "fr" }
+```typescript
+interface LanguageState {
+  preferred: string  // Global preferred language
+}
+// Key: ae-language
 ```
 
-New format (`ae-language-{id}`):
-```json
-{ "priorities": ["en", "fr"], "current": null }
-```
+### Endpoint Store
 
-Migration: Convert `[preferred, fallback]` to `priorities` array.
-
-## Loading States
-
-### Detecting Languages
-
-```
-┌────────────────────────┐
-│ 🌐 ◌ Detecting...  [▼] │
-└────────────────────────┘
-```
-
-### No Languages Detected
-
-```
-┌────────────────────────┐
-│ 🌐 (none)          [▼] │
-├────────────────────────┤
-│   No languages found   │
-└────────────────────────┘
+```typescript
+interface SPARQLEndpoint {
+  languagePriorities?: string[]  // Per-endpoint priority order
+  analysis?: {
+    languages?: { lang: string; count: number }[]
+  }
+}
+// Key: ae-endpoints
 ```
 
 ## Related Specs
 
+- [com01-EndpointManager](../common/com01-EndpointManager.md) - Endpoint configuration
 - [com02-StateManagement](../common/com02-StateManagement.md) - State architecture
-- [com03-ErrorHandling](../common/com03-ErrorHandling.md) - Error/loading states

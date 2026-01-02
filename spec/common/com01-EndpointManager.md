@@ -52,130 +52,103 @@ Optional authentication methods:
 
 See [com03-ErrorHandling](./com03-ErrorHandling.md) for retry logic details.
 
-### Query Patterns
-
-All SPARQL queries should follow patterns defined in [com05-SPARQLPatterns](./com05-SPARQLPatterns.md):
-- Standard language filtering
-- Pagination
-- Graph-aware queries
-- Error-safe patterns
-
 ## Endpoint Analysis
 
 Run analysis queries on connection to detect endpoint characteristics.
 
-### Graph Detection
+### Three-Step Analysis
 
-Detect if endpoint uses named graphs.
-
-**Query:**
-```sparql
-SELECT DISTINCT ?graph
-WHERE {
-  GRAPH ?graph { ?s ?p ?o }
-}
-LIMIT 100
-```
-
-**Results:**
-- No results → Single default graph (graph-less)
-- Results → Multiple named graphs
-
-### Duplicate Triple Detection
-
-Check if same triples exist in multiple graphs (common in quad stores).
-
-**Query:**
-```sparql
-SELECT ?s ?p ?o (COUNT(DISTINCT ?graph) AS ?graphCount)
-WHERE {
-  GRAPH ?graph { ?s ?p ?o }
-}
-GROUP BY ?s ?p ?o
-HAVING (COUNT(DISTINCT ?graph) > 1)
-LIMIT 10
-```
-
-**Results:**
-- No results → No duplicates across graphs
-- Results → Duplicates exist (show warning to user)
-
-### Analysis Data Model
-
-```typescript
-interface EndpointAnalysis {
-  hasNamedGraphs: boolean;
-  graphs: string[];              // List of detected graph URIs
-  hasDuplicateTriples: boolean;
-  duplicateSample?: {            // Sample of duplicates if found
-    subject: string;
-    predicate: string;
-    object: string;
-    graphCount: number;
-  }[];
-  analyzedAt: string;            // ISO timestamp
-}
-```
-
-### Analysis UI
+Analysis runs automatically on endpoint connection and can be re-triggered via "Re-analyze" button.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│ Endpoint Analysis                                    [↻]    │
+│ SPARQL Capabilities                                    [×]  │
 ├─────────────────────────────────────────────────────────────┤
-│ Named Graphs:  ✓ Yes (12 graphs detected)                   │
-│                ├─ http://example.org/graph/main             │
-│                ├─ http://example.org/graph/imported         │
-│                └─ ... (10 more)                             │
 │                                                             │
-│ Duplicates:    ⚠ Warning - Triples found in multiple graphs │
-│                This may affect query results.               │
-│                [View details]                               │
+│ ✓ (1/3) Graphs: 12 graphs (empty graph pattern)            │
+│ ✓ (2/3) Duplicates: none                                    │
+│ ✓ (3/3) Languages: found 5 (default)                        │
+│                                                             │
+│ Named Graphs:  Yes (12 graphs)                              │
+│ Duplicates:    No                                           │
+│ Languages:     en, fr, de, it, rm                           │
+│                                                             │
+│ Last analyzed: 2 hours ago                                  │
+├─────────────────────────────────────────────────────────────┤
+│                              [Re-analyze]  [Close]          │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### Graph Selection
+### Step 1: Graph Detection
 
-When named graphs detected, allow user to:
-- Query all graphs (default, union)
-- Select specific graph(s) to query
-- Query default graph only
+Detect if endpoint uses named graphs using a 3-method approach:
 
-**Query modifier:**
+**Method 1: Empty Graph Pattern** (fastest)
 ```sparql
-# All graphs (default)
-SELECT * WHERE { ?s ?p ?o }
-
-# Specific graph
-SELECT * FROM <http://example.org/graph/main>
-WHERE { ?s ?p ?o }
-
-# Multiple specific graphs
-SELECT *
-FROM <http://example.org/graph/main>
-FROM <http://example.org/graph/imported>
-WHERE { ?s ?p ?o }
+SELECT (COUNT(DISTINCT ?g) AS ?count)
+WHERE { GRAPH ?g { } }
 ```
 
-## Language Preferences
+**Method 2: Triple Pattern** (fallback if Method 1 fails)
+```sparql
+SELECT (COUNT(DISTINCT ?g) AS ?count)
+WHERE { GRAPH ?g { [] [] [] } }
+```
 
-Per-endpoint language settings. See [sko01-LanguageSelector](../ae-skos/sko01-LanguageSelector.md) for full details.
+**Method 3: Enumeration** (fallback if count fails)
+```sparql
+SELECT DISTINCT ?g
+WHERE { GRAPH ?g { [] [] [] } }
+LIMIT 10001
+```
 
-### Language Detection
+**Results:**
+- `null` (not supported) - Endpoint doesn't support GRAPH queries
+- `0` (no graphs) - Single default graph
+- `n` (count) - Number of named graphs (10000+ if enumeration hit limit)
 
-Detect available languages with counts from SKOS concepts only.
+**Display:**
+- "not supported" - Graphs not available
+- "none found" - No named graphs
+- "12 graphs (empty graph pattern)" - Shows count and method used
 
-> **Note:** Collections and ConceptSchemes are ignored, but concepts typically have the same languages so this should be good enough.
+### Step 2: Duplicate Detection
+
+Check if same triples exist in multiple graphs (only if multiple graphs exist).
 
 **Query:**
 ```sparql
+ASK {
+  GRAPH ?g1 { ?s ?p ?o }
+  GRAPH ?g2 { ?s ?p ?o }
+  FILTER(?g1 != ?g2)
+}
+```
+
+**Conditions:**
+- **Skipped** if `supportsNamedGraphs === null` (not supported)
+- **Skipped** if `graphCount <= 1` (no multiple graphs)
+- **Run** if multiple graphs exist
+
+**Results:**
+- `true` - Duplicates found across graphs (warning)
+- `false` - No duplicates
+
+### Step 3: Language Detection
+
+Detect available languages from SKOS concept labels.
+
+**Query (default):**
+```sparql
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 PREFIX skosxl: <http://www.w3.org/2008/05/skos-xl#>
+
 SELECT ?lang (COUNT(?label) AS ?count)
 WHERE {
   ?concept a skos:Concept .
   {
-    ?concept skos:prefLabel|skos:altLabel|skos:hiddenLabel|skos:definition|skos:scopeNote ?label .
+    ?concept skos:prefLabel|skos:altLabel|skos:hiddenLabel
+             |skos:definition|skos:scopeNote ?label .
   } UNION {
     ?concept skosxl:prefLabel/skosxl:literalForm ?label .
   } UNION {
@@ -188,76 +161,113 @@ GROUP BY ?lang
 ORDER BY DESC(?count)
 ```
 
-### Per-Endpoint Configuration
+**Query (graph-scoped):** Used when duplicates exist to ensure concept+labels are in same graph.
+```sparql
+SELECT ?lang (COUNT(?label) AS ?count)
+WHERE {
+  GRAPH ?g {
+    ?concept a skos:Concept .
+    # ... same pattern ...
+  }
+}
+GROUP BY ?lang
+ORDER BY DESC(?count)
+```
 
-Each endpoint has its own language configuration:
+### Analysis Data Model
 
 ```typescript
-interface EndpointLanguageConfig {
-  priorities: string[];      // Ordered list: ['en', 'fr', 'de']
-  current: string | null;    // Override, null = use priorities
+interface EndpointAnalysis {
+  // Named graphs
+  supportsNamedGraphs: boolean | null  // null = not supported, false = none, true = has graphs
+  graphCount: number | null            // null = count failed, number = exact or estimated
+  graphCountExact: boolean             // true = exact count, false = estimated (10000+)
+
+  // Duplicates
+  hasDuplicateTriples: boolean | null  // null = detection not supported
+
+  // Languages (sorted by count descending)
+  languages?: { lang: string; count: number }[]
+
+  analyzedAt: string  // ISO timestamp
 }
 ```
 
-**Storage:** `ae-language-{endpointId}` in localStorage
+### Analysis Log Display
 
-### Language Settings UI
+During re-analysis, show step-by-step progress with colored status indicators:
 
-Accessible via globe icon button in endpoint actions column:
+| Status | Icon | Color |
+|--------|------|-------|
+| Pending | Spinner | Blue |
+| Success | Check circle | Green |
+| Warning | Triangle | Orange |
+| Error | X circle | Red |
+| Info | Info circle | Gray |
+
+## Endpoint Data Model
+
+```typescript
+interface SPARQLEndpoint {
+  id: string                     // UUID
+  name: string                   // User-defined display name
+  url: string                    // Endpoint URL
+  auth?: EndpointAuth            // Authentication config
+  analysis?: EndpointAnalysis    // Analysis results
+  selectedGraphs?: string[]      // User-selected graphs (empty = all)
+  languagePriorities?: string[]  // User-ordered language codes
+  createdAt: string              // ISO timestamp
+  lastAccessedAt?: string        // ISO timestamp
+  accessCount: number            // Times accessed
+}
+
+interface EndpointAuth {
+  type: 'none' | 'basic' | 'apikey' | 'bearer'
+  credentials?: {
+    username?: string
+    password?: string
+    apiKey?: string
+    token?: string
+    headerName?: string  // For API key: custom header name
+  }
+}
+```
+
+## Language Configuration
+
+Each endpoint stores an ordered list of language priorities for fallback resolution.
+
+See [sko01-LanguageSelector](../ae-skos/sko01-LanguageSelector.md) for full language system documentation.
+
+### Language Priority Dialog
 
 ```
 ┌─────────────────────────────────────────┐
-│ Language Settings - EuroVoc         [×] │
+│ Language Priority - EuroVoc         [×] │
 ├─────────────────────────────────────────┤
-│ Language Priority                       │
-│ Drag to reorder. First is default.      │
-│ ┌─────────────────────────────────────┐ │
-│ │ ≡ 1. en (12,456)              [×]  │ │
-│ │ ≡ 2. fr (8,901)               [×]  │ │
-│ │ ≡ 3. de (7,234)               [×]  │ │
-│ └─────────────────────────────────────┘ │
 │                                         │
-│ Available Languages                     │
-│ [+ it (5,123)] [+ nl (4,567)]          │
+│ Use the buttons to reorder. First       │
+│ language is used when preferred         │
+│ is unavailable.                         │
+│                                         │
+│ ┌─────────────────────────────────────┐ │
+│ │ [▲][▼] 1. en (12,456)               │ │
+│ │ [▲][▼] 2. fr (8,901)                │ │
+│ │ [▲][▼] 3. de (7,234)                │ │
+│ └─────────────────────────────────────┘ │
 │                                         │
 ├─────────────────────────────────────────┤
 │                  [Cancel]  [Save]       │
 └─────────────────────────────────────────┘
 ```
 
-Features:
-- Drag-and-drop reordering of priority list
-- Auto-detection of languages with label counts
-- Auto-add detected languages (sorted alphabetically)
-- Remove languages from priority list
-- Add available languages back
+### Default Language Order
+
+When no priorities are configured:
+1. `en` (English) always first
+2. Remaining languages alphabetically by code
 
 ## Endpoint Management
-
-### Data Model
-
-```typescript
-interface SPARQLEndpoint {
-  id: string;                  // UUID
-  name: string;                // User-defined display name
-  url: string;                 // Endpoint URL
-  auth?: {
-    type: 'none' | 'basic' | 'apikey' | 'bearer';
-    credentials?: {
-      username?: string;
-      password?: string;
-      apiKey?: string;
-      token?: string;
-      headerName?: string;     // For API key: custom header name
-    };
-  };
-  analysis?: EndpointAnalysis; // Graph detection results
-  selectedGraphs?: string[];   // User-selected graphs (null = all)
-  createdAt: string;           // ISO timestamp
-  lastAccessedAt?: string;     // ISO timestamp
-  accessCount: number;         // Times accessed
-}
-```
 
 ### Features
 

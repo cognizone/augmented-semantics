@@ -78,6 +78,7 @@ export const useEndpointStore = defineStore('endpoint', () => {
       auth: updates.auth ?? existing.auth,
       analysis: updates.analysis ?? existing.analysis,
       selectedGraphs: updates.selectedGraphs ?? existing.selectedGraphs,
+      languagePriorities: updates.languagePriorities ?? existing.languagePriorities,
       createdAt: existing.createdAt,
       lastAccessedAt: updates.lastAccessedAt ?? existing.lastAccessedAt,
       accessCount: updates.accessCount ?? existing.accessCount,

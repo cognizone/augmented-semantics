@@ -23,6 +23,31 @@ const endpointStore = useEndpointStore()
 const languageStore = useLanguageStore()
 const { shouldShowLangTag } = useLabelResolver()
 
+// Helper to select best label based on language priorities
+function selectBestLabelByLanguage(
+  labels: { value: string; lang: string; type: string }[]
+): { value: string; lang: string } | undefined {
+  if (!labels.length) return undefined
+
+  // 1. Try preferred language
+  const preferred = labels.find(l => l.lang === languageStore.preferred)
+  if (preferred) return preferred
+
+  // 2. Try endpoint's language priorities in order
+  const priorities = endpointStore.current?.languagePriorities || []
+  for (const lang of priorities) {
+    const match = labels.find(l => l.lang === lang)
+    if (match) return match
+  }
+
+  // 3. Try labels without language tag
+  const noLang = labels.find(l => !l.lang || l.lang === '')
+  if (noLang) return noLang
+
+  // 4. Return first available
+  return labels[0]
+}
+
 // Update endpoint connection status based on query results
 function setConnected() {
   if (endpointStore.status !== 'connected') {
@@ -142,30 +167,7 @@ async function loadSchemes() {
         const labelsOfType = data.labels.filter(l => l.type === labelType)
         if (!labelsOfType.length) continue
 
-        // Use current override if set
-        let selected: { value: string; lang: string } | undefined
-        if (languageStore.current) {
-          selected = labelsOfType.find(l => l.lang === languageStore.current)
-        }
-
-        // Walk through all language priorities in order
-        if (!selected) {
-          for (const lang of languageStore.priorities) {
-            selected = labelsOfType.find(l => l.lang === lang)
-            if (selected) break
-          }
-        }
-
-        // Try labels without language tag
-        if (!selected) {
-          selected = labelsOfType.find(l => l.lang === '')
-        }
-
-        // Fall back to first available
-        if (!selected) {
-          selected = labelsOfType[0]
-        }
-
+        const selected = selectBestLabelByLanguage(labelsOfType)
         if (selected) {
           bestLabel = selected.value
           bestLabelLang = selected.lang || undefined
@@ -265,9 +267,9 @@ watch(
   { immediate: true }
 )
 
-// Reload when language priorities or current override changes
+// Reload when language preference changes
 watch(
-  () => [languageStore.priorities, languageStore.current] as const,
+  () => languageStore.preferred,
   () => {
     if (endpointStore.current) {
       loadSchemes()

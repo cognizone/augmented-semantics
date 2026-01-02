@@ -44,7 +44,7 @@ export interface ConceptDetails {
   changeNotes: LabelValue[]
   editorialNotes: LabelValue[]
   examples: LabelValue[]
-  notations: string[]
+  notations: NotationValue[]
   broader: ConceptRef[]
   narrower: ConceptRef[]
   related: ConceptRef[]
@@ -92,12 +92,18 @@ export interface OtherProperty {
 export interface PropertyValue {
   value: string
   lang?: string
+  datatype?: string  // Short form like "xsd:date" or full URI
   isUri: boolean
 }
 
 export interface LabelValue {
   value: string
   lang?: string
+}
+
+export interface NotationValue {
+  value: string
+  datatype?: string  // Short form like "xsd:string" or full URI
 }
 
 // SKOS-XL Extended Labels
