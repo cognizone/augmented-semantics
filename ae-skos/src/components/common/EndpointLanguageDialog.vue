@@ -72,6 +72,7 @@ function handleClose() {
         <OrderList
           v-model="priorities"
           :listStyle="{ height: 'auto', maxHeight: '350px' }"
+          selectionMode="single"
           @reorder="onReorder"
         >
           <template #item="{ item, index }">

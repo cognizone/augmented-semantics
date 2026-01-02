@@ -28,7 +28,7 @@ const emit = defineEmits<{
 }>()
 
 const endpointRef = ref(props.endpoint)
-const { analyzing, analysisLog, analysisDuration, reanalyzeEndpoint: reanalyze, clearAnalysis } = useEndpointAnalysis()
+const { analyzing, analyzeElapsed, analysisLog, analysisDuration, reanalyzeEndpoint: reanalyze, clearAnalysis } = useEndpointAnalysis()
 const {
   graphStatus,
   graphSeverity,
@@ -108,6 +108,9 @@ function handleClose() {
 
       <!-- Analysis Log -->
       <div v-if="analysisLog.length > 0" class="analysis-log">
+        <div v-if="analyzing && analyzeElapsed.show.value" class="elapsed-indicator">
+          Analyzing... ({{ analyzeElapsed.elapsed.value }}s)
+        </div>
         <div
           v-for="(entry, index) in analysisLog"
           :key="index"
@@ -198,6 +201,13 @@ function handleClose() {
   background: var(--p-surface-100);
   border-radius: var(--p-border-radius);
   font-size: 0.875rem;
+}
+
+.elapsed-indicator {
+  font-size: 0.75rem;
+  color: var(--p-text-muted-color);
+  text-align: right;
+  margin-bottom: 0.25rem;
 }
 
 .log-entry {
