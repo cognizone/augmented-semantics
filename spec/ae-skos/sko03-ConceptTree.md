@@ -89,8 +89,9 @@ All components (Tree, Breadcrumb, Details, Search) MUST use the same label resol
 
 ### Property Priority
 1. `skos:prefLabel` - primary SKOS label
-2. `dct:title` - common for schemes and resources
-3. `rdfs:label` - generic fallback
+2. `skosxl:prefLabel/skosxl:literalForm` - SKOS-XL extended label
+3. `dct:title` - common for schemes and resources
+4. `rdfs:label` - generic fallback
 
 ### Language Priority (for each property)
 1. Preferred language (user selected)
@@ -219,6 +220,23 @@ interface NavigationState {
 | `concept:expanded` | `string` | Node expanded in tree |
 | `concept:collapsed` | `string` | Node collapsed in tree |
 | `breadcrumb:clicked` | `string` | Breadcrumb segment clicked |
+
+## UI Behavior
+
+### Label Display
+- Labels use **multiline word wrap** instead of truncation with ellipsis
+- No horizontal scrollbar; long labels wrap to multiple lines
+- Language tags shown inline after label text when needed
+
+### Scrolling
+- **Vertical scrolling** enabled when tree content exceeds container height
+- **No horizontal scrollbar** - content wraps instead
+- Smooth scrolling behavior
+
+### Breadcrumb
+- Items display inline horizontally
+- Wraps to multiple lines if needed (flex-wrap)
+- Each segment is clickable for navigation
 
 ## Performance
 

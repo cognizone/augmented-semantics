@@ -131,7 +131,7 @@ async function loadTopConcepts() {
     ? `?concept skos:inScheme <${scheme.uri}> .`
     : ''
 
-  // Query gets all label types and notation - we pick best one in code
+  // Query gets all label types (including SKOS-XL) and notation - we pick best one in code
   const query = withPrefixes(`
     SELECT DISTINCT ?concept ?label ?labelLang ?labelType ?notation (COUNT(DISTINCT ?narrower) AS ?narrowerCount)
     WHERE {
@@ -143,6 +143,9 @@ async function loadTopConcepts() {
         {
           ?concept skos:prefLabel ?label .
           BIND("prefLabel" AS ?labelType)
+        } UNION {
+          ?concept skosxl:prefLabel/skosxl:literalForm ?label .
+          BIND("xlPrefLabel" AS ?labelType)
         } UNION {
           ?concept dct:title ?label .
           BIND("title" AS ?labelType)
@@ -200,8 +203,8 @@ async function loadTopConcepts() {
 
     // Convert to ConceptNode[] with best label selection
     const concepts: ConceptNode[] = Array.from(conceptMap.entries()).map(([uri, data]) => {
-      // Pick best label: prefLabel > title > rdfsLabel, with language priority
-      const labelPriority = ['prefLabel', 'title', 'rdfsLabel']
+      // Pick best label: prefLabel > xlPrefLabel > title > rdfsLabel, with language priority
+      const labelPriority = ['prefLabel', 'xlPrefLabel', 'title', 'rdfsLabel']
       let bestLabel: string | undefined
       let bestLabelLang: string | undefined
 
@@ -269,6 +272,9 @@ async function loadChildren(uri: string) {
           ?concept skos:prefLabel ?label .
           BIND("prefLabel" AS ?labelType)
         } UNION {
+          ?concept skosxl:prefLabel/skosxl:literalForm ?label .
+          BIND("xlPrefLabel" AS ?labelType)
+        } UNION {
           ?concept dct:title ?label .
           BIND("title" AS ?labelType)
         } UNION {
@@ -323,8 +329,8 @@ async function loadChildren(uri: string) {
 
     // Convert to ConceptNode[] with best label selection
     const children: ConceptNode[] = Array.from(conceptMap.entries()).map(([conceptUri, data]) => {
-      // Pick best label: prefLabel > title > rdfsLabel, with language priority
-      const labelPriority = ['prefLabel', 'title', 'rdfsLabel']
+      // Pick best label: prefLabel > xlPrefLabel > title > rdfsLabel, with language priority
+      const labelPriority = ['prefLabel', 'xlPrefLabel', 'title', 'rdfsLabel']
       let bestLabel: string | undefined
       let bestLabelLang: string | undefined
 
@@ -575,7 +581,9 @@ watch(
 
 .concept-tree-component {
   flex: 1;
-  overflow: auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
   padding: 0.5rem;
 }
 
@@ -587,10 +595,9 @@ watch(
 
 .node-label {
   flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
   min-width: 0;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .lang-tag {
@@ -613,5 +620,10 @@ watch(
 :deep(.p-tree-node-content.p-highlight) {
   background: var(--p-primary-100);
   color: var(--p-primary-700);
+}
+
+/* Ensure tree wrapper doesn't prevent scrolling */
+:deep(.p-tree-root) {
+  overflow: visible;
 }
 </style>

@@ -46,6 +46,7 @@ const editingEndpoint = ref<SPARQLEndpoint | null>(null)
 const testing = ref(false)
 const testResult = ref<{ success: boolean; message: string; time?: number } | null>(null)
 const analyzing = ref(false)
+const analyzeStep = ref<string | null>(null) // Current step being executed
 
 // Form state
 const form = reactive({
@@ -207,6 +208,7 @@ async function handleSave() {
       url: form.url,
       auth,
     })
+    closeAddDialog()
   } else {
     const newEndpoint = endpointStore.addEndpoint({
       name: form.name,
@@ -214,13 +216,24 @@ async function handleSave() {
       auth,
     })
 
-    // Auto-select and analyze
+    // Auto-select and analyze with progress feedback
     endpointStore.selectEndpoint(newEndpoint.id)
     endpointStore.setStatus('connecting')
 
     analyzing.value = true
+    analyzeStep.value = 'Testing connection...'
+
     try {
+      // Step 1: Test connection
+      const connectionResult = await testConnection(newEndpoint)
+      if (!connectionResult.success) {
+        throw new Error(connectionResult.error?.message || 'Connection failed')
+      }
+
+      // Step 2: Analyze endpoint (named graphs, etc.)
+      analyzeStep.value = 'Analyzing endpoint structure...'
       const analysis = await analyzeEndpoint(newEndpoint)
+
       endpointStore.updateEndpoint(newEndpoint.id, {
         analysis: {
           hasNamedGraphs: analysis.hasNamedGraphs,
@@ -230,14 +243,24 @@ async function handleSave() {
           analyzedAt: analysis.analyzedAt,
         },
       })
-      endpointStore.setStatus('connected')
-    } catch {
-      endpointStore.setStatus('error')
-    }
-    analyzing.value = false
-  }
 
-  closeAddDialog()
+      analyzeStep.value = 'Done!'
+      endpointStore.setStatus('connected')
+
+      // Brief delay to show "Done!" before closing
+      await new Promise(resolve => setTimeout(resolve, 500))
+    } catch (e) {
+      endpointStore.setStatus('error')
+      analyzeStep.value = `Error: ${e instanceof Error ? e.message : 'Unknown error'}`
+      // Keep dialog open on error so user can see what went wrong
+      analyzing.value = false
+      return
+    }
+
+    analyzing.value = false
+    analyzeStep.value = null
+    closeAddDialog()
+  }
 }
 
 function handleDelete(endpoint: SPARQLEndpoint) {
@@ -269,7 +292,7 @@ function formatDate(dateStr?: string) {
   <Dialog
     v-model:visible="dialogVisible"
     header="Endpoint Manager"
-    :style="{ width: '700px' }"
+    :style="{ width: '850px' }"
     :modal="true"
     :closable="true"
   >
@@ -515,6 +538,14 @@ function formatDate(dateStr?: string) {
       >
         {{ testResult.message }}
       </Message>
+
+      <!-- Progress indicator during save -->
+      <div v-if="analyzeStep" class="progress-indicator">
+        <i v-if="analyzing" class="pi pi-spin pi-spinner"></i>
+        <i v-else-if="analyzeStep.startsWith('Error')" class="pi pi-times-circle error-icon"></i>
+        <i v-else class="pi pi-check-circle success-icon"></i>
+        <span :class="{ 'error-text': analyzeStep.startsWith('Error') }">{{ analyzeStep }}</span>
+      </div>
     </div>
 
     <template #footer>
@@ -588,7 +619,7 @@ function formatDate(dateStr?: string) {
 .url-cell {
   font-size: 0.75rem;
   color: var(--p-text-muted-color);
-  max-width: 200px;
+  max-width: 300px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -687,5 +718,31 @@ function formatDate(dateStr?: string) {
 .footer-right {
   display: flex;
   gap: 0.5rem;
+}
+
+.progress-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: var(--p-surface-100);
+  border-radius: 6px;
+  font-size: 0.875rem;
+}
+
+.progress-indicator .pi-spinner {
+  color: var(--p-primary-color);
+}
+
+.progress-indicator .success-icon {
+  color: var(--p-green-500);
+}
+
+.progress-indicator .error-icon {
+  color: var(--p-red-500);
+}
+
+.progress-indicator .error-text {
+  color: var(--p-red-500);
 }
 </style>

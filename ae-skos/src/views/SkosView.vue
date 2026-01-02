@@ -215,15 +215,18 @@ onMounted(() => {
   flex-direction: column;
 }
 
-:deep(.sidebar-tabs .p-tabview-panels) {
+:deep(.p-tabpanels) {
   flex: 1;
+  min-height: 0;
   overflow: hidden;
   padding: 0;
 }
 
-:deep(.sidebar-tabs .p-tabview-panel) {
+:deep(.p-tabpanel) {
   height: 100%;
-  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .search-panel {

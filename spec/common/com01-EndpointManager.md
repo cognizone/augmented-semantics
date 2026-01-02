@@ -270,6 +270,11 @@ interface SPARQLEndpoint {
 - Authentication type (optional)
 - Test connection before saving
 - Run endpoint analysis on successful connection
+- **Progress indicator** showing current step:
+  - "Testing connection..."
+  - "Analyzing endpoint structure..."
+  - "Done!" or error message
+- Dialog stays open on error to show what went wrong
 
 #### Edit Endpoint
 - Modify name, URL, or auth settings
@@ -316,6 +321,7 @@ Value: JSON array of SPARQLEndpoint objects
 - Full CRUD interface
 - Connection testing
 - Import/export buttons
+- Width: 850px (main dialog), 500px (add/edit dialog)
 
 ### Connection Status Indicator
 - Connected (green)

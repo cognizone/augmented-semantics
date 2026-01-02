@@ -82,6 +82,21 @@ GROUP BY (LANG(?label))
 ORDER BY DESC(?count)
 ```
 
+### Auto-Add Detected Languages
+
+After detecting languages, automatically add any unknown languages to the priority list:
+
+1. Compare detected languages against current priorities
+2. Filter out languages already in priorities
+3. Sort unknown languages **alphabetically by language code**
+4. Append sorted unknown languages to end of priority list
+5. Save updated priorities
+
+This ensures:
+- Users don't miss languages present in the data
+- New languages appear in consistent order
+- Priority list grows automatically as data is explored
+
 ## Data Model
 
 ### Per-Endpoint Language Config

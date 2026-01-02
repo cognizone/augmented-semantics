@@ -7,7 +7,7 @@
  * @see /spec/ae-skos/sko01-LanguageSelector.md
  */
 import { useLanguageStore } from '../stores'
-import type { LabelValue } from '../types'
+import type { LabelValue, XLLabel } from '../types'
 
 export function useLabelResolver() {
   const languageStore = useLanguageStore()
@@ -39,6 +39,31 @@ export function useLabelResolver() {
 
     // Return first available
     return labels[0] ?? null
+  }
+
+  /**
+   * Select the best label with SKOS-XL fallback.
+   * Priority:
+   * 1. skos:prefLabel (in language priority order)
+   * 2. skosxl:prefLabel literalForm (in language priority order)
+   * 3. Other fallbacks (no-lang, first available)
+   */
+  function selectLabelWithXL(
+    labels: LabelValue[],
+    xlLabels: XLLabel[]
+  ): LabelValue | null {
+    // First try regular labels
+    const regularLabel = selectLabel(labels)
+    if (regularLabel) return regularLabel
+
+    // Fall back to XL labels
+    if (xlLabels && xlLabels.length > 0) {
+      // Convert XL labels to LabelValue for consistent selection
+      const xlLabelValues = xlLabels.map(xl => xl.literalForm)
+      return selectLabel(xlLabelValues)
+    }
+
+    return null
   }
 
   /**
@@ -119,6 +144,7 @@ export function useLabelResolver() {
 
   return {
     selectLabel,
+    selectLabelWithXL,
     sortLabels,
     shouldShowLangTag,
     getDisplayLanguage,

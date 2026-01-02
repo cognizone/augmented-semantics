@@ -101,7 +101,7 @@ WHERE {
 
 ### Other Properties
 
-Display any additional properties not covered above.
+Display any additional properties not covered by SKOS core.
 
 **Query:**
 ```sparql
@@ -112,7 +112,32 @@ WHERE {
 }
 ```
 
+**Display Behavior:**
+- Properties displayed using **qualified names** (e.g., `dct:title` instead of full URI)
+- Prefix resolution via local common prefixes map (fallback to prefix.cc API)
+- Properties sorted **alphabetically** by qualified name
+- Styled consistently with other sections (no distinct background)
+
+**Prefix Resolution:**
+1. Extract namespace from URI (up to last `/` or `#`)
+2. Check local common prefixes map (dct, dc, rdfs, owl, foaf, schema, prov, dcat, etc.)
+3. Fallback to prefix.cc API if not found locally
+4. Cache resolved prefixes in localStorage for persistence
+
 ## Display Behavior
+
+### Concept Header
+
+The concept title in the header uses the following priority:
+
+1. **notation + skos:prefLabel** (if both exist): `123 - Albania`
+2. **notation + skosxl:prefLabel** (SKOS-XL fallback): `123 - Albania`
+3. **notation only** or **label only** if just one exists
+4. **URI fragment** as last resort
+
+The SKOS-XL prefLabel (`skosxl:prefLabel/skosxl:literalForm`) is used as fallback when regular `skos:prefLabel` is not available.
+
+### Conditional Sections
 
 Properties and sections are **only displayed when they have values**:
 
@@ -169,6 +194,21 @@ Within each section, individual properties are only displayed if they have value
 - `[📋]` = Copy to clipboard
 - `[</>]` = View raw RDF
 - `[Concept]` = Clickable link to navigate
+
+### Raw RDF Dialog
+
+View the raw RDF representation of the concept.
+
+**Features:**
+- Format selector: Turtle, JSON-LD, N-Triples, RDF/XML
+- Copy to clipboard button
+- Read-only text area with monospace font
+
+**Dialog Styling:**
+- Width: 900px
+- Max height: 90vh
+- Font size: 0.7rem (compact for readability)
+- Textarea: 28 rows
 
 ## Data Model
 

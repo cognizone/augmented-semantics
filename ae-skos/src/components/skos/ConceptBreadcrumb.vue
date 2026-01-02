@@ -59,7 +59,7 @@ async function loadBreadcrumb(uri: string) {
   logger.debug('Breadcrumb', 'Loading path', { uri })
   loading.value = true
 
-  // Query to get all broader concepts recursively with all label types and notation
+  // Query to get all broader concepts recursively with all label types (including SKOS-XL) and notation
   const query = withPrefixes(`
     SELECT ?concept ?label ?labelLang ?labelType ?notation ?depth
     WHERE {
@@ -69,6 +69,9 @@ async function loadBreadcrumb(uri: string) {
         {
           ?concept skos:prefLabel ?label .
           BIND("prefLabel" AS ?labelType)
+        } UNION {
+          ?concept skosxl:prefLabel/skosxl:literalForm ?label .
+          BIND("xlPrefLabel" AS ?labelType)
         } UNION {
           ?concept dct:title ?label .
           BIND("title" AS ?labelType)
@@ -130,8 +133,8 @@ async function loadBreadcrumb(uri: string) {
     const path: ConceptRef[] = Array.from(conceptMap.entries())
       .sort((a, b) => b[1].depth - a[1].depth) // Sort by depth descending
       .map(([conceptUri, data]) => {
-        // Pick best label: prefLabel > title > rdfsLabel, with language priority
-        const labelPriority = ['prefLabel', 'title', 'rdfsLabel']
+        // Pick best label: prefLabel > xlPrefLabel > title > rdfsLabel, with language priority
+        const labelPriority = ['prefLabel', 'xlPrefLabel', 'title', 'rdfsLabel']
         let bestLabel: string | undefined
         let bestLabelLang: string | undefined
 
@@ -267,9 +270,19 @@ watch(
 :deep(.p-breadcrumb-list) {
   margin: 0;
   padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+:deep(.p-breadcrumb-list li) {
+  display: inline-flex;
+  align-items: center;
 }
 
 :deep(.p-breadcrumb-separator) {
   color: var(--p-text-muted-color);
+  margin: 0 0.25rem;
 }
 </style>

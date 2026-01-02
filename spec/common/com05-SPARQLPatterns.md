@@ -325,3 +325,70 @@ Required features:
 - `LANGMATCHES`
 - Subqueries
 - Property paths (`/`, `|`, `*`, `+`)
+
+## Prefix Resolution Service
+
+Convert full URIs to qualified names (e.g., `http://purl.org/dc/terms/title` → `dct:title`).
+
+### Algorithm
+
+1. Extract namespace from URI (up to last `/` or `#`)
+2. Check **local common prefixes** map first (30+ common RDF vocabularies)
+3. Fallback to **prefix.cc API** if not found locally
+4. Cache resolved prefixes in **localStorage** for persistence
+
+### Common Prefixes (Built-in)
+
+```typescript
+const COMMON_PREFIXES = {
+  'http://purl.org/dc/terms/': 'dct',
+  'http://purl.org/dc/elements/1.1/': 'dc',
+  'http://www.w3.org/2000/01/rdf-schema#': 'rdfs',
+  'http://www.w3.org/1999/02/22-rdf-syntax-ns#': 'rdf',
+  'http://www.w3.org/2002/07/owl#': 'owl',
+  'http://www.w3.org/2001/XMLSchema#': 'xsd',
+  'http://xmlns.com/foaf/0.1/': 'foaf',
+  'http://www.w3.org/2004/02/skos/core#': 'skos',
+  'http://www.w3.org/2008/05/skos-xl#': 'skosxl',
+  'http://schema.org/': 'schema',
+  'http://www.w3.org/ns/prov#': 'prov',
+  'http://www.w3.org/ns/dcat#': 'dcat',
+  // ... and more
+}
+```
+
+### prefix.cc API
+
+```
+GET https://prefix.cc/reverse?uri={namespace}&format=json
+→ { "prefix": "namespace" }
+```
+
+**Note:** prefix.cc SSL certificate may be expired. Local common prefixes provide reliable fallback.
+
+### Storage
+
+```typescript
+// localStorage key
+const STORAGE_KEY = 'ae-prefixes'
+
+// Cache format
+interface PrefixCache {
+  [namespace: string]: string | null  // null = lookup attempted, not found
+}
+```
+
+### Usage
+
+```typescript
+import { resolveUris, formatQualifiedName } from '@/services/prefix'
+
+// Resolve multiple URIs at once (batch)
+const resolved = await resolveUris(uris)
+
+// Format for display
+for (const [uri, { prefix, localName }] of resolved) {
+  console.log(formatQualifiedName({ prefix, localName }))
+  // "dct:title" or just "unknownProp" if prefix not found
+}
+```

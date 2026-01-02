@@ -172,6 +172,16 @@ async function detectSkosLanguages() {
     if (languageStore.priorities.length === 0 && firstDetected) {
       languageStore.setPriorities([firstDetected.lang])
     }
+
+    // Auto-add unknown detected languages to priorities (sorted alphabetically)
+    const detectedLangs = detected.map(d => d.lang)
+    const unknownLangs = detectedLangs.filter(
+      lang => !languageStore.priorities.includes(lang)
+    )
+    if (unknownLangs.length > 0) {
+      const sorted = unknownLangs.sort((a, b) => a.localeCompare(b))
+      languageStore.setPriorities([...languageStore.priorities, ...sorted])
+    }
   } catch (error) {
     console.error('Failed to detect languages:', error)
   } finally {

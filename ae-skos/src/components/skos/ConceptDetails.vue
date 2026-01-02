@@ -19,7 +19,7 @@
  */
 import { ref, watch, computed } from 'vue'
 import { useConceptStore, useEndpointStore, useLanguageStore } from '../../stores'
-import { executeSparql, withPrefixes, logger, isValidURI, fetchRawRdf } from '../../services'
+import { executeSparql, withPrefixes, logger, isValidURI, fetchRawRdf, resolveUris, formatQualifiedName } from '../../services'
 import { useDelayedLoading, useLabelResolver } from '../../composables'
 import type { RdfFormat } from '../../services'
 import type { ConceptDetails, ConceptRef } from '../../types'
@@ -43,11 +43,12 @@ const conceptStore = useConceptStore()
 const endpointStore = useEndpointStore()
 const languageStore = useLanguageStore()
 const toast = useToast()
-const { selectLabel, sortLabels, shouldShowLangTag } = useLabelResolver()
+const { selectLabelWithXL, sortLabels, shouldShowLangTag } = useLabelResolver()
 
 // Local state
 const error = ref<string | null>(null)
 const showHiddenLabels = ref(false)
+const resolvedPredicates = ref<Map<string, { prefix: string; localName: string }>>(new Map())
 
 // Raw RDF dialog state
 const showRawRdfDialog = ref(false)
@@ -79,9 +80,10 @@ const loading = computed(() => conceptStore.loadingDetails)
 const showLoading = useDelayedLoading(loading)
 
 // Get preferred label (full LabelValue for language info)
+// Uses SKOS-XL prefLabel as fallback if regular prefLabel not available
 const preferredLabelObj = computed(() => {
   if (!details.value) return null
-  return selectLabel(details.value.prefLabels)
+  return selectLabelWithXL(details.value.prefLabels, details.value.prefLabelsXL)
 })
 
 // Get preferred label string
@@ -147,6 +149,28 @@ const sortedEditorialNotes = computed(() => {
 const sortedExamples = computed(() => {
   return details.value ? sortLabels(details.value.examples) : []
 })
+
+// Sorted other properties (alphabetically by qualified name)
+const sortedOtherProperties = computed(() => {
+  if (!details.value) return []
+  return [...details.value.otherProperties].sort((a, b) => {
+    const aResolved = resolvedPredicates.value.get(a.predicate)
+    const bResolved = resolvedPredicates.value.get(b.predicate)
+    const aName = aResolved ? formatQualifiedName(aResolved) : a.predicate
+    const bName = bResolved ? formatQualifiedName(bResolved) : b.predicate
+    return aName.localeCompare(bName)
+  })
+})
+
+// Get formatted predicate name
+function getPredicateName(predicate: string): string {
+  const resolved = resolvedPredicates.value.get(predicate)
+  if (resolved && resolved.prefix) {
+    return formatQualifiedName(resolved)
+  }
+  // Fallback: extract local name from URI
+  return predicate.split('/').pop()?.split('#').pop() || predicate
+}
 
 
 // Load concept details
@@ -286,6 +310,14 @@ async function loadDetails(uri: string) {
 
     // Load other (non-SKOS) properties
     await loadOtherProperties(uri, details)
+
+    // Resolve prefixes for other properties
+    if (details.otherProperties.length > 0) {
+      const predicates = details.otherProperties.map(p => p.predicate)
+      resolvedPredicates.value = await resolveUris(predicates)
+    } else {
+      resolvedPredicates.value = new Map()
+    }
 
     logger.info('ConceptDetails', 'Loaded details', {
       labels: details.prefLabels.length,
@@ -1109,9 +1141,9 @@ watch(
       </section>
 
       <!-- Other Properties Section -->
-      <section v-if="details.otherProperties.length" class="details-section other-properties">
+      <section v-if="details.otherProperties.length" class="details-section">
         <h3>Other Properties</h3>
-        <div v-for="prop in details.otherProperties" :key="prop.predicate" class="property-row">
+        <div v-for="prop in sortedOtherProperties" :key="prop.predicate" class="property-row">
           <label class="predicate-label">
             <a
               v-if="isValidURI(prop.predicate)"
@@ -1119,10 +1151,10 @@ watch(
               target="_blank"
               class="predicate-link"
             >
-              {{ prop.predicate.split('/').pop()?.split('#').pop() }}
+              {{ getPredicateName(prop.predicate) }}
               <i class="pi pi-external-link"></i>
             </a>
-            <span v-else>{{ prop.predicate.split('/').pop()?.split('#').pop() }}</span>
+            <span v-else>{{ getPredicateName(prop.predicate) }}</span>
           </label>
           <div class="other-values">
             <template v-for="(val, i) in prop.values" :key="i">
@@ -1149,7 +1181,7 @@ watch(
     <Dialog
       v-model:visible="showRawRdfDialog"
       header="Raw RDF"
-      :style="{ width: '700px', maxHeight: '80vh' }"
+      :style="{ width: '900px', maxHeight: '90vh' }"
       :modal="true"
     >
       <div class="raw-rdf-dialog">
@@ -1187,7 +1219,7 @@ watch(
           :readonly="true"
           class="rdf-content"
           :autoResize="false"
-          rows="20"
+          rows="28"
         />
       </div>
     </Dialog>
@@ -1268,7 +1300,7 @@ watch(
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin-top: 0.5rem;
+  margin-top: 0.25rem;
 }
 
 .uri-link {
@@ -1292,11 +1324,10 @@ watch(
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 0.75rem;
 }
 
 .section-header h3 {
-  margin: 0;
+  /* margin inherited from .details-section h3 */
 }
 
 .details-section h3 {
@@ -1404,12 +1435,6 @@ watch(
 }
 
 /* Other Properties */
-.other-properties {
-  background: var(--p-surface-50);
-  border-radius: 4px;
-  padding: 1rem;
-}
-
 .predicate-label {
   font-family: monospace;
   font-size: 0.8rem;
@@ -1488,7 +1513,7 @@ watch(
 
 .rdf-content {
   font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-  font-size: 0.8rem;
+  font-size: 0.7rem;
   width: 100%;
   background: var(--p-surface-50);
 }
