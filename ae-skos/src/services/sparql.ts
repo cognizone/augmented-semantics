@@ -343,22 +343,26 @@ export async function detectDuplicates(
  */
 export async function detectLanguages(
   endpoint: SPARQLEndpoint
-): Promise<string[]> {
+): Promise<{ lang: string; count: number }[]> {
   const query = `
-    SELECT DISTINCT (LANG(?label) AS ?lang)
+    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+    SELECT (LANG(?label) AS ?lang) (COUNT(?label) AS ?count)
     WHERE {
       ?s ?p ?label .
       FILTER (isLiteral(?label) && LANG(?label) != "")
     }
-    ORDER BY ?lang
-    LIMIT 50
+    GROUP BY (LANG(?label))
+    ORDER BY DESC(?count)
   `
 
   try {
     const results = await executeSparql(endpoint, query, { retries: 1 })
     return results.results.bindings
-      .map(b => b.lang?.value)
-      .filter((lang): lang is string => !!lang && lang.length > 0)
+      .map(b => ({
+        lang: b.lang?.value || '',
+        count: parseInt(b.count?.value || '0', 10)
+      }))
+      .filter(item => item.lang.length > 0)
   } catch {
     return []
   }
@@ -374,7 +378,7 @@ export async function analyzeEndpoint(
   graphs: string[]
   hasDuplicateTriples: boolean
   duplicateCount?: number
-  languages: string[]
+  languages: { lang: string; count: number }[]
   analyzedAt: string
 }> {
   const [graphResult, duplicateResult, languages] = await Promise.all([

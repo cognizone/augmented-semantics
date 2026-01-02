@@ -139,7 +139,7 @@ function isExpanded(key: string): boolean {
 <style scoped>
 .xl-labels-group {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
   gap: 0.5rem;
   margin-top: 0.5rem;
 }
@@ -149,6 +149,8 @@ function isExpanded(key: string): boolean {
   border: 1px solid var(--p-surface-200);
   border-radius: 4px;
   overflow: hidden;
+  width: fit-content;
+  max-width: 100%;
 }
 
 .xl-label-header {

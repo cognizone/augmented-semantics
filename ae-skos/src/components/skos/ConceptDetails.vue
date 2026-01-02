@@ -534,8 +534,8 @@ async function loadOtherProperties(uri: string, details: ConceptDetails) {
   try {
     const results = await executeSparql(endpoint, query, { retries: 0 })
 
-    // Group by predicate
-    const propMap = new Map<string, { value: string; lang?: string; isUri: boolean }[]>()
+    // Group by predicate with deduplication
+    const propMap = new Map<string, Map<string, { value: string; lang?: string; isUri: boolean }>>()
 
     for (const binding of results.results.bindings) {
       const predicate = binding.predicate?.value
@@ -546,15 +546,19 @@ async function loadOtherProperties(uri: string, details: ConceptDetails) {
       if (!predicate || !value) continue
 
       if (!propMap.has(predicate)) {
-        propMap.set(predicate, [])
+        propMap.set(predicate, new Map())
       }
-      propMap.get(predicate)!.push({ value, lang, isUri })
+      // Deduplicate by value+lang combination
+      const key = `${value}|${lang || ''}`
+      if (!propMap.get(predicate)!.has(key)) {
+        propMap.get(predicate)!.set(key, { value, lang, isUri })
+      }
     }
 
     // Convert to OtherProperty array
-    details.otherProperties = Array.from(propMap.entries()).map(([predicate, values]) => ({
+    details.otherProperties = Array.from(propMap.entries()).map(([predicate, valuesMap]) => ({
       predicate,
-      values,
+      values: Array.from(valuesMap.values()),
     }))
 
     logger.debug('ConceptDetails', 'Loaded other properties', {
@@ -1297,7 +1301,7 @@ watch(
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin-top: 0.25rem;
+  margin-top: 0.125rem;
 }
 
 .uri-link {
@@ -1356,6 +1360,12 @@ watch(
 
 .label-value {
   font-size: 0.875rem;
+}
+
+.label-value:not(:last-child)::after {
+  content: '·';
+  margin-left: 0.5rem;
+  color: var(--p-text-muted-color);
 }
 
 .label-value.hidden-label {

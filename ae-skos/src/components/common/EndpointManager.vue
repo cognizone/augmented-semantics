@@ -10,14 +10,15 @@
  *
  * @see /spec/common/com01-EndpointManager.md
  */
-import { ref, reactive, computed, onUnmounted } from 'vue'
-import { useEndpointStore } from '../../stores'
-import { testConnection, analyzeEndpoint } from '../../services/sparql'
+import { ref, reactive, computed } from 'vue'
+import { useEndpointStore, useLanguageStore } from '../../stores'
+import { testConnection, analyzeEndpoint, detectLanguages } from '../../services/sparql'
 import {
   isValidEndpointUrl,
   checkEndpointSecurity,
   assessEndpointTrust,
 } from '../../services/security'
+import { useElapsedTime } from '../../composables'
 import type { SPARQLEndpoint, EndpointAuth } from '../../types'
 
 import Dialog from 'primevue/dialog'
@@ -29,6 +30,7 @@ import Column from 'primevue/column'
 import Message from 'primevue/message'
 import Tag from 'primevue/tag'
 import Divider from 'primevue/divider'
+import OrderList from 'primevue/orderlist'
 
 const props = defineProps<{
   visible: boolean
@@ -39,6 +41,7 @@ const emit = defineEmits<{
 }>()
 
 const endpointStore = useEndpointStore()
+const languageStore = useLanguageStore()
 
 // Dialog state
 const showAddDialog = ref(false)
@@ -47,29 +50,19 @@ const testing = ref(false)
 const testResult = ref<{ success: boolean; message: string; time?: number } | null>(null)
 const analyzing = ref(false)
 const analyzeStep = ref<string | null>(null) // Current step being executed
-const elapsedTime = ref(0) // Elapsed seconds
-let elapsedTimer: ReturnType<typeof setInterval> | null = null
 
-// Start elapsed time counter
-function startElapsedTimer() {
-  elapsedTime.value = 0
-  elapsedTimer = setInterval(() => {
-    elapsedTime.value++
-  }, 1000)
-}
+// Elapsed time for analyzing (shows after 2 seconds)
+const analyzeElapsed = useElapsedTime(analyzing)
 
-// Stop elapsed time counter
-function stopElapsedTimer() {
-  if (elapsedTimer) {
-    clearInterval(elapsedTimer)
-    elapsedTimer = null
-  }
-}
+// Language settings dialog state
+const showLanguageDialog = ref(false)
+const languageEndpoint = ref<SPARQLEndpoint | null>(null)
+const loadingLanguages = ref(false)
+const languagePriorities = ref<string[]>([])
+const detectedLanguages = ref<{ lang: string; count: number }[]>([])
 
-// Cleanup on unmount
-onUnmounted(() => {
-  stopElapsedTimer()
-})
+// Elapsed time for language detection (shows after 2 seconds)
+const languageElapsed = useElapsedTime(loadingLanguages)
 
 // Form state
 const form = reactive({
@@ -212,6 +205,12 @@ async function handleTest() {
       message: `Connected successfully (${result.responseTime}ms)`,
       time: result.responseTime,
     }
+    // Auto-dismiss success message after 3 seconds
+    setTimeout(() => {
+      if (testResult.value?.success) {
+        testResult.value = null
+      }
+    }, 3000)
   } else {
     testResult.value = {
       success: false,
@@ -245,7 +244,6 @@ async function handleSave() {
 
     analyzing.value = true
     analyzeStep.value = 'Testing connection...'
-    startElapsedTimer()
 
     try {
       // Step 1: Test connection
@@ -274,7 +272,6 @@ async function handleSave() {
       // Brief delay to show "Done!" before closing
       await new Promise(resolve => setTimeout(resolve, 500))
     } catch (e) {
-      stopElapsedTimer()
       endpointStore.setStatus('error')
       analyzeStep.value = `Error: ${e instanceof Error ? e.message : 'Unknown error'}`
       // Keep dialog open on error so user can see what went wrong
@@ -282,7 +279,6 @@ async function handleSave() {
       return
     }
 
-    stopElapsedTimer()
     analyzing.value = false
     analyzeStep.value = null
     closeAddDialog()
@@ -311,6 +307,87 @@ async function handleConnect(endpoint: SPARQLEndpoint) {
 function formatDate(dateStr?: string) {
   if (!dateStr) return '-'
   return new Date(dateStr).toLocaleDateString()
+}
+
+// Language settings functions
+async function openLanguageDialog(endpoint: SPARQLEndpoint) {
+  languageEndpoint.value = endpoint
+  showLanguageDialog.value = true
+  loadingLanguages.value = true
+
+  // Load existing config for this endpoint
+  const config = languageStore.configs[endpoint.id] || { priorities: ['en'], current: null }
+  languagePriorities.value = [...config.priorities]
+
+  // Detect languages from endpoint
+  try {
+    detectedLanguages.value = await detectLanguages(endpoint)
+
+    // Auto-add detected languages not in priorities (sorted alphabetically)
+    const newLangs = detectedLanguages.value
+      .map(d => d.lang)
+      .filter(lang => !languagePriorities.value.includes(lang))
+      .sort((a, b) => a.localeCompare(b))
+
+    if (newLangs.length > 0) {
+      languagePriorities.value = [...languagePriorities.value, ...newLangs]
+    }
+  } catch (e) {
+    console.error('Failed to detect languages:', e)
+    detectedLanguages.value = []
+  } finally {
+    loadingLanguages.value = false
+  }
+}
+
+function closeLanguageDialog() {
+  showLanguageDialog.value = false
+  languageEndpoint.value = null
+  languagePriorities.value = []
+  detectedLanguages.value = []
+}
+
+function saveLanguageSettings() {
+  if (!languageEndpoint.value) return
+
+  // Save to language store
+  languageStore.configs[languageEndpoint.value.id] = {
+    priorities: languagePriorities.value,
+    current: null
+  }
+
+  // Persist to localStorage
+  const key = `ae-language-${languageEndpoint.value.id}`
+  localStorage.setItem(key, JSON.stringify({
+    priorities: languagePriorities.value,
+    current: null
+  }))
+
+  // If this is the current endpoint, update active config
+  if (languageEndpoint.value.id === endpointStore.currentId) {
+    languageStore.setEndpoint(languageEndpoint.value.id)
+  }
+
+  closeLanguageDialog()
+}
+
+function getLanguageCount(lang: string): number | undefined {
+  const found = detectedLanguages.value.find(d => d.lang === lang)
+  return found?.count
+}
+
+function removeLanguageFromPriorities(lang: string) {
+  languagePriorities.value = languagePriorities.value.filter(l => l !== lang)
+}
+
+function addLanguageToPriorities(lang: string) {
+  if (!languagePriorities.value.includes(lang)) {
+    languagePriorities.value = [...languagePriorities.value, lang]
+  }
+}
+
+function onLanguageReorder(event: { value: string[] }) {
+  languagePriorities.value = event.value
 }
 </script>
 
@@ -386,7 +463,7 @@ function formatDate(dateStr?: string) {
           </template>
         </Column>
 
-        <Column header="Actions" :style="{ width: '150px' }">
+        <Column header="Actions" :style="{ width: '180px' }">
           <template #body="{ data }">
             <div class="action-buttons">
               <Button
@@ -398,6 +475,16 @@ function formatDate(dateStr?: string) {
                 aria-label="Connect"
                 :disabled="data.id === endpointStore.currentId"
                 @click="handleConnect(data)"
+              />
+              <Button
+                icon="pi pi-globe"
+                severity="info"
+                text
+                rounded
+                size="small"
+                aria-label="Language settings"
+                v-tooltip.top="'Language settings'"
+                @click="openLanguageDialog(data)"
               />
               <Button
                 icon="pi pi-pencil"
@@ -556,14 +643,16 @@ function formatDate(dateStr?: string) {
       </template>
 
       <!-- Test Result -->
-      <Message
-        v-if="testResult"
-        :severity="testResult.success ? 'success' : 'error'"
-        :closable="false"
-        class="test-result"
-      >
-        {{ testResult.message }}
-      </Message>
+      <Transition name="fade">
+        <Message
+          v-if="testResult"
+          :severity="testResult.success ? 'success' : 'error'"
+          :closable="false"
+          class="test-result"
+        >
+          {{ testResult.message }}
+        </Message>
+      </Transition>
 
       <!-- Progress indicator during save -->
       <div v-if="analyzeStep" class="progress-indicator">
@@ -572,7 +661,7 @@ function formatDate(dateStr?: string) {
         <i v-else class="pi pi-check-circle success-icon"></i>
         <span :class="{ 'error-text': analyzeStep.startsWith('Error') }">
           {{ analyzeStep }}
-          <span v-if="analyzing && elapsedTime > 0" class="elapsed-time">({{ elapsedTime }}s)</span>
+          <span v-if="analyzeElapsed.show.value" class="elapsed-time">({{ analyzeElapsed.elapsed.value }}s)</span>
         </span>
       </div>
     </div>
@@ -603,6 +692,95 @@ function formatDate(dateStr?: string) {
             @click="handleSave"
           />
         </div>
+      </div>
+    </template>
+  </Dialog>
+
+  <!-- Language Settings Dialog -->
+  <Dialog
+    v-model:visible="showLanguageDialog"
+    :header="`Language Settings - ${languageEndpoint?.name || ''}`"
+    :style="{ width: '500px' }"
+    :modal="true"
+    :closable="true"
+    @hide="closeLanguageDialog"
+  >
+    <div class="language-settings">
+      <div v-if="loadingLanguages" class="loading-languages">
+        <i class="pi pi-spin pi-spinner"></i>
+        <span>
+          Detecting languages...
+          <span v-if="languageElapsed.show.value" class="elapsed-time">({{ languageElapsed.elapsed.value }}s)</span>
+        </span>
+      </div>
+
+      <template v-else>
+        <div class="language-section">
+          <h4>Language Priority</h4>
+          <p class="section-description">
+            Drag to reorder. First language is the default display language.
+          </p>
+
+          <OrderList
+            v-model="languagePriorities"
+            dataKey="value"
+            :listStyle="{ height: 'auto', maxHeight: '300px' }"
+            @reorder="onLanguageReorder"
+          >
+            <template #item="{ item, index }">
+              <div class="language-item">
+                <span class="language-rank">{{ index + 1 }}.</span>
+                <span class="language-code">{{ item }}</span>
+                <span v-if="getLanguageCount(item)" class="language-count">
+                  ({{ getLanguageCount(item)?.toLocaleString() }})
+                </span>
+                <Button
+                  v-if="languagePriorities.length > 1"
+                  icon="pi pi-times"
+                  severity="danger"
+                  text
+                  rounded
+                  size="small"
+                  class="remove-btn"
+                  @click.stop="removeLanguageFromPriorities(item)"
+                />
+              </div>
+            </template>
+          </OrderList>
+        </div>
+
+        <div v-if="detectedLanguages.some(d => !languagePriorities.includes(d.lang))" class="language-section">
+          <h4>Available Languages</h4>
+          <div class="available-languages">
+            <Button
+              v-for="lang in detectedLanguages.filter(d => !languagePriorities.includes(d.lang))"
+              :key="lang.lang"
+              :label="`${lang.lang} (${lang.count.toLocaleString()})`"
+              icon="pi pi-plus"
+              severity="secondary"
+              outlined
+              size="small"
+              @click="addLanguageToPriorities(lang.lang)"
+            />
+          </div>
+        </div>
+      </template>
+    </div>
+
+    <template #footer>
+      <div class="dialog-footer">
+        <Button
+          label="Cancel"
+          severity="secondary"
+          text
+          @click="closeLanguageDialog"
+        />
+        <Button
+          label="Save"
+          icon="pi pi-check"
+          :disabled="languagePriorities.length === 0"
+          @click="saveLanguageSettings"
+        />
       </div>
     </template>
   </Dialog>
@@ -738,6 +916,20 @@ function formatDate(dateStr?: string) {
   margin-top: 0.5rem;
 }
 
+/* Fade transition for test result */
+.fade-enter-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-leave-active {
+  transition: opacity 1s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
 .dialog-footer {
   display: flex;
   justify-content: space-between;
@@ -778,5 +970,75 @@ function formatDate(dateStr?: string) {
 .elapsed-time {
   color: var(--p-text-muted-color);
   margin-left: 0.25rem;
+}
+
+/* Language Settings Dialog */
+.language-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.loading-languages {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 2rem;
+  color: var(--p-text-muted-color);
+}
+
+.language-section h4 {
+  margin: 0 0 0.25rem 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.section-description {
+  margin: 0 0 0.75rem 0;
+  font-size: 0.75rem;
+  color: var(--p-text-muted-color);
+}
+
+.language-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  width: 100%;
+}
+
+.language-rank {
+  font-weight: 500;
+  color: var(--p-text-muted-color);
+  min-width: 1.5rem;
+}
+
+.language-code {
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.language-count {
+  font-size: 0.75rem;
+  color: var(--p-text-muted-color);
+}
+
+.remove-btn {
+  margin-left: auto;
+}
+
+.available-languages {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+:deep(.p-orderlist-controls) {
+  display: none;
+}
+
+:deep(.p-orderlist-list) {
+  padding: 0.5rem;
 }
 </style>

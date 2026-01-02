@@ -41,8 +41,29 @@ const loadingChildren = ref<Set<string>>(new Set())
 const gotoUri = ref('')
 
 // Convert our ConceptNode[] to PrimeVue tree format
+// If a scheme is selected, show it as the root with top concepts as children
 const treeNodes = computed((): TreeNode[] => {
-  return conceptStore.topConcepts.map(node => convertToTreeNode(node))
+  const topNodes = conceptStore.topConcepts.map(node => convertToTreeNode(node))
+
+  // If a scheme is selected, wrap top concepts under the scheme as root
+  const scheme = schemeStore.selected
+  if (scheme && topNodes.length > 0) {
+    return [{
+      key: scheme.uri,
+      label: scheme.label || scheme.uri.split('/').pop() || scheme.uri,
+      data: {
+        uri: scheme.uri,
+        isScheme: true,
+        label: scheme.label,
+        showLangTag: scheme.labelLang ? shouldShowLangTag(scheme.labelLang) : false,
+        lang: scheme.labelLang,
+      },
+      leaf: false,
+      children: topNodes,
+    }]
+  }
+
+  return topNodes
 })
 
 function convertToTreeNode(node: ConceptNode): TreeNode {
@@ -86,6 +107,11 @@ const selectedKey = computed<TreeSelectionKeys | undefined>({
 const expandedKeys = computed<TreeExpandedKeys>({
   get: () => {
     const keys: TreeExpandedKeys = {}
+    // Auto-expand the scheme node if present
+    const scheme = schemeStore.selected
+    if (scheme) {
+      keys[scheme.uri] = true
+    }
     conceptStore.expanded.forEach(uri => {
       keys[uri] = true
     })
@@ -506,7 +532,8 @@ watch(
       @node-collapse="onNodeCollapse"
     >
       <template #default="slotProps">
-        <div class="tree-node">
+        <div class="tree-node" :class="{ 'scheme-node': slotProps.node.data?.isScheme }">
+          <i v-if="slotProps.node.data?.isScheme" class="pi pi-sitemap scheme-icon"></i>
           <span class="node-label">
             {{ slotProps.node.label }}
             <span v-if="slotProps.node.data?.showLangTag" class="lang-tag">
@@ -591,6 +618,15 @@ watch(
   display: flex;
   align-items: center;
   gap: 0.5rem;
+}
+
+.tree-node.scheme-node {
+  font-weight: 600;
+}
+
+.scheme-icon {
+  color: var(--p-primary-color);
+  font-size: 0.875rem;
 }
 
 .node-label {

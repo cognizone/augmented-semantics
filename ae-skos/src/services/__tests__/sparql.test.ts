@@ -474,18 +474,27 @@ describe('detectLanguages', () => {
     vi.restoreAllMocks()
   })
 
-  it('returns available languages', async () => {
-    const mockResults = createSparqlResults([
-      { lang: 'en' },
-      { lang: 'fr' },
-      { lang: 'de' },
-    ])
+  it('returns available languages with counts', async () => {
+    const mockResults = {
+      head: { vars: ['lang', 'count'] },
+      results: {
+        bindings: [
+          { lang: { type: 'literal', value: 'en' }, count: { type: 'literal', value: '100' } },
+          { lang: { type: 'literal', value: 'fr' }, count: { type: 'literal', value: '50' } },
+          { lang: { type: 'literal', value: 'de' }, count: { type: 'literal', value: '25' } },
+        ],
+      },
+    }
     global.fetch = mockFetchSuccess(mockResults)
 
     const endpoint = createMockEndpoint()
     const result = await detectLanguages(endpoint)
 
-    expect(result).toEqual(['en', 'fr', 'de'])
+    expect(result).toEqual([
+      { lang: 'en', count: 100 },
+      { lang: 'fr', count: 50 },
+      { lang: 'de', count: 25 },
+    ])
   })
 
   it('returns empty array on failure', async () => {
@@ -499,12 +508,12 @@ describe('detectLanguages', () => {
 
   it('filters out empty language values', async () => {
     const mockResults = {
-      head: { vars: ['lang'] },
+      head: { vars: ['lang', 'count'] },
       results: {
         bindings: [
-          { lang: { type: 'literal', value: 'en' } },
-          { lang: { type: 'literal', value: '' } },
-          { lang: { type: 'literal', value: 'fr' } },
+          { lang: { type: 'literal', value: 'en' }, count: { type: 'literal', value: '100' } },
+          { lang: { type: 'literal', value: '' }, count: { type: 'literal', value: '10' } },
+          { lang: { type: 'literal', value: 'fr' }, count: { type: 'literal', value: '50' } },
         ],
       },
     }
@@ -513,7 +522,10 @@ describe('detectLanguages', () => {
     const endpoint = createMockEndpoint()
     const result = await detectLanguages(endpoint)
 
-    expect(result).toEqual(['en', 'fr'])
+    expect(result).toEqual([
+      { lang: 'en', count: 100 },
+      { lang: 'fr', count: 50 },
+    ])
   })
 })
 

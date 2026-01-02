@@ -159,81 +159,66 @@ WHERE { ?s ?p ?o }
 
 ## Language Preferences
 
-Global language settings applied across all tools.
+Per-endpoint language settings. See [sko01-LanguageSelector](../ae-skos/sko01-LanguageSelector.md) for full details.
 
 ### Language Detection
 
-Detect available languages from the endpoint on connection.
+Detect available languages with counts from the endpoint.
 
 **Query:**
 ```sparql
-SELECT DISTINCT (LANG(?label) AS ?lang)
+SELECT (LANG(?label) AS ?lang) (COUNT(?label) AS ?count)
 WHERE {
   ?s ?p ?label .
   FILTER (isLiteral(?label) && LANG(?label) != "")
 }
-ORDER BY ?lang
-LIMIT 50
+GROUP BY (LANG(?label))
+ORDER BY DESC(?count)
 ```
 
-### Settings
+### Per-Endpoint Configuration
 
-| Setting | Description | Default |
-|---------|-------------|---------|
-| Preferred language | Primary language for labels | Browser language |
-| Fallback language | Used when preferred not available | `en` |
-
-### Language Data Model
+Each endpoint has its own language configuration:
 
 ```typescript
-interface LanguagePreferences {
-  preferred: string;           // ISO 639-1 code (e.g., "nl", "en")
-  fallback: string;            // ISO 639-1 code
-  detected: string[];          // Languages found in endpoint
-  detectedAt?: string;         // ISO timestamp
+interface EndpointLanguageConfig {
+  priorities: string[];      // Ordered list: ['en', 'fr', 'de']
+  current: string | null;    // Override, null = use priorities
 }
 ```
 
-### Language Filter Pattern
+**Storage:** `ae-language-{endpointId}` in localStorage
 
-All tools use this SPARQL pattern for language filtering:
+### Language Settings UI
 
-```sparql
-# Get label with preferred language, fallback, or no-lang
-OPTIONAL {
-  ?concept skos:prefLabel ?prefLangLabel .
-  FILTER (LANGMATCHES(LANG(?prefLangLabel), "PREFERRED"))
-}
-OPTIONAL {
-  ?concept skos:prefLabel ?fallbackLabel .
-  FILTER (LANGMATCHES(LANG(?fallbackLabel), "FALLBACK"))
-}
-OPTIONAL {
-  ?concept skos:prefLabel ?noLangLabel .
-  FILTER (LANG(?noLangLabel) = "")
-}
-BIND (COALESCE(?prefLangLabel, ?fallbackLabel, ?noLangLabel) AS ?label)
-```
-
-### Language UI
+Accessible via globe icon button in endpoint actions column:
 
 ```
 ┌─────────────────────────────────────────┐
-│ Language Settings                       │
+│ Language Settings - EuroVoc         [×] │
 ├─────────────────────────────────────────┤
-│ Preferred:   [Nederlands        ▼]      │
-│ Fallback:    [English           ▼]      │
+│ Language Priority                       │
+│ Drag to reorder. First is default.      │
+│ ┌─────────────────────────────────────┐ │
+│ │ ≡ 1. en (12,456)              [×]  │ │
+│ │ ≡ 2. fr (8,901)               [×]  │ │
+│ │ ≡ 3. de (7,234)               [×]  │ │
+│ └─────────────────────────────────────┘ │
 │                                         │
-│ Detected languages: nl, en, fr, de      │
+│ Available Languages                     │
+│ [+ it (5,123)] [+ nl (4,567)]          │
+│                                         │
+├─────────────────────────────────────────┤
+│                  [Cancel]  [Save]       │
 └─────────────────────────────────────────┘
 ```
 
-### Storage
-
-```
-Key: ae-language
-Value: LanguagePreferences object
-```
+Features:
+- Drag-and-drop reordering of priority list
+- Auto-detection of languages with label counts
+- Auto-add detected languages (sorted alphabetically)
+- Remove languages from priority list
+- Add available languages back
 
 ## Endpoint Management
 
@@ -274,7 +259,14 @@ interface SPARQLEndpoint {
   - "Testing connection..."
   - "Analyzing endpoint structure..."
   - "Done!" or error message
+  - Elapsed time shown after 2 seconds (e.g., "Testing connection... (3s)")
 - Dialog stays open on error to show what went wrong
+
+#### Test Connection
+- Tests endpoint connectivity
+- Shows response time on success (e.g., "Connected successfully (162ms)")
+- **Success message auto-dismisses after 3 seconds**
+- Error messages persist until manually dismissed or form is reset
 
 #### Edit Endpoint
 - Modify name, URL, or auth settings

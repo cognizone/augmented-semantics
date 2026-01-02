@@ -134,6 +134,25 @@ function clearHistory() {
   flex: 1;
   overflow: auto;
   border: none;
+  min-height: 0;
+  height: 100%;
+}
+
+:deep(.p-listbox) {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+:deep(.p-listbox-list-container) {
+  flex: 1;
+  height: auto;
+  max-height: none;
+  overflow: auto;
+}
+
+:deep(.p-listbox-list) {
+  max-height: none;
 }
 
 .history-item {

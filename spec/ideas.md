@@ -28,6 +28,28 @@
 - [x] SKOS-XL labels: displayed on new line, grouped by literalForm, collapse count shown for duplicates
 - [x] endpoint add progress: shows elapsed time (e.g., "Testing connection... (3s)")
 
+- [x] recent concepts now uses full screen height (removed Listbox max-height)
+- [x] SKOS-XL format: width fit-content, not full width
+- [x] concept scheme shown as root in tree with sitemap icon, auto-expanded
+- [x] other properties: added deduplication by value+lang
+- [x] prefixes in other properties: already working via resolveUris
+
+- [x] test connection success message auto-dismisses after 3 seconds
+- [x] created useElapsedTime composable for progress indicators (shows after 2s delay)
+- [x] endpoint add uses generic elapsed time composable
+- [x] URI of concept moved closer to label (margin-top reduced to 0.125rem)
+- [x] labels have visual separator (middle dot ·) between them
+- [x] recent concepts uses full vertical space (Listbox height fixes)
+- [x] language settings added to EndpointManager:
+  - globe button in actions column opens language dialog
+  - detects languages with counts from endpoint
+  - drag-drop reorderable priority list
+  - auto-adds detected languages (sorted alphabetically)
+  - per-endpoint configuration persisted to localStorage
+- [x] test connection success message fades out slowly (1s transition)
+- [x] elapsed time shows on language detection progress (after 2s delay)
+- [x] removed LIMIT 50 on language detection query
+
 ## Backlog
 
-(empty) 
+- SKOS-XL labels behavior when normal label has same value (needs clarification) 
