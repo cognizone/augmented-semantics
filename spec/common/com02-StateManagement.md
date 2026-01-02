@@ -56,9 +56,23 @@ interface LanguageState {
 }
 
 interface SettingsState {
+  // Display settings
   showDatatypes: boolean;           // Show datatype tags on property values
   showLanguageTags: boolean;        // Show language tags on labels
   showPreferredLanguageTag: boolean; // Show tag even when matching preferred
+
+  // Deprecation settings
+  showDeprecationIndicator: boolean; // Show deprecation badges/styling
+  deprecationRules: DeprecationRule[]; // Configurable detection rules
+}
+
+interface DeprecationRule {
+  id: string;                       // Unique identifier
+  label: string;                    // Display name
+  predicate: string;                // Full predicate URI
+  condition: 'equals' | 'not-equals' | 'exists';
+  value?: string;                   // Value to compare (for equals/not-equals)
+  enabled: boolean;                 // Whether rule is active
 }
 
 interface UIState {
@@ -122,10 +136,71 @@ Two types for concept references serve different purposes:
 |-----|---------|------|
 | `ae-endpoints` | Saved endpoints (includes languagePriorities) | Cross-tab |
 | `ae-language` | Global preferred language | Cross-tab |
-| `ae-skos-settings` | App settings (datatypes, language tags) | Cross-tab |
+| `ae-skos-settings` | App settings (display, deprecation) | Cross-tab |
 | `ae-skos-scheme` | Last selected scheme | Per-endpoint |
 | `ae-skos-history` | Recently viewed | Per-endpoint |
 | `ae-skos-tree-expanded` | Expanded nodes | Per-session |
+
+### Default Deprecation Rules
+
+```typescript
+const DEFAULT_DEPRECATION_RULES: DeprecationRule[] = [
+  {
+    id: 'owl-deprecated',
+    label: 'OWL Deprecated',
+    predicate: 'http://www.w3.org/2002/07/owl#deprecated',
+    condition: 'equals',
+    value: 'true',
+    enabled: true,
+  },
+  {
+    id: 'euvoc-status',
+    label: 'EU Vocabularies Status',
+    predicate: 'http://publications.europa.eu/ontology/euvoc#status',
+    condition: 'not-equals',
+    value: 'http://publications.europa.eu/resource/authority/concept-status/CURRENT',
+    enabled: true,
+  },
+];
+```
+
+**Rule conditions:**
+- `equals`: Deprecated when predicate value equals configured value
+- `not-equals`: Deprecated when predicate value does NOT equal configured value
+- `exists`: Deprecated when predicate exists with any value
+
+### Settings Dialog
+
+The Settings dialog (accessible via toolbar) is organized into sections:
+
+```
+┌─────────────────────────────────────┐
+│ Settings                            │
+├─────────────────────────────────────┤
+│ PREFERRED LANGUAGE                  │
+│ ┌─────────────────────────────────┐ │
+│ │ [Language dropdown        ▾]    │ │
+│ │ Labels shown in this language   │ │
+│ └─────────────────────────────────┘ │
+│                                     │
+│ DISPLAY                             │
+│ ┌─────────────────────────────────┐ │
+│ │ ☑ Show datatypes                │ │
+│ │ ☑ Show language tags            │ │
+│ │   ☐ Include preferred language  │ │
+│ └─────────────────────────────────┘ │
+│                                     │
+│ DEPRECATION                         │
+│ ┌─────────────────────────────────┐ │
+│ │ ☑ Show deprecation indicators   │ │
+│ │   DETECTION RULES               │ │
+│ │   ☑ OWL Deprecated (= true)     │ │
+│ │   ☑ EU Vocabularies (≠ CURRENT) │ │
+│ └─────────────────────────────────┘ │
+├─────────────────────────────────────┤
+│ [Reset to defaults]        [Close]  │
+└─────────────────────────────────────┘
+```
 
 ### Persistence Rules
 
@@ -141,6 +216,8 @@ persist('ae-skos-settings', {
   showDatatypes: state.settings.showDatatypes,
   showLanguageTags: state.settings.showLanguageTags,
   showPreferredLanguageTag: state.settings.showPreferredLanguageTag,
+  showDeprecationIndicator: state.settings.showDeprecationIndicator,
+  deprecationRules: state.settings.deprecationRules,
 });
 
 // Restore on init
@@ -150,6 +227,8 @@ const settings = restore('ae-skos-settings') ?? {
   showDatatypes: true,
   showLanguageTags: true,
   showPreferredLanguageTag: false,
+  showDeprecationIndicator: true,
+  deprecationRules: DEFAULT_DEPRECATION_RULES,
 };
 ```
 

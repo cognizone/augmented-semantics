@@ -137,6 +137,27 @@ The concept title in the header uses the following priority:
 
 The SKOS-XL prefLabel (`skosxl:prefLabel/skosxl:literalForm`) is used as fallback when regular `skos:prefLabel` is not available.
 
+### Deprecation Badge
+
+Deprecated concepts display a warning badge in the header:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ Wheat [en] [DEPRECATED]                          [📋] [</>] │
+│ http://example.org/concepts/wheat                [📋]       │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Detection:** Deprecation status is determined from `otherProperties` using configurable rules:
+1. `owl:deprecated = "true"` - Standard OWL deprecation
+2. `euvoc:status ≠ CURRENT` - EU Vocabularies status
+
+**Styling:**
+- Badge: Orange background with uppercase "DEPRECATED" text
+- Positioned after language tag in header
+
+**Settings:** Visibility controlled via Settings → Deprecation → "Show deprecation indicators"
+
 ### Conditional Sections
 
 Properties and sections are **only displayed when they have values**:
@@ -215,6 +236,7 @@ View the raw RDF representation of the concept.
 ```typescript
 interface ConceptDetails {
   uri: string;
+  deprecated?: boolean;  // Deprecation status
   labels: {
     prefLabel: LangLiteral[];
     altLabel: LangLiteral[];

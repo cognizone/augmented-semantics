@@ -125,7 +125,6 @@ async function loadSchemes() {
         BIND(LANG(?label) AS ?labelLang)
       }
     }
-    LIMIT 500
   `)
 
   logger.debug('SchemeSelector', 'Query', { query })

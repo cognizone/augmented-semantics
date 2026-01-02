@@ -14,7 +14,7 @@
 import { ref, watch, computed } from 'vue'
 import { useConceptStore, useEndpointStore, useSchemeStore, useLanguageStore } from '../../stores'
 import { executeSparql, withPrefixes, logger } from '../../services'
-import { useDelayedLoading, useLabelResolver, useElapsedTime } from '../../composables'
+import { useDelayedLoading, useLabelResolver, useElapsedTime, useDeprecation } from '../../composables'
 import type { ConceptNode } from '../../types'
 import Tree from 'primevue/tree'
 import type { TreeNode } from 'primevue/treenode'
@@ -31,6 +31,29 @@ const endpointStore = useEndpointStore()
 const schemeStore = useSchemeStore()
 const languageStore = useLanguageStore()
 const { shouldShowLangTag, selectLabel } = useLabelResolver()
+const { getDeprecationSparqlClauses, getDeprecationSelectVars, isDeprecatedFromBinding, showIndicator: showDeprecationIndicator } = useDeprecation()
+
+/**
+ * Pick the best notation from a list.
+ * Prefers the smallest numeric notation for consistent sorting.
+ */
+function pickBestNotation(notations: string[]): string | undefined {
+  if (!notations.length) return undefined
+  if (notations.length === 1) return notations[0]
+
+  // Find all numeric notations and pick the smallest
+  const numericNotations = notations
+    .map(n => ({ value: n, num: parseFloat(n) }))
+    .filter(n => !isNaN(n.num))
+    .sort((a, b) => a.num - b.num)
+
+  if (numericNotations.length > 0) {
+    return numericNotations[0].value
+  }
+
+  // No numeric notations, return first alphabetically
+  return notations.sort()[0]
+}
 
 /**
  * Compare tree nodes for sorting.
@@ -68,10 +91,22 @@ const showTreeLoading = useDelayedLoading(computed(() => conceptStore.loadingTre
 // Elapsed time for tree loading (shows after 1s delay)
 const treeLoadingElapsed = useElapsedTime(computed(() => conceptStore.loadingTree))
 
+// Pagination config
+const PAGE_SIZE = 200
+
+// Pagination state for top concepts
+const topConceptsOffset = ref(0)
+const hasMoreTopConcepts = ref(true)
+const loadingMoreTopConcepts = ref(false)
+
+// Pagination state for children (keyed by parent URI)
+const childrenPagination = ref<Map<string, { offset: number; hasMore: boolean; loading: boolean }>>(new Map())
+
 // Local state
 const error = ref<string | null>(null)
 const loadingChildren = ref<Set<string>>(new Set())
 const gotoUri = ref('')
+const treeContainerRef = ref<HTMLElement | null>(null)
 
 // Convert our ConceptNode[] to PrimeVue tree format
 // If a scheme is selected, show it as the root with top concepts as children
@@ -167,7 +202,7 @@ const expandedKeys = computed<TreeExpandedKeys>({
 })
 
 // Load top concepts for selected scheme
-async function loadTopConcepts() {
+async function loadTopConcepts(offset = 0) {
   const endpoint = endpointStore.current
   const scheme = schemeStore.selected
   if (!endpoint) return
@@ -178,25 +213,48 @@ async function loadTopConcepts() {
     return
   }
 
+  const isFirstPage = offset === 0
+
   logger.info('ConceptTree', 'Loading top concepts', {
     scheme: scheme?.uri || 'all',
-    language: languageStore.preferred
+    language: languageStore.preferred,
+    offset,
+    pageSize: PAGE_SIZE
   })
 
-  conceptStore.setLoadingTree(true)
+  if (isFirstPage) {
+    conceptStore.setLoadingTree(true)
+    topConceptsOffset.value = 0
+    hasMoreTopConcepts.value = true
+  } else {
+    loadingMoreTopConcepts.value = true
+  }
   error.value = null
 
-  const schemeFilter = scheme
-    ? `?concept skos:inScheme <${scheme.uri}> .`
-    : ''
-
   // Query gets all label types (including SKOS-XL) and notation - we pick best one in code
+  // Top concepts are found via: topConceptOf, hasTopConcept (inverse), or no broader (fallback)
+  // Fetch PAGE_SIZE + 1 to detect if there are more results
+  const deprecationSelectVars = getDeprecationSelectVars()
+  const deprecationClauses = getDeprecationSparqlClauses('?concept')
+
   const query = withPrefixes(`
-    SELECT DISTINCT ?concept ?label ?labelLang ?labelType ?notation (COUNT(DISTINCT ?narrower) AS ?narrowerCount)
+    SELECT DISTINCT ?concept ?label ?labelLang ?labelType ?notation (COUNT(DISTINCT ?narrower) AS ?narrowerCount) ${deprecationSelectVars}
     WHERE {
-      ?concept a skos:Concept .
-      ${schemeFilter}
-      FILTER NOT EXISTS { ?concept skos:broader ?broader }
+      {
+        # Explicit top concept via topConceptOf or hasTopConcept
+        ?concept a skos:Concept .
+        ?concept skos:inScheme <${scheme.uri}> .
+        { ?concept skos:topConceptOf <${scheme.uri}> }
+        UNION
+        { <${scheme.uri}> skos:hasTopConcept ?concept }
+      }
+      UNION
+      {
+        # Fallback: concepts with no broader relationship
+        ?concept a skos:Concept .
+        ?concept skos:inScheme <${scheme.uri}> .
+        FILTER NOT EXISTS { ?concept skos:broader ?broader }
+      }
       OPTIONAL { ?concept skos:notation ?notation }
       OPTIONAL {
         {
@@ -215,10 +273,12 @@ async function loadTopConcepts() {
         BIND(LANG(?label) AS ?labelLang)
       }
       OPTIONAL { ?narrower skos:broader ?concept }
+      ${deprecationClauses}
     }
-    GROUP BY ?concept ?label ?labelLang ?labelType ?notation
+    GROUP BY ?concept ?label ?labelLang ?labelType ?notation ${deprecationSelectVars}
     ORDER BY ?concept ?label
-    LIMIT 2000
+    LIMIT ${PAGE_SIZE + 1}
+    OFFSET ${offset}
   `)
 
   logger.debug('ConceptTree', 'Top concepts query', { query })
@@ -229,8 +289,9 @@ async function loadTopConcepts() {
     // Group by concept URI and pick best label
     const conceptMap = new Map<string, {
       labels: { value: string; lang: string; type: string }[]
-      notation?: string
+      notations: string[]
       hasNarrower: boolean
+      deprecated: boolean
     }>()
 
     for (const b of results.results.bindings) {
@@ -240,15 +301,17 @@ async function loadTopConcepts() {
       if (!conceptMap.has(uri)) {
         conceptMap.set(uri, {
           labels: [],
-          hasNarrower: parseInt(b.narrowerCount?.value || '0', 10) > 0
+          notations: [],
+          hasNarrower: parseInt(b.narrowerCount?.value || '0', 10) > 0,
+          deprecated: isDeprecatedFromBinding(b),
         })
       }
 
       const entry = conceptMap.get(uri)!
 
-      // Store notation (first one wins)
-      if (b.notation?.value && !entry.notation) {
-        entry.notation = b.notation.value
+      // Collect all notations (we'll pick the best one later)
+      if (b.notation?.value && !entry.notations.includes(b.notation.value)) {
+        entry.notations.push(b.notation.value)
       }
 
       if (b.label?.value) {
@@ -283,41 +346,79 @@ async function loadTopConcepts() {
         uri,
         label: bestLabel,
         lang: bestLabelLang,
-        notation: data.notation,
+        notation: pickBestNotation(data.notations),
         hasNarrower: data.hasNarrower,
         expanded: false,
+        deprecated: data.deprecated,
       }
     })
 
     // Sort by notation (numeric if possible) then label
     concepts.sort(compareNodes)
 
-    logger.info('ConceptTree', `Loaded ${concepts.length} top concepts`)
-    conceptStore.setTopConcepts(concepts)
+    // Check if there are more results (we fetched PAGE_SIZE + 1)
+    const hasMore = concepts.length > PAGE_SIZE
+    if (hasMore) {
+      concepts.pop() // Remove the extra item used for detection
+    }
+    hasMoreTopConcepts.value = hasMore
+    topConceptsOffset.value = offset
+
+    logger.info('ConceptTree', `Loaded ${concepts.length} top concepts`, { hasMore, offset })
+
+    if (isFirstPage) {
+      conceptStore.setTopConcepts(concepts)
+    } else {
+      conceptStore.appendTopConcepts(concepts)
+    }
   } catch (e: unknown) {
     const errMsg = e && typeof e === 'object' && 'message' in e
       ? (e as { message: string }).message
       : 'Unknown error'
     logger.error('ConceptTree', 'Failed to load top concepts', { error: e })
     error.value = `Failed to load concepts: ${errMsg}`
-    conceptStore.setTopConcepts([])
+    if (isFirstPage) {
+      conceptStore.setTopConcepts([])
+    }
   } finally {
     conceptStore.setLoadingTree(false)
+    loadingMoreTopConcepts.value = false
   }
 }
 
+// Load more top concepts (next page)
+async function loadMoreTopConcepts() {
+  if (!hasMoreTopConcepts.value || loadingMoreTopConcepts.value) return
+  const nextOffset = topConceptsOffset.value + PAGE_SIZE
+  await loadTopConcepts(nextOffset)
+}
+
 // Load children for a node
-async function loadChildren(uri: string) {
+async function loadChildren(uri: string, offset = 0) {
   const endpoint = endpointStore.current
   if (!endpoint) return
 
-  if (loadingChildren.value.has(uri)) return
-  loadingChildren.value.add(uri)
+  const isFirstPage = offset === 0
 
-  logger.debug('ConceptTree', 'Loading children', { parent: uri })
+  // Prevent duplicate requests
+  if (isFirstPage && loadingChildren.value.has(uri)) return
+  const pagination = childrenPagination.value.get(uri)
+  if (!isFirstPage && pagination?.loading) return
+
+  if (isFirstPage) {
+    loadingChildren.value.add(uri)
+    childrenPagination.value.set(uri, { offset: 0, hasMore: true, loading: true })
+  } else if (pagination) {
+    pagination.loading = true
+  }
+
+  logger.debug('ConceptTree', 'Loading children', { parent: uri, offset, pageSize: PAGE_SIZE })
+
+  const deprecationSelectVarsChild = getDeprecationSelectVars()
+  const deprecationClausesChild = getDeprecationSparqlClauses('?concept')
 
   const query = withPrefixes(`
-    SELECT DISTINCT ?concept ?label ?labelLang ?labelType ?notation (COUNT(DISTINCT ?narrower) AS ?narrowerCount)
+    SELECT DISTINCT ?concept ?label ?labelLang ?labelType ?notation (COUNT(DISTINCT ?narrower) AS ?narrowerCount) ${deprecationSelectVarsChild}
     WHERE {
       ?concept skos:broader <${uri}> .
       OPTIONAL { ?concept skos:notation ?notation }
@@ -338,38 +439,43 @@ async function loadChildren(uri: string) {
         BIND(LANG(?label) AS ?labelLang)
       }
       OPTIONAL { ?narrower skos:broader ?concept }
+      ${deprecationClausesChild}
     }
-    GROUP BY ?concept ?label ?labelLang ?labelType ?notation
+    GROUP BY ?concept ?label ?labelLang ?labelType ?notation ${deprecationSelectVarsChild}
     ORDER BY ?concept ?label
-    LIMIT 1000
+    LIMIT ${PAGE_SIZE + 1}
+    OFFSET ${offset}
   `)
 
   try {
     const results = await executeSparql(endpoint, query, { retries: 1 })
 
     // Group by concept URI and pick best label
-    const conceptMap = new Map<string, {
+    const conceptMapChild = new Map<string, {
       labels: { value: string; lang: string; type: string }[]
-      notation?: string
+      notations: string[]
       hasNarrower: boolean
+      deprecated: boolean
     }>()
 
     for (const b of results.results.bindings) {
       const conceptUri = b.concept?.value
       if (!conceptUri) continue
 
-      if (!conceptMap.has(conceptUri)) {
-        conceptMap.set(conceptUri, {
+      if (!conceptMapChild.has(conceptUri)) {
+        conceptMapChild.set(conceptUri, {
           labels: [],
-          hasNarrower: parseInt(b.narrowerCount?.value || '0', 10) > 0
+          notations: [],
+          hasNarrower: parseInt(b.narrowerCount?.value || '0', 10) > 0,
+          deprecated: isDeprecatedFromBinding(b),
         })
       }
 
-      const entry = conceptMap.get(conceptUri)!
+      const entry = conceptMapChild.get(conceptUri)!
 
-      // Store notation (first one wins)
-      if (b.notation?.value && !entry.notation) {
-        entry.notation = b.notation.value
+      // Collect all notations (we'll pick the best one later)
+      if (b.notation?.value && !entry.notations.includes(b.notation.value)) {
+        entry.notations.push(b.notation.value)
       }
 
       if (b.label?.value) {
@@ -382,7 +488,7 @@ async function loadChildren(uri: string) {
     }
 
     // Convert to ConceptNode[] with best label selection
-    const children: ConceptNode[] = Array.from(conceptMap.entries()).map(([conceptUri, data]) => {
+    const children: ConceptNode[] = Array.from(conceptMapChild.entries()).map(([conceptUri, data]) => {
       // Pick best label: prefLabel > xlPrefLabel > title > rdfsLabel, with language priority
       const labelPriority = ['prefLabel', 'xlPrefLabel', 'title', 'rdfsLabel']
       let bestLabel: string | undefined
@@ -404,22 +510,51 @@ async function loadChildren(uri: string) {
         uri: conceptUri,
         label: bestLabel,
         lang: bestLabelLang,
-        notation: data.notation,
+        notation: pickBestNotation(data.notations),
         hasNarrower: data.hasNarrower,
         expanded: false,
+        deprecated: data.deprecated,
       }
     })
 
     // Sort by notation (numeric if possible) then label
     children.sort(compareNodes)
 
-    logger.debug('ConceptTree', `Loaded ${children.length} children for ${uri}`)
-    conceptStore.updateNodeChildren(uri, children)
+    // Check if there are more results
+    const hasMore = children.length > PAGE_SIZE
+    if (hasMore) {
+      children.pop()
+    }
+
+    // Update pagination state
+    childrenPagination.value.set(uri, { offset, hasMore, loading: false })
+
+    logger.debug('ConceptTree', `Loaded ${children.length} children for ${uri}`, { hasMore, offset })
+
+    if (isFirstPage) {
+      conceptStore.updateNodeChildren(uri, children)
+    } else {
+      // Append to existing children
+      const node = findNode(uri, conceptStore.topConcepts)
+      if (node?.children) {
+        node.children = [...node.children, ...children]
+      }
+    }
   } catch (e) {
     logger.error('ConceptTree', 'Failed to load children', { parent: uri, error: e })
   } finally {
     loadingChildren.value.delete(uri)
+    const pag = childrenPagination.value.get(uri)
+    if (pag) pag.loading = false
   }
+}
+
+// Load more children for a node (next page)
+async function loadMoreChildren(uri: string) {
+  const pagination = childrenPagination.value.get(uri)
+  if (!pagination || !pagination.hasMore || pagination.loading) return
+  const nextOffset = pagination.offset + PAGE_SIZE
+  await loadChildren(uri, nextOffset)
 }
 
 // Handle node expand
@@ -477,6 +612,16 @@ function goToUri() {
   if (uri) {
     selectConcept(uri)
     gotoUri.value = ''
+  }
+}
+
+// Infinite scroll handler - load more when near bottom
+function onTreeScroll(event: Event) {
+  const el = event.target as HTMLElement
+  const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 100
+
+  if (nearBottom && hasMoreTopConcepts.value && !loadingMoreTopConcepts.value && !conceptStore.loadingTree) {
+    loadMoreTopConcepts()
   }
 }
 
@@ -548,32 +693,40 @@ watch(
     </div>
 
     <!-- Tree -->
-    <Tree
-      v-else
-      v-model:selectionKeys="selectedKey"
-      v-model:expandedKeys="expandedKeys"
-      :value="treeNodes"
-      selectionMode="single"
-      class="concept-tree-component"
-      @node-expand="onNodeExpand"
-      @node-collapse="onNodeCollapse"
-    >
-      <template #default="slotProps">
-        <div class="tree-node" :class="{ 'scheme-node': slotProps.node.data?.isScheme }">
-          <i v-if="slotProps.node.data?.isScheme" class="pi pi-sitemap scheme-icon"></i>
-          <span class="node-label">
-            {{ slotProps.node.label }}
-            <span v-if="slotProps.node.data?.showLangTag" class="lang-tag">
-              {{ slotProps.node.data.lang }}
+    <div v-else class="tree-wrapper" @scroll="onTreeScroll">
+      <Tree
+        v-model:selectionKeys="selectedKey"
+        v-model:expandedKeys="expandedKeys"
+        :value="treeNodes"
+        selectionMode="single"
+        class="concept-tree-component"
+        @node-expand="onNodeExpand"
+        @node-collapse="onNodeCollapse"
+      >
+        <template #default="slotProps">
+          <div class="tree-node" :class="{ 'scheme-node': slotProps.node.data?.isScheme, 'deprecated': slotProps.node.data?.deprecated && showDeprecationIndicator }">
+            <i v-if="slotProps.node.data?.isScheme" class="pi pi-sitemap scheme-icon"></i>
+            <span class="node-label">
+              {{ slotProps.node.label }}
+              <span v-if="slotProps.node.data?.showLangTag" class="lang-tag">
+                {{ slotProps.node.data.lang }}
+              </span>
+              <span v-if="slotProps.node.data?.deprecated && showDeprecationIndicator && !slotProps.node.data?.isScheme" class="deprecated-badge">deprecated</span>
             </span>
-          </span>
-          <ProgressSpinner
-            v-if="loadingChildren.has(slotProps.node.key)"
-            style="width: 16px; height: 16px"
-          />
-        </div>
-      </template>
-    </Tree>
+            <ProgressSpinner
+              v-if="loadingChildren.has(slotProps.node.key)"
+              style="width: 16px; height: 16px"
+            />
+          </div>
+        </template>
+      </Tree>
+
+      <!-- Load more indicator (auto-triggered by scroll) -->
+      <div v-if="loadingMoreTopConcepts" class="load-more-indicator">
+        <ProgressSpinner style="width: 20px; height: 20px" />
+        <span>Loading more...</span>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -633,12 +786,29 @@ watch(
   font-size: 0.75rem;
 }
 
-.concept-tree-component {
+.tree-wrapper {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.concept-tree-component {
+  flex: 1;
+  min-height: 0;
   padding: 0.5rem;
+}
+
+.load-more-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  color: var(--p-text-muted-color);
+  font-size: 0.875rem;
 }
 
 .tree-node {
@@ -654,6 +824,22 @@ watch(
 .scheme-icon {
   color: var(--p-primary-color);
   font-size: 0.875rem;
+}
+
+.tree-node.deprecated {
+  opacity: 0.6;
+}
+
+.deprecated-badge {
+  font-size: 0.6rem;
+  font-weight: 600;
+  background: var(--p-orange-100);
+  color: var(--p-orange-700);
+  padding: 0.05rem 0.3rem;
+  border-radius: 3px;
+  margin-left: 0.25rem;
+  flex-shrink: 0;
+  text-transform: lowercase;
 }
 
 .node-label {

@@ -64,6 +64,10 @@ export const useConceptStore = defineStore('concept', () => {
     topConcepts.value = concepts
   }
 
+  function appendTopConcepts(concepts: ConceptNode[]) {
+    topConcepts.value = [...topConcepts.value, ...concepts]
+  }
+
   function expandNode(uri: string) {
     expanded.value.add(uri)
   }
@@ -218,6 +222,7 @@ export const useConceptStore = defineStore('concept', () => {
     recentHistory,
     // Actions
     setTopConcepts,
+    appendTopConcepts,
     expandNode,
     collapseNode,
     toggleNode,

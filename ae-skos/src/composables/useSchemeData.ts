@@ -96,7 +96,6 @@ export function useSchemeData() {
           ?predicate != dct:license
         )
       }
-      LIMIT 100
     `)
 
     try {

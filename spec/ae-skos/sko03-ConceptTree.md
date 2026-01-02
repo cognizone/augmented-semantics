@@ -6,22 +6,55 @@ Component for hierarchical browsing of SKOS concepts.
 
 ### Top Concepts
 
-Display root concepts (no broader concept) within selected scheme.
+Display root concepts within selected scheme. Top concepts are identified via:
+
+1. **Explicit marking**: `skos:topConceptOf` or scheme's `skos:hasTopConcept`
+2. **Fallback**: Concepts with no `skos:broader` relationship
 
 **Query:**
 ```sparql
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX skosxl: <http://www.w3.org/2008/05/skos-xl#>
+PREFIX dct: <http://purl.org/dc/terms/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 
-SELECT ?concept ?label
+SELECT DISTINCT ?concept ?label ?labelLang ?labelType ?notation
+       (COUNT(DISTINCT ?narrower) AS ?narrowerCount)
 WHERE {
-  ?concept a skos:Concept .
-  ?concept skos:inScheme <SCHEME_URI> .
-  FILTER NOT EXISTS { ?concept skos:broader ?broader }
-  ?concept skos:prefLabel ?label .
-  FILTER (LANGMATCHES(LANG(?label), "LANG") || LANG(?label) = "")
+  {
+    # Explicit top concept via topConceptOf or hasTopConcept
+    ?concept a skos:Concept .
+    ?concept skos:inScheme <SCHEME_URI> .
+    { ?concept skos:topConceptOf <SCHEME_URI> }
+    UNION
+    { <SCHEME_URI> skos:hasTopConcept ?concept }
+  }
+  UNION
+  {
+    # Fallback: concepts with no broader relationship
+    ?concept a skos:Concept .
+    ?concept skos:inScheme <SCHEME_URI> .
+    FILTER NOT EXISTS { ?concept skos:broader ?broader }
+  }
+  OPTIONAL { ?concept skos:notation ?notation }
+  OPTIONAL {
+    { ?concept skos:prefLabel ?label . BIND("prefLabel" AS ?labelType) }
+    UNION
+    { ?concept skosxl:prefLabel/skosxl:literalForm ?label . BIND("xlPrefLabel" AS ?labelType) }
+    UNION
+    { ?concept dct:title ?label . BIND("title" AS ?labelType) }
+    UNION
+    { ?concept rdfs:label ?label . BIND("rdfsLabel" AS ?labelType) }
+    BIND(LANG(?label) AS ?labelLang)
+  }
+  OPTIONAL { ?narrower skos:broader ?concept }
 }
-ORDER BY ?label
+GROUP BY ?concept ?label ?labelLang ?labelType ?notation
+ORDER BY ?concept ?label
+LIMIT 2000
 ```
+
+**Note:** Label selection happens in code using priority-based resolution (see Label Resolution section below).
 
 ### Hierarchical Expansion
 
@@ -30,14 +63,30 @@ Load narrower concepts on demand when user expands a node.
 **Query:**
 ```sparql
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX skosxl: <http://www.w3.org/2008/05/skos-xl#>
+PREFIX dct: <http://purl.org/dc/terms/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 
-SELECT ?concept ?label
+SELECT DISTINCT ?concept ?label ?labelLang ?labelType ?notation
+       (COUNT(DISTINCT ?narrower) AS ?narrowerCount)
 WHERE {
   ?concept skos:broader <PARENT_URI> .
-  ?concept skos:prefLabel ?label .
-  FILTER (LANGMATCHES(LANG(?label), "LANG") || LANG(?label) = "")
+  OPTIONAL { ?concept skos:notation ?notation }
+  OPTIONAL {
+    { ?concept skos:prefLabel ?label . BIND("prefLabel" AS ?labelType) }
+    UNION
+    { ?concept skosxl:prefLabel/skosxl:literalForm ?label . BIND("xlPrefLabel" AS ?labelType) }
+    UNION
+    { ?concept dct:title ?label . BIND("title" AS ?labelType) }
+    UNION
+    { ?concept rdfs:label ?label . BIND("rdfsLabel" AS ?labelType) }
+    BIND(LANG(?label) AS ?labelLang)
+  }
+  OPTIONAL { ?narrower skos:broader ?concept }
 }
-ORDER BY ?label
+GROUP BY ?concept ?label ?labelLang ?labelType ?notation
+ORDER BY ?concept ?label
+LIMIT 1000
 ```
 
 ### Broader Concepts
@@ -192,6 +241,43 @@ Toggle between:
 
 Each segment is clickable for navigation.
 
+## Deprecation Display
+
+Deprecated concepts are visually indicated in the tree based on configurable detection rules.
+
+### Visual Indicator
+
+- **Badge**: `deprecated` text badge displayed after the label
+- **Styling**: Node displayed at 60% opacity
+
+### Detection Rules
+
+Deprecation status is determined via SPARQL OPTIONAL clauses added to tree queries. Default rules:
+
+1. **OWL Deprecated**: `owl:deprecated = "true"`
+2. **EU Vocabularies Status**: `euvoc:status ≠ <.../concept-status/CURRENT>`
+
+Rules are configurable in Settings and can be enabled/disabled individually.
+
+### Query Extension
+
+```sparql
+# Added to SELECT
+?deprec_owl_deprecated ?deprec_euvoc_status
+
+# Added to WHERE
+OPTIONAL { ?concept owl:deprecated ?deprec_owl_deprecated }
+OPTIONAL { ?concept euvoc:status ?deprec_euvoc_status }
+
+# Added to GROUP BY
+?deprec_owl_deprecated ?deprec_euvoc_status
+```
+
+### Settings
+
+- **Show deprecation indicators**: Toggle visibility (default: on)
+- **Detection Rules**: Enable/disable individual rules
+
 ## Data Model
 
 ```typescript
@@ -201,6 +287,7 @@ interface ConceptNode {
   hasNarrower: boolean;    // Has children (for expand indicator)
   children?: ConceptNode[]; // Loaded on demand
   expanded: boolean;
+  deprecated?: boolean;    // Deprecation status
 }
 
 interface NavigationState {

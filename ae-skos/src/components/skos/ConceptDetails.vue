@@ -20,7 +20,7 @@
 import { ref, watch, computed } from 'vue'
 import { useConceptStore, useSettingsStore } from '../../stores'
 import { isValidURI } from '../../services'
-import { useDelayedLoading, useLabelResolver, useConceptData, useConceptNavigation, useClipboard, useResourceExport } from '../../composables'
+import { useDelayedLoading, useLabelResolver, useConceptData, useConceptNavigation, useClipboard, useResourceExport, useDeprecation } from '../../composables'
 import { getPredicateName, formatPropertyValue, getRefLabel } from '../../utils/displayUtils'
 import Button from 'primevue/button'
 import Divider from 'primevue/divider'
@@ -41,6 +41,7 @@ const { details, loading, error, resolvedPredicates, loadDetails } = useConceptD
 const { navigateTo, handleSchemeClick, isLocalScheme } = useConceptNavigation(emit)
 const { copyToClipboard } = useClipboard()
 const { exportAsJson, exportAsTurtle, exportAsCsv } = useResourceExport()
+const { showIndicator: showDeprecationIndicator } = useDeprecation()
 
 // Local state
 const showHiddenLabels = ref(false)
@@ -180,6 +181,7 @@ watch(
           <h2 class="concept-label">
             {{ displayTitle }}
             <span v-if="showHeaderLangTag" class="header-lang-tag">{{ displayLang }}</span>
+            <span v-if="details?.deprecated && showDeprecationIndicator" class="deprecation-badge" v-tooltip="'This concept is deprecated'">Deprecated</span>
           </h2>
           <div class="concept-uri">
             <a v-if="isValidURI(details.uri)" :href="details.uri" target="_blank" class="uri-link">
@@ -650,6 +652,18 @@ watch(
   border-radius: 3px;
   margin-left: 0.5rem;
   vertical-align: middle;
+}
+
+.deprecation-badge {
+  font-size: 0.65rem;
+  font-weight: 600;
+  background: var(--p-orange-100);
+  color: var(--p-orange-700);
+  padding: 0.1rem 0.4rem;
+  border-radius: 3px;
+  margin-left: 0.5rem;
+  vertical-align: middle;
+  text-transform: uppercase;
 }
 
 .header-actions {

@@ -161,56 +161,104 @@ onUnmounted(() => {
       :modal="true"
     >
       <div class="settings-content">
-        <div class="setting-group">
-          <label class="setting-group-label">Preferred Language</label>
-          <Select
-            v-model="languageStore.preferred"
-            :options="languageOptions"
-            optionLabel="label"
-            optionValue="value"
-            placeholder="Select language"
-            class="language-select"
-            @change="(e: any) => languageStore.setPreferred(e.value)"
-          />
-          <span v-if="!languageOptions.length" class="setting-hint">
-            Connect to an endpoint and run analysis to detect languages
-          </span>
+        <!-- Language Section -->
+        <div class="setting-section">
+          <div class="setting-section-label">Preferred Language</div>
+
+          <div class="setting-group">
+            <Select
+              v-model="languageStore.preferred"
+              :options="languageOptions"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Select language"
+              class="language-select"
+              @change="(e: any) => languageStore.setPreferred(e.value)"
+            />
+            <span class="setting-description">
+              Labels and descriptions will be shown in this language when available
+            </span>
+            <span v-if="!languageOptions.length" class="setting-hint">
+              Connect to an endpoint and run analysis to detect languages
+            </span>
+          </div>
         </div>
 
-        <div class="setting-item">
-          <Checkbox
-            v-model="settingsStore.showDatatypes"
-            inputId="showDatatypes"
-            :binary="true"
-          />
-          <label for="showDatatypes" class="setting-label">
-            Show datatypes
-            <span class="setting-description">Display datatype tags (e.g., xsd:date) on property values</span>
-          </label>
+        <!-- Display Section -->
+        <div class="setting-section">
+          <div class="setting-section-label">Display</div>
+
+          <div class="setting-item">
+            <Checkbox
+              v-model="settingsStore.showDatatypes"
+              inputId="showDatatypes"
+              :binary="true"
+            />
+            <label for="showDatatypes" class="setting-label">
+              Show datatypes
+              <span class="setting-description">Display datatype tags (e.g., xsd:date) on property values</span>
+            </label>
+          </div>
+
+          <div class="setting-item">
+            <Checkbox
+              v-model="settingsStore.showLanguageTags"
+              inputId="showLanguageTags"
+              :binary="true"
+            />
+            <label for="showLanguageTags" class="setting-label">
+              Show language tags
+              <span class="setting-description">Display language tags on labels when different from preferred</span>
+            </label>
+          </div>
+
+          <div v-if="settingsStore.showLanguageTags" class="setting-item nested">
+            <Checkbox
+              v-model="settingsStore.showPreferredLanguageTag"
+              inputId="showPreferredLanguageTag"
+              :binary="true"
+            />
+            <label for="showPreferredLanguageTag" class="setting-label">
+              Include preferred language
+              <span class="setting-description">Also show tag when label matches preferred language</span>
+            </label>
+          </div>
         </div>
 
-        <div class="setting-item">
-          <Checkbox
-            v-model="settingsStore.showLanguageTags"
-            inputId="showLanguageTags"
-            :binary="true"
-          />
-          <label for="showLanguageTags" class="setting-label">
-            Show language tags
-            <span class="setting-description">Display language tags on labels when different from preferred</span>
-          </label>
-        </div>
+        <!-- Deprecation Section -->
+        <div class="setting-section">
+          <div class="setting-section-label">Deprecation</div>
 
-        <div v-if="settingsStore.showLanguageTags" class="setting-item nested">
-          <Checkbox
-            v-model="settingsStore.showPreferredLanguageTag"
-            inputId="showPreferredLanguageTag"
-            :binary="true"
-          />
-          <label for="showPreferredLanguageTag" class="setting-label">
-            Include preferred language
-            <span class="setting-description">Also show tag when label matches preferred language</span>
-          </label>
+          <div class="setting-item">
+            <Checkbox
+              v-model="settingsStore.showDeprecationIndicator"
+              inputId="showDeprecationIndicator"
+              :binary="true"
+            />
+            <label for="showDeprecationIndicator" class="setting-label">
+              Show deprecation indicators
+              <span class="setting-description">Display visual indicators for deprecated concepts</span>
+            </label>
+          </div>
+
+          <div v-if="settingsStore.showDeprecationIndicator" class="deprecation-rules">
+            <div class="setting-section-label">Detection Rules</div>
+            <div v-for="rule in settingsStore.deprecationRules" :key="rule.id" class="setting-item nested">
+              <Checkbox
+                v-model="rule.enabled"
+                :inputId="`rule-${rule.id}`"
+                :binary="true"
+              />
+              <label :for="`rule-${rule.id}`" class="setting-label">
+                {{ rule.label }}
+                <span class="setting-description rule-description">
+                  {{ rule.condition === 'equals' ? '=' :
+                     rule.condition === 'not-equals' ? '≠' : 'exists' }}
+                  {{ rule.value ? rule.value.split('/').pop() : '' }}
+                </span>
+              </label>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -309,7 +357,22 @@ onUnmounted(() => {
 .settings-content {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.75rem;
+}
+
+.setting-section {
+  background: var(--p-surface-50);
+  border-radius: 6px;
+  padding: 0.75rem;
+}
+
+.setting-section-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--p-text-muted-color);
+  margin-bottom: 0.75rem;
+  letter-spacing: 0.5px;
 }
 
 .setting-item {
@@ -318,8 +381,13 @@ onUnmounted(() => {
   gap: 0.75rem;
 }
 
+.setting-item + .setting-item {
+  margin-top: 0.75rem;
+}
+
 .setting-item.nested {
   margin-left: 1.75rem;
+  margin-top: 0.75rem;
 }
 
 .setting-label {
@@ -347,6 +415,20 @@ onUnmounted(() => {
 
 .language-select {
   width: 100%;
+}
+
+.deprecation-rules {
+  margin-top: 0.5rem;
+  margin-left: 1.75rem;
+}
+
+.deprecation-rules .setting-item.nested {
+  margin-left: 0;
+}
+
+.rule-description {
+  font-family: monospace;
+  font-size: 0.7rem;
 }
 
 .setting-hint {

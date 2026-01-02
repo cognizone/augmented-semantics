@@ -24,6 +24,7 @@ export interface ConceptRef {
   label?: string
   notation?: string
   lang?: string
+  deprecated?: boolean
 }
 
 // Tree node with expansion state
@@ -35,6 +36,7 @@ export interface ConceptNode extends ConceptRef {
 
 export interface ConceptDetails {
   uri: string
+  deprecated?: boolean
   prefLabels: LabelValue[]
   altLabels: LabelValue[]
   hiddenLabels: LabelValue[]

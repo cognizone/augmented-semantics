@@ -6,7 +6,7 @@
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
-import { useSettingsStore } from '../settings'
+import { useSettingsStore, DEFAULT_DEPRECATION_RULES } from '../settings'
 
 describe('settings store', () => {
   beforeEach(() => {
@@ -28,6 +28,18 @@ describe('settings store', () => {
     it('starts with showPreferredLanguageTag disabled', () => {
       const store = useSettingsStore()
       expect(store.showPreferredLanguageTag).toBe(false)
+    })
+
+    it('starts with showDeprecationIndicator enabled', () => {
+      const store = useSettingsStore()
+      expect(store.showDeprecationIndicator).toBe(true)
+    })
+
+    it('starts with default deprecation rules', () => {
+      const store = useSettingsStore()
+      expect(store.deprecationRules).toHaveLength(2)
+      expect(store.deprecationRules[0].id).toBe('owl-deprecated')
+      expect(store.deprecationRules[1].id).toBe('euvoc-status')
     })
   })
 
@@ -59,6 +71,46 @@ describe('settings store', () => {
 
       store.setShowLanguageTags(true)
       expect(store.showLanguageTags).toBe(true)
+    })
+  })
+
+  describe('setShowDeprecationIndicator', () => {
+    it('updates showDeprecationIndicator value', () => {
+      const store = useSettingsStore()
+
+      store.setShowDeprecationIndicator(false)
+      expect(store.showDeprecationIndicator).toBe(false)
+
+      store.setShowDeprecationIndicator(true)
+      expect(store.showDeprecationIndicator).toBe(true)
+    })
+
+    it('persists to localStorage', () => {
+      const store = useSettingsStore()
+
+      store.setShowDeprecationIndicator(false)
+      expect(localStorage.setItem).toHaveBeenCalled()
+    })
+  })
+
+  describe('setDeprecationRules', () => {
+    it('updates deprecation rules', () => {
+      const store = useSettingsStore()
+
+      const newRules = [
+        { ...DEFAULT_DEPRECATION_RULES[0], enabled: false },
+      ]
+
+      store.setDeprecationRules(newRules)
+      expect(store.deprecationRules).toHaveLength(1)
+      expect(store.deprecationRules[0].enabled).toBe(false)
+    })
+
+    it('persists to localStorage', () => {
+      const store = useSettingsStore()
+
+      store.setDeprecationRules([])
+      expect(localStorage.setItem).toHaveBeenCalled()
     })
   })
 
@@ -95,6 +147,8 @@ describe('settings store', () => {
       store.showDatatypes = false
       store.showLanguageTags = false
       store.showPreferredLanguageTag = true
+      store.showDeprecationIndicator = false
+      store.setDeprecationRules([])
 
       // Reset
       store.resetToDefaults()
@@ -103,6 +157,8 @@ describe('settings store', () => {
       expect(store.showDatatypes).toBe(true)
       expect(store.showLanguageTags).toBe(true)
       expect(store.showPreferredLanguageTag).toBe(false)
+      expect(store.showDeprecationIndicator).toBe(true)
+      expect(store.deprecationRules).toHaveLength(2)
     })
   })
 

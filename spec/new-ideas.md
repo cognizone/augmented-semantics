@@ -2,8 +2,8 @@ New ideas: copy them into ideas.md, remove the list here (but keep the file and 
 
 - label display logic (depending on languages) seems scattered? should it be in one place?
 - notation of concepts in "Classification des accords sectoriels avec l'Union européenne" just show "id" as type?
-- sorting tree should use the label but if there is an id in it need to use sorting based on id (numeric sorting if possible)
-  if numeric sorting is not possible, use the label as a string and sort alphabetically
-- readme needs tp be made github ready. this needs to include a how to run the app too
 - packaging needs to be reviewed. system complains
-- 
+- if I click in history of recent concepts and select one it only updates the concept part. not the tree. not the concept scheme in the main top row.
+- still recent concepts does not use full vertical space!!!
+- we should add the type somewhere in the "main component part" (typically concept?!)
+    as a side issue one we are there (in inconsistent state) we cannot select other concept scheme anymore

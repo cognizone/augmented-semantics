@@ -9,11 +9,13 @@
 import { ref, type Ref } from 'vue'
 import { useEndpointStore, useLanguageStore } from '../stores'
 import { executeSparql, withPrefixes, logger, resolveUris, formatQualifiedName } from '../services'
+import { useDeprecation } from './useDeprecation'
 import type { ConceptDetails } from '../types'
 
 export function useConceptData() {
   const endpointStore = useEndpointStore()
   const languageStore = useLanguageStore()
+  const { isDeprecatedFromProperties } = useDeprecation()
 
   // State
   const details: Ref<ConceptDetails | null> = ref(null)
@@ -255,7 +257,6 @@ export function useConceptData() {
           ?predicate != dct:title
         )
       }
-      LIMIT 100
     `)
 
     try {
@@ -458,6 +459,9 @@ export function useConceptData() {
 
       // Load other (non-SKOS) properties
       await loadOtherProperties(uri, conceptDetails)
+
+      // Check deprecation status from loaded properties
+      conceptDetails.deprecated = isDeprecatedFromProperties(conceptDetails.otherProperties)
 
       // Resolve prefixes for other properties
       if (conceptDetails.otherProperties.length > 0) {
