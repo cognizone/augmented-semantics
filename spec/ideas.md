@@ -23,9 +23,11 @@
 - [x] endpoint manager can be a bit wider so name of the endpoint get more space - increased from 700px to 850px
 - [x] endpoint add button should show progress (testing connection, analyzing endpoint)
 
+- [x] scheme label now uses full language priority list (not just preferred/fallback)
+- [x] duplicate labels fixed via deduplication in sortLabels composable
+- [x] SKOS-XL labels: displayed on new line, grouped by literalForm, collapse count shown for duplicates
+- [x] endpoint add progress: shows elapsed time (e.g., "Testing connection... (3s)")
+
 ## Backlog
 
-- scheme label should use language priority (code exists, may need endpoint-specific testing)
-- duplicate labels showing (e.g., "anarchism en" twice) - see http://localhost:5173/?endpoint=https://data.europa.eu/sparql&scheme=http://eurovoc.europa.eu/100163&concept=http://eurovoc.europa.eu/1829
-- SKOS-XL labels: put on new line, collapse duplicates, visual feedback for collapsed state
-- endpoint add progress: show elapsed time (e.g., "Testing connection... (3s)")
+(empty) 

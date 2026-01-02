@@ -10,7 +10,7 @@
  *
  * @see /spec/common/com01-EndpointManager.md
  */
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, onUnmounted } from 'vue'
 import { useEndpointStore } from '../../stores'
 import { testConnection, analyzeEndpoint } from '../../services/sparql'
 import {
@@ -47,6 +47,29 @@ const testing = ref(false)
 const testResult = ref<{ success: boolean; message: string; time?: number } | null>(null)
 const analyzing = ref(false)
 const analyzeStep = ref<string | null>(null) // Current step being executed
+const elapsedTime = ref(0) // Elapsed seconds
+let elapsedTimer: ReturnType<typeof setInterval> | null = null
+
+// Start elapsed time counter
+function startElapsedTimer() {
+  elapsedTime.value = 0
+  elapsedTimer = setInterval(() => {
+    elapsedTime.value++
+  }, 1000)
+}
+
+// Stop elapsed time counter
+function stopElapsedTimer() {
+  if (elapsedTimer) {
+    clearInterval(elapsedTimer)
+    elapsedTimer = null
+  }
+}
+
+// Cleanup on unmount
+onUnmounted(() => {
+  stopElapsedTimer()
+})
 
 // Form state
 const form = reactive({
@@ -222,6 +245,7 @@ async function handleSave() {
 
     analyzing.value = true
     analyzeStep.value = 'Testing connection...'
+    startElapsedTimer()
 
     try {
       // Step 1: Test connection
@@ -250,6 +274,7 @@ async function handleSave() {
       // Brief delay to show "Done!" before closing
       await new Promise(resolve => setTimeout(resolve, 500))
     } catch (e) {
+      stopElapsedTimer()
       endpointStore.setStatus('error')
       analyzeStep.value = `Error: ${e instanceof Error ? e.message : 'Unknown error'}`
       // Keep dialog open on error so user can see what went wrong
@@ -257,6 +282,7 @@ async function handleSave() {
       return
     }
 
+    stopElapsedTimer()
     analyzing.value = false
     analyzeStep.value = null
     closeAddDialog()
@@ -544,7 +570,10 @@ function formatDate(dateStr?: string) {
         <i v-if="analyzing" class="pi pi-spin pi-spinner"></i>
         <i v-else-if="analyzeStep.startsWith('Error')" class="pi pi-times-circle error-icon"></i>
         <i v-else class="pi pi-check-circle success-icon"></i>
-        <span :class="{ 'error-text': analyzeStep.startsWith('Error') }">{{ analyzeStep }}</span>
+        <span :class="{ 'error-text': analyzeStep.startsWith('Error') }">
+          {{ analyzeStep }}
+          <span v-if="analyzing && elapsedTime > 0" class="elapsed-time">({{ elapsedTime }}s)</span>
+        </span>
       </div>
     </div>
 
@@ -744,5 +773,10 @@ function formatDate(dateStr?: string) {
 
 .progress-indicator .error-text {
   color: var(--p-red-500);
+}
+
+.elapsed-time {
+  color: var(--p-text-muted-color);
+  margin-left: 0.25rem;
 }
 </style>

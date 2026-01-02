@@ -138,12 +138,23 @@ async function loadSchemes() {
         const labelsOfType = data.labels.filter(l => l.type === labelType)
         if (!labelsOfType.length) continue
 
-        const preferred = labelsOfType.find(l => l.lang === languageStore.preferred)
-        const fallback = labelsOfType.find(l => l.lang === languageStore.fallback)
-        const noLang = labelsOfType.find(l => l.lang === '')
-        const any = labelsOfType[0]
+        // Walk through all language priorities in order
+        let selected: { value: string; lang: string } | undefined
+        for (const lang of languageStore.priorities) {
+          selected = labelsOfType.find(l => l.lang === lang)
+          if (selected) break
+        }
 
-        const selected = preferred || fallback || noLang || any
+        // Try labels without language tag
+        if (!selected) {
+          selected = labelsOfType.find(l => l.lang === '')
+        }
+
+        // Fall back to first available
+        if (!selected) {
+          selected = labelsOfType[0]
+        }
+
         if (selected) {
           bestLabel = selected.value
           bestLabelLang = selected.lang || undefined
@@ -243,14 +254,15 @@ watch(
   { immediate: true }
 )
 
-// Reload when language changes
+// Reload when language priorities change
 watch(
-  () => languageStore.preferred,
+  () => languageStore.priorities,
   () => {
     if (endpointStore.current) {
       loadSchemes()
     }
-  }
+  },
+  { deep: true }
 )
 </script>
 

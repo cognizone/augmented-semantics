@@ -67,17 +67,27 @@ export function useLabelResolver() {
   }
 
   /**
-   * Sort labels by priority position:
-   * 1. Languages in priority list (in order)
-   * 2. Labels without language tag
-   * 3. Remaining languages alphabetically
+   * Sort and deduplicate labels by priority position:
+   * 1. Deduplicate by value+lang combination
+   * 2. Languages in priority list (in order)
+   * 3. Labels without language tag
+   * 4. Remaining languages alphabetically
    */
   function sortLabels(labels: LabelValue[]): LabelValue[] {
     if (!labels || labels.length === 0) return []
 
+    // Deduplicate by value+lang combination
+    const seen = new Set<string>()
+    const deduplicated = labels.filter(label => {
+      const key = `${label.value}|${label.lang || ''}`
+      if (seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
+
     const priorities = languageStore.priorities
 
-    return [...labels].sort((a, b) => {
+    return deduplicated.sort((a, b) => {
       const aLang = a.lang || ''
       const bLang = b.lang || ''
 

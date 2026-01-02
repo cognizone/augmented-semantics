@@ -33,7 +33,7 @@ import Select from 'primevue/select'
 import Textarea from 'primevue/textarea'
 import Menu from 'primevue/menu'
 import { useToast } from 'primevue/usetoast'
-import XLLabelDisplay from '../common/XLLabelDisplay.vue'
+import XLLabelsGroup from '../common/XLLabelsGroup.vue'
 
 const emit = defineEmits<{
   selectConcept: [uri: string]
@@ -861,12 +861,11 @@ watch(
               {{ label.value }}
               <span v-if="label.lang" class="lang-tag">{{ label.lang }}</span>
             </span>
-            <XLLabelDisplay
-              v-for="(xlLabel, i) in details.prefLabelsXL"
-              :key="`xl-${i}`"
-              :label="xlLabel"
-            />
           </div>
+          <XLLabelsGroup
+            v-if="details.prefLabelsXL.length"
+            :labels="details.prefLabelsXL"
+          />
         </div>
 
         <div v-if="details.altLabels.length || details.altLabelsXL.length" class="property-row">
@@ -880,12 +879,11 @@ watch(
               {{ label.value }}
               <span v-if="label.lang" class="lang-tag">{{ label.lang }}</span>
             </span>
-            <XLLabelDisplay
-              v-for="(xlLabel, i) in details.altLabelsXL"
-              :key="`xl-${i}`"
-              :label="xlLabel"
-            />
           </div>
+          <XLLabelsGroup
+            v-if="details.altLabelsXL.length"
+            :labels="details.altLabelsXL"
+          />
         </div>
 
         <div v-if="showHiddenLabels && (details.hiddenLabels.length || details.hiddenLabelsXL.length)" class="property-row">
@@ -899,12 +897,11 @@ watch(
               {{ label.value }}
               <span v-if="label.lang" class="lang-tag">{{ label.lang }}</span>
             </span>
-            <XLLabelDisplay
-              v-for="(xlLabel, i) in details.hiddenLabelsXL"
-              :key="`xl-${i}`"
-              :label="xlLabel"
-            />
           </div>
+          <XLLabelsGroup
+            v-if="details.hiddenLabelsXL.length"
+            :labels="details.hiddenLabelsXL"
+          />
         </div>
 
         <div v-if="details.notations.length" class="property-row">
