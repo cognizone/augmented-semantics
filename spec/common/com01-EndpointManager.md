@@ -259,7 +259,7 @@ interface SPARQLEndpoint {
   - "Testing connection..."
   - "Analyzing endpoint structure..."
   - "Done!" or error message
-  - Elapsed time shown after 2 seconds (e.g., "Testing connection... (3s)")
+  - Elapsed time shown after 1 second (e.g., "Testing connection... (2s)")
 - Dialog stays open on error to show what went wrong
 
 #### Test Connection

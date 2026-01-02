@@ -6,26 +6,49 @@ Component for listing and selecting SKOS Concept Schemes.
 
 ### List Concept Schemes
 
-Query all available concept schemes from the endpoint.
+Query all available concept schemes from the endpoint with all label types.
 
 **Query:**
 ```sparql
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX skosxl: <http://www.w3.org/2008/05/skos-xl#>
 PREFIX dct: <http://purl.org/dc/terms/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 
-SELECT ?scheme ?label ?description
+SELECT DISTINCT ?scheme ?label ?labelLang ?labelType
 WHERE {
   ?scheme a skos:ConceptScheme .
   OPTIONAL {
-    ?scheme skos:prefLabel ?label .
-    FILTER (LANGMATCHES(LANG(?label), "en") || LANG(?label) = "")
-  }
-  OPTIONAL {
-    ?scheme dct:description ?description .
+    {
+      ?scheme skos:prefLabel ?label .
+      BIND("prefLabel" AS ?labelType)
+    } UNION {
+      ?scheme skosxl:prefLabel/skosxl:literalForm ?label .
+      BIND("xlPrefLabel" AS ?labelType)
+    } UNION {
+      ?scheme dct:title ?label .
+      BIND("title" AS ?labelType)
+    } UNION {
+      ?scheme rdfs:label ?label .
+      BIND("rdfsLabel" AS ?labelType)
+    }
+    BIND(LANG(?label) AS ?labelLang)
   }
 }
-ORDER BY ?label
+LIMIT 500
 ```
+
+### Label Resolution
+
+Same logic as concepts for consistency:
+
+**Priority order:** `prefLabel` > `xlPrefLabel` > `title` > `rdfsLabel`
+
+**Language selection (for each label type):**
+1. Current language override (if set)
+2. Walk through language priorities in order
+3. Labels without language tag
+4. First available label
 
 ### Scheme Selection
 
@@ -90,6 +113,7 @@ Value: "http://example.org/scheme/1" | null
 interface ConceptScheme {
   uri: string;
   label?: string;
+  labelLang?: string;    // Language of the selected label
   description?: string;
   title?: string;
   creator?: string;
