@@ -444,6 +444,7 @@ function onNodeCollapse(node: TreeNode) {
 
 // Handle node select
 function selectConcept(uri: string) {
+  schemeStore.viewScheme(null) // Clear scheme viewing when selecting a concept
   conceptStore.selectConcept(uri)
 
   // Find node for history (includes notation and lang)
@@ -454,6 +455,8 @@ function selectConcept(uri: string) {
       label: node.label || uri,
       notation: node.notation,
       lang: node.lang,
+      endpointUrl: endpointStore.current?.url,
+      schemeUri: schemeStore.selectedUri || undefined,
     })
   }
 }

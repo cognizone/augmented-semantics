@@ -7,12 +7,13 @@
  *
  * @see /spec/common/com04-URLRouting.md
  */
-import { computed, watch, onMounted } from 'vue'
+import { computed, watch, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUIStore, useConceptStore, useSchemeStore, useLanguageStore, useEndpointStore } from '../stores'
 import { URL_PARAMS } from '../router'
 import ConceptTree from '../components/skos/ConceptTree.vue'
 import ConceptDetails from '../components/skos/ConceptDetails.vue'
+import SchemeDetails from '../components/skos/SchemeDetails.vue'
 import SearchBox from '../components/skos/SearchBox.vue'
 import RecentHistory from '../components/skos/RecentHistory.vue'
 import Splitter from 'primevue/splitter'
@@ -31,13 +32,46 @@ const schemeStore = useSchemeStore()
 const languageStore = useLanguageStore()
 const endpointStore = useEndpointStore()
 
+// Active tab state
+const activeTab = ref('browse')
+
 // Handle concept selection from any component
 function selectConcept(uri: string) {
   if (uri) {
+    // Clear scheme viewing when selecting a concept
+    schemeStore.viewScheme(null)
     conceptStore.selectConcept(uri)
+    // Switch to browse tab when selecting a concept
+    activeTab.value = 'browse'
   } else {
     conceptStore.selectConcept(null)
   }
+}
+
+// Handle browsing a scheme from SchemeDetails
+function browseScheme(schemeUri: string) {
+  schemeStore.selectScheme(schemeUri)
+  schemeStore.viewScheme(null)
+  activeTab.value = 'browse'
+}
+
+// Handle history selection - may need to switch endpoint/scheme
+function selectFromHistory(entry: { uri: string; endpointUrl?: string; schemeUri?: string }) {
+  // Switch endpoint if different
+  if (entry.endpointUrl && entry.endpointUrl !== endpointStore.current?.url) {
+    const endpoint = endpointStore.endpoints.find(e => e.url === entry.endpointUrl)
+    if (endpoint) {
+      endpointStore.selectEndpoint(endpoint.id)
+    }
+  }
+
+  // Switch scheme if different
+  if (entry.schemeUri && entry.schemeUri !== schemeStore.selectedUri) {
+    schemeStore.selectScheme(entry.schemeUri)
+  }
+
+  // Select the concept
+  selectConcept(entry.uri)
 }
 
 // Computed
@@ -157,7 +191,7 @@ onMounted(() => {
         class="left-panel"
         v-show="showSidebar"
       >
-        <Tabs value="browse" class="sidebar-tabs">
+        <Tabs v-model:value="activeTab" class="sidebar-tabs">
           <TabList>
             <Tab value="browse">Browse</Tab>
             <Tab value="search">Search</Tab>
@@ -173,15 +207,22 @@ onMounted(() => {
               </div>
             </TabPanel>
             <TabPanel value="recent">
-              <RecentHistory @select-concept="selectConcept" />
+              <RecentHistory @select-concept="selectFromHistory" />
             </TabPanel>
           </TabPanels>
         </Tabs>
       </SplitterPanel>
 
-      <!-- Right Panel: Concept Details -->
+      <!-- Right Panel: Scheme or Concept Details -->
       <SplitterPanel :size="70" :minSize="40" class="right-panel">
-        <ConceptDetails @select-concept="selectConcept" />
+        <SchemeDetails
+          v-if="schemeStore.viewingSchemeUri"
+          @browse-scheme="browseScheme"
+        />
+        <ConceptDetails
+          v-else
+          @select-concept="selectConcept"
+        />
       </SplitterPanel>
     </Splitter>
   </div>

@@ -62,6 +62,28 @@ export interface ConceptDetails {
   otherProperties: OtherProperty[]
 }
 
+export interface SchemeDetails {
+  uri: string
+  prefLabels: LabelValue[]
+  altLabels: LabelValue[]
+  definitions: LabelValue[]
+  scopeNotes: LabelValue[]
+  historyNotes: LabelValue[]
+  changeNotes: LabelValue[]
+  editorialNotes: LabelValue[]
+  examples: LabelValue[]
+  title: LabelValue[]
+  description: LabelValue[]
+  creator: string[]
+  created?: string
+  modified?: string
+  // SKOS-XL extended labels
+  prefLabelsXL: XLLabel[]
+  // Other properties (non-SKOS predicates)
+  otherProperties: OtherProperty[]
+  topConceptCount?: number
+}
+
 export interface OtherProperty {
   predicate: string
   values: PropertyValue[]
@@ -117,4 +139,6 @@ export interface HistoryEntry {
   notation?: string
   lang?: string
   accessedAt: string
+  endpointUrl?: string
+  schemeUri?: string
 }

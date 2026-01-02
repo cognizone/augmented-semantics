@@ -9,7 +9,7 @@
  */
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { ConceptScheme } from '../types'
+import type { ConceptScheme, SchemeDetails } from '../types'
 
 const STORAGE_KEY = 'ae-skos-scheme'
 
@@ -18,6 +18,11 @@ export const useSchemeStore = defineStore('scheme', () => {
   const schemes = ref<ConceptScheme[]>([])
   const selectedUri = ref<string | null>(null)
   const loading = ref(false)
+
+  // Scheme details viewing state (separate from selection for filtering)
+  const viewingSchemeUri = ref<string | null>(null)
+  const schemeDetails = ref<SchemeDetails | null>(null)
+  const loadingDetails = ref(false)
 
   // Getters
   const selected = computed(() =>
@@ -68,6 +73,24 @@ export const useSchemeStore = defineStore('scheme', () => {
   function reset() {
     schemes.value = []
     selectedUri.value = null
+    viewingSchemeUri.value = null
+    schemeDetails.value = null
+  }
+
+  // Scheme details viewing actions
+  function viewScheme(uri: string | null) {
+    viewingSchemeUri.value = uri
+    if (!uri) {
+      schemeDetails.value = null
+    }
+  }
+
+  function setSchemeDetails(details: SchemeDetails | null) {
+    schemeDetails.value = details
+  }
+
+  function setLoadingDetails(isLoading: boolean) {
+    loadingDetails.value = isLoading
   }
 
   // Initialize
@@ -78,6 +101,9 @@ export const useSchemeStore = defineStore('scheme', () => {
     schemes,
     selectedUri,
     loading,
+    viewingSchemeUri,
+    schemeDetails,
+    loadingDetails,
     // Getters
     selected,
     sortedSchemes,
@@ -87,5 +113,8 @@ export const useSchemeStore = defineStore('scheme', () => {
     selectScheme,
     setLoading,
     reset,
+    viewScheme,
+    setSchemeDetails,
+    setLoadingDetails,
   }
 })

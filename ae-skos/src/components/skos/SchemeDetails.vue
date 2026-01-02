@@ -1,30 +1,25 @@
 <script setup lang="ts">
 /**
- * ConceptDetails - SKOS concept property display
+ * SchemeDetails - SKOS concept scheme property display
  *
- * Shows comprehensive concept information organized in sections.
+ * Shows comprehensive scheme information organized in sections.
  * Each section and property is only displayed if values exist.
  *
  * Sections:
- * - Labels: prefLabel, altLabel, notation (if any exist)
- * - Documentation: definition, scopeNote, historyNote, changeNote,
- *   editorialNote, example (if any exist)
- * - Hierarchy: broader, narrower (if any exist)
- * - Relations: related (if any exist)
- * - Mappings: exactMatch, closeMatch, broadMatch, narrowMatch,
- *   relatedMatch (if any exist)
- * - Schemes: inScheme (if any exist)
+ * - Labels: prefLabel, altLabel
+ * - Documentation: definition, scopeNote, description, historyNote, etc.
+ * - Metadata: creator, created, modified
+ * - Other Properties: non-SKOS predicates
  *
- * @see /spec/ae-skos/sko04-ConceptDetails.md
+ * @see /spec/ae-skos/sko02-SchemeSelector.md
  */
 import { ref, watch, computed } from 'vue'
-import { useConceptStore, useEndpointStore, useLanguageStore, useSchemeStore } from '../../stores'
+import { useSchemeStore, useEndpointStore } from '../../stores'
 import { executeSparql, withPrefixes, logger, isValidURI, fetchRawRdf, resolveUris, formatQualifiedName } from '../../services'
-import { useDelayedLoading, useLabelResolver } from '../../composables'
+import { useDelayedLoading, useLabelResolver, useElapsedTime } from '../../composables'
 import type { RdfFormat } from '../../services'
-import type { ConceptDetails, ConceptRef } from '../../types'
+import type { SchemeDetails } from '../../types'
 import Button from 'primevue/button'
-import Chip from 'primevue/chip'
 import Divider from 'primevue/divider'
 import Dialog from 'primevue/dialog'
 import Message from 'primevue/message'
@@ -36,20 +31,21 @@ import { useToast } from 'primevue/usetoast'
 import XLLabelsGroup from '../common/XLLabelsGroup.vue'
 
 const emit = defineEmits<{
-  selectConcept: [uri: string]
+  browseScheme: [uri: string]
 }>()
 
-const conceptStore = useConceptStore()
-const endpointStore = useEndpointStore()
-const languageStore = useLanguageStore()
 const schemeStore = useSchemeStore()
+const endpointStore = useEndpointStore()
 const toast = useToast()
 const { selectLabelWithXL, sortLabels, shouldShowLangTag } = useLabelResolver()
 
 // Local state
 const error = ref<string | null>(null)
-const showHiddenLabels = ref(false)
 const resolvedPredicates = ref<Map<string, { prefix: string; localName: string }>>(new Map())
+
+// Track elapsed time when loading
+const isLoading = computed(() => schemeStore.loadingDetails)
+const loadingElapsed = useElapsedTime(isLoading)
 
 // Raw RDF dialog state
 const showRawRdfDialog = ref(false)
@@ -70,18 +66,16 @@ const exportMenu = ref()
 const exportMenuItems = [
   { label: 'Export as JSON', icon: 'pi pi-file', command: () => exportAsJson() },
   { label: 'Export as Turtle', icon: 'pi pi-code', command: () => exportAsTurtle() },
-  { label: 'Export as CSV', icon: 'pi pi-table', command: () => exportAsCsv() },
 ]
 
 // Computed
-const details = computed(() => conceptStore.details)
-const loading = computed(() => conceptStore.loadingDetails)
+const details = computed(() => schemeStore.schemeDetails)
+const loading = computed(() => schemeStore.loadingDetails)
 
 // Delayed loading - show spinner only after 300ms to prevent flicker
 const showLoading = useDelayedLoading(loading)
 
 // Get preferred label (full LabelValue for language info)
-// Uses SKOS-XL prefLabel as fallback if regular prefLabel not available
 const preferredLabelObj = computed(() => {
   if (!details.value) return null
   return selectLabelWithXL(details.value.prefLabels, details.value.prefLabelsXL)
@@ -92,7 +86,7 @@ const preferredLabel = computed(() => {
   return preferredLabelObj.value?.value || null
 })
 
-// Get language of displayed label (for showing lang tag)
+// Get language of displayed label
 const displayLang = computed(() => {
   return preferredLabelObj.value?.lang || null
 })
@@ -102,19 +96,7 @@ const showHeaderLangTag = computed(() => {
   return displayLang.value && shouldShowLangTag(displayLang.value)
 })
 
-// Get display title (notation + label if both exist)
-const displayTitle = computed(() => {
-  if (!details.value) return null
-  const label = preferredLabel.value
-  const notation = details.value.notations[0]
-
-  if (notation && label) {
-    return `${notation} - ${label}`
-  }
-  return notation || label || 'Unnamed Concept'
-})
-
-// Sorted label arrays (preferred lang first, then fallback, then rest alphabetically)
+// Sorted label arrays
 const sortedPrefLabels = computed(() => {
   return details.value ? sortLabels(details.value.prefLabels) : []
 })
@@ -123,12 +105,12 @@ const sortedAltLabels = computed(() => {
   return details.value ? sortLabels(details.value.altLabels) : []
 })
 
-const sortedHiddenLabels = computed(() => {
-  return details.value ? sortLabels(details.value.hiddenLabels) : []
-})
-
 const sortedDefinitions = computed(() => {
   return details.value ? sortLabels(details.value.definitions) : []
+})
+
+const sortedDescriptions = computed(() => {
+  return details.value ? sortLabels(details.value.description) : []
 })
 
 const sortedScopeNotes = computed(() => {
@@ -151,7 +133,11 @@ const sortedExamples = computed(() => {
   return details.value ? sortLabels(details.value.examples) : []
 })
 
-// Sorted other properties (alphabetically by qualified name)
+const sortedTitles = computed(() => {
+  return details.value ? sortLabels(details.value.title) : []
+})
+
+// Sorted other properties
 const sortedOtherProperties = computed(() => {
   if (!details.value) return []
   return [...details.value.otherProperties].sort((a, b) => {
@@ -167,24 +153,21 @@ const sortedOtherProperties = computed(() => {
 function getPredicateName(predicate: string): string {
   const resolved = resolvedPredicates.value.get(predicate)
   if (resolved) {
-    // Show qualified name if prefix exists, otherwise just localName
     return resolved.prefix
       ? formatQualifiedName(resolved)
       : resolved.localName
   }
-  // Fallback: extract local name from URI
   return predicate.split('/').pop()?.split('#').pop() || predicate
 }
 
-
-// Load concept details
+// Load scheme details
 async function loadDetails(uri: string) {
   const endpoint = endpointStore.current
   if (!endpoint) return
 
-  logger.info('ConceptDetails', 'Loading details', { uri })
+  logger.info('SchemeDetails', 'Loading details', { uri })
 
-  conceptStore.setLoadingDetails(true)
+  schemeStore.setLoadingDetails(true)
   error.value = null
 
   const query = withPrefixes(`
@@ -192,13 +175,12 @@ async function loadDetails(uri: string) {
     WHERE {
       <${uri}> ?property ?value .
       FILTER (?property IN (
-        skos:prefLabel, skos:altLabel, skos:hiddenLabel,
-        rdfs:label, dct:title,
+        skos:prefLabel, skos:altLabel,
         skos:definition, skos:scopeNote, skos:historyNote,
         skos:changeNote, skos:editorialNote, skos:example,
-        skos:notation, skos:broader, skos:narrower, skos:related,
-        skos:inScheme, skos:exactMatch, skos:closeMatch,
-        skos:broadMatch, skos:narrowMatch, skos:relatedMatch
+        dct:title, dct:description, dct:creator, dct:created, dct:modified,
+        dct:publisher, dct:rights, dct:license,
+        rdfs:label
       ))
     }
   `)
@@ -206,30 +188,20 @@ async function loadDetails(uri: string) {
   try {
     const results = await executeSparql(endpoint, query, { retries: 1 })
 
-    const details: ConceptDetails = {
+    const details: SchemeDetails = {
       uri,
       prefLabels: [],
       altLabels: [],
-      hiddenLabels: [],
       definitions: [],
       scopeNotes: [],
       historyNotes: [],
       changeNotes: [],
       editorialNotes: [],
       examples: [],
-      notations: [],
-      broader: [],
-      narrower: [],
-      related: [],
-      inScheme: [],
-      exactMatch: [],
-      closeMatch: [],
-      broadMatch: [],
-      narrowMatch: [],
-      relatedMatch: [],
+      title: [],
+      description: [],
+      creator: [],
       prefLabelsXL: [],
-      altLabelsXL: [],
-      hiddenLabelsXL: [],
       otherProperties: [],
     }
 
@@ -242,15 +214,9 @@ async function loadDetails(uri: string) {
       if (prop.endsWith('prefLabel')) {
         details.prefLabels.push({ value: val, lang })
       } else if (prop.endsWith('#label') || prop.endsWith('/label')) {
-        // rdfs:label - treat as fallback prefLabel
-        details.prefLabels.push({ value: val, lang })
-      } else if (prop.endsWith('title')) {
-        // dct:title - treat as fallback prefLabel
         details.prefLabels.push({ value: val, lang })
       } else if (prop.endsWith('altLabel')) {
         details.altLabels.push({ value: val, lang })
-      } else if (prop.endsWith('hiddenLabel')) {
-        details.hiddenLabels.push({ value: val, lang })
       } else if (prop.endsWith('definition')) {
         details.definitions.push({ value: val, lang })
       } else if (prop.endsWith('scopeNote')) {
@@ -263,53 +229,22 @@ async function loadDetails(uri: string) {
         details.editorialNotes.push({ value: val, lang })
       } else if (prop.endsWith('example')) {
         details.examples.push({ value: val, lang })
-      } else if (prop.endsWith('notation')) {
-        if (!details.notations.includes(val)) {
-          details.notations.push(val)
+      } else if (prop.endsWith('title')) {
+        details.title.push({ value: val, lang })
+      } else if (prop.endsWith('description')) {
+        details.description.push({ value: val, lang })
+      } else if (prop.endsWith('creator')) {
+        if (!details.creator.includes(val)) {
+          details.creator.push(val)
         }
-      } else if (prop.endsWith('broader')) {
-        if (!details.broader.some(r => r.uri === val)) {
-          details.broader.push({ uri: val })
-        }
-      } else if (prop.endsWith('narrower')) {
-        if (!details.narrower.some(r => r.uri === val)) {
-          details.narrower.push({ uri: val })
-        }
-      } else if (prop.endsWith('related')) {
-        if (!details.related.some(r => r.uri === val)) {
-          details.related.push({ uri: val })
-        }
-      } else if (prop.endsWith('inScheme')) {
-        if (!details.inScheme.some(r => r.uri === val)) {
-          details.inScheme.push({ uri: val })
-        }
-      } else if (prop.endsWith('exactMatch')) {
-        if (!details.exactMatch.includes(val)) {
-          details.exactMatch.push(val)
-        }
-      } else if (prop.endsWith('closeMatch')) {
-        if (!details.closeMatch.includes(val)) {
-          details.closeMatch.push(val)
-        }
-      } else if (prop.endsWith('broadMatch')) {
-        if (!details.broadMatch.includes(val)) {
-          details.broadMatch.push(val)
-        }
-      } else if (prop.endsWith('narrowMatch')) {
-        if (!details.narrowMatch.includes(val)) {
-          details.narrowMatch.push(val)
-        }
-      } else if (prop.endsWith('relatedMatch')) {
-        if (!details.relatedMatch.includes(val)) {
-          details.relatedMatch.push(val)
-        }
+      } else if (prop.endsWith('created')) {
+        details.created = val
+      } else if (prop.endsWith('modified')) {
+        details.modified = val
       }
     }
 
-    // Load labels for related concepts
-    await loadRelatedLabels(details)
-
-    // Load SKOS-XL extended labels
+    // Load SKOS-XL labels
     await loadXLLabels(uri, details)
 
     // Load other (non-SKOS) properties
@@ -323,167 +258,35 @@ async function loadDetails(uri: string) {
       resolvedPredicates.value = new Map()
     }
 
-    logger.info('ConceptDetails', 'Loaded details', {
+    logger.info('SchemeDetails', 'Loaded details', {
       labels: details.prefLabels.length,
-      broader: details.broader.length,
-      narrower: details.narrower.length
+      definitions: details.definitions.length,
     })
 
-    conceptStore.setDetails(details)
+    schemeStore.setSchemeDetails(details)
   } catch (e: unknown) {
     const errMsg = e && typeof e === 'object' && 'message' in e
       ? (e as { message: string }).message
       : 'Unknown error'
-    logger.error('ConceptDetails', 'Failed to load details', { uri, error: e })
+    logger.error('SchemeDetails', 'Failed to load details', { uri, error: e })
     error.value = `Failed to load details: ${errMsg}`
-    conceptStore.setDetails(null)
+    schemeStore.setSchemeDetails(null)
   } finally {
-    conceptStore.setLoadingDetails(false)
-  }
-}
-
-// Load labels for related concepts and schemes
-async function loadRelatedLabels(details: ConceptDetails) {
-  const endpoint = endpointStore.current
-  if (!endpoint) return
-
-  const allRefs = [
-    ...details.broader,
-    ...details.narrower,
-    ...details.related,
-    ...details.inScheme
-  ]
-
-  if (!allRefs.length) return
-
-  const uris = allRefs.map(r => `<${r.uri}>`).join(' ')
-
-  // Fetch notation, prefLabel (incl. XL), altLabel, hiddenLabel, and dct:title (for schemes)
-  const query = withPrefixes(`
-    SELECT ?concept ?notation ?label ?labelLang ?labelType
-    WHERE {
-      VALUES ?concept { ${uris} }
-      OPTIONAL { ?concept skos:notation ?notation }
-      OPTIONAL {
-        {
-          ?concept skos:prefLabel ?label .
-          BIND("prefLabel" AS ?labelType)
-        } UNION {
-          ?concept skosxl:prefLabel/skosxl:literalForm ?label .
-          BIND("xlPrefLabel" AS ?labelType)
-        } UNION {
-          ?concept skos:altLabel ?label .
-          BIND("altLabel" AS ?labelType)
-        } UNION {
-          ?concept skos:hiddenLabel ?label .
-          BIND("hiddenLabel" AS ?labelType)
-        } UNION {
-          ?concept dct:title ?label .
-          BIND("title" AS ?labelType)
-        } UNION {
-          ?concept rdfs:label ?label .
-          BIND("rdfsLabel" AS ?labelType)
-        }
-        BIND(LANG(?label) AS ?labelLang)
-      }
-    }
-  `)
-
-  try {
-    const results = await executeSparql(endpoint, query, { retries: 0 })
-
-    // Group by concept URI
-    const conceptData = new Map<string, {
-      notation?: string
-      labels: { value: string; lang: string; type: string }[]
-    }>()
-
-    for (const b of results.results.bindings) {
-      const uri = b.concept?.value
-      if (!uri) continue
-
-      if (!conceptData.has(uri)) {
-        conceptData.set(uri, { labels: [] })
-      }
-
-      const data = conceptData.get(uri)!
-
-      if (b.notation?.value && !data.notation) {
-        data.notation = b.notation.value
-      }
-
-      if (b.label?.value) {
-        data.labels.push({
-          value: b.label.value,
-          lang: b.labelLang?.value || '',
-          type: b.labelType?.value || 'prefLabel'
-        })
-      }
-    }
-
-    // Update refs with best label and notation
-    allRefs.forEach(ref => {
-      const data = conceptData.get(ref.uri)
-      if (!data) return
-
-      ref.notation = data.notation
-
-      // Pick best label: prefLabel > xlPrefLabel > title > rdfsLabel, etc.
-      const labelPriority = ['prefLabel', 'xlPrefLabel', 'title', 'rdfsLabel', 'altLabel', 'hiddenLabel']
-      let bestLabel: string | undefined
-
-      for (const labelType of labelPriority) {
-        const labelsOfType = data.labels.filter(l => l.type === labelType)
-        if (!labelsOfType.length) continue
-
-        // Use current override if set
-        let selected: typeof labelsOfType[0] | undefined
-        if (languageStore.current) {
-          selected = labelsOfType.find(l => l.lang === languageStore.current)
-        }
-        // Walk full priority list
-        if (!selected) {
-          for (const lang of languageStore.priorities) {
-            selected = labelsOfType.find(l => l.lang === lang)
-            if (selected) break
-          }
-        }
-        // Fallback: no-lang, then any
-        if (!selected) {
-          selected = labelsOfType.find(l => l.lang === '') || labelsOfType[0]
-        }
-
-        bestLabel = selected?.value
-        if (bestLabel) break
-      }
-
-      if (bestLabel) {
-        ref.label = bestLabel
-      }
-    })
-  } catch (e) {
-    logger.warn('ConceptDetails', 'Failed to load related labels', { error: e })
+    schemeStore.setLoadingDetails(false)
   }
 }
 
 // Load SKOS-XL extended labels
-async function loadXLLabels(uri: string, details: ConceptDetails) {
+async function loadXLLabels(uri: string, details: SchemeDetails) {
   const endpoint = endpointStore.current
   if (!endpoint) return
 
-  // Query for XL labels
   const query = withPrefixes(`
     SELECT ?xlLabel ?labelType ?literalForm ?literalLang
     WHERE {
       {
         <${uri}> skosxl:prefLabel ?xlLabel .
         BIND("prefLabel" AS ?labelType)
-      } UNION {
-        <${uri}> skosxl:altLabel ?xlLabel .
-        BIND("altLabel" AS ?labelType)
-      } UNION {
-        <${uri}> skosxl:hiddenLabel ?xlLabel .
-        BIND("hiddenLabel" AS ?labelType)
       }
       ?xlLabel skosxl:literalForm ?literalForm .
       BIND(LANG(?literalForm) AS ?literalLang)
@@ -493,55 +296,39 @@ async function loadXLLabels(uri: string, details: ConceptDetails) {
   try {
     const results = await executeSparql(endpoint, query, { retries: 0 })
 
-    // Track seen URIs to deduplicate
     const seenXLUris = new Set<string>()
 
     for (const binding of results.results.bindings) {
       const xlUri = binding.xlLabel?.value
-      const labelType = binding.labelType?.value
       const literalForm = binding.literalForm?.value
       const literalLang = binding.literalLang?.value
 
       if (!xlUri || !literalForm) continue
-
-      // Deduplicate by XL label URI
       if (seenXLUris.has(xlUri)) continue
       seenXLUris.add(xlUri)
 
-      const xlLabel = {
+      details.prefLabelsXL.push({
         uri: xlUri,
         literalForm: {
           value: literalForm,
           lang: literalLang || undefined,
         },
-      }
-
-      if (labelType === 'prefLabel') {
-        details.prefLabelsXL.push(xlLabel)
-      } else if (labelType === 'altLabel') {
-        details.altLabelsXL.push(xlLabel)
-      } else if (labelType === 'hiddenLabel') {
-        details.hiddenLabelsXL.push(xlLabel)
-      }
+      })
     }
 
-    logger.debug('ConceptDetails', 'Loaded XL labels', {
+    logger.debug('SchemeDetails', 'Loaded XL labels', {
       prefLabelsXL: details.prefLabelsXL.length,
-      altLabelsXL: details.altLabelsXL.length,
-      hiddenLabelsXL: details.hiddenLabelsXL.length,
     })
   } catch (e) {
-    // SKOS-XL may not be supported by all endpoints, silently skip
-    logger.debug('ConceptDetails', 'SKOS-XL labels not available or query failed', { error: e })
+    logger.debug('SchemeDetails', 'SKOS-XL labels not available or query failed', { error: e })
   }
 }
 
 // Load other (non-SKOS) properties
-async function loadOtherProperties(uri: string, details: ConceptDetails) {
+async function loadOtherProperties(uri: string, details: SchemeDetails) {
   const endpoint = endpointStore.current
   if (!endpoint) return
 
-  // Query for all properties not in SKOS/SKOS-XL namespaces
   const query = withPrefixes(`
     SELECT ?predicate ?value
     WHERE {
@@ -551,7 +338,14 @@ async function loadOtherProperties(uri: string, details: ConceptDetails) {
         !STRSTARTS(STR(?predicate), STR(skosxl:)) &&
         !STRSTARTS(STR(?predicate), STR(rdf:)) &&
         ?predicate != rdfs:label &&
-        ?predicate != dct:title
+        ?predicate != dct:title &&
+        ?predicate != dct:description &&
+        ?predicate != dct:creator &&
+        ?predicate != dct:created &&
+        ?predicate != dct:modified &&
+        ?predicate != dct:publisher &&
+        ?predicate != dct:rights &&
+        ?predicate != dct:license
       )
     }
     LIMIT 100
@@ -560,7 +354,6 @@ async function loadOtherProperties(uri: string, details: ConceptDetails) {
   try {
     const results = await executeSparql(endpoint, query, { retries: 0 })
 
-    // Group by predicate with deduplication
     const propMap = new Map<string, Map<string, { value: string; lang?: string; isUri: boolean }>>()
 
     for (const binding of results.results.bindings) {
@@ -574,25 +367,22 @@ async function loadOtherProperties(uri: string, details: ConceptDetails) {
       if (!propMap.has(predicate)) {
         propMap.set(predicate, new Map())
       }
-      // Deduplicate by value+lang combination
       const key = `${value}|${lang || ''}`
       if (!propMap.get(predicate)!.has(key)) {
         propMap.get(predicate)!.set(key, { value, lang, isUri })
       }
     }
 
-    // Convert to OtherProperty array
     details.otherProperties = Array.from(propMap.entries()).map(([predicate, valuesMap]) => ({
       predicate,
       values: Array.from(valuesMap.values()),
     }))
 
-    logger.debug('ConceptDetails', 'Loaded other properties', {
+    logger.debug('SchemeDetails', 'Loaded other properties', {
       count: details.otherProperties.length,
     })
   } catch (e) {
-    // Silently skip if query fails
-    logger.debug('ConceptDetails', 'Failed to load other properties', { error: e })
+    logger.debug('SchemeDetails', 'Failed to load other properties', { error: e })
   }
 }
 
@@ -616,28 +406,10 @@ async function copyToClipboard(text: string, label: string) {
   }
 }
 
-// Navigate to concept
-function navigateTo(ref: ConceptRef) {
-  emit('selectConcept', ref.uri)
-}
-
-// Check if a scheme exists in the current endpoint
-function isLocalScheme(uri: string): boolean {
-  return schemeStore.schemes.some(s => s.uri === uri)
-}
-
-// Navigate to a scheme (select it)
-function navigateToScheme(ref: ConceptRef) {
-  schemeStore.viewScheme(ref.uri) // View scheme details
-  conceptStore.selectConcept(null) // Clear current concept
-}
-
-// Handle scheme click - navigate if local, open external otherwise
-function handleSchemeClick(ref: ConceptRef) {
-  if (isLocalScheme(ref.uri)) {
-    navigateToScheme(ref)
-  } else {
-    openExternal(ref.uri)
+// Browse this scheme (emit to parent)
+function browseScheme() {
+  if (details.value) {
+    emit('browseScheme', details.value.uri)
   }
 }
 
@@ -668,15 +440,10 @@ async function loadRawRdf() {
       ? (e as { message: string }).message
       : 'Failed to fetch RDF'
     rawRdfError.value = errMsg
-    logger.error('ConceptDetails', 'Failed to fetch raw RDF', { error: e })
+    logger.error('SchemeDetails', 'Failed to fetch raw RDF', { error: e })
   } finally {
     rawRdfLoading.value = false
   }
-}
-
-// Open external link
-function openExternal(uri: string) {
-  window.open(uri, '_blank')
 }
 
 // Download helper
@@ -700,43 +467,40 @@ function exportAsJson() {
     uri: details.value.uri,
     prefLabels: details.value.prefLabels,
     altLabels: details.value.altLabels,
-    hiddenLabels: details.value.hiddenLabels,
-    notations: details.value.notations,
     definitions: details.value.definitions,
     scopeNotes: details.value.scopeNotes,
-    broader: details.value.broader,
-    narrower: details.value.narrower,
-    related: details.value.related,
-    inScheme: details.value.inScheme,
-    exactMatch: details.value.exactMatch,
-    closeMatch: details.value.closeMatch,
+    title: details.value.title,
+    description: details.value.description,
+    creator: details.value.creator,
+    created: details.value.created,
+    modified: details.value.modified,
   }
 
   const content = JSON.stringify(jsonData, null, 2)
-  const filename = `concept-${details.value.uri.split('/').pop() || 'export'}.json`
+  const filename = `scheme-${details.value.uri.split('/').pop() || 'export'}.json`
   downloadFile(content, filename, 'application/json')
 
   toast.add({
     severity: 'success',
     summary: 'Exported',
-    detail: 'Concept exported as JSON',
+    detail: 'Scheme exported as JSON',
     life: 2000
   })
 }
 
-// Export as Turtle (fetch from endpoint)
+// Export as Turtle
 async function exportAsTurtle() {
   if (!details.value || !endpointStore.current) return
 
   try {
     const turtle = await fetchRawRdf(endpointStore.current, details.value.uri, 'turtle')
-    const filename = `concept-${details.value.uri.split('/').pop() || 'export'}.ttl`
+    const filename = `scheme-${details.value.uri.split('/').pop() || 'export'}.ttl`
     downloadFile(turtle, filename, 'text/turtle')
 
     toast.add({
       severity: 'success',
       summary: 'Exported',
-      detail: 'Concept exported as Turtle',
+      detail: 'Scheme exported as Turtle',
       life: 2000
     })
   } catch (e) {
@@ -749,66 +513,28 @@ async function exportAsTurtle() {
   }
 }
 
-// Export as CSV
-function exportAsCsv() {
-  if (!details.value) return
-
-  const rows: string[][] = [['Property', 'Value', 'Language']]
-
-  // Add labels
-  details.value.prefLabels.forEach(l => rows.push(['prefLabel', l.value, l.lang || '']))
-  details.value.altLabels.forEach(l => rows.push(['altLabel', l.value, l.lang || '']))
-  details.value.hiddenLabels.forEach(l => rows.push(['hiddenLabel', l.value, l.lang || '']))
-
-  // Add notations
-  details.value.notations.forEach(n => rows.push(['notation', n, '']))
-
-  // Add documentation
-  details.value.definitions.forEach(d => rows.push(['definition', d.value, d.lang || '']))
-  details.value.scopeNotes.forEach(d => rows.push(['scopeNote', d.value, d.lang || '']))
-
-  // Add relations
-  details.value.broader.forEach(r => rows.push(['broader', r.uri, '']))
-  details.value.narrower.forEach(r => rows.push(['narrower', r.uri, '']))
-  details.value.related.forEach(r => rows.push(['related', r.uri, '']))
-
-  // Add mappings
-  details.value.exactMatch.forEach(u => rows.push(['exactMatch', u, '']))
-  details.value.closeMatch.forEach(u => rows.push(['closeMatch', u, '']))
-
-  // Convert to CSV
-  const csv = rows.map(row =>
-    row.map(cell => `"${cell.replace(/"/g, '""')}"`).join(',')
-  ).join('\n')
-
-  const filename = `concept-${details.value.uri.split('/').pop() || 'export'}.csv`
-  downloadFile(csv, filename, 'text/csv')
-
-  toast.add({
-    severity: 'success',
-    summary: 'Exported',
-    detail: 'Concept exported as CSV',
-    life: 2000
-  })
-}
-
-// Get display label for a ConceptRef (notation + label if both exist)
-function getRefLabel(ref: ConceptRef): string {
-  const label = ref.label || ref.uri.split('/').pop() || ref.uri
-  if (ref.notation && ref.label) {
-    return `${ref.notation} - ${label}`
+// Format date for display
+function formatDate(dateStr: string): string {
+  try {
+    const date = new Date(dateStr)
+    return date.toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    })
+  } catch {
+    return dateStr
   }
-  return ref.notation || label
 }
 
-// Watch for selected concept changes
+// Watch for viewing scheme changes
 watch(
-  () => conceptStore.selectedUri,
+  () => schemeStore.viewingSchemeUri,
   (uri) => {
     if (uri) {
       loadDetails(uri)
     } else {
-      conceptStore.setDetails(null)
+      schemeStore.setSchemeDetails(null)
     }
   },
   { immediate: true }
@@ -816,18 +542,23 @@ watch(
 </script>
 
 <template>
-  <div class="concept-details">
-    <!-- Loading state (delayed to prevent flicker) -->
+  <div class="scheme-details">
+    <!-- Loading state -->
     <div v-if="showLoading" class="loading-container">
       <ProgressSpinner style="width: 40px; height: 40px" />
-      <span>Loading details...</span>
+      <span>
+        Loading scheme...
+        <template v-if="loadingElapsed.show.value">
+          ({{ loadingElapsed.elapsed.value }}s)
+        </template>
+      </span>
     </div>
 
     <!-- Empty state -->
     <div v-else-if="!loading && !details && !error" class="empty-state">
-      <i class="pi pi-info-circle"></i>
-      <p>No concept selected</p>
-      <small>Select a concept from the tree or search</small>
+      <i class="pi pi-sitemap"></i>
+      <p>No scheme selected</p>
+      <small>Select a scheme from the dropdown or click "In Scheme" on a concept</small>
     </div>
 
     <!-- Error state -->
@@ -840,11 +571,15 @@ watch(
       <!-- Header -->
       <div class="details-header">
         <div class="header-left">
-          <h2 class="concept-label">
-            {{ displayTitle }}
+          <div class="scheme-badge">
+            <i class="pi pi-sitemap"></i>
+            <span>Concept Scheme</span>
+          </div>
+          <h2 class="scheme-label">
+            {{ preferredLabel || details.uri.split('/').pop() }}
             <span v-if="showHeaderLangTag" class="header-lang-tag">{{ displayLang }}</span>
           </h2>
-          <div class="concept-uri">
+          <div class="scheme-uri">
             <a v-if="isValidURI(details.uri)" :href="details.uri" target="_blank" class="uri-link">
               {{ details.uri }}
               <i class="pi pi-external-link"></i>
@@ -862,6 +597,14 @@ watch(
           </div>
         </div>
         <div class="header-actions">
+          <Button
+            icon="pi pi-list"
+            label="Browse"
+            severity="primary"
+            size="small"
+            v-tooltip.left="'Browse concepts in this scheme'"
+            @click="browseScheme"
+          />
           <Button
             icon="pi pi-code"
             severity="secondary"
@@ -886,20 +629,9 @@ watch(
 
       <Divider />
 
-      <!-- Labels Section - only shown if any label or notation exists -->
-      <section v-if="details.prefLabels.length || details.altLabels.length || details.hiddenLabels.length || details.notations.length || details.prefLabelsXL.length || details.altLabelsXL.length || details.hiddenLabelsXL.length" class="details-section">
-        <div class="section-header">
-          <h3>Labels</h3>
-          <Button
-            v-if="details.hiddenLabels.length || details.hiddenLabelsXL.length"
-            :icon="showHiddenLabels ? 'pi pi-eye-slash' : 'pi pi-eye'"
-            :label="showHiddenLabels ? 'Hide hidden' : 'Show hidden'"
-            severity="secondary"
-            text
-            size="small"
-            @click="showHiddenLabels = !showHiddenLabels"
-          />
-        </div>
+      <!-- Labels Section -->
+      <section v-if="details.prefLabels.length || details.altLabels.length || details.prefLabelsXL.length" class="details-section">
+        <h3>Labels</h3>
 
         <div v-if="details.prefLabels.length || details.prefLabelsXL.length" class="property-row">
           <label>Preferred</label>
@@ -920,7 +652,7 @@ watch(
           />
         </div>
 
-        <div v-if="details.altLabels.length || details.altLabelsXL.length" class="property-row">
+        <div v-if="details.altLabels.length" class="property-row">
           <label>Alternative</label>
           <div class="label-values">
             <span
@@ -932,42 +664,28 @@ watch(
               <span v-if="label.lang" class="lang-tag">{{ label.lang }}</span>
             </span>
           </div>
-          <XLLabelsGroup
-            v-if="details.altLabelsXL.length"
-            :labels="details.altLabelsXL"
-            :regular-labels="details.altLabels"
-          />
         </div>
+      </section>
 
-        <div v-if="showHiddenLabels && (details.hiddenLabels.length || details.hiddenLabelsXL.length)" class="property-row">
-          <label>Hidden</label>
-          <div class="label-values">
-            <span
-              v-for="(label, i) in sortedHiddenLabels"
+      <!-- Dublin Core Title (if different from prefLabel) -->
+      <section v-if="sortedTitles.length" class="details-section">
+        <h3>Title</h3>
+        <div class="property-row">
+          <div class="doc-values">
+            <p
+              v-for="(title, i) in sortedTitles"
               :key="i"
-              class="label-value hidden-label"
+              class="doc-value"
             >
-              {{ label.value }}
-              <span v-if="label.lang" class="lang-tag">{{ label.lang }}</span>
-            </span>
-          </div>
-          <XLLabelsGroup
-            v-if="details.hiddenLabelsXL.length"
-            :labels="details.hiddenLabelsXL"
-            :regular-labels="details.hiddenLabels"
-          />
-        </div>
-
-        <div v-if="details.notations.length" class="property-row">
-          <label>Notation</label>
-          <div class="label-values">
-            <code v-for="(n, i) in details.notations" :key="i" class="notation">{{ n }}</code>
+              <span v-if="title.lang" class="lang-tag lang-tag-first">{{ title.lang }}</span>
+              <span class="doc-text">{{ title.value }}</span>
+            </p>
           </div>
         </div>
       </section>
 
       <!-- Documentation Section -->
-      <section v-if="details.definitions.length || details.scopeNotes.length || details.historyNotes.length || details.changeNotes.length || details.editorialNotes.length || details.examples.length" class="details-section">
+      <section v-if="details.definitions.length || sortedDescriptions.length || details.scopeNotes.length || details.historyNotes.length || details.changeNotes.length || details.editorialNotes.length || details.examples.length" class="details-section">
         <h3>Documentation</h3>
 
         <div v-if="details.definitions.length" class="property-row">
@@ -980,6 +698,20 @@ watch(
             >
               <span v-if="def.lang" class="lang-tag lang-tag-first">{{ def.lang }}</span>
               <span class="doc-text">{{ def.value }}</span>
+            </p>
+          </div>
+        </div>
+
+        <div v-if="sortedDescriptions.length" class="property-row">
+          <label>Description</label>
+          <div class="doc-values">
+            <p
+              v-for="(desc, i) in sortedDescriptions"
+              :key="i"
+              class="doc-value"
+            >
+              <span v-if="desc.lang" class="lang-tag lang-tag-first">{{ desc.lang }}</span>
+              <span class="doc-text">{{ desc.value }}</span>
             </p>
           </div>
         </div>
@@ -1055,139 +787,36 @@ watch(
         </div>
       </section>
 
-      <!-- Hierarchy Section -->
-      <section v-if="details.broader.length || details.narrower.length" class="details-section">
-        <h3>Hierarchy</h3>
+      <!-- Metadata Section -->
+      <section v-if="details.creator.length || details.created || details.modified" class="details-section">
+        <h3>Metadata</h3>
 
-        <div v-if="details.broader.length" class="property-row">
-          <label>Broader</label>
-          <div class="concept-chips">
-            <Chip
-              v-for="ref in details.broader"
-              :key="ref.uri"
-              :label="getRefLabel(ref)"
-              class="concept-chip clickable"
-              @click="navigateTo(ref)"
-            />
-          </div>
-        </div>
-
-        <div v-if="details.narrower.length" class="property-row">
-          <label>Narrower</label>
-          <div class="concept-chips">
-            <Chip
-              v-for="ref in details.narrower"
-              :key="ref.uri"
-              :label="getRefLabel(ref)"
-              class="concept-chip clickable"
-              @click="navigateTo(ref)"
-            />
-          </div>
-        </div>
-      </section>
-
-      <!-- Relations Section -->
-      <section v-if="details.related.length" class="details-section">
-        <h3>Relations</h3>
-
-        <div class="property-row">
-          <label>Related</label>
-          <div class="concept-chips">
-            <Chip
-              v-for="ref in details.related"
-              :key="ref.uri"
-              :label="getRefLabel(ref)"
-              class="concept-chip clickable"
-              @click="navigateTo(ref)"
-            />
-          </div>
-        </div>
-      </section>
-
-      <!-- Mappings Section -->
-      <section v-if="details.exactMatch.length || details.closeMatch.length || details.broadMatch.length || details.narrowMatch.length || details.relatedMatch.length" class="details-section">
-        <h3>Mappings</h3>
-
-        <div v-if="details.exactMatch.length" class="property-row">
-          <label>Exact Match</label>
-          <div class="mapping-links">
-            <template v-for="uri in details.exactMatch" :key="uri">
-              <a v-if="isValidURI(uri)" :href="uri" target="_blank" class="mapping-link">
-                {{ uri.split('/').pop() }}
+        <div v-if="details.creator.length" class="property-row">
+          <label>Creator</label>
+          <div class="metadata-values">
+            <template v-for="(creator, i) in details.creator" :key="i">
+              <a
+                v-if="isValidURI(creator)"
+                :href="creator"
+                target="_blank"
+                class="metadata-link"
+              >
+                {{ creator.split('/').pop() }}
                 <i class="pi pi-external-link"></i>
               </a>
-              <span v-else class="mapping-text">{{ uri.split('/').pop() }}</span>
+              <span v-else class="metadata-value">{{ creator }}</span>
             </template>
           </div>
         </div>
 
-        <div v-if="details.closeMatch.length" class="property-row">
-          <label>Close Match</label>
-          <div class="mapping-links">
-            <template v-for="uri in details.closeMatch" :key="uri">
-              <a v-if="isValidURI(uri)" :href="uri" target="_blank" class="mapping-link">
-                {{ uri.split('/').pop() }}
-                <i class="pi pi-external-link"></i>
-              </a>
-              <span v-else class="mapping-text">{{ uri.split('/').pop() }}</span>
-            </template>
-          </div>
+        <div v-if="details.created" class="property-row">
+          <label>Created</label>
+          <span class="metadata-value">{{ formatDate(details.created) }}</span>
         </div>
 
-        <div v-if="details.broadMatch.length" class="property-row">
-          <label>Broad Match</label>
-          <div class="mapping-links">
-            <template v-for="uri in details.broadMatch" :key="uri">
-              <a v-if="isValidURI(uri)" :href="uri" target="_blank" class="mapping-link">
-                {{ uri.split('/').pop() }}
-                <i class="pi pi-external-link"></i>
-              </a>
-              <span v-else class="mapping-text">{{ uri.split('/').pop() }}</span>
-            </template>
-          </div>
-        </div>
-
-        <div v-if="details.narrowMatch.length" class="property-row">
-          <label>Narrow Match</label>
-          <div class="mapping-links">
-            <template v-for="uri in details.narrowMatch" :key="uri">
-              <a v-if="isValidURI(uri)" :href="uri" target="_blank" class="mapping-link">
-                {{ uri.split('/').pop() }}
-                <i class="pi pi-external-link"></i>
-              </a>
-              <span v-else class="mapping-text">{{ uri.split('/').pop() }}</span>
-            </template>
-          </div>
-        </div>
-
-        <div v-if="details.relatedMatch.length" class="property-row">
-          <label>Related Match</label>
-          <div class="mapping-links">
-            <template v-for="uri in details.relatedMatch" :key="uri">
-              <a v-if="isValidURI(uri)" :href="uri" target="_blank" class="mapping-link">
-                {{ uri.split('/').pop() }}
-                <i class="pi pi-external-link"></i>
-              </a>
-              <span v-else class="mapping-text">{{ uri.split('/').pop() }}</span>
-            </template>
-          </div>
-        </div>
-      </section>
-
-      <!-- Scheme Section -->
-      <section v-if="details.inScheme.length" class="details-section">
-        <h3>Schemes</h3>
-        <div class="property-row">
-          <label>In Scheme</label>
-          <div class="concept-chips">
-            <Chip
-              v-for="ref in details.inScheme"
-              :key="ref.uri"
-              :label="getRefLabel(ref)"
-              :class="['concept-chip', { clickable: isLocalScheme(ref.uri) }]"
-              @click="handleSchemeClick(ref)"
-            />
-          </div>
+        <div v-if="details.modified" class="property-row">
+          <label>Modified</label>
+          <span class="metadata-value">{{ formatDate(details.modified) }}</span>
         </div>
       </section>
 
@@ -1278,7 +907,7 @@ watch(
 </template>
 
 <style scoped>
-.concept-details {
+.scheme-details {
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -1330,7 +959,22 @@ watch(
   min-width: 0;
 }
 
-.concept-label {
+.scheme-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--p-primary-color);
+  margin-bottom: 0.25rem;
+}
+
+.scheme-badge i {
+  font-size: 0.75rem;
+}
+
+.scheme-label {
   margin: 0;
   font-size: 1.25rem;
   font-weight: 600;
@@ -1353,10 +997,11 @@ watch(
   flex-shrink: 0;
 }
 
-.concept-uri {
+.scheme-uri {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  margin-top: 0.125rem;
 }
 
 .uri-link {
@@ -1374,16 +1019,6 @@ watch(
 
 .details-section {
   margin-bottom: 1.5rem;
-}
-
-.section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.section-header h3 {
-  /* margin inherited from .details-section h3 */
 }
 
 .details-section h3 {
@@ -1423,11 +1058,6 @@ watch(
   color: var(--p-text-muted-color);
 }
 
-.label-value.hidden-label {
-  font-style: italic;
-  color: var(--p-text-muted-color);
-}
-
 .lang-tag {
   font-size: 0.625rem;
   background: var(--p-surface-200);
@@ -1440,13 +1070,6 @@ watch(
 .lang-tag.lang-tag-first {
   margin-left: 0;
   margin-right: 0.5rem;
-}
-
-.notation {
-  font-size: 0.875rem;
-  background: var(--p-surface-100);
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
 }
 
 .doc-values {
@@ -1479,38 +1102,24 @@ watch(
   color: var(--p-text-muted-color);
 }
 
-.concept-chips {
+.metadata-values {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
 }
 
-.concept-chip {
+.metadata-value {
   font-size: 0.875rem;
 }
 
-.concept-chip.clickable {
-  cursor: pointer;
-}
-
-.concept-chip.clickable:hover {
-  background: var(--p-primary-100);
-}
-
-.mapping-links {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.mapping-link {
+.metadata-link {
   font-size: 0.875rem;
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
 }
 
-.mapping-link i {
+.metadata-link i {
   font-size: 0.625rem;
 }
 
