@@ -67,6 +67,7 @@
 - [x] elapsed time shown on concept tree loading
 
 - [x] documentation properties (Definition, Scope Note, etc.) show language tag first
+- [x] documentation properties use grid layout: lang tag aligned, text wraps below itself
 
 ## Backlog
 

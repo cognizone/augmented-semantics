@@ -955,7 +955,7 @@ watch(
               class="doc-value"
             >
               <span v-if="def.lang" class="lang-tag lang-tag-first">{{ def.lang }}</span>
-              {{ def.value }}
+              <span class="doc-text">{{ def.value }}</span>
             </p>
           </div>
         </div>
@@ -969,7 +969,7 @@ watch(
               class="doc-value"
             >
               <span v-if="note.lang" class="lang-tag lang-tag-first">{{ note.lang }}</span>
-              {{ note.value }}
+              <span class="doc-text">{{ note.value }}</span>
             </p>
           </div>
         </div>
@@ -983,7 +983,7 @@ watch(
               class="doc-value"
             >
               <span v-if="note.lang" class="lang-tag lang-tag-first">{{ note.lang }}</span>
-              {{ note.value }}
+              <span class="doc-text">{{ note.value }}</span>
             </p>
           </div>
         </div>
@@ -997,7 +997,7 @@ watch(
               class="doc-value"
             >
               <span v-if="note.lang" class="lang-tag lang-tag-first">{{ note.lang }}</span>
-              {{ note.value }}
+              <span class="doc-text">{{ note.value }}</span>
             </p>
           </div>
         </div>
@@ -1011,7 +1011,7 @@ watch(
               class="doc-value"
             >
               <span v-if="note.lang" class="lang-tag lang-tag-first">{{ note.lang }}</span>
-              {{ note.value }}
+              <span class="doc-text">{{ note.value }}</span>
             </p>
           </div>
         </div>
@@ -1025,7 +1025,7 @@ watch(
               class="doc-value example"
             >
               <span v-if="ex.lang" class="lang-tag lang-tag-first">{{ ex.lang }}</span>
-              {{ ex.value }}
+              <span class="doc-text">{{ ex.value }}</span>
             </p>
           </div>
         </div>
@@ -1435,6 +1435,19 @@ watch(
   margin: 0;
   font-size: 0.875rem;
   line-height: 1.5;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0;
+}
+
+.doc-value .lang-tag-first {
+  grid-column: 1;
+  align-self: start;
+  margin-top: 0.1rem;
+}
+
+.doc-value .doc-text {
+  grid-column: 2;
 }
 
 .doc-value.example {
