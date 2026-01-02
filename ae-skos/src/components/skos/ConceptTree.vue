@@ -32,6 +32,36 @@ const schemeStore = useSchemeStore()
 const languageStore = useLanguageStore()
 const { shouldShowLangTag, selectLabel } = useLabelResolver()
 
+/**
+ * Compare tree nodes for sorting.
+ * Priority: notation (numeric if possible) > label (alphabetical)
+ */
+function compareNodes(a: ConceptNode, b: ConceptNode): number {
+  const aNotation = a.notation
+  const bNotation = b.notation
+
+  // If both have notation, try numeric sort
+  if (aNotation && bNotation) {
+    const aNum = parseFloat(aNotation)
+    const bNum = parseFloat(bNotation)
+
+    // Both are valid numbers → numeric sort
+    if (!isNaN(aNum) && !isNaN(bNum)) {
+      return aNum - bNum
+    }
+
+    // Otherwise → string comparison on notation
+    return aNotation.localeCompare(bNotation)
+  }
+
+  // One has notation, one doesn't → notation first
+  if (aNotation) return -1
+  if (bNotation) return 1
+
+  // Neither has notation → sort by label
+  return (a.label || a.uri).localeCompare(b.label || b.uri)
+}
+
 // Delayed loading - show spinner only after 300ms to prevent flicker
 const showTreeLoading = useDelayedLoading(computed(() => conceptStore.loadingTree))
 
@@ -259,8 +289,8 @@ async function loadTopConcepts() {
       }
     })
 
-    // Sort by label
-    concepts.sort((a, b) => (a.label || a.uri).localeCompare(b.label || b.uri))
+    // Sort by notation (numeric if possible) then label
+    concepts.sort(compareNodes)
 
     logger.info('ConceptTree', `Loaded ${concepts.length} top concepts`)
     conceptStore.setTopConcepts(concepts)
@@ -380,8 +410,8 @@ async function loadChildren(uri: string) {
       }
     })
 
-    // Sort by label
-    children.sort((a, b) => (a.label || a.uri).localeCompare(b.label || b.uri))
+    // Sort by notation (numeric if possible) then label
+    children.sort(compareNodes)
 
     logger.debug('ConceptTree', `Loaded ${children.length} children for ${uri}`)
     conceptStore.updateNodeChildren(uri, children)
