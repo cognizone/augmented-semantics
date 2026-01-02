@@ -145,7 +145,7 @@ async function executeSearch() {
       OPTIONAL {
         ?concept skos:prefLabel ?label .
         BIND(LANG(?label) AS ?labelLang)
-        FILTER (LANG(?label) = "${languageStore.preferred}" || LANG(?label) = "${languageStore.fallback}" || LANG(?label) = "")
+        FILTER (${languageStore.priorities.map(lang => `LANG(?label) = "${lang}"`).join(' || ')} || LANG(?label) = "")
       }
     }
     ORDER BY ?label

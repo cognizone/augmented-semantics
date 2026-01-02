@@ -165,8 +165,11 @@ const sortedOtherProperties = computed(() => {
 // Get formatted predicate name
 function getPredicateName(predicate: string): string {
   const resolved = resolvedPredicates.value.get(predicate)
-  if (resolved && resolved.prefix) {
-    return formatQualifiedName(resolved)
+  if (resolved) {
+    // Show qualified name if prefix exists, otherwise just localName
+    return resolved.prefix
+      ? formatQualifiedName(resolved)
+      : resolved.localName
   }
   // Fallback: extract local name from URI
   return predicate.split('/').pop()?.split('#').pop() || predicate
@@ -429,12 +432,24 @@ async function loadRelatedLabels(details: ConceptDetails) {
         const labelsOfType = data.labels.filter(l => l.type === labelType)
         if (!labelsOfType.length) continue
 
-        const preferred = labelsOfType.find(l => l.lang === languageStore.preferred)
-        const fallback = labelsOfType.find(l => l.lang === languageStore.fallback)
-        const noLang = labelsOfType.find(l => l.lang === '')
-        const any = labelsOfType[0]
+        // Use current override if set
+        let selected: typeof labelsOfType[0] | undefined
+        if (languageStore.current) {
+          selected = labelsOfType.find(l => l.lang === languageStore.current)
+        }
+        // Walk full priority list
+        if (!selected) {
+          for (const lang of languageStore.priorities) {
+            selected = labelsOfType.find(l => l.lang === lang)
+            if (selected) break
+          }
+        }
+        // Fallback: no-lang, then any
+        if (!selected) {
+          selected = labelsOfType.find(l => l.lang === '') || labelsOfType[0]
+        }
 
-        bestLabel = preferred?.value || fallback?.value || noLang?.value || any?.value
+        bestLabel = selected?.value
         if (bestLabel) break
       }
 
@@ -869,6 +884,7 @@ watch(
           <XLLabelsGroup
             v-if="details.prefLabelsXL.length"
             :labels="details.prefLabelsXL"
+            :regular-labels="details.prefLabels"
           />
         </div>
 
@@ -887,6 +903,7 @@ watch(
           <XLLabelsGroup
             v-if="details.altLabelsXL.length"
             :labels="details.altLabelsXL"
+            :regular-labels="details.altLabels"
           />
         </div>
 
@@ -905,6 +922,7 @@ watch(
           <XLLabelsGroup
             v-if="details.hiddenLabelsXL.length"
             :labels="details.hiddenLabelsXL"
+            :regular-labels="details.hiddenLabels"
           />
         </div>
 

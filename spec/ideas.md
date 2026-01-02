@@ -50,6 +50,13 @@
 - [x] elapsed time shows on language detection progress (after 2s delay)
 - [x] removed LIMIT 50 on language detection query
 
+- [x] SKOS-XL labels hidden when value matches regular SKOS label, with "(N XL hidden)" indicator
+- [x] language selection now uses full priority list (not just preferred/fallback)
+- [x] ConceptTree, ConceptDetails, SearchBox all use full priorities + current override
+- [x] ConceptTree watch now triggers on priorities array or current change
+- [x] elapsed time delay reduced from 2s to 1s for faster feedback
+- [x] prefix display bug fixed: empty prefix string no longer treated as falsy
+
 ## Backlog
 
-- SKOS-XL labels behavior when normal label has same value (needs clarification) 
+(none) 

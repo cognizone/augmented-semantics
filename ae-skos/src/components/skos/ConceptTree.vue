@@ -238,12 +238,23 @@ async function loadTopConcepts() {
         const labelsOfType = data.labels.filter(l => l.type === labelType)
         if (!labelsOfType.length) continue
 
-        const preferred = labelsOfType.find(l => l.lang === languageStore.preferred)
-        const fallback = labelsOfType.find(l => l.lang === languageStore.fallback)
-        const noLang = labelsOfType.find(l => l.lang === '')
-        const any = labelsOfType[0]
+        // Use current override if set
+        let selected: typeof labelsOfType[0] | undefined
+        if (languageStore.current) {
+          selected = labelsOfType.find(l => l.lang === languageStore.current)
+        }
+        // Walk full priority list
+        if (!selected) {
+          for (const lang of languageStore.priorities) {
+            selected = labelsOfType.find(l => l.lang === lang)
+            if (selected) break
+          }
+        }
+        // Fallback: no-lang, then any
+        if (!selected) {
+          selected = labelsOfType.find(l => l.lang === '') || labelsOfType[0]
+        }
 
-        const selected = preferred || fallback || noLang || any
         if (selected) {
           bestLabel = selected.value
           bestLabelLang = selected.lang || undefined
@@ -364,12 +375,23 @@ async function loadChildren(uri: string) {
         const labelsOfType = data.labels.filter(l => l.type === labelType)
         if (!labelsOfType.length) continue
 
-        const preferred = labelsOfType.find(l => l.lang === languageStore.preferred)
-        const fallback = labelsOfType.find(l => l.lang === languageStore.fallback)
-        const noLang = labelsOfType.find(l => l.lang === '')
-        const any = labelsOfType[0]
+        // Use current override if set
+        let selected: typeof labelsOfType[0] | undefined
+        if (languageStore.current) {
+          selected = labelsOfType.find(l => l.lang === languageStore.current)
+        }
+        // Walk full priority list
+        if (!selected) {
+          for (const lang of languageStore.priorities) {
+            selected = labelsOfType.find(l => l.lang === lang)
+            if (selected) break
+          }
+        }
+        // Fallback: no-lang, then any
+        if (!selected) {
+          selected = labelsOfType.find(l => l.lang === '') || labelsOfType[0]
+        }
 
-        const selected = preferred || fallback || noLang || any
         if (selected) {
           bestLabel = selected.value
           bestLabelLang = selected.lang || undefined
@@ -468,14 +490,15 @@ watch(
   { immediate: true }
 )
 
-// Reload when language changes
+// Reload when language changes (watch priorities array and current override)
 watch(
-  () => languageStore.preferred,
+  () => [languageStore.priorities, languageStore.current] as const,
   () => {
     if (endpointStore.current && schemeStore.selected) {
       loadTopConcepts()
     }
-  }
+  },
+  { deep: true }
 )
 </script>
 

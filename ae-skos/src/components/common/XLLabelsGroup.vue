@@ -10,14 +10,32 @@
 import { computed, ref } from 'vue'
 import { useLabelResolver } from '../../composables'
 import { isValidURI } from '../../services'
-import type { XLLabel } from '../../types'
+import type { XLLabel, LabelValue } from '../../types'
 import Button from 'primevue/button'
 
 const props = defineProps<{
   labels: XLLabel[]
+  regularLabels?: LabelValue[]
 }>()
 
 const { shouldShowLangTag, sortLabels } = useLabelResolver()
+
+// Filter out XL labels that have the same value+lang as regular labels
+const filteredLabels = computed(() => {
+  if (!props.regularLabels?.length) return props.labels
+
+  const regularKeys = new Set(
+    props.regularLabels.map(l => `${l.value}|${l.lang || ''}`)
+  )
+
+  return props.labels.filter(xl => {
+    const key = `${xl.literalForm.value}|${xl.literalForm.lang || ''}`
+    return !regularKeys.has(key)
+  })
+})
+
+// Count of hidden XL labels (matching regular labels)
+const hiddenCount = computed(() => props.labels.length - filteredLabels.value.length)
 
 interface GroupedLabel {
   key: string
@@ -29,7 +47,7 @@ interface GroupedLabel {
 const groupedLabels = computed(() => {
   const groups = new Map<string, GroupedLabel>()
 
-  for (const label of props.labels) {
+  for (const label of filteredLabels.value) {
     const key = `${label.literalForm.value}|${label.literalForm.lang || ''}`
     if (!groups.has(key)) {
       groups.set(key, {
@@ -74,6 +92,14 @@ function isExpanded(key: string): boolean {
 </script>
 
 <template>
+  <div class="xl-labels-container">
+    <!-- Hidden indicator when XL labels match regular labels -->
+    <span v-if="hiddenCount > 0 && groupedLabels.length === 0" class="xl-hidden-indicator">
+      ({{ hiddenCount }} XL hidden)
+    </span>
+    <span v-else-if="hiddenCount > 0" class="xl-hidden-indicator">
+      (+{{ hiddenCount }} XL hidden)
+    </span>
   <div v-if="groupedLabels.length > 0" class="xl-labels-group">
     <div v-for="group in groupedLabels" :key="group.key" class="xl-label-item">
       <div class="xl-label-header" @click="toggleGroup(group.key)">
@@ -134,9 +160,21 @@ function isExpanded(key: string): boolean {
       </div>
     </div>
   </div>
+  </div>
 </template>
 
 <style scoped>
+.xl-labels-container {
+  display: contents;
+}
+
+.xl-hidden-indicator {
+  font-size: 0.75rem;
+  color: var(--p-text-muted-color);
+  font-style: italic;
+  margin-left: 0.25rem;
+}
+
 .xl-labels-group {
   display: flex;
   flex-wrap: wrap;

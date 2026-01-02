@@ -49,15 +49,15 @@ describe('useElapsedTime', () => {
     const isActive = ref(true)
     const elapsed = useElapsedTime(isActive)
 
-    vi.advanceTimersByTime(1999)
+    vi.advanceTimersByTime(999)
     expect(elapsed.show.value).toBe(false)
   })
 
-  it('shows elapsed after default 2 second delay', () => {
+  it('shows elapsed after default 1 second delay', () => {
     const isActive = ref(true)
     const elapsed = useElapsedTime(isActive)
 
-    vi.advanceTimersByTime(2000)
+    vi.advanceTimersByTime(1000)
     expect(elapsed.show.value).toBe(true)
   })
 
@@ -110,7 +110,7 @@ describe('useElapsedTime', () => {
     const isActive = ref(true)
     const elapsed = useElapsedTime(isActive)
 
-    vi.advanceTimersByTime(1000)
+    vi.advanceTimersByTime(500)
     expect(elapsed.formatted()).toBeNull()
   })
 
