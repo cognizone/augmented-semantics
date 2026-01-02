@@ -233,6 +233,162 @@ interface EndpointAuth {
 }
 ```
 
+## Implementation Architecture
+
+EndpointManager follows a composable-based architecture with extracted dialog components, consistent with the patterns used in ConceptDetails and SchemeDetails refactoring.
+
+### Component Structure
+
+**EndpointManager.vue** (~386 lines)
+- Lightweight orchestrator component
+- Manages dialog visibility and data flow
+- Coordinates between child dialogs and endpoint store
+- Handles connection and CRUD operations
+
+**Dialog Components:**
+- `EndpointFormDialog.vue` - Add/edit endpoint with authentication
+- `EndpointLanguageDialog.vue` - Language priority configuration
+- `EndpointCapabilitiesDialog.vue` - Capabilities viewer with reanalysis
+- `EndpointDeleteDialog.vue` - Deletion confirmation
+
+### Composables
+
+Five reusable composables encapsulate business logic:
+
+#### useEndpointTest
+**Purpose:** Connection testing with state management
+
+```typescript
+function useEndpointTest() {
+  const testing = ref(false)
+  const testResult = ref<TestResult | null>(null)
+
+  async function testConnection(endpoint: SPARQLEndpoint): Promise<TestResult>
+  function clearResult()
+
+  return { testing, testResult, testConnection, clearResult }
+}
+```
+
+Features:
+- Calls `testConnection()` service
+- Tracks testing state
+- Auto-dismisses success after 3 seconds
+- Returns formatted test results
+
+#### useEndpointAnalysis
+**Purpose:** Endpoint analysis and reanalysis with logging
+
+```typescript
+function useEndpointAnalysis() {
+  const analyzing = ref(false)
+  const analyzeStep = ref<string | null>(null)
+  const analyzeElapsed = useElapsedTime(analyzing)
+  const analysisLog = ref<AnalysisLogEntry[]>([])
+
+  async function analyzeEndpoint(endpoint: SPARQLEndpoint)
+  async function reanalyzeEndpoint(endpoint: SPARQLEndpoint)
+  function logStep(message: string, status: 'pending' | 'success' | 'warning' | 'error')
+
+  return { analyzing, analyzeStep, analyzeElapsed, analysisLog, analyzeEndpoint, reanalyzeEndpoint, logStep }
+}
+```
+
+Features:
+- Handles both initial analysis and reanalysis
+- Maintains step-by-step analysis log
+- Tracks elapsed time
+- Manages graph, duplicate, and language detection
+
+#### useEndpointForm
+**Purpose:** Form state, validation, and security checks
+
+```typescript
+function useEndpointForm(initialEndpoint?: SPARQLEndpoint) {
+  const form = reactive({ name, url, authType, username, password, apiKey, token, headerName })
+  const formValid = computed(() => ...)
+  const securityCheck = computed(() => ...)
+  const trustCheck = computed(() => ...)
+
+  function resetForm()
+  function loadEndpoint(endpoint: SPARQLEndpoint)
+  function buildAuth(): EndpointAuth | undefined
+  function buildEndpoint(): SPARQLEndpoint
+
+  return { form, formValid, securityCheck, trustCheck, resetForm, loadEndpoint, buildAuth, buildEndpoint }
+}
+```
+
+Features:
+- Manages reactive form state
+- Validates URL format and required fields
+- Performs security checks (HTTP vs HTTPS)
+- Assesses endpoint trust level
+- Builds auth configuration objects
+
+#### useEndpointCapabilities
+**Purpose:** Capability display with computed properties
+
+```typescript
+function useEndpointCapabilities(endpoint: Ref<SPARQLEndpoint | null>) {
+  const graphStatus = computed(() => ...)
+  const graphSeverity = computed(() => ...)
+  const duplicateStatus = computed(() => ...)
+  const duplicateSeverity = computed(() => ...)
+
+  function formatQueryMethod(method?: string): string
+  function formatCount(count: number): string
+
+  return { graphStatus, graphSeverity, duplicateStatus, duplicateSeverity, formatQueryMethod, formatCount }
+}
+```
+
+Features:
+- Computes graph capability status and display
+- Computes duplicate detection status
+- Provides severity levels for badges
+- Formats display values
+
+#### useLanguagePriorities
+**Purpose:** Language priority management
+
+```typescript
+function useLanguagePriorities(endpoint: Ref<SPARQLEndpoint | null>) {
+  const priorities = ref<string[]>([])
+
+  function loadPriorities(ep: SPARQLEndpoint)
+  function savePriorities(ep: SPARQLEndpoint)
+  function getLanguageCount(lang: string): number
+
+  return { priorities, loadPriorities, savePriorities, getLanguageCount }
+}
+```
+
+Features:
+- Loads and saves language priorities
+- Handles drag-and-drop reordering
+- Provides language counts
+- Defaults: 'en' first, others alphabetically
+
+### Benefits
+
+- ✅ **Separation of concerns** - Each composable/component has a single responsibility
+- ✅ **Reusability** - Composables can be used in other components
+- ✅ **Testability** - Isolated logic is easier to test
+- ✅ **Maintainability** - Smaller, focused files are easier to understand
+- ✅ **Consistency** - Follows patterns from ConceptDetails/SchemeDetails refactoring
+
+### File Size Comparison
+
+| Component | Before | After | Reduction |
+|-----------|--------|-------|-----------|
+| EndpointManager.vue | 1,459 lines | 386 lines | 73% |
+
+**Total system:**
+- Before: 1 monolithic file (1,459 lines)
+- After: 10 focused files (~1,200 lines total)
+- Net complexity reduction: Very high
+
 ## Language Configuration
 
 Each endpoint stores an ordered list of language priorities for fallback resolution.
