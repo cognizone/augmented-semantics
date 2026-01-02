@@ -14,7 +14,7 @@
 import { ref, watch, computed } from 'vue'
 import { useConceptStore, useEndpointStore, useSchemeStore, useLanguageStore } from '../../stores'
 import { executeSparql, withPrefixes, logger } from '../../services'
-import { useDelayedLoading, useLabelResolver } from '../../composables'
+import { useDelayedLoading, useLabelResolver, useElapsedTime } from '../../composables'
 import type { ConceptNode } from '../../types'
 import Tree from 'primevue/tree'
 import type { TreeNode } from 'primevue/treenode'
@@ -34,6 +34,9 @@ const { shouldShowLangTag } = useLabelResolver()
 
 // Delayed loading - show spinner only after 300ms to prevent flicker
 const showTreeLoading = useDelayedLoading(computed(() => conceptStore.loadingTree))
+
+// Elapsed time for tree loading (shows after 1s delay)
+const treeLoadingElapsed = useElapsedTime(computed(() => conceptStore.loadingTree))
 
 // Local state
 const error = ref<string | null>(null)
@@ -532,7 +535,7 @@ watch(
     <!-- Loading state (delayed to prevent flicker) -->
     <div v-if="showTreeLoading" class="loading-container">
       <ProgressSpinner style="width: 40px; height: 40px" />
-      <span>Loading concepts...</span>
+      <span>Loading concepts...{{ treeLoadingElapsed.show.value ? ` (${treeLoadingElapsed.elapsed.value}s)` : '' }}</span>
     </div>
 
     <!-- Empty state -->

@@ -63,6 +63,9 @@
   - uses current language override + full priorities list
   - watch triggers on language changes
 
+- [x] elapsed time shown on endpoint connecting (EndpointSelector)
+- [x] elapsed time shown on concept tree loading
+
 ## Backlog
 
 (none) 

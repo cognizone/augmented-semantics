@@ -8,6 +8,7 @@
  */
 import { computed } from 'vue'
 import { useEndpointStore } from '../../stores'
+import { useElapsedTime } from '../../composables'
 import Select from 'primevue/select'
 import Button from 'primevue/button'
 import Tag from 'primevue/tag'
@@ -17,6 +18,10 @@ const emit = defineEmits<{
 }>()
 
 const endpointStore = useEndpointStore()
+
+// Track elapsed time when connecting
+const isConnecting = computed(() => endpointStore.status === 'connecting')
+const connectingElapsed = useElapsedTime(isConnecting)
 
 const selectedId = computed({
   get: () => endpointStore.currentId,
@@ -49,7 +54,9 @@ const statusLabel = computed(() => {
     case 'connected':
       return 'Connected'
     case 'connecting':
-      return 'Connecting...'
+      return connectingElapsed.show.value
+        ? `Connecting... (${connectingElapsed.elapsed.value}s)`
+        : 'Connecting...'
     case 'error':
       return 'Error'
     default:
