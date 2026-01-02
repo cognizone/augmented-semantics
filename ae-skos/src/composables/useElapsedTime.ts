@@ -9,6 +9,8 @@
  * const elapsed = useElapsedTime(loading)
  * // After 1 second: elapsed.value = "1s"
  * // Template: {{ stepName }}{{ elapsed ? ` (${elapsed})` : '' }}
+ *
+ * @see /spec/common/com03-ErrorHandling.md
  */
 import { ref, watch, onUnmounted, type Ref } from 'vue'
 
