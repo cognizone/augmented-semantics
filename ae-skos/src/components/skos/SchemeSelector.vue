@@ -78,7 +78,7 @@ async function loadSchemes() {
   error.value = null
   endpointStore.setStatus('connecting')
 
-  // Query with all label types
+  // Query with all label types including SKOS-XL
   const query = withPrefixes(`
     SELECT DISTINCT ?scheme ?label ?labelLang ?labelType
     WHERE {
@@ -87,6 +87,9 @@ async function loadSchemes() {
         {
           ?scheme skos:prefLabel ?label .
           BIND("prefLabel" AS ?labelType)
+        } UNION {
+          ?scheme skosxl:prefLabel/skosxl:literalForm ?label .
+          BIND("xlPrefLabel" AS ?labelType)
         } UNION {
           ?scheme dct:title ?label .
           BIND("title" AS ?labelType)
@@ -129,8 +132,9 @@ async function loadSchemes() {
     }
 
     // Convert to ConceptScheme[] with best label selection
+    // Same logic as concepts: prefLabel > xlPrefLabel > title > rdfsLabel
     const uniqueSchemes: ConceptScheme[] = Array.from(schemeMap.entries()).map(([uri, data]) => {
-      const labelPriority = ['prefLabel', 'title', 'rdfsLabel']
+      const labelPriority = ['prefLabel', 'xlPrefLabel', 'title', 'rdfsLabel']
       let bestLabel: string | undefined
       let bestLabelLang: string | undefined
 
@@ -138,11 +142,18 @@ async function loadSchemes() {
         const labelsOfType = data.labels.filter(l => l.type === labelType)
         if (!labelsOfType.length) continue
 
-        // Walk through all language priorities in order
+        // Use current override if set
         let selected: { value: string; lang: string } | undefined
-        for (const lang of languageStore.priorities) {
-          selected = labelsOfType.find(l => l.lang === lang)
-          if (selected) break
+        if (languageStore.current) {
+          selected = labelsOfType.find(l => l.lang === languageStore.current)
+        }
+
+        // Walk through all language priorities in order
+        if (!selected) {
+          for (const lang of languageStore.priorities) {
+            selected = labelsOfType.find(l => l.lang === lang)
+            if (selected) break
+          }
         }
 
         // Try labels without language tag
@@ -254,9 +265,9 @@ watch(
   { immediate: true }
 )
 
-// Reload when language priorities change
+// Reload when language priorities or current override changes
 watch(
-  () => languageStore.priorities,
+  () => [languageStore.priorities, languageStore.current] as const,
   () => {
     if (endpointStore.current) {
       loadSchemes()

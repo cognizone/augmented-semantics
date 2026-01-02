@@ -57,6 +57,12 @@
 - [x] elapsed time delay reduced from 2s to 1s for faster feedback
 - [x] prefix display bug fixed: empty prefix string no longer treated as falsy
 
+- [x] concept scheme labels now follow same rendering rules as concepts:
+  - SKOS-XL support (skosxl:prefLabel/skosxl:literalForm)
+  - priority order: prefLabel > xlPrefLabel > title > rdfsLabel
+  - uses current language override + full priorities list
+  - watch triggers on language changes
+
 ## Backlog
 
 (none) 
