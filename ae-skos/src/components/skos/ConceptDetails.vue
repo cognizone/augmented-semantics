@@ -761,7 +761,7 @@ watch(
 }
 
 .section-icon {
-  font-size: 16px;
+  font-size: 18px;
 }
 
 .property-row {
@@ -783,7 +783,7 @@ watch(
 }
 
 .label-value {
-  font-size: 1rem;
+  font-size: 0.875rem;
 }
 
 .label-value:not(:last-child)::after {
