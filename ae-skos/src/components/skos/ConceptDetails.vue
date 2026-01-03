@@ -649,8 +649,8 @@ watch(
 }
 
 .concept-label {
-  margin: 0 0 0.5rem 0;
-  font-size: 1.75rem;
+  margin: 0 0 0.375rem 0;
+  font-size: 1.375rem;
   font-weight: 600;
   color: var(--ae-text-primary);
   word-break: break-word;
@@ -682,15 +682,15 @@ watch(
 .concept-uri {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.25rem 0.5rem;
+  gap: 0.375rem;
+  padding: 0.125rem 0.375rem;
   background: var(--ae-bg-elevated);
   border: 1px solid var(--ae-border-color);
-  border-radius: 4px;
+  border-radius: 3px;
 }
 
 .uri-text {
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   color: var(--ae-text-secondary);
   word-break: break-all;
 }
