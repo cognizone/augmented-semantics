@@ -394,7 +394,64 @@ watch(
 }
 
 .scheme-dropdown {
-  min-width: 180px;
+  min-width: 140px;
+  max-width: 200px;
+}
+
+/* PrimeVue Select overrides for compact styling */
+:deep(.p-select) {
+  background: transparent;
+  border: 1px solid var(--ae-border-color);
+  border-radius: 4px;
+  transition: border-color 0.15s;
+}
+
+:deep(.p-select:hover) {
+  border-color: var(--ae-text-secondary);
+}
+
+:deep(.p-select.p-focus) {
+  border-color: var(--ae-accent);
+  box-shadow: none;
+}
+
+:deep(.p-select-label) {
+  padding: 0.375rem 0.5rem;
+  font-size: 0.8125rem;
+  color: var(--ae-text-primary);
+}
+
+:deep(.p-select-dropdown) {
+  width: 1.5rem;
+  color: var(--ae-text-secondary);
+}
+
+:deep(.p-select-dropdown .p-icon) {
+  width: 0.75rem;
+  height: 0.75rem;
+}
+
+/* Dropdown panel styling */
+:deep(.p-select-overlay) {
+  background: var(--ae-bg-elevated);
+  border: 1px solid var(--ae-border-color);
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+:deep(.p-select-option) {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8125rem;
+  color: var(--ae-text-primary);
+}
+
+:deep(.p-select-option:hover) {
+  background: var(--ae-bg-hover);
+}
+
+:deep(.p-select-option.p-highlight) {
+  background: var(--ae-bg-hover);
+  color: var(--ae-text-primary);
 }
 
 .selected-scheme {
@@ -402,6 +459,7 @@ watch(
   align-items: center;
   gap: 0.375rem;
   font-weight: 500;
+  font-size: 0.8125rem;
 }
 
 .scheme-option {
@@ -418,21 +476,25 @@ watch(
 
 .scheme-label {
   font-weight: 500;
+  font-size: 0.8125rem;
 }
 
 .lang-tag {
-  font-size: 0.625rem;
+  font-size: 0.5625rem;
   font-weight: normal;
   background: var(--ae-bg-hover);
   color: var(--ae-text-secondary);
-  padding: 0.1rem 0.3rem;
-  border-radius: 3px;
+  padding: 0.05rem 0.25rem;
+  border-radius: 2px;
 }
 
 .scheme-uri {
-  font-size: 0.7rem;
-  color: var(--ae-text-secondary);
-  word-break: break-all;
+  font-size: 0.625rem;
+  color: var(--ae-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 250px;
 }
 
 .info-btn {
