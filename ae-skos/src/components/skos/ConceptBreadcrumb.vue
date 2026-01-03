@@ -247,7 +247,7 @@ watch(
 
 <template>
   <div class="concept-breadcrumb">
-    <!-- Scheme selector -->
+    <!-- Scheme selector (styled like endpoint badge) -->
     <Select
       v-model="selectedScheme"
       :options="schemeOptions"
@@ -262,19 +262,26 @@ watch(
       </template>
     </Select>
 
+    <!-- Separator -->
+    <span class="breadcrumb-separator">
+      <span class="material-symbols-outlined">chevron_right</span>
+    </span>
+
+    <!-- Home button (always visible) -->
+    <button class="home-btn" @click="emit('selectConcept', '')" title="Go to root">
+      <span class="material-symbols-outlined">home</span>
+    </button>
+
     <!-- Breadcrumb path (only when concept selected) -->
-    <template v-if="conceptStore.selectedUri">
+    <template v-if="breadcrumbItems.length > 0">
       <span class="breadcrumb-separator">
         <span class="material-symbols-outlined">chevron_right</span>
       </span>
-      <Breadcrumb :home="homeItem" :model="breadcrumbItems" class="breadcrumb-nav">
+      <Breadcrumb :model="breadcrumbItems" class="breadcrumb-nav">
         <template #item="{ item }">
           <a class="breadcrumb-link" @click.prevent="() => item.command && item.command({} as never)">
-            <span v-if="item.icon" class="material-symbols-outlined breadcrumb-home">home</span>
-            <span v-else>
-              {{ item.label }}
-              <span v-if="item.showLangTag" class="lang-tag">{{ item.lang }}</span>
-            </span>
+            {{ item.label }}
+            <span v-if="item.showLangTag" class="lang-tag">{{ item.lang }}</span>
           </a>
         </template>
       </Breadcrumb>
@@ -286,27 +293,29 @@ watch(
 .concept-breadcrumb {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.375rem;
   padding: 0.5rem 1rem;
   background: var(--ae-bg-elevated);
   border-bottom: 1px solid var(--ae-border-color);
   min-height: 40px;
 }
 
-/* Scheme selector */
+/* Scheme selector - styled like endpoint badge */
 .scheme-select {
   flex-shrink: 0;
 }
 
 :deep(.scheme-select .p-select) {
-  background: transparent;
+  background: var(--ae-bg-elevated);
   border: 1px solid var(--ae-border-color);
   border-radius: 4px;
   min-width: auto;
   max-width: none;
+  transition: background-color 0.15s, border-color 0.15s;
 }
 
 :deep(.scheme-select .p-select:hover) {
+  background: var(--ae-bg-hover);
   border-color: var(--ae-text-secondary);
 }
 
@@ -316,22 +325,26 @@ watch(
 }
 
 :deep(.scheme-select .p-select-label) {
-  padding: 0.375rem 0.5rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--ae-text-primary);
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  color: var(--ae-text-secondary);
 }
 
 :deep(.scheme-select .p-select-dropdown) {
-  width: 1.5rem;
+  width: 1.25rem;
   color: var(--ae-text-secondary);
+}
+
+:deep(.scheme-select .p-select-dropdown .p-icon) {
+  width: 0.75rem;
+  height: 0.75rem;
 }
 
 .scheme-value {
   white-space: nowrap;
 }
 
-/* Separator between scheme and breadcrumb */
+/* Separator */
 .breadcrumb-separator {
   display: flex;
   align-items: center;
@@ -339,6 +352,31 @@ watch(
 }
 
 .breadcrumb-separator .material-symbols-outlined {
+  font-size: 16px;
+}
+
+/* Home button */
+.home-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--ae-text-secondary);
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.home-btn:hover {
+  background: var(--ae-bg-hover);
+  color: var(--ae-text-primary);
+}
+
+.home-btn .material-symbols-outlined {
   font-size: 18px;
 }
 
@@ -354,7 +392,7 @@ watch(
   cursor: pointer;
   color: var(--ae-text-secondary);
   text-decoration: none;
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   display: flex;
   align-items: center;
   gap: 0.25rem;
@@ -362,10 +400,6 @@ watch(
 
 .breadcrumb-link:hover {
   color: var(--ae-accent);
-}
-
-.breadcrumb-home {
-  font-size: 18px;
 }
 
 .lang-tag {

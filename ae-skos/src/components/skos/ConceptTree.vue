@@ -1073,7 +1073,7 @@ watch(
 }
 
 .node-icon {
-  font-size: 16px;
+  font-size: 14px;
   flex-shrink: 0;
 }
 

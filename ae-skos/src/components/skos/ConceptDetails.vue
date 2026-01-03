@@ -777,7 +777,7 @@ watch(
 }
 
 .label-value {
-  font-size: 0.875rem;
+  font-size: 1rem;
 }
 
 .label-value:not(:last-child)::after {
