@@ -279,6 +279,7 @@ watch(
         :options="results"
         optionLabel="label"
         class="results-list"
+        scrollHeight="100%"
         @change="(e) => e.value && selectResult(e.value)"
       >
         <template #option="slotProps">
@@ -380,6 +381,10 @@ watch(
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  height: 100%;
+  min-height: 0;
+  padding: 0.5rem;
+  overflow: hidden;
 }
 
 .search-input-container {
@@ -398,7 +403,7 @@ watch(
 .search-icon {
   position: absolute;
   left: 0.5rem;
-  font-size: 18px;
+  font-size: 16px;
   color: var(--ae-text-secondary);
   pointer-events: none;
 }
@@ -478,7 +483,8 @@ watch(
 .search-results {
   display: flex;
   flex-direction: column;
-  max-height: 400px;
+  flex: 1;
+  min-height: 0;
   overflow: auto;
 }
 
@@ -493,11 +499,27 @@ watch(
   flex: 1;
   overflow: auto;
   border: none;
+  min-height: 0;
+  height: 100%;
 }
 
 :deep(.p-listbox) {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
   background: transparent;
   border: none;
+}
+
+:deep(.p-listbox-list-container) {
+  flex: 1;
+  height: auto;
+  max-height: none;
+  overflow: auto;
+}
+
+:deep(.p-listbox-list) {
+  max-height: none;
 }
 
 .result-item {
@@ -507,6 +529,7 @@ watch(
 }
 
 .result-label {
+  font-size: 0.875rem;
   font-weight: 500;
 }
 

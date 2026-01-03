@@ -239,9 +239,7 @@ onMounted(() => {
               <ConceptTree />
             </TabPanel>
             <TabPanel value="search">
-              <div class="search-panel">
-                <SearchBox @select-concept="selectConcept" />
-              </div>
+              <SearchBox @select-concept="selectConcept" />
             </TabPanel>
             <TabPanel value="recent">
               <RecentHistory @select-concept="selectFromHistory" />
@@ -336,12 +334,6 @@ onMounted(() => {
   flex-direction: column;
   overflow: hidden;
   padding: 0;
-}
-
-.search-panel {
-  padding: 0.5rem;
-  height: 100%;
-  overflow: auto;
 }
 
 .right-panel {

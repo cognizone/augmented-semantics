@@ -79,6 +79,7 @@ function clearHistory() {
       :options="history"
       optionLabel="label"
       class="history-list"
+      scrollHeight="100%"
       @change="(e) => e.value && selectItem(e.value)"
     >
       <template #option="slotProps">
@@ -103,6 +104,7 @@ function clearHistory() {
   display: flex;
   flex-direction: column;
   height: 100%;
+  min-height: 0;
 }
 
 .history-header {
@@ -123,7 +125,7 @@ function clearHistory() {
 }
 
 .header-icon {
-  font-size: 18px;
+  font-size: 16px;
   color: var(--ae-text-secondary);
 }
 
@@ -192,6 +194,7 @@ function clearHistory() {
 
 .item-label {
   flex: 1;
+  font-size: 0.875rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
