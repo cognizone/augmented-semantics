@@ -10,7 +10,6 @@ import Select from 'primevue/select'
 import Menu from 'primevue/menu'
 import EndpointManager from './components/common/EndpointManager.vue'
 import ErrorBoundary from './components/common/ErrorBoundary.vue'
-import SchemeSelector from './components/skos/SchemeSelector.vue'
 import ConceptBreadcrumb from './components/skos/ConceptBreadcrumb.vue'
 
 const uiStore = useUIStore()
@@ -153,8 +152,6 @@ onUnmounted(() => {
           <span class="material-symbols-outlined badge-arrow">arrow_drop_down</span>
         </button>
         <Menu ref="endpointMenu" :model="endpointMenuItems" :popup="true" class="endpoint-menu" />
-        <!-- Scheme selector -->
-        <SchemeSelector />
       </div>
       <div class="header-right">
         <button class="header-btn" @click="showSettingsDialog = true" aria-label="Language and settings">

@@ -8,11 +8,12 @@
  * @see /spec/ae-skos/sko03-ConceptTree.md
  */
 import { ref, watch, computed } from 'vue'
-import { useConceptStore, useEndpointStore, useLanguageStore } from '../../stores'
+import { useConceptStore, useEndpointStore, useLanguageStore, useSchemeStore } from '../../stores'
 import { executeSparql, withPrefixes, logger } from '../../services'
 import { useLabelResolver } from '../../composables'
 import type { ConceptRef } from '../../types'
 import Breadcrumb from 'primevue/breadcrumb'
+import Select from 'primevue/select'
 
 const emit = defineEmits<{
   selectConcept: [uri: string]
@@ -21,10 +22,37 @@ const emit = defineEmits<{
 const conceptStore = useConceptStore()
 const endpointStore = useEndpointStore()
 const languageStore = useLanguageStore()
+const schemeStore = useSchemeStore()
 const { shouldShowLangTag } = useLabelResolver()
 
 // Local state
 const loading = ref(false)
+
+// Scheme dropdown options
+const schemeOptions = computed(() => {
+  const options: { label: string; value: string | null }[] = [
+    { label: 'All Schemes', value: null },
+  ]
+
+  schemeStore.sortedSchemes.forEach(scheme => {
+    options.push({
+      label: scheme.label || scheme.uri.split('/').pop() || scheme.uri,
+      value: scheme.uri,
+    })
+  })
+
+  return options
+})
+
+const selectedScheme = computed({
+  get: () => schemeStore.selectedUri,
+  set: (uri: string | null) => schemeStore.selectScheme(uri),
+})
+
+const currentSchemeName = computed(() => {
+  if (!schemeStore.selected) return 'All Schemes'
+  return schemeStore.selected.label || schemeStore.selected.uri.split('/').pop() || 'Scheme'
+})
 
 // Convert breadcrumb to PrimeVue format with notation + label + lang
 const breadcrumbItems = computed(() => {
@@ -218,70 +246,167 @@ watch(
 </script>
 
 <template>
-  <div class="concept-breadcrumb" v-if="conceptStore.selectedUri">
-    <Breadcrumb :home="homeItem" :model="breadcrumbItems" class="breadcrumb-nav">
-      <template #item="{ item }">
-        <a class="breadcrumb-link" @click.prevent="() => item.command && item.command({} as never)">
-          <i v-if="item.icon" :class="item.icon"></i>
-          <span v-else>
-            {{ item.label }}
-            <span v-if="item.showLangTag" class="lang-tag">{{ item.lang }}</span>
-          </span>
-        </a>
+  <div class="concept-breadcrumb">
+    <!-- Scheme selector -->
+    <Select
+      v-model="selectedScheme"
+      :options="schemeOptions"
+      optionLabel="label"
+      optionValue="value"
+      placeholder="Select Scheme"
+      class="scheme-select"
+      :disabled="!endpointStore.current || schemeOptions.length <= 1"
+    >
+      <template #value>
+        <span class="scheme-value">{{ currentSchemeName }}</span>
       </template>
-    </Breadcrumb>
+    </Select>
+
+    <!-- Breadcrumb path (only when concept selected) -->
+    <template v-if="conceptStore.selectedUri">
+      <span class="breadcrumb-separator">
+        <span class="material-symbols-outlined">chevron_right</span>
+      </span>
+      <Breadcrumb :home="homeItem" :model="breadcrumbItems" class="breadcrumb-nav">
+        <template #item="{ item }">
+          <a class="breadcrumb-link" @click.prevent="() => item.command && item.command({} as never)">
+            <span v-if="item.icon" class="material-symbols-outlined breadcrumb-home">home</span>
+            <span v-else>
+              {{ item.label }}
+              <span v-if="item.showLangTag" class="lang-tag">{{ item.lang }}</span>
+            </span>
+          </a>
+        </template>
+      </Breadcrumb>
+    </template>
   </div>
 </template>
 
 <style scoped>
 .concept-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   padding: 0.5rem 1rem;
-  background: var(--p-content-hover-background);
-  border-bottom: 1px solid var(--p-content-border-color);
+  background: var(--ae-bg-elevated);
+  border-bottom: 1px solid var(--ae-border-color);
+  min-height: 40px;
 }
 
+/* Scheme selector */
+.scheme-select {
+  flex-shrink: 0;
+}
+
+:deep(.scheme-select .p-select) {
+  background: transparent;
+  border: 1px solid var(--ae-border-color);
+  border-radius: 4px;
+  min-width: auto;
+  max-width: none;
+}
+
+:deep(.scheme-select .p-select:hover) {
+  border-color: var(--ae-text-secondary);
+}
+
+:deep(.scheme-select .p-select.p-focus) {
+  border-color: var(--ae-accent);
+  box-shadow: none;
+}
+
+:deep(.scheme-select .p-select-label) {
+  padding: 0.375rem 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--ae-text-primary);
+}
+
+:deep(.scheme-select .p-select-dropdown) {
+  width: 1.5rem;
+  color: var(--ae-text-secondary);
+}
+
+.scheme-value {
+  white-space: nowrap;
+}
+
+/* Separator between scheme and breadcrumb */
+.breadcrumb-separator {
+  display: flex;
+  align-items: center;
+  color: var(--ae-text-muted);
+}
+
+.breadcrumb-separator .material-symbols-outlined {
+  font-size: 18px;
+}
+
+/* Breadcrumb nav */
 .breadcrumb-nav {
   background: transparent;
   padding: 0;
+  flex: 1;
+  min-width: 0;
 }
 
 .breadcrumb-link {
   cursor: pointer;
-  color: var(--p-text-color);
+  color: var(--ae-text-secondary);
   text-decoration: none;
   font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
 }
 
 .breadcrumb-link:hover {
-  color: var(--p-primary-color);
+  color: var(--ae-accent);
+}
+
+.breadcrumb-home {
+  font-size: 18px;
 }
 
 .lang-tag {
   font-size: 0.625rem;
   font-weight: normal;
-  background: var(--p-content-hover-background);
-  color: var(--p-text-muted-color);
+  background: var(--ae-bg-hover);
+  color: var(--ae-text-secondary);
   padding: 0.1rem 0.3rem;
   border-radius: 3px;
   margin-left: 0.25rem;
+}
+
+:deep(.p-breadcrumb) {
+  background: transparent;
+  border: none;
+  padding: 0;
 }
 
 :deep(.p-breadcrumb-list) {
   margin: 0;
   padding: 0;
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   gap: 0.25rem;
+  overflow: hidden;
 }
 
 :deep(.p-breadcrumb-list li) {
   display: inline-flex;
   align-items: center;
+  min-width: 0;
 }
 
 :deep(.p-breadcrumb-separator) {
-  color: var(--p-text-muted-color);
+  color: var(--ae-text-muted);
   margin: 0 0.25rem;
+}
+
+:deep(.p-breadcrumb-separator .p-icon) {
+  width: 12px;
+  height: 12px;
 }
 </style>
