@@ -668,7 +668,7 @@ watch(
 }
 
 .deprecation-badge {
-  font-size: 0.65rem;
+  font-size: 0.625rem;
   font-weight: 600;
   background: color-mix(in srgb, var(--ae-status-warning) 20%, transparent);
   color: var(--ae-status-warning);
@@ -921,7 +921,7 @@ watch(
 /* Other Properties */
 .predicate-label {
   font-family: var(--ae-font-mono);
-  font-size: 0.8rem;
+  font-size: 0.8125rem;
 }
 
 .predicate-link {

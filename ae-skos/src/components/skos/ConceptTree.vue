@@ -1093,7 +1093,7 @@ watch(
 }
 
 .deprecated-badge {
-  font-size: 0.6rem;
+  font-size: 0.625rem;
   font-weight: 600;
   background: color-mix(in srgb, var(--ae-status-warning) 20%, transparent);
   color: var(--ae-status-warning);
