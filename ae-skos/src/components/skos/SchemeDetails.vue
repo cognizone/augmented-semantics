@@ -36,7 +36,7 @@ const emit = defineEmits<{
 
 const schemeStore = useSchemeStore()
 const toast = useToast()
-const { selectLabelWithXL, sortLabels, shouldShowLangTag } = useLabelResolver()
+const { selectLabel, selectLabelWithXL, sortLabels, shouldShowLangTag } = useLabelResolver()
 const { copyToClipboard } = useClipboard()
 const { exportAsTurtle, downloadFile } = useResourceExport()
 const { details, loading, error, resolvedPredicates, loadDetails } = useSchemeData()
@@ -58,9 +58,20 @@ const exportMenuItems = [
 const showLoading = useDelayedLoading(loading)
 
 // Get preferred label (full LabelValue for language info)
+// Priority: prefLabel > xlPrefLabel > title
 const preferredLabelObj = computed(() => {
   if (!details.value) return null
-  return selectLabelWithXL(details.value.prefLabels, details.value.prefLabelsXL)
+
+  // 1. Try regular prefLabels (includes SKOS-XL fallback)
+  const regularLabel = selectLabelWithXL(details.value.prefLabels, details.value.prefLabelsXL)
+  if (regularLabel) return regularLabel
+
+  // 2. Fall back to title (dct:title)
+  if (details.value.title.length) {
+    return selectLabel(details.value.title)
+  }
+
+  return null
 })
 
 // Get preferred label string
