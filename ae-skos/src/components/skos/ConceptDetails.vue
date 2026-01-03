@@ -761,7 +761,7 @@ watch(
 }
 
 .section-icon {
-  font-size: 18px;
+  font-size: 16px;
 }
 
 .property-row {
@@ -770,7 +770,7 @@ watch(
 
 .property-row label {
   display: block;
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
   font-weight: 500;
   color: var(--ae-text-secondary);
   margin-bottom: 0.25rem;
@@ -780,6 +780,7 @@ watch(
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
+  margin-left: 0.75rem;
 }
 
 .label-value {
@@ -841,6 +842,7 @@ watch(
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  margin-left: 0.75rem;
 }
 
 .doc-value {
@@ -871,6 +873,7 @@ watch(
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
+  margin-left: 0.75rem;
 }
 
 .concept-chip {
@@ -896,6 +899,7 @@ watch(
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
+  margin-left: 0.75rem;
 }
 
 .mapping-link {
@@ -932,6 +936,7 @@ watch(
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
+  margin-left: 0.75rem;
 }
 
 .other-value {
