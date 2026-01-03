@@ -21,8 +21,6 @@ import type { TreeNode } from 'primevue/treenode'
 
 type TreeExpandedKeys = Record<string, boolean>
 type TreeSelectionKeys = Record<string, boolean>
-import Button from 'primevue/button'
-import InputText from 'primevue/inputtext'
 import Message from 'primevue/message'
 import ProgressSpinner from 'primevue/progressspinner'
 
@@ -823,22 +821,23 @@ watch(
   <div class="concept-tree">
     <!-- Go to URI input -->
     <div class="goto-uri">
-      <span class="p-input-icon-left">
-        <i class="pi pi-link"></i>
-        <InputText
+      <div class="goto-input-wrapper">
+        <input
           v-model="gotoUri"
+          type="text"
           placeholder="Go to URI..."
           class="goto-input"
           @keyup.enter="goToUri"
         />
-      </span>
-      <Button
-        icon="pi pi-arrow-right"
-        severity="secondary"
-        text
-        :disabled="!gotoUri.trim()"
-        @click="goToUri"
-      />
+        <button
+          class="goto-btn"
+          :disabled="!gotoUri.trim()"
+          aria-label="Go to URI"
+          @click="goToUri"
+        >
+          <span class="material-symbols-outlined icon-sm">arrow_forward</span>
+        </button>
+      </div>
     </div>
 
     <!-- Error message -->
@@ -854,7 +853,7 @@ watch(
 
     <!-- Empty state -->
     <div v-else-if="!conceptStore.loadingTree && !conceptStore.topConcepts.length && !error" class="empty-state">
-      <i class="pi pi-folder-open"></i>
+      <span class="material-symbols-outlined empty-icon">folder_open</span>
       <p>No concepts found</p>
       <small v-if="!schemeStore.selected">Select a concept scheme to browse</small>
       <small v-else>This scheme has no top-level concepts</small>
@@ -895,6 +894,16 @@ watch(
         <span>Loading more...</span>
       </div>
     </div>
+
+    <!-- Bottom toolbar -->
+    <div class="tree-toolbar">
+      <button class="toolbar-btn" aria-label="Expand all" title="Expand all">
+        <span class="material-symbols-outlined">unfold_more</span>
+      </button>
+      <button class="toolbar-btn" aria-label="Refresh" title="Refresh" @click="loadTopConcepts(0)">
+        <span class="material-symbols-outlined">refresh</span>
+      </button>
+    </div>
   </div>
 </template>
 
@@ -907,16 +916,59 @@ watch(
 }
 
 .goto-uri {
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--ae-border-color);
+}
+
+.goto-input-wrapper {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 0.25rem;
-  padding: 0.5rem;
-  border-bottom: 1px solid var(--p-content-border-color);
 }
 
 .goto-input {
   width: 100%;
+  padding: 0.5rem 2rem 0.5rem 0.75rem;
   font-size: 0.875rem;
+  background: var(--ae-bg-base);
+  border: 1px solid var(--ae-border-color);
+  border-radius: 4px;
+  color: var(--ae-text-primary);
+}
+
+.goto-input::placeholder {
+  color: var(--ae-text-secondary);
+}
+
+.goto-input:focus {
+  outline: none;
+  border-color: var(--ae-accent);
+}
+
+.goto-btn {
+  position: absolute;
+  right: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--ae-text-secondary);
+  transition: color 0.15s;
+}
+
+.goto-btn:hover:not(:disabled) {
+  color: var(--ae-text-primary);
+}
+
+.goto-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .loading-container {
@@ -926,7 +978,7 @@ watch(
   justify-content: center;
   gap: 1rem;
   padding: 2rem;
-  color: var(--p-text-muted-color);
+  color: var(--ae-text-secondary);
 }
 
 .empty-state {
@@ -937,10 +989,10 @@ watch(
   gap: 0.5rem;
   padding: 2rem;
   text-align: center;
-  color: var(--p-text-muted-color);
+  color: var(--ae-text-secondary);
 }
 
-.empty-state i {
+.empty-icon {
   font-size: 2rem;
   opacity: 0.5;
 }
@@ -961,12 +1013,12 @@ watch(
   overflow-x: hidden;
   display: flex;
   flex-direction: column;
+  padding: 0.5rem;
 }
 
 .concept-tree-component {
   flex: 1;
   min-height: 0;
-  padding: 0.5rem;
 }
 
 .load-more-indicator {
@@ -975,8 +1027,35 @@ watch(
   justify-content: center;
   gap: 0.5rem;
   padding: 0.75rem;
-  color: var(--p-text-muted-color);
+  color: var(--ae-text-secondary);
   font-size: 0.875rem;
+}
+
+.tree-toolbar {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem;
+  border-top: 1px solid var(--ae-border-color);
+}
+
+.toolbar-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--ae-text-secondary);
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.toolbar-btn:hover {
+  background: var(--ae-bg-hover);
+  color: var(--ae-text-primary);
 }
 
 .tree-node {
@@ -990,7 +1069,7 @@ watch(
 }
 
 .scheme-icon {
-  color: var(--p-primary-color);
+  color: var(--ae-accent);
   font-size: 0.875rem;
 }
 
@@ -1001,8 +1080,8 @@ watch(
 .deprecated-badge {
   font-size: 0.6rem;
   font-weight: 600;
-  background: color-mix(in srgb, var(--p-orange-500) 20%, transparent);
-  color: var(--p-orange-500);
+  background: color-mix(in srgb, var(--ae-status-warning) 20%, transparent);
+  color: var(--ae-status-warning);
   padding: 0.05rem 0.3rem;
   border-radius: 3px;
   margin-left: 0.25rem;
@@ -1020,8 +1099,8 @@ watch(
 .lang-tag {
   font-size: 0.625rem;
   font-weight: normal;
-  background: var(--p-content-hover-background);
-  color: var(--p-text-muted-color);
+  background: var(--ae-bg-hover);
+  color: var(--ae-text-secondary);
   padding: 0.1rem 0.3rem;
   border-radius: 3px;
   margin-left: 0.25rem;
@@ -1029,19 +1108,25 @@ watch(
 
 :deep(.p-tree-node-content) {
   padding: 0.25rem 0.5rem;
+  border-radius: 4px;
 }
 
 :deep(.p-tree-node-content:hover) {
-  background: var(--p-content-hover-background);
+  background: var(--ae-bg-hover);
 }
 
 :deep(.p-tree-node-content.p-highlight) {
-  background: var(--p-primary-100);
-  color: var(--p-primary-700);
+  background: var(--ae-bg-hover);
+  border: 1px solid var(--ae-border-color);
 }
 
 /* Ensure tree wrapper doesn't prevent scrolling */
 :deep(.p-tree-root) {
   overflow: visible;
+}
+
+:deep(.p-tree) {
+  background: transparent;
+  padding: 0;
 }
 </style>

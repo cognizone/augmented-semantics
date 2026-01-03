@@ -290,8 +290,8 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: var(--p-content-background);
-  border-right: 1px solid var(--p-content-border-color);
+  background: var(--ae-bg-elevated);
+  border-right: 1px solid var(--ae-border-color);
 }
 
 .sidebar-tabs {
@@ -300,11 +300,42 @@ onMounted(() => {
   flex-direction: column;
 }
 
+/* Tab list styling */
+:deep(.p-tablist) {
+  background: transparent;
+  border-bottom: 1px solid var(--ae-border-color);
+}
+
+:deep(.p-tab) {
+  flex: 1;
+  justify-content: center;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--ae-text-secondary);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s, border-color 0.15s, background-color 0.15s;
+}
+
+:deep(.p-tab:hover) {
+  color: var(--ae-text-primary);
+  background: var(--ae-bg-base);
+}
+
+:deep(.p-tab[data-p-active="true"]) {
+  color: var(--ae-text-primary);
+  background: var(--ae-bg-base);
+  border-bottom-color: var(--ae-accent);
+}
+
 :deep(.p-tabpanels) {
   flex: 1;
   min-height: 0;
   overflow: hidden;
   padding: 0;
+  background: transparent;
 }
 
 :deep(.p-tabpanel) {
@@ -312,6 +343,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  padding: 0;
 }
 
 .search-panel {
@@ -324,7 +356,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: var(--p-content-background);
+  background: var(--ae-bg-base);
 }
 
 /* Mobile: hide sidebar by default */
@@ -336,7 +368,7 @@ onMounted(() => {
     bottom: 0;
     width: 300px;
     z-index: 100;
-    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
   }
 }
 </style>
