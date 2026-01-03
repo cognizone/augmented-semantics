@@ -337,16 +337,6 @@ function isExpanded(key: string): boolean {
   font-size: 0.875rem;
 }
 
-.lang-tag {
-  font-size: 0.625rem;
-  font-weight: normal;
-  background: var(--p-content-hover-background);
-  color: var(--p-text-muted-color);
-  padding: 0.1rem 0.3rem;
-  border-radius: 3px;
-  margin-left: 0.25rem;
-}
-
 .collapse-count {
   font-size: 0.625rem;
   font-weight: 600;

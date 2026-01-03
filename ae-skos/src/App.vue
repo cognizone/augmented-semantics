@@ -467,22 +467,10 @@ onUnmounted(() => {
   margin-top: 1.25rem;
 }
 
+/* Tighter spacing for settings dialog */
 .settings-section .section-title {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin: 0 0 0.75rem 0;
+  margin-bottom: 0.75rem;
   padding-bottom: 0.375rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--ae-text-secondary);
-  border-bottom: 1px solid var(--ae-border-color);
-}
-
-.settings-section .section-icon {
-  font-size: 16px;
 }
 
 .setting-row {

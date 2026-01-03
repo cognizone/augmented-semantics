@@ -479,11 +479,9 @@ watch(
   font-size: 0.8125rem;
 }
 
+/* Compact override for dropdown context */
 .lang-tag {
   font-size: 0.5625rem;
-  font-weight: normal;
-  background: var(--ae-bg-hover);
-  color: var(--ae-text-secondary);
   padding: 0.05rem 0.25rem;
   border-radius: 2px;
 }

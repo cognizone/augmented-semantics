@@ -197,16 +197,6 @@ function clearHistory() {
   white-space: nowrap;
 }
 
-.lang-tag {
-  font-size: 0.625rem;
-  font-weight: normal;
-  background: var(--ae-bg-hover);
-  color: var(--ae-text-secondary);
-  padding: 0.1rem 0.3rem;
-  border-radius: 3px;
-  margin-left: 0.25rem;
-}
-
 .item-time {
   font-size: 0.7rem;
   color: var(--ae-text-secondary);
