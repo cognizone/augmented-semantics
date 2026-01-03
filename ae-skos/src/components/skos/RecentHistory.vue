@@ -10,7 +10,6 @@
 import { computed } from 'vue'
 import { useConceptStore } from '../../stores'
 import { useLabelResolver } from '../../composables'
-import Button from 'primevue/button'
 import Listbox from 'primevue/listbox'
 
 import type { HistoryEntry } from '../../types'
@@ -58,19 +57,17 @@ function clearHistory() {
   <div class="recent-history">
     <div class="history-header">
       <span class="header-title">
-        <i class="pi pi-history"></i>
+        <span class="material-symbols-outlined header-icon">history</span>
         Recent
       </span>
-      <Button
+      <button
         v-if="hasHistory"
-        icon="pi pi-trash"
-        severity="secondary"
-        text
-        rounded
-        size="small"
-        v-tooltip.left="'Clear history'"
+        class="clear-btn"
+        title="Clear history"
         @click="clearHistory"
-      />
+      >
+        <span class="material-symbols-outlined icon-sm">delete</span>
+      </button>
     </div>
 
     <div v-if="!hasHistory" class="empty-state">
@@ -112,8 +109,8 @@ function clearHistory() {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.5rem;
-  border-bottom: 1px solid var(--p-content-border-color);
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--ae-border-color);
 }
 
 .header-title {
@@ -122,6 +119,32 @@ function clearHistory() {
   gap: 0.5rem;
   font-weight: 500;
   font-size: 0.875rem;
+  color: var(--ae-text-primary);
+}
+
+.header-icon {
+  font-size: 18px;
+  color: var(--ae-text-secondary);
+}
+
+.clear-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--ae-text-secondary);
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.clear-btn:hover {
+  background: var(--ae-bg-hover);
+  color: var(--ae-text-primary);
 }
 
 .empty-state {
@@ -129,7 +152,7 @@ function clearHistory() {
   align-items: center;
   justify-content: center;
   padding: 2rem;
-  color: var(--p-text-muted-color);
+  color: var(--ae-text-secondary);
 }
 
 .history-list {
@@ -144,6 +167,8 @@ function clearHistory() {
   height: 100%;
   display: flex;
   flex-direction: column;
+  background: transparent;
+  border: none;
 }
 
 :deep(.p-listbox-list-container) {
@@ -175,8 +200,8 @@ function clearHistory() {
 .lang-tag {
   font-size: 0.625rem;
   font-weight: normal;
-  background: var(--p-content-hover-background);
-  color: var(--p-text-muted-color);
+  background: var(--ae-bg-hover);
+  color: var(--ae-text-secondary);
   padding: 0.1rem 0.3rem;
   border-radius: 3px;
   margin-left: 0.25rem;
@@ -184,7 +209,7 @@ function clearHistory() {
 
 .item-time {
   font-size: 0.7rem;
-  color: var(--p-text-muted-color);
+  color: var(--ae-text-secondary);
   white-space: nowrap;
 }
 </style>

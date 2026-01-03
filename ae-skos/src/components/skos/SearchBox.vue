@@ -16,8 +16,6 @@ import { useConceptStore, useEndpointStore, useSchemeStore, useLanguageStore, us
 import { executeSparql, withPrefixes, logger, escapeSparqlString } from '../../services'
 import { useDelayedLoading, useLabelResolver } from '../../composables'
 import type { SearchResult } from '../../types'
-import InputText from 'primevue/inputtext'
-import Button from 'primevue/button'
 import Listbox from 'primevue/listbox'
 import Dialog from 'primevue/dialog'
 import Checkbox from 'primevue/checkbox'
@@ -231,31 +229,33 @@ watch(
   <div class="search-box">
     <!-- Search input -->
     <div class="search-input-container">
-      <span class="p-input-icon-left p-input-icon-right search-input-wrapper">
-        <i class="pi pi-search"></i>
-        <InputText
+      <div class="search-input-wrapper">
+        <span class="material-symbols-outlined search-icon">search</span>
+        <input
           ref="searchInputRef"
           v-model="searchInput"
+          type="text"
           placeholder="Search concepts..."
           class="search-input"
           @input="onSearchInput"
           @keyup.escape="clearSearch"
         />
-        <i
+        <button
           v-if="searchInput"
-          class="pi pi-times clear-icon"
+          class="clear-btn"
+          aria-label="Clear search"
           @click="clearSearch"
-        ></i>
-      </span>
-      <Button
-        icon="pi pi-cog"
-        severity="secondary"
-        text
-        rounded
-        size="small"
-        v-tooltip.bottom="'Search settings'"
+        >
+          <span class="material-symbols-outlined icon-sm">close</span>
+        </button>
+      </div>
+      <button
+        class="settings-btn"
+        title="Search settings"
         @click="showSettings = true"
-      />
+      >
+        <span class="material-symbols-outlined">tune</span>
+      </button>
     </div>
 
     <!-- Loading indicator (delayed to prevent flicker) -->
@@ -303,7 +303,7 @@ watch(
 
     <!-- No results -->
     <div v-if="hasQuery && !loading && results.length === 0 && !error" class="no-results">
-      <i class="pi pi-search"></i>
+      <span class="material-symbols-outlined empty-icon">search_off</span>
       <p>No results for "{{ searchInput }}"</p>
       <small>Try different keywords or adjust search settings</small>
     </div>
@@ -384,24 +384,81 @@ watch(
 .search-input-container {
   display: flex;
   align-items: center;
-  gap: 0.25rem;
+  gap: 0.5rem;
 }
 
 .search-input-wrapper {
   flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  left: 0.5rem;
+  font-size: 18px;
+  color: var(--ae-text-secondary);
+  pointer-events: none;
 }
 
 .search-input {
   width: 100%;
+  padding: 0.5rem 2rem 0.5rem 2rem;
+  font-size: 0.875rem;
+  background: var(--ae-bg-base);
+  border: 1px solid var(--ae-border-color);
+  border-radius: 4px;
+  color: var(--ae-text-primary);
 }
 
-.clear-icon {
+.search-input::placeholder {
+  color: var(--ae-text-secondary);
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--ae-accent);
+}
+
+.clear-btn {
+  position: absolute;
+  right: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 4px;
   cursor: pointer;
-  opacity: 0.5;
+  color: var(--ae-text-secondary);
 }
 
-.clear-icon:hover {
-  opacity: 1;
+.clear-btn:hover {
+  color: var(--ae-text-primary);
+}
+
+.settings-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--ae-text-secondary);
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.settings-btn:hover {
+  background: var(--ae-bg-hover);
+  color: var(--ae-text-primary);
 }
 
 .loading-indicator {
@@ -409,7 +466,7 @@ watch(
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem;
-  color: var(--p-text-muted-color);
+  color: var(--ae-text-secondary);
   font-size: 0.875rem;
 }
 
@@ -426,14 +483,19 @@ watch(
 
 .results-header {
   font-size: 0.75rem;
-  color: var(--p-text-muted-color);
+  color: var(--ae-text-secondary);
   padding: 0.5rem;
-  border-bottom: 1px solid var(--p-content-border-color);
+  border-bottom: 1px solid var(--ae-border-color);
 }
 
 .results-list {
   flex: 1;
   overflow: auto;
+  border: none;
+}
+
+:deep(.p-listbox) {
+  background: transparent;
   border: none;
 }
 
@@ -450,8 +512,8 @@ watch(
 .lang-tag {
   font-size: 0.625rem;
   font-weight: normal;
-  background: var(--p-content-hover-background);
-  color: var(--p-text-muted-color);
+  background: var(--ae-bg-hover);
+  color: var(--ae-text-secondary);
   padding: 0.1rem 0.3rem;
   border-radius: 3px;
   margin-left: 0.25rem;
@@ -465,7 +527,7 @@ watch(
 
 .result-uri {
   font-size: 0.7rem;
-  color: var(--p-text-muted-color);
+  color: var(--ae-text-secondary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -474,7 +536,7 @@ watch(
 
 .match-type {
   font-size: 0.7rem;
-  color: var(--p-primary-color);
+  color: var(--ae-accent);
   font-style: italic;
 }
 
@@ -485,10 +547,10 @@ watch(
   gap: 0.5rem;
   padding: 2rem;
   text-align: center;
-  color: var(--p-text-muted-color);
+  color: var(--ae-text-secondary);
 }
 
-.no-results i {
+.empty-icon {
   font-size: 2rem;
   opacity: 0.5;
 }
