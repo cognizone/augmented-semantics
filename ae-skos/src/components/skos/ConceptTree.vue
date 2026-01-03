@@ -872,7 +872,10 @@ watch(
       >
         <template #default="slotProps">
           <div class="tree-node" :class="{ 'scheme-node': slotProps.node.data?.isScheme, 'deprecated': slotProps.node.data?.deprecated && showDeprecationIndicator }">
-            <i v-if="slotProps.node.data?.isScheme" class="pi pi-sitemap scheme-icon"></i>
+            <!-- Icon based on node type -->
+            <span v-if="slotProps.node.data?.isScheme" class="material-symbols-outlined node-icon icon-folder">folder</span>
+            <span v-else-if="slotProps.node.data?.hasNarrower" class="material-symbols-outlined node-icon icon-label">label</span>
+            <span v-else class="material-symbols-outlined node-icon icon-leaf">circle</span>
             <span class="node-label">
               {{ slotProps.node.label }}
               <span v-if="slotProps.node.data?.showLangTag" class="lang-tag">
@@ -1061,16 +1064,17 @@ watch(
 .tree-node {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.375rem;
+  font-size: 0.875rem;
 }
 
 .tree-node.scheme-node {
   font-weight: 600;
 }
 
-.scheme-icon {
-  color: var(--ae-accent);
-  font-size: 0.875rem;
+.node-icon {
+  font-size: 16px;
+  flex-shrink: 0;
 }
 
 .tree-node.deprecated {
@@ -1092,8 +1096,9 @@ watch(
 .node-label {
   flex: 1;
   min-width: 0;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .lang-tag {
@@ -1106,9 +1111,31 @@ watch(
   margin-left: 0.25rem;
 }
 
+/* PrimeVue Tree overrides */
+:deep(.p-tree) {
+  background: transparent;
+  padding: 0;
+  font-family: inherit;
+}
+
+:deep(.p-tree-root) {
+  overflow: visible;
+}
+
+:deep(.p-tree-node) {
+  padding: 0;
+}
+
+:deep(.p-tree-node-children) {
+  padding-left: 1rem;
+  margin-left: 0.5rem;
+  border-left: 1px solid var(--ae-border-color);
+}
+
 :deep(.p-tree-node-content) {
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
+  transition: background-color 0.1s;
 }
 
 :deep(.p-tree-node-content:hover) {
@@ -1120,13 +1147,26 @@ watch(
   border: 1px solid var(--ae-border-color);
 }
 
-/* Ensure tree wrapper doesn't prevent scrolling */
-:deep(.p-tree-root) {
-  overflow: visible;
+:deep(.p-tree-node-content.p-highlight .node-label) {
+  font-weight: 500;
+  color: var(--ae-text-primary);
 }
 
-:deep(.p-tree) {
+/* Toggle button styling */
+:deep(.p-tree-node-toggle-button) {
+  width: 20px;
+  height: 20px;
+  margin-right: 0;
+  color: var(--ae-text-secondary);
+}
+
+:deep(.p-tree-node-toggle-button:hover) {
   background: transparent;
-  padding: 0;
+  color: var(--ae-text-primary);
+}
+
+:deep(.p-tree-node-toggle-button .p-icon) {
+  width: 14px;
+  height: 14px;
 }
 </style>
