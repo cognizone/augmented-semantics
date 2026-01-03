@@ -131,7 +131,8 @@ Live regions in App.vue announce these to screen readers.
 
 | Class | Purpose |
 |-------|---------|
-| `.dropdown-trigger` | Button that opens any dropdown (endpoint, language, scheme) |
+| `.dropdown-trigger` | Button that opens any dropdown (endpoint, language) |
+| `.select-compact` | PrimeVue Select styled like dropdown-trigger (scheme selector) |
 | `.p-menu` | Global PrimeVue Menu overrides |
 | `.p-select` | Global PrimeVue Select overrides |
 | `.p-dialog` | Global PrimeVue Dialog overrides |

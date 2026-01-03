@@ -395,7 +395,7 @@ watch(
       optionLabel="label"
       optionValue="value"
       placeholder="Select Scheme"
-      class="scheme-select"
+      class="scheme-select select-compact"
       :disabled="!endpointStore.current || schemeOptions.length <= 1"
     >
       <template #value>
