@@ -70,6 +70,57 @@ export function useLabelResolver() {
   }
 
   /**
+   * Select best label for a concept.
+   * Priority: prefLabel > xlPrefLabel > rdfsLabel
+   */
+  function selectConceptLabel(labels: {
+    prefLabels?: LabelValue[]
+    prefLabelsXL?: XLLabel[]
+    rdfsLabels?: LabelValue[]
+  }): LabelValue | null {
+    // 1. Try prefLabel (with XL fallback)
+    const prefLabel = selectLabelWithXL(labels.prefLabels || [], labels.prefLabelsXL || [])
+    if (prefLabel) return prefLabel
+
+    // 2. Try rdfsLabel
+    if (labels.rdfsLabels?.length) {
+      const rdfsLabel = selectLabel(labels.rdfsLabels)
+      if (rdfsLabel) return rdfsLabel
+    }
+
+    return null
+  }
+
+  /**
+   * Select best label for a scheme.
+   * Priority: prefLabel > xlPrefLabel > title > rdfsLabel
+   */
+  function selectSchemeLabel(labels: {
+    prefLabels?: LabelValue[]
+    prefLabelsXL?: XLLabel[]
+    titles?: LabelValue[]
+    rdfsLabels?: LabelValue[]
+  }): LabelValue | null {
+    // 1. Try prefLabel (with XL fallback)
+    const prefLabel = selectLabelWithXL(labels.prefLabels || [], labels.prefLabelsXL || [])
+    if (prefLabel) return prefLabel
+
+    // 2. Try title (dct:title)
+    if (labels.titles?.length) {
+      const title = selectLabel(labels.titles)
+      if (title) return title
+    }
+
+    // 3. Try rdfsLabel
+    if (labels.rdfsLabels?.length) {
+      const rdfsLabel = selectLabel(labels.rdfsLabels)
+      if (rdfsLabel) return rdfsLabel
+    }
+
+    return null
+  }
+
+  /**
    * Sort and deduplicate labels:
    * 1. Deduplicate by value+lang combination
    * 2. Preferred language first
@@ -145,6 +196,8 @@ export function useLabelResolver() {
   return {
     selectLabel,
     selectLabelWithXL,
+    selectConceptLabel,
+    selectSchemeLabel,
     sortLabels,
     shouldShowLangTag,
     getDisplayLanguage,

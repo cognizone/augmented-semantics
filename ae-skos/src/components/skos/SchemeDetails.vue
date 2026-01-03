@@ -30,13 +30,9 @@ import { useToast } from 'primevue/usetoast'
 import XLLabelsGroup from '../common/XLLabelsGroup.vue'
 import RawRdfDialog from '../common/RawRdfDialog.vue'
 
-const emit = defineEmits<{
-  browseScheme: [uri: string]
-}>()
-
 const schemeStore = useSchemeStore()
 const toast = useToast()
-const { selectLabel, selectLabelWithXL, sortLabels, shouldShowLangTag } = useLabelResolver()
+const { selectSchemeLabel, sortLabels, shouldShowLangTag } = useLabelResolver()
 const { copyToClipboard } = useClipboard()
 const { exportAsTurtle, downloadFile } = useResourceExport()
 const { details, loading, error, resolvedPredicates, loadDetails } = useSchemeData()
@@ -58,20 +54,14 @@ const exportMenuItems = [
 const showLoading = useDelayedLoading(loading)
 
 // Get preferred label (full LabelValue for language info)
-// Priority: prefLabel > xlPrefLabel > title
+// Uses selectSchemeLabel: prefLabel > xlPrefLabel > title > rdfsLabel
 const preferredLabelObj = computed(() => {
   if (!details.value) return null
-
-  // 1. Try regular prefLabels (includes SKOS-XL fallback)
-  const regularLabel = selectLabelWithXL(details.value.prefLabels, details.value.prefLabelsXL)
-  if (regularLabel) return regularLabel
-
-  // 2. Fall back to title (dct:title)
-  if (details.value.title.length) {
-    return selectLabel(details.value.title)
-  }
-
-  return null
+  return selectSchemeLabel({
+    prefLabels: details.value.prefLabels,
+    prefLabelsXL: details.value.prefLabelsXL,
+    titles: details.value.title,
+  })
 })
 
 // Get preferred label string
@@ -159,13 +149,6 @@ const labelConfig = computed(() => {
 })
 
 const hasLabels = computed(() => labelConfig.value.length > 0)
-
-// Browse this scheme (emit to parent)
-function browseScheme() {
-  if (details.value) {
-    emit('browseScheme', details.value.uri)
-  }
-}
 
 // Export as JSON
 function exportAsJson() {
@@ -272,10 +255,6 @@ watch(
           </div>
         </div>
         <div class="header-actions">
-          <button class="browse-btn" title="Browse concepts in this scheme" @click="browseScheme">
-            <span class="material-symbols-outlined icon-sm">list</span>
-            Browse
-          </button>
           <button class="action-btn" title="View RDF" @click="showRawRdfDialog = true">
             <span class="material-symbols-outlined">code</span>
           </button>
