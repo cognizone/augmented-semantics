@@ -416,3 +416,9 @@ a:hover {
   background: var(--ae-bg-hover);
   color: var(--ae-text-primary);
 }
+
+/* Dialog close button icon size */
+.p-dialog-header-close .p-icon {
+  width: 18px;
+  height: 18px;
+}

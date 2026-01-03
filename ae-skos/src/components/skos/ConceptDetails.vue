@@ -741,6 +741,10 @@ watch(
   color: var(--ae-text-primary);
 }
 
+.action-btn .material-symbols-outlined {
+  font-size: 18px;
+}
+
 /* Sections */
 .details-section {
   margin-bottom: 2rem;
