@@ -7,8 +7,7 @@ import Button from 'primevue/button'
 import Dialog from 'primevue/dialog'
 import Checkbox from 'primevue/checkbox'
 import Select from 'primevue/select'
-
-import EndpointSelector from './components/common/EndpointSelector.vue'
+import Menu from 'primevue/menu'
 import EndpointManager from './components/common/EndpointManager.vue'
 import ErrorBoundary from './components/common/ErrorBoundary.vue'
 import SchemeSelector from './components/skos/SchemeSelector.vue'
@@ -21,6 +20,28 @@ const languageStore = useLanguageStore()
 const endpointStore = useEndpointStore()
 const showEndpointManager = ref(false)
 const showSettingsDialog = ref(false)
+const endpointMenu = ref()
+
+// Endpoint menu items
+const endpointMenuItems = computed(() => {
+  const items = endpointStore.sortedEndpoints.map(ep => ({
+    label: ep.name,
+    icon: ep.id === endpointStore.currentId ? 'pi pi-check' : undefined,
+    command: () => endpointStore.selectEndpoint(ep.id),
+  }))
+
+  if (items.length > 0) {
+    items.push({ separator: true } as any)
+  }
+
+  items.push({
+    label: 'Manage endpoints...',
+    icon: 'pi pi-cog',
+    command: () => { showEndpointManager.value = true },
+  })
+
+  return items
+})
 
 // Language options from current endpoint - use priorities order if available
 const languageOptions = computed(() => {
@@ -120,21 +141,28 @@ onUnmounted(() => {
           <span class="material-symbols-outlined">menu</span>
         </button>
         <h1 class="app-title">AE SKOS</h1>
-        <div v-if="endpointStore.current" class="connection-badge" :class="endpointStore.status">
+        <!-- Endpoint selector badge -->
+        <button
+          class="connection-badge"
+          :class="endpointStore.status"
+          aria-label="Select endpoint"
+          @click="(e) => endpointMenu.toggle(e)"
+        >
           <span class="status-dot"></span>
-          <span class="connection-name">{{ endpointStore.current.name }}</span>
-          <span class="connection-status">{{ endpointStore.status === 'connected' ? 'Connected' : endpointStore.status === 'connecting' ? 'Connecting...' : 'Error' }}</span>
-        </div>
+          <span class="connection-name">{{ endpointStore.current?.name || 'No endpoint' }}</span>
+          <span class="material-symbols-outlined badge-arrow">arrow_drop_down</span>
+        </button>
+        <Menu ref="endpointMenu" :model="endpointMenuItems" :popup="true" class="endpoint-menu" />
+        <!-- Scheme selector -->
+        <SchemeSelector />
       </div>
       <div class="header-right">
-        <SchemeSelector />
-        <div class="header-divider"></div>
         <button class="header-btn" @click="showSettingsDialog = true" aria-label="Language and settings">
           <span class="material-symbols-outlined icon-sm">language</span>
           <span class="btn-label">{{ getLanguageName(languageStore.preferred) }}</span>
           <span class="material-symbols-outlined icon-sm">arrow_drop_down</span>
         </button>
-        <button class="header-icon-btn" aria-label="Manage endpoints" @click="showEndpointManager = true">
+        <button class="header-icon-btn" aria-label="Settings" @click="showSettingsDialog = true">
           <span class="material-symbols-outlined">settings</span>
         </button>
       </div>
@@ -355,12 +383,25 @@ onUnmounted(() => {
 .connection-badge {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.375rem;
   font-size: 0.75rem;
   padding: 0.25rem 0.5rem;
   background: var(--ae-bg-elevated);
   border: 1px solid var(--ae-border-color);
   border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+
+.connection-badge:hover {
+  background: var(--ae-bg-hover);
+  border-color: var(--ae-text-secondary);
+}
+
+.badge-arrow {
+  font-size: 18px;
+  margin-left: -0.125rem;
+  color: var(--ae-text-secondary);
 }
 
 .status-dot {
@@ -392,21 +433,10 @@ onUnmounted(() => {
   color: var(--ae-text-secondary);
 }
 
-.connection-status {
-  display: none;
-}
-
 .header-right {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-}
-
-.header-divider {
-  width: 1px;
-  height: 20px;
-  background: var(--ae-border-color);
-  margin: 0 0.5rem;
 }
 
 .header-btn {
