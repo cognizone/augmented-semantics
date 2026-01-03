@@ -164,7 +164,13 @@ const selectedKey = computed<TreeSelectionKeys | undefined>({
     if (keys) {
       const uri = Object.keys(keys)[0]
       if (uri) {
-        selectConcept(uri)
+        // Check if this is the scheme node
+        const scheme = schemeStore.selected
+        if (scheme && uri === scheme.uri) {
+          schemeStore.viewScheme(uri)
+        } else {
+          selectConcept(uri)
+        }
       }
     }
   },
