@@ -310,4 +310,264 @@ describe('ConceptTree', () => {
       expect(query).toContain('?concept skos:narrower ?narrower')
     })
   })
+
+  describe('concept reveal (history/search navigation)', () => {
+    beforeEach(() => {
+      const schemeStore = useSchemeStore()
+      schemeStore.schemes = [
+        { uri: 'http://example.org/scheme/1', label: 'Test Scheme' },
+      ]
+      schemeStore.selectScheme('http://example.org/scheme/1')
+    })
+
+    describe('ancestor path fetching', () => {
+      it('fetches ancestors when concept selected from history', async () => {
+        // First call: top concepts query
+        ;(executeSparql as Mock).mockResolvedValueOnce({
+          results: {
+            bindings: [
+              {
+                concept: { value: 'http://example.org/concept/root' },
+                label: { value: 'Root' },
+                labelLang: { value: 'en' },
+                labelType: { value: 'prefLabel' },
+                narrowerCount: { value: '1' },
+              },
+            ],
+          },
+        })
+
+        const wrapper = mountConceptTree()
+        await flushPromises()
+        await nextTick()
+
+        // Second call: ancestor path query for a deep concept
+        ;(executeSparql as Mock).mockResolvedValueOnce({
+          results: {
+            bindings: [
+              {
+                ancestor: { value: 'http://example.org/concept/root' },
+                label: { value: 'Root' },
+                notation: { value: '1' },
+              },
+              {
+                ancestor: { value: 'http://example.org/concept/parent' },
+                label: { value: 'Parent' },
+                notation: { value: '1.1' },
+              },
+            ],
+          },
+        })
+
+        // Select a concept not in tree (triggers reveal)
+        const conceptStore = useConceptStore()
+        conceptStore.selectConcept('http://example.org/concept/child')
+        await flushPromises()
+        await nextTick()
+
+        // Verify ancestor query was made
+        const calls = (executeSparql as Mock).mock.calls
+        const ancestorQuery = calls.find((c: unknown[]) =>
+          typeof c[1] === 'string' && c[1].includes('skos:broader+')
+        )
+        expect(ancestorQuery).toBeDefined()
+      })
+
+      it('returns empty array for top concept (no ancestors)', async () => {
+        // Top concepts query
+        ;(executeSparql as Mock).mockResolvedValueOnce({
+          results: {
+            bindings: [
+              {
+                concept: { value: 'http://example.org/concept/root' },
+                label: { value: 'Root' },
+                labelLang: { value: 'en' },
+                labelType: { value: 'prefLabel' },
+                narrowerCount: { value: '0' },
+              },
+            ],
+          },
+        })
+
+        mountConceptTree()
+        await flushPromises()
+        await nextTick()
+
+        // Ancestor query returns empty
+        ;(executeSparql as Mock).mockResolvedValueOnce({
+          results: { bindings: [] },
+        })
+
+        const conceptStore = useConceptStore()
+        conceptStore.selectConcept('http://example.org/concept/root')
+        await flushPromises()
+        await nextTick()
+
+        // Concept should be selected without error
+        expect(conceptStore.selectedUri).toBe('http://example.org/concept/root')
+      })
+
+      it('handles SPARQL query errors gracefully', async () => {
+        // Top concepts query
+        ;(executeSparql as Mock).mockResolvedValueOnce({
+          results: { bindings: [] },
+        })
+
+        mountConceptTree()
+        await flushPromises()
+        await nextTick()
+
+        // Ancestor query fails
+        ;(executeSparql as Mock).mockRejectedValueOnce(new Error('Network error'))
+
+        const conceptStore = useConceptStore()
+        conceptStore.selectConcept('http://example.org/concept/deep')
+        await flushPromises()
+        await nextTick()
+
+        // Should not throw - error handled gracefully
+        expect(conceptStore.selectedUri).toBe('http://example.org/concept/deep')
+      })
+    })
+
+    describe('reveal behavior', () => {
+      it('expands ancestor nodes when revealing concept', async () => {
+        const conceptStore = useConceptStore()
+
+        // Top concepts query
+        ;(executeSparql as Mock).mockResolvedValueOnce({
+          results: {
+            bindings: [
+              {
+                concept: { value: 'http://example.org/concept/root' },
+                label: { value: 'Root' },
+                labelLang: { value: 'en' },
+                labelType: { value: 'prefLabel' },
+                narrowerCount: { value: '1' },
+              },
+            ],
+          },
+        })
+
+        mountConceptTree()
+        await flushPromises()
+        await nextTick()
+
+        // Ancestor path
+        ;(executeSparql as Mock).mockResolvedValueOnce({
+          results: {
+            bindings: [
+              {
+                ancestor: { value: 'http://example.org/concept/root' },
+                label: { value: 'Root' },
+              },
+            ],
+          },
+        })
+
+        // Children query (triggered by expand)
+        ;(executeSparql as Mock).mockResolvedValueOnce({
+          results: {
+            bindings: [
+              {
+                concept: { value: 'http://example.org/concept/child' },
+                label: { value: 'Child' },
+                labelLang: { value: 'en' },
+                labelType: { value: 'prefLabel' },
+                narrowerCount: { value: '0' },
+              },
+            ],
+          },
+        })
+
+        conceptStore.selectConcept('http://example.org/concept/child')
+        await flushPromises()
+        await nextTick()
+
+        // Root should be expanded
+        expect(conceptStore.expanded.has('http://example.org/concept/root')).toBe(true)
+      })
+
+      it('does not reveal when tree is loading', async () => {
+        const conceptStore = useConceptStore()
+
+        // Start loading
+        conceptStore.setLoadingTree(true)
+
+        // Select concept while loading
+        conceptStore.selectConcept('http://example.org/concept/test')
+        await flushPromises()
+        await nextTick()
+
+        // No ancestor query should be made while loading
+        // (only the initial top concepts query would be in progress)
+        const ancestorQueries = (executeSparql as Mock).mock.calls.filter((c: unknown[]) =>
+          typeof c[1] === 'string' && c[1].includes('skos:broader+')
+        )
+        expect(ancestorQueries).toHaveLength(0)
+      })
+    })
+
+    describe('loadingTree watch for reveal', () => {
+      it('triggers reveal after loading completes if concept selected', async () => {
+        const conceptStore = useConceptStore()
+
+        // Clear mock to track calls
+        ;(executeSparql as Mock).mockClear()
+
+        // Top concepts loading
+        ;(executeSparql as Mock).mockResolvedValueOnce({
+          results: {
+            bindings: [
+              {
+                concept: { value: 'http://example.org/concept/root' },
+                label: { value: 'Root' },
+                labelLang: { value: 'en' },
+                labelType: { value: 'prefLabel' },
+                narrowerCount: { value: '1' },
+              },
+            ],
+          },
+        })
+
+        // Mount triggers loading
+        mountConceptTree()
+        await flushPromises()
+        await nextTick()
+
+        // Now select a concept after tree has loaded
+        // Ancestor query mock
+        ;(executeSparql as Mock).mockResolvedValueOnce({
+          results: { bindings: [] },
+        })
+
+        conceptStore.selectConcept('http://example.org/concept/deep')
+        await flushPromises()
+        await nextTick()
+
+        // Verify concept is selected
+        expect(conceptStore.selectedUri).toBe('http://example.org/concept/deep')
+      })
+
+      it('does not trigger reveal when no concept selected', async () => {
+        const conceptStore = useConceptStore()
+
+        // Top concepts query
+        ;(executeSparql as Mock).mockResolvedValueOnce({
+          results: { bindings: [] },
+        })
+
+        mountConceptTree()
+        await flushPromises()
+        await nextTick()
+
+        // No concept selected - no ancestor query
+        const ancestorQueries = (executeSparql as Mock).mock.calls.filter((c: unknown[]) =>
+          typeof c[1] === 'string' && c[1].includes('skos:broader+')
+        )
+        expect(ancestorQueries).toHaveLength(0)
+        expect(conceptStore.selectedUri).toBeNull()
+      })
+    })
+  })
 })

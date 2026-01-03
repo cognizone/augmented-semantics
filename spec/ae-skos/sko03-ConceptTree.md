@@ -12,31 +12,50 @@ Display root concepts within selected scheme. Top concepts are identified via:
 2. **Fallback**: Concepts with no hierarchical parent (neither `skos:broader` nor inverse `skos:narrower`)
 
 **Query:**
+
+Uses a subquery to paginate by distinct concepts (not by label rows, since concepts can have many label language/type variations):
+
 ```sparql
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 PREFIX skosxl: <http://www.w3.org/2008/05/skos-xl#>
 PREFIX dct: <http://purl.org/dc/terms/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 
-SELECT DISTINCT ?concept ?label ?labelLang ?labelType ?notation
-       (COUNT(DISTINCT ?narrower) AS ?narrowerCount)
+SELECT ?concept ?label ?labelLang ?labelType ?notation ?narrowerCount
 WHERE {
   {
-    # Explicit top concept via topConceptOf or hasTopConcept
-    ?concept a skos:Concept .
-    ?concept skos:inScheme <SCHEME_URI> .
-    { ?concept skos:topConceptOf <SCHEME_URI> }
-    UNION
-    { <SCHEME_URI> skos:hasTopConcept ?concept }
+    # Subquery to get paginated distinct concepts with narrower count
+    SELECT DISTINCT ?concept (COUNT(DISTINCT ?narrower) AS ?narrowerCount)
+    WHERE {
+      {
+        # Explicit top concept via topConceptOf or hasTopConcept
+        ?concept a skos:Concept .
+        ?concept skos:inScheme <SCHEME_URI> .
+        { ?concept skos:topConceptOf <SCHEME_URI> }
+        UNION
+        { <SCHEME_URI> skos:hasTopConcept ?concept }
+      }
+      UNION
+      {
+        # Fallback: concepts with no broader relationship (neither direction)
+        ?concept a skos:Concept .
+        ?concept skos:inScheme <SCHEME_URI> .
+        FILTER NOT EXISTS { ?concept skos:broader ?broader }
+        FILTER NOT EXISTS { ?parent skos:narrower ?concept }
+      }
+      # Count children via broader or narrower (supports both directions)
+      OPTIONAL {
+        { ?narrower skos:broader ?concept }
+        UNION
+        { ?concept skos:narrower ?narrower }
+      }
+    }
+    GROUP BY ?concept
+    ORDER BY ?concept
+    LIMIT 201
+    OFFSET 0
   }
-  UNION
-  {
-    # Fallback: concepts with no broader relationship (neither direction)
-    ?concept a skos:Concept .
-    ?concept skos:inScheme <SCHEME_URI> .
-    FILTER NOT EXISTS { ?concept skos:broader ?broader }
-    FILTER NOT EXISTS { ?parent skos:narrower ?concept }
-  }
+  # Get labels and notations for the paginated concepts
   OPTIONAL { ?concept skos:notation ?notation }
   OPTIONAL {
     { ?concept skos:prefLabel ?label . BIND("prefLabel" AS ?labelType) }
@@ -48,16 +67,7 @@ WHERE {
     { ?concept rdfs:label ?label . BIND("rdfsLabel" AS ?labelType) }
     BIND(LANG(?label) AS ?labelLang)
   }
-  # Count children via broader or narrower (supports both directions)
-  OPTIONAL {
-    { ?narrower skos:broader ?concept }
-    UNION
-    { ?concept skos:narrower ?narrower }
-  }
 }
-GROUP BY ?concept ?label ?labelLang ?labelType ?notation
-ORDER BY ?concept ?label
-LIMIT 2000
 ```
 
 **Note:** Label selection happens in code using priority-based resolution (see Label Resolution section below).
@@ -67,19 +77,38 @@ LIMIT 2000
 Load narrower concepts on demand when user expands a node. Supports both `skos:broader` and `skos:narrower` relationships.
 
 **Query:**
+
+Uses a subquery to paginate by distinct concepts:
+
 ```sparql
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 PREFIX skosxl: <http://www.w3.org/2008/05/skos-xl#>
 PREFIX dct: <http://purl.org/dc/terms/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 
-SELECT DISTINCT ?concept ?label ?labelLang ?labelType ?notation
-       (COUNT(DISTINCT ?narrower) AS ?narrowerCount)
+SELECT ?concept ?label ?labelLang ?labelType ?notation ?narrowerCount
 WHERE {
-  # Find children via broader or narrower (supports both directions)
-  { ?concept skos:broader <PARENT_URI> }
-  UNION
-  { <PARENT_URI> skos:narrower ?concept }
+  {
+    # Subquery to get paginated distinct children with narrower count
+    SELECT DISTINCT ?concept (COUNT(DISTINCT ?narrower) AS ?narrowerCount)
+    WHERE {
+      # Find children via broader or narrower (supports both directions)
+      { ?concept skos:broader <PARENT_URI> }
+      UNION
+      { <PARENT_URI> skos:narrower ?concept }
+      # Count grandchildren via broader or narrower
+      OPTIONAL {
+        { ?narrower skos:broader ?concept }
+        UNION
+        { ?concept skos:narrower ?narrower }
+      }
+    }
+    GROUP BY ?concept
+    ORDER BY ?concept
+    LIMIT 201
+    OFFSET 0
+  }
+  # Get labels and notations for the paginated concepts
   OPTIONAL { ?concept skos:notation ?notation }
   OPTIONAL {
     { ?concept skos:prefLabel ?label . BIND("prefLabel" AS ?labelType) }
@@ -91,16 +120,7 @@ WHERE {
     { ?concept rdfs:label ?label . BIND("rdfsLabel" AS ?labelType) }
     BIND(LANG(?label) AS ?labelLang)
   }
-  # Count grandchildren via broader or narrower
-  OPTIONAL {
-    { ?narrower skos:broader ?concept }
-    UNION
-    { ?concept skos:narrower ?narrower }
-  }
 }
-GROUP BY ?concept ?label ?labelLang ?labelType ?notation
-ORDER BY ?concept ?label
-LIMIT 1000
 ```
 
 ### Broader Concepts
@@ -144,6 +164,65 @@ WHERE {
   }
 }
 ORDER BY DESC(?depth)
+```
+
+### Concept Reveal (History/Search/URL Navigation)
+
+When navigating to a concept from history, search, or URL deep link, the tree must reveal (expand and scroll to) the selected concept.
+
+**Process:**
+1. Query ancestor path using `skos:broader+`
+2. Expand each ancestor node (loading children on-demand if needed)
+3. Scroll to reveal the selected concept in the tree
+
+**Ancestor Path Query:**
+```sparql
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+
+SELECT DISTINCT ?ancestor ?label ?notation ?depth
+WHERE {
+  <CONCEPT_URI> skos:broader+ ?ancestor .
+  {
+    SELECT ?ancestor (COUNT(?mid) AS ?depth)
+    WHERE {
+      <CONCEPT_URI> skos:broader+ ?mid .
+      ?mid skos:broader* ?ancestor .
+      ?ancestor skos:broader* ?root .
+      FILTER NOT EXISTS { ?root skos:broader ?parent }
+    }
+    GROUP BY ?ancestor
+  }
+  OPTIONAL { ?ancestor skos:prefLabel ?label . FILTER(LANG(?label) = "LANG" || LANG(?label) = "") }
+  OPTIONAL { ?ancestor skos:notation ?notation }
+}
+ORDER BY DESC(?depth)
+```
+
+**Race Condition Handling:**
+
+When navigating from history, the scheme/endpoint may change which triggers a tree reload. To handle this timing:
+
+1. **Watch on `selectedUri`**: Triggers reveal when concept is selected
+2. **Check `loadingTree`**: If tree is loading, skip reveal (wait for load to complete)
+3. **Watch on `loadingTree`**: When loading finishes, re-check if reveal is needed
+
+```
+History Click
+    ↓
+Switch Endpoint/Scheme (if different)
+    ↓
+await nextTick() (wait for reactivity)
+    ↓
+Select Concept (sets selectedUri)
+    ↓
+selectedUri Watch fires
+    ↓
+If loadingTree → skip (wait for load)
+If !loadingTree → reveal concept
+    ↓
+loadingTree Watch fires when load completes
+    ↓
+If selectedUri exists → reveal concept
 ```
 
 ## Label Resolution (Consistent Across All Components)
