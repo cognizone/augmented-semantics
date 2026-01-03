@@ -647,7 +647,8 @@ watch(
 .header-lang-tag {
   font-size: 0.625rem;
   font-weight: normal;
-  background: var(--p-surface-200);
+  background: var(--p-content-hover-background);
+  color: var(--p-text-muted-color);
   padding: 0.1rem 0.4rem;
   border-radius: 3px;
   margin-left: 0.5rem;
@@ -657,8 +658,8 @@ watch(
 .deprecation-badge {
   font-size: 0.65rem;
   font-weight: 600;
-  background: var(--p-orange-100);
-  color: var(--p-orange-700);
+  background: color-mix(in srgb, var(--p-orange-500) 20%, transparent);
+  color: var(--p-orange-500);
   padding: 0.1rem 0.4rem;
   border-radius: 3px;
   margin-left: 0.5rem;
@@ -749,7 +750,8 @@ watch(
 
 .lang-tag {
   font-size: 0.625rem;
-  background: var(--p-surface-200);
+  background: var(--p-content-hover-background);
+  color: var(--p-text-muted-color);
   padding: 0.1rem 0.3rem;
   border-radius: 3px;
   margin-left: 0.25rem;
@@ -759,7 +761,8 @@ watch(
 .datatype-tag {
   font-size: 0.625rem;
   font-family: monospace;
-  background: var(--p-surface-200);
+  background: var(--p-content-hover-background);
+  color: var(--p-text-muted-color);
   padding: 0.1rem 0.3rem;
   border-radius: 3px;
   margin-left: 0.25rem;
@@ -779,7 +782,7 @@ watch(
 
 .notation {
   font-size: 0.875rem;
-  background: var(--p-surface-100);
+  background: var(--p-content-hover-background);
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
 }
@@ -824,7 +827,7 @@ watch(
   display: inline-flex;
   align-items: center;
   font-size: 0.875rem;
-  background: var(--p-surface-100);
+  background: var(--p-content-hover-background);
   border-radius: 1rem;
   padding: 0.25rem 0.75rem;
 }

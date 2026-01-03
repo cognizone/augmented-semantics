@@ -268,7 +268,7 @@ function isExpanded(key: string): boolean {
 }
 
 .xl-hidden-toggle:hover {
-  background: var(--p-surface-100);
+  background: var(--p-content-hover-background);
   color: var(--p-text-color);
 }
 
@@ -280,9 +280,9 @@ function isExpanded(key: string): boolean {
   width: 100%;
   margin-top: 0.5rem;
   padding: 0.5rem;
-  background: var(--p-surface-50);
+  background: var(--p-content-hover-background);
   border-radius: 4px;
-  border: 1px dashed var(--p-surface-300);
+  border: 1px dashed var(--p-content-border-color);
 }
 
 .xl-hidden-item {
@@ -290,7 +290,7 @@ function isExpanded(key: string): boolean {
 }
 
 .xl-hidden-badge {
-  background: var(--p-surface-200) !important;
+  background: var(--p-content-border-color) !important;
   color: var(--p-text-muted-color) !important;
 }
 
@@ -302,8 +302,8 @@ function isExpanded(key: string): boolean {
 }
 
 .xl-label-item {
-  background: var(--p-surface-50);
-  border: 1px solid var(--p-surface-200);
+  background: var(--p-content-hover-background);
+  border: 1px solid var(--p-content-border-color);
   border-radius: 4px;
   overflow: hidden;
   width: fit-content;
@@ -319,7 +319,7 @@ function isExpanded(key: string): boolean {
 }
 
 .xl-label-header:hover {
-  background: var(--p-surface-100);
+  background: var(--p-content-hover-background);
 }
 
 .xl-indicator {
@@ -340,7 +340,8 @@ function isExpanded(key: string): boolean {
 .lang-tag {
   font-size: 0.625rem;
   font-weight: normal;
-  background: var(--p-surface-200);
+  background: var(--p-content-hover-background);
+  color: var(--p-text-muted-color);
   padding: 0.1rem 0.3rem;
   border-radius: 3px;
   margin-left: 0.25rem;
@@ -350,7 +351,8 @@ function isExpanded(key: string): boolean {
   font-size: 0.625rem;
   font-weight: 600;
   color: var(--p-text-muted-color);
-  background: var(--p-surface-200);
+  background: var(--p-content-hover-background);
+  color: var(--p-text-muted-color);
   padding: 0.1rem 0.4rem;
   border-radius: 10px;
   flex-shrink: 0;
@@ -362,8 +364,8 @@ function isExpanded(key: string): boolean {
 
 .xl-label-details {
   padding: 0.5rem;
-  background: var(--p-surface-0);
-  border-top: 1px solid var(--p-surface-200);
+  background: var(--p-content-background);
+  border-top: 1px solid var(--p-content-border-color);
 }
 
 .xl-label-entry {
@@ -371,7 +373,7 @@ function isExpanded(key: string): boolean {
 }
 
 .xl-label-entry:not(:last-child) {
-  border-bottom: 1px dashed var(--p-surface-200);
+  border-bottom: 1px dashed var(--p-content-border-color);
   margin-bottom: 0.5rem;
 }
 
@@ -423,7 +425,7 @@ function isExpanded(key: string): boolean {
 .xl-relations {
   margin-top: 0.5rem;
   padding-top: 0.5rem;
-  border-top: 1px dashed var(--p-surface-200);
+  border-top: 1px dashed var(--p-content-border-color);
 }
 
 .relation-item {

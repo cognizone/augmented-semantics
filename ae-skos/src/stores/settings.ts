@@ -43,6 +43,7 @@ export const DEFAULT_DEPRECATION_RULES: DeprecationRule[] = [
 
 export interface AppSettings {
   // Display settings
+  darkMode: boolean                   // Use dark color scheme
   showDatatypes: boolean              // Show datatype tags on property values
   showLanguageTags: boolean           // Show language tags on labels (when not current)
   showPreferredLanguageTag: boolean   // Show language tag even when matching preferred
@@ -53,6 +54,7 @@ export interface AppSettings {
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
+  darkMode: false,
   showDatatypes: true,
   showLanguageTags: true,
   showPreferredLanguageTag: false,
@@ -62,11 +64,21 @@ const DEFAULT_SETTINGS: AppSettings = {
 
 export const useSettingsStore = defineStore('settings', () => {
   // State
+  const darkMode = ref(DEFAULT_SETTINGS.darkMode)
   const showDatatypes = ref(DEFAULT_SETTINGS.showDatatypes)
   const showLanguageTags = ref(DEFAULT_SETTINGS.showLanguageTags)
   const showPreferredLanguageTag = ref(DEFAULT_SETTINGS.showPreferredLanguageTag)
   const showDeprecationIndicator = ref(DEFAULT_SETTINGS.showDeprecationIndicator)
   const deprecationRules = ref<DeprecationRule[]>([...DEFAULT_DEPRECATION_RULES])
+
+  // Apply dark mode to document
+  function applyDarkMode(isDark: boolean) {
+    if (isDark) {
+      document.documentElement.classList.add('dark-mode')
+    } else {
+      document.documentElement.classList.remove('dark-mode')
+    }
+  }
 
   // Load settings from localStorage
   function loadSettings() {
@@ -74,6 +86,10 @@ export const useSettingsStore = defineStore('settings', () => {
       const stored = localStorage.getItem(STORAGE_KEY)
       if (stored) {
         const settings = JSON.parse(stored) as Partial<AppSettings>
+        if (settings.darkMode !== undefined) {
+          darkMode.value = settings.darkMode
+          applyDarkMode(settings.darkMode)
+        }
         if (settings.showDatatypes !== undefined) {
           showDatatypes.value = settings.showDatatypes
         }
@@ -99,6 +115,7 @@ export const useSettingsStore = defineStore('settings', () => {
   function saveSettings() {
     try {
       const settings: AppSettings = {
+        darkMode: darkMode.value,
         showDatatypes: showDatatypes.value,
         showLanguageTags: showLanguageTags.value,
         showPreferredLanguageTag: showPreferredLanguageTag.value,
@@ -112,6 +129,12 @@ export const useSettingsStore = defineStore('settings', () => {
   }
 
   // Actions
+  function setDarkMode(value: boolean) {
+    darkMode.value = value
+    applyDarkMode(value)
+    saveSettings()
+  }
+
   function setShowDatatypes(value: boolean) {
     showDatatypes.value = value
     saveSettings()
@@ -133,6 +156,8 @@ export const useSettingsStore = defineStore('settings', () => {
   }
 
   function resetToDefaults() {
+    darkMode.value = DEFAULT_SETTINGS.darkMode
+    applyDarkMode(DEFAULT_SETTINGS.darkMode)
     showDatatypes.value = DEFAULT_SETTINGS.showDatatypes
     showLanguageTags.value = DEFAULT_SETTINGS.showLanguageTags
     showPreferredLanguageTag.value = DEFAULT_SETTINGS.showPreferredLanguageTag
@@ -140,6 +165,12 @@ export const useSettingsStore = defineStore('settings', () => {
     deprecationRules.value = [...DEFAULT_DEPRECATION_RULES]
     saveSettings()
   }
+
+  // Watch darkMode separately to apply class immediately
+  watch(darkMode, (isDark) => {
+    applyDarkMode(isDark)
+    saveSettings()
+  })
 
   // Auto-save on any change (alternative to manual save in each setter)
   watch(
@@ -159,12 +190,14 @@ export const useSettingsStore = defineStore('settings', () => {
 
   return {
     // State
+    darkMode,
     showDatatypes,
     showLanguageTags,
     showPreferredLanguageTag,
     showDeprecationIndicator,
     deprecationRules,
     // Actions
+    setDarkMode,
     setShowDatatypes,
     setShowLanguageTags,
     setShowDeprecationIndicator,

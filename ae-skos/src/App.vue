@@ -190,6 +190,18 @@ onUnmounted(() => {
 
           <div class="setting-item">
             <Checkbox
+              v-model="settingsStore.darkMode"
+              inputId="darkMode"
+              :binary="true"
+            />
+            <label for="darkMode" class="setting-label">
+              Dark mode
+              <span class="setting-description">Use dark color scheme</span>
+            </label>
+          </div>
+
+          <div class="setting-item">
+            <Checkbox
               v-model="settingsStore.showDatatypes"
               inputId="showDatatypes"
               :binary="true"
@@ -299,8 +311,8 @@ onUnmounted(() => {
   align-items: center;
   justify-content: space-between;
   padding: 0.5rem 1rem;
-  background: var(--p-surface-0);
-  border-bottom: 1px solid var(--p-surface-200);
+  background: var(--p-content-background);
+  border-bottom: 1px solid var(--p-content-border-color);
   flex-shrink: 0;
 }
 
@@ -361,7 +373,7 @@ onUnmounted(() => {
 }
 
 .setting-section {
-  background: var(--p-surface-50);
+  background: var(--p-content-hover-background);
   border-radius: 6px;
   padding: 0.75rem;
 }

@@ -167,7 +167,7 @@ function handleClose() {
   flex-direction: column;
   gap: 0.5rem;
   padding: 0.75rem;
-  background: var(--p-surface-50);
+  background: var(--p-content-hover-background);
   border-radius: var(--p-border-radius);
 }
 
@@ -198,7 +198,7 @@ function handleClose() {
   flex-direction: column;
   gap: 0.5rem;
   padding: 0.75rem;
-  background: var(--p-surface-100);
+  background: var(--p-content-hover-background);
   border-radius: var(--p-border-radius);
   font-size: 0.875rem;
 }
@@ -236,7 +236,7 @@ function handleClose() {
   display: flex;
   justify-content: center;
   padding-top: 0.5rem;
-  border-top: 1px solid var(--p-surface-200);
+  border-top: 1px solid var(--p-content-border-color);
 }
 
 .capabilities-timestamp {

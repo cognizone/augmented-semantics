@@ -15,6 +15,11 @@ describe('settings store', () => {
   })
 
   describe('initial state', () => {
+    it('starts with darkMode disabled', () => {
+      const store = useSettingsStore()
+      expect(store.darkMode).toBe(false)
+    })
+
     it('starts with showDatatypes enabled', () => {
       const store = useSettingsStore()
       expect(store.showDatatypes).toBe(true)
@@ -40,6 +45,56 @@ describe('settings store', () => {
       expect(store.deprecationRules).toHaveLength(2)
       expect(store.deprecationRules[0].id).toBe('owl-deprecated')
       expect(store.deprecationRules[1].id).toBe('euvoc-status')
+    })
+  })
+
+  describe('setDarkMode', () => {
+    it('updates darkMode value', () => {
+      const store = useSettingsStore()
+
+      store.setDarkMode(true)
+      expect(store.darkMode).toBe(true)
+
+      store.setDarkMode(false)
+      expect(store.darkMode).toBe(false)
+    })
+
+    it('persists to localStorage', () => {
+      const store = useSettingsStore()
+
+      store.setDarkMode(true)
+      expect(localStorage.setItem).toHaveBeenCalled()
+    })
+
+    it('applies dark mode class to document', () => {
+      const store = useSettingsStore()
+
+      store.setDarkMode(true)
+      expect(document.documentElement.classList.contains('dark-mode')).toBe(true)
+
+      store.setDarkMode(false)
+      expect(document.documentElement.classList.contains('dark-mode')).toBe(false)
+    })
+
+    it('applies class via watcher when ref is changed directly', async () => {
+      const store = useSettingsStore()
+
+      // Simulate v-model behavior (direct ref assignment)
+      store.darkMode = true
+      await new Promise(resolve => setTimeout(resolve, 0)) // Wait for watcher
+
+      expect(document.documentElement.classList.contains('dark-mode')).toBe(true)
+    })
+
+    it('loads and applies dark mode from localStorage on init', () => {
+      const storedSettings = { darkMode: true }
+      vi.mocked(localStorage.getItem).mockReturnValue(JSON.stringify(storedSettings))
+
+      // Create new store instance - should load and apply
+      const store = useSettingsStore()
+
+      expect(store.darkMode).toBe(true)
+      expect(document.documentElement.classList.contains('dark-mode')).toBe(true)
     })
   })
 
@@ -144,6 +199,7 @@ describe('settings store', () => {
       const store = useSettingsStore()
 
       // Change all settings
+      store.setDarkMode(true)
       store.showDatatypes = false
       store.showLanguageTags = false
       store.showPreferredLanguageTag = true
@@ -154,6 +210,7 @@ describe('settings store', () => {
       store.resetToDefaults()
 
       // Verify defaults
+      expect(store.darkMode).toBe(false)
       expect(store.showDatatypes).toBe(true)
       expect(store.showLanguageTags).toBe(true)
       expect(store.showPreferredLanguageTag).toBe(false)
@@ -165,6 +222,7 @@ describe('settings store', () => {
   describe('persistence', () => {
     it('loads settings from localStorage on init', () => {
       const storedSettings = {
+        darkMode: true,
         showDatatypes: false,
         showLanguageTags: false,
         showPreferredLanguageTag: true,
@@ -174,6 +232,7 @@ describe('settings store', () => {
 
       const store = useSettingsStore()
 
+      expect(store.darkMode).toBe(true)
       expect(store.showDatatypes).toBe(false)
       expect(store.showLanguageTags).toBe(false)
       expect(store.showPreferredLanguageTag).toBe(true)

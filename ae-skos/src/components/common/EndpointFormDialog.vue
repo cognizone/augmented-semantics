@@ -334,7 +334,7 @@ function handleClose() {
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem;
-  background: var(--p-surface-50);
+  background: var(--p-content-hover-background);
   border-radius: var(--p-border-radius);
   flex-wrap: wrap;
 }
@@ -388,7 +388,7 @@ function handleClose() {
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem;
-  background: var(--p-surface-50);
+  background: var(--p-content-hover-background);
   border-radius: var(--p-border-radius);
 }
 

@@ -133,7 +133,8 @@ async function copyUri() {
 .lang-tag {
   font-size: 0.625rem;
   font-weight: normal;
-  background: var(--p-surface-200);
+  background: var(--p-content-hover-background);
+  color: var(--p-text-muted-color);
   padding: 0.1rem 0.3rem;
   border-radius: 3px;
   margin-left: 0.25rem;

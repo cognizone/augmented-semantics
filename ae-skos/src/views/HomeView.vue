@@ -69,8 +69,8 @@ const uiStore = useUIStore()
   top: 0;
   left: 0;
   right: 0;
-  background: var(--p-surface-50);
-  border-bottom: 1px solid var(--p-surface-200);
+  background: var(--p-content-hover-background);
+  border-bottom: 1px solid var(--p-content-border-color);
   z-index: 10;
 }
 
@@ -93,8 +93,8 @@ const uiStore = useUIStore()
 .app-sidebar {
   width: 320px;
   flex-shrink: 0;
-  background: var(--p-surface-0);
-  border-right: 1px solid var(--p-surface-200);
+  background: var(--p-content-background);
+  border-right: 1px solid var(--p-content-border-color);
   overflow-y: auto;
 }
 
@@ -122,7 +122,7 @@ const uiStore = useUIStore()
   flex: 1;
   overflow-y: auto;
   padding: 1rem;
-  background: var(--p-surface-50);
+  background: var(--p-content-hover-background);
 }
 
 .placeholder {

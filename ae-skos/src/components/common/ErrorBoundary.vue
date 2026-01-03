@@ -117,7 +117,7 @@ function reportIssue() {
   justify-content: center;
   min-height: 100%;
   padding: 2rem;
-  background: var(--p-surface-50);
+  background: var(--p-content-hover-background);
 }
 
 .error-content {
@@ -171,7 +171,7 @@ h2 {
 
 .error-details {
   text-align: left;
-  background: var(--p-surface-100);
+  background: var(--p-content-hover-background);
   border-radius: 0.5rem;
   padding: 1rem;
   overflow-x: auto;

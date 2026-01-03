@@ -281,8 +281,8 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: var(--p-surface-0);
-  border-right: 1px solid var(--p-surface-200);
+  background: var(--p-content-background);
+  border-right: 1px solid var(--p-content-border-color);
 }
 
 .sidebar-tabs {
@@ -315,7 +315,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: var(--p-surface-0);
+  background: var(--p-content-background);
 }
 
 /* Mobile: hide sidebar by default */

@@ -164,6 +164,6 @@ function handleClose() {
   font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
   font-size: 0.7rem;
   width: 100%;
-  background: var(--p-surface-50);
+  background: var(--p-content-hover-background);
 }
 </style>

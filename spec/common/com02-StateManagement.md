@@ -57,12 +57,13 @@ interface LanguageState {
 
 interface SettingsState {
   // Display settings
-  showDatatypes: boolean;           // Show datatype tags on property values
-  showLanguageTags: boolean;        // Show language tags on labels
-  showPreferredLanguageTag: boolean; // Show tag even when matching preferred
+  darkMode: boolean;                  // Use dark color scheme
+  showDatatypes: boolean;             // Show datatype tags on property values
+  showLanguageTags: boolean;          // Show language tags on labels
+  showPreferredLanguageTag: boolean;  // Show tag even when matching preferred
 
   // Deprecation settings
-  showDeprecationIndicator: boolean; // Show deprecation badges/styling
+  showDeprecationIndicator: boolean;  // Show deprecation badges/styling
   deprecationRules: DeprecationRule[]; // Configurable detection rules
 }
 
@@ -213,6 +214,7 @@ persist('ae-language', state.language.preferred);
 
 // Persist settings
 persist('ae-skos-settings', {
+  darkMode: state.settings.darkMode,
   showDatatypes: state.settings.showDatatypes,
   showLanguageTags: state.settings.showLanguageTags,
   showPreferredLanguageTag: state.settings.showPreferredLanguageTag,
@@ -224,6 +226,7 @@ persist('ae-skos-settings', {
 const endpoints = restore('ae-endpoints') ?? [];
 const preferred = restore('ae-language') ?? navigator.language.split('-')[0] ?? 'en';
 const settings = restore('ae-skos-settings') ?? {
+  darkMode: false,
   showDatatypes: true,
   showLanguageTags: true,
   showPreferredLanguageTag: false,

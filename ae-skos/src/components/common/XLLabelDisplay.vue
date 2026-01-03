@@ -81,8 +81,8 @@ function toggleExpand() {
 
 <style scoped>
 .xl-label {
-  background: var(--p-surface-50);
-  border: 1px solid var(--p-surface-200);
+  background: var(--p-content-hover-background);
+  border: 1px solid var(--p-content-border-color);
   border-radius: 4px;
   overflow: hidden;
 }
@@ -96,7 +96,7 @@ function toggleExpand() {
 }
 
 .xl-label-header:hover {
-  background: var(--p-surface-100);
+  background: var(--p-content-hover-background);
 }
 
 .xl-indicator {
@@ -115,7 +115,8 @@ function toggleExpand() {
 .lang-tag {
   font-size: 0.625rem;
   font-weight: normal;
-  background: var(--p-surface-200);
+  background: var(--p-content-hover-background);
+  color: var(--p-text-muted-color);
   padding: 0.1rem 0.3rem;
   border-radius: 3px;
   margin-left: 0.25rem;
@@ -127,8 +128,8 @@ function toggleExpand() {
 
 .xl-label-details {
   padding: 0.5rem;
-  background: var(--p-surface-0);
-  border-top: 1px solid var(--p-surface-200);
+  background: var(--p-content-background);
+  border-top: 1px solid var(--p-content-border-color);
 }
 
 .xl-detail-row {
@@ -172,7 +173,7 @@ function toggleExpand() {
 .xl-relations {
   margin-top: 0.5rem;
   padding-top: 0.5rem;
-  border-top: 1px dashed var(--p-surface-200);
+  border-top: 1px dashed var(--p-content-border-color);
 }
 
 .relation-item {

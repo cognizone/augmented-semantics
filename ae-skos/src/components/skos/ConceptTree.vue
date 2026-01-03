@@ -743,7 +743,7 @@ watch(
   align-items: center;
   gap: 0.25rem;
   padding: 0.5rem;
-  border-bottom: 1px solid var(--p-surface-200);
+  border-bottom: 1px solid var(--p-content-border-color);
 }
 
 .goto-input {
@@ -833,8 +833,8 @@ watch(
 .deprecated-badge {
   font-size: 0.6rem;
   font-weight: 600;
-  background: var(--p-orange-100);
-  color: var(--p-orange-700);
+  background: color-mix(in srgb, var(--p-orange-500) 20%, transparent);
+  color: var(--p-orange-500);
   padding: 0.05rem 0.3rem;
   border-radius: 3px;
   margin-left: 0.25rem;
@@ -852,7 +852,8 @@ watch(
 .lang-tag {
   font-size: 0.625rem;
   font-weight: normal;
-  background: var(--p-surface-200);
+  background: var(--p-content-hover-background);
+  color: var(--p-text-muted-color);
   padding: 0.1rem 0.3rem;
   border-radius: 3px;
   margin-left: 0.25rem;
@@ -863,7 +864,7 @@ watch(
 }
 
 :deep(.p-tree-node-content:hover) {
-  background: var(--p-surface-100);
+  background: var(--p-content-hover-background);
 }
 
 :deep(.p-tree-node-content.p-highlight) {
