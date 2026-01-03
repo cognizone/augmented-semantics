@@ -233,29 +233,46 @@ async function loadTopConcepts(offset = 0) {
 
   // Query gets all label types (including SKOS-XL) and notation - we pick best one in code
   // Top concepts are found via: topConceptOf, hasTopConcept (inverse), or no broader (fallback)
-  // Fetch PAGE_SIZE + 1 to detect if there are more results
+  // Use subquery to paginate by DISTINCT concepts, not by label rows
   const deprecationSelectVars = getDeprecationSelectVars()
   const deprecationClauses = getDeprecationSparqlClauses('?concept')
 
   const query = withPrefixes(`
-    SELECT DISTINCT ?concept ?label ?labelLang ?labelType ?notation (COUNT(DISTINCT ?narrower) AS ?narrowerCount) ${deprecationSelectVars}
+    SELECT ?concept ?label ?labelLang ?labelType ?notation ?narrowerCount ${deprecationSelectVars}
     WHERE {
       {
-        # Explicit top concept via topConceptOf or hasTopConcept
-        ?concept a skos:Concept .
-        ?concept skos:inScheme <${scheme.uri}> .
-        { ?concept skos:topConceptOf <${scheme.uri}> }
-        UNION
-        { <${scheme.uri}> skos:hasTopConcept ?concept }
+        # Subquery to get paginated distinct concepts with narrower count
+        SELECT DISTINCT ?concept (COUNT(DISTINCT ?narrower) AS ?narrowerCount) ${deprecationSelectVars}
+        WHERE {
+          {
+            # Explicit top concept via topConceptOf or hasTopConcept
+            ?concept a skos:Concept .
+            ?concept skos:inScheme <${scheme.uri}> .
+            { ?concept skos:topConceptOf <${scheme.uri}> }
+            UNION
+            { <${scheme.uri}> skos:hasTopConcept ?concept }
+          }
+          UNION
+          {
+            # Fallback: concepts with no broader relationship (neither direction)
+            ?concept a skos:Concept .
+            ?concept skos:inScheme <${scheme.uri}> .
+            FILTER NOT EXISTS { ?concept skos:broader ?broader }
+            FILTER NOT EXISTS { ?parent skos:narrower ?concept }
+          }
+          OPTIONAL {
+            { ?narrower skos:broader ?concept }
+            UNION
+            { ?concept skos:narrower ?narrower }
+          }
+          ${deprecationClauses}
+        }
+        GROUP BY ?concept ${deprecationSelectVars}
+        ORDER BY ?concept
+        LIMIT ${PAGE_SIZE + 1}
+        OFFSET ${offset}
       }
-      UNION
-      {
-        # Fallback: concepts with no broader relationship (neither direction)
-        ?concept a skos:Concept .
-        ?concept skos:inScheme <${scheme.uri}> .
-        FILTER NOT EXISTS { ?concept skos:broader ?broader }
-        FILTER NOT EXISTS { ?parent skos:narrower ?concept }
-      }
+      # Get labels and notations for the paginated concepts
       OPTIONAL { ?concept skos:notation ?notation }
       OPTIONAL {
         {
@@ -273,17 +290,7 @@ async function loadTopConcepts(offset = 0) {
         }
         BIND(LANG(?label) AS ?labelLang)
       }
-      OPTIONAL {
-        { ?narrower skos:broader ?concept }
-        UNION
-        { ?concept skos:narrower ?narrower }
-      }
-      ${deprecationClauses}
     }
-    GROUP BY ?concept ?label ?labelLang ?labelType ?notation ${deprecationSelectVars}
-    ORDER BY ?concept ?label
-    LIMIT ${PAGE_SIZE + 1}
-    OFFSET ${offset}
   `)
 
   logger.debug('ConceptTree', 'Top concepts query', { query })
@@ -419,16 +426,34 @@ async function loadChildren(uri: string, offset = 0) {
 
   logger.debug('ConceptTree', 'Loading children', { parent: uri, offset, pageSize: PAGE_SIZE })
 
+  // Use subquery to paginate by DISTINCT concepts, not by label rows
   const deprecationSelectVarsChild = getDeprecationSelectVars()
   const deprecationClausesChild = getDeprecationSparqlClauses('?concept')
 
   const query = withPrefixes(`
-    SELECT DISTINCT ?concept ?label ?labelLang ?labelType ?notation (COUNT(DISTINCT ?narrower) AS ?narrowerCount) ${deprecationSelectVarsChild}
+    SELECT ?concept ?label ?labelLang ?labelType ?notation ?narrowerCount ${deprecationSelectVarsChild}
     WHERE {
-      # Find children via broader or narrower (inverse)
-      { ?concept skos:broader <${uri}> }
-      UNION
-      { <${uri}> skos:narrower ?concept }
+      {
+        # Subquery to get paginated distinct children with narrower count
+        SELECT DISTINCT ?concept (COUNT(DISTINCT ?narrower) AS ?narrowerCount) ${deprecationSelectVarsChild}
+        WHERE {
+          # Find children via broader or narrower (inverse)
+          { ?concept skos:broader <${uri}> }
+          UNION
+          { <${uri}> skos:narrower ?concept }
+          OPTIONAL {
+            { ?narrower skos:broader ?concept }
+            UNION
+            { ?concept skos:narrower ?narrower }
+          }
+          ${deprecationClausesChild}
+        }
+        GROUP BY ?concept ${deprecationSelectVarsChild}
+        ORDER BY ?concept
+        LIMIT ${PAGE_SIZE + 1}
+        OFFSET ${offset}
+      }
+      # Get labels and notations for the paginated concepts
       OPTIONAL { ?concept skos:notation ?notation }
       OPTIONAL {
         {
@@ -446,17 +471,7 @@ async function loadChildren(uri: string, offset = 0) {
         }
         BIND(LANG(?label) AS ?labelLang)
       }
-      OPTIONAL {
-        { ?narrower skos:broader ?concept }
-        UNION
-        { ?concept skos:narrower ?narrower }
-      }
-      ${deprecationClausesChild}
     }
-    GROUP BY ?concept ?label ?labelLang ?labelType ?notation ${deprecationSelectVarsChild}
-    ORDER BY ?concept ?label
-    LIMIT ${PAGE_SIZE + 1}
-    OFFSET ${offset}
   `)
 
   try {
