@@ -9,7 +9,7 @@ Component for hierarchical browsing of SKOS concepts.
 Display root concepts within selected scheme. Top concepts are identified via:
 
 1. **Explicit marking**: `skos:topConceptOf` or scheme's `skos:hasTopConcept`
-2. **Fallback**: Concepts with no `skos:broader` relationship
+2. **Fallback**: Concepts with no hierarchical parent (neither `skos:broader` nor inverse `skos:narrower`)
 
 **Query:**
 ```sparql
@@ -31,10 +31,11 @@ WHERE {
   }
   UNION
   {
-    # Fallback: concepts with no broader relationship
+    # Fallback: concepts with no broader relationship (neither direction)
     ?concept a skos:Concept .
     ?concept skos:inScheme <SCHEME_URI> .
     FILTER NOT EXISTS { ?concept skos:broader ?broader }
+    FILTER NOT EXISTS { ?parent skos:narrower ?concept }
   }
   OPTIONAL { ?concept skos:notation ?notation }
   OPTIONAL {
@@ -47,7 +48,12 @@ WHERE {
     { ?concept rdfs:label ?label . BIND("rdfsLabel" AS ?labelType) }
     BIND(LANG(?label) AS ?labelLang)
   }
-  OPTIONAL { ?narrower skos:broader ?concept }
+  # Count children via broader or narrower (supports both directions)
+  OPTIONAL {
+    { ?narrower skos:broader ?concept }
+    UNION
+    { ?concept skos:narrower ?narrower }
+  }
 }
 GROUP BY ?concept ?label ?labelLang ?labelType ?notation
 ORDER BY ?concept ?label
@@ -58,7 +64,7 @@ LIMIT 2000
 
 ### Hierarchical Expansion
 
-Load narrower concepts on demand when user expands a node.
+Load narrower concepts on demand when user expands a node. Supports both `skos:broader` and `skos:narrower` relationships.
 
 **Query:**
 ```sparql
@@ -70,7 +76,10 @@ PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 SELECT DISTINCT ?concept ?label ?labelLang ?labelType ?notation
        (COUNT(DISTINCT ?narrower) AS ?narrowerCount)
 WHERE {
-  ?concept skos:broader <PARENT_URI> .
+  # Find children via broader or narrower (supports both directions)
+  { ?concept skos:broader <PARENT_URI> }
+  UNION
+  { <PARENT_URI> skos:narrower ?concept }
   OPTIONAL { ?concept skos:notation ?notation }
   OPTIONAL {
     { ?concept skos:prefLabel ?label . BIND("prefLabel" AS ?labelType) }
@@ -82,7 +91,12 @@ WHERE {
     { ?concept rdfs:label ?label . BIND("rdfsLabel" AS ?labelType) }
     BIND(LANG(?label) AS ?labelLang)
   }
-  OPTIONAL { ?narrower skos:broader ?concept }
+  # Count grandchildren via broader or narrower
+  OPTIONAL {
+    { ?narrower skos:broader ?concept }
+    UNION
+    { ?concept skos:narrower ?narrower }
+  }
 }
 GROUP BY ?concept ?label ?labelLang ?labelType ?notation
 ORDER BY ?concept ?label

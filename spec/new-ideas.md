@@ -6,5 +6,4 @@ New ideas: copy them into ideas.md, remove the list here (but keep the file and 
 - still recent concepts does not use full vertical space!!!
 - we should add the type somewhere in the "main component part" (typically concept?!)
     as a side issue one we are there (in inconsistent state) we cannot select other concept scheme anymore
-- dark mode
 - is it possible to have broader and not narrower?

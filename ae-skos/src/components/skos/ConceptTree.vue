@@ -250,10 +250,11 @@ async function loadTopConcepts(offset = 0) {
       }
       UNION
       {
-        # Fallback: concepts with no broader relationship
+        # Fallback: concepts with no broader relationship (neither direction)
         ?concept a skos:Concept .
         ?concept skos:inScheme <${scheme.uri}> .
         FILTER NOT EXISTS { ?concept skos:broader ?broader }
+        FILTER NOT EXISTS { ?parent skos:narrower ?concept }
       }
       OPTIONAL { ?concept skos:notation ?notation }
       OPTIONAL {
@@ -272,7 +273,11 @@ async function loadTopConcepts(offset = 0) {
         }
         BIND(LANG(?label) AS ?labelLang)
       }
-      OPTIONAL { ?narrower skos:broader ?concept }
+      OPTIONAL {
+        { ?narrower skos:broader ?concept }
+        UNION
+        { ?concept skos:narrower ?narrower }
+      }
       ${deprecationClauses}
     }
     GROUP BY ?concept ?label ?labelLang ?labelType ?notation ${deprecationSelectVars}
@@ -420,7 +425,10 @@ async function loadChildren(uri: string, offset = 0) {
   const query = withPrefixes(`
     SELECT DISTINCT ?concept ?label ?labelLang ?labelType ?notation (COUNT(DISTINCT ?narrower) AS ?narrowerCount) ${deprecationSelectVarsChild}
     WHERE {
-      ?concept skos:broader <${uri}> .
+      # Find children via broader or narrower (inverse)
+      { ?concept skos:broader <${uri}> }
+      UNION
+      { <${uri}> skos:narrower ?concept }
       OPTIONAL { ?concept skos:notation ?notation }
       OPTIONAL {
         {
@@ -438,7 +446,11 @@ async function loadChildren(uri: string, offset = 0) {
         }
         BIND(LANG(?label) AS ?labelLang)
       }
-      OPTIONAL { ?narrower skos:broader ?concept }
+      OPTIONAL {
+        { ?narrower skos:broader ?concept }
+        UNION
+        { ?concept skos:narrower ?narrower }
+      }
       ${deprecationClausesChild}
     }
     GROUP BY ?concept ?label ?labelLang ?labelType ?notation ${deprecationSelectVarsChild}

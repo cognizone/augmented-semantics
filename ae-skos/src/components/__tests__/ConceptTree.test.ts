@@ -276,4 +276,38 @@ describe('ConceptTree', () => {
       expect(languageStore.preferred).toBe('en')
     })
   })
+
+  describe('SPARQL query patterns', () => {
+    beforeEach(() => {
+      const schemeStore = useSchemeStore()
+      schemeStore.schemes = [
+        { uri: 'http://example.org/scheme/1', label: 'Test Scheme' },
+      ]
+      schemeStore.selectScheme('http://example.org/scheme/1')
+    })
+
+    it('top concepts query supports both skos:broader and skos:narrower for fallback', async () => {
+      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
+
+      mountConceptTree()
+      await flushPromises()
+
+      const query = (executeSparql as Mock).mock.calls[0][1]
+      // Fallback should check both directions
+      expect(query).toContain('FILTER NOT EXISTS { ?concept skos:broader ?broader }')
+      expect(query).toContain('FILTER NOT EXISTS { ?parent skos:narrower ?concept }')
+    })
+
+    it('top concepts query counts children via both skos:broader and skos:narrower', async () => {
+      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
+
+      mountConceptTree()
+      await flushPromises()
+
+      const query = (executeSparql as Mock).mock.calls[0][1]
+      // Child counting should use UNION for both directions
+      expect(query).toContain('?narrower skos:broader ?concept')
+      expect(query).toContain('?concept skos:narrower ?narrower')
+    })
+  })
 })
