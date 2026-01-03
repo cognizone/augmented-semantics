@@ -288,4 +288,125 @@ describe('useLabelResolver', () => {
       expect(result[3]?.lang).toBe('es') // then alphabetical
     })
   })
+
+  describe('selectConceptLabel', () => {
+    it('selects prefLabel over rdfsLabel', () => {
+      const languageStore = useLanguageStore()
+      languageStore.setPreferred('en')
+
+      const { selectConceptLabel } = useLabelResolver()
+      const result = selectConceptLabel({
+        prefLabels: [{ value: 'prefLabel value', lang: 'en' }],
+        rdfsLabels: [{ value: 'rdfs value', lang: 'en' }],
+      })
+
+      expect(result?.value).toBe('prefLabel value')
+    })
+
+    it('falls back to xlPrefLabel when no prefLabel', () => {
+      const languageStore = useLanguageStore()
+      languageStore.setPreferred('en')
+
+      const { selectConceptLabel } = useLabelResolver()
+      const result = selectConceptLabel({
+        prefLabels: [],
+        prefLabelsXL: [{
+          uri: 'http://example.org/xl',
+          literalForm: { value: 'xl value', lang: 'en' }
+        }],
+        rdfsLabels: [{ value: 'rdfs value', lang: 'en' }],
+      })
+
+      expect(result?.value).toBe('xl value')
+    })
+
+    it('falls back to rdfsLabel when no prefLabel or xlPrefLabel', () => {
+      const languageStore = useLanguageStore()
+      languageStore.setPreferred('en')
+
+      const { selectConceptLabel } = useLabelResolver()
+      const result = selectConceptLabel({
+        prefLabels: [],
+        prefLabelsXL: [],
+        rdfsLabels: [{ value: 'rdfs value', lang: 'en' }],
+      })
+
+      expect(result?.value).toBe('rdfs value')
+    })
+
+    it('returns null when no labels available', () => {
+      const { selectConceptLabel } = useLabelResolver()
+      const result = selectConceptLabel({})
+
+      expect(result).toBeNull()
+    })
+  })
+
+  describe('selectSchemeLabel', () => {
+    it('selects prefLabel over title and rdfsLabel', () => {
+      const languageStore = useLanguageStore()
+      languageStore.setPreferred('en')
+
+      const { selectSchemeLabel } = useLabelResolver()
+      const result = selectSchemeLabel({
+        prefLabels: [{ value: 'prefLabel value', lang: 'en' }],
+        titles: [{ value: 'title value', lang: 'en' }],
+        rdfsLabels: [{ value: 'rdfs value', lang: 'en' }],
+      })
+
+      expect(result?.value).toBe('prefLabel value')
+    })
+
+    it('falls back to title when no prefLabel', () => {
+      const languageStore = useLanguageStore()
+      languageStore.setPreferred('en')
+
+      const { selectSchemeLabel } = useLabelResolver()
+      const result = selectSchemeLabel({
+        prefLabels: [],
+        titles: [{ value: 'title value', lang: 'en' }],
+        rdfsLabels: [{ value: 'rdfs value', lang: 'en' }],
+      })
+
+      expect(result?.value).toBe('title value')
+    })
+
+    it('falls back to rdfsLabel when no prefLabel or title', () => {
+      const languageStore = useLanguageStore()
+      languageStore.setPreferred('en')
+
+      const { selectSchemeLabel } = useLabelResolver()
+      const result = selectSchemeLabel({
+        prefLabels: [],
+        titles: [],
+        rdfsLabels: [{ value: 'rdfs value', lang: 'en' }],
+      })
+
+      expect(result?.value).toBe('rdfs value')
+    })
+
+    it('returns null when no labels available', () => {
+      const { selectSchemeLabel } = useLabelResolver()
+      const result = selectSchemeLabel({})
+
+      expect(result).toBeNull()
+    })
+
+    it('respects language priority within each label type', () => {
+      const languageStore = useLanguageStore()
+      languageStore.setPreferred('fr')
+
+      const { selectSchemeLabel } = useLabelResolver()
+      const result = selectSchemeLabel({
+        prefLabels: [],
+        titles: [
+          { value: 'English title', lang: 'en' },
+          { value: 'French title', lang: 'fr' },
+        ],
+      })
+
+      expect(result?.value).toBe('French title')
+      expect(result?.lang).toBe('fr')
+    })
+  })
 })

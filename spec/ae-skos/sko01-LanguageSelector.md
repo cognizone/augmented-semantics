@@ -18,6 +18,42 @@ When displaying a label, the system tries languages in this order:
 3. **Labels without language tag**
 4. **First available label**
 
+### Label Property Priority by Resource Type
+
+Different resource types have different property fallback orders:
+
+**Concepts** (`selectConceptLabel`):
+1. `skos:prefLabel`
+2. `skosxl:prefLabel` (SKOS-XL)
+3. `rdfs:label`
+
+**Schemes** (`selectSchemeLabel`):
+1. `skos:prefLabel`
+2. `skosxl:prefLabel` (SKOS-XL)
+3. `dct:title`
+4. `rdfs:label`
+
+```typescript
+// For concepts - no dct:title in fallback chain
+const conceptLabel = selectConceptLabel({
+  prefLabels: concept.prefLabels,
+  prefLabelsXL: concept.prefLabelsXL,
+  rdfsLabels: concept.rdfsLabels,
+})
+
+// For schemes - includes dct:title
+const schemeLabel = selectSchemeLabel({
+  prefLabels: scheme.prefLabels,
+  prefLabelsXL: scheme.prefLabelsXL,
+  titles: scheme.title,
+  rdfsLabels: scheme.rdfsLabels,
+})
+```
+
+### Language Selection Within Property
+
+For each property type, languages are tried in this order:
+
 ```typescript
 function selectLabel(labels: LabelValue[]): LabelValue | null {
   if (!labels?.length) return null

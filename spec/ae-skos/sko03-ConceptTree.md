@@ -227,12 +227,19 @@ If selectedUri exists → reveal concept
 
 ## Label Resolution (Consistent Across All Components)
 
-All components (Tree, Breadcrumb, Details, Search) MUST use the same label resolution logic:
+All components (Tree, Breadcrumb, Details, Search) MUST use the centralized label resolution functions from `useLabelResolver`.
 
-### Property Priority
+### Property Priority by Resource Type
+
+**Concepts** (`selectConceptLabel`):
 1. `skos:prefLabel` - primary SKOS label
 2. `skosxl:prefLabel/skosxl:literalForm` - SKOS-XL extended label
-3. `dct:title` - common for schemes and resources
+3. `rdfs:label` - generic fallback
+
+**Schemes** (`selectSchemeLabel`):
+1. `skos:prefLabel` - primary SKOS label
+2. `skosxl:prefLabel/skosxl:literalForm` - SKOS-XL extended label
+3. `dct:title` - common for schemes
 4. `rdfs:label` - generic fallback
 
 ### Language Priority (for each property)
@@ -272,27 +279,29 @@ function getDisplayLabel(notation?: string, label?: string, uri?: string): strin
 }
 ```
 
-### Label Fetching
-Fetch all labels with all language tags, then pick the best one in code:
+### Label Selection Functions
+
+Use the centralized functions from `useLabelResolver`:
 
 ```typescript
-function pickBestLabel(labels: { value: string; lang: string; type: string }[]): string | undefined {
-  const labelPriority = ['prefLabel', 'title', 'rdfsLabel']
+import { useLabelResolver } from '@/composables'
 
-  for (const labelType of labelPriority) {
-    const labelsOfType = labels.filter(l => l.type === labelType)
-    if (!labelsOfType.length) continue
+const { selectConceptLabel, selectSchemeLabel } = useLabelResolver()
 
-    const preferred = labelsOfType.find(l => l.lang === preferredLang)
-    const fallback = labelsOfType.find(l => l.lang === fallbackLang)
-    const noLang = labelsOfType.find(l => l.lang === '')
-    const any = labelsOfType[0]
+// For concepts
+const conceptLabel = selectConceptLabel({
+  prefLabels: details.prefLabels,
+  prefLabelsXL: details.prefLabelsXL,
+  rdfsLabels: details.rdfsLabels,
+})
 
-    const best = preferred?.value || fallback?.value || noLang?.value || any?.value
-    if (best) return best
-  }
-  return undefined
-}
+// For schemes
+const schemeLabel = selectSchemeLabel({
+  prefLabels: details.prefLabels,
+  prefLabelsXL: details.prefLabelsXL,
+  titles: details.title,
+  rdfsLabels: details.rdfsLabels,
+})
 ```
 
 ### Direct URI Lookup
