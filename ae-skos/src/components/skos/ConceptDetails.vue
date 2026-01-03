@@ -810,7 +810,7 @@ watch(
 
 .datatype-tag {
   font-size: 0.625rem;
-  font-family: monospace;
+  font-family: var(--ae-font-mono);
   background: var(--ae-bg-hover);
   color: var(--ae-text-secondary);
   padding: 0.1rem 0.3rem;
@@ -916,7 +916,7 @@ watch(
 
 /* Other Properties */
 .predicate-label {
-  font-family: monospace;
+  font-family: var(--ae-font-mono);
   font-size: 0.8rem;
 }
 

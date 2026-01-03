@@ -732,7 +732,7 @@ watch(
 
 /* Other Properties */
 .predicate-label {
-  font-family: monospace;
+  font-family: var(--ae-font-mono);
   font-size: 0.8rem;
 }
 

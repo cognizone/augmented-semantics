@@ -373,7 +373,7 @@ function formatDate(dateStr?: string) {
 }
 
 .url-cell {
-  font-family: monospace;
+  font-family: var(--ae-font-mono);
   font-size: 0.75rem;
   color: var(--p-text-muted-color);
 }

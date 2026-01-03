@@ -27,6 +27,12 @@
   --ae-status-success: #22c55e;
   --ae-status-warning: #f59e0b;
   --ae-status-error: #ef4444;
+
+  /* Fonts */
+  --ae-font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --ae-font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas,
+    'Liberation Mono', monospace;
 }
 
 .dark-mode {
@@ -70,8 +76,7 @@ body {
   padding: 0;
   background-color: var(--ae-bg-base);
   color: var(--ae-text-primary);
-  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
-    Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family: var(--ae-font-sans);
   font-size: 14px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
@@ -198,8 +203,7 @@ a:hover {
 
 /* Monospace text (for URIs, code) */
 .mono {
-  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas,
-    'Liberation Mono', monospace;
+  font-family: var(--ae-font-mono);
   font-size: 0.875em;
 }
 
@@ -219,8 +223,7 @@ a:hover {
 .p-select-overlay,
 .p-dialog,
 .p-popover {
-  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
-    Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family: var(--ae-font-sans);
 }
 
 /* Reusable dropdown trigger button */
@@ -377,8 +380,7 @@ a:hover {
 }
 
 .p-dialog-title {
-  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
-    Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family: var(--ae-font-sans);
   font-size: 0.875rem;
   font-weight: 600;
   color: var(--ae-text-primary);
@@ -390,12 +392,17 @@ a:hover {
 }
 
 .p-dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.5rem;
   padding: 0.75rem 1.25rem;
   border-top: 1px solid var(--ae-border-color);
 }
 
 /* Button styling */
 .p-button {
+  font-family: var(--ae-font-sans);
   font-size: 0.8125rem;
   padding: 0.5rem 0.875rem;
   border-radius: 4px;

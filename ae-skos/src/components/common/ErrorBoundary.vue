@@ -195,7 +195,7 @@ h2 {
 
 .detail-section code {
   display: block;
-  font-family: monospace;
+  font-family: var(--ae-font-mono);
   font-size: 0.875rem;
   color: var(--p-red-600);
   word-break: break-word;
@@ -203,7 +203,7 @@ h2 {
 
 .detail-section pre {
   margin: 0;
-  font-family: monospace;
+  font-family: var(--ae-font-mono);
   font-size: 0.75rem;
   white-space: pre-wrap;
   word-break: break-word;

@@ -547,6 +547,6 @@ onUnmounted(() => {
 }
 
 .rule-value {
-  font-family: monospace;
+  font-family: var(--ae-font-mono);
 }
 </style>

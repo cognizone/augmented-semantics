@@ -161,7 +161,7 @@ function handleClose() {
 }
 
 .rdf-content {
-  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-family: var(--ae-font-mono);
   font-size: 0.7rem;
   width: 100%;
   background: var(--p-content-hover-background);

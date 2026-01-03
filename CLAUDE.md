@@ -153,6 +153,13 @@ Always use CSS variables from `style.css`:
 - `--ae-border-color` for borders
 - `--ae-accent` for interactive elements
 
+### Font Variables
+
+| Variable | Usage |
+|----------|-------|
+| `--ae-font-sans` | Primary UI font (Inter) |
+| `--ae-font-mono` | Code, URIs, technical values |
+
 ## User Environment
 
 - Screenshots are located in `~/Documents`
