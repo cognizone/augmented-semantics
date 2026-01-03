@@ -112,8 +112,9 @@ const treeNodes = computed((): TreeNode[] => {
   const topNodes = conceptStore.topConcepts.map(node => convertToTreeNode(node))
 
   // If a scheme is selected, wrap top concepts under the scheme as root
+  // Always show the scheme node, even if it has no concepts
   const scheme = schemeStore.selected
-  if (scheme && topNodes.length > 0) {
+  if (scheme) {
     return [{
       key: scheme.uri,
       label: scheme.label || scheme.uri.split('/').pop() || scheme.uri,
@@ -124,7 +125,7 @@ const treeNodes = computed((): TreeNode[] => {
         showLangTag: scheme.labelLang ? shouldShowLangTag(scheme.labelLang) : false,
         lang: scheme.labelLang,
       },
-      leaf: false,
+      leaf: topNodes.length === 0,
       children: topNodes,
     }]
   }
@@ -851,8 +852,8 @@ watch(
       <span>Loading concepts...{{ treeLoadingElapsed.show.value ? ` (${treeLoadingElapsed.elapsed.value}s)` : '' }}</span>
     </div>
 
-    <!-- Empty state -->
-    <div v-else-if="!conceptStore.loadingTree && !conceptStore.topConcepts.length && !error" class="empty-state">
+    <!-- Empty state (only when no treeNodes - scheme or concepts) -->
+    <div v-else-if="!conceptStore.loadingTree && !treeNodes.length && !error" class="empty-state">
       <span class="material-symbols-outlined empty-icon">folder_open</span>
       <p>No concepts found</p>
       <small v-if="!schemeStore.selected">Select a concept scheme to browse</small>
