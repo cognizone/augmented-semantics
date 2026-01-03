@@ -7,7 +7,7 @@
  *
  * @see /spec/common/com04-URLRouting.md
  */
-import { computed, watch, onMounted, ref } from 'vue'
+import { computed, watch, onMounted, ref, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUIStore, useConceptStore, useSchemeStore, useLanguageStore, useEndpointStore } from '../stores'
 import { URL_PARAMS } from '../router'
@@ -56,21 +56,30 @@ function browseScheme(schemeUri: string) {
 }
 
 // Handle history selection - may need to switch endpoint/scheme
-function selectFromHistory(entry: { uri: string; endpointUrl?: string; schemeUri?: string }) {
+async function selectFromHistory(entry: { uri: string; endpointUrl?: string; schemeUri?: string }) {
+  let needsWait = false
+
   // Switch endpoint if different
   if (entry.endpointUrl && entry.endpointUrl !== endpointStore.current?.url) {
     const endpoint = endpointStore.endpoints.find(e => e.url === entry.endpointUrl)
     if (endpoint) {
       endpointStore.selectEndpoint(endpoint.id)
+      needsWait = true
     }
   }
 
   // Switch scheme if different
   if (entry.schemeUri && entry.schemeUri !== schemeStore.selectedUri) {
     schemeStore.selectScheme(entry.schemeUri)
+    needsWait = true
   }
 
-  // Select the concept
+  // Wait for Vue reactivity to propagate endpoint/scheme changes
+  if (needsWait) {
+    await nextTick()
+  }
+
+  // Select the concept (now with correct endpoint/scheme context)
   selectConcept(entry.uri)
 }
 

@@ -11,7 +11,7 @@
  *
  * @see /spec/ae-skos/sko03-ConceptTree.md
  */
-import { ref, watch, computed } from 'vue'
+import { ref, watch, computed, nextTick } from 'vue'
 import { useConceptStore, useEndpointStore, useSchemeStore, useLanguageStore } from '../../stores'
 import { executeSparql, withPrefixes, logger } from '../../services'
 import { useDelayedLoading, useLabelResolver, useElapsedTime, useDeprecation } from '../../composables'
@@ -47,12 +47,13 @@ function pickBestNotation(notations: string[]): string | undefined {
     .filter(n => !isNaN(n.num))
     .sort((a, b) => a.num - b.num)
 
-  if (numericNotations.length > 0) {
+  if (numericNotations.length > 0 && numericNotations[0]) {
     return numericNotations[0].value
   }
 
   // No numeric notations, return first alphabetically
-  return notations.sort()[0]
+  const sorted = notations.sort()
+  return sorted[0]
 }
 
 /**
@@ -106,7 +107,6 @@ const childrenPagination = ref<Map<string, { offset: number; hasMore: boolean; l
 const error = ref<string | null>(null)
 const loadingChildren = ref<Set<string>>(new Set())
 const gotoUri = ref('')
-const treeContainerRef = ref<HTMLElement | null>(null)
 
 // Convert our ConceptNode[] to PrimeVue tree format
 // If a scheme is selected, show it as the root with top concepts as children
@@ -561,14 +561,6 @@ async function loadChildren(uri: string, offset = 0) {
   }
 }
 
-// Load more children for a node (next page)
-async function loadMoreChildren(uri: string) {
-  const pagination = childrenPagination.value.get(uri)
-  if (!pagination || !pagination.hasMore || pagination.loading) return
-  const nextOffset = pagination.offset + PAGE_SIZE
-  await loadChildren(uri, nextOffset)
-}
-
 // Handle node expand
 function onNodeExpand(node: TreeNode) {
   const conceptNode = node.data as ConceptNode | undefined
@@ -627,6 +619,118 @@ function goToUri() {
   }
 }
 
+// Fetch ancestor path for a concept (from root to parent)
+async function fetchAncestorPath(uri: string): Promise<{ uri: string; label?: string; notation?: string }[]> {
+  const endpoint = endpointStore.current
+  if (!endpoint) return []
+
+  logger.debug('ConceptTree', 'Fetching ancestor path', { concept: uri })
+
+  // Query all ancestors with their depth (distance from concept)
+  const query = withPrefixes(`
+    SELECT DISTINCT ?ancestor ?label ?notation ?depth
+    WHERE {
+      <${uri}> skos:broader+ ?ancestor .
+      {
+        SELECT ?ancestor (COUNT(?mid) AS ?depth)
+        WHERE {
+          <${uri}> skos:broader+ ?mid .
+          ?mid skos:broader* ?ancestor .
+          ?ancestor skos:broader* ?root .
+          FILTER NOT EXISTS { ?root skos:broader ?parent }
+        }
+        GROUP BY ?ancestor
+      }
+      OPTIONAL { ?ancestor skos:prefLabel ?label . FILTER(LANG(?label) = "${languageStore.preferred}" || LANG(?label) = "") }
+      OPTIONAL { ?ancestor skos:notation ?notation }
+    }
+    ORDER BY DESC(?depth)
+  `)
+
+  try {
+    const results = await executeSparql(endpoint, query, { retries: 1 })
+
+    const ancestors: { uri: string; label?: string; notation?: string }[] = []
+    const seen = new Set<string>()
+
+    for (const b of results.results.bindings) {
+      const ancestorUri = b.ancestor?.value
+      if (!ancestorUri || seen.has(ancestorUri)) continue
+      seen.add(ancestorUri)
+
+      ancestors.push({
+        uri: ancestorUri,
+        label: b.label?.value,
+        notation: b.notation?.value,
+      })
+    }
+
+    logger.debug('ConceptTree', `Found ${ancestors.length} ancestors`, { ancestors: ancestors.map(a => a.uri) })
+    return ancestors
+  } catch (e) {
+    logger.error('ConceptTree', 'Failed to fetch ancestor path', { concept: uri, error: e })
+    return []
+  }
+}
+
+// Reveal a concept in the tree (expand ancestors and scroll to it)
+async function revealConcept(uri: string) {
+  logger.info('ConceptTree', 'Revealing concept in tree', { uri })
+
+  // Fetch ancestor path
+  const ancestors = await fetchAncestorPath(uri)
+
+  // Expand each ancestor (loading children if needed)
+  for (const ancestor of ancestors) {
+    // Expand the ancestor node
+    conceptStore.expandNode(ancestor.uri)
+
+    // Load children if not already loaded
+    const existingNode = findNode(ancestor.uri, conceptStore.topConcepts)
+    if (existingNode && existingNode.hasNarrower && !existingNode.children) {
+      await loadChildren(ancestor.uri)
+    }
+  }
+
+  // Also expand the scheme if present
+  if (schemeStore.selectedUri) {
+    conceptStore.expandNode(schemeStore.selectedUri)
+  }
+
+  // Scroll to the concept after DOM updates
+  await nextTick()
+  scrollToNode(uri)
+}
+
+// Scroll to a node in the tree
+function scrollToNode(uri: string) {
+  // Find the tree node element by its key
+  const treeWrapper = document.querySelector('.tree-wrapper')
+  if (!treeWrapper) return
+
+  // PrimeVue Tree uses data-p-key attribute for node identification
+  const nodeElement = treeWrapper.querySelector(`[data-pc-section="nodechildren"] [data-p-key="${CSS.escape(uri)}"]`) ||
+                      treeWrapper.querySelector(`[data-pc-section="nodetogglebutton"]`)?.closest(`[data-p-key="${CSS.escape(uri)}"]`)
+
+  // Alternative: find by checking the node content
+  if (!nodeElement) {
+    // Try to find by traversing the tree
+    const allNodes = treeWrapper.querySelectorAll('.p-tree-node')
+    for (const node of allNodes) {
+      const nodeContent = node as HTMLElement
+      // Check if this node's key matches (stored in data attribute or component data)
+      if (nodeContent.getAttribute('data-p-key') === uri) {
+        nodeContent.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        return
+      }
+    }
+  }
+
+  if (nodeElement) {
+    (nodeElement as HTMLElement).scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }
+}
+
 // Infinite scroll handler - load more when near bottom
 function onTreeScroll(event: Event) {
   const el = event.target as HTMLElement
@@ -638,9 +742,9 @@ function onTreeScroll(event: Event) {
 }
 
 // Watch for scheme/endpoint changes
-// Use selected?.uri (not selectedUri) so we react when schemes finish loading
+// Use selectedUri directly so we react immediately when scheme changes (e.g., from history)
 watch(
-  () => [schemeStore.selected?.uri, endpointStore.current?.id] as const,
+  () => [schemeStore.selectedUri, endpointStore.current?.id] as const,
   ([newScheme, newEndpoint], oldValue) => {
     const [oldScheme, oldEndpoint] = oldValue || [null, undefined]
     if (newEndpoint && (newScheme !== oldScheme || newEndpoint !== oldEndpoint)) {
@@ -660,6 +764,41 @@ watch(
     }
   },
   { deep: true }
+)
+
+// Reveal concept in tree when selected from history/search/URL
+// (only if not already visible in the tree)
+async function tryRevealSelectedConcept() {
+  const uri = conceptStore.selectedUri
+  if (!uri || conceptStore.loadingTree) return
+
+  // Check if concept is already in the loaded tree
+  const existingNode = findNode(uri, conceptStore.topConcepts)
+  if (!existingNode) {
+    // Concept not in tree - expand ancestors to reveal it
+    await revealConcept(uri)
+  } else {
+    // Concept is in tree - just scroll to it
+    await nextTick()
+    scrollToNode(uri)
+  }
+}
+
+// Watch for concept selection changes
+watch(
+  () => conceptStore.selectedUri,
+  () => tryRevealSelectedConcept()
+)
+
+// Also trigger reveal when tree finishes loading (handles race condition with history nav)
+watch(
+  () => conceptStore.loadingTree,
+  (loading, wasLoading) => {
+    // When loading finishes, try to reveal the selected concept
+    if (wasLoading && !loading && conceptStore.selectedUri) {
+      tryRevealSelectedConcept()
+    }
+  }
 )
 </script>
 
