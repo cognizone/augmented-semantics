@@ -174,8 +174,9 @@ watch(
     <div v-else-if="details" class="details-content">
       <!-- Header -->
       <div class="details-header">
-        <div class="header-icon-wrapper">
-          <span class="material-symbols-outlined header-icon icon-label">label</span>
+        <div class="header-icon-wrapper" :class="{ 'wrapper-leaf': !details.narrower.length }">
+          <span v-if="details.narrower.length" class="material-symbols-outlined header-icon icon-label">label</span>
+          <span v-else class="material-symbols-outlined header-icon icon-leaf">circle</span>
         </div>
         <div class="header-content">
           <h2 class="concept-label">
@@ -631,6 +632,11 @@ watch(
   background: color-mix(in srgb, var(--ae-icon-label) 15%, transparent);
   border: 1px solid color-mix(in srgb, var(--ae-icon-label) 25%, transparent);
   border-radius: 0.75rem;
+}
+
+.header-icon-wrapper.wrapper-leaf {
+  background: color-mix(in srgb, var(--ae-icon-leaf) 15%, transparent);
+  border-color: color-mix(in srgb, var(--ae-icon-leaf) 25%, transparent);
 }
 
 .header-icon {
