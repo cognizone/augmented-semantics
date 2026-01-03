@@ -22,8 +22,6 @@ import { useConceptStore, useSettingsStore } from '../../stores'
 import { isValidURI } from '../../services'
 import { useDelayedLoading, useLabelResolver, useConceptData, useConceptNavigation, useClipboard, useResourceExport, useDeprecation } from '../../composables'
 import { getPredicateName, formatPropertyValue, getRefLabel } from '../../utils/displayUtils'
-import Button from 'primevue/button'
-import Divider from 'primevue/divider'
 import Message from 'primevue/message'
 import ProgressSpinner from 'primevue/progressspinner'
 import Menu from 'primevue/menu'
@@ -162,7 +160,7 @@ watch(
 
     <!-- Empty state -->
     <div v-else-if="!loading && !details && !error" class="empty-state">
-      <i class="pi pi-info-circle"></i>
+      <span class="material-symbols-outlined empty-icon">info</span>
       <p>No concept selected</p>
       <small>Select a concept from the tree or search</small>
     </div>
@@ -176,57 +174,46 @@ watch(
     <div v-else-if="details" class="details-content">
       <!-- Header -->
       <div class="details-header">
-        <div class="header-left">
+        <div class="header-icon-wrapper">
+          <span class="material-symbols-outlined header-icon icon-label">label</span>
+        </div>
+        <div class="header-content">
           <h2 class="concept-label">
             {{ displayTitle }}
             <span v-if="showHeaderLangTag" class="header-lang-tag">{{ displayLang }}</span>
             <span v-if="details?.deprecated && showDeprecationIndicator" class="deprecation-badge" v-tooltip="'This concept is deprecated'">Deprecated</span>
           </h2>
           <div class="concept-uri">
-            <a v-if="isValidURI(details.uri)" :href="details.uri" target="_blank" class="uri-link">
-              {{ details.uri }}
-              <i class="pi pi-external-link"></i>
-            </a>
-            <span v-else class="uri-text">{{ details.uri }}</span>
-            <Button
-              icon="pi pi-copy"
-              severity="secondary"
-              text
-              rounded
-              size="small"
-              v-tooltip.left="'Copy URI'"
+            <span class="uri-text mono">{{ details.uri }}</span>
+            <button
+              class="copy-btn"
+              title="Copy URI"
               @click="copyToClipboard(details.uri, 'URI')"
-            />
+            >
+              <span class="material-symbols-outlined icon-sm">content_copy</span>
+            </button>
           </div>
         </div>
         <div class="header-actions">
-          <Button
-            icon="pi pi-code"
-            severity="secondary"
-            text
-            rounded
-            size="small"
-            v-tooltip.left="'View RDF'"
-            @click="showRawRdfDialog = true"
-          />
-          <Button
-            icon="pi pi-download"
-            severity="secondary"
-            text
-            rounded
-            size="small"
-            v-tooltip.left="'Export'"
-            @click="(event: Event) => exportMenu.toggle(event)"
-          />
+          <button class="action-btn" title="View RDF" @click="showRawRdfDialog = true">
+            <span class="material-symbols-outlined">code</span>
+          </button>
+          <button class="action-btn" title="Export" @click="(event: Event) => exportMenu.toggle(event)">
+            <span class="material-symbols-outlined">download</span>
+          </button>
+          <a v-if="isValidURI(details.uri)" :href="details.uri" target="_blank" class="action-btn" title="Open in new tab">
+            <span class="material-symbols-outlined">open_in_new</span>
+          </a>
           <Menu ref="exportMenu" :model="exportMenuItems" :popup="true" />
         </div>
       </div>
 
-      <Divider />
-
       <!-- Labels Section - only shown if any label or notation exists -->
       <section v-if="details.prefLabels.length || details.altLabels.length || details.hiddenLabels.length || details.notations.length || details.prefLabelsXL.length || details.altLabelsXL.length || details.hiddenLabelsXL.length" class="details-section">
-        <h3>Labels</h3>
+        <h3 class="section-title">
+          <span class="material-symbols-outlined section-icon">translate</span>
+          Labels
+        </h3>
 
         <div v-if="details.prefLabels.length || details.prefLabelsXL.length" class="property-row">
           <label>Preferred</label>
@@ -298,7 +285,10 @@ watch(
 
       <!-- Documentation Section -->
       <section v-if="details.definitions.length || details.scopeNotes.length || details.historyNotes.length || details.changeNotes.length || details.editorialNotes.length || details.examples.length" class="details-section">
-        <h3>Documentation</h3>
+        <h3 class="section-title">
+          <span class="material-symbols-outlined section-icon">description</span>
+          Documentation
+        </h3>
 
         <div v-if="details.definitions.length" class="property-row">
           <label>Definition</label>
@@ -387,7 +377,10 @@ watch(
 
       <!-- Hierarchy Section -->
       <section v-if="details.broader.length || details.narrower.length" class="details-section">
-        <h3>Hierarchy</h3>
+        <h3 class="section-title">
+          <span class="material-symbols-outlined section-icon">account_tree</span>
+          Hierarchy
+        </h3>
 
         <div v-if="details.broader.length" class="property-row">
           <label>Broader</label>
@@ -420,7 +413,10 @@ watch(
 
       <!-- Relations Section -->
       <section v-if="details.related.length" class="details-section">
-        <h3>Relations</h3>
+        <h3 class="section-title">
+          <span class="material-symbols-outlined section-icon">link</span>
+          Relations
+        </h3>
 
         <div class="property-row">
           <label>Related</label>
@@ -439,7 +435,10 @@ watch(
 
       <!-- Mappings Section -->
       <section v-if="details.exactMatch.length || details.closeMatch.length || details.broadMatch.length || details.narrowMatch.length || details.relatedMatch.length" class="details-section">
-        <h3>Mappings</h3>
+        <h3 class="section-title">
+          <span class="material-symbols-outlined section-icon">swap_horiz</span>
+          Mappings
+        </h3>
 
         <div v-if="details.exactMatch.length" class="property-row">
           <label>Exact Match</label>
@@ -447,7 +446,7 @@ watch(
             <template v-for="uri in details.exactMatch" :key="uri">
               <a v-if="isValidURI(uri)" :href="uri" target="_blank" class="mapping-link">
                 {{ uri.split('/').pop() }}
-                <i class="pi pi-external-link"></i>
+                <span class="material-symbols-outlined link-icon">open_in_new</span>
               </a>
               <span v-else class="mapping-text">{{ uri.split('/').pop() }}</span>
             </template>
@@ -460,7 +459,7 @@ watch(
             <template v-for="uri in details.closeMatch" :key="uri">
               <a v-if="isValidURI(uri)" :href="uri" target="_blank" class="mapping-link">
                 {{ uri.split('/').pop() }}
-                <i class="pi pi-external-link"></i>
+                <span class="material-symbols-outlined link-icon">open_in_new</span>
               </a>
               <span v-else class="mapping-text">{{ uri.split('/').pop() }}</span>
             </template>
@@ -473,7 +472,7 @@ watch(
             <template v-for="uri in details.broadMatch" :key="uri">
               <a v-if="isValidURI(uri)" :href="uri" target="_blank" class="mapping-link">
                 {{ uri.split('/').pop() }}
-                <i class="pi pi-external-link"></i>
+                <span class="material-symbols-outlined link-icon">open_in_new</span>
               </a>
               <span v-else class="mapping-text">{{ uri.split('/').pop() }}</span>
             </template>
@@ -486,7 +485,7 @@ watch(
             <template v-for="uri in details.narrowMatch" :key="uri">
               <a v-if="isValidURI(uri)" :href="uri" target="_blank" class="mapping-link">
                 {{ uri.split('/').pop() }}
-                <i class="pi pi-external-link"></i>
+                <span class="material-symbols-outlined link-icon">open_in_new</span>
               </a>
               <span v-else class="mapping-text">{{ uri.split('/').pop() }}</span>
             </template>
@@ -499,7 +498,7 @@ watch(
             <template v-for="uri in details.relatedMatch" :key="uri">
               <a v-if="isValidURI(uri)" :href="uri" target="_blank" class="mapping-link">
                 {{ uri.split('/').pop() }}
-                <i class="pi pi-external-link"></i>
+                <span class="material-symbols-outlined link-icon">open_in_new</span>
               </a>
               <span v-else class="mapping-text">{{ uri.split('/').pop() }}</span>
             </template>
@@ -509,7 +508,10 @@ watch(
 
       <!-- Scheme Section -->
       <section v-if="details.inScheme.length" class="details-section">
-        <h3>Schemes</h3>
+        <h3 class="section-title">
+          <span class="material-symbols-outlined section-icon">schema</span>
+          Schemes
+        </h3>
         <div class="property-row">
           <label>In Scheme</label>
           <div class="concept-chips">
@@ -527,7 +529,10 @@ watch(
 
       <!-- Other Properties Section -->
       <section v-if="details.otherProperties.length" class="details-section">
-        <h3>Other Properties</h3>
+        <h3 class="section-title">
+          <span class="material-symbols-outlined section-icon">info</span>
+          Other Properties
+        </h3>
         <div v-for="prop in sortedOtherProperties" :key="prop.predicate" class="property-row">
           <label class="predicate-label">
             <a
@@ -537,7 +542,7 @@ watch(
               class="predicate-link"
             >
               {{ getPredicateName(prop.predicate, resolvedPredicates.get(prop.predicate)) }}
-              <i class="pi pi-external-link"></i>
+              <span class="material-symbols-outlined link-icon">open_in_new</span>
             </a>
             <span v-else>{{ getPredicateName(prop.predicate, resolvedPredicates.get(prop.predicate)) }}</span>
           </label>
@@ -550,7 +555,7 @@ watch(
                 class="other-value uri-value"
               >
                 {{ val.value.split('/').pop()?.split('#').pop() }}
-                <i class="pi pi-external-link"></i>
+                <span class="material-symbols-outlined link-icon">open_in_new</span>
               </a>
               <span v-else class="other-value">
                 {{ formatPropertyValue(val.value, val.datatype) }}
@@ -588,12 +593,12 @@ watch(
   justify-content: center;
   gap: 1rem;
   padding: 2rem;
-  color: var(--p-text-muted-color);
+  color: var(--ae-text-secondary);
   flex: 1;
 }
 
-.empty-state i {
-  font-size: 2rem;
+.empty-icon {
+  font-size: 2.5rem;
   opacity: 0.5;
 }
 
@@ -609,34 +614,47 @@ watch(
 .details-content {
   flex: 1;
   overflow: auto;
-  padding: 1rem;
+  padding: 2rem;
+  max-width: 900px;
 }
 
+/* Header */
 .details-header {
   display: flex;
   align-items: flex-start;
-  justify-content: space-between;
   gap: 1rem;
+  margin-bottom: 2rem;
 }
 
-.header-left {
-  display: flex;
-  flex-direction: column;
+.header-icon-wrapper {
+  padding: 0.75rem;
+  background: color-mix(in srgb, var(--ae-icon-label) 15%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ae-icon-label) 25%, transparent);
+  border-radius: 0.75rem;
+}
+
+.header-icon {
+  font-size: 2.5rem;
+}
+
+.header-content {
+  flex: 1;
   min-width: 0;
 }
 
 .concept-label {
-  margin: 0;
-  font-size: 1.25rem;
+  margin: 0 0 0.5rem 0;
+  font-size: 1.75rem;
   font-weight: 600;
+  color: var(--ae-text-primary);
   word-break: break-word;
 }
 
 .header-lang-tag {
   font-size: 0.625rem;
   font-weight: normal;
-  background: var(--p-content-hover-background);
-  color: var(--p-text-muted-color);
+  background: var(--ae-bg-hover);
+  color: var(--ae-text-secondary);
   padding: 0.1rem 0.4rem;
   border-radius: 3px;
   margin-left: 0.5rem;
@@ -646,13 +664,48 @@ watch(
 .deprecation-badge {
   font-size: 0.65rem;
   font-weight: 600;
-  background: color-mix(in srgb, var(--p-orange-500) 20%, transparent);
-  color: var(--p-orange-500);
+  background: color-mix(in srgb, var(--ae-status-warning) 20%, transparent);
+  color: var(--ae-status-warning);
   padding: 0.1rem 0.4rem;
   border-radius: 3px;
   margin-left: 0.5rem;
   vertical-align: middle;
   text-transform: uppercase;
+}
+
+.concept-uri {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  background: var(--ae-bg-elevated);
+  border: 1px solid var(--ae-border-color);
+  border-radius: 4px;
+}
+
+.uri-text {
+  font-size: 0.75rem;
+  color: var(--ae-text-secondary);
+  word-break: break-all;
+}
+
+.copy-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  color: var(--ae-text-secondary);
+  transition: color 0.15s;
+}
+
+.copy-btn:hover {
+  color: var(--ae-text-primary);
 }
 
 .header-actions {
@@ -661,57 +714,59 @@ watch(
   flex-shrink: 0;
 }
 
-.concept-uri {
+.action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--ae-text-secondary);
+  text-decoration: none;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.action-btn:hover {
+  background: var(--ae-bg-hover);
+  color: var(--ae-text-primary);
+}
+
+/* Sections */
+.details-section {
+  margin-bottom: 2rem;
+}
+
+.section-title {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-}
-
-.uri-link {
+  margin: 0 0 1rem 0;
+  padding-bottom: 0.5rem;
   font-size: 0.75rem;
-  color: var(--p-text-muted-color);
-  word-break: break-all;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-
-.uri-link i {
-  font-size: 0.625rem;
-}
-
-.details-section {
-  margin-bottom: 1.5rem;
-}
-
-.section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.section-header h3 {
-  /* margin inherited from .details-section h3 */
-}
-
-.details-section h3 {
-  margin: 0 0 0.75rem 0;
-  font-size: 0.75rem;
-  font-weight: 700;
+  font-weight: 600;
   text-transform: uppercase;
-  color: var(--p-text-color);
   letter-spacing: 0.05em;
+  color: var(--ae-text-secondary);
+  border-bottom: 1px solid var(--ae-border-color);
+}
+
+.section-icon {
+  font-size: 18px;
 }
 
 .property-row {
-  margin-bottom: 0.75rem;
+  margin-bottom: 1rem;
 }
 
 .property-row label {
   display: block;
   font-size: 0.75rem;
   font-weight: 500;
-  color: var(--p-text-muted-color);
+  color: var(--ae-text-secondary);
   margin-bottom: 0.25rem;
 }
 
@@ -728,18 +783,18 @@ watch(
 .label-value:not(:last-child)::after {
   content: '·';
   margin-left: 0.5rem;
-  color: var(--p-text-muted-color);
+  color: var(--ae-text-muted);
 }
 
 .label-value.hidden-label {
   font-style: italic;
-  color: var(--p-text-muted-color);
+  color: var(--ae-text-secondary);
 }
 
 .lang-tag {
   font-size: 0.625rem;
-  background: var(--p-content-hover-background);
-  color: var(--p-text-muted-color);
+  background: var(--ae-bg-hover);
+  color: var(--ae-text-secondary);
   padding: 0.1rem 0.3rem;
   border-radius: 3px;
   margin-left: 0.25rem;
@@ -749,8 +804,8 @@ watch(
 .datatype-tag {
   font-size: 0.625rem;
   font-family: monospace;
-  background: var(--p-content-hover-background);
-  color: var(--p-text-muted-color);
+  background: var(--ae-bg-hover);
+  color: var(--ae-text-secondary);
   padding: 0.1rem 0.3rem;
   border-radius: 3px;
   margin-left: 0.25rem;
@@ -770,9 +825,10 @@ watch(
 
 .notation {
   font-size: 0.875rem;
-  background: var(--p-content-hover-background);
+  background: var(--ae-bg-hover);
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
+  border: 1px solid var(--ae-border-color);
 }
 
 .doc-values {
@@ -802,7 +858,7 @@ watch(
 
 .doc-value.example {
   font-style: italic;
-  color: var(--p-text-muted-color);
+  color: var(--ae-text-secondary);
 }
 
 .concept-chips {
@@ -815,9 +871,10 @@ watch(
   display: inline-flex;
   align-items: center;
   font-size: 0.875rem;
-  background: var(--p-content-hover-background);
-  border-radius: 1rem;
-  padding: 0.25rem 0.75rem;
+  background: var(--ae-bg-elevated);
+  border: 1px solid var(--ae-border-color);
+  border-radius: 4px;
+  padding: 0.375rem 0.75rem;
 }
 
 .concept-chip.clickable {
@@ -825,7 +882,8 @@ watch(
 }
 
 .concept-chip.clickable:hover {
-  background: var(--p-primary-100);
+  background: var(--ae-bg-hover);
+  color: var(--ae-accent);
 }
 
 .mapping-links {
@@ -839,10 +897,11 @@ watch(
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
+  color: var(--ae-accent);
 }
 
-.mapping-link i {
-  font-size: 0.625rem;
+.link-icon {
+  font-size: 14px;
 }
 
 /* Other Properties */
@@ -852,7 +911,7 @@ watch(
 }
 
 .predicate-link {
-  color: var(--p-primary-color);
+  color: var(--ae-accent);
   text-decoration: none;
   display: inline-flex;
   align-items: center;
@@ -861,10 +920,6 @@ watch(
 
 .predicate-link:hover {
   text-decoration: underline;
-}
-
-.predicate-link i {
-  font-size: 0.5rem;
 }
 
 .other-values {
@@ -879,11 +934,11 @@ watch(
 
 .other-value:not(:last-child)::after {
   content: ' · ';
-  color: var(--p-text-muted-color);
+  color: var(--ae-text-muted);
 }
 
 .other-value.uri-value {
-  color: var(--p-primary-color);
+  color: var(--ae-accent);
   text-decoration: none;
   display: inline-flex;
   align-items: center;
@@ -892,9 +947,5 @@ watch(
 
 .other-value.uri-value:hover {
   text-decoration: underline;
-}
-
-.other-value.uri-value i {
-  font-size: 0.5rem;
 }
 </style>
