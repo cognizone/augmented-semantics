@@ -23,8 +23,6 @@ import { useSchemeStore } from '../../stores'
 import { isValidURI, formatQualifiedName } from '../../services'
 import { useDelayedLoading, useLabelResolver, useElapsedTime, useClipboard, useResourceExport, useSchemeData } from '../../composables'
 import { getPredicateName } from '../../utils/displayUtils'
-import Button from 'primevue/button'
-import Divider from 'primevue/divider'
 import Message from 'primevue/message'
 import ProgressSpinner from 'primevue/progressspinner'
 import Menu from 'primevue/menu'
@@ -229,7 +227,7 @@ watch(
 
     <!-- Empty state -->
     <div v-else-if="!loading && !details && !error" class="empty-state">
-      <i class="pi pi-sitemap"></i>
+      <span class="material-symbols-outlined empty-icon">schema</span>
       <p>No scheme selected</p>
       <small>Select a scheme from the dropdown or click "In Scheme" on a concept</small>
     </div>
@@ -243,68 +241,49 @@ watch(
     <div v-else-if="details" class="details-content">
       <!-- Header -->
       <div class="details-header">
-        <div class="header-left">
-          <div class="scheme-badge">
-            <i class="pi pi-sitemap"></i>
-            <span>Concept Scheme</span>
-          </div>
+        <div class="header-icon-wrapper">
+          <span class="material-symbols-outlined header-icon icon-folder">folder</span>
+        </div>
+        <div class="header-content">
           <h2 class="scheme-label">
             {{ preferredLabel || details.uri.split('/').pop() }}
             <span v-if="showHeaderLangTag" class="header-lang-tag">{{ displayLang }}</span>
           </h2>
           <div class="scheme-uri">
-            <a v-if="isValidURI(details.uri)" :href="details.uri" target="_blank" class="uri-link">
-              {{ details.uri }}
-              <i class="pi pi-external-link"></i>
-            </a>
-            <span v-else class="uri-text">{{ details.uri }}</span>
-            <Button
-              icon="pi pi-copy"
-              severity="secondary"
-              text
-              rounded
-              size="small"
-              v-tooltip.left="'Copy URI'"
+            <span class="uri-text mono">{{ details.uri }}</span>
+            <button
+              class="copy-btn"
+              title="Copy URI"
               @click="copyToClipboard(details.uri, 'URI')"
-            />
+            >
+              <span class="material-symbols-outlined icon-sm">content_copy</span>
+            </button>
           </div>
         </div>
         <div class="header-actions">
-          <Button
-            icon="pi pi-list"
-            label="Browse"
-            severity="primary"
-            size="small"
-            v-tooltip.left="'Browse concepts in this scheme'"
-            @click="browseScheme"
-          />
-          <Button
-            icon="pi pi-code"
-            severity="secondary"
-            text
-            rounded
-            size="small"
-            v-tooltip.left="'View RDF'"
-            @click="showRawRdfDialog = true"
-          />
-          <Button
-            icon="pi pi-download"
-            severity="secondary"
-            text
-            rounded
-            size="small"
-            v-tooltip.left="'Export'"
-            @click="(event: Event) => exportMenu.toggle(event)"
-          />
+          <button class="browse-btn" title="Browse concepts in this scheme" @click="browseScheme">
+            <span class="material-symbols-outlined icon-sm">list</span>
+            Browse
+          </button>
+          <button class="action-btn" title="View RDF" @click="showRawRdfDialog = true">
+            <span class="material-symbols-outlined">code</span>
+          </button>
+          <button class="action-btn" title="Export" @click="(event: Event) => exportMenu.toggle(event)">
+            <span class="material-symbols-outlined">download</span>
+          </button>
+          <a v-if="isValidURI(details.uri)" :href="details.uri" target="_blank" class="action-btn" title="Open in new tab">
+            <span class="material-symbols-outlined">open_in_new</span>
+          </a>
           <Menu ref="exportMenu" :model="exportMenuItems" :popup="true" />
         </div>
       </div>
 
-      <Divider />
-
       <!-- Labels Section -->
       <section v-if="hasLabels" class="details-section">
-        <h3>Labels</h3>
+        <h3 class="section-title">
+          <span class="material-symbols-outlined section-icon">translate</span>
+          Labels
+        </h3>
         <div v-for="prop in labelConfig" :key="prop.label" class="property-row">
           <label>{{ prop.label }}</label>
           <div class="label-values">
@@ -323,7 +302,10 @@ watch(
 
       <!-- Dublin Core Title (if different from prefLabel) -->
       <section v-if="sortedTitles.length" class="details-section">
-        <h3>Title</h3>
+        <h3 class="section-title">
+          <span class="material-symbols-outlined section-icon">title</span>
+          Title
+        </h3>
         <div class="property-row">
           <div class="doc-values">
             <p
@@ -340,7 +322,10 @@ watch(
 
       <!-- Documentation Section -->
       <section v-if="hasDocumentation" class="details-section">
-        <h3>Documentation</h3>
+        <h3 class="section-title">
+          <span class="material-symbols-outlined section-icon">description</span>
+          Documentation
+        </h3>
         <div v-for="prop in documentationConfig" :key="prop.label" class="property-row">
           <label>{{ prop.label }}</label>
           <div class="doc-values">
@@ -354,7 +339,10 @@ watch(
 
       <!-- Metadata Section -->
       <section v-if="details.creator.length || details.created || details.modified || details.publisher.length || details.rights.length || details.license.length" class="details-section">
-        <h3>Metadata</h3>
+        <h3 class="section-title">
+          <span class="material-symbols-outlined section-icon">info</span>
+          Metadata
+        </h3>
 
         <div v-if="details.creator.length" class="property-row">
           <label>Creator</label>
@@ -367,7 +355,7 @@ watch(
                 class="metadata-link"
               >
                 {{ creator.split('/').pop() }}
-                <i class="pi pi-external-link"></i>
+                <span class="material-symbols-outlined link-icon">open_in_new</span>
               </a>
               <span v-else class="metadata-value">{{ creator }}</span>
             </template>
@@ -395,7 +383,7 @@ watch(
                 class="metadata-link"
               >
                 {{ pub.split('/').pop() }}
-                <i class="pi pi-external-link"></i>
+                <span class="material-symbols-outlined link-icon">open_in_new</span>
               </a>
               <span v-else class="metadata-value">{{ pub }}</span>
             </template>
@@ -413,7 +401,7 @@ watch(
                 class="metadata-link"
               >
                 {{ r.split('/').pop() }}
-                <i class="pi pi-external-link"></i>
+                <span class="material-symbols-outlined link-icon">open_in_new</span>
               </a>
               <span v-else class="metadata-value">{{ r }}</span>
             </template>
@@ -431,7 +419,7 @@ watch(
                 class="metadata-link"
               >
                 {{ lic.split('/').pop() }}
-                <i class="pi pi-external-link"></i>
+                <span class="material-symbols-outlined link-icon">open_in_new</span>
               </a>
               <span v-else class="metadata-value">{{ lic }}</span>
             </template>
@@ -441,7 +429,10 @@ watch(
 
       <!-- Other Properties Section -->
       <section v-if="details.otherProperties.length" class="details-section">
-        <h3>Other Properties</h3>
+        <h3 class="section-title">
+          <span class="material-symbols-outlined section-icon">more_horiz</span>
+          Other Properties
+        </h3>
         <div v-for="prop in sortedOtherProperties" :key="prop.predicate" class="property-row">
           <label class="predicate-label">
             <a
@@ -451,7 +442,7 @@ watch(
               class="predicate-link"
             >
               {{ getPredicateName(prop.predicate, resolvedPredicates.get(prop.predicate)) }}
-              <i class="pi pi-external-link"></i>
+              <span class="material-symbols-outlined link-icon">open_in_new</span>
             </a>
             <span v-else>{{ getPredicateName(prop.predicate, resolvedPredicates.get(prop.predicate)) }}</span>
           </label>
@@ -464,7 +455,7 @@ watch(
                 class="other-value uri-value"
               >
                 {{ val.value.split('/').pop()?.split('#').pop() }}
-                <i class="pi pi-external-link"></i>
+                <span class="material-symbols-outlined link-icon">open_in_new</span>
               </a>
               <span v-else class="other-value">
                 {{ val.value }}
@@ -501,12 +492,12 @@ watch(
   justify-content: center;
   gap: 1rem;
   padding: 2rem;
-  color: var(--p-text-muted-color);
+  color: var(--ae-text-secondary);
   flex: 1;
 }
 
-.empty-state i {
-  font-size: 2rem;
+.empty-icon {
+  font-size: 2.5rem;
   opacity: 0.5;
 }
 
@@ -522,53 +513,86 @@ watch(
 .details-content {
   flex: 1;
   overflow: auto;
-  padding: 1rem;
+  padding: 2rem;
+  max-width: 900px;
 }
 
+/* Header */
 .details-header {
   display: flex;
   align-items: flex-start;
-  justify-content: space-between;
   gap: 1rem;
+  margin-bottom: 2rem;
 }
 
-.header-left {
-  display: flex;
-  flex-direction: column;
+.header-icon-wrapper {
+  padding: 0.75rem;
+  background: color-mix(in srgb, var(--ae-icon-folder) 15%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ae-icon-folder) 25%, transparent);
+  border-radius: 0.75rem;
+}
+
+.header-icon {
+  font-size: 2.5rem;
+}
+
+.header-content {
+  flex: 1;
   min-width: 0;
 }
 
-.scheme-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  font-size: 0.7rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  color: var(--p-primary-color);
-  margin-bottom: 0.25rem;
-}
-
-.scheme-badge i {
-  font-size: 0.75rem;
-}
-
 .scheme-label {
-  margin: 0;
-  font-size: 1.25rem;
+  margin: 0 0 0.5rem 0;
+  font-size: 1.75rem;
   font-weight: 600;
+  color: var(--ae-text-primary);
   word-break: break-word;
 }
 
 .header-lang-tag {
   font-size: 0.625rem;
   font-weight: normal;
-  background: var(--p-content-hover-background);
-  color: var(--p-text-muted-color);
+  background: var(--ae-bg-hover);
+  color: var(--ae-text-secondary);
   padding: 0.1rem 0.4rem;
   border-radius: 3px;
   margin-left: 0.5rem;
   vertical-align: middle;
+}
+
+.scheme-uri {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  background: var(--ae-bg-elevated);
+  border: 1px solid var(--ae-border-color);
+  border-radius: 4px;
+}
+
+.uri-text {
+  font-size: 0.75rem;
+  color: var(--ae-text-secondary);
+  word-break: break-all;
+}
+
+.copy-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  color: var(--ae-text-secondary);
+  transition: color 0.15s;
+}
+
+.copy-btn:hover {
+  color: var(--ae-text-primary);
 }
 
 .header-actions {
@@ -577,48 +601,78 @@ watch(
   flex-shrink: 0;
 }
 
-.scheme-uri {
+.browse-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 1rem;
+  background: var(--ae-accent);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: background-color 0.15s;
+}
+
+.browse-btn:hover {
+  background: var(--ae-accent-hover);
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--ae-text-secondary);
+  text-decoration: none;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.action-btn:hover {
+  background: var(--ae-bg-hover);
+  color: var(--ae-text-primary);
+}
+
+/* Sections */
+.details-section {
+  margin-bottom: 2rem;
+}
+
+.section-title {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin-top: 0.125rem;
-}
-
-.uri-link {
+  margin: 0 0 1rem 0;
+  padding-bottom: 0.5rem;
   font-size: 0.75rem;
-  color: var(--p-text-muted-color);
-  word-break: break-all;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-
-.uri-link i {
-  font-size: 0.625rem;
-}
-
-.details-section {
-  margin-bottom: 1.5rem;
-}
-
-.details-section h3 {
-  margin: 0 0 0.75rem 0;
-  font-size: 0.75rem;
-  font-weight: 700;
+  font-weight: 600;
   text-transform: uppercase;
-  color: var(--p-text-color);
   letter-spacing: 0.05em;
+  color: var(--ae-text-secondary);
+  border-bottom: 1px solid var(--ae-border-color);
+}
+
+.section-icon {
+  font-size: 18px;
 }
 
 .property-row {
-  margin-bottom: 0.75rem;
+  margin-bottom: 1rem;
 }
 
 .property-row label {
   display: block;
   font-size: 0.75rem;
   font-weight: 500;
-  color: var(--p-text-muted-color);
+  color: var(--ae-text-secondary);
   margin-bottom: 0.25rem;
 }
 
@@ -635,13 +689,13 @@ watch(
 .label-value:not(:last-child)::after {
   content: '·';
   margin-left: 0.5rem;
-  color: var(--p-text-muted-color);
+  color: var(--ae-text-muted);
 }
 
 .lang-tag {
   font-size: 0.625rem;
-  background: var(--p-content-hover-background);
-  color: var(--p-text-muted-color);
+  background: var(--ae-bg-hover);
+  color: var(--ae-text-secondary);
   padding: 0.1rem 0.3rem;
   border-radius: 3px;
   margin-left: 0.25rem;
@@ -680,7 +734,7 @@ watch(
 
 .doc-value.example {
   font-style: italic;
-  color: var(--p-text-muted-color);
+  color: var(--ae-text-secondary);
 }
 
 .metadata-values {
@@ -698,10 +752,11 @@ watch(
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
+  color: var(--ae-accent);
 }
 
-.metadata-link i {
-  font-size: 0.625rem;
+.link-icon {
+  font-size: 14px;
 }
 
 /* Other Properties */
@@ -711,7 +766,7 @@ watch(
 }
 
 .predicate-link {
-  color: var(--p-primary-color);
+  color: var(--ae-accent);
   text-decoration: none;
   display: inline-flex;
   align-items: center;
@@ -722,10 +777,6 @@ watch(
   text-decoration: underline;
 }
 
-.predicate-link i {
-  font-size: 0.5rem;
-}
-
 .other-values {
   display: flex;
   flex-wrap: wrap;
@@ -734,13 +785,14 @@ watch(
 
 .other-value {
   font-size: 0.875rem;
-  background: var(--p-content-hover-background);
+  background: var(--ae-bg-elevated);
+  border: 1px solid var(--ae-border-color);
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
 }
 
 .other-value.uri-value {
-  color: var(--p-primary-color);
+  color: var(--ae-accent);
   text-decoration: none;
   display: inline-flex;
   align-items: center;
@@ -749,9 +801,5 @@ watch(
 
 .other-value.uri-value:hover {
   text-decoration: underline;
-}
-
-.other-value.uri-value i {
-  font-size: 0.5rem;
 }
 </style>
