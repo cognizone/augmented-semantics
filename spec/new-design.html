@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>AE SKOS Browser</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+    <style type="text/tailwindcss">
+        :root {
+            --bg-dark: #1e1e1e;
+            --bg-darker: #121212;
+            --bg-panel: #252526;
+            --border-color: #3e3e42;
+            --text-primary: #cccccc;
+            --text-secondary: #969696;
+            --accent-blue: #007acc;
+            --accent-hover: #1f8ad2;
+            --header-bg: #2d2d2d;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+        }::-webkit-scrollbar {
+             width: 10px;
+             height: 10px;
+         }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-dark);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #424242;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #4f4f4f;
+        }
+    </style>
+</head>
+<body class="bg-[var(--bg-darker)] text-[var(--text-primary)] h-screen overflow-hidden flex flex-col">
+<header class="h-12 bg-[var(--header-bg)] border-b border-[var(--border-color)] flex items-center justify-between px-4 shrink-0">
+    <div class="flex items-center gap-6">
+        <h1 class="text-white font-bold text-lg tracking-wide">AE SKOS</h1>
+        <div class="flex items-center gap-2 text-xs bg-[var(--bg-panel)] px-2 py-1 rounded border border-[var(--border-color)]">
+            <span class="w-2 h-2 rounded-full bg-green-500"></span>
+            <span class="text-[var(--text-secondary)]">Cordis Connected</span>
+        </div>
+    </div>
+    <div class="flex items-center gap-4">
+        <div class="relative group">
+            <button class="flex items-center gap-2 text-sm hover:bg-[var(--bg-panel)] px-2 py-1 rounded transition-colors">
+                <span class="material-symbols-outlined text-[18px]">dataset</span>
+                <span>EuroSciVoc</span>
+                <span class="material-symbols-outlined text-[16px]">arrow_drop_down</span>
+            </button>
+        </div>
+        <div class="h-5 w-px bg-[var(--border-color)]"></div>
+        <div class="flex items-center gap-1 text-sm hover:text-white cursor-pointer">
+            <span class="material-symbols-outlined text-[18px]">language</span>
+            <span>English</span>
+            <span class="material-symbols-outlined text-[16px]">arrow_drop_down</span>
+        </div>
+        <button class="hover:bg-[var(--bg-panel)] p-1 rounded-full transition-colors">
+            <span class="material-symbols-outlined text-[20px] text-[var(--text-secondary)]">settings</span>
+        </button>
+        <button class="hover:bg-[var(--bg-panel)] p-1 rounded-full transition-colors">
+            <span class="material-symbols-outlined text-[20px] text-[var(--text-secondary)]">account_circle</span>
+        </button>
+    </div>
+</header>
+<div class="flex flex-1 overflow-hidden">
+    <aside class="w-80 bg-[var(--bg-panel)] border-r border-[var(--border-color)] flex flex-col">
+        <div class="flex border-b border-[var(--border-color)]">
+            <button class="flex-1 py-2 text-sm font-medium text-white border-b-2 border-[var(--accent-blue)] bg-[var(--bg-dark)]">Browse</button>
+            <button class="flex-1 py-2 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-dark)] transition-colors">Search</button>
+            <button class="flex-1 py-2 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-dark)] transition-colors">Recent</button>
+        </div>
+        <div class="p-3 border-b border-[var(--border-color)]">
+            <div class="relative">
+                <input class="w-full bg-[var(--bg-darker)] border border-[var(--border-color)] rounded text-sm px-3 py-1.5 text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-blue)] placeholder-[var(--text-secondary)]" placeholder="Go to URI..." type="text"/>
+                <button class="absolute right-1 top-1/2 -translate-y-1/2 text-[var(--text-secondary)] hover:text-white">
+                    <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+                </button>
+            </div>
+        </div>
+        <div class="flex-1 overflow-y-auto p-2">
+            <ul class="text-sm space-y-1">
+                <li>
+                    <div class="flex items-center gap-1 hover:bg-[var(--bg-dark)] p-1 rounded cursor-pointer group">
+                        <span class="material-symbols-outlined text-[16px] text-[var(--text-secondary)]">arrow_drop_down</span>
+                        <span class="material-symbols-outlined text-[16px] text-yellow-600">folder</span>
+                        <span class="truncate">Fields of Science</span>
+                    </div>
+                    <ul class="pl-4 space-y-1 mt-1 border-l border-[var(--border-color)] ml-2">
+                        <li>
+                            <div class="flex items-center gap-1 hover:bg-[var(--bg-dark)] p-1 rounded cursor-pointer group">
+                                <span class="material-symbols-outlined text-[16px] text-[var(--text-secondary)]">arrow_right</span>
+                                <span class="material-symbols-outlined text-[16px] text-purple-400">label</span>
+                                <span class="truncate">Natural sciences</span>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="flex items-center gap-1 hover:bg-[var(--bg-dark)] p-1 rounded cursor-pointer group">
+                                <span class="material-symbols-outlined text-[16px] text-[var(--text-secondary)]">arrow_right</span>
+                                <span class="material-symbols-outlined text-[16px] text-purple-400">label</span>
+                                <span class="truncate">Engineering and technology</span>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="flex items-center gap-1 hover:bg-[var(--bg-dark)] p-1 rounded cursor-pointer group bg-[var(--bg-dark)] border border-[var(--border-color)]">
+                                <span class="material-symbols-outlined text-[16px] text-[var(--text-secondary)]">arrow_drop_down</span>
+                                <span class="material-symbols-outlined text-[16px] text-purple-400">label</span>
+                                <span class="truncate font-medium text-white">Medical and health sciences</span>
+                            </div>
+                            <ul class="pl-4 space-y-1 mt-1 border-l border-[var(--border-color)] ml-2">
+                                <li>
+                                    <div class="flex items-center gap-1 hover:bg-[var(--bg-dark)] p-1 rounded cursor-pointer group">
+                                        <span class="material-symbols-outlined text-[16px] text-[var(--text-secondary)] opacity-0">arrow_right</span>
+                                        <span class="material-symbols-outlined text-[16px] text-green-500">circle</span>
+                                        <span class="truncate">Basic medicine</span>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="flex items-center gap-1 hover:bg-[var(--bg-dark)] p-1 rounded cursor-pointer group">
+                                        <span class="material-symbols-outlined text-[16px] text-[var(--text-secondary)] opacity-0">arrow_right</span>
+                                        <span class="material-symbols-outlined text-[16px] text-green-500">circle</span>
+                                        <span class="truncate">Clinical medicine</span>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="flex items-center gap-1 hover:bg-[var(--bg-dark)] p-1 rounded cursor-pointer group">
+                                        <span class="material-symbols-outlined text-[16px] text-[var(--text-secondary)] opacity-0">arrow_right</span>
+                                        <span class="material-symbols-outlined text-[16px] text-green-500">circle</span>
+                                        <span class="truncate">Health sciences</span>
+                                    </div>
+                                </li>
+                            </ul>
+                        </li>
+                        <li>
+                            <div class="flex items-center gap-1 hover:bg-[var(--bg-dark)] p-1 rounded cursor-pointer group">
+                                <span class="material-symbols-outlined text-[16px] text-[var(--text-secondary)]">arrow_right</span>
+                                <span class="material-symbols-outlined text-[16px] text-purple-400">label</span>
+                                <span class="truncate">Agricultural sciences</span>
+                            </div>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+        <div class="p-2 border-t border-[var(--border-color)] flex justify-between text-[var(--text-secondary)]">
+            <button class="p-1 hover:text-white hover:bg-[var(--bg-dark)] rounded"><span class="material-symbols-outlined text-[18px]">unfold_more</span></button>
+            <button class="p-1 hover:text-white hover:bg-[var(--bg-dark)] rounded"><span class="material-symbols-outlined text-[18px]">refresh</span></button>
+        </div>
+    </aside>
+    <main class="flex-1 bg-[var(--bg-dark)] overflow-y-auto">
+        <div class="px-6 py-3 border-b border-[var(--border-color)] flex items-center justify-between sticky top-0 bg-[var(--bg-dark)] z-10">
+            <div class="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
+                <span class="hover:text-[var(--text-primary)] cursor-pointer">Fields of Science</span>
+                <span class="material-symbols-outlined text-[14px]">chevron_right</span>
+                <span class="text-white font-medium">Medical and health sciences</span>
+            </div>
+            <div class="flex gap-2">
+                <button class="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-white bg-[var(--accent-blue)] hover:bg-[var(--accent-hover)] rounded shadow-sm transition-colors">
+                    <span class="material-symbols-outlined text-[16px]">edit</span>
+                    Edit
+                </button>
+                <button class="p-1.5 text-[var(--text-secondary)] hover:text-white hover:bg-[var(--bg-panel)] rounded transition-colors">
+                    <span class="material-symbols-outlined text-[20px]">share</span>
+                </button>
+                <button class="p-1.5 text-[var(--text-secondary)] hover:text-white hover:bg-[var(--bg-panel)] rounded transition-colors">
+                    <span class="material-symbols-outlined text-[20px]">download</span>
+                </button>
+            </div>
+        </div>
+        <div class="p-8 max-w-5xl mx-auto space-y-8">
+            <div class="flex items-start gap-4">
+                <div class="mt-1 p-3 bg-purple-900/30 rounded-lg border border-purple-500/20 text-purple-400">
+                    <span class="material-symbols-outlined text-4xl">label</span>
+                </div>
+                <div>
+                    <h2 class="text-3xl font-semibold text-white mb-2">Medical and health sciences</h2>
+                    <div class="flex items-center gap-2 text-sm text-[var(--text-secondary)] font-mono bg-[var(--bg-panel)] px-2 py-1 rounded w-fit border border-[var(--border-color)]">
+                        <span class="select-all">http://data.europa.eu/8mn/euroscivoc/af123-bc45</span>
+                        <button class="hover:text-white"><span class="material-symbols-outlined text-[14px]">content_copy</span></button>
+                    </div>
+                </div>
+            </div>
+            <section>
+                <h3 class="text-sm uppercase tracking-wider font-semibold text-[var(--text-secondary)] mb-4 flex items-center gap-2 border-b border-[var(--border-color)] pb-2">
+                    <span class="material-symbols-outlined text-[18px]">translate</span>
+                    Labels
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-3">
+                        <h4 class="text-sm font-medium text-white">Preferred Labels (skos:prefLabel)</h4>
+                        <div class="bg-[var(--bg-panel)] border border-[var(--border-color)] rounded-md overflow-hidden">
+                            <table class="w-full text-sm text-left">
+                                <thead class="bg-[#2d2d2d] text-[var(--text-secondary)]">
+                                <tr>
+                                    <th class="px-3 py-2 font-medium w-16">Lang</th>
+                                    <th class="px-3 py-2 font-medium">Value</th>
+                                </tr>
+                                </thead>
+                                <tbody class="divide-y divide-[var(--border-color)]">
+                                <tr class="hover:bg-[var(--bg-dark)]">
+                                    <td class="px-3 py-2 text-[var(--text-secondary)] uppercase text-xs">en</td>
+                                    <td class="px-3 py-2">Medical and health sciences</td>
+                                </tr>
+                                <tr class="hover:bg-[var(--bg-dark)]">
+                                    <td class="px-3 py-2 text-[var(--text-secondary)] uppercase text-xs">fr</td>
+                                    <td class="px-3 py-2">Sciences médicales et de la santé</td>
+                                </tr>
+                                <tr class="hover:bg-[var(--bg-dark)]">
+                                    <td class="px-3 py-2 text-[var(--text-secondary)] uppercase text-xs">de</td>
+                                    <td class="px-3 py-2">Medizin und Gesundheitswissenschaften</td>
+                                </tr>
+                                <tr class="hover:bg-[var(--bg-dark)]">
+                                    <td class="px-3 py-2 text-[var(--text-secondary)] uppercase text-xs">es</td>
+                                    <td class="px-3 py-2">Ciencias médicas y de la salud</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="space-y-3">
+                        <h4 class="text-sm font-medium text-white">Alternative Labels (skos:altLabel)</h4>
+                        <div class="bg-[var(--bg-panel)] border border-[var(--border-color)] rounded-md overflow-hidden">
+                            <table class="w-full text-sm text-left">
+                                <thead class="bg-[#2d2d2d] text-[var(--text-secondary)]">
+                                <tr>
+                                    <th class="px-3 py-2 font-medium w-16">Lang</th>
+                                    <th class="px-3 py-2 font-medium">Value</th>
+                                </tr>
+                                </thead>
+                                <tbody class="divide-y divide-[var(--border-color)]">
+                                <tr class="hover:bg-[var(--bg-dark)]">
+                                    <td class="px-3 py-2 text-[var(--text-secondary)] uppercase text-xs">en</td>
+                                    <td class="px-3 py-2">Medical sciences</td>
+                                </tr>
+                                <tr class="hover:bg-[var(--bg-dark)]">
+                                    <td class="px-3 py-2 text-[var(--text-secondary)] uppercase text-xs">en</td>
+                                    <td class="px-3 py-2">Medicine</td>
+                                </tr>
+                                <tr class="hover:bg-[var(--bg-dark)]">
+                                    <td class="px-3 py-2 text-[var(--text-secondary)] uppercase text-xs">en</td>
+                                    <td class="px-3 py-2">Health care</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <section>
+                    <h3 class="text-sm uppercase tracking-wider font-semibold text-[var(--text-secondary)] mb-4 flex items-center gap-2 border-b border-[var(--border-color)] pb-2">
+                        <span class="material-symbols-outlined text-[18px]">tag</span>
+                        Notation
+                    </h3>
+                    <div class="bg-[var(--bg-panel)] p-4 rounded border border-[var(--border-color)]">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-[var(--text-secondary)]">skos:notation</span>
+                            <span class="text-white font-mono bg-[var(--bg-dark)] px-2 py-1 rounded border border-[var(--border-color)]">3</span>
+                        </div>
+                    </div>
+                </section>
+                <section>
+                    <h3 class="text-sm uppercase tracking-wider font-semibold text-[var(--text-secondary)] mb-4 flex items-center gap-2 border-b border-[var(--border-color)] pb-2">
+                        <span class="material-symbols-outlined text-[18px]">schema</span>
+                        In Schemes
+                    </h3>
+                    <div class="bg-[var(--bg-panel)] rounded border border-[var(--border-color)] divide-y divide-[var(--border-color)]">
+                        <div class="p-3 flex items-center gap-3">
+                            <span class="material-symbols-outlined text-yellow-600">folder</span>
+                            <a class="text-[var(--accent-blue)] hover:underline text-sm" href="#">EuroSciVoc Concept Scheme</a>
+                        </div>
+                    </div>
+                </section>
+            </div>
+            <section>
+                <h3 class="text-sm uppercase tracking-wider font-semibold text-[var(--text-secondary)] mb-4 flex items-center gap-2 border-b border-[var(--border-color)] pb-2">
+                    <span class="material-symbols-outlined text-[18px]">account_tree</span>
+                    Relationships
+                </h3>
+                <div class="space-y-4">
+                    <div class="flex gap-4">
+                        <div class="w-32 shrink-0 text-sm font-medium text-[var(--text-secondary)] pt-2 text-right">Broader</div>
+                        <div class="flex-1 bg-[var(--bg-panel)] rounded border border-[var(--border-color)] p-2">
+                            <div class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-yellow-600 text-sm">folder</span>
+                                <a class="text-[var(--accent-blue)] hover:underline text-sm" href="#">Fields of Science</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex gap-4">
+                        <div class="w-32 shrink-0 text-sm font-medium text-[var(--text-secondary)] pt-2 text-right">Narrower</div>
+                        <div class="flex-1 bg-[var(--bg-panel)] rounded border border-[var(--border-color)] divide-y divide-[var(--border-color)]">
+                            <div class="p-2 flex items-center gap-2 hover:bg-[var(--bg-dark)]">
+                                <span class="material-symbols-outlined text-green-500 text-sm">circle</span>
+                                <a class="text-[var(--accent-blue)] hover:underline text-sm" href="#">Basic medicine</a>
+                            </div>
+                            <div class="p-2 flex items-center gap-2 hover:bg-[var(--bg-dark)]">
+                                <span class="material-symbols-outlined text-green-500 text-sm">circle</span>
+                                <a class="text-[var(--accent-blue)] hover:underline text-sm" href="#">Clinical medicine</a>
+                            </div>
+                            <div class="p-2 flex items-center gap-2 hover:bg-[var(--bg-dark)]">
+                                <span class="material-symbols-outlined text-green-500 text-sm">circle</span>
+                                <a class="text-[var(--accent-blue)] hover:underline text-sm" href="#">Health sciences</a>
+                            </div>
+                            <div class="p-2 flex items-center gap-2 hover:bg-[var(--bg-dark)]">
+                                <span class="material-symbols-outlined text-green-500 text-sm">circle</span>
+                                <a class="text-[var(--accent-blue)] hover:underline text-sm" href="#">Health biotechnology</a>
+                            </div>
+                            <div class="p-2 flex items-center gap-2 hover:bg-[var(--bg-dark)]">
+                                <span class="material-symbols-outlined text-green-500 text-sm">circle</span>
+                                <a class="text-[var(--accent-blue)] hover:underline text-sm" href="#">Other medical sciences</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <section>
+                <h3 class="text-sm uppercase tracking-wider font-semibold text-[var(--text-secondary)] mb-4 flex items-center gap-2 border-b border-[var(--border-color)] pb-2">
+                    <span class="material-symbols-outlined text-[18px]">info</span>
+                    Other Properties
+                </h3>
+                <div class="bg-[var(--bg-panel)] border border-[var(--border-color)] rounded-md overflow-hidden">
+                    <table class="w-full text-sm text-left">
+                        <tbody class="divide-y divide-[var(--border-color)]">
+                        <tr class="hover:bg-[var(--bg-dark)]">
+                            <td class="px-4 py-3 text-[var(--text-secondary)] w-1/3 font-mono text-xs">dcterms:created</td>
+                            <td class="px-4 py-3 text-white">2019-12-02</td>
+                        </tr>
+                        <tr class="hover:bg-[var(--bg-dark)]">
+                            <td class="px-4 py-3 text-[var(--text-secondary)] w-1/3 font-mono text-xs">dcterms:modified</td>
+                            <td class="px-4 py-3 text-white">2023-01-15</td>
+                        </tr>
+                        <tr class="hover:bg-[var(--bg-dark)]">
+                            <td class="px-4 py-3 text-[var(--text-secondary)] w-1/3 font-mono text-xs">skos:exactMatch</td>
+                            <td class="px-4 py-3">
+                                <a class="text-[var(--accent-blue)] hover:underline break-all" href="#">http://id.loc.gov/authorities/subjects/sh85082871</a>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+            <div class="h-10"></div>
+        </div>
+    </main>
+</div>
+</body></html>

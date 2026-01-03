@@ -1,5 +1,63 @@
 /* Base styles for AE SKOS */
 
+/* ============================================
+   Theme Variables
+   ============================================ */
+
+:root {
+  /* Light theme (default) */
+  --ae-bg-base: #ffffff;
+  --ae-bg-elevated: #f8f9fa;
+  --ae-bg-panel: #f3f4f6;
+  --ae-bg-hover: #e5e7eb;
+  --ae-border-color: #d1d5db;
+  --ae-text-primary: #1f2937;
+  --ae-text-secondary: #6b7280;
+  --ae-text-muted: #9ca3af;
+  --ae-accent: #007acc;
+  --ae-accent-hover: #0062a3;
+  --ae-header-bg: #f9fafb;
+
+  /* Icon colors */
+  --ae-icon-folder: #ca8a04;
+  --ae-icon-label: #a855f7;
+  --ae-icon-leaf: #22c55e;
+
+  /* Status colors */
+  --ae-status-success: #22c55e;
+  --ae-status-warning: #f59e0b;
+  --ae-status-error: #ef4444;
+}
+
+.dark-mode {
+  /* Dark theme (VS Code inspired) */
+  --ae-bg-base: #1e1e1e;
+  --ae-bg-elevated: #252526;
+  --ae-bg-panel: #2d2d2d;
+  --ae-bg-hover: #3e3e42;
+  --ae-border-color: #3e3e42;
+  --ae-text-primary: #cccccc;
+  --ae-text-secondary: #969696;
+  --ae-text-muted: #6e6e6e;
+  --ae-accent: #007acc;
+  --ae-accent-hover: #1f8ad2;
+  --ae-header-bg: #2d2d2d;
+
+  /* Icon colors (same in dark mode) */
+  --ae-icon-folder: #ca8a04;
+  --ae-icon-label: #a855f7;
+  --ae-icon-leaf: #22c55e;
+
+  /* Status colors */
+  --ae-status-success: #22c55e;
+  --ae-status-warning: #f59e0b;
+  --ae-status-error: #ef4444;
+}
+
+/* ============================================
+   Base Styles
+   ============================================ */
+
 *,
 *::before,
 *::after {
@@ -10,10 +68,10 @@ html,
 body {
   margin: 0;
   padding: 0;
-  background-color: var(--p-content-background);
-  color: var(--p-text-color);
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
-    'Helvetica Neue', Arial, sans-serif;
+  background-color: var(--ae-bg-base);
+  color: var(--ae-text-primary);
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    Roboto, 'Helvetica Neue', Arial, sans-serif;
   font-size: 14px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
@@ -25,34 +83,46 @@ body {
   overflow: hidden;
 }
 
-/* Scrollbar styling */
+/* ============================================
+   Scrollbar Styling
+   ============================================ */
+
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--p-surface-100);
+  background: var(--ae-bg-base);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--p-surface-400);
-  border-radius: 4px;
+  background: var(--ae-bg-hover);
+  border-radius: 0;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--p-surface-500);
+  background: var(--ae-text-muted);
 }
 
-/* Focus styles */
+/* Firefox scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--ae-bg-hover) var(--ae-bg-base);
+}
+
+/* ============================================
+   Focus & Interactive States
+   ============================================ */
+
 :focus-visible {
-  outline: 2px solid var(--p-primary-color);
+  outline: 2px solid var(--ae-accent);
   outline-offset: 2px;
 }
 
 /* Link styles */
 a {
-  color: var(--p-primary-color);
+  color: var(--ae-accent);
   text-decoration: none;
 }
 
@@ -62,9 +132,56 @@ a:hover {
 
 /* Selection */
 ::selection {
-  background: var(--p-primary-100);
-  color: var(--p-primary-700);
+  background: var(--ae-accent);
+  color: #ffffff;
 }
+
+/* ============================================
+   Material Symbols Icon Font
+   ============================================ */
+
+.material-symbols-outlined {
+  font-variation-settings:
+    'FILL' 0,
+    'wght' 400,
+    'GRAD' 0,
+    'opsz' 24;
+  vertical-align: middle;
+}
+
+/* Icon size utilities */
+.icon-sm {
+  font-size: 16px;
+}
+
+.icon-md {
+  font-size: 20px;
+}
+
+.icon-lg {
+  font-size: 24px;
+}
+
+.icon-xl {
+  font-size: 32px;
+}
+
+/* Icon color utilities */
+.icon-folder {
+  color: var(--ae-icon-folder);
+}
+
+.icon-label {
+  color: var(--ae-icon-label);
+}
+
+.icon-leaf {
+  color: var(--ae-icon-leaf);
+}
+
+/* ============================================
+   Utility Classes
+   ============================================ */
 
 /* Screen reader only - visually hidden but accessible */
 .sr-only {
@@ -77,4 +194,18 @@ a:hover {
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border: 0;
+}
+
+/* Monospace text (for URIs, code) */
+.mono {
+  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas,
+    'Liberation Mono', monospace;
+  font-size: 0.875em;
+}
+
+/* Truncate text with ellipsis */
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
