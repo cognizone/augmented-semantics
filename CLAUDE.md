@@ -118,6 +118,40 @@ uiStore.announceSuccess('Data loaded')
 
 Live regions in App.vue announce these to screen readers.
 
+## Styling Rules
+
+### CSS Reuse (MANDATORY)
+
+1. **Check existing styles first** - Before writing any CSS, search `style.css` and existing components for similar patterns
+2. **Create reusable classes** - If a pattern appears 2+ times, create a global class in `style.css`
+3. **No duplicate CSS** - Never copy-paste styles between components
+4. **Prefer global over `:deep()`** - Global styles in `style.css` work better for PrimeVue components (especially teleported ones like Dialog, Menu, Select overlays)
+
+### Established Patterns
+
+| Class | Purpose |
+|-------|---------|
+| `.dropdown-trigger` | Button that opens any dropdown (endpoint, language, scheme) |
+| `.p-menu` | Global PrimeVue Menu overrides |
+| `.p-select` | Global PrimeVue Select overrides |
+| `.p-dialog` | Global PrimeVue Dialog overrides |
+
+### Font Sizes
+
+| Size | Usage |
+|------|-------|
+| `0.75rem` | Labels, buttons, small text |
+| `0.8125rem` | Body text, form inputs |
+| `0.875rem` | Dialog titles |
+
+### Colors
+
+Always use CSS variables from `style.css`:
+- `--ae-bg-*` for backgrounds
+- `--ae-text-*` for text colors
+- `--ae-border-color` for borders
+- `--ae-accent` for interactive elements
+
 ## User Environment
 
 - Screenshots are located in `~/Documents`

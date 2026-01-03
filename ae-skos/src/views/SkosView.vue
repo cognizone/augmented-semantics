@@ -48,13 +48,6 @@ function selectConcept(uri: string) {
   }
 }
 
-// Handle browsing a scheme from SchemeDetails
-function browseScheme(schemeUri: string) {
-  schemeStore.selectScheme(schemeUri)
-  schemeStore.viewScheme(null)
-  activeTab.value = 'browse'
-}
-
 // Handle history selection - may need to switch endpoint/scheme
 async function selectFromHistory(entry: { uri: string; endpointUrl?: string; schemeUri?: string }) {
   let needsWait = false
@@ -261,7 +254,6 @@ onMounted(() => {
       <SplitterPanel :size="70" :minSize="40" class="right-panel">
         <SchemeDetails
           v-if="schemeStore.viewingSchemeUri"
-          @browse-scheme="browseScheme"
         />
         <ConceptDetails
           v-else

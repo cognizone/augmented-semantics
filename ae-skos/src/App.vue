@@ -20,6 +20,7 @@ const endpointStore = useEndpointStore()
 const showEndpointManager = ref(false)
 const showSettingsDialog = ref(false)
 const endpointMenu = ref()
+const languageMenu = ref()
 
 // Endpoint menu items
 const endpointMenuItems = computed(() => {
@@ -63,8 +64,17 @@ const languageOptions = computed(() => {
   }
 
   return orderedLangs.map(lang => ({
-    label: `${lang} (${countMap.get(lang)?.toLocaleString() || 0})`,
+    label: `${getLanguageName(lang)} (${countMap.get(lang)?.toLocaleString() || 0})`,
     value: lang,
+  }))
+})
+
+// Language menu items for header dropdown
+const languageMenuItems = computed(() => {
+  return languageOptions.value.map(opt => ({
+    label: opt.label,
+    icon: opt.value === languageStore.preferred ? 'pi pi-check' : undefined,
+    command: () => languageStore.setPreferred(opt.value),
   }))
 })
 
@@ -142,23 +152,24 @@ onUnmounted(() => {
         <h1 class="app-title">AE SKOS</h1>
         <!-- Endpoint selector badge -->
         <button
-          class="connection-badge"
+          class="dropdown-trigger"
           :class="endpointStore.status"
           aria-label="Select endpoint"
           @click="(e) => endpointMenu.toggle(e)"
         >
           <span class="status-dot"></span>
-          <span class="connection-name">{{ endpointStore.current?.name || 'No endpoint' }}</span>
-          <span class="material-symbols-outlined badge-arrow">arrow_drop_down</span>
+          <span>{{ endpointStore.current?.name || 'No endpoint' }}</span>
+          <span class="material-symbols-outlined dropdown-arrow">arrow_drop_down</span>
         </button>
-        <Menu ref="endpointMenu" :model="endpointMenuItems" :popup="true" class="endpoint-menu" />
+        <Menu ref="endpointMenu" :model="endpointMenuItems" :popup="true" />
       </div>
       <div class="header-right">
-        <button class="header-btn" @click="showSettingsDialog = true" aria-label="Language and settings">
-          <span class="material-symbols-outlined icon-sm">language</span>
-          <span class="btn-label">{{ getLanguageName(languageStore.preferred) }}</span>
-          <span class="material-symbols-outlined icon-sm">arrow_drop_down</span>
+        <button class="dropdown-trigger" @click="(e) => languageMenu.toggle(e)" aria-label="Select language">
+          <span class="material-symbols-outlined">language</span>
+          <span>{{ getLanguageName(languageStore.preferred) }}</span>
+          <span class="material-symbols-outlined dropdown-arrow">arrow_drop_down</span>
         </button>
+        <Menu ref="languageMenu" :model="languageMenuItems" :popup="true" />
         <button class="header-icon-btn" aria-label="Settings" @click="showSettingsDialog = true">
           <span class="material-symbols-outlined">settings</span>
         </button>
@@ -185,15 +196,17 @@ onUnmounted(() => {
     <Dialog
       v-model:visible="showSettingsDialog"
       header="Settings"
-      :style="{ width: '400px' }"
+      :style="{ width: '420px' }"
       :modal="true"
     >
       <div class="settings-content">
         <!-- Language Section -->
-        <div class="setting-section">
-          <div class="setting-section-label">Preferred Language</div>
-
-          <div class="setting-group">
+        <section class="settings-section">
+          <h3 class="section-title">
+            <span class="material-symbols-outlined section-icon">language</span>
+            Language
+          </h3>
+          <div class="setting-row">
             <Select
               v-model="languageStore.preferred"
               :options="languageOptions"
@@ -203,103 +216,96 @@ onUnmounted(() => {
               class="language-select"
               @change="(e: any) => languageStore.setPreferred(e.value)"
             />
-            <span class="setting-description">
+            <p class="setting-hint">
               Labels and descriptions will be shown in this language when available
-            </span>
-            <span v-if="!languageOptions.length" class="setting-hint">
+            </p>
+            <p v-if="!languageOptions.length" class="setting-hint warning">
               Connect to an endpoint and run analysis to detect languages
-            </span>
+            </p>
           </div>
-        </div>
+        </section>
 
         <!-- Display Section -->
-        <div class="setting-section">
-          <div class="setting-section-label">Display</div>
+        <section class="settings-section">
+          <h3 class="section-title">
+            <span class="material-symbols-outlined section-icon">palette</span>
+            Display
+          </h3>
 
-          <div class="setting-item">
-            <Checkbox
-              v-model="settingsStore.darkMode"
-              inputId="darkMode"
-              :binary="true"
-            />
-            <label for="darkMode" class="setting-label">
-              Dark mode
-              <span class="setting-description">Use dark color scheme</span>
+          <div class="setting-row">
+            <label class="checkbox-label">
+              <Checkbox v-model="settingsStore.darkMode" :binary="true" />
+              <span class="checkbox-text">
+                Dark mode
+                <small>Use dark color scheme</small>
+              </span>
             </label>
           </div>
 
-          <div class="setting-item">
-            <Checkbox
-              v-model="settingsStore.showDatatypes"
-              inputId="showDatatypes"
-              :binary="true"
-            />
-            <label for="showDatatypes" class="setting-label">
-              Show datatypes
-              <span class="setting-description">Display datatype tags (e.g., xsd:date) on property values</span>
+          <div class="setting-row">
+            <label class="checkbox-label">
+              <Checkbox v-model="settingsStore.showDatatypes" :binary="true" />
+              <span class="checkbox-text">
+                Show datatypes
+                <small>Display datatype tags (e.g., xsd:date) on property values</small>
+              </span>
             </label>
           </div>
 
-          <div class="setting-item">
-            <Checkbox
-              v-model="settingsStore.showLanguageTags"
-              inputId="showLanguageTags"
-              :binary="true"
-            />
-            <label for="showLanguageTags" class="setting-label">
-              Show language tags
-              <span class="setting-description">Display language tags on labels when different from preferred</span>
+          <div class="setting-row">
+            <label class="checkbox-label">
+              <Checkbox v-model="settingsStore.showLanguageTags" :binary="true" />
+              <span class="checkbox-text">
+                Show language tags
+                <small>Display language tags on labels when different from preferred</small>
+              </span>
             </label>
           </div>
 
-          <div v-if="settingsStore.showLanguageTags" class="setting-item nested">
-            <Checkbox
-              v-model="settingsStore.showPreferredLanguageTag"
-              inputId="showPreferredLanguageTag"
-              :binary="true"
-            />
-            <label for="showPreferredLanguageTag" class="setting-label">
-              Include preferred language
-              <span class="setting-description">Also show tag when label matches preferred language</span>
+          <div v-if="settingsStore.showLanguageTags" class="setting-row nested">
+            <label class="checkbox-label">
+              <Checkbox v-model="settingsStore.showPreferredLanguageTag" :binary="true" />
+              <span class="checkbox-text">
+                Include preferred language
+                <small>Also show tag when label matches preferred language</small>
+              </span>
             </label>
           </div>
-        </div>
+        </section>
 
         <!-- Deprecation Section -->
-        <div class="setting-section">
-          <div class="setting-section-label">Deprecation</div>
+        <section class="settings-section">
+          <h3 class="section-title">
+            <span class="material-symbols-outlined section-icon">warning</span>
+            Deprecation
+          </h3>
 
-          <div class="setting-item">
-            <Checkbox
-              v-model="settingsStore.showDeprecationIndicator"
-              inputId="showDeprecationIndicator"
-              :binary="true"
-            />
-            <label for="showDeprecationIndicator" class="setting-label">
-              Show deprecation indicators
-              <span class="setting-description">Display visual indicators for deprecated concepts</span>
+          <div class="setting-row">
+            <label class="checkbox-label">
+              <Checkbox v-model="settingsStore.showDeprecationIndicator" :binary="true" />
+              <span class="checkbox-text">
+                Show deprecation indicators
+                <small>Display visual indicators for deprecated concepts</small>
+              </span>
             </label>
           </div>
 
-          <div v-if="settingsStore.showDeprecationIndicator" class="deprecation-rules">
-            <div class="setting-section-label">Detection Rules</div>
-            <div v-for="rule in settingsStore.deprecationRules" :key="rule.id" class="setting-item nested">
-              <Checkbox
-                v-model="rule.enabled"
-                :inputId="`rule-${rule.id}`"
-                :binary="true"
-              />
-              <label :for="`rule-${rule.id}`" class="setting-label">
-                {{ rule.label }}
-                <span class="setting-description rule-description">
-                  {{ rule.condition === 'equals' ? '=' :
-                     rule.condition === 'not-equals' ? '≠' : 'exists' }}
-                  {{ rule.value ? rule.value.split('/').pop() : '' }}
+          <div v-if="settingsStore.showDeprecationIndicator" class="detection-rules">
+            <div class="rules-label">Detection Rules</div>
+            <div v-for="rule in settingsStore.deprecationRules" :key="rule.id" class="setting-row nested">
+              <label class="checkbox-label">
+                <Checkbox v-model="rule.enabled" :binary="true" />
+                <span class="checkbox-text">
+                  {{ rule.label }}
+                  <small class="rule-value">
+                    {{ rule.condition === 'equals' ? '=' : rule.condition === 'not-equals' ? '≠' : 'exists' }}
+                    {{ rule.value ? rule.value.split('/').pop() : '' }}
+                  </small>
                 </span>
               </label>
             </div>
           </div>
-        </div>
+        </section>
       </div>
 
       <template #footer>
@@ -377,30 +383,7 @@ onUnmounted(() => {
   letter-spacing: 0.02em;
 }
 
-.connection-badge {
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-  font-size: 0.75rem;
-  padding: 0.25rem 0.5rem;
-  background: var(--ae-bg-elevated);
-  border: 1px solid var(--ae-border-color);
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.15s, border-color 0.15s;
-}
-
-.connection-badge:hover {
-  background: var(--ae-bg-hover);
-  border-color: var(--ae-text-secondary);
-}
-
-.badge-arrow {
-  font-size: 18px;
-  margin-left: -0.125rem;
-  color: var(--ae-text-secondary);
-}
-
+/* Status dot for endpoint connection */
 .status-dot {
   width: 8px;
   height: 8px;
@@ -408,16 +391,16 @@ onUnmounted(() => {
   background: var(--ae-text-muted);
 }
 
-.connection-badge.connected .status-dot {
+.dropdown-trigger.connected .status-dot {
   background: var(--ae-status-success);
 }
 
-.connection-badge.connecting .status-dot {
+.dropdown-trigger.connecting .status-dot {
   background: var(--ae-status-warning);
   animation: pulse 1s infinite;
 }
 
-.connection-badge.error .status-dot {
+.dropdown-trigger.error .status-dot {
   background: var(--ae-status-error);
 }
 
@@ -426,36 +409,10 @@ onUnmounted(() => {
   50% { opacity: 0.5; }
 }
 
-.connection-name {
-  color: var(--ae-text-secondary);
-}
-
 .header-right {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-}
-
-.header-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.375rem 0.5rem;
-  background: none;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.875rem;
-  color: var(--ae-text-primary);
-  transition: background-color 0.15s;
-}
-
-.header-btn:hover {
-  background: var(--ae-bg-hover);
-}
-
-.header-btn .btn-label {
-  margin: 0 0.125rem;
 }
 
 .header-icon-btn {
@@ -499,83 +456,93 @@ onUnmounted(() => {
 .settings-content {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 1.5rem;
 }
 
-.setting-section {
-  background: var(--ae-bg-elevated);
-  border-radius: 6px;
-  padding: 0.75rem;
+.settings-section:first-child {
+  margin-top: 1.25rem;
 }
 
-.setting-section-label {
-  font-size: 0.7rem;
+.settings-section .section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.75rem 0;
+  padding-bottom: 0.375rem;
+  font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
+  letter-spacing: 0.05em;
   color: var(--ae-text-secondary);
-  margin-bottom: 0.75rem;
-  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--ae-border-color);
 }
 
-.setting-item {
+.settings-section .section-icon {
+  font-size: 18px;
+}
+
+.setting-row {
+  margin-bottom: 0.75rem;
+}
+
+.setting-row.nested {
+  margin-left: 1.75rem;
+}
+
+.checkbox-label {
   display: flex;
   align-items: flex-start;
-  gap: 0.75rem;
-}
-
-.setting-item + .setting-item {
-  margin-top: 0.75rem;
-}
-
-.setting-item.nested {
-  margin-left: 1.75rem;
-  margin-top: 0.75rem;
-}
-
-.setting-label {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.625rem;
   cursor: pointer;
 }
 
-.setting-description {
-  font-size: 0.75rem;
-  color: var(--ae-text-secondary);
-}
-
-.setting-group {
+.checkbox-text {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.125rem;
+  font-size: 0.8125rem;
+  color: var(--ae-text-primary);
+  line-height: 1.4;
 }
 
-.setting-group-label {
-  font-weight: 600;
-  font-size: 0.875rem;
+.checkbox-text small {
+  font-size: 0.75rem;
+  color: var(--ae-text-secondary);
 }
 
 .language-select {
   width: 100%;
 }
 
-.deprecation-rules {
-  margin-top: 0.5rem;
-  margin-left: 1.75rem;
-}
-
-.deprecation-rules .setting-item.nested {
-  margin-left: 0;
-}
-
-.rule-description {
-  font-family: monospace;
-  font-size: 0.7rem;
-}
-
 .setting-hint {
   font-size: 0.75rem;
   color: var(--ae-text-secondary);
+  margin: 0.5rem 0 0 0;
+}
+
+.setting-hint.warning {
   font-style: italic;
+}
+
+.detection-rules {
+  margin-top: 0.75rem;
+  margin-left: 1.75rem;
+}
+
+.rules-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ae-text-secondary);
+  margin-bottom: 0.5rem;
+}
+
+.detection-rules .setting-row.nested {
+  margin-left: 0;
+}
+
+.rule-value {
+  font-family: monospace;
 }
 </style>

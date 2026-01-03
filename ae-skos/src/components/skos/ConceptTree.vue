@@ -155,6 +155,10 @@ function convertToTreeNode(node: ConceptNode): TreeNode {
 // Selected node keys for PrimeVue Tree
 const selectedKey = computed<TreeSelectionKeys | undefined>({
   get: () => {
+    // Show scheme as selected when viewing scheme details
+    if (schemeStore.viewingSchemeUri) {
+      return { [schemeStore.viewingSchemeUri]: true }
+    }
     if (conceptStore.selectedUri) {
       return { [conceptStore.selectedUri]: true }
     }

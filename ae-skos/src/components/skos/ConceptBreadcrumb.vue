@@ -11,7 +11,7 @@ import { ref, watch, computed } from 'vue'
 import { useConceptStore, useEndpointStore, useLanguageStore, useSchemeStore } from '../../stores'
 import { executeSparql, withPrefixes, logger } from '../../services'
 import { useLabelResolver } from '../../composables'
-import type { ConceptRef } from '../../types'
+import type { ConceptRef, ConceptScheme } from '../../types'
 import Breadcrumb from 'primevue/breadcrumb'
 import Select from 'primevue/select'
 
@@ -53,6 +53,137 @@ const currentSchemeName = computed(() => {
   if (!schemeStore.selected) return 'All Schemes'
   return schemeStore.selected.label || schemeStore.selected.uri.split('/').pop() || 'Scheme'
 })
+
+// Helper to select best label based on language priorities
+function selectBestLabelByLanguage(
+  labels: { value: string; lang: string; type: string }[]
+): { value: string; lang: string } | undefined {
+  if (!labels.length) return undefined
+
+  // 1. Try preferred language
+  const preferred = labels.find(l => l.lang === languageStore.preferred)
+  if (preferred) return preferred
+
+  // 2. Try endpoint's language priorities in order
+  const priorities = endpointStore.current?.languagePriorities || []
+  for (const lang of priorities) {
+    const match = labels.find(l => l.lang === lang)
+    if (match) return match
+  }
+
+  // 3. Try labels without language tag
+  const noLang = labels.find(l => !l.lang || l.lang === '')
+  if (noLang) return noLang
+
+  // 4. Return first available
+  return labels[0]
+}
+
+// Load schemes from endpoint
+async function loadSchemes() {
+  const endpoint = endpointStore.current
+  if (!endpoint) return
+
+  logger.info('ConceptBreadcrumb', 'Loading concept schemes', { endpoint: endpoint.url })
+  endpointStore.setStatus('connecting')
+
+  const query = withPrefixes(`
+    SELECT DISTINCT ?scheme ?label ?labelLang ?labelType
+    WHERE {
+      ?scheme a skos:ConceptScheme .
+      OPTIONAL {
+        {
+          ?scheme skos:prefLabel ?label .
+          BIND("prefLabel" AS ?labelType)
+        } UNION {
+          ?scheme skosxl:prefLabel/skosxl:literalForm ?label .
+          BIND("xlPrefLabel" AS ?labelType)
+        } UNION {
+          ?scheme dct:title ?label .
+          BIND("title" AS ?labelType)
+        } UNION {
+          ?scheme rdfs:label ?label .
+          BIND("rdfsLabel" AS ?labelType)
+        }
+        BIND(LANG(?label) AS ?labelLang)
+      }
+    }
+  `)
+
+  try {
+    const results = await executeSparql(endpoint, query, { retries: 1 })
+
+    // Group by scheme URI and pick best label
+    const schemeMap = new Map<string, {
+      labels: { value: string; lang: string; type: string }[]
+    }>()
+
+    for (const b of results.results.bindings) {
+      const uri = b.scheme?.value
+      if (!uri) continue
+
+      if (!schemeMap.has(uri)) {
+        schemeMap.set(uri, { labels: [] })
+      }
+
+      const entry = schemeMap.get(uri)!
+      if (b.label?.value) {
+        entry.labels.push({
+          value: b.label.value,
+          lang: b.labelLang?.value || '',
+          type: b.labelType?.value || 'prefLabel'
+        })
+      }
+    }
+
+    // Convert to ConceptScheme[] with best label selection
+    const uniqueSchemes: ConceptScheme[] = Array.from(schemeMap.entries()).map(([uri, data]) => {
+      const labelPriority = ['prefLabel', 'xlPrefLabel', 'title', 'rdfsLabel']
+      let bestLabel: string | undefined
+      let bestLabelLang: string | undefined
+
+      for (const labelType of labelPriority) {
+        const labelsOfType = data.labels.filter(l => l.type === labelType)
+        if (!labelsOfType.length) continue
+
+        const selected = selectBestLabelByLanguage(labelsOfType)
+        if (selected) {
+          bestLabel = selected.value
+          bestLabelLang = selected.lang || undefined
+          break
+        }
+      }
+
+      return { uri, label: bestLabel, labelLang: bestLabelLang }
+    })
+
+    logger.info('ConceptBreadcrumb', `Loaded ${uniqueSchemes.length} schemes`)
+    endpointStore.setStatus('connected')
+    schemeStore.setSchemes(uniqueSchemes)
+
+    // Auto-select if only one scheme
+    if (uniqueSchemes.length === 1 && uniqueSchemes[0] && !schemeStore.selectedUri) {
+      schemeStore.selectScheme(uniqueSchemes[0].uri)
+    }
+  } catch (e: unknown) {
+    const errMsg = e && typeof e === 'object' && 'message' in e ? (e as { message: string }).message : 'Unknown error'
+    logger.error('ConceptBreadcrumb', 'Failed to load schemes', { error: e, message: errMsg })
+    endpointStore.setStatus('error')
+    schemeStore.setSchemes([])
+  }
+}
+
+// Watch for endpoint changes to load schemes
+watch(
+  () => endpointStore.current?.id,
+  (newId, oldId) => {
+    if (newId && newId !== oldId) {
+      schemeStore.reset()
+      loadSchemes()
+    }
+  },
+  { immediate: true }
+)
 
 // Convert breadcrumb to PrimeVue format with notation + label + lang
 const breadcrumbItems = computed(() => {
@@ -300,44 +431,9 @@ watch(
   min-height: 40px;
 }
 
-/* Scheme selector - styled like endpoint badge */
+/* Scheme selector */
 .scheme-select {
   flex-shrink: 0;
-}
-
-:deep(.scheme-select .p-select) {
-  background: var(--ae-bg-elevated);
-  border: 1px solid var(--ae-border-color);
-  border-radius: 4px;
-  min-width: auto;
-  max-width: none;
-  transition: background-color 0.15s, border-color 0.15s;
-}
-
-:deep(.scheme-select .p-select:hover) {
-  background: var(--ae-bg-hover);
-  border-color: var(--ae-text-secondary);
-}
-
-:deep(.scheme-select .p-select.p-focus) {
-  border-color: var(--ae-accent);
-  box-shadow: none;
-}
-
-:deep(.scheme-select .p-select-label) {
-  padding: 0.25rem 0.5rem;
-  font-size: 0.75rem;
-  color: var(--ae-text-secondary);
-}
-
-:deep(.scheme-select .p-select-dropdown) {
-  width: 1.25rem;
-  color: var(--ae-text-secondary);
-}
-
-:deep(.scheme-select .p-select-dropdown .p-icon) {
-  width: 0.75rem;
-  height: 0.75rem;
 }
 
 .scheme-value {

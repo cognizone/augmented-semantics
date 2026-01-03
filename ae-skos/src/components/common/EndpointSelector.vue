@@ -122,6 +122,7 @@ const statusLabel = computed(() => {
 
 .endpoint-name {
   font-weight: 500;
+  font-size: 0.8125rem;
 }
 
 .status-tag {
@@ -137,13 +138,13 @@ const statusLabel = computed(() => {
 
 .endpoint-url {
   font-size: 0.75rem;
-  color: var(--p-text-muted-color);
+  color: var(--ae-text-muted);
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 250px;
 }
 
 .placeholder {
-  color: var(--p-text-muted-color);
+  color: var(--ae-text-muted);
 }
 </style>
