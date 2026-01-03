@@ -10,6 +10,24 @@ import type { ConceptRef } from '../types'
 import { formatQualifiedName } from '../services'
 
 /**
+ * Extract the last meaningful segment from a URI
+ * Handles trailing slashes and hash fragments properly
+ * @param uri - The URI to extract from
+ * @returns The last segment, or the full URI if extraction fails
+ */
+export function getUriFragment(uri: string): string {
+  if (!uri) return ''
+  // Remove trailing slash, then split and get last segment
+  const cleaned = uri.endsWith('/') ? uri.slice(0, -1) : uri
+  // Handle hash fragments first, then path segments
+  const hashPart = cleaned.split('#').pop() || ''
+  if (hashPart && hashPart !== cleaned) {
+    return hashPart
+  }
+  return cleaned.split('/').pop() || uri
+}
+
+/**
  * Get a human-readable predicate name from a URI
  * @param predicate - The predicate URI
  * @param resolved - Optional resolved prefix/localName

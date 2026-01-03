@@ -21,7 +21,7 @@ import { ref, watch, computed } from 'vue'
 import { useConceptStore, useSettingsStore } from '../../stores'
 import { isValidURI } from '../../services'
 import { useDelayedLoading, useLabelResolver, useConceptData, useConceptNavigation, useClipboard, useResourceExport, useDeprecation } from '../../composables'
-import { getPredicateName, formatPropertyValue, getRefLabel } from '../../utils/displayUtils'
+import { getPredicateName, formatPropertyValue, getRefLabel, getUriFragment } from '../../utils/displayUtils'
 import Message from 'primevue/message'
 import ProgressSpinner from 'primevue/progressspinner'
 import Menu from 'primevue/menu'
@@ -446,10 +446,10 @@ watch(
           <div class="mapping-links">
             <template v-for="uri in details.exactMatch" :key="uri">
               <a v-if="isValidURI(uri)" :href="uri" target="_blank" class="mapping-link">
-                {{ uri.split('/').pop() }}
+                {{ getUriFragment(uri) }}
                 <span class="material-symbols-outlined link-icon">open_in_new</span>
               </a>
-              <span v-else class="mapping-text">{{ uri.split('/').pop() }}</span>
+              <span v-else class="mapping-text">{{ getUriFragment(uri) }}</span>
             </template>
           </div>
         </div>
@@ -459,10 +459,10 @@ watch(
           <div class="mapping-links">
             <template v-for="uri in details.closeMatch" :key="uri">
               <a v-if="isValidURI(uri)" :href="uri" target="_blank" class="mapping-link">
-                {{ uri.split('/').pop() }}
+                {{ getUriFragment(uri) }}
                 <span class="material-symbols-outlined link-icon">open_in_new</span>
               </a>
-              <span v-else class="mapping-text">{{ uri.split('/').pop() }}</span>
+              <span v-else class="mapping-text">{{ getUriFragment(uri) }}</span>
             </template>
           </div>
         </div>
@@ -472,10 +472,10 @@ watch(
           <div class="mapping-links">
             <template v-for="uri in details.broadMatch" :key="uri">
               <a v-if="isValidURI(uri)" :href="uri" target="_blank" class="mapping-link">
-                {{ uri.split('/').pop() }}
+                {{ getUriFragment(uri) }}
                 <span class="material-symbols-outlined link-icon">open_in_new</span>
               </a>
-              <span v-else class="mapping-text">{{ uri.split('/').pop() }}</span>
+              <span v-else class="mapping-text">{{ getUriFragment(uri) }}</span>
             </template>
           </div>
         </div>
@@ -485,10 +485,10 @@ watch(
           <div class="mapping-links">
             <template v-for="uri in details.narrowMatch" :key="uri">
               <a v-if="isValidURI(uri)" :href="uri" target="_blank" class="mapping-link">
-                {{ uri.split('/').pop() }}
+                {{ getUriFragment(uri) }}
                 <span class="material-symbols-outlined link-icon">open_in_new</span>
               </a>
-              <span v-else class="mapping-text">{{ uri.split('/').pop() }}</span>
+              <span v-else class="mapping-text">{{ getUriFragment(uri) }}</span>
             </template>
           </div>
         </div>
@@ -498,10 +498,10 @@ watch(
           <div class="mapping-links">
             <template v-for="uri in details.relatedMatch" :key="uri">
               <a v-if="isValidURI(uri)" :href="uri" target="_blank" class="mapping-link">
-                {{ uri.split('/').pop() }}
+                {{ getUriFragment(uri) }}
                 <span class="material-symbols-outlined link-icon">open_in_new</span>
               </a>
-              <span v-else class="mapping-text">{{ uri.split('/').pop() }}</span>
+              <span v-else class="mapping-text">{{ getUriFragment(uri) }}</span>
             </template>
           </div>
         </div>
@@ -555,7 +555,7 @@ watch(
                 target="_blank"
                 class="other-value uri-value"
               >
-                {{ val.value.split('/').pop()?.split('#').pop() }}
+                {{ getUriFragment(val.value) }}
                 <span class="material-symbols-outlined link-icon">open_in_new</span>
               </a>
               <span v-else class="other-value">

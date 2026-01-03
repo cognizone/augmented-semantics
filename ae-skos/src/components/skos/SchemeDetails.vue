@@ -22,7 +22,7 @@ import { ref, watch, computed } from 'vue'
 import { useSchemeStore } from '../../stores'
 import { isValidURI, formatQualifiedName } from '../../services'
 import { useDelayedLoading, useLabelResolver, useElapsedTime, useClipboard, useResourceExport, useSchemeData } from '../../composables'
-import { getPredicateName } from '../../utils/displayUtils'
+import { getPredicateName, getUriFragment } from '../../utils/displayUtils'
 import Message from 'primevue/message'
 import ProgressSpinner from 'primevue/progressspinner'
 import Menu from 'primevue/menu'
@@ -344,7 +344,7 @@ watch(
                 target="_blank"
                 class="metadata-link"
               >
-                {{ creator.split('/').pop() }}
+                {{ getUriFragment(creator) }}
                 <span class="material-symbols-outlined link-icon">open_in_new</span>
               </a>
               <span v-else class="metadata-value">{{ creator }}</span>
@@ -372,7 +372,7 @@ watch(
                 target="_blank"
                 class="metadata-link"
               >
-                {{ pub.split('/').pop() }}
+                {{ getUriFragment(pub) }}
                 <span class="material-symbols-outlined link-icon">open_in_new</span>
               </a>
               <span v-else class="metadata-value">{{ pub }}</span>
@@ -390,7 +390,7 @@ watch(
                 target="_blank"
                 class="metadata-link"
               >
-                {{ r.split('/').pop() }}
+                {{ getUriFragment(r) }}
                 <span class="material-symbols-outlined link-icon">open_in_new</span>
               </a>
               <span v-else class="metadata-value">{{ r }}</span>
@@ -408,7 +408,7 @@ watch(
                 target="_blank"
                 class="metadata-link"
               >
-                {{ lic.split('/').pop() }}
+                {{ getUriFragment(lic) }}
                 <span class="material-symbols-outlined link-icon">open_in_new</span>
               </a>
               <span v-else class="metadata-value">{{ lic }}</span>
@@ -444,7 +444,7 @@ watch(
                 target="_blank"
                 class="other-value uri-value"
               >
-                {{ val.value.split('/').pop()?.split('#').pop() }}
+                {{ getUriFragment(val.value) }}
                 <span class="material-symbols-outlined link-icon">open_in_new</span>
               </a>
               <span v-else class="other-value">
