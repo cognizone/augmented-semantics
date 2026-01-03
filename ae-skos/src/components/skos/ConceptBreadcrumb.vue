@@ -247,6 +247,16 @@ watch(
 
 <template>
   <div class="concept-breadcrumb">
+    <!-- Home button (always visible, first) -->
+    <button class="home-btn" @click="emit('selectConcept', '')" title="Go to root">
+      <span class="material-symbols-outlined">home</span>
+    </button>
+
+    <!-- Separator -->
+    <span class="breadcrumb-separator">
+      <span class="material-symbols-outlined">chevron_right</span>
+    </span>
+
     <!-- Scheme selector (styled like endpoint badge) -->
     <Select
       v-model="selectedScheme"
@@ -261,16 +271,6 @@ watch(
         <span class="scheme-value">{{ currentSchemeName }}</span>
       </template>
     </Select>
-
-    <!-- Separator -->
-    <span class="breadcrumb-separator">
-      <span class="material-symbols-outlined">chevron_right</span>
-    </span>
-
-    <!-- Home button (always visible) -->
-    <button class="home-btn" @click="emit('selectConcept', '')" title="Go to root">
-      <span class="material-symbols-outlined">home</span>
-    </button>
 
     <!-- Breadcrumb path (only when concept selected) -->
     <template v-if="breadcrumbItems.length > 0">
