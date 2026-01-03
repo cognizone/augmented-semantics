@@ -157,6 +157,9 @@ describe('SchemeDetails', () => {
         creator: ['http://example.org/person/1'],
         created: '2024-01-01',
         modified: '2024-06-15',
+        publisher: [],
+        rights: [],
+        license: [],
         prefLabelsXL: [],
         otherProperties: [],
       }
@@ -209,6 +212,9 @@ describe('SchemeDetails', () => {
         title: [],
         description: [],
         creator: [],
+        publisher: [],
+        rights: [],
+        license: [],
         prefLabelsXL: [],
         otherProperties: [],
       }

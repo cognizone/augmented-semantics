@@ -353,7 +353,7 @@ watch(
       </section>
 
       <!-- Metadata Section -->
-      <section v-if="details.creator.length || details.created || details.modified" class="details-section">
+      <section v-if="details.creator.length || details.created || details.modified || details.publisher.length || details.rights.length || details.license.length" class="details-section">
         <h3>Metadata</h3>
 
         <div v-if="details.creator.length" class="property-row">
@@ -382,6 +382,60 @@ watch(
         <div v-if="details.modified" class="property-row">
           <label>Modified</label>
           <span class="metadata-value">{{ formatDate(details.modified) }}</span>
+        </div>
+
+        <div v-if="details.publisher.length" class="property-row">
+          <label>Publisher</label>
+          <div class="metadata-values">
+            <template v-for="(pub, i) in details.publisher" :key="i">
+              <a
+                v-if="isValidURI(pub)"
+                :href="pub"
+                target="_blank"
+                class="metadata-link"
+              >
+                {{ pub.split('/').pop() }}
+                <i class="pi pi-external-link"></i>
+              </a>
+              <span v-else class="metadata-value">{{ pub }}</span>
+            </template>
+          </div>
+        </div>
+
+        <div v-if="details.rights.length" class="property-row">
+          <label>Rights</label>
+          <div class="metadata-values">
+            <template v-for="(r, i) in details.rights" :key="i">
+              <a
+                v-if="isValidURI(r)"
+                :href="r"
+                target="_blank"
+                class="metadata-link"
+              >
+                {{ r.split('/').pop() }}
+                <i class="pi pi-external-link"></i>
+              </a>
+              <span v-else class="metadata-value">{{ r }}</span>
+            </template>
+          </div>
+        </div>
+
+        <div v-if="details.license.length" class="property-row">
+          <label>License</label>
+          <div class="metadata-values">
+            <template v-for="(lic, i) in details.license" :key="i">
+              <a
+                v-if="isValidURI(lic)"
+                :href="lic"
+                target="_blank"
+                class="metadata-link"
+              >
+                {{ lic.split('/').pop() }}
+                <i class="pi pi-external-link"></i>
+              </a>
+              <span v-else class="metadata-value">{{ lic }}</span>
+            </template>
+          </div>
         </div>
       </section>
 

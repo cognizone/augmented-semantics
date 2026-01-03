@@ -12,7 +12,7 @@ Display standard SKOS label and documentation properties:
 |----------|---------|----------|
 | `skos:prefLabel` | Preferred Label | Per language |
 | `skos:altLabel` | Alternative Labels | Yes |
-| `skos:hiddenLabel` | Hidden Labels (toggleable) | Yes |
+| `skos:hiddenLabel` | Hidden Labels | Yes |
 | `skos:definition` | Definition | Per language |
 | `skos:scopeNote` | Scope Note | Yes |
 | `skos:historyNote` | History Note | Yes |

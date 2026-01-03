@@ -244,18 +244,21 @@ export function useConceptData() {
     const endpoint = endpointStore.current
     if (!endpoint) return
 
-    // Query for all properties not in SKOS/SKOS-XL namespaces
+    // Query for properties not explicitly displayed in dedicated sections
     const query = withPrefixes(`
       SELECT ?predicate ?value
       WHERE {
         <${uri}> ?predicate ?value .
-        FILTER (
-          !STRSTARTS(STR(?predicate), STR(skos:)) &&
-          !STRSTARTS(STR(?predicate), STR(skosxl:)) &&
-          !STRSTARTS(STR(?predicate), STR(rdf:)) &&
-          ?predicate != rdfs:label &&
-          ?predicate != dct:title
-        )
+        FILTER (?predicate NOT IN (
+          rdf:type,
+          skos:prefLabel, skos:altLabel, skos:hiddenLabel, skos:notation,
+          skos:definition, skos:scopeNote, skos:historyNote,
+          skos:changeNote, skos:editorialNote, skos:example,
+          skos:broader, skos:narrower, skos:related,
+          skos:inScheme, skos:exactMatch, skos:closeMatch,
+          skos:broadMatch, skos:narrowMatch, skos:relatedMatch,
+          skosxl:prefLabel, skosxl:altLabel, skosxl:hiddenLabel
+        ))
       }
     `)
 

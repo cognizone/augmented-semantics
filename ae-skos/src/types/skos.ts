@@ -79,6 +79,9 @@ export interface SchemeDetails {
   creator: string[]
   created?: string
   modified?: string
+  publisher: string[]
+  rights: string[]
+  license: string[]
   // SKOS-XL extended labels
   prefLabelsXL: XLLabel[]
   // Other properties (non-SKOS predicates)

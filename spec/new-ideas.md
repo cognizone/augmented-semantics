@@ -4,4 +4,6 @@ New ideas: copy them into ideas.md, remove the list here (but keep the file and 
 - packaging needs to be reviewed. system complains
 - still recent concepts does not use full vertical space!!!
 - we should add the type somewhere in the "main component part" (typically concept?!)
-    as a side issue one we are there (in inconsistent state) we cannot select other concept scheme anymore
+    as au side issue one we are there (in inconsistent state) we cannot select other concept scheme anymore
+- using endswith logic to find the properties??
+- navigation to related concepts in same database should be via the tool. for example the main taxonomy + it/fr/de taxosare 

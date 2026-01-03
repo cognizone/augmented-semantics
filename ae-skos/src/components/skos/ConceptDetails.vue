@@ -44,7 +44,6 @@ const { exportAsJson, exportAsTurtle, exportAsCsv } = useResourceExport()
 const { showIndicator: showDeprecationIndicator } = useDeprecation()
 
 // Local state
-const showHiddenLabels = ref(false)
 const showRawRdfDialog = ref(false)
 
 // Export menu
@@ -227,18 +226,7 @@ watch(
 
       <!-- Labels Section - only shown if any label or notation exists -->
       <section v-if="details.prefLabels.length || details.altLabels.length || details.hiddenLabels.length || details.notations.length || details.prefLabelsXL.length || details.altLabelsXL.length || details.hiddenLabelsXL.length" class="details-section">
-        <div class="section-header">
-          <h3>Labels</h3>
-          <Button
-            v-if="details.hiddenLabels.length || details.hiddenLabelsXL.length"
-            :icon="showHiddenLabels ? 'pi pi-eye-slash' : 'pi pi-eye'"
-            :label="showHiddenLabels ? 'Hide hidden' : 'Show hidden'"
-            severity="secondary"
-            text
-            size="small"
-            @click="showHiddenLabels = !showHiddenLabels"
-          />
-        </div>
+        <h3>Labels</h3>
 
         <div v-if="details.prefLabels.length || details.prefLabelsXL.length" class="property-row">
           <label>Preferred</label>
@@ -278,7 +266,7 @@ watch(
           />
         </div>
 
-        <div v-if="showHiddenLabels && (details.hiddenLabels.length || details.hiddenLabelsXL.length)" class="property-row">
+        <div v-if="details.hiddenLabels.length || details.hiddenLabelsXL.length" class="property-row">
           <label>Hidden</label>
           <div class="label-values">
             <span

@@ -77,24 +77,22 @@ export function useSchemeData() {
     const endpoint = endpointStore.current
     if (!endpoint) return
 
+    // Query for properties not explicitly displayed in dedicated sections
     const query = withPrefixes(`
       SELECT ?predicate ?value
       WHERE {
         <${uri}> ?predicate ?value .
-        FILTER (
-          !STRSTARTS(STR(?predicate), STR(skos:)) &&
-          !STRSTARTS(STR(?predicate), STR(skosxl:)) &&
-          !STRSTARTS(STR(?predicate), STR(rdf:)) &&
-          ?predicate != rdfs:label &&
-          ?predicate != dct:title &&
-          ?predicate != dct:description &&
-          ?predicate != dct:creator &&
-          ?predicate != dct:created &&
-          ?predicate != dct:modified &&
-          ?predicate != dct:publisher &&
-          ?predicate != dct:rights &&
-          ?predicate != dct:license
-        )
+        FILTER (?predicate NOT IN (
+          rdf:type,
+          skos:prefLabel, skos:altLabel,
+          skos:definition, skos:scopeNote, skos:historyNote,
+          skos:changeNote, skos:editorialNote, skos:example,
+          skos:hasTopConcept,
+          skosxl:prefLabel,
+          dct:title, dct:description,
+          dct:creator, dct:created, dct:modified,
+          dct:publisher, dct:rights, dct:license
+        ))
       }
     `)
 
@@ -176,6 +174,9 @@ export function useSchemeData() {
         title: [],
         description: [],
         creator: [],
+        publisher: [],
+        rights: [],
+        license: [],
         prefLabelsXL: [],
         otherProperties: [],
       }
@@ -216,6 +217,18 @@ export function useSchemeData() {
           schemeDetails.created = val
         } else if (prop.endsWith('modified')) {
           schemeDetails.modified = val
+        } else if (prop.endsWith('publisher')) {
+          if (!schemeDetails.publisher.includes(val)) {
+            schemeDetails.publisher.push(val)
+          }
+        } else if (prop.endsWith('rights')) {
+          if (!schemeDetails.rights.includes(val)) {
+            schemeDetails.rights.push(val)
+          }
+        } else if (prop.endsWith('license')) {
+          if (!schemeDetails.license.includes(val)) {
+            schemeDetails.license.push(val)
+          }
         }
       }
 
