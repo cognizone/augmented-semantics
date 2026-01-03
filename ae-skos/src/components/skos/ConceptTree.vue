@@ -775,6 +775,8 @@ watch(
   () => languageStore.preferred,
   () => {
     if (endpointStore.current && schemeStore.selected) {
+      // Clear cached children so they reload with new language labels
+      conceptStore.clearAllChildren()
       loadTopConcepts()
     }
   },

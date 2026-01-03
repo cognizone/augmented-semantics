@@ -118,6 +118,10 @@ uiStore.announceSuccess('Data loaded')
 
 Live regions in App.vue announce these to screen readers.
 
+## User Environment
+
+- Screenshots are located in `~/Documents`
+
 ## Debugging
 
 ### Logger

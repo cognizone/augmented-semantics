@@ -199,6 +199,23 @@ export const useConceptStore = defineStore('concept', () => {
     searchResults.value = []
   }
 
+  /**
+   * Clear all cached children from tree nodes.
+   * Called when language changes to force reload with new labels.
+   */
+  function clearAllChildren() {
+    function clearChildren(nodes: ConceptNode[]) {
+      for (const node of nodes) {
+        if (node.children) {
+          clearChildren(node.children)
+          node.children = undefined
+        }
+      }
+    }
+    clearChildren(topConcepts.value)
+    expanded.value.clear()
+  }
+
   // Initialize
   loadHistoryFromStorage()
 
@@ -240,5 +257,6 @@ export const useConceptStore = defineStore('concept', () => {
     setLoadingDetails,
     setLoadingSearch,
     reset,
+    clearAllChildren,
   }
 })

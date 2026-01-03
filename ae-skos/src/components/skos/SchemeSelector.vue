@@ -431,10 +431,7 @@ watch(
 .scheme-uri {
   font-size: 0.7rem;
   color: var(--p-text-muted-color);
-  max-width: 250px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  word-break: break-all;
 }
 
 .scheme-details {

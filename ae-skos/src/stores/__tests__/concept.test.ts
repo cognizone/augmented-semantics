@@ -123,6 +123,51 @@ describe('concept store', () => {
       const firstConcept = store.topConcepts[0]
       expect(firstConcept?.children?.[0]?.children).toEqual(grandchildren)
     })
+
+    it('clears all children and expanded state', () => {
+      const store = useConceptStore()
+      const concepts: ConceptNode[] = [
+        {
+          uri: 'http://ex.org/c1',
+          label: 'Parent',
+          hasNarrower: true,
+          expanded: false,
+          children: [
+            {
+              uri: 'http://ex.org/c1-1',
+              label: 'Child',
+              hasNarrower: true,
+              expanded: false,
+              children: [
+                { uri: 'http://ex.org/c1-1-1', label: 'Grandchild', hasNarrower: false, expanded: false },
+              ],
+            },
+          ],
+        },
+        {
+          uri: 'http://ex.org/c2',
+          label: 'Parent 2',
+          hasNarrower: true,
+          expanded: false,
+          children: [
+            { uri: 'http://ex.org/c2-1', label: 'Child 2', hasNarrower: false, expanded: false },
+          ],
+        },
+      ]
+      store.setTopConcepts(concepts)
+      store.expandNode('http://ex.org/c1')
+      store.expandNode('http://ex.org/c1-1')
+
+      store.clearAllChildren()
+
+      // Children should be cleared
+      expect(store.topConcepts[0]?.children).toBeUndefined()
+      expect(store.topConcepts[1]?.children).toBeUndefined()
+      // Expanded state should be cleared
+      expect(store.expanded.size).toBe(0)
+      // Top concepts should still exist
+      expect(store.topConcepts).toHaveLength(2)
+    })
   })
 
   describe('selection', () => {

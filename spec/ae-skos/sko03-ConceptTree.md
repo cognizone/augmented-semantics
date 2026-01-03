@@ -424,6 +424,16 @@ interface NavigationState {
 - Cache expanded nodes to avoid re-fetching
 - Virtual scrolling for large lists (>100 items)
 
+## Language Change Behavior
+
+When the preferred language changes:
+1. All cached children are cleared
+2. Expanded state is reset (nodes collapse)
+3. Top concepts reload with new language labels
+4. Children reload on next expand with correct language
+
+This ensures labels throughout the tree reflect the current language preference.
+
 ## Loading & Error States
 
 See [com03-ErrorHandling](../common/com03-ErrorHandling.md) for details.
