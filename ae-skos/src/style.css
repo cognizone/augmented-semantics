@@ -377,6 +377,8 @@ a:hover {
 }
 
 .p-dialog-title {
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    Roboto, 'Helvetica Neue', Arial, sans-serif;
   font-size: 0.875rem;
   font-weight: 600;
   color: var(--ae-text-primary);

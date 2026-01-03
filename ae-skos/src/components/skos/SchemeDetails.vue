@@ -632,7 +632,7 @@ watch(
 }
 
 .section-icon {
-  font-size: 18px;
+  font-size: 16px;
 }
 
 .property-row {

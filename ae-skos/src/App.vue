@@ -213,7 +213,7 @@ onUnmounted(() => {
               optionLabel="label"
               optionValue="value"
               placeholder="Select language"
-              class="language-select"
+              class="language-select select-compact"
               @change="(e: any) => languageStore.setPreferred(e.value)"
             />
             <p class="setting-hint">
@@ -435,6 +435,10 @@ onUnmounted(() => {
   color: var(--ae-text-primary);
 }
 
+.header-icon-btn .material-symbols-outlined {
+  font-size: 18px;
+}
+
 .app-main {
   display: flex;
   flex: 1;
@@ -478,7 +482,7 @@ onUnmounted(() => {
 }
 
 .settings-section .section-icon {
-  font-size: 18px;
+  font-size: 16px;
 }
 
 .setting-row {
