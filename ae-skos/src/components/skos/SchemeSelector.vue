@@ -14,8 +14,8 @@ import { executeSparql, withPrefixes, logger, isValidURI } from '../../services'
 import { useLabelResolver } from '../../composables'
 import type { ConceptScheme } from '../../types'
 import Select from 'primevue/select'
-import Button from 'primevue/button'
 import Dialog from 'primevue/dialog'
+import Button from 'primevue/button'
 import Message from 'primevue/message'
 
 const schemeStore = useSchemeStore()
@@ -316,16 +316,14 @@ watch(
       </template>
     </Select>
 
-    <Button
+    <button
       v-if="currentScheme"
-      icon="pi pi-info-circle"
-      severity="secondary"
-      text
-      rounded
-      size="small"
+      class="info-btn"
       aria-label="Scheme details"
       @click="openDetails"
-    />
+    >
+      <span class="material-symbols-outlined icon-sm">info</span>
+    </button>
 
     <!-- Error message -->
     <Message v-if="error" severity="error" :closable="true" @close="error = null">
@@ -400,6 +398,9 @@ watch(
 }
 
 .selected-scheme {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
   font-weight: 500;
 }
 
@@ -422,16 +423,36 @@ watch(
 .lang-tag {
   font-size: 0.625rem;
   font-weight: normal;
-  background: var(--p-content-hover-background);
-  color: var(--p-text-muted-color);
+  background: var(--ae-bg-hover);
+  color: var(--ae-text-secondary);
   padding: 0.1rem 0.3rem;
   border-radius: 3px;
 }
 
 .scheme-uri {
   font-size: 0.7rem;
-  color: var(--p-text-muted-color);
+  color: var(--ae-text-secondary);
   word-break: break-all;
+}
+
+.info-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--ae-text-secondary);
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.info-btn:hover {
+  background: var(--ae-bg-hover);
+  color: var(--ae-text-primary);
 }
 
 .scheme-details {
@@ -449,7 +470,7 @@ watch(
 .detail-row label {
   font-size: 0.75rem;
   font-weight: 600;
-  color: var(--p-text-muted-color);
+  color: var(--ae-text-secondary);
   text-transform: uppercase;
 }
 
@@ -485,7 +506,7 @@ watch(
 .detail-item label {
   font-size: 0.75rem;
   font-weight: 600;
-  color: var(--p-text-muted-color);
+  color: var(--ae-text-secondary);
   text-transform: uppercase;
 }
 </style>

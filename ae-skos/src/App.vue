@@ -114,26 +114,29 @@ onUnmounted(() => {
         <button
           v-if="!uiStore.isDesktop"
           class="menu-button"
+          aria-label="Toggle menu"
           @click="uiStore.toggleSidebar()"
         >
-          <i class="pi pi-bars"></i>
+          <span class="material-symbols-outlined">menu</span>
         </button>
         <h1 class="app-title">AE SKOS</h1>
-      </div>
-      <div class="header-center">
-        <EndpointSelector @manage="showEndpointManager = true" />
-        <SchemeSelector />
+        <div v-if="endpointStore.current" class="connection-badge" :class="endpointStore.status">
+          <span class="status-dot"></span>
+          <span class="connection-name">{{ endpointStore.current.name }}</span>
+          <span class="connection-status">{{ endpointStore.status === 'connected' ? 'Connected' : endpointStore.status === 'connecting' ? 'Connecting...' : 'Error' }}</span>
+        </div>
       </div>
       <div class="header-right">
-        <Button
-          :label="getLanguageName(languageStore.preferred)"
-          icon="pi pi-cog"
-          iconPos="right"
-          severity="secondary"
-          text
-          aria-label="Settings"
-          @click="showSettingsDialog = true"
-        />
+        <SchemeSelector />
+        <div class="header-divider"></div>
+        <button class="header-btn" @click="showSettingsDialog = true" aria-label="Language and settings">
+          <span class="material-symbols-outlined icon-sm">language</span>
+          <span class="btn-label">{{ getLanguageName(languageStore.preferred) }}</span>
+          <span class="material-symbols-outlined icon-sm">arrow_drop_down</span>
+        </button>
+        <button class="header-icon-btn" aria-label="Manage endpoints" @click="showEndpointManager = true">
+          <span class="material-symbols-outlined">settings</span>
+        </button>
       </div>
     </header>
 
@@ -310,45 +313,142 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.5rem 1rem;
-  background: var(--p-content-background);
-  border-bottom: 1px solid var(--p-content-border-color);
+  height: 48px;
+  padding: 0 1rem;
+  background: var(--ae-header-bg);
+  border-bottom: 1px solid var(--ae-border-color);
   flex-shrink: 0;
 }
 
 .header-left {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 1.5rem;
 }
 
 .menu-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: none;
   border: none;
-  padding: 0.5rem;
+  padding: 0.25rem;
   cursor: pointer;
-  font-size: 1.25rem;
-  color: var(--p-text-color);
+  color: var(--ae-text-secondary);
+  border-radius: 4px;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.menu-button:hover {
+  background: var(--ae-bg-hover);
+  color: var(--ae-text-primary);
 }
 
 .app-title {
   margin: 0;
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--p-primary-color);
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--ae-text-primary);
+  letter-spacing: 0.02em;
 }
 
-.header-center {
-  flex: 1;
+.connection-badge {
   display: flex;
-  justify-content: center;
   align-items: center;
-  gap: 1rem;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  background: var(--ae-bg-elevated);
+  border: 1px solid var(--ae-border-color);
+  border-radius: 4px;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ae-text-muted);
+}
+
+.connection-badge.connected .status-dot {
+  background: var(--ae-status-success);
+}
+
+.connection-badge.connecting .status-dot {
+  background: var(--ae-status-warning);
+  animation: pulse 1s infinite;
+}
+
+.connection-badge.error .status-dot {
+  background: var(--ae-status-error);
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.connection-name {
+  color: var(--ae-text-secondary);
+}
+
+.connection-status {
+  display: none;
 }
 
 .header-right {
   display: flex;
   align-items: center;
+  gap: 0.5rem;
+}
+
+.header-divider {
+  width: 1px;
+  height: 20px;
+  background: var(--ae-border-color);
+  margin: 0 0.5rem;
+}
+
+.header-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.375rem 0.5rem;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: var(--ae-text-primary);
+  transition: background-color 0.15s;
+}
+
+.header-btn:hover {
+  background: var(--ae-bg-hover);
+}
+
+.header-btn .btn-label {
+  margin: 0 0.125rem;
+}
+
+.header-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  color: var(--ae-text-secondary);
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.header-icon-btn:hover {
+  background: var(--ae-bg-hover);
+  color: var(--ae-text-primary);
 }
 
 .app-main {
@@ -357,10 +457,13 @@ onUnmounted(() => {
   overflow: hidden;
 }
 
-
 /* Mobile adjustments */
 @media (max-width: 767px) {
-  .header-center {
+  .header-right {
+    display: none;
+  }
+
+  .connection-badge {
     display: none;
   }
 }
@@ -373,7 +476,7 @@ onUnmounted(() => {
 }
 
 .setting-section {
-  background: var(--p-content-hover-background);
+  background: var(--ae-bg-elevated);
   border-radius: 6px;
   padding: 0.75rem;
 }
@@ -382,7 +485,7 @@ onUnmounted(() => {
   font-size: 0.7rem;
   font-weight: 600;
   text-transform: uppercase;
-  color: var(--p-text-muted-color);
+  color: var(--ae-text-secondary);
   margin-bottom: 0.75rem;
   letter-spacing: 0.5px;
 }
@@ -411,7 +514,7 @@ onUnmounted(() => {
 
 .setting-description {
   font-size: 0.75rem;
-  color: var(--p-text-muted-color);
+  color: var(--ae-text-secondary);
 }
 
 .setting-group {
@@ -445,7 +548,7 @@ onUnmounted(() => {
 
 .setting-hint {
   font-size: 0.75rem;
-  color: var(--p-text-muted-color);
+  color: var(--ae-text-secondary);
   font-style: italic;
 }
 </style>
