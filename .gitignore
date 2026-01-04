@@ -6,3 +6,10 @@
 
 # Dependencies
 node_modules/
+
+# Build output
+dist/
+*.tsbuildinfo
+
+# Compiled JS (TypeScript outputs)
+src/**/*.js
