@@ -21,9 +21,7 @@ import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Tag from 'primevue/tag'
 
-import EndpointFormDialog from './EndpointFormDialog.vue'
-import EndpointLanguageDialog from './EndpointLanguageDialog.vue'
-import EndpointCapabilitiesDialog from './EndpointCapabilitiesDialog.vue'
+import EndpointWizard from './EndpointWizard.vue'
 import EndpointDeleteDialog from './EndpointDeleteDialog.vue'
 
 const props = defineProps<{
@@ -36,24 +34,19 @@ const emit = defineEmits<{
 
 const endpointStore = useEndpointStore()
 
+// Banner state
+const showInfoBanner = ref(true)
+
 // Dialog state
-const showFormDialog = ref(false)
-const showLanguageDialog = ref(false)
-const showCapabilitiesDialog = ref(false)
+const showWizard = ref(false)
 const showDeleteDialog = ref(false)
 
 // Dialog data
-const editingEndpoint = ref<SPARQLEndpoint | undefined>(undefined)
-const languageEndpoint = ref<SPARQLEndpoint | null>(null)
-const capabilitiesEndpoint = ref<SPARQLEndpoint | null>(null)
+const wizardEndpoint = ref<SPARQLEndpoint | undefined>(undefined)
 const deleteTarget = ref<SPARQLEndpoint | null>(null)
 
-// Example endpoints for quick add
-const exampleEndpoints = [
-  { name: 'DBpedia', url: 'https://dbpedia.org/sparql' },
-  { name: 'Wikidata', url: 'https://query.wikidata.org/sparql' },
-  { name: 'EU Publications', url: 'https://publications.europa.eu/webapi/rdf/sparql' },
-]
+// Connection testing state
+const testingEndpointId = ref<string | null>(null)
 
 // Computed
 const dialogVisible = computed({
@@ -61,24 +54,26 @@ const dialogVisible = computed({
   set: (value: boolean) => emit('update:visible', value),
 })
 
-// Form Dialog Handlers
-function openAddDialog() {
-  editingEndpoint.value = undefined
-  showFormDialog.value = true
+// Wizard Handlers
+function openAddWizard() {
+  wizardEndpoint.value = undefined
+  showWizard.value = true
 }
 
-function openEditDialog(endpoint: SPARQLEndpoint) {
-  editingEndpoint.value = endpoint
-  showFormDialog.value = true
+function openConfigureWizard(endpoint: SPARQLEndpoint) {
+  wizardEndpoint.value = endpoint
+  showWizard.value = true
 }
 
-function handleFormSave(endpoint: SPARQLEndpoint, analysis?: SPARQLEndpoint['analysis']) {
-  if (editingEndpoint.value) {
+function handleWizardSave(endpoint: SPARQLEndpoint) {
+  if (wizardEndpoint.value) {
     // Update existing endpoint
-    endpointStore.updateEndpoint(editingEndpoint.value.id, {
+    endpointStore.updateEndpoint(wizardEndpoint.value.id, {
       name: endpoint.name,
       url: endpoint.url,
       auth: endpoint.auth,
+      analysis: endpoint.analysis,
+      languagePriorities: endpoint.languagePriorities,
     })
   } else {
     // Add new endpoint
@@ -88,37 +83,16 @@ function handleFormSave(endpoint: SPARQLEndpoint, analysis?: SPARQLEndpoint['ana
       auth: endpoint.auth,
     })
 
-    // Auto-select and update with analysis
+    // Update with analysis and language priorities
+    endpointStore.updateEndpoint(newEndpoint.id, {
+      analysis: endpoint.analysis,
+      languagePriorities: endpoint.languagePriorities,
+    })
+
+    // Auto-select and set connected
     endpointStore.selectEndpoint(newEndpoint.id)
-    if (analysis) {
-      endpointStore.updateEndpoint(newEndpoint.id, { analysis })
-    }
     endpointStore.setStatus('connected')
   }
-}
-
-// Language Dialog Handlers
-function openLanguageDialog(endpoint: SPARQLEndpoint) {
-  languageEndpoint.value = endpoint
-  showLanguageDialog.value = true
-}
-
-function handleLanguageSave(endpoint: SPARQLEndpoint, priorities: string[]) {
-  endpointStore.updateEndpoint(endpoint.id, {
-    languagePriorities: priorities,
-  })
-}
-
-// Capabilities Dialog Handlers
-function openCapabilitiesDialog(endpoint: SPARQLEndpoint) {
-  capabilitiesEndpoint.value = endpoint
-  showCapabilitiesDialog.value = true
-}
-
-function handleCapabilitiesAnalyzed(endpoint: SPARQLEndpoint, analysis: SPARQLEndpoint['analysis']) {
-  endpointStore.updateEndpoint(endpoint.id, { analysis })
-  // Update the ref to show new data
-  capabilitiesEndpoint.value = endpointStore.endpoints.find(e => e.id === endpoint.id) || null
 }
 
 // Delete Dialog Handlers
@@ -132,17 +106,19 @@ function handleDeleteConfirm(endpoint: SPARQLEndpoint) {
 }
 
 // Connection Handler
-async function handleConnect(endpoint: SPARQLEndpoint) {
-  endpointStore.selectEndpoint(endpoint.id)
-  endpointStore.setStatus('connecting')
+async function handleTestConnection(endpoint: SPARQLEndpoint) {
+  testingEndpointId.value = endpoint.id
 
   const result = await testConnection(endpoint)
   if (result.success) {
+    endpointStore.selectEndpoint(endpoint.id)
     endpointStore.setStatus('connected')
   } else {
     endpointStore.setStatus('error')
     endpointStore.setError(result.error!)
   }
+
+  testingEndpointId.value = null
 }
 
 // Utility Functions
@@ -161,125 +137,114 @@ function formatDate(dateStr?: string) {
   <Dialog
     v-model:visible="dialogVisible"
     header="Endpoint Manager"
-    :style="{ width: '850px' }"
+    :style="{ width: '900px' }"
     :modal="true"
     :closable="true"
   >
-    <!-- Endpoint List -->
-    <div class="endpoint-list">
+    <div class="endpoint-manager-content">
+      <!-- Info Banner -->
+      <div v-if="showInfoBanner" class="info-banner">
+        <span class="material-symbols-outlined info-icon">info</span>
+        <div class="info-content">
+          <span class="info-title">Configuration Wizard Enabled</span>
+          <span class="info-text">
+            Managing endpoints is now more powerful. Clicking
+            <strong>Add Endpoint</strong> or the
+            <span class="icon-badge"><span class="material-symbols-outlined">tune</span></span>
+            configuration action will launch the new multi-step setup flow.
+          </span>
+        </div>
+        <button class="dismiss-btn" @click="showInfoBanner = false" aria-label="Dismiss">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+      <!-- Header -->
       <div class="list-header">
         <h3>Saved Endpoints</h3>
         <Button
           label="Add Endpoint"
-          icon="pi pi-plus"
           size="small"
-          @click="openAddDialog"
-        />
+          class="add-endpoint-btn"
+          @click="openAddWizard"
+        >
+          <template #icon>
+            <span class="material-symbols-outlined btn-icon">add</span>
+          </template>
+        </Button>
       </div>
 
+      <!-- Endpoint Table -->
       <DataTable
         :value="endpointStore.sortedEndpoints"
         :rows="5"
         :paginator="endpointStore.endpoints.length > 5"
         class="endpoints-table"
+        stripedRows
       >
         <template #empty>
           <div class="empty-state">
-            <p>No endpoints configured.</p>
-            <div class="example-endpoints">
-              <p>Try one of these:</p>
-              <div class="example-list">
-                <Button
-                  v-for="ex in exampleEndpoints"
-                  :key="ex.url"
-                  :label="ex.name"
-                  size="small"
-                  severity="secondary"
-                  outlined
-                  @click="openAddDialog"
-                />
-              </div>
-            </div>
+            <span class="material-symbols-outlined empty-icon">dns</span>
+            <p>No endpoints configured yet.</p>
+            <p class="empty-hint">Click "Add Endpoint" to get started.</p>
           </div>
         </template>
 
-        <Column field="name" header="Name" sortable>
+        <Column field="name" header="Name" sortable :style="{ width: '25%' }">
           <template #body="{ data }">
-            <div class="endpoint-cell">
-              <span class="name">{{ data.name }}</span>
+            <div class="endpoint-name-cell">
+              <span class="endpoint-name">{{ data.name }}</span>
               <Tag
                 v-if="data.id === endpointStore.currentId"
                 severity="success"
-                value="Active"
                 class="active-tag"
-              />
+              >
+                Active
+              </Tag>
             </div>
           </template>
         </Column>
 
-        <Column field="url" header="URL">
+        <Column field="url" header="URL" :style="{ width: '40%' }">
           <template #body="{ data }">
             <span class="url-cell">{{ data.url }}</span>
           </template>
         </Column>
 
-        <Column field="lastAccessedAt" header="Last Used" sortable>
+        <Column field="lastAccessedAt" header="Last Used" sortable :style="{ width: '15%' }">
           <template #body="{ data }">
-            {{ formatDate(data.lastAccessedAt) }}
+            <span class="date-cell">{{ formatDate(data.lastAccessedAt) }}</span>
           </template>
         </Column>
 
-        <Column header="Actions" :style="{ width: '180px' }">
+        <Column header="Actions" :style="{ width: '20%' }">
           <template #body="{ data }">
             <div class="action-buttons">
-              <Button
-                icon="pi pi-link"
-                severity="success"
-                text
-                rounded
-                size="small"
-                aria-label="Connect"
-                :disabled="data.id === endpointStore.currentId"
-                @click="handleConnect(data)"
-              />
-              <Button
-                icon="pi pi-globe"
-                severity="info"
-                text
-                rounded
-                size="small"
-                aria-label="Language settings"
-                v-tooltip.top="'Language settings'"
-                @click="openLanguageDialog(data)"
-              />
-              <Button
-                icon="pi pi-sitemap"
-                severity="info"
-                text
-                rounded
-                size="small"
-                aria-label="SPARQL capabilities"
-                v-tooltip.top="'SPARQL capabilities'"
-                @click="openCapabilitiesDialog(data)"
-              />
-              <Button
-                icon="pi pi-pencil"
-                severity="secondary"
-                text
-                rounded
-                size="small"
-                aria-label="Edit"
-                @click="openEditDialog(data)"
-              />
-              <Button
-                icon="pi pi-trash"
-                severity="danger"
-                text
-                rounded
-                size="small"
-                aria-label="Delete"
+              <button
+                class="action-btn action-btn-link"
+                :class="{ 'action-btn-disabled': data.id === endpointStore.currentId }"
+                :disabled="data.id === endpointStore.currentId || testingEndpointId === data.id"
+                title="Check connection"
+                @click="handleTestConnection(data)"
+              >
+                <span v-if="testingEndpointId === data.id" class="material-symbols-outlined spinning">sync</span>
+                <span v-else class="material-symbols-outlined">link</span>
+              </button>
+              <div class="action-divider"></div>
+              <button
+                class="action-btn action-btn-configure"
+                title="Configure Endpoint"
+                @click="openConfigureWizard(data)"
+              >
+                <span class="material-symbols-outlined">tune</span>
+              </button>
+              <button
+                class="action-btn action-btn-delete"
+                title="Delete"
                 @click="handleDelete(data)"
-              />
+              >
+                <span class="material-symbols-outlined">delete</span>
+              </button>
             </div>
           </template>
         </Column>
@@ -288,22 +253,10 @@ function formatDate(dateStr?: string) {
   </Dialog>
 
   <!-- Child Dialogs -->
-  <EndpointFormDialog
-    v-model:visible="showFormDialog"
-    :endpoint="editingEndpoint"
-    @save="handleFormSave"
-  />
-
-  <EndpointLanguageDialog
-    v-model:visible="showLanguageDialog"
-    :endpoint="languageEndpoint"
-    @save="handleLanguageSave"
-  />
-
-  <EndpointCapabilitiesDialog
-    v-model:visible="showCapabilitiesDialog"
-    :endpoint="capabilitiesEndpoint"
-    @analyzed="handleCapabilitiesAnalyzed"
+  <EndpointWizard
+    v-model:visible="showWizard"
+    :endpoint="wizardEndpoint"
+    @save="handleWizardSave"
   />
 
   <EndpointDeleteDialog
@@ -314,12 +267,89 @@ function formatDate(dateStr?: string) {
 </template>
 
 <style scoped>
-.endpoint-list {
+.endpoint-manager-content {
   display: flex;
   flex-direction: column;
   gap: 1rem;
 }
 
+/* Info Banner */
+.info-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: var(--ae-accent-bg, rgba(0, 122, 204, 0.08));
+  border: 1px solid var(--ae-accent-border, rgba(0, 122, 204, 0.2));
+  border-radius: 0.375rem;
+}
+
+.info-icon {
+  color: var(--ae-accent);
+  font-size: 1.25rem;
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+}
+
+.info-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.info-title {
+  font-weight: 600;
+  color: var(--ae-text-primary);
+  font-size: 0.8125rem;
+}
+
+.info-text {
+  font-size: 0.8125rem;
+  color: var(--ae-text-secondary);
+  line-height: 1.5;
+}
+
+.icon-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--ae-bg-elevated);
+  border: 1px solid var(--ae-border-color);
+  border-radius: 0.25rem;
+  padding: 0 0.25rem;
+  height: 1.25rem;
+  vertical-align: middle;
+  margin: 0 0.125rem;
+}
+
+.icon-badge .material-symbols-outlined {
+  font-size: 0.875rem;
+  color: var(--ae-accent);
+}
+
+.dismiss-btn {
+  background: none;
+  border: none;
+  padding: 0.25rem;
+  cursor: pointer;
+  color: var(--ae-text-muted);
+  border-radius: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dismiss-btn:hover {
+  background: var(--ae-bg-hover);
+  color: var(--ae-text-primary);
+}
+
+.dismiss-btn .material-symbols-outlined {
+  font-size: 1.125rem;
+}
+
+/* List Header */
 .list-header {
   display: flex;
   justify-content: space-between;
@@ -330,57 +360,151 @@ function formatDate(dateStr?: string) {
   margin: 0;
   font-size: 1rem;
   font-weight: 600;
+  color: var(--ae-text-primary);
 }
 
+.add-endpoint-btn {
+  background: var(--ae-accent) !important;
+  border-color: var(--ae-accent) !important;
+}
+
+.add-endpoint-btn:hover {
+  background: var(--ae-accent-hover, #005a9e) !important;
+  border-color: var(--ae-accent-hover, #005a9e) !important;
+}
+
+.btn-icon {
+  font-size: 1.125rem;
+  margin-right: 0.25rem;
+}
+
+/* Table */
 .endpoints-table {
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
 }
 
+/* Empty State */
 .empty-state {
-  padding: 2rem;
-  text-align: center;
-  color: var(--p-text-muted-color);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 3rem 2rem;
+  color: var(--ae-text-muted);
+}
+
+.empty-icon {
+  font-size: 2.5rem;
+  opacity: 0.4;
 }
 
 .empty-state p {
-  margin: 0 0 1rem 0;
+  margin: 0;
 }
 
-.example-endpoints {
-  margin-top: 1rem;
+.empty-hint {
+  font-size: 0.75rem;
 }
 
-.example-list {
-  display: flex;
-  justify-content: center;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-  margin-top: 0.5rem;
-}
-
-.endpoint-cell {
+/* Table Cells */
+.endpoint-name-cell {
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
 
-.endpoint-cell .name {
+.endpoint-name {
   font-weight: 500;
+  color: var(--ae-text-primary);
 }
 
 .active-tag {
   font-size: 0.625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
 }
 
 .url-cell {
   font-family: var(--ae-font-mono);
   font-size: 0.75rem;
-  color: var(--p-text-muted-color);
+  color: var(--ae-text-muted);
 }
 
+.date-cell {
+  color: var(--ae-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Action Buttons */
 .action-buttons {
   display: flex;
-  gap: 0.25rem;
+  align-items: center;
   justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.action-btn {
+  background: none;
+  border: none;
+  padding: 0.375rem;
+  cursor: pointer;
+  border-radius: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.action-btn .material-symbols-outlined {
+  font-size: 1.25rem;
+}
+
+.action-btn-link {
+  color: var(--ae-text-muted);
+}
+
+.action-btn-link:hover:not(:disabled) {
+  color: var(--ae-accent);
+  background: var(--ae-bg-hover);
+}
+
+.action-btn-configure {
+  color: var(--ae-accent);
+}
+
+.action-btn-configure:hover {
+  color: var(--ae-accent);
+  background: var(--ae-bg-hover);
+  transform: scale(1.1);
+}
+
+.action-btn-delete {
+  color: var(--ae-text-muted);
+}
+
+.action-btn-delete:hover {
+  color: var(--ae-status-error);
+  background: var(--ae-bg-hover);
+}
+
+.action-btn-disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.action-divider {
+  width: 1px;
+  height: 1rem;
+  background: var(--ae-border-color);
+}
+
+/* Spinning animation for loading state */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.spinning {
+  animation: spin 1s linear infinite;
 }
 </style>
