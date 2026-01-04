@@ -837,7 +837,7 @@ watch(
           v-model="gotoUri"
           type="text"
           placeholder="Go to URI..."
-          class="goto-input"
+          class="ae-input"
           @keyup.enter="goToUri"
         />
         <button
@@ -940,23 +940,9 @@ watch(
   align-items: center;
 }
 
-.goto-input {
-  width: 100%;
-  padding: 0.5rem 2rem 0.5rem 0.75rem;
-  font-size: 0.875rem;
-  background: var(--ae-bg-base);
-  border: 1px solid var(--ae-border-color);
-  border-radius: 4px;
-  color: var(--ae-text-primary);
-}
-
-.goto-input::placeholder {
-  color: var(--ae-text-secondary);
-}
-
-.goto-input:focus {
-  outline: none;
-  border-color: var(--ae-accent);
+/* Extra right padding for go button */
+.goto-input-wrapper .ae-input {
+  padding-right: 2rem;
 }
 
 .goto-btn {

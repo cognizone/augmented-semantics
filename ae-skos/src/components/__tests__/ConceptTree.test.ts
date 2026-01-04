@@ -101,7 +101,7 @@ describe('ConceptTree', () => {
 
     it('renders input for Go to URI', () => {
       const wrapper = mountConceptTree()
-      expect(wrapper.find('.goto-input').exists()).toBe(true)
+      expect(wrapper.find('.goto-input-wrapper .ae-input').exists()).toBe(true)
     })
   })
 

@@ -237,7 +237,7 @@ watch(
           v-model="searchInput"
           type="text"
           placeholder="Search concepts..."
-          class="search-input"
+          class="ae-input ae-input-with-icon"
           @input="onSearchInput"
           @keyup.escape="clearSearch"
         />
@@ -408,23 +408,9 @@ watch(
   pointer-events: none;
 }
 
-.search-input {
-  width: 100%;
-  padding: 0.5rem 2rem 0.5rem 2rem;
-  font-size: 0.875rem;
-  background: var(--ae-bg-base);
-  border: 1px solid var(--ae-border-color);
-  border-radius: 4px;
-  color: var(--ae-text-primary);
-}
-
-.search-input::placeholder {
-  color: var(--ae-text-secondary);
-}
-
-.search-input:focus {
-  outline: none;
-  border-color: var(--ae-accent);
+/* Extra right padding for clear button */
+.search-input-wrapper .ae-input {
+  padding-right: 2rem;
 }
 
 .clear-btn {

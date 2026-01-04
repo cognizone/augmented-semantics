@@ -178,7 +178,9 @@ function formatDate(dateStr?: string) {
       <DataTable
         :value="endpointStore.sortedEndpoints"
         :rows="5"
-        :paginator="endpointStore.endpoints.length > 5"
+        paginator
+        paginatorTemplate="PrevPageLink CurrentPageReport NextPageLink"
+        currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
         class="endpoints-table"
         stripedRows
       >

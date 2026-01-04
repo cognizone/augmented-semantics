@@ -27,7 +27,6 @@ import StepList from 'primevue/steplist'
 import StepPanels from 'primevue/steppanels'
 import Step from 'primevue/step'
 import StepPanel from 'primevue/steppanel'
-import InputText from 'primevue/inputtext'
 import Select from 'primevue/select'
 import Message from 'primevue/message'
 import Tag from 'primevue/tag'
@@ -254,22 +253,24 @@ function handleClose() {
             <!-- Name -->
             <div class="form-field">
               <label for="ep-name">Name</label>
-              <InputText
+              <input
                 id="ep-name"
                 v-model="form.name"
+                type="text"
                 placeholder="My Endpoint"
-                class="w-full"
+                class="ae-input"
               />
             </div>
 
             <!-- URL -->
             <div class="form-field">
               <label for="ep-url">URL</label>
-              <InputText
+              <input
                 id="ep-url"
                 v-model="form.url"
+                type="text"
                 placeholder="https://example.org/sparql"
-                class="w-full"
+                class="ae-input"
               />
               <!-- Security warnings -->
               <Message
@@ -303,7 +304,6 @@ function handleClose() {
                 :options="authOptions"
                 optionLabel="label"
                 optionValue="value"
-                class="w-full"
               />
             </div>
 
@@ -312,16 +312,11 @@ function handleClose() {
               <div class="form-row">
                 <div class="form-field">
                   <label for="ep-user">Username</label>
-                  <InputText id="ep-user" v-model="form.username" class="w-full" />
+                  <input id="ep-user" v-model="form.username" type="text" class="ae-input" />
                 </div>
                 <div class="form-field">
                   <label for="ep-pass">Password</label>
-                  <InputText
-                    id="ep-pass"
-                    v-model="form.password"
-                    type="password"
-                    class="w-full"
-                  />
+                  <input id="ep-pass" v-model="form.password" type="password" class="ae-input" />
                 </div>
               </div>
             </template>
@@ -331,16 +326,11 @@ function handleClose() {
               <div class="form-row">
                 <div class="form-field">
                   <label for="ep-header">Header Name</label>
-                  <InputText id="ep-header" v-model="form.headerName" class="w-full" />
+                  <input id="ep-header" v-model="form.headerName" type="text" class="ae-input" />
                 </div>
                 <div class="form-field">
                   <label for="ep-apikey">API Key</label>
-                  <InputText
-                    id="ep-apikey"
-                    v-model="form.apiKey"
-                    type="password"
-                    class="w-full"
-                  />
+                  <input id="ep-apikey" v-model="form.apiKey" type="password" class="ae-input" />
                 </div>
               </div>
             </template>
@@ -349,12 +339,7 @@ function handleClose() {
             <template v-if="form.authType === 'bearer'">
               <div class="form-field">
                 <label for="ep-token">Token</label>
-                <InputText
-                  id="ep-token"
-                  v-model="form.token"
-                  type="password"
-                  class="w-full"
-                />
+                <input id="ep-token" v-model="form.token" type="password" class="ae-input" />
               </div>
             </template>
 
@@ -804,4 +789,5 @@ function handleClose() {
 .fade-leave-to {
   opacity: 0;
 }
+
 </style>
