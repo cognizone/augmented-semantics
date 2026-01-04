@@ -1,0 +1,7 @@
+{
+  "name": "augmented-semantics",
+  "private": true,
+  "scripts": {
+    "dev:skos": "pnpm --filter ae-skos dev"
+  }
+}
