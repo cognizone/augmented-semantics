@@ -36,6 +36,7 @@ import OrderList from 'primevue/orderlist'
 const props = defineProps<{
   visible: boolean
   endpoint?: SPARQLEndpoint
+  initialStep?: '1' | '2' | '3'
 }>()
 
 const emit = defineEmits<{
@@ -98,9 +99,15 @@ watch(() => props.endpoint, (endpoint) => {
   }
 }, { immediate: true })
 
-// Clear state when dialog closes
+// Handle dialog open/close
 watch(() => props.visible, (visible) => {
-  if (!visible) {
+  if (visible) {
+    // Set initial step if provided
+    if (props.initialStep) {
+      activeStep.value = props.initialStep
+    }
+  } else {
+    // Clear state when dialog closes
     activeStep.value = '1'
     clearResult()
     clearAnalysis()
@@ -225,7 +232,7 @@ function handleClose() {
     class="endpoint-wizard-dialog"
     @update:visible="$emit('update:visible', $event)"
   >
-    <Stepper v-model:value="activeStep" linear>
+    <Stepper v-model:value="activeStep">
       <StepList>
         <Step value="1">Basic Info</Step>
         <Step value="2">Capabilities</Step>
@@ -271,6 +278,7 @@ function handleClose() {
                 type="text"
                 placeholder="https://example.org/sparql"
                 class="ae-input"
+                :disabled="isEditing"
               />
               <!-- Security warnings -->
               <Message

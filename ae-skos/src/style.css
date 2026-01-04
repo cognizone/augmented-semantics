@@ -125,6 +125,12 @@
   border-color: var(--ae-accent);
 }
 
+.ae-input:disabled {
+  background: var(--ae-bg-hover);
+  color: var(--ae-text-secondary);
+  cursor: not-allowed;
+}
+
 /* Input with icon (search, goto) - needs extra left padding */
 .ae-input-with-icon {
   padding-left: 2rem;
