@@ -102,6 +102,12 @@ watch(() => props.endpoint, (endpoint) => {
 // Handle dialog open/close
 watch(() => props.visible, (visible) => {
   if (visible) {
+    // Load endpoint data when opening (handles re-open with same endpoint)
+    if (props.endpoint) {
+      loadEndpoint(props.endpoint)
+      tempEndpoint.value = props.endpoint
+      loadPriorities(props.endpoint)
+    }
     // Set initial step if provided
     if (props.initialStep) {
       activeStep.value = props.initialStep
