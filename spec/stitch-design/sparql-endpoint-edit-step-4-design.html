@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Review Endpoint Configuration - SKOS Browser</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#135bec",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#101622",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"],
+                        "body": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white min-h-screen flex flex-col font-display overflow-x-hidden">
+<header class="w-full border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-[#151a23]">
+    <div class="max-w-[1200px] mx-auto px-6 h-16 flex items-center justify-between">
+        <div class="flex items-center gap-3 text-slate-900 dark:text-white">
+            <div class="size-8 text-primary flex items-center justify-center">
+                <span class="material-symbols-outlined text-3xl">share</span>
+            </div>
+            <h2 class="text-lg font-bold leading-tight tracking-[-0.015em]">SKOS Browser</h2>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                <span class="material-symbols-outlined text-[20px]">help</span>
+                <span class="hidden sm:inline">Help &amp; Documentation</span>
+            </div>
+            <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-9 border border-gray-200 dark:border-gray-700" data-alt="User profile avatar gradient" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAqACNVOF8LAkii2ind-lUttzTwMNzn3REOkdLjA5yLO9z_pBE20WAYZrHLroTseiys49nnO7IIEJngEb_1Yl5sROhlH7lq5V5JpjyLI9lhdCJtJ3ABh1iOMwq83_kRiyq14XVU7MYnRPe6UWMG-dwuV36ezbOTzbgEiBHA5KhyuyxSPBXXMn2pnVg3EGbKPo1rqlX_9bXAveqGlvN5b6xpOvxWZwgH3OrzLe8q1uK5bWlySji-98Dx6p0BuxumWWtqAEIqe2HZW70N");'>
+            </div>
+        </div>
+    </div>
+</header>
+<main class="flex-1 flex flex-col items-center justify-start pt-10 pb-20 px-4 sm:px-6">
+    <div class="w-full max-w-[800px] flex flex-col gap-8">
+        <div class="flex flex-col gap-3">
+            <div class="flex gap-6 justify-between items-end">
+                <h1 class="text-slate-900 dark:text-white text-xl font-semibold leading-normal">Endpoint Configuration</h1>
+                <p class="text-primary text-sm font-medium leading-normal">Step 4 of 4</p>
+            </div>
+            <div class="relative w-full h-2 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden">
+                <div class="absolute top-0 left-0 h-full bg-primary rounded-full" style="width: 100%;"></div>
+            </div>
+            <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 font-medium">
+                <span>Endpoint Details</span>
+                <span>Authentication</span>
+                <span>Language Priority</span>
+                <span class="text-primary">Review</span>
+            </div>
+        </div>
+        <div class="flex flex-col gap-2 pt-4">
+            <h2 class="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">Review Configuration</h2>
+            <p class="text-gray-600 dark:text-gray-400 text-base max-w-2xl">
+                Please verify your settings below. Ensure all details are correct before finalizing the SPARQL endpoint configuration.
+            </p>
+        </div>
+        <div class="flex flex-col gap-6">
+            <div class="bg-white dark:bg-[#1c212c] rounded-xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm flex flex-col gap-6">
+                <div class="flex justify-between items-center pb-2 border-b border-gray-100 dark:border-gray-800">
+                    <h3 class="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+                        <span class="material-symbols-outlined text-gray-400">dns</span>
+                        Endpoint Details
+                    </h3>
+                    <button class="text-primary hover:text-blue-500 text-sm font-medium flex items-center gap-1 transition-colors px-2 py-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20">
+                        <span>Edit</span>
+                        <span class="material-symbols-outlined text-[16px]">edit</span>
+                    </button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-8">
+                    <div>
+                        <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider block mb-1">Name</span>
+                        <p class="text-slate-900 dark:text-white font-medium">Getty Vocabularies</p>
+                    </div>
+                    <div>
+                        <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider block mb-1">Endpoint URL</span>
+                        <p class="text-slate-900 dark:text-white font-medium font-mono text-sm break-all">http://vocab.getty.edu/sparql</p>
+                    </div>
+                    <div>
+                        <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider block mb-1">Named Graph</span>
+                        <p class="text-gray-500 dark:text-gray-400 italic text-sm">Default Graph</p>
+                    </div>
+                    <div>
+                        <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider block mb-1">Authentication</span>
+                        <div class="flex items-center gap-2">
+                            <span class="flex h-2 w-2 rounded-full bg-green-500"></span>
+                            <p class="text-slate-900 dark:text-white text-sm">No Authentication Required</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white dark:bg-[#1c212c] rounded-xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm flex flex-col gap-6">
+                <div class="flex justify-between items-center pb-2 border-b border-gray-100 dark:border-gray-800">
+                    <h3 class="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+                        <span class="material-symbols-outlined text-gray-400">settings_suggest</span>
+                        Capabilities
+                    </h3>
+                    <button class="text-primary hover:text-blue-500 text-sm font-medium flex items-center gap-1 transition-colors px-2 py-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20">
+                        <span>Edit</span>
+                        <span class="material-symbols-outlined text-[16px]">edit</span>
+                    </button>
+                </div>
+                <div class="flex flex-wrap gap-3">
+                    <div class="flex items-center gap-2 px-3 py-2 bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-800/30 rounded-lg text-sm text-green-800 dark:text-green-300">
+                        <span class="material-symbols-outlined text-[18px]">check_circle</span>
+                        SPARQL 1.1 Query
+                    </div>
+                    <div class="flex items-center gap-2 px-3 py-2 bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-800/30 rounded-lg text-sm text-green-800 dark:text-green-300">
+                        <span class="material-symbols-outlined text-[18px]">check_circle</span>
+                        JSON Results
+                    </div>
+                    <div class="flex items-center gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-600 dark:text-gray-400 opacity-60">
+                        <span class="material-symbols-outlined text-[18px]">cancel</span>
+                        Full Text Search
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white dark:bg-[#1c212c] rounded-xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm flex flex-col gap-6">
+                <div class="flex justify-between items-center pb-2 border-b border-gray-100 dark:border-gray-800">
+                    <h3 class="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+                        <span class="material-symbols-outlined text-gray-400">translate</span>
+                        Language Priority
+                    </h3>
+                    <button class="text-primary hover:text-blue-500 text-sm font-medium flex items-center gap-1 transition-colors px-2 py-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20">
+                        <span>Edit</span>
+                        <span class="material-symbols-outlined text-[16px]">edit</span>
+                    </button>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">The application will try to fetch labels in this order:</p>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <div class="flex items-center gap-2 pr-4 pl-2 py-1.5 rounded-full bg-blue-50 dark:bg-[#101622] border border-blue-200 dark:border-blue-900 shadow-sm">
+                            <div class="size-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold shadow-sm">1</div>
+                            <span class="text-slate-800 dark:text-white text-sm font-semibold">English</span>
+                            <span class="text-xs uppercase text-gray-500 bg-white dark:bg-gray-800 px-1.5 py-0.5 rounded border border-gray-200 dark:border-gray-700">en</span>
+                        </div>
+                        <span class="material-symbols-outlined text-gray-300 dark:text-gray-600">arrow_forward</span>
+                        <div class="flex items-center gap-2 pr-4 pl-2 py-1.5 rounded-full bg-gray-50 dark:bg-[#151a23] border border-gray-200 dark:border-gray-700">
+                            <div class="size-6 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 flex items-center justify-center text-xs font-bold">2</div>
+                            <span class="text-slate-700 dark:text-gray-300 text-sm font-medium">French</span>
+                            <span class="text-xs uppercase text-gray-500 bg-white dark:bg-gray-800 px-1.5 py-0.5 rounded border border-gray-200 dark:border-gray-700">fr</span>
+                        </div>
+                        <span class="material-symbols-outlined text-gray-300 dark:text-gray-600">arrow_forward</span>
+                        <div class="flex items-center gap-2 pr-4 pl-2 py-1.5 rounded-full bg-gray-50 dark:bg-[#151a23] border border-gray-200 dark:border-gray-700">
+                            <div class="size-6 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 flex items-center justify-center text-xs font-bold">3</div>
+                            <span class="text-slate-700 dark:text-gray-300 text-sm font-medium">German</span>
+                            <span class="text-xs uppercase text-gray-500 bg-white dark:bg-gray-800 px-1.5 py-0.5 rounded border border-gray-200 dark:border-gray-700">de</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="flex gap-3 bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-900/30 rounded-lg p-4">
+                <span class="material-symbols-outlined text-blue-600 dark:text-blue-400 shrink-0">info</span>
+                <p class="text-sm text-blue-900 dark:text-blue-200 leading-relaxed">
+                    Once saved, the crawler will immediately attempt to index the concept scheme structure based on these settings.
+                </p>
+            </div>
+        </div>
+        <div class="flex items-center justify-between pt-4 pb-8">
+            <button class="flex items-center justify-center gap-2 text-slate-700 dark:text-gray-300 hover:text-slate-900 hover:dark:text-white font-medium py-3 px-6 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-[#1c212c]">
+                <span class="material-symbols-outlined text-[20px]">arrow_back</span>
+                <span>Back</span>
+            </button>
+            <div class="flex gap-4">
+                <button class="hidden sm:flex items-center justify-center gap-2 text-slate-700 dark:text-gray-300 hover:text-slate-900 hover:dark:text-white font-medium py-3 px-6 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-[#1c212c]">
+                    <span>Save as Draft</span>
+                </button>
+                <button class="flex items-center justify-center gap-2 bg-primary hover:bg-blue-600 text-white font-medium py-3 px-8 rounded-lg transition-colors shadow-lg shadow-primary/25">
+                    <span class="material-symbols-outlined text-[20px]">check</span>
+                    <span>Save Endpoint</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</main>
+
+</body></html>

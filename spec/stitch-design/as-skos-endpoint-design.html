@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Endpoint Manager</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#10b981", // Emerald 500
+                        "primary-dark": "#059669", // Emerald 600
+                        "primary-light": "#34d399", // Emerald 400
+                        "background-light": "#f3f4f6", // Gray 100
+                        "background-dark": "#121212", // Very dark gray
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#1e1e1e", // Dark gray for panels
+                        "border-light": "#e5e7eb",
+                        "border-dark": "#333333",
+                    },
+                    fontFamily: {
+                        display: ["Inter", "sans-serif"],
+                        mono: ["JetBrains Mono", "monospace"],
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.375rem",
+                    },
+                },
+            },
+        };
+    </script>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-gray-900 dark:text-gray-200 font-display min-h-screen p-4 sm:p-8 flex flex-col items-center justify-start transition-colors duration-200">
+<div class="w-full max-w-6xl bg-surface-light dark:bg-surface-dark shadow-xl rounded-lg border border-border-light dark:border-border-dark flex flex-col overflow-hidden">
+    <div class="flex items-center justify-between px-6 py-5 border-b border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark">
+        <h1 class="text-xl font-semibold text-gray-800 dark:text-gray-100 tracking-tight">Endpoint Manager</h1>
+        <button class="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors focus:outline-none rounded-full p-1 hover:bg-gray-100 dark:hover:bg-gray-800">
+            <span class="material-symbols-outlined text-2xl">close</span>
+        </button>
+    </div>
+    <div class="px-6 pt-6 pb-2">
+        <div class="flex items-start gap-3 p-4 rounded-md bg-blue-50/80 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20 text-sm">
+            <span class="material-symbols-outlined text-blue-600 dark:text-blue-400 text-[22px] mt-0.5 shrink-0 fill-0">info</span>
+            <div class="flex-1 text-gray-600 dark:text-gray-300 leading-relaxed">
+                <span class="font-semibold text-gray-900 dark:text-blue-200 block mb-1">Configuration Wizard Enabled</span>
+                Managing endpoints is now more powerful. Clicking <span class="font-medium text-primary dark:text-emerald-400">Add Endpoint</span> or the <span class="inline-flex align-bottom items-center justify-center bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-gray-700 rounded px-1 mx-0.5 h-5"><span class="material-symbols-outlined text-[14px] text-primary dark:text-emerald-400">tune</span></span> configuration action will launch the new multi-step setup flow.
+            </div>
+        </div>
+    </div>
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between px-6 py-4 gap-4">
+        <h2 class="text-lg font-medium text-gray-700 dark:text-gray-300">Saved Endpoints</h2>
+        <button class="bg-primary hover:bg-emerald-600 text-white px-4 py-2 rounded-md flex items-center gap-2 font-medium text-sm transition-all shadow-md hover:shadow-lg focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 focus:ring-offset-surface-dark group" title="Launch the Endpoint Configuration Wizard">
+            <span class="material-symbols-outlined text-xl group-hover:rotate-90 transition-transform duration-300">add</span>
+            Add Endpoint
+        </button>
+    </div>
+    <div class="overflow-x-auto w-full">
+        <table class="w-full text-left border-collapse">
+            <thead>
+            <tr class="border-b border-border-light dark:border-border-dark text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-[#252525]">
+                <th class="px-6 py-3 font-semibold cursor-pointer hover:text-gray-700 dark:hover:text-gray-200 group select-none transition-colors">
+                    <div class="flex items-center gap-1">
+                        Name
+                        <span class="material-symbols-outlined text-sm opacity-40 group-hover:opacity-100 transition-opacity">swap_vert</span>
+                    </div>
+                </th>
+                <th class="px-6 py-3 font-semibold">URL</th>
+                <th class="px-6 py-3 font-semibold cursor-pointer hover:text-gray-700 dark:hover:text-gray-200 group select-none transition-colors">
+                    <div class="flex items-center gap-1">
+                        Last Used
+                        <span class="material-symbols-outlined text-sm opacity-40 group-hover:opacity-100 transition-opacity">swap_vert</span>
+                    </div>
+                </th>
+                <th class="px-6 py-3 font-semibold text-right pr-8">Actions</th>
+            </tr>
+            </thead>
+            <tbody class="divide-y divide-border-light dark:divide-border-dark text-sm">
+            <tr class="hover:bg-gray-50 dark:hover:bg-[#252525] transition-colors duration-150 group">
+                <td class="px-6 py-4 align-middle whitespace-nowrap">
+                    <div class="flex items-center gap-3">
+                        <span class="font-medium text-gray-900 dark:text-white">FedLex</span>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wide bg-emerald-100 text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20">
+                                    Active
+                                </span>
+                    </div>
+                </td>
+                <td class="px-6 py-4 align-middle font-mono text-gray-500 dark:text-gray-500 text-xs">
+                    https://fedlex.data.admin.ch/sparqlendpoint
+                </td>
+                <td class="px-6 py-4 align-middle whitespace-nowrap text-gray-700 dark:text-gray-300 tabular-nums">
+                    04/01/2026
+                </td>
+                <td class="px-6 py-4 align-middle whitespace-nowrap text-right">
+                    <div class="flex items-center justify-end gap-3">
+                        <button class="text-gray-400 hover:text-emerald-600 dark:text-gray-500 dark:hover:text-emerald-400 transition-colors" title="Check connection">
+                            <span class="material-symbols-outlined text-[20px]">link</span>
+                        </button>
+                        <div class="w-px h-4 bg-gray-300 dark:bg-gray-700 mx-1"></div>
+                        <button class="text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300 transition-colors transform hover:scale-110 duration-200" title="Configure Endpoint (Opens Wizard)">
+                            <span class="material-symbols-outlined text-[20px]">tune</span>
+                        </button>
+                        <button class="text-gray-400 hover:text-red-600 dark:text-gray-500 dark:hover:text-red-400 transition-colors" title="Delete">
+                            <span class="material-symbols-outlined text-[20px]">delete</span>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            <tr class="hover:bg-gray-50 dark:hover:bg-[#252525] transition-colors duration-150 group">
+                <td class="px-6 py-4 align-middle whitespace-nowrap">
+                    <span class="font-medium text-gray-900 dark:text-white">Cordis</span>
+                </td>
+                <td class="px-6 py-4 align-middle font-mono text-gray-500 dark:text-gray-500 text-xs">
+                    https://cordis.europa.eu/datalab/sparql
+                </td>
+                <td class="px-6 py-4 align-middle whitespace-nowrap text-gray-700 dark:text-gray-300 tabular-nums">
+                    03/01/2026
+                </td>
+                <td class="px-6 py-4 align-middle whitespace-nowrap text-right">
+                    <div class="flex items-center justify-end gap-3">
+                        <button class="text-gray-400 hover:text-emerald-600 dark:text-gray-500 dark:hover:text-emerald-400 transition-colors">
+                            <span class="material-symbols-outlined text-[20px]">link</span>
+                        </button>
+                        <div class="w-px h-4 bg-gray-300 dark:bg-gray-700 mx-1"></div>
+                        <button class="text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300 transition-colors transform hover:scale-110 duration-200" title="Configure Endpoint (Opens Wizard)">
+                            <span class="material-symbols-outlined text-[20px]">tune</span>
+                        </button>
+                        <button class="text-gray-400 hover:text-red-600 dark:text-gray-500 dark:hover:text-red-400 transition-colors">
+                            <span class="material-symbols-outlined text-[20px]">delete</span>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            <tr class="hover:bg-gray-50 dark:hover:bg-[#252525] transition-colors duration-150 group">
+                <td class="px-6 py-4 align-middle whitespace-nowrap">
+                    <span class="font-medium text-gray-900 dark:text-white">EU Open Data Portal</span>
+                </td>
+                <td class="px-6 py-4 align-middle font-mono text-gray-500 dark:text-gray-500 text-xs">
+                    https://data.europa.eu/sparql
+                </td>
+                <td class="px-6 py-4 align-middle whitespace-nowrap text-gray-700 dark:text-gray-300 tabular-nums">
+                    03/01/2026
+                </td>
+                <td class="px-6 py-4 align-middle whitespace-nowrap text-right">
+                    <div class="flex items-center justify-end gap-3">
+                        <button class="text-gray-400 hover:text-emerald-600 dark:text-gray-500 dark:hover:text-emerald-400 transition-colors">
+                            <span class="material-symbols-outlined text-[20px]">link</span>
+                        </button>
+                        <div class="w-px h-4 bg-gray-300 dark:bg-gray-700 mx-1"></div>
+                        <button class="text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300 transition-colors transform hover:scale-110 duration-200" title="Configure Endpoint (Opens Wizard)">
+                            <span class="material-symbols-outlined text-[20px]">tune</span>
+                        </button>
+                        <button class="text-gray-400 hover:text-red-600 dark:text-gray-500 dark:hover:text-red-400 transition-colors">
+                            <span class="material-symbols-outlined text-[20px]">delete</span>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            <tr class="hover:bg-gray-50 dark:hover:bg-[#252525] transition-colors duration-150 group">
+                <td class="px-6 py-4 align-middle whitespace-nowrap">
+                    <span class="font-medium text-gray-900 dark:text-white">UNESCO Vocabularies</span>
+                </td>
+                <td class="px-6 py-4 align-middle font-mono text-gray-500 dark:text-gray-500 text-xs">
+                    https://vocabularies.unesco.org/sparql
+                </td>
+                <td class="px-6 py-4 align-middle whitespace-nowrap text-gray-700 dark:text-gray-300 tabular-nums">
+                    02/01/2026
+                </td>
+                <td class="px-6 py-4 align-middle whitespace-nowrap text-right">
+                    <div class="flex items-center justify-end gap-3">
+                        <button class="text-gray-400 hover:text-emerald-600 dark:text-gray-500 dark:hover:text-emerald-400 transition-colors">
+                            <span class="material-symbols-outlined text-[20px]">link</span>
+                        </button>
+                        <div class="w-px h-4 bg-gray-300 dark:bg-gray-700 mx-1"></div>
+                        <button class="text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300 transition-colors transform hover:scale-110 duration-200" title="Configure Endpoint (Opens Wizard)">
+                            <span class="material-symbols-outlined text-[20px]">tune</span>
+                        </button>
+                        <button class="text-gray-400 hover:text-red-600 dark:text-gray-500 dark:hover:text-red-400 transition-colors">
+                            <span class="material-symbols-outlined text-[20px]">delete</span>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            <tr class="hover:bg-gray-50 dark:hover:bg-[#252525] transition-colors duration-150 group">
+                <td class="px-6 py-4 align-middle whitespace-nowrap">
+                    <span class="font-medium text-gray-900 dark:text-white">EU Publications</span>
+                </td>
+                <td class="px-6 py-4 align-middle font-mono text-gray-500 dark:text-gray-500 text-xs">
+                    https://publications.europa.eu/webapi/rdf/sparql
+                </td>
+                <td class="px-6 py-4 align-middle whitespace-nowrap text-gray-700 dark:text-gray-300 tabular-nums">
+                    02/01/2026
+                </td>
+                <td class="px-6 py-4 align-middle whitespace-nowrap text-right">
+                    <div class="flex items-center justify-end gap-3">
+                        <button class="text-gray-400 hover:text-emerald-600 dark:text-gray-500 dark:hover:text-emerald-400 transition-colors">
+                            <span class="material-symbols-outlined text-[20px]">link</span>
+                        </button>
+                        <div class="w-px h-4 bg-gray-300 dark:bg-gray-700 mx-1"></div>
+                        <button class="text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300 transition-colors transform hover:scale-110 duration-200" title="Configure Endpoint (Opens Wizard)">
+                            <span class="material-symbols-outlined text-[20px]">tune</span>
+                        </button>
+                        <button class="text-gray-400 hover:text-red-600 dark:text-gray-500 dark:hover:text-red-400 transition-colors">
+                            <span class="material-symbols-outlined text-[20px]">delete</span>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="px-6 py-4 border-t border-border-light dark:border-border-dark flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-[#1e1e1e]">
+        <span>Showing <span class="font-medium">1</span> to <span class="font-medium">5</span> of <span class="font-medium">5</span> entries</span>
+        <div class="flex items-center gap-2">
+            <button class="px-3 py-1.5 rounded border border-border-light dark:border-border-dark hover:bg-white dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors" disabled="">Previous</button>
+            <button class="px-3 py-1.5 rounded border border-border-light dark:border-border-dark hover:bg-white dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors" disabled="">Next</button>
+        </div>
+    </div>
+</div>
+</body></html>
