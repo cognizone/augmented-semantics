@@ -154,15 +154,17 @@ describe('ConceptTree', () => {
       expect(wrapper.find('.p-tree').exists()).toBe(true)
     })
 
-    it('shows empty state for scheme with no concepts', async () => {
+    it('shows tree with scheme node when no concepts', async () => {
       ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
 
       const wrapper = mountConceptTree()
       await flushPromises()
       await nextTick()
 
-      expect(wrapper.find('.empty-state').exists()).toBe(true)
-      expect(wrapper.text()).toContain('no top-level concepts')
+      // Tree should be shown (scheme is always shown even when empty)
+      expect(wrapper.find('.p-tree').exists()).toBe(true)
+      // Empty state should NOT be shown
+      expect(wrapper.find('.empty-state').exists()).toBe(false)
     })
   })
 
