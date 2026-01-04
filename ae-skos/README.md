@@ -15,7 +15,7 @@ Browser-based SKOS vocabulary browser and explorer. Connect to any SPARQL endpoi
 ## Prerequisites
 
 - Node.js 18+
-- npm 9+
+- pnpm 9+
 - A SPARQL endpoint with CORS enabled
 
 ## Getting Started
@@ -28,14 +28,14 @@ git clone https://github.com/cognizone/augmented-semantics.git
 cd augmented-semantics/ae-skos
 
 # Install dependencies
-npm install
+pnpm install
 ```
 
 ### Development
 
 ```bash
 # Start development server
-npm run dev
+pnpm dev
 ```
 
 The app will be available at `http://localhost:5173`
@@ -44,23 +44,35 @@ The app will be available at `http://localhost:5173`
 
 ```bash
 # Type-check and build for production
-npm run build
+pnpm build
 
 # Preview production build
-npm run preview
+pnpm preview
+```
+
+### Desktop App (Tauri)
+
+Build native desktop apps for macOS, Windows, and Linux:
+
+```bash
+# Development with hot reload
+pnpm tauri:dev
+
+# Production build
+pnpm tauri:build
 ```
 
 ### Testing
 
 ```bash
 # Run tests in watch mode
-npm test
+pnpm test
 
 # Run tests once
-npm run test:run
+pnpm test:run
 
 # Run tests with coverage
-npm run test:coverage
+pnpm test:coverage
 ```
 
 ## Usage
@@ -146,4 +158,4 @@ Most public SPARQL endpoints (DBpedia, Wikidata, etc.) have CORS enabled by defa
 
 ## License
 
-MIT
+[Apache 2.0](../LICENSE)
