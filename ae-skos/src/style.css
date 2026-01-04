@@ -1,177 +1,28 @@
-/* Base styles for AE SKOS */
+/* AE SKOS - App-specific styles */
+/* Shared styles are imported from @ae/styles */
 
 /* ============================================
-   Theme Variables
+   SKOS-Specific Icon Colors
+
+   NOT shared: These encode SKOS semantic type distinctions
+   - folder = concept scheme
+   - label = concept with narrower concepts
+   - leaf = leaf concept (no children)
    ============================================ */
 
 :root {
-  /* Light theme (default) */
-  --ae-bg-base: #ffffff;
-  --ae-bg-elevated: #f8f9fa;
-  --ae-bg-panel: #f3f4f6;
-  --ae-bg-hover: #e5e7eb;
-  --ae-border-color: #d1d5db;
-  --ae-text-primary: #1f2937;
-  --ae-text-secondary: #6b7280;
-  --ae-text-muted: #9ca3af;
-  --ae-accent: #007acc;
-  --ae-accent-hover: #0062a3;
-  --ae-header-bg: #f9fafb;
-
-  /* Icon colors */
   --ae-icon-folder: #ca8a04;
   --ae-icon-label: #a855f7;
   --ae-icon-leaf: #22c55e;
-
-  /* Status colors */
-  --ae-status-success: #22c55e;
-  --ae-status-warning: #f59e0b;
-  --ae-status-error: #ef4444;
-
-  /* Fonts */
-  --ae-font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
-    Roboto, 'Helvetica Neue', Arial, sans-serif;
-  --ae-font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas,
-    'Liberation Mono', monospace;
 }
 
 .dark-mode {
-  /* Dark theme (VS Code inspired) */
-  --ae-bg-base: #1e1e1e;
-  --ae-bg-elevated: #252526;
-  --ae-bg-panel: #2d2d2d;
-  --ae-bg-hover: #3e3e42;
-  --ae-border-color: #3e3e42;
-  --ae-text-primary: #cccccc;
-  --ae-text-secondary: #969696;
-  --ae-text-muted: #6e6e6e;
-  --ae-accent: #007acc;
-  --ae-accent-hover: #1f8ad2;
-  --ae-header-bg: #2d2d2d;
-
   /* Icon colors (same in dark mode) */
   --ae-icon-folder: #ca8a04;
   --ae-icon-label: #a855f7;
   --ae-icon-leaf: #22c55e;
-
-  /* Status colors */
-  --ae-status-success: #22c55e;
-  --ae-status-warning: #f59e0b;
-  --ae-status-error: #ef4444;
 }
 
-/* ============================================
-   Base Styles
-   ============================================ */
-
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
-
-html,
-body {
-  margin: 0;
-  padding: 0;
-  background-color: var(--ae-bg-base);
-  color: var(--ae-text-primary);
-  font-family: var(--ae-font-sans);
-  font-size: 14px;
-  line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-#app {
-  height: 100vh;
-  overflow: hidden;
-}
-
-/* ============================================
-   Scrollbar Styling
-   ============================================ */
-
-::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
-
-::-webkit-scrollbar-track {
-  background: var(--ae-bg-base);
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--ae-bg-hover);
-  border-radius: 0;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--ae-text-muted);
-}
-
-/* Firefox scrollbar */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: var(--ae-bg-hover) var(--ae-bg-base);
-}
-
-/* ============================================
-   Focus & Interactive States
-   ============================================ */
-
-:focus-visible {
-  outline: 2px solid var(--ae-accent);
-  outline-offset: 2px;
-}
-
-/* Link styles */
-a {
-  color: var(--ae-accent);
-  text-decoration: none;
-}
-
-a:hover {
-  text-decoration: underline;
-}
-
-/* Selection */
-::selection {
-  background: var(--ae-accent);
-  color: #ffffff;
-}
-
-/* ============================================
-   Material Symbols Icon Font
-   ============================================ */
-
-.material-symbols-outlined {
-  font-variation-settings:
-    'FILL' 0,
-    'wght' 400,
-    'GRAD' 0,
-    'opsz' 24;
-  vertical-align: middle;
-}
-
-/* Icon size utilities */
-.icon-sm {
-  font-size: 16px;
-}
-
-.icon-md {
-  font-size: 20px;
-}
-
-.icon-lg {
-  font-size: 24px;
-}
-
-.icon-xl {
-  font-size: 32px;
-}
-
-/* Icon color utilities */
 .icon-folder {
   color: var(--ae-icon-folder);
 }
@@ -185,7 +36,72 @@ a:hover {
 }
 
 /* ============================================
+   SKOS-Specific Component Patterns
+
+   NOT shared: Only used by ae-skos until ae-rdf needs them
+   ============================================ */
+
+/* Action button - icon-only button for toolbars */
+.action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--ae-text-secondary);
+  text-decoration: none;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.action-btn:hover {
+  background: var(--ae-bg-hover);
+  color: var(--ae-text-primary);
+}
+
+.action-btn .material-symbols-outlined {
+  font-size: 18px;
+}
+
+/* Section title - uppercase label for content sections */
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 1rem 0;
+  padding-bottom: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ae-text-secondary);
+  border-bottom: 1px solid var(--ae-border-color);
+}
+
+.section-title .section-icon {
+  font-size: 16px;
+}
+
+/* Language tag - small inline badge */
+.lang-tag {
+  font-size: 0.625rem;
+  font-weight: normal;
+  background: var(--ae-bg-hover);
+  color: var(--ae-text-secondary);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  margin-left: 0.25rem;
+  vertical-align: middle;
+}
+
+/* ============================================
    Utility Classes
+
+   NOT shared: Only ae-skos uses these currently
    ============================================ */
 
 /* Screen reader only - visually hidden but accessible */
@@ -216,6 +132,8 @@ a:hover {
 
 /* ============================================
    PrimeVue Global Overrides
+
+   NOT shared: Only ae-skos uses PrimeVue components currently
    ============================================ */
 
 /* Consistent fonts for all dropdown menus and overlays */
@@ -421,65 +339,4 @@ a:hover {
 .p-dialog-header-close .p-icon {
   width: 18px;
   height: 18px;
-}
-
-/* ============================================
-   Reusable Component Patterns
-   ============================================ */
-
-/* Action button - icon-only button for toolbars */
-.action-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  background: none;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  color: var(--ae-text-secondary);
-  text-decoration: none;
-  transition: background-color 0.15s, color 0.15s;
-}
-
-.action-btn:hover {
-  background: var(--ae-bg-hover);
-  color: var(--ae-text-primary);
-}
-
-.action-btn .material-symbols-outlined {
-  font-size: 18px;
-}
-
-/* Section title - uppercase label for content sections */
-.section-title {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin: 0 0 1rem 0;
-  padding-bottom: 0.5rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--ae-text-secondary);
-  border-bottom: 1px solid var(--ae-border-color);
-}
-
-.section-title .section-icon {
-  font-size: 16px;
-}
-
-/* Language tag - small inline badge */
-.lang-tag {
-  font-size: 0.625rem;
-  font-weight: normal;
-  background: var(--ae-bg-hover);
-  color: var(--ae-text-secondary);
-  padding: 0.1rem 0.3rem;
-  border-radius: 3px;
-  margin-left: 0.25rem;
-  vertical-align: middle;
 }

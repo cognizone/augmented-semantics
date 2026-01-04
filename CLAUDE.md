@@ -42,12 +42,21 @@ Browser-only tools that connect directly to SPARQL endpoints via HTTP. No backen
   - `/spec/task/` - Implementation task lists
     - `ae-skos-tasks.md` - AE SKOS implementation plan
 
+## Packages
+
+| Package | Folder | Description |
+|---------|--------|-------------|
+| @ae/styles | `packages/styles` | Shared CSS (theme, base, PrimeVue overrides) |
+
+See `/packages/styles/STYLES.md` for design tokens and usage.
+See `/packages/styles/DECISIONS.md` for what's shared vs app-specific.
+
 ## Tools
 
 | Tool | Folder | Status | Description |
 |------|--------|--------|-------------|
 | AE SKOS | `ae-skos` | Spec ready | SKOS vocabulary browser |
-| AE RDF | `ae-rdf` | Planned | RDF data browser |
+| AE RDF | `ae-rdf` | Barebones | RDF data browser |
 | AE OWL | `ae-owl` | Planned | OWL ontology viewer |
 | AE SHACL | `ae-shacl` | Planned | SHACL validation |
 
@@ -120,22 +129,39 @@ Live regions in App.vue announce these to screen readers.
 
 ## Styling Rules
 
+### Shared vs App-Specific
+
+- **@ae/styles** (`packages/styles/`) - Shared CSS used by 2+ apps
+- **App style.css** (`ae-*/src/style.css`) - App-specific styles
+
+Only move styles to @ae/styles when used by multiple apps. See `packages/styles/DECISIONS.md`.
+
 ### CSS Reuse (MANDATORY)
 
-1. **Check existing styles first** - Before writing any CSS, search `style.css` and existing components for similar patterns
-2. **Create reusable classes** - If a pattern appears 2+ times, create a global class in `style.css`
-3. **No duplicate CSS** - Never copy-paste styles between components
-4. **Prefer global over `:deep()`** - Global styles in `style.css` work better for PrimeVue components (especially teleported ones like Dialog, Menu, Select overlays)
+1. **Check existing styles first** - Before writing any CSS, search @ae/styles and app's `style.css`
+2. **Create reusable classes** - If a pattern appears 2+ times in same app, add to app's `style.css`
+3. **Extract to @ae/styles** - If a pattern is used by 2+ apps, move to shared package
+4. **Prefer global over `:deep()`** - Global styles work better for PrimeVue components
 
-### Established Patterns
+### Shared (in @ae/styles)
+
+Only CSS variables and base setup - no utility classes yet.
+
+| File | Purpose |
+|------|---------|
+| `theme.css` | CSS variables (colors, fonts) |
+| `base.css` | Reset, body, scrollbar, focus |
+| `icons.css` | Material Symbols setup |
+
+### SKOS-Specific (in ae-skos/src/style.css)
 
 | Class | Purpose |
 |-------|---------|
-| `.dropdown-trigger` | Button that opens any dropdown (endpoint, language) |
-| `.select-compact` | PrimeVue Select styled like dropdown-trigger (scheme selector) |
-| `.p-menu` | Global PrimeVue Menu overrides |
-| `.p-select` | Global PrimeVue Select overrides |
-| `.p-dialog` | Global PrimeVue Dialog overrides |
+| `.icon-folder`, `.icon-label`, `.icon-leaf` | SKOS semantic type colors |
+| `.action-btn`, `.section-title`, `.lang-tag` | Component patterns |
+| `.sr-only`, `.mono`, `.truncate` | Utility classes |
+| `.dropdown-trigger`, `.select-compact` | Dropdown patterns |
+| `.p-menu`, `.p-select`, `.p-dialog`, `.p-button` | PrimeVue overrides |
 
 ### Font Sizes
 

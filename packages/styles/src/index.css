@@ -1,0 +1,10 @@
+/**
+ * @ae/styles - Shared styles for Augmented Semantics tools
+ *
+ * Only includes styles used by 2+ apps.
+ * See DECISIONS.md for rationale.
+ */
+
+@import './theme.css';
+@import './base.css';
+@import './icons.css';

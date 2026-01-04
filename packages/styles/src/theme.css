@@ -1,0 +1,52 @@
+/* ============================================
+   Theme Variables
+
+   Used by: ae-skos, ae-rdf
+   Reason: Visual consistency across all tools
+   ============================================ */
+
+:root {
+  /* Light theme (default) */
+  --ae-bg-base: #ffffff;
+  --ae-bg-elevated: #f8f9fa;
+  --ae-bg-panel: #f3f4f6;
+  --ae-bg-hover: #e5e7eb;
+  --ae-border-color: #d1d5db;
+  --ae-text-primary: #1f2937;
+  --ae-text-secondary: #6b7280;
+  --ae-text-muted: #9ca3af;
+  --ae-accent: #007acc;
+  --ae-accent-hover: #0062a3;
+  --ae-header-bg: #f9fafb;
+
+  /* Status colors */
+  --ae-status-success: #22c55e;
+  --ae-status-warning: #f59e0b;
+  --ae-status-error: #ef4444;
+
+  /* Fonts */
+  --ae-font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --ae-font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas,
+    'Liberation Mono', monospace;
+}
+
+.dark-mode {
+  /* Dark theme (VS Code inspired) */
+  --ae-bg-base: #1e1e1e;
+  --ae-bg-elevated: #252526;
+  --ae-bg-panel: #2d2d2d;
+  --ae-bg-hover: #3e3e42;
+  --ae-border-color: #3e3e42;
+  --ae-text-primary: #cccccc;
+  --ae-text-secondary: #969696;
+  --ae-text-muted: #6e6e6e;
+  --ae-accent: #007acc;
+  --ae-accent-hover: #1f8ad2;
+  --ae-header-bg: #2d2d2d;
+
+  /* Status colors (same in dark mode) */
+  --ae-status-success: #22c55e;
+  --ae-status-warning: #f59e0b;
+  --ae-status-error: #ef4444;
+}
