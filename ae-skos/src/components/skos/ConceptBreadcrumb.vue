@@ -204,12 +204,6 @@ const breadcrumbItems = computed(() => {
   })
 })
 
-// Home item
-const homeItem = computed(() => ({
-  icon: 'pi pi-home',
-  command: () => emit('selectConcept', ''),
-}))
-
 // Load breadcrumb path for concept
 async function loadBreadcrumb(uri: string) {
   const endpoint = endpointStore.current
