@@ -239,17 +239,20 @@ EndpointManager follows a composable-based architecture with extracted dialog co
 
 ### Component Structure
 
-**EndpointManager.vue** (~386 lines)
-- Lightweight orchestrator component
-- Manages dialog visibility and data flow
-- Coordinates between child dialogs and endpoint store
-- Handles connection and CRUD operations
+**EndpointManager.vue** (~514 lines)
+- Endpoint list with DataTable
+- CRUD operations coordination
+- Connection testing
 
-**Dialog Components:**
-- `EndpointFormDialog.vue` - Add/edit endpoint with authentication
-- `EndpointLanguageDialog.vue` - Language priority configuration
-- `EndpointCapabilitiesDialog.vue` - Capabilities viewer with reanalysis
-- `EndpointDeleteDialog.vue` - Deletion confirmation
+**EndpointWizard.vue** (~600 lines)
+- 3-step stepper wizard for add/edit:
+  - Step 1: Basic Info (name, URL, authentication)
+  - Step 2: Capabilities (graphs, duplicates)
+  - Step 3: Languages (drag-and-drop priority ordering)
+- Handles both add and edit modes
+
+**EndpointDeleteDialog.vue** (~101 lines)
+- Deletion confirmation dialog
 
 ### Composables
 
@@ -350,24 +353,41 @@ Features:
 - Formats display values
 
 #### useLanguagePriorities
-**Purpose:** Language priority management
+**Purpose:** Language priority management with display helpers
 
 ```typescript
 function useLanguagePriorities(endpoint: Ref<SPARQLEndpoint | null>) {
   const priorities = ref<string[]>([])
+  const endpointLanguages = computed(() => endpoint.value?.analysis?.languages || [])
 
+  // Core functions
   function loadPriorities(ep: SPARQLEndpoint)
-  function savePriorities(ep: SPARQLEndpoint)
-  function getLanguageCount(lang: string): number
+  function savePriorities(ep: SPARQLEndpoint): { id: string; languagePriorities: string[] }
+  function onReorder(event: { value: string[] })
+  function getLanguageCount(lang: string): number | undefined
+  function removeLanguage(lang: string)
+  function clearPriorities()
 
-  return { priorities, loadPriorities, savePriorities, getLanguageCount }
+  // Display helpers
+  function getLanguageName(lang: string): string      // 'en' → 'English', unknown → 'XYZ'
+  function getPriorityLabel(index: number): string    // 0 → 'Default fallback', 1 → '2nd priority'
+  function getBadgeColor(index: number): { bg, text } // Cycling color palette for badges
+
+  return {
+    priorities, endpointLanguages,
+    loadPriorities, savePriorities, onReorder, getLanguageCount,
+    getLanguageName, getPriorityLabel, getBadgeColor,
+    removeLanguage, clearPriorities
+  }
 }
 ```
 
 Features:
 - Loads and saves language priorities
-- Handles drag-and-drop reordering
-- Provides language counts
+- Drag-and-drop reordering via `vuedraggable`
+- Language name lookup (ISO 639-1 → full name)
+- Priority labels ("Default fallback", "2nd priority", etc.)
+- Colored badge styling (cycling palette)
 - Defaults: 'en' first, others alphabetically
 
 ### Benefits
@@ -380,14 +400,17 @@ Features:
 
 ### File Size Comparison
 
-| Component | Before | After | Reduction |
-|-----------|--------|-------|-----------|
-| EndpointManager.vue | 1,459 lines | 386 lines | 73% |
+| Component | Lines | Purpose |
+|-----------|-------|---------|
+| EndpointManager.vue | ~514 | List/table management |
+| EndpointWizard.vue | ~600 | 3-step wizard |
+| EndpointDeleteDialog.vue | ~101 | Delete confirmation |
+| 5 composables | ~600 | Business logic |
 
-**Total system:**
-- Before: 1 monolithic file (1,459 lines)
-- After: 10 focused files (~1,200 lines total)
-- Net complexity reduction: Very high
+**Architecture:**
+- Total: ~1,800 lines across focused components
+- Clear separation: UI (components) vs logic (composables)
+- Each file has a single responsibility
 
 ## Language Configuration
 
@@ -395,27 +418,37 @@ Each endpoint stores an ordered list of language priorities for fallback resolut
 
 See [sko01-LanguageSelector](../ae-skos/sko01-LanguageSelector.md) for full language system documentation.
 
-### Language Priority Dialog
+### Language Priority (Wizard Step 3)
+
+Integrated into the EndpointWizard as Step 3, using drag-and-drop reordering.
 
 ```
-┌─────────────────────────────────────────┐
-│ Language Priority - EuroVoc         [×] │
-├─────────────────────────────────────────┤
-│                                         │
-│ Use the buttons to reorder. First       │
-│ language is used when preferred         │
-│ is unavailable.                         │
-│                                         │
-│ ┌─────────────────────────────────────┐ │
-│ │ [▲][▼] 1. en (12,456)               │ │
-│ │ [▲][▼] 2. fr (8,901)                │ │
-│ │ [▲][▼] 3. de (7,234)                │ │
-│ └─────────────────────────────────────┘ │
-│                                         │
-├─────────────────────────────────────────┤
-│                  [Cancel]  [Save]       │
-└─────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────┐
+│ ℹ Drag and drop to set fallback order.              │
+│   First language is used when your preferred        │
+│   language is unavailable.                          │
+└─────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────┐
+│ ≡  [en] English                                     │
+│        Default fallback              12,456 labels  │
+├─────────────────────────────────────────────────────┤
+│ ≡  [fr] French                                      │
+│        2nd priority                   8,901 labels  │
+├─────────────────────────────────────────────────────┤
+│ ≡  [de] German                                      │
+│        3rd priority                   7,234 labels  │
+└─────────────────────────────────────────────────────┘
 ```
+
+**UI Elements:**
+- Drag handle icon (`≡`) for reordering
+- Colored circular badges with language codes
+- Full language names (e.g., "English" instead of "en")
+- Priority labels ("Default fallback", "2nd priority", etc.)
+- Label counts from endpoint analysis
+
+**Implementation:** Uses `vuedraggable` library for drag-and-drop.
 
 ### Default Language Order
 
