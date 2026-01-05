@@ -493,9 +493,9 @@ function handleClose() {
             </div>
 
             <div v-else class="language-priority-section">
-              <div class="priority-header">
-                <span class="priority-label">Priority Order</span>
-                <span class="drag-hint">Drag to reorder</span>
+              <div class="drag-hint">
+                <span class="material-symbols-outlined">drag_indicator</span>
+                <span>Drag items to set language priority. The first language is used when your preferred language isn't available.</span>
               </div>
 
               <draggable
@@ -521,12 +521,6 @@ function handleClose() {
                   </div>
                 </template>
               </draggable>
-
-              <!-- Info box -->
-              <div class="language-info-box">
-                <span class="material-symbols-outlined">info</span>
-                <p>Concepts without labels in your preferred languages will fallback to display the URI or any available label found in the dataset.</p>
-              </div>
             </div>
           </div>
 
@@ -695,24 +689,24 @@ function handleClose() {
   gap: 1rem;
 }
 
-.priority-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.priority-label {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--ae-text-primary);
-}
-
 .drag-hint {
-  font-size: 0.75rem;
-  color: var(--ae-text-muted);
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.75rem;
   background: var(--ae-bg-hover);
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
+  border: 1px solid var(--ae-border-color);
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  color: var(--ae-text-secondary);
+  line-height: 1.4;
+}
+
+.drag-hint .material-symbols-outlined {
+  font-size: 1.125rem;
+  color: var(--ae-text-muted);
+  flex-shrink: 0;
+  margin-top: 0.0625rem;
 }
 
 /* Draggable language list */
@@ -820,28 +814,6 @@ function handleClose() {
   font-size: 0.75rem;
   color: var(--ae-text-secondary);
   white-space: nowrap;
-}
-
-.language-info-box {
-  display: flex;
-  gap: 0.75rem;
-  padding: 1rem;
-  background: rgba(59, 130, 246, 0.08);
-  border: 1px solid rgba(59, 130, 246, 0.2);
-  border-radius: 8px;
-}
-
-.language-info-box .material-symbols-outlined {
-  color: var(--ae-accent);
-  font-size: 1.25rem;
-  flex-shrink: 0;
-}
-
-.language-info-box p {
-  margin: 0;
-  font-size: 0.8125rem;
-  color: var(--ae-text-secondary);
-  line-height: 1.5;
 }
 
 /* Step 3: Capabilities */
