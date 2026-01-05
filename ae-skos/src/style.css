@@ -425,46 +425,38 @@
   color: var(--ae-text-primary);
 }
 
-/* Stepper styling - use blue accent */
-.p-stepper .p-stepper-header .p-stepper-number {
+/* Stepper styling - use blue accent (PrimeVue 4 class names) */
+.p-step .p-step-number {
   background: var(--ae-bg-hover);
   color: var(--ae-text-secondary);
   border-color: var(--ae-border-color);
 }
 
-.p-stepper .p-stepper-header.p-stepper-header-active .p-stepper-number {
+.p-step.p-step-active .p-step-number {
   background: var(--ae-accent);
   color: white;
   border-color: var(--ae-accent);
 }
 
-.p-stepper .p-stepper-header:not(.p-disabled):hover .p-stepper-number {
+.p-step:not(.p-disabled):hover .p-step-number {
   background: var(--ae-bg-hover);
   border-color: var(--ae-accent);
   color: var(--ae-accent);
 }
 
-.p-stepper .p-stepper-header.p-stepper-header-active:hover .p-stepper-number {
+.p-step.p-step-active:hover .p-step-number {
   background: var(--ae-accent-hover, #005a9e);
   border-color: var(--ae-accent-hover, #005a9e);
   color: white;
 }
 
-.p-stepper .p-stepper-separator {
-  background: var(--ae-border-color);
-}
-
-.p-stepper .p-stepper-header.p-stepper-header-active ~ .p-stepper-separator {
-  background: var(--ae-border-color);
-}
-
-.p-stepper .p-stepper-header .p-stepper-title {
+.p-step .p-step-title {
   color: var(--ae-text-secondary);
   font-weight: 500;
 }
 
-.p-stepper .p-stepper-header.p-stepper-header-active .p-stepper-title {
-  color: var(--ae-text-primary);
+.p-step.p-step-active .p-step-title {
+  color: var(--ae-accent);
 }
 
 /* Dialog close button icon size */
