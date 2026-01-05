@@ -109,6 +109,12 @@ vi.mock('../../composables/useEndpointAnalysis', () => ({
 const mockPriorities = ref<string[]>([])
 const mockEndpointLanguages = ref<Array<{ lang: string; count: number }>>([])
 
+const BADGE_COLORS = [
+  { bg: 'bg-blue', text: 'text-blue' },
+  { bg: 'bg-purple', text: 'text-purple' },
+  { bg: 'bg-orange', text: 'text-orange' },
+]
+
 vi.mock('../../composables/useLanguagePriorities', () => ({
   useLanguagePriorities: () => ({
     priorities: mockPriorities,
@@ -118,6 +124,18 @@ vi.mock('../../composables/useLanguagePriorities', () => ({
     getLanguageCount: vi.fn((lang: string) => {
       const found = mockEndpointLanguages.value.find(l => l.lang === lang)
       return found?.count
+    }),
+    getLanguageName: vi.fn((lang: string) => {
+      const names: Record<string, string> = { en: 'English', fr: 'French', de: 'German' }
+      return names[lang] || lang.toUpperCase()
+    }),
+    getPriorityLabel: vi.fn((index: number) => {
+      if (index === 0) return 'Default fallback'
+      return `${index + 1}th priority`
+    }),
+    getBadgeColor: vi.fn((index: number) => BADGE_COLORS[index % BADGE_COLORS.length]),
+    removeLanguage: vi.fn((lang: string) => {
+      mockPriorities.value = mockPriorities.value.filter(l => l !== lang)
     }),
   }),
 }))

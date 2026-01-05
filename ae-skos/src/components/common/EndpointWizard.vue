@@ -57,7 +57,7 @@ const tempEndpoint = ref<SPARQLEndpoint | null>(null)
 
 // Language state (Step 2)
 const endpointForLanguage = computed(() => tempEndpoint.value || props.endpoint || null)
-const { priorities, endpointLanguages, loadPriorities, onReorder, getLanguageCount } = useLanguagePriorities(endpointForLanguage)
+const { priorities, endpointLanguages, loadPriorities, onReorder, getLanguageCount, getLanguageName, getPriorityLabel, getBadgeColor, removeLanguage } = useLanguagePriorities(endpointForLanguage)
 
 // Capabilities state (Step 3)
 const {
@@ -492,27 +492,47 @@ function handleClose() {
               <p class="hint">Go back to Capabilities and click "Re-analyze" to detect languages.</p>
             </div>
 
-            <div v-else>
-              <p class="section-description">
-                Drag to reorder. First language is used when your preferred language is unavailable.
-              </p>
+            <div v-else class="language-priority-section">
+              <div class="priority-header">
+                <span class="priority-label">Priority Order</span>
+                <span class="drag-hint">Drag to reorder</span>
+              </div>
 
               <OrderList
                 v-model="priorities"
                 :listStyle="{ height: 'auto', maxHeight: '300px' }"
-                selectionMode="single"
                 @reorder="onReorder"
+                class="language-order-list"
               >
                 <template #item="{ item, index }">
                   <div class="language-item">
-                    <span class="language-rank">{{ index + 1 }}.</span>
-                    <span class="language-code">{{ item }}</span>
+                    <span class="material-symbols-outlined drag-handle">drag_indicator</span>
+                    <div class="language-badge" :class="getBadgeColor(index).bg">
+                      {{ item }}
+                    </div>
+                    <div class="language-info">
+                      <span class="language-name">{{ getLanguageName(item) }}</span>
+                      <span class="language-priority">{{ getPriorityLabel(index) }}</span>
+                    </div>
                     <span v-if="getLanguageCount(item)" class="language-count">
-                      ({{ getLanguageCount(item)?.toLocaleString() }})
+                      {{ getLanguageCount(item)?.toLocaleString() }} labels
                     </span>
+                    <button
+                      class="delete-btn"
+                      aria-label="Remove language"
+                      @click.stop="removeLanguage(item)"
+                    >
+                      <span class="material-symbols-outlined">delete</span>
+                    </button>
                   </div>
                 </template>
               </OrderList>
+
+              <!-- Info box -->
+              <div class="language-info-box">
+                <span class="material-symbols-outlined">info</span>
+                <p>Concepts without labels in your preferred languages will fallback to display the URI or any available label found in the dataset.</p>
+              </div>
             </div>
           </div>
 
@@ -650,7 +670,7 @@ function handleClose() {
   margin-left: 0.25rem;
 }
 
-/* Step 2: Languages */
+/* Step 3: Languages */
 .no-languages {
   display: flex;
   flex-direction: column;
@@ -675,33 +695,194 @@ function handleClose() {
   font-style: italic;
 }
 
-.section-description {
+.language-priority-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.priority-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.priority-label {
   font-size: 0.875rem;
-  color: var(--p-text-muted-color);
-  margin: 0 0 1rem 0;
+  font-weight: 500;
+  color: var(--ae-text-primary);
+}
+
+.drag-hint {
+  font-size: 0.75rem;
+  color: var(--ae-text-muted);
+  background: var(--ae-bg-hover);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+/* Hide OrderList default buttons */
+.language-order-list :deep(.p-orderlist-controls) {
+  display: none;
+}
+
+.language-order-list :deep(.p-orderlist-list) {
+  padding: 0;
+  gap: 0.5rem;
+}
+
+.language-order-list :deep(.p-orderlist-item) {
+  padding: 0;
+  background: var(--ae-bg-hover);
+  border: 1px solid var(--ae-border-color);
+  border-radius: 8px;
+  transition: all 0.15s ease;
+}
+
+.language-order-list :deep(.p-orderlist-item:hover) {
+  border-color: var(--ae-accent);
+  background: var(--ae-bg-elevated);
+}
+
+.language-order-list :deep(.p-orderlist-item.p-highlight) {
+  background: var(--ae-bg-elevated);
+  border-color: var(--ae-accent);
 }
 
 .language-item {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  cursor: move;
 }
 
-.language-rank {
+.drag-handle {
+  font-size: 1.25rem;
+  color: var(--ae-text-muted);
+  cursor: grab;
+  transition: color 0.15s;
+}
+
+.language-item:hover .drag-handle {
+  color: var(--ae-accent);
+}
+
+.language-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  font-size: 0.75rem;
   font-weight: 600;
-  color: var(--p-text-muted-color);
-  min-width: 2rem;
+  text-transform: uppercase;
 }
 
-.language-code {
+/* Badge colors */
+.language-badge.bg-blue {
+  background: rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.language-badge.bg-purple {
+  background: rgba(168, 85, 247, 0.15);
+  color: #a855f7;
+  border: 1px solid rgba(168, 85, 247, 0.3);
+}
+
+.language-badge.bg-orange {
+  background: rgba(249, 115, 22, 0.15);
+  color: #f97316;
+  border: 1px solid rgba(249, 115, 22, 0.3);
+}
+
+.language-badge.bg-green {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.language-badge.bg-pink {
+  background: rgba(236, 72, 153, 0.15);
+  color: #ec4899;
+  border: 1px solid rgba(236, 72, 153, 0.3);
+}
+
+.language-badge.bg-cyan {
+  background: rgba(6, 182, 212, 0.15);
+  color: #06b6d4;
+  border: 1px solid rgba(6, 182, 212, 0.3);
+}
+
+.language-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.language-name {
+  font-size: 0.875rem;
   font-weight: 500;
+  color: var(--ae-text-primary);
+}
+
+.language-priority {
+  font-size: 0.75rem;
+  color: var(--ae-text-muted);
 }
 
 .language-count {
   font-size: 0.75rem;
-  color: var(--p-text-muted-color);
-  margin-left: auto;
+  color: var(--ae-text-secondary);
+  white-space: nowrap;
+}
+
+.delete-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.375rem;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  color: var(--ae-text-muted);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.delete-btn:hover {
+  color: var(--ae-status-error);
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.delete-btn .material-symbols-outlined {
+  font-size: 1.25rem;
+}
+
+.language-info-box {
+  display: flex;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 8px;
+}
+
+.language-info-box .material-symbols-outlined {
+  color: var(--ae-accent);
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.language-info-box p {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--ae-text-secondary);
+  line-height: 1.5;
 }
 
 /* Step 3: Capabilities */
