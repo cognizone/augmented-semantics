@@ -235,6 +235,7 @@ function handleClose() {
     :style="{ width: '600px' }"
     :modal="true"
     :closable="true"
+    position="top"
     class="endpoint-wizard-dialog"
     @update:visible="$emit('update:visible', $event)"
   >
