@@ -57,7 +57,7 @@ const tempEndpoint = ref<SPARQLEndpoint | null>(null)
 
 // Language state (Step 2)
 const endpointForLanguage = computed(() => tempEndpoint.value || props.endpoint || null)
-const { priorities, endpointLanguages, loadPriorities, onReorder, getLanguageCount, getLanguageName, getPriorityLabel, getBadgeColor, removeLanguage } = useLanguagePriorities(endpointForLanguage)
+const { priorities, endpointLanguages, loadPriorities, onReorder, getLanguageCount, getLanguageName, getPriorityLabel, getBadgeColor } = useLanguagePriorities(endpointForLanguage)
 
 // Capabilities state (Step 3)
 const {
@@ -517,13 +517,6 @@ function handleClose() {
                     <span v-if="getLanguageCount(item)" class="language-count">
                       {{ getLanguageCount(item)?.toLocaleString() }} labels
                     </span>
-                    <button
-                      class="delete-btn"
-                      aria-label="Remove language"
-                      @click.stop="removeLanguage(item)"
-                    >
-                      <span class="material-symbols-outlined">delete</span>
-                    </button>
                   </div>
                 </template>
               </OrderList>
@@ -839,28 +832,6 @@ function handleClose() {
   font-size: 0.75rem;
   color: var(--ae-text-secondary);
   white-space: nowrap;
-}
-
-.delete-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.375rem;
-  background: none;
-  border: none;
-  border-radius: 6px;
-  color: var(--ae-text-muted);
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.delete-btn:hover {
-  color: var(--ae-status-error);
-  background: rgba(239, 68, 68, 0.1);
-}
-
-.delete-btn .material-symbols-outlined {
-  font-size: 1.25rem;
 }
 
 .language-info-box {
