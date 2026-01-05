@@ -14,7 +14,8 @@
 import { ref, watch, computed, nextTick } from 'vue'
 import { useConceptStore, useEndpointStore, useSchemeStore, useLanguageStore } from '../../stores'
 import { executeSparql, withPrefixes, logger } from '../../services'
-import { useDelayedLoading, useLabelResolver, useElapsedTime, useDeprecation } from '../../composables'
+import { useDelayedLoading, useLabelResolver, useElapsedTime, useDeprecation, useConceptBindings } from '../../composables'
+import { compareNodes } from '../../utils/concept-tree'
 import type { ConceptNode } from '../../types'
 import Tree from 'primevue/tree'
 import type { TreeNode } from 'primevue/treenode'
@@ -28,61 +29,9 @@ const conceptStore = useConceptStore()
 const endpointStore = useEndpointStore()
 const schemeStore = useSchemeStore()
 const languageStore = useLanguageStore()
-const { shouldShowLangTag, selectLabel } = useLabelResolver()
-const { getDeprecationSparqlClauses, getDeprecationSelectVars, isDeprecatedFromBinding, showIndicator: showDeprecationIndicator } = useDeprecation()
-
-/**
- * Pick the best notation from a list.
- * Prefers the smallest numeric notation for consistent sorting.
- */
-function pickBestNotation(notations: string[]): string | undefined {
-  if (!notations.length) return undefined
-  if (notations.length === 1) return notations[0]
-
-  // Find all numeric notations and pick the smallest
-  const numericNotations = notations
-    .map(n => ({ value: n, num: parseFloat(n) }))
-    .filter(n => !isNaN(n.num))
-    .sort((a, b) => a.num - b.num)
-
-  if (numericNotations.length > 0 && numericNotations[0]) {
-    return numericNotations[0].value
-  }
-
-  // No numeric notations, return first alphabetically
-  const sorted = notations.sort()
-  return sorted[0]
-}
-
-/**
- * Compare tree nodes for sorting.
- * Priority: notation (numeric if possible) > label (alphabetical)
- */
-function compareNodes(a: ConceptNode, b: ConceptNode): number {
-  const aNotation = a.notation
-  const bNotation = b.notation
-
-  // If both have notation, try numeric sort
-  if (aNotation && bNotation) {
-    const aNum = parseFloat(aNotation)
-    const bNum = parseFloat(bNotation)
-
-    // Both are valid numbers → numeric sort
-    if (!isNaN(aNum) && !isNaN(bNum)) {
-      return aNum - bNum
-    }
-
-    // Otherwise → string comparison on notation
-    return aNotation.localeCompare(bNotation)
-  }
-
-  // One has notation, one doesn't → notation first
-  if (aNotation) return -1
-  if (bNotation) return 1
-
-  // Neither has notation → sort by label
-  return (a.label || a.uri).localeCompare(b.label || b.uri)
-}
+const { shouldShowLangTag } = useLabelResolver()
+const { getDeprecationSparqlClauses, getDeprecationSelectVars, showIndicator: showDeprecationIndicator } = useDeprecation()
+const { processBindings } = useConceptBindings()
 
 // Delayed loading - show spinner only after 300ms to prevent flicker
 const showTreeLoading = useDelayedLoading(computed(() => conceptStore.loadingTree))
@@ -307,75 +256,8 @@ async function loadTopConcepts(offset = 0) {
   try {
     const results = await executeSparql(endpoint, query, { retries: 1 })
 
-    // Group by concept URI and pick best label
-    const conceptMap = new Map<string, {
-      labels: { value: string; lang: string; type: string }[]
-      notations: string[]
-      hasNarrower: boolean
-      deprecated: boolean
-    }>()
-
-    for (const b of results.results.bindings) {
-      const uri = b.concept?.value
-      if (!uri) continue
-
-      if (!conceptMap.has(uri)) {
-        conceptMap.set(uri, {
-          labels: [],
-          notations: [],
-          hasNarrower: parseInt(b.narrowerCount?.value || '0', 10) > 0,
-          deprecated: isDeprecatedFromBinding(b),
-        })
-      }
-
-      const entry = conceptMap.get(uri)!
-
-      // Collect all notations (we'll pick the best one later)
-      if (b.notation?.value && !entry.notations.includes(b.notation.value)) {
-        entry.notations.push(b.notation.value)
-      }
-
-      if (b.label?.value) {
-        entry.labels.push({
-          value: b.label.value,
-          lang: b.labelLang?.value || '',
-          type: b.labelType?.value || 'prefLabel'
-        })
-      }
-    }
-
-    // Convert to ConceptNode[] with best label selection
-    const concepts: ConceptNode[] = Array.from(conceptMap.entries()).map(([uri, data]) => {
-      // Pick best label: prefLabel > xlPrefLabel > title > rdfsLabel, with language priority
-      const labelPriority = ['prefLabel', 'xlPrefLabel', 'title', 'rdfsLabel']
-      let bestLabel: string | undefined
-      let bestLabelLang: string | undefined
-
-      for (const labelType of labelPriority) {
-        const labelsOfType = data.labels.filter(l => l.type === labelType)
-        if (!labelsOfType.length) continue
-
-        const selected = selectLabel(labelsOfType)
-        if (selected) {
-          bestLabel = selected.value
-          bestLabelLang = selected.lang || undefined
-          break
-        }
-      }
-
-      return {
-        uri,
-        label: bestLabel,
-        lang: bestLabelLang,
-        notation: pickBestNotation(data.notations),
-        hasNarrower: data.hasNarrower,
-        expanded: false,
-        deprecated: data.deprecated,
-      }
-    })
-
-    // Sort by notation (numeric if possible) then label
-    concepts.sort(compareNodes)
+    // Process bindings into sorted ConceptNode[]
+    const concepts = processBindings(results.results.bindings)
 
     // Check if there are more results (we fetched PAGE_SIZE + 1)
     const hasMore = concepts.length > PAGE_SIZE
@@ -486,75 +368,8 @@ async function loadChildren(uri: string, offset = 0) {
   try {
     const results = await executeSparql(endpoint, query, { retries: 1 })
 
-    // Group by concept URI and pick best label
-    const conceptMapChild = new Map<string, {
-      labels: { value: string; lang: string; type: string }[]
-      notations: string[]
-      hasNarrower: boolean
-      deprecated: boolean
-    }>()
-
-    for (const b of results.results.bindings) {
-      const conceptUri = b.concept?.value
-      if (!conceptUri) continue
-
-      if (!conceptMapChild.has(conceptUri)) {
-        conceptMapChild.set(conceptUri, {
-          labels: [],
-          notations: [],
-          hasNarrower: parseInt(b.narrowerCount?.value || '0', 10) > 0,
-          deprecated: isDeprecatedFromBinding(b),
-        })
-      }
-
-      const entry = conceptMapChild.get(conceptUri)!
-
-      // Collect all notations (we'll pick the best one later)
-      if (b.notation?.value && !entry.notations.includes(b.notation.value)) {
-        entry.notations.push(b.notation.value)
-      }
-
-      if (b.label?.value) {
-        entry.labels.push({
-          value: b.label.value,
-          lang: b.labelLang?.value || '',
-          type: b.labelType?.value || 'prefLabel'
-        })
-      }
-    }
-
-    // Convert to ConceptNode[] with best label selection
-    const children: ConceptNode[] = Array.from(conceptMapChild.entries()).map(([conceptUri, data]) => {
-      // Pick best label: prefLabel > xlPrefLabel > title > rdfsLabel, with language priority
-      const labelPriority = ['prefLabel', 'xlPrefLabel', 'title', 'rdfsLabel']
-      let bestLabel: string | undefined
-      let bestLabelLang: string | undefined
-
-      for (const labelType of labelPriority) {
-        const labelsOfType = data.labels.filter(l => l.type === labelType)
-        if (!labelsOfType.length) continue
-
-        const selected = selectLabel(labelsOfType)
-        if (selected) {
-          bestLabel = selected.value
-          bestLabelLang = selected.lang || undefined
-          break
-        }
-      }
-
-      return {
-        uri: conceptUri,
-        label: bestLabel,
-        lang: bestLabelLang,
-        notation: pickBestNotation(data.notations),
-        hasNarrower: data.hasNarrower,
-        expanded: false,
-        deprecated: data.deprecated,
-      }
-    })
-
-    // Sort by notation (numeric if possible) then label
-    children.sort(compareNodes)
+    // Process bindings into sorted ConceptNode[]
+    const children = processBindings(results.results.bindings)
 
     // Check if there are more results
     const hasMore = children.length > PAGE_SIZE

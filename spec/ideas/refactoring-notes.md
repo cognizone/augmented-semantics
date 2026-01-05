@@ -1,25 +1,26 @@
 # Component Refactoring Notes
 
-## Components Identified for Future Refactoring
+## Current Large Components
 
-| Component | Lines | Priority |
-|-----------|-------|----------|
-| ConceptTree.vue | 1,173 | Critical |
-| ConceptDetails.vue | 913 | High |
-| SchemeDetails.vue | 727 | Medium-High |
-| SearchBox.vue | 618 | Medium |
-| EndpointFormDialog.vue | 438 | Medium |
+| Component | Lines | Status |
+|-----------|-------|--------|
+| ConceptTree.vue | 974 | Partially refactored ✓ |
+| EndpointWizard.vue | 920 | New - monitor |
+| ConceptDetails.vue | 913 | Needs refactoring |
+| SchemeDetails.vue | 727 | Needs refactoring |
+| SearchBox.vue | 605 | Acceptable |
+| EndpointManager.vue | 513 | Refactored ✓ |
 
-## ConceptTree.vue - Top Priority
+## ConceptTree.vue - Partially Done
 
-**Current issues:**
-- Pagination, queries, navigation all mixed
-- 5 watchers managing different concerns
-- 200+ lines of utility functions
-- Duplicate query logic
+**Completed (Jan 2025):**
+- Extracted `utils/concept-tree.ts` with `pickBestNotation` and `compareNodes`
+- Created `composables/useConceptBindings.ts` for SPARQL result processing
+- Removed ~185 lines of duplicate result processing code
+- Added comprehensive tests for both utilities and composable
 
-**Refactoring approach:**
-- Extract `useConceptTreeQueries` composable
+**Remaining opportunities:**
+- Extract `useConceptTreeQueries` composable (SPARQL queries)
 - Extract `useConceptTreePagination` composable
 - Create `ConceptTreeNode.vue` child component
 - Create `ConceptTreeGotoUri.vue` child component
@@ -34,3 +35,19 @@
 **Refactoring approach:**
 - Extract child components for each section (Labels, Documentation, Hierarchy, Mappings)
 - Create reusable `MappingLink.vue` component
+
+## SchemeDetails.vue - Third Priority
+
+**Current issues:**
+- Similar structure to ConceptDetails
+- Large template with repeated patterns
+
+**Refactoring approach:**
+- Follow same pattern as ConceptDetails refactoring
+- Extract composables for data fetching
+
+## Completed Refactoring
+
+- **EndpointManager** (Jan 2025): Split into EndpointWizard + composables
+  - Created: `useEndpointForm`, `useEndpointTest`, `useEndpointAnalysis`, `useEndpointCapabilities`, `useLanguagePriorities`
+  - Removed: `EndpointFormDialog.vue`, `EndpointLanguageDialog.vue`, `EndpointCapabilitiesDialog.vue`

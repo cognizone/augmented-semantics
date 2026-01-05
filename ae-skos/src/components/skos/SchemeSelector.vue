@@ -273,8 +273,7 @@ watch(
     if (endpointStore.current) {
       loadSchemes()
     }
-  },
-  { deep: true }
+  }
 )
 </script>
 

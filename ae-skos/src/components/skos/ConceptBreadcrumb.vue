@@ -185,6 +185,16 @@ watch(
   { immediate: true }
 )
 
+// Reload schemes when language preference changes
+watch(
+  () => languageStore.preferred,
+  () => {
+    if (endpointStore.current) {
+      loadSchemes()
+    }
+  }
+)
+
 // Convert breadcrumb to PrimeVue format with notation + label + lang
 const breadcrumbItems = computed(() => {
   return conceptStore.breadcrumb.map(item => {

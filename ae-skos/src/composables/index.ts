@@ -1,4 +1,5 @@
 export { useClipboard } from './useClipboard'
+export { useConceptBindings } from './useConceptBindings'
 export { useConceptData } from './useConceptData'
 export { useConceptNavigation } from './useConceptNavigation'
 export { useDelayedLoading } from './useDelayedLoading'
