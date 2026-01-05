@@ -89,42 +89,39 @@ const displayTitle = computed(() => {
   return notation || label || 'Unnamed Concept'
 })
 
+// Factory for sorted label computeds
+const getSorted = <K extends keyof NonNullable<typeof details.value>>(field: K) =>
+  computed(() => details.value ? sortLabels(details.value[field] as any) : [])
+
 // Sorted label arrays (preferred lang first, then fallback, then rest alphabetically)
-const sortedPrefLabels = computed(() => {
-  return details.value ? sortLabels(details.value.prefLabels) : []
-})
+const sortedPrefLabels = getSorted('prefLabels')
+const sortedAltLabels = getSorted('altLabels')
+const sortedHiddenLabels = getSorted('hiddenLabels')
+const sortedDefinitions = getSorted('definitions')
+const sortedScopeNotes = getSorted('scopeNotes')
+const sortedHistoryNotes = getSorted('historyNotes')
+const sortedChangeNotes = getSorted('changeNotes')
+const sortedEditorialNotes = getSorted('editorialNotes')
+const sortedExamples = getSorted('examples')
 
-const sortedAltLabels = computed(() => {
-  return details.value ? sortLabels(details.value.altLabels) : []
-})
+// Documentation config for DRY template rendering
+const documentationConfig = computed(() => [
+  { label: 'Definition', items: sortedDefinitions.value },
+  { label: 'Scope Note', items: sortedScopeNotes.value },
+  { label: 'History Note', items: sortedHistoryNotes.value },
+  { label: 'Change Note', items: sortedChangeNotes.value },
+  { label: 'Editorial Note', items: sortedEditorialNotes.value },
+  { label: 'Example', items: sortedExamples.value, class: 'example' },
+].filter(d => d.items.length > 0))
 
-const sortedHiddenLabels = computed(() => {
-  return details.value ? sortLabels(details.value.hiddenLabels) : []
-})
-
-const sortedDefinitions = computed(() => {
-  return details.value ? sortLabels(details.value.definitions) : []
-})
-
-const sortedScopeNotes = computed(() => {
-  return details.value ? sortLabels(details.value.scopeNotes) : []
-})
-
-const sortedHistoryNotes = computed(() => {
-  return details.value ? sortLabels(details.value.historyNotes) : []
-})
-
-const sortedChangeNotes = computed(() => {
-  return details.value ? sortLabels(details.value.changeNotes) : []
-})
-
-const sortedEditorialNotes = computed(() => {
-  return details.value ? sortLabels(details.value.editorialNotes) : []
-})
-
-const sortedExamples = computed(() => {
-  return details.value ? sortLabels(details.value.examples) : []
-})
+// Mappings config for DRY template rendering
+const mappingsConfig = computed(() => [
+  { label: 'Exact Match', uris: details.value?.exactMatch || [] },
+  { label: 'Close Match', uris: details.value?.closeMatch || [] },
+  { label: 'Broad Match', uris: details.value?.broadMatch || [] },
+  { label: 'Narrow Match', uris: details.value?.narrowMatch || [] },
+  { label: 'Related Match', uris: details.value?.relatedMatch || [] },
+].filter(m => m.uris.length > 0))
 
 // Sorted other properties (alphabetically by qualified name)
 const sortedOtherProperties = computed(() => {
@@ -291,86 +288,17 @@ watch(
           Documentation
         </h3>
 
-        <div v-if="details.definitions.length" class="property-row">
-          <label>Definition</label>
+        <div v-for="doc in documentationConfig" :key="doc.label" class="property-row">
+          <label>{{ doc.label }}</label>
           <div class="doc-values">
             <p
-              v-for="(def, i) in sortedDefinitions"
+              v-for="(item, i) in doc.items"
               :key="i"
               class="doc-value"
+              :class="doc.class"
             >
-              <span v-if="def.lang" class="lang-tag lang-tag-first">{{ def.lang }}</span>
-              <span class="doc-text">{{ def.value }}</span>
-            </p>
-          </div>
-        </div>
-
-        <div v-if="details.scopeNotes.length" class="property-row">
-          <label>Scope Note</label>
-          <div class="doc-values">
-            <p
-              v-for="(note, i) in sortedScopeNotes"
-              :key="i"
-              class="doc-value"
-            >
-              <span v-if="note.lang" class="lang-tag lang-tag-first">{{ note.lang }}</span>
-              <span class="doc-text">{{ note.value }}</span>
-            </p>
-          </div>
-        </div>
-
-        <div v-if="details.historyNotes.length" class="property-row">
-          <label>History Note</label>
-          <div class="doc-values">
-            <p
-              v-for="(note, i) in sortedHistoryNotes"
-              :key="i"
-              class="doc-value"
-            >
-              <span v-if="note.lang" class="lang-tag lang-tag-first">{{ note.lang }}</span>
-              <span class="doc-text">{{ note.value }}</span>
-            </p>
-          </div>
-        </div>
-
-        <div v-if="details.changeNotes.length" class="property-row">
-          <label>Change Note</label>
-          <div class="doc-values">
-            <p
-              v-for="(note, i) in sortedChangeNotes"
-              :key="i"
-              class="doc-value"
-            >
-              <span v-if="note.lang" class="lang-tag lang-tag-first">{{ note.lang }}</span>
-              <span class="doc-text">{{ note.value }}</span>
-            </p>
-          </div>
-        </div>
-
-        <div v-if="details.editorialNotes.length" class="property-row">
-          <label>Editorial Note</label>
-          <div class="doc-values">
-            <p
-              v-for="(note, i) in sortedEditorialNotes"
-              :key="i"
-              class="doc-value"
-            >
-              <span v-if="note.lang" class="lang-tag lang-tag-first">{{ note.lang }}</span>
-              <span class="doc-text">{{ note.value }}</span>
-            </p>
-          </div>
-        </div>
-
-        <div v-if="details.examples.length" class="property-row">
-          <label>Example</label>
-          <div class="doc-values">
-            <p
-              v-for="(ex, i) in sortedExamples"
-              :key="i"
-              class="doc-value example"
-            >
-              <span v-if="ex.lang" class="lang-tag lang-tag-first">{{ ex.lang }}</span>
-              <span class="doc-text">{{ ex.value }}</span>
+              <span v-if="item.lang" class="lang-tag lang-tag-first">{{ item.lang }}</span>
+              <span class="doc-text">{{ item.value }}</span>
             </p>
           </div>
         </div>
@@ -441,62 +369,10 @@ watch(
           Mappings
         </h3>
 
-        <div v-if="details.exactMatch.length" class="property-row">
-          <label>Exact Match</label>
+        <div v-for="mapping in mappingsConfig" :key="mapping.label" class="property-row">
+          <label>{{ mapping.label }}</label>
           <div class="mapping-links">
-            <template v-for="uri in details.exactMatch" :key="uri">
-              <a v-if="isValidURI(uri)" :href="uri" target="_blank" class="mapping-link">
-                {{ getUriFragment(uri) }}
-                <span class="material-symbols-outlined link-icon">open_in_new</span>
-              </a>
-              <span v-else class="mapping-text">{{ getUriFragment(uri) }}</span>
-            </template>
-          </div>
-        </div>
-
-        <div v-if="details.closeMatch.length" class="property-row">
-          <label>Close Match</label>
-          <div class="mapping-links">
-            <template v-for="uri in details.closeMatch" :key="uri">
-              <a v-if="isValidURI(uri)" :href="uri" target="_blank" class="mapping-link">
-                {{ getUriFragment(uri) }}
-                <span class="material-symbols-outlined link-icon">open_in_new</span>
-              </a>
-              <span v-else class="mapping-text">{{ getUriFragment(uri) }}</span>
-            </template>
-          </div>
-        </div>
-
-        <div v-if="details.broadMatch.length" class="property-row">
-          <label>Broad Match</label>
-          <div class="mapping-links">
-            <template v-for="uri in details.broadMatch" :key="uri">
-              <a v-if="isValidURI(uri)" :href="uri" target="_blank" class="mapping-link">
-                {{ getUriFragment(uri) }}
-                <span class="material-symbols-outlined link-icon">open_in_new</span>
-              </a>
-              <span v-else class="mapping-text">{{ getUriFragment(uri) }}</span>
-            </template>
-          </div>
-        </div>
-
-        <div v-if="details.narrowMatch.length" class="property-row">
-          <label>Narrow Match</label>
-          <div class="mapping-links">
-            <template v-for="uri in details.narrowMatch" :key="uri">
-              <a v-if="isValidURI(uri)" :href="uri" target="_blank" class="mapping-link">
-                {{ getUriFragment(uri) }}
-                <span class="material-symbols-outlined link-icon">open_in_new</span>
-              </a>
-              <span v-else class="mapping-text">{{ getUriFragment(uri) }}</span>
-            </template>
-          </div>
-        </div>
-
-        <div v-if="details.relatedMatch.length" class="property-row">
-          <label>Related Match</label>
-          <div class="mapping-links">
-            <template v-for="uri in details.relatedMatch" :key="uri">
+            <template v-for="uri in mapping.uris" :key="uri">
               <a v-if="isValidURI(uri)" :href="uri" target="_blank" class="mapping-link">
                 {{ getUriFragment(uri) }}
                 <span class="material-symbols-outlined link-icon">open_in_new</span>

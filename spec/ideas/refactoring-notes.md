@@ -6,7 +6,7 @@
 |-----------|-------|--------|
 | ConceptTree.vue | 974 | Partially refactored ✓ |
 | EndpointWizard.vue | 920 | New - monitor |
-| ConceptDetails.vue | 913 | Needs refactoring |
+| ConceptDetails.vue | 789 | Refactored ✓ |
 | SchemeDetails.vue | 727 | Needs refactoring |
 | SearchBox.vue | 605 | Acceptable |
 | EndpointManager.vue | 513 | Refactored ✓ |
@@ -25,16 +25,13 @@
 - Create `ConceptTreeNode.vue` child component
 - Create `ConceptTreeGotoUri.vue` child component
 
-## ConceptDetails.vue - Second Priority
+## ConceptDetails.vue - Done
 
-**Current issues:**
-- 5 identical mapping section blocks
-- 15+ computed properties for sorting
-- 700+ lines of template
-
-**Refactoring approach:**
-- Extract child components for each section (Labels, Documentation, Hierarchy, Mappings)
-- Create reusable `MappingLink.vue` component
+**Completed (Jan 2025):**
+- Added `getSorted` factory function for DRY computed properties
+- Created `documentationConfig` array to replace 6 duplicate template blocks
+- Created `mappingsConfig` array to replace 5 duplicate template blocks
+- Reduced from 913 to 789 lines (~14% reduction)
 
 ## SchemeDetails.vue - Third Priority
 
