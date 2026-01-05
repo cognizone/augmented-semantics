@@ -31,7 +31,7 @@ import Select from 'primevue/select'
 import Message from 'primevue/message'
 import Tag from 'primevue/tag'
 import Divider from 'primevue/divider'
-import OrderList from 'primevue/orderlist'
+import draggable from 'vuedraggable'
 
 const props = defineProps<{
   visible: boolean
@@ -57,7 +57,7 @@ const tempEndpoint = ref<SPARQLEndpoint | null>(null)
 
 // Language state (Step 2)
 const endpointForLanguage = computed(() => tempEndpoint.value || props.endpoint || null)
-const { priorities, endpointLanguages, loadPriorities, onReorder, getLanguageCount, getLanguageName, getPriorityLabel, getBadgeColor } = useLanguagePriorities(endpointForLanguage)
+const { priorities, endpointLanguages, loadPriorities, getLanguageCount, getLanguageName, getPriorityLabel, getBadgeColor } = useLanguagePriorities(endpointForLanguage)
 
 // Capabilities state (Step 3)
 const {
@@ -498,28 +498,29 @@ function handleClose() {
                 <span class="drag-hint">Drag to reorder</span>
               </div>
 
-              <OrderList
+              <draggable
                 v-model="priorities"
-                :listStyle="{ height: 'auto', maxHeight: '300px' }"
-                @reorder="onReorder"
-                class="language-order-list"
+                item-key="id"
+                handle=".drag-handle"
+                class="language-list"
+                :component-data="{ class: 'language-list-inner' }"
               >
-                <template #item="{ item, index }">
+                <template #item="{ element, index }">
                   <div class="language-item">
                     <span class="material-symbols-outlined drag-handle">drag_indicator</span>
                     <div class="language-badge" :class="getBadgeColor(index).bg">
-                      {{ item }}
+                      {{ element }}
                     </div>
                     <div class="language-info">
-                      <span class="language-name">{{ getLanguageName(item) }}</span>
+                      <span class="language-name">{{ getLanguageName(element) }}</span>
                       <span class="language-priority">{{ getPriorityLabel(index) }}</span>
                     </div>
-                    <span v-if="getLanguageCount(item)" class="language-count">
-                      {{ getLanguageCount(item)?.toLocaleString() }} labels
+                    <span v-if="getLanguageCount(element)" class="language-count">
+                      {{ getLanguageCount(element)?.toLocaleString() }} labels
                     </span>
                   </div>
                 </template>
-              </OrderList>
+              </draggable>
 
               <!-- Info box -->
               <div class="language-info-box">
@@ -714,32 +715,11 @@ function handleClose() {
   border-radius: 4px;
 }
 
-/* Hide OrderList default buttons */
-.language-order-list :deep(.p-orderlist-controls) {
-  display: none;
-}
-
-.language-order-list :deep(.p-orderlist-list) {
-  padding: 0;
+/* Draggable language list */
+.language-list {
+  display: flex;
+  flex-direction: column;
   gap: 0.5rem;
-}
-
-.language-order-list :deep(.p-orderlist-item) {
-  padding: 0;
-  background: var(--ae-bg-hover);
-  border: 1px solid var(--ae-border-color);
-  border-radius: 8px;
-  transition: all 0.15s ease;
-}
-
-.language-order-list :deep(.p-orderlist-item:hover) {
-  border-color: var(--ae-accent);
-  background: var(--ae-bg-elevated);
-}
-
-.language-order-list :deep(.p-orderlist-item.p-highlight) {
-  background: var(--ae-bg-elevated);
-  border-color: var(--ae-accent);
 }
 
 .language-item {
@@ -747,7 +727,15 @@ function handleClose() {
   align-items: center;
   gap: 0.75rem;
   padding: 0.75rem;
-  cursor: move;
+  background: var(--ae-bg-hover);
+  border: 1px solid var(--ae-border-color);
+  border-radius: 8px;
+  transition: all 0.15s ease;
+}
+
+.language-item:hover {
+  border-color: var(--ae-accent);
+  background: var(--ae-bg-elevated);
 }
 
 .drag-handle {

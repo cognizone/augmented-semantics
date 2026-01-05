@@ -243,10 +243,10 @@ describe('EndpointWizard', () => {
           Divider: {
             template: '<hr class="p-divider" />',
           },
-          OrderList: {
-            template: '<div class="p-orderlist"><slot name="item" v-for="(item, index) in modelValue" :item="item" :index="index" /></div>',
-            props: ['modelValue', 'listStyle', 'selectionMode'],
-            emits: ['update:modelValue', 'reorder'],
+          draggable: {
+            template: '<div class="language-list"><slot name="item" v-for="(element, index) in modelValue" :element="element" :index="index" /></div>',
+            props: ['modelValue', 'itemKey', 'handle', 'componentData'],
+            emits: ['update:modelValue'],
           },
         },
       },
@@ -354,7 +354,7 @@ describe('EndpointWizard', () => {
       mockEndpointLanguages.value = [{ lang: 'en', count: 100 }]
       mockPriorities.value = ['en']
       const wrapper = mountEndpointWizard()
-      expect(wrapper.find('.p-orderlist').exists()).toBe(true)
+      expect(wrapper.find('.language-list').exists()).toBe(true)
     })
   })
 
