@@ -336,6 +336,7 @@ watch(
       header="Concept Scheme"
       :style="{ width: '500px' }"
       :modal="true"
+      position="top"
     >
       <div v-if="selectedSchemeDetails" class="scheme-details">
         <div class="detail-row">

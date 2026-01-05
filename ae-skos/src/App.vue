@@ -198,6 +198,7 @@ onUnmounted(() => {
       header="Settings"
       :style="{ width: '420px' }"
       :modal="true"
+      position="top"
     >
       <div class="settings-content">
         <!-- Language Section -->

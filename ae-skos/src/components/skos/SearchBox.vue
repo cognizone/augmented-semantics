@@ -316,6 +316,7 @@ watch(
       header="Search Settings"
       :style="{ width: '350px' }"
       :modal="true"
+      position="top"
     >
       <div class="settings-content">
         <div class="setting-group">

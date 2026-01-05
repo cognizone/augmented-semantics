@@ -40,6 +40,7 @@ function handleCancel() {
     :style="{ width: '400px' }"
     :modal="true"
     :closable="true"
+    position="top"
     @update:visible="$emit('update:visible', $event)"
   >
     <div class="delete-confirmation">

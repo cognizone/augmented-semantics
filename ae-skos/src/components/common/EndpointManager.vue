@@ -140,6 +140,7 @@ function formatDate(dateStr?: string) {
     :style="{ width: '900px' }"
     :modal="true"
     :closable="true"
+    position="top"
   >
     <div class="endpoint-manager-content">
       <!-- Info Banner -->

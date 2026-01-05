@@ -91,6 +91,7 @@ function handleClose() {
     header="Raw RDF"
     :style="{ width: '900px', maxHeight: '90vh' }"
     :modal="true"
+    position="top"
     @update:visible="handleClose"
   >
     <div class="raw-rdf-dialog">
