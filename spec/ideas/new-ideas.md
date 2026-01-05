@@ -9,3 +9,4 @@ New ideas: copy them into ideas.md, remove the list here (but keep the file and 
 - navigation to related concepts in same database should be via the tool. for example the main taxonomy + it/fr/de taxosare
 - it seems that breadcrumb does not correctly refresh after selecting a search result or a recent item. it stays on the current concept scheme 
 - search config icon is too big
+- fix dates -> just normal format with xsd:date next to ityes

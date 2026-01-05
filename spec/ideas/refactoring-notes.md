@@ -7,7 +7,7 @@
 | ConceptTree.vue | 974 | Partially refactored ✓ |
 | EndpointWizard.vue | 920 | New - monitor |
 | ConceptDetails.vue | 789 | Refactored ✓ |
-| SchemeDetails.vue | 727 | Needs refactoring |
+| SchemeDetails.vue | 682 | Refactored ✓ |
 | SearchBox.vue | 605 | Acceptable |
 | EndpointManager.vue | 513 | Refactored ✓ |
 
@@ -33,15 +33,13 @@
 - Created `mappingsConfig` array to replace 5 duplicate template blocks
 - Reduced from 913 to 789 lines (~14% reduction)
 
-## SchemeDetails.vue - Third Priority
+## SchemeDetails.vue - Done
 
-**Current issues:**
-- Similar structure to ConceptDetails
-- Large template with repeated patterns
-
-**Refactoring approach:**
-- Follow same pattern as ConceptDetails refactoring
-- Extract composables for data fetching
+**Completed (Jan 2025):**
+- Added `metadataLinksConfig` array for creator, publisher, rights, license
+- Replaced 4 duplicate template blocks with single config-driven loop
+- Already had `getSorted` factory, `documentationConfig`, `labelConfig`
+- Reduced from 727 to 682 lines (~6% reduction)
 
 ## Completed Refactoring
 

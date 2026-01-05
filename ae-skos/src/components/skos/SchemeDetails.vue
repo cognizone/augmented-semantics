@@ -150,6 +150,14 @@ const labelConfig = computed(() => {
 
 const hasLabels = computed(() => labelConfig.value.length > 0)
 
+// Metadata links config (creator, publisher, rights, license)
+const metadataLinksConfig = computed(() => [
+  { label: 'Creator', values: details.value?.creator || [] },
+  { label: 'Publisher', values: details.value?.publisher || [] },
+  { label: 'Rights', values: details.value?.rights || [] },
+  { label: 'License', values: details.value?.license || [] },
+].filter(m => m.values.length > 0))
+
 // Export as JSON
 function exportAsJson() {
   if (!details.value) return
@@ -328,26 +336,27 @@ watch(
       </section>
 
       <!-- Metadata Section -->
-      <section v-if="details.creator.length || details.created || details.modified || details.publisher.length || details.rights.length || details.license.length" class="details-section">
+      <section v-if="metadataLinksConfig.length || details.created || details.modified" class="details-section">
         <h3 class="section-title">
           <span class="material-symbols-outlined section-icon">info</span>
           Metadata
         </h3>
 
-        <div v-if="details.creator.length" class="property-row">
-          <label>Creator</label>
+        <!-- Config-driven metadata links (creator, publisher, rights, license) -->
+        <div v-for="meta in metadataLinksConfig" :key="meta.label" class="property-row">
+          <label>{{ meta.label }}</label>
           <div class="metadata-values">
-            <template v-for="(creator, i) in details.creator" :key="i">
+            <template v-for="(val, i) in meta.values" :key="i">
               <a
-                v-if="isValidURI(creator)"
-                :href="creator"
+                v-if="isValidURI(val)"
+                :href="val"
                 target="_blank"
                 class="metadata-link"
               >
-                {{ getUriFragment(creator) }}
+                {{ getUriFragment(val) }}
                 <span class="material-symbols-outlined link-icon">open_in_new</span>
               </a>
-              <span v-else class="metadata-value">{{ creator }}</span>
+              <span v-else class="metadata-value">{{ val }}</span>
             </template>
           </div>
         </div>
@@ -360,60 +369,6 @@ watch(
         <div v-if="details.modified" class="property-row">
           <label>Modified</label>
           <span class="metadata-value">{{ formatDate(details.modified) }}</span>
-        </div>
-
-        <div v-if="details.publisher.length" class="property-row">
-          <label>Publisher</label>
-          <div class="metadata-values">
-            <template v-for="(pub, i) in details.publisher" :key="i">
-              <a
-                v-if="isValidURI(pub)"
-                :href="pub"
-                target="_blank"
-                class="metadata-link"
-              >
-                {{ getUriFragment(pub) }}
-                <span class="material-symbols-outlined link-icon">open_in_new</span>
-              </a>
-              <span v-else class="metadata-value">{{ pub }}</span>
-            </template>
-          </div>
-        </div>
-
-        <div v-if="details.rights.length" class="property-row">
-          <label>Rights</label>
-          <div class="metadata-values">
-            <template v-for="(r, i) in details.rights" :key="i">
-              <a
-                v-if="isValidURI(r)"
-                :href="r"
-                target="_blank"
-                class="metadata-link"
-              >
-                {{ getUriFragment(r) }}
-                <span class="material-symbols-outlined link-icon">open_in_new</span>
-              </a>
-              <span v-else class="metadata-value">{{ r }}</span>
-            </template>
-          </div>
-        </div>
-
-        <div v-if="details.license.length" class="property-row">
-          <label>License</label>
-          <div class="metadata-values">
-            <template v-for="(lic, i) in details.license" :key="i">
-              <a
-                v-if="isValidURI(lic)"
-                :href="lic"
-                target="_blank"
-                class="metadata-link"
-              >
-                {{ getUriFragment(lic) }}
-                <span class="material-symbols-outlined link-icon">open_in_new</span>
-              </a>
-              <span v-else class="metadata-value">{{ lic }}</span>
-            </template>
-          </div>
         </div>
       </section>
 

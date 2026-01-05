@@ -18,15 +18,16 @@ import type { ConceptNode } from '../types'
 import type { SPARQLBinding } from '../services/sparql'
 
 /**
- * Extended SPARQL binding with concept-specific fields
+ * SPARQL binding for concept queries
+ * Note: Uses intersection type to satisfy index signature while allowing specific fields
  */
-export interface ConceptBinding extends SPARQLBinding {
-  concept?: { type: string; value: string }
-  label?: { type: string; value: string }
-  labelLang?: { type: string; value: string }
-  labelType?: { type: string; value: string }
-  notation?: { type: string; value: string }
-  narrowerCount?: { type: string; value: string }
+export type ConceptBinding = SPARQLBinding & {
+  concept?: SPARQLBinding[string]
+  label?: SPARQLBinding[string]
+  labelLang?: SPARQLBinding[string]
+  labelType?: SPARQLBinding[string]
+  notation?: SPARQLBinding[string]
+  narrowerCount?: SPARQLBinding[string]
 }
 
 export function useConceptBindings() {

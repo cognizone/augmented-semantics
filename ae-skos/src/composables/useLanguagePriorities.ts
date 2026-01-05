@@ -142,7 +142,7 @@ export function useLanguagePriorities(endpoint: Ref<SPARQLEndpoint | null>) {
    * Get badge color class for a language based on its index
    */
   function getBadgeColor(index: number): { bg: string; text: string } {
-    return BADGE_COLORS[index % BADGE_COLORS.length]
+    return BADGE_COLORS[index % BADGE_COLORS.length]!
   }
 
   /**
