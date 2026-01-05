@@ -405,12 +405,65 @@
   border-radius: 4px;
 }
 
+/* Primary button - use blue accent */
+.p-button:not(.p-button-secondary):not(.p-button-text):not(.p-button-outlined) {
+  background: var(--ae-accent);
+  border-color: var(--ae-accent);
+}
+
+.p-button:not(.p-button-secondary):not(.p-button-text):not(.p-button-outlined):hover {
+  background: var(--ae-accent-hover, #005a9e);
+  border-color: var(--ae-accent-hover, #005a9e);
+}
+
 .p-button.p-button-text {
   color: var(--ae-text-secondary);
 }
 
 .p-button.p-button-text:hover {
   background: var(--ae-bg-hover);
+  color: var(--ae-text-primary);
+}
+
+/* Stepper styling - use blue accent */
+.p-stepper .p-stepper-header .p-stepper-number {
+  background: var(--ae-bg-hover);
+  color: var(--ae-text-secondary);
+  border-color: var(--ae-border-color);
+}
+
+.p-stepper .p-stepper-header.p-stepper-header-active .p-stepper-number {
+  background: var(--ae-accent);
+  color: white;
+  border-color: var(--ae-accent);
+}
+
+.p-stepper .p-stepper-header:not(.p-disabled):hover .p-stepper-number {
+  background: var(--ae-bg-hover);
+  border-color: var(--ae-accent);
+  color: var(--ae-accent);
+}
+
+.p-stepper .p-stepper-header.p-stepper-header-active:hover .p-stepper-number {
+  background: var(--ae-accent-hover, #005a9e);
+  border-color: var(--ae-accent-hover, #005a9e);
+  color: white;
+}
+
+.p-stepper .p-stepper-separator {
+  background: var(--ae-border-color);
+}
+
+.p-stepper .p-stepper-header.p-stepper-header-active ~ .p-stepper-separator {
+  background: var(--ae-border-color);
+}
+
+.p-stepper .p-stepper-header .p-stepper-title {
+  color: var(--ae-text-secondary);
+  font-weight: 500;
+}
+
+.p-stepper .p-stepper-header.p-stepper-header-active .p-stepper-title {
   color: var(--ae-text-primary);
 }
 
