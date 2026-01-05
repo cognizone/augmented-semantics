@@ -365,6 +365,9 @@
   border: 1px solid var(--ae-border-color);
   border-radius: 8px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  /* Anchor from top - prevents layout shift when content height changes */
+  margin-top: 10vh;
+  margin-bottom: auto;
 }
 
 .dark-mode .p-dialog {
