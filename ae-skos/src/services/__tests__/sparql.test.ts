@@ -615,6 +615,130 @@ describe('detectLanguages', () => {
     const query = decodeURIComponent(capturedBody.replace('query=', ''))
     expect(query).toContain('GRAPH ?g')
   })
+
+  it('uses batched detection when skosGraphUris provided', async () => {
+    const mockResults = {
+      head: { vars: ['lang', 'count'] },
+      results: {
+        bindings: [
+          { lang: { type: 'literal', value: 'en' }, count: { type: 'literal', value: '50' } },
+          { lang: { type: 'literal', value: 'fr' }, count: { type: 'literal', value: '30' } },
+        ],
+      },
+    }
+    let capturedBody = ''
+    global.fetch = vi.fn().mockImplementation((_url: string, options: RequestInit) => {
+      capturedBody = options.body as string
+      return Promise.resolve({
+        ok: true,
+        headers: new Headers({ 'content-type': 'application/sparql-results+json' }),
+        json: () => Promise.resolve(mockResults),
+      })
+    })
+
+    const endpoint = createMockEndpoint()
+    const graphUris = ['http://example.org/g1', 'http://example.org/g2']
+    const result = await detectLanguages(endpoint, false, graphUris)
+
+    // Verify the query uses VALUES + GRAPH pattern
+    const query = decodeURIComponent(capturedBody.replace('query=', ''))
+    expect(query).toContain('VALUES ?g')
+    expect(query).toContain('<http://example.org/g1>')
+    expect(query).toContain('<http://example.org/g2>')
+    expect(query).toContain('GRAPH ?g')
+
+    expect(result).toEqual([
+      { lang: 'en', count: 50 },
+      { lang: 'fr', count: 30 },
+    ])
+  })
+
+  it('merges results across batches', async () => {
+    // Simulate two batches returning overlapping languages
+    let callCount = 0
+    global.fetch = vi.fn().mockImplementation(() => {
+      callCount++
+      const mockResults = callCount === 1
+        ? {
+            head: { vars: ['lang', 'count'] },
+            results: {
+              bindings: [
+                { lang: { type: 'literal', value: 'en' }, count: { type: 'literal', value: '100' } },
+                { lang: { type: 'literal', value: 'fr' }, count: { type: 'literal', value: '50' } },
+              ],
+            },
+          }
+        : {
+            head: { vars: ['lang', 'count'] },
+            results: {
+              bindings: [
+                { lang: { type: 'literal', value: 'en' }, count: { type: 'literal', value: '75' } },
+                { lang: { type: 'literal', value: 'de' }, count: { type: 'literal', value: '25' } },
+              ],
+            },
+          }
+      return Promise.resolve({
+        ok: true,
+        headers: new Headers({ 'content-type': 'application/sparql-results+json' }),
+        json: () => Promise.resolve(mockResults),
+      })
+    })
+
+    const endpoint = createMockEndpoint()
+    // 15 graphs with batch size 10 = 2 batches
+    const graphUris = Array.from({ length: 15 }, (_, i) => `http://example.org/g${i + 1}`)
+    const result = await detectLanguages(endpoint, false, graphUris, 10)
+
+    // Counts should be merged: en = 100+75, fr = 50, de = 25
+    expect(result).toEqual([
+      { lang: 'en', count: 175 },
+      { lang: 'fr', count: 50 },
+      { lang: 'de', count: 25 },
+    ])
+    expect(callCount).toBe(2)
+  })
+
+  it('returns empty array when skosGraphUris is empty', async () => {
+    const endpoint = createMockEndpoint()
+    const result = await detectLanguages(endpoint, false, [])
+
+    expect(result).toEqual([])
+  })
+
+  it('handles batch failure gracefully', async () => {
+    let callCount = 0
+    global.fetch = vi.fn().mockImplementation(() => {
+      callCount++
+      if (callCount === 1) {
+        // First batch succeeds
+        return Promise.resolve({
+          ok: true,
+          headers: new Headers({ 'content-type': 'application/sparql-results+json' }),
+          json: () => Promise.resolve({
+            head: { vars: ['lang', 'count'] },
+            results: {
+              bindings: [
+                { lang: { type: 'literal', value: 'en' }, count: { type: 'literal', value: '100' } },
+              ],
+            },
+          }),
+        })
+      }
+      // Second batch fails
+      return Promise.resolve({
+        ok: false,
+        status: 500,
+        statusText: 'Server Error',
+      })
+    })
+
+    const endpoint = createMockEndpoint()
+    const graphUris = Array.from({ length: 15 }, (_, i) => `http://example.org/g${i + 1}`)
+    const result = await detectLanguages(endpoint, false, graphUris, 10)
+
+    // Should still return results from successful batch
+    expect(result).toEqual([{ lang: 'en', count: 100 }])
+  })
 })
 
 describe('withPrefixes', () => {
