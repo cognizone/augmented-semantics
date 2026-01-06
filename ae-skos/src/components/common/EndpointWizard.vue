@@ -61,10 +61,18 @@ const { priorities, endpointLanguages, loadPriorities, getLanguageCount, getLang
 
 // Capabilities state (Step 3)
 const {
+  graphSupportStatus,
+  graphSupportSeverity,
+  graphSupportIcon,
+  graphSupportDescription,
   graphStatus,
   graphSeverity,
   graphIcon,
   graphDescription,
+  skosGraphStatus,
+  skosGraphSeverity,
+  skosGraphIcon,
+  skosGraphDescription,
   duplicateStatus,
   duplicateSeverity,
   duplicateIcon,
@@ -179,6 +187,7 @@ async function runAnalysis() {
         supportsNamedGraphs: analysis.supportsNamedGraphs,
         graphCount: analysis.graphCount,
         graphCountExact: analysis.graphCountExact,
+        skosGraphCount: analysis.skosGraphCount,
         hasDuplicateTriples: analysis.hasDuplicateTriples,
         analyzedAt: analysis.analyzedAt,
         languages: analysis.languages,
@@ -403,7 +412,19 @@ function handleClose() {
         <StepPanel v-slot="{ activateCallback }" value="2">
           <div class="step-content">
             <div class="capabilities-info">
-              <!-- Named Graphs -->
+              <!-- Graph Support (Yes/No) -->
+              <div class="capability-item">
+                <div class="capability-row">
+                  <i :class="graphSupportIcon"></i>
+                  <span class="capability-label">Graph Support</span>
+                  <Tag :severity="graphSupportSeverity">{{ graphSupportStatus }}</Tag>
+                </div>
+                <p v-if="graphSupportDescription" class="capability-description">
+                  {{ graphSupportDescription }}
+                </p>
+              </div>
+
+              <!-- Named Graphs (count) -->
               <div class="capability-item">
                 <div class="capability-row">
                   <i :class="graphIcon"></i>
@@ -412,6 +433,18 @@ function handleClose() {
                 </div>
                 <p v-if="graphDescription" class="capability-description">
                   {{ graphDescription }}
+                </p>
+              </div>
+
+              <!-- SKOS Graphs (count) -->
+              <div class="capability-item">
+                <div class="capability-row">
+                  <i :class="skosGraphIcon"></i>
+                  <span class="capability-label">SKOS Graphs</span>
+                  <Tag :severity="skosGraphSeverity">{{ skosGraphStatus }}</Tag>
+                </div>
+                <p v-if="skosGraphDescription" class="capability-description">
+                  {{ skosGraphDescription }}
                 </p>
               </div>
 

@@ -10,6 +10,7 @@ import {
   executeSparql,
   testConnection,
   detectGraphs,
+  detectSkosGraphs,
   detectDuplicates,
   detectLanguages,
   withPrefixes,
@@ -427,6 +428,70 @@ describe('detectGraphs', () => {
 
     expect(result.supportsNamedGraphs).toBe(null)
     expect(result.graphCount).toBe(null)
+  })
+})
+
+describe('detectSkosGraphs', () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('returns count and URIs of graphs with SKOS data', async () => {
+    const mockResults = createSparqlResults([
+      { g: 'http://example.org/graph1' },
+      { g: 'http://example.org/graph2' },
+      { g: 'http://example.org/graph3' },
+    ])
+    global.fetch = mockFetchSuccess(mockResults)
+
+    const endpoint = createMockEndpoint()
+    const result = await detectSkosGraphs(endpoint)
+
+    expect(result.skosGraphCount).toBe(3)
+    expect(result.skosGraphUris).toEqual([
+      'http://example.org/graph1',
+      'http://example.org/graph2',
+      'http://example.org/graph3',
+    ])
+  })
+
+  it('returns null URIs when over maxGraphs threshold', async () => {
+    // Create 6 graphs but set maxGraphs to 5
+    const mockResults = createSparqlResults([
+      { g: 'http://example.org/graph1' },
+      { g: 'http://example.org/graph2' },
+      { g: 'http://example.org/graph3' },
+      { g: 'http://example.org/graph4' },
+      { g: 'http://example.org/graph5' },
+      { g: 'http://example.org/graph6' },
+    ])
+    global.fetch = mockFetchSuccess(mockResults)
+
+    const endpoint = createMockEndpoint()
+    const result = await detectSkosGraphs(endpoint, { maxGraphs: 5 })
+
+    expect(result.skosGraphCount).toBe(6)
+    expect(result.skosGraphUris).toBe(null)
+  })
+
+  it('returns 0 when no graphs have SKOS data', async () => {
+    global.fetch = mockFetchSuccess(createEmptyResults())
+
+    const endpoint = createMockEndpoint()
+    const result = await detectSkosGraphs(endpoint)
+
+    expect(result.skosGraphCount).toBe(0)
+    expect(result.skosGraphUris).toEqual([])
+  })
+
+  it('returns null on query failure', async () => {
+    global.fetch = mockFetchError(500, 'Server Error')
+
+    const endpoint = createMockEndpoint()
+    const result = await detectSkosGraphs(endpoint)
+
+    expect(result.skosGraphCount).toBe(null)
+    expect(result.skosGraphUris).toBe(null)
   })
 })
 

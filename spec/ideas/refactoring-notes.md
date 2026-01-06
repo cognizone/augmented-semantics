@@ -4,7 +4,7 @@
 
 | Component | Lines | Status |
 |-----------|-------|--------|
-| ConceptTree.vue | 974 | Partially refactored ✓ |
+| ConceptTree.vue | 868 | Partially refactored ✓ |
 | EndpointWizard.vue | 920 | New - monitor |
 | ConceptDetails.vue | 789 | Refactored ✓ |
 | SchemeDetails.vue | 682 | Refactored ✓ |
@@ -18,9 +18,11 @@
 - Created `composables/useConceptBindings.ts` for SPARQL result processing
 - Removed ~185 lines of duplicate result processing code
 - Added comprehensive tests for both utilities and composable
+- Created `composables/useConceptTreeQueries.ts` for SPARQL query building (106 lines removed)
+- Shared label resolution pattern between top concepts and children queries
+- Added 16 tests for query structure validation
 
 **Remaining opportunities:**
-- Extract `useConceptTreeQueries` composable (SPARQL queries)
 - Extract `useConceptTreePagination` composable
 - Create `ConceptTreeNode.vue` child component
 - Create `ConceptTreeGotoUri.vue` child component

@@ -398,6 +398,139 @@ export async function detectDuplicates(
   }
 }
 
+// Configuration constants for language detection optimization
+export const LANGUAGE_DETECTION_BATCH_SIZE = 10
+export const LANGUAGE_DETECTION_MAX_GRAPHS = 500
+
+export interface SkosGraphResult {
+  skosGraphCount: number | null
+  skosGraphUris: string[] | null  // URIs when count <= maxGraphs, null otherwise
+}
+
+export interface DetectSkosGraphsOptions {
+  maxGraphs?: number  // default: LANGUAGE_DETECTION_MAX_GRAPHS
+}
+
+/**
+ * Detect graphs containing SKOS data.
+ * Counts graphs that have either:
+ * - A skos:ConceptScheme, OR
+ * - A skos:Concept with a skos:prefLabel
+ * Graphs with concepts lacking prefLabels are excluded.
+ *
+ * Returns both the count and the list of graph URIs (if count <= maxGraphs).
+ * When there are too many graphs, skosGraphUris is null to avoid memory issues.
+ */
+export async function detectSkosGraphs(
+  endpoint: SPARQLEndpoint,
+  options: DetectSkosGraphsOptions = {}
+): Promise<SkosGraphResult> {
+  const maxGraphs = options.maxGraphs ?? LANGUAGE_DETECTION_MAX_GRAPHS
+
+  // Query with LIMIT to get URIs (limit + 1 to detect if over threshold)
+  const query = `
+    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+    SELECT DISTINCT ?g
+    WHERE {
+      GRAPH ?g {
+        { ?s a skos:ConceptScheme }
+        UNION
+        { ?s a skos:Concept . ?s skos:prefLabel ?label }
+      }
+    }
+    LIMIT ${maxGraphs + 1}
+  `
+
+  try {
+    const results = await executeSparql(endpoint, query, { retries: 1 })
+    const graphUris = results.results.bindings
+      .map(b => b.g?.value)
+      .filter((uri): uri is string => !!uri)
+
+    // If we got more than maxGraphs, return count only (too many to batch)
+    if (graphUris.length > maxGraphs) {
+      return {
+        skosGraphCount: graphUris.length,  // At least this many (could be more)
+        skosGraphUris: null
+      }
+    }
+
+    return {
+      skosGraphCount: graphUris.length,
+      skosGraphUris: graphUris
+    }
+  } catch {
+    return { skosGraphCount: null, skosGraphUris: null }
+  }
+}
+
+/**
+ * Detect languages from specific graphs in batches.
+ * Runs parallel queries per batch, then merges results.
+ */
+async function detectLanguagesForGraphs(
+  endpoint: SPARQLEndpoint,
+  graphUris: string[],
+  batchSize: number = LANGUAGE_DETECTION_BATCH_SIZE
+): Promise<{ lang: string; count: number }[]> {
+  if (graphUris.length === 0) {
+    return []
+  }
+
+  // Split into batches
+  const batches: string[][] = []
+  for (let i = 0; i < graphUris.length; i += batchSize) {
+    batches.push(graphUris.slice(i, i + batchSize))
+  }
+
+  // Run batches sequentially to avoid overwhelming the endpoint
+  const batchResults: { lang: string; count: number }[][] = []
+  for (const batch of batches) {
+    const valuesClause = batch.map(uri => `<${uri}>`).join(' ')
+    const query = `
+    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+    PREFIX skosxl: <http://www.w3.org/2008/05/skos-xl#>
+    SELECT ?lang (COUNT(*) AS ?count)
+    WHERE {
+      VALUES ?g { ${valuesClause} }
+      GRAPH ?g {
+        { ?concept skos:prefLabel ?label }
+        UNION
+        { ?concept skosxl:prefLabel/skosxl:literalForm ?label }
+        FILTER(LANG(?label) != "")
+        BIND(LANG(?label) AS ?lang)
+      }
+    }
+    GROUP BY ?lang
+  `
+    try {
+      const results = await executeSparql(endpoint, query, { retries: 1 })
+      batchResults.push(results.results.bindings.map(b => ({
+        lang: b.lang?.value || '',
+        count: parseInt(b.count?.value || '0', 10)
+      })))
+    } catch (e) {
+      logger.warn('sparql', 'Batch language detection failed', { batch, error: e })
+      batchResults.push([])
+    }
+  }
+
+  // Merge results: aggregate counts per language
+  const langMap = new Map<string, number>()
+  for (const batch of batchResults) {
+    for (const item of batch) {
+      if (item.lang) {
+        langMap.set(item.lang, (langMap.get(item.lang) || 0) + item.count)
+      }
+    }
+  }
+
+  // Convert to array and sort by count descending
+  return Array.from(langMap.entries())
+    .map(([lang, count]) => ({ lang, count }))
+    .sort((a, b) => b.count - a.count)
+}
+
 /**
  * Detect available languages in endpoint (SKOS concepts only).
  * Note: Collections and ConceptSchemes are ignored, but concepts
@@ -405,11 +538,21 @@ export async function detectDuplicates(
  *
  * @param useGraphScope - If true, wraps query in GRAPH pattern to ensure
  *   concept and labels are in the same graph (use when duplicates exist)
+ * @param skosGraphUris - If provided, use batched detection on these specific graphs
+ * @param batchSize - Number of graphs per batch (default: 10)
  */
 export async function detectLanguages(
   endpoint: SPARQLEndpoint,
-  useGraphScope: boolean = false
+  useGraphScope: boolean = false,
+  skosGraphUris?: string[] | null,
+  batchSize: number = LANGUAGE_DETECTION_BATCH_SIZE
 ): Promise<{ lang: string; count: number }[]> {
+  // Use batched detection if we have specific graph URIs
+  if (skosGraphUris && skosGraphUris.length > 0) {
+    return detectLanguagesForGraphs(endpoint, skosGraphUris, batchSize)
+  }
+
+  // Fall back to full query (original behavior)
   // Core pattern for finding concept labels
   const corePattern = `
       ?concept a skos:Concept .
@@ -461,6 +604,7 @@ export async function analyzeEndpoint(
   supportsNamedGraphs: boolean | null
   graphCount: number | null
   graphCountExact: boolean
+  skosGraphCount: number | null
   hasDuplicateTriples: boolean | null
   languages: { lang: string; count: number }[]
   analyzedAt: string
@@ -468,14 +612,21 @@ export async function analyzeEndpoint(
   // Step 1: Detect named graphs
   const graphResult = await detectGraphs(endpoint)
 
-  // Step 2: Check for duplicates (only if multiple graphs exist)
+  // Step 2: Detect SKOS graphs (only if graphs supported)
+  let skosGraphCount: number | null = null
+  if (graphResult.supportsNamedGraphs === true) {
+    const skosResult = await detectSkosGraphs(endpoint)
+    skosGraphCount = skosResult.skosGraphCount
+  }
+
+  // Step 3: Check for duplicates (only if multiple graphs exist)
   let hasDuplicateTriples: boolean | null = null
   if (graphResult.supportsNamedGraphs === true && graphResult.graphCount && graphResult.graphCount > 1) {
     const duplicateResult = await detectDuplicates(endpoint)
     hasDuplicateTriples = duplicateResult.hasDuplicates
   }
 
-  // Step 3: Detect languages
+  // Step 4: Detect languages
   // Use GRAPH scope if duplicates exist to ensure concept+labels are in same graph
   const useGraphScope = hasDuplicateTriples === true
   const languages = await detectLanguages(endpoint, useGraphScope)
@@ -484,6 +635,7 @@ export async function analyzeEndpoint(
     supportsNamedGraphs: graphResult.supportsNamedGraphs,
     graphCount: graphResult.graphCount,
     graphCountExact: graphResult.graphCountExact,
+    skosGraphCount,
     hasDuplicateTriples,
     languages,
     analyzedAt: new Date().toISOString(),

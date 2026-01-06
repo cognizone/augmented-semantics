@@ -13,6 +13,7 @@ import { ref, type Ref } from 'vue'
 import {
   analyzeEndpoint as analyzeEndpointService,
   detectGraphs,
+  detectSkosGraphs,
   detectDuplicates,
   detectLanguages,
 } from '../services/sparql'
@@ -48,6 +49,7 @@ export function useEndpointAnalysis() {
         supportsNamedGraphs: analysis.supportsNamedGraphs,
         graphCount: analysis.graphCount,
         graphCountExact: analysis.graphCountExact,
+        skosGraphCount: analysis.skosGraphCount,
         hasDuplicateTriples: analysis.hasDuplicateTriples,
         analyzedAt: analysis.analyzedAt,
       }
@@ -69,48 +71,70 @@ export function useEndpointAnalysis() {
 
     try {
       // Step 1: Detect graphs
-      logStep('(1/3) Detecting named graphs...', 'pending')
+      logStep('(1/4) Detecting named graphs...', 'pending')
       const graphResult = await detectGraphs(endpoint)
 
       if (graphResult.supportsNamedGraphs === null) {
-        updateLastLog(`(1/3) Graphs: not supported`, 'warning')
+        updateLastLog(`(1/4) Graphs: not supported`, 'warning')
       } else if (graphResult.supportsNamedGraphs === false) {
-        updateLastLog(`(1/3) Graphs: none found`, 'info')
+        updateLastLog(`(1/4) Graphs: none found`, 'info')
       } else {
         const countStr = graphResult.graphCountExact
           ? `${graphResult.graphCount} graphs`
           : `${graphResult.graphCount}+ graphs`
-        updateLastLog(`(1/3) Graphs: ${countStr} (${formatQueryMethod(graphResult.queryMethod)})`, 'success')
+        updateLastLog(`(1/4) Graphs: ${countStr} (${formatQueryMethod(graphResult.queryMethod)})`, 'success')
       }
 
-      // Step 2: Detect duplicates (only if multiple graphs exist)
+      // Step 2: Detect SKOS graphs (only if graphs supported)
+      let skosGraphCount: number | null = null
+      let skosGraphUris: string[] | null = null
+      if (graphResult.supportsNamedGraphs === true) {
+        logStep('(2/4) Detecting SKOS graphs...', 'pending')
+        const skosResult = await detectSkosGraphs(endpoint)
+        skosGraphCount = skosResult.skosGraphCount
+        skosGraphUris = skosResult.skosGraphUris
+        if (skosGraphCount === null) {
+          updateLastLog(`(2/4) SKOS graphs: detection failed`, 'warning')
+        } else if (skosGraphCount === 0) {
+          updateLastLog(`(2/4) SKOS graphs: none found`, 'warning')
+        } else {
+          const batchInfo = skosGraphUris ? ' (will batch)' : ' (too many to batch)'
+          updateLastLog(`(2/4) SKOS graphs: ${skosGraphCount}${batchInfo}`, 'success')
+        }
+      } else {
+        logStep('(2/4) SKOS graphs: not applicable (no graph support)', 'info')
+      }
+
+      // Step 3: Detect duplicates (only if multiple graphs exist)
       let hasDuplicateTriples: boolean | null = null
       if (graphResult.supportsNamedGraphs === true && graphResult.graphCount && graphResult.graphCount > 1) {
-        logStep('(2/3) Checking for duplicates...', 'pending')
+        logStep('(3/4) Checking for duplicates...', 'pending')
         const duplicateResult = await detectDuplicates(endpoint)
         hasDuplicateTriples = duplicateResult.hasDuplicates
         if (hasDuplicateTriples) {
-          updateLastLog(`(2/3) Duplicates: found across graphs`, 'warning')
+          updateLastLog(`(3/4) Duplicates: found across graphs`, 'warning')
         } else {
-          updateLastLog(`(2/3) Duplicates: none`, 'success')
+          updateLastLog(`(3/4) Duplicates: none`, 'success')
         }
       } else if (graphResult.supportsNamedGraphs === null) {
         // Graphs not supported = no duplicates possible
         hasDuplicateTriples = false
-        logStep('(2/3) Duplicates: not applicable (no graph support)', 'info')
+        logStep('(3/4) Duplicates: not applicable (no graph support)', 'info')
       } else {
         // No graphs or single graph = no duplicates possible
         hasDuplicateTriples = false
-        logStep('(2/3) Duplicates: none (single graph)', 'info')
+        logStep('(3/4) Duplicates: none (single graph)', 'info')
       }
 
-      // Step 3: Detect languages
-      // Use GRAPH scope if duplicates exist to ensure concept+labels are in same graph
+      // Step 4: Detect languages
+      // Use batched detection if we have SKOS graph URIs, otherwise fall back to full query
       const useGraphScope = hasDuplicateTriples === true
-      const queryMode = useGraphScope ? 'graph-scoped' : 'default'
-      logStep(`(3/3) Detecting languages (${queryMode})...`, 'pending')
-      const languages = await detectLanguages(endpoint, useGraphScope)
-      updateLastLog(`(3/3) Languages: found ${languages.length} (${queryMode})`, 'success')
+      const queryMode = skosGraphUris
+        ? `batched, ${skosGraphUris.length} graphs`
+        : useGraphScope ? 'graph-scoped' : 'default'
+      logStep(`(4/4) Detecting languages (${queryMode})...`, 'pending')
+      const languages = await detectLanguages(endpoint, useGraphScope, skosGraphUris)
+      updateLastLog(`(4/4) Languages: found ${languages.length} (${queryMode})`, 'success')
 
       // Calculate total duration
       analysisDuration.value = Math.round((performance.now() - startTime) / 1000)
@@ -119,6 +143,7 @@ export function useEndpointAnalysis() {
         supportsNamedGraphs: graphResult.supportsNamedGraphs,
         graphCount: graphResult.graphCount,
         graphCountExact: graphResult.graphCountExact,
+        skosGraphCount,
         hasDuplicateTriples,
         languages,
         analyzedAt: new Date().toISOString(),

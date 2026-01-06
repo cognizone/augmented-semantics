@@ -39,6 +39,9 @@ export interface EndpointAnalysis {
   graphCount: number | null            // null = count failed, number = exact or estimated
   graphCountExact: boolean             // true = exact count, false = estimated (10000+)
 
+  // SKOS graphs
+  skosGraphCount: number | null        // null = detection failed, number = graphs with Concept or ConceptScheme
+
   // Duplicates
   hasDuplicateTriples: boolean | null  // null = detection not supported
 

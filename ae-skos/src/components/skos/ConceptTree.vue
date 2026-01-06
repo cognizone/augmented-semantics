@@ -14,7 +14,7 @@
 import { ref, watch, computed, nextTick } from 'vue'
 import { useConceptStore, useEndpointStore, useSchemeStore, useLanguageStore } from '../../stores'
 import { executeSparql, withPrefixes, logger } from '../../services'
-import { useDelayedLoading, useLabelResolver, useElapsedTime, useDeprecation, useConceptBindings } from '../../composables'
+import { useDelayedLoading, useLabelResolver, useElapsedTime, useDeprecation, useConceptBindings, useConceptTreeQueries } from '../../composables'
 import type { ConceptNode } from '../../types'
 import Tree from 'primevue/tree'
 import type { TreeNode } from 'primevue/treenode'
@@ -29,8 +29,9 @@ const endpointStore = useEndpointStore()
 const schemeStore = useSchemeStore()
 const languageStore = useLanguageStore()
 const { shouldShowLangTag } = useLabelResolver()
-const { getDeprecationSparqlClauses, getDeprecationSelectVars, showIndicator: showDeprecationIndicator } = useDeprecation()
+const { showIndicator: showDeprecationIndicator } = useDeprecation()
 const { processBindings } = useConceptBindings()
+const { buildTopConceptsQuery, buildChildrenQuery } = useConceptTreeQueries()
 
 // Delayed loading - show spinner only after 300ms to prevent flicker
 const showTreeLoading = useDelayedLoading(computed(() => conceptStore.loadingTree))
@@ -188,67 +189,7 @@ async function loadTopConcepts(offset = 0) {
   }
   error.value = null
 
-  // Query gets all label types (including SKOS-XL) and notation - we pick best one in code
-  // Top concepts are found via: topConceptOf, hasTopConcept (inverse), or no broader (fallback)
-  // Use subquery to paginate by DISTINCT concepts, not by label rows
-  const deprecationSelectVars = getDeprecationSelectVars()
-  const deprecationClauses = getDeprecationSparqlClauses('?concept')
-
-  const query = withPrefixes(`
-    SELECT ?concept ?label ?labelLang ?labelType ?notation ?narrowerCount ${deprecationSelectVars}
-    WHERE {
-      {
-        # Subquery to get paginated distinct concepts with narrower count
-        SELECT DISTINCT ?concept (COUNT(DISTINCT ?narrower) AS ?narrowerCount) ${deprecationSelectVars}
-        WHERE {
-          {
-            # Explicit top concept via topConceptOf or hasTopConcept
-            ?concept a skos:Concept .
-            ?concept skos:inScheme <${scheme.uri}> .
-            { ?concept skos:topConceptOf <${scheme.uri}> }
-            UNION
-            { <${scheme.uri}> skos:hasTopConcept ?concept }
-          }
-          UNION
-          {
-            # Fallback: concepts with no broader relationship (neither direction)
-            ?concept a skos:Concept .
-            ?concept skos:inScheme <${scheme.uri}> .
-            FILTER NOT EXISTS { ?concept skos:broader ?broader }
-            FILTER NOT EXISTS { ?parent skos:narrower ?concept }
-          }
-          OPTIONAL {
-            { ?narrower skos:broader ?concept }
-            UNION
-            { ?concept skos:narrower ?narrower }
-          }
-          ${deprecationClauses}
-        }
-        GROUP BY ?concept ${deprecationSelectVars}
-        ORDER BY ?concept
-        LIMIT ${PAGE_SIZE + 1}
-        OFFSET ${offset}
-      }
-      # Get labels and notations for the paginated concepts
-      OPTIONAL { ?concept skos:notation ?notation }
-      OPTIONAL {
-        {
-          ?concept skos:prefLabel ?label .
-          BIND("prefLabel" AS ?labelType)
-        } UNION {
-          ?concept skosxl:prefLabel/skosxl:literalForm ?label .
-          BIND("xlPrefLabel" AS ?labelType)
-        } UNION {
-          ?concept dct:title ?label .
-          BIND("title" AS ?labelType)
-        } UNION {
-          ?concept rdfs:label ?label .
-          BIND("rdfsLabel" AS ?labelType)
-        }
-        BIND(LANG(?label) AS ?labelLang)
-      }
-    }
-  `)
+  const query = buildTopConceptsQuery(scheme.uri, PAGE_SIZE, offset)
 
   logger.debug('ConceptTree', 'Top concepts query', { query })
 
@@ -316,53 +257,7 @@ async function loadChildren(uri: string, offset = 0) {
 
   logger.debug('ConceptTree', 'Loading children', { parent: uri, offset, pageSize: PAGE_SIZE })
 
-  // Use subquery to paginate by DISTINCT concepts, not by label rows
-  const deprecationSelectVarsChild = getDeprecationSelectVars()
-  const deprecationClausesChild = getDeprecationSparqlClauses('?concept')
-
-  const query = withPrefixes(`
-    SELECT ?concept ?label ?labelLang ?labelType ?notation ?narrowerCount ${deprecationSelectVarsChild}
-    WHERE {
-      {
-        # Subquery to get paginated distinct children with narrower count
-        SELECT DISTINCT ?concept (COUNT(DISTINCT ?narrower) AS ?narrowerCount) ${deprecationSelectVarsChild}
-        WHERE {
-          # Find children via broader or narrower (inverse)
-          { ?concept skos:broader <${uri}> }
-          UNION
-          { <${uri}> skos:narrower ?concept }
-          OPTIONAL {
-            { ?narrower skos:broader ?concept }
-            UNION
-            { ?concept skos:narrower ?narrower }
-          }
-          ${deprecationClausesChild}
-        }
-        GROUP BY ?concept ${deprecationSelectVarsChild}
-        ORDER BY ?concept
-        LIMIT ${PAGE_SIZE + 1}
-        OFFSET ${offset}
-      }
-      # Get labels and notations for the paginated concepts
-      OPTIONAL { ?concept skos:notation ?notation }
-      OPTIONAL {
-        {
-          ?concept skos:prefLabel ?label .
-          BIND("prefLabel" AS ?labelType)
-        } UNION {
-          ?concept skosxl:prefLabel/skosxl:literalForm ?label .
-          BIND("xlPrefLabel" AS ?labelType)
-        } UNION {
-          ?concept dct:title ?label .
-          BIND("title" AS ?labelType)
-        } UNION {
-          ?concept rdfs:label ?label .
-          BIND("rdfsLabel" AS ?labelType)
-        }
-        BIND(LANG(?label) AS ?labelLang)
-      }
-    }
-  `)
+  const query = buildChildrenQuery(uri, PAGE_SIZE, offset)
 
   try {
     const results = await executeSparql(endpoint, query, { retries: 1 })
