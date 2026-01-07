@@ -16,6 +16,7 @@ import type { AppError } from '../types'
 
 export type ViewMode = 'tree' | 'flat'
 export type MobileTab = 'tree' | 'details' | 'search'
+export type SidebarTab = 'browse' | 'search' | 'recent'
 
 export const useUIStore = defineStore('ui', () => {
   // State - Loading
@@ -31,6 +32,7 @@ export const useUIStore = defineStore('ui', () => {
   const sidebarOpen = ref(true)
   const viewMode = ref<ViewMode>('tree')
   const mobileTab = ref<MobileTab>('tree')
+  const sidebarTab = ref<SidebarTab>('browse')
 
   // State - Responsive
   const isMobile = ref(false)
@@ -108,6 +110,10 @@ export const useUIStore = defineStore('ui', () => {
     mobileTab.value = tab
   }
 
+  function setSidebarTab(tab: SidebarTab) {
+    sidebarTab.value = tab
+  }
+
   // Actions - Responsive
   function updateBreakpoints() {
     const width = window.innerWidth
@@ -169,6 +175,7 @@ export const useUIStore = defineStore('ui', () => {
     sidebarOpen,
     viewMode,
     mobileTab,
+    sidebarTab,
     isMobile,
     isTablet,
     // Getters
@@ -190,6 +197,7 @@ export const useUIStore = defineStore('ui', () => {
     setSidebarOpen,
     setViewMode,
     setMobileTab,
+    setSidebarTab,
     updateBreakpoints,
     initResponsive,
     destroyResponsive,

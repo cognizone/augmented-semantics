@@ -8,7 +8,7 @@
  * @see /spec/ae-skos/sko03-ConceptTree.md
  */
 import { ref, watch, computed } from 'vue'
-import { useConceptStore, useEndpointStore, useLanguageStore, useSchemeStore } from '../../stores'
+import { useConceptStore, useEndpointStore, useLanguageStore, useSchemeStore, useUIStore } from '../../stores'
 import { executeSparql, withPrefixes, logger } from '../../services'
 import { useLabelResolver } from '../../composables'
 import type { ConceptRef, ConceptScheme } from '../../types'
@@ -23,6 +23,7 @@ const conceptStore = useConceptStore()
 const endpointStore = useEndpointStore()
 const languageStore = useLanguageStore()
 const schemeStore = useSchemeStore()
+const uiStore = useUIStore()
 const { shouldShowLangTag } = useLabelResolver()
 
 // Local state
@@ -52,6 +53,8 @@ const selectedScheme = computed({
     if (uri) {
       conceptStore.selectConcept(null)
       schemeStore.viewScheme(uri)
+      // Switch to browse tab
+      uiStore.setSidebarTab('browse')
       // Add to history
       const scheme = schemeStore.schemes.find(s => s.uri === uri)
       if (scheme) {

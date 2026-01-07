@@ -7,7 +7,7 @@
  *
  * @see /spec/common/com04-URLRouting.md
  */
-import { computed, watch, onMounted, ref, nextTick } from 'vue'
+import { computed, watch, onMounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUIStore, useConceptStore, useSchemeStore, useLanguageStore, useEndpointStore } from '../stores'
 import { URL_PARAMS } from '../router'
@@ -32,9 +32,6 @@ const schemeStore = useSchemeStore()
 const languageStore = useLanguageStore()
 const endpointStore = useEndpointStore()
 
-// Active tab state
-const activeTab = ref('browse')
-
 // Handle concept selection from any component
 function selectConcept(uri: string) {
   if (uri) {
@@ -42,7 +39,7 @@ function selectConcept(uri: string) {
     schemeStore.viewScheme(null)
     conceptStore.selectConcept(uri)
     // Switch to browse tab when selecting a concept
-    activeTab.value = 'browse'
+    uiStore.setSidebarTab('browse')
   } else {
     conceptStore.selectConcept(null)
   }
@@ -72,7 +69,7 @@ async function selectFromHistory(entry: { uri: string; endpointUrl?: string; sch
     schemeStore.selectScheme(entry.uri)
     conceptStore.selectConcept(null)
     schemeStore.viewScheme(entry.uri)
-    activeTab.value = 'browse'
+    uiStore.setSidebarTab('browse')
     return
   }
 
@@ -243,7 +240,7 @@ onMounted(() => {
         :minSize="20"
         class="left-panel"
       >
-        <Tabs v-model:value="activeTab" class="sidebar-tabs">
+        <Tabs v-model:value="uiStore.sidebarTab" class="sidebar-tabs">
           <TabList>
             <Tab value="browse">Browse</Tab>
             <Tab value="search">Search</Tab>
