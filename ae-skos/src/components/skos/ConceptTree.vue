@@ -121,6 +121,7 @@ const selectedKey = computed<TreeSelectionKeys | undefined>({
         // Check if this is the scheme node
         const scheme = schemeStore.selected
         if (scheme && uri === scheme.uri) {
+          conceptStore.selectConcept(null) // Clear concept selection when viewing scheme
           schemeStore.viewScheme(uri)
         } else {
           selectConcept(uri)
@@ -354,7 +355,8 @@ function goToUri() {
     if (isScheme) {
       // Select the scheme in the dropdown (triggers tree loading via watcher)
       schemeStore.selectScheme(uri)
-      // Show scheme details on the right
+      // Clear concept selection and show scheme details on the right
+      conceptStore.selectConcept(null)
       schemeStore.viewScheme(uri)
     } else {
       // Treat as a concept
