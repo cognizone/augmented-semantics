@@ -313,6 +313,86 @@ describe('ConceptTree', () => {
     })
   })
 
+  describe('goto URI with scheme URIs', () => {
+    beforeEach(() => {
+      const schemeStore = useSchemeStore()
+      schemeStore.schemes = [
+        { uri: 'http://example.org/scheme/1', label: 'Test Scheme' },
+        { uri: 'http://example.org/scheme/2', label: 'Another Scheme' },
+      ]
+      schemeStore.selectScheme('http://example.org/scheme/1')
+    })
+
+    it('handles scheme URI by selecting scheme and showing details', async () => {
+      const schemeStore = useSchemeStore()
+      const conceptStore = useConceptStore()
+
+      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
+
+      const wrapper = mountConceptTree()
+      await flushPromises()
+      await nextTick()
+
+      // Find the input and simulate entering a scheme URI
+      const input = wrapper.find('.ae-input')
+      await input.setValue('http://example.org/scheme/2')
+
+      // Trigger the go button
+      const goBtn = wrapper.find('.goto-btn')
+      await goBtn.trigger('click')
+      await flushPromises()
+      await nextTick()
+
+      // Scheme should be selected
+      expect(schemeStore.selectedUri).toBe('http://example.org/scheme/2')
+      // viewingSchemeUri should be set
+      expect(schemeStore.viewingSchemeUri).toBe('http://example.org/scheme/2')
+      // Concept selection should be cleared
+      expect(conceptStore.selectedUri).toBeNull()
+    })
+
+    it('handles concept URI normally when not a known scheme', async () => {
+      const conceptStore = useConceptStore()
+
+      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
+
+      const wrapper = mountConceptTree()
+      await flushPromises()
+      await nextTick()
+
+      // Enter a concept URI (not in schemes list)
+      const input = wrapper.find('.ae-input')
+      await input.setValue('http://example.org/concept/123')
+
+      const goBtn = wrapper.find('.goto-btn')
+      await goBtn.trigger('click')
+      await flushPromises()
+      await nextTick()
+
+      // Concept should be selected
+      expect(conceptStore.selectedUri).toBe('http://example.org/concept/123')
+    })
+
+    it('clears input after successful navigation', async () => {
+      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
+
+      const wrapper = mountConceptTree()
+      await flushPromises()
+      await nextTick()
+
+      const input = wrapper.find('.ae-input')
+      await input.setValue('http://example.org/scheme/2')
+
+      const goBtn = wrapper.find('.goto-btn')
+      await goBtn.trigger('click')
+      await flushPromises()
+      await nextTick()
+
+      // Input should be cleared
+      expect((input.element as HTMLInputElement).value).toBe('')
+    })
+  })
+
   describe('concept reveal (history/search navigation)', () => {
     beforeEach(() => {
       const schemeStore = useSchemeStore()

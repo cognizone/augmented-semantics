@@ -77,34 +77,53 @@ WHERE { <CONCEPT_URI> ?p ?o }
 
 ### Recently Viewed
 
-Track and display recently viewed concepts across all endpoints/schemes.
+Track and display recently viewed concepts and schemes across all endpoints.
 
 **Storage:**
 ```
 Key: ae-skos-history
 Value: [
-  { uri: "...", label: "...", accessedAt: "...", endpointUrl: "...", schemeUri: "..." },
+  { uri: "...", label: "...", accessedAt: "...", endpointUrl: "...", schemeUri: "...", type: "...", hasNarrower: ... },
   ...
 ]
 ```
 
 **Features:**
-- Show last 10 concepts (store up to 50)
+- Show last 50 items (concepts and schemes)
 - Click to navigate (auto-switches endpoint/scheme if different)
-- Clear history button
+- Clear history button with confirmation dialog
 - Persist across sessions
+- Context display (endpoint name, scheme name)
+- Visual distinction between concepts and schemes
+
+**Context Display:**
+Each history item shows contextual information below the label:
+- Endpoint name (resolved from stored URL)
+- Scheme name (resolved from stored URI)
+- Format: `Endpoint Name · Scheme Name`
+
+**Clear History:**
+Clicking the delete button opens a confirmation dialog before clearing all history.
+Uses `HistoryDeleteDialog` component with softer styling (info icon instead of warning).
 
 **UI:**
 ```
 ┌─────────────────────────────────────────┐
-│ Recently Viewed                   [🗑]  │
+│ Recent                            [🗑]  │
 ├─────────────────────────────────────────┤
-│ 🕐 Wheat                    2 min ago   │
-│ 🕐 Cereals                  5 min ago   │
-│ 🕐 Agriculture             10 min ago   │
-│ 🕐 Food production         1 hour ago   │
+│ 📁 Test Scheme              2 min ago   │
+│    Test Endpoint                        │
+│ 🏷 Wheat                    5 min ago   │
+│    Test Endpoint · Agriculture          │
+│ ⚫ Cereals                 10 min ago   │
+│    Test Endpoint · Agriculture          │
 └─────────────────────────────────────────┘
 ```
+
+**Icons:**
+- 📁 Folder: Scheme entries (`type: 'scheme'`)
+- 🏷 Label: Concepts with narrower (`hasNarrower: true`)
+- ⚫ Circle: Leaf concepts (no narrower)
 
 ### Export Concept
 
@@ -137,6 +156,8 @@ interface HistoryEntry {
   accessedAt: string;    // ISO timestamp
   endpointUrl?: string;  // Endpoint URL for cross-endpoint navigation
   schemeUri?: string;    // Scheme URI for cross-scheme navigation
+  type?: 'concept' | 'scheme';  // Entry type for visual distinction
+  hasNarrower?: boolean; // Has children (for icon selection)
 }
 
 interface UtilityState {

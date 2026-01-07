@@ -405,4 +405,26 @@ describe('concept store', () => {
       expect(store.history.length).toBeGreaterThan(0)
     })
   })
+
+  describe('scroll to top', () => {
+    it('starts with shouldScrollToTop as false', () => {
+      const store = useConceptStore()
+      expect(store.shouldScrollToTop).toBe(false)
+    })
+
+    it('triggers scroll to top', () => {
+      const store = useConceptStore()
+
+      store.scrollTreeToTop()
+      expect(store.shouldScrollToTop).toBe(true)
+    })
+
+    it('resets scroll to top flag', () => {
+      const store = useConceptStore()
+
+      store.scrollTreeToTop()
+      store.resetScrollToTop()
+      expect(store.shouldScrollToTop).toBe(false)
+    })
+  })
 })

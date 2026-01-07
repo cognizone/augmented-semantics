@@ -304,9 +304,29 @@ const schemeLabel = selectSchemeLabel({
 })
 ```
 
-### Direct URI Lookup
+### Direct URI Lookup (Go to URI)
 
-Input field to navigate directly to a concept by URI.
+Input field to navigate directly to a concept or scheme by URI.
+
+**Behavior:**
+The input accepts both concept and scheme URIs:
+
+| URI Type | Action |
+|----------|--------|
+| Scheme URI | Selects scheme in dropdown, loads tree, shows scheme details |
+| Concept URI | Selects concept, loads details, reveals in tree |
+
+**Detection:**
+The component checks if the entered URI matches a known scheme URI from `schemeStore.schemes`. If matched, it's treated as a scheme; otherwise as a concept.
+
+**URI Sanitization:**
+Input is sanitized before processing:
+- Trim whitespace
+- Remove accidental `<` and `>` characters (from Turtle/SPARQL copy-paste)
+
+```typescript
+const uri = gotoUri.value.trim().replace(/^<|>$/g, '')
+```
 
 ### View Modes
 
@@ -342,6 +362,40 @@ Toggle between:
 ```
 
 Each segment is clickable for navigation.
+
+### Home Button
+
+The breadcrumb includes a home button (🏠) that navigates to the scheme root:
+
+**Behavior:**
+1. Clears concept selection (`conceptStore.selectConcept(null)`)
+2. Shows scheme details in the right panel (`schemeStore.viewScheme(uri)`)
+3. Scrolls tree to top via store trigger (`conceptStore.scrollTreeToTop()`)
+4. Adds scheme to history with `type: 'scheme'`
+
+**Store Mechanism:**
+The scroll-to-top uses a reactive flag pattern since the breadcrumb component doesn't have direct DOM access to the tree:
+
+```typescript
+// concept store
+const shouldScrollToTop = ref(false)
+
+function scrollTreeToTop() {
+  shouldScrollToTop.value = true
+}
+
+function resetScrollToTop() {
+  shouldScrollToTop.value = false
+}
+
+// ConceptTree watches and scrolls
+watch(() => conceptStore.shouldScrollToTop, (should) => {
+  if (should) {
+    document.querySelector('.tree-wrapper')?.scrollTo({ top: 0, behavior: 'smooth' })
+    conceptStore.resetScrollToTop()
+  }
+})
+```
 
 ## Deprecation Display
 
