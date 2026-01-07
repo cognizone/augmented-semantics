@@ -11,6 +11,7 @@
 import { ref, computed, watch } from 'vue'
 import { useSchemeStore, useEndpointStore, useLanguageStore } from '../../stores'
 import { executeSparql, withPrefixes, logger, isValidURI } from '../../services'
+import { formatTemporalValue } from '../../utils/displayUtils'
 import { useLabelResolver } from '../../composables'
 import type { ConceptScheme } from '../../types'
 import Select from 'primevue/select'
@@ -245,15 +246,6 @@ function openDetails() {
   }
 }
 
-function formatDate(dateStr?: string): string {
-  if (!dateStr) return '-'
-  try {
-    return new Date(dateStr).toLocaleDateString()
-  } catch {
-    return dateStr
-  }
-}
-
 // Watch for endpoint changes
 watch(
   () => endpointStore.current?.id,
@@ -370,11 +362,11 @@ watch(
         <div class="detail-row-inline">
           <div v-if="selectedSchemeDetails.created" class="detail-item">
             <label>Created</label>
-            <span>{{ formatDate(selectedSchemeDetails.created) }}</span>
+            <span>{{ formatTemporalValue(selectedSchemeDetails.created, 'xsd:date') }}</span>
           </div>
           <div v-if="selectedSchemeDetails.modified" class="detail-item">
             <label>Modified</label>
-            <span>{{ formatDate(selectedSchemeDetails.modified) }}</span>
+            <span>{{ formatTemporalValue(selectedSchemeDetails.modified, 'xsd:date') }}</span>
           </div>
         </div>
       </div>

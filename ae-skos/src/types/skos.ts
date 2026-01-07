@@ -45,6 +45,7 @@ export interface ConceptDetails {
   historyNotes: LabelValue[]
   changeNotes: LabelValue[]
   editorialNotes: LabelValue[]
+  notes: LabelValue[]
   examples: LabelValue[]
   notations: NotationValue[]
   broader: ConceptRef[]
@@ -68,11 +69,13 @@ export interface SchemeDetails {
   uri: string
   prefLabels: LabelValue[]
   altLabels: LabelValue[]
+  hiddenLabels: LabelValue[]
   definitions: LabelValue[]
   scopeNotes: LabelValue[]
   historyNotes: LabelValue[]
   changeNotes: LabelValue[]
   editorialNotes: LabelValue[]
+  notes: LabelValue[]
   examples: LabelValue[]
   title: LabelValue[]
   description: LabelValue[]
@@ -84,6 +87,8 @@ export interface SchemeDetails {
   license: string[]
   // SKOS-XL extended labels
   prefLabelsXL: XLLabel[]
+  altLabelsXL: XLLabel[]
+  hiddenLabelsXL: XLLabel[]
   // Other properties (non-SKOS predicates)
   otherProperties: OtherProperty[]
   topConceptCount?: number

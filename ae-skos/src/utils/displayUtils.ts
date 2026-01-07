@@ -48,7 +48,42 @@ export function getPredicateName(
 }
 
 /**
- * Format a property value with special handling for xsd:boolean
+ * Format temporal values (date, dateTime, time) based on datatype
+ * @param value - The temporal value string to format
+ * @param datatype - The XSD datatype (xsd:date, xsd:dateTime, xsd:time, or full URI)
+ * @returns The formatted temporal string
+ */
+export function formatTemporalValue(value: string, datatype?: string): string {
+  if (!value) return ''
+
+  // Normalize datatype to short form (date, dateTime, time)
+  const dtype = datatype?.includes('#')
+    ? datatype.split('#').pop()
+    : datatype?.replace('xsd:', '')
+
+  try {
+    if (dtype === 'time') {
+      // xsd:time - strip milliseconds if present
+      return value.split('.')[0]
+    }
+
+    const date = new Date(value)
+    if (isNaN(date.getTime())) return value
+
+    if (dtype === 'dateTime') {
+      // xsd:dateTime - return full ISO without milliseconds
+      return date.toISOString().replace(/\.\d{3}Z$/, 'Z')
+    }
+
+    // xsd:date or default - return date only
+    return date.toISOString().split('T')[0]
+  } catch {
+    return value
+  }
+}
+
+/**
+ * Format a property value with special handling for xsd:boolean and temporal types
  * @param value - The value to format
  * @param datatype - Optional datatype URI
  * @returns The formatted value
@@ -63,6 +98,14 @@ export function formatPropertyValue(value: string, datatype?: string): string {
       return '1 (true)'
     }
   }
+
+  // Handle xsd:date, xsd:dateTime, xsd:time - format appropriately, datatype shown separately
+  if (datatype === 'xsd:date' || datatype?.endsWith('#date') ||
+      datatype === 'xsd:dateTime' || datatype?.endsWith('#dateTime') ||
+      datatype === 'xsd:time' || datatype?.endsWith('#time')) {
+    return formatTemporalValue(value, datatype)
+  }
+
   return value
 }
 

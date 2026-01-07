@@ -102,6 +102,7 @@ const sortedScopeNotes = getSorted('scopeNotes')
 const sortedHistoryNotes = getSorted('historyNotes')
 const sortedChangeNotes = getSorted('changeNotes')
 const sortedEditorialNotes = getSorted('editorialNotes')
+const sortedNotes = getSorted('notes')
 const sortedExamples = getSorted('examples')
 
 // Documentation config for DRY template rendering
@@ -111,6 +112,7 @@ const documentationConfig = computed(() => [
   { label: 'History Note', items: sortedHistoryNotes.value },
   { label: 'Change Note', items: sortedChangeNotes.value },
   { label: 'Editorial Note', items: sortedEditorialNotes.value },
+  { label: 'Note', items: sortedNotes.value },
   { label: 'Example', items: sortedExamples.value, class: 'example' },
 ].filter(d => d.items.length > 0))
 
@@ -171,8 +173,8 @@ watch(
     <div v-else-if="details" class="details-content">
       <!-- Header -->
       <div class="details-header">
-        <div class="header-icon-wrapper" :class="{ 'wrapper-leaf': !details.narrower.length }">
-          <span v-if="details.narrower.length" class="material-symbols-outlined header-icon icon-label">label</span>
+        <div class="header-icon-wrapper" :class="{ 'wrapper-leaf': !details.narrower?.length }">
+          <span v-if="details.narrower?.length" class="material-symbols-outlined header-icon icon-label">label</span>
           <span v-else class="material-symbols-outlined header-icon icon-leaf">circle</span>
         </div>
         <div class="header-content">
@@ -282,7 +284,7 @@ watch(
       </section>
 
       <!-- Documentation Section -->
-      <section v-if="details.definitions.length || details.scopeNotes.length || details.historyNotes.length || details.changeNotes.length || details.editorialNotes.length || details.examples.length" class="details-section">
+      <section v-if="details.definitions.length || details.scopeNotes.length || details.historyNotes.length || details.changeNotes.length || details.editorialNotes.length || details.notes.length || details.examples.length" class="details-section">
         <h3 class="section-title">
           <span class="material-symbols-outlined section-icon">description</span>
           Documentation
@@ -437,7 +439,7 @@ watch(
               <span v-else class="other-value">
                 {{ formatPropertyValue(val.value, val.datatype) }}
                 <span v-if="val.lang" class="lang-tag">{{ val.lang }}</span>
-                <span v-if="settingsStore.showDatatypes && val.datatype" class="datatype-tag">{{ val.datatype }}</span>
+                <span v-else-if="val.datatype" class="datatype-tag">{{ val.datatype }}</span>
               </span>
             </template>
           </div>

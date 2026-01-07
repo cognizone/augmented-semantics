@@ -146,6 +146,7 @@ describe('SchemeDetails', () => {
         uri: 'http://example.org/scheme/1',
         prefLabels: [{ value: 'Test Scheme', lang: 'en' }],
         altLabels: [],
+        hiddenLabels: [],
         definitions: [{ value: 'A test scheme definition', lang: 'en' }],
         scopeNotes: [],
         historyNotes: [],
@@ -161,6 +162,8 @@ describe('SchemeDetails', () => {
         rights: [],
         license: [],
         prefLabelsXL: [],
+        altLabelsXL: [],
+        hiddenLabelsXL: [],
         otherProperties: [],
       }
     })
@@ -203,6 +206,7 @@ describe('SchemeDetails', () => {
         uri: 'http://example.org/scheme/1',
         prefLabels: [{ value: 'Test Scheme', lang: 'en' }],
         altLabels: [],
+        hiddenLabels: [],
         definitions: [],
         scopeNotes: [],
         historyNotes: [],
@@ -216,6 +220,8 @@ describe('SchemeDetails', () => {
         rights: [],
         license: [],
         prefLabelsXL: [],
+        altLabelsXL: [],
+        hiddenLabelsXL: [],
         otherProperties: [],
       }
     })

@@ -122,7 +122,9 @@ async function handleTestConnection(endpoint: SPARQLEndpoint) {
 }
 
 // Utility Functions
-function formatDate(dateStr?: string) {
+// Note: This is for UI timestamps (lastAccessedAt), not RDF dates.
+// For RDF dates use formatTemporalValue from displayUtils.
+function formatUIDate(dateStr?: string) {
   if (!dateStr) return '-'
   try {
     const date = new Date(dateStr)
@@ -216,7 +218,7 @@ function formatDate(dateStr?: string) {
 
         <Column field="lastAccessedAt" header="Last Used" sortable :style="{ width: '15%' }">
           <template #body="{ data }">
-            <span class="date-cell">{{ formatDate(data.lastAccessedAt) }}</span>
+            <span class="date-cell">{{ formatUIDate(data.lastAccessedAt) }}</span>
           </template>
         </Column>
 

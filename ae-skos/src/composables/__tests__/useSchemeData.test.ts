@@ -106,11 +106,11 @@ describe('useSchemeData', () => {
       expect(details.value?.definitions).toHaveLength(1)
     })
 
-    it('handles rdfs:label as prefLabel', async () => {
+    it('handles skos:hiddenLabel', async () => {
       ;(executeSparql as Mock).mockResolvedValueOnce({
         results: {
           bindings: [
-            { property: { value: 'http://www.w3.org/2000/01/rdf-schema#label' }, value: { value: 'RDFS Label', 'xml:lang': 'en' } },
+            { property: { value: 'http://www.w3.org/2004/02/skos/core#hiddenLabel' }, value: { value: 'Hidden Label', 'xml:lang': 'en' } },
           ],
         },
       })
@@ -120,8 +120,8 @@ describe('useSchemeData', () => {
       const { loadDetails, details } = useSchemeData()
       await loadDetails('http://example.org/scheme/1')
 
-      expect(details.value?.prefLabels).toHaveLength(1)
-      expect(details.value?.prefLabels[0].value).toBe('RDFS Label')
+      expect(details.value?.hiddenLabels).toHaveLength(1)
+      expect(details.value?.hiddenLabels[0].value).toBe('Hidden Label')
     })
 
     it('handles DC terms (title, description)', async () => {
@@ -263,8 +263,8 @@ describe('useSchemeData', () => {
       ;(executeSparql as Mock).mockResolvedValueOnce({
         results: {
           bindings: [
-            { xlLabel: { value: 'http://example.org/xl/1' }, literalForm: { value: 'XL Label' }, literalLang: { value: 'en' } },
-            { xlLabel: { value: 'http://example.org/xl/1' }, literalForm: { value: 'XL Label' }, literalLang: { value: 'en' } },
+            { xlLabel: { value: 'http://example.org/xl/1' }, labelType: { value: 'prefLabel' }, literalForm: { value: 'XL Label' }, literalLang: { value: 'en' } },
+            { xlLabel: { value: 'http://example.org/xl/1' }, labelType: { value: 'prefLabel' }, literalForm: { value: 'XL Label' }, literalLang: { value: 'en' } },
           ],
         },
       })

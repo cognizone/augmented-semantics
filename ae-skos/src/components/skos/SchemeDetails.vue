@@ -22,7 +22,7 @@ import { ref, watch, computed } from 'vue'
 import { useSchemeStore } from '../../stores'
 import { isValidURI, formatQualifiedName } from '../../services'
 import { useDelayedLoading, useLabelResolver, useElapsedTime, useClipboard, useResourceExport, useSchemeData } from '../../composables'
-import { getPredicateName, getUriFragment } from '../../utils/displayUtils'
+import { getPredicateName, getUriFragment, formatTemporalValue, formatPropertyValue } from '../../utils/displayUtils'
 import Message from 'primevue/message'
 import ProgressSpinner from 'primevue/progressspinner'
 import Menu from 'primevue/menu'
@@ -90,12 +90,14 @@ const getSorted = (field: keyof NonNullable<typeof details.value>) =>
 // Sorted label arrays
 const sortedPrefLabels = getSorted('prefLabels')
 const sortedAltLabels = getSorted('altLabels')
+const sortedHiddenLabels = getSorted('hiddenLabels')
 const sortedDefinitions = getSorted('definitions')
 const sortedDescriptions = getSorted('description')
 const sortedScopeNotes = getSorted('scopeNotes')
 const sortedHistoryNotes = getSorted('historyNotes')
 const sortedChangeNotes = getSorted('changeNotes')
 const sortedEditorialNotes = getSorted('editorialNotes')
+const sortedNotes = getSorted('notes')
 const sortedExamples = getSorted('examples')
 const sortedTitles = getSorted('title')
 
@@ -119,6 +121,7 @@ const documentationConfig = computed(() => [
   { label: 'History Note', values: sortedHistoryNotes.value, class: '' },
   { label: 'Change Note', values: sortedChangeNotes.value, class: '' },
   { label: 'Editorial Note', values: sortedEditorialNotes.value, class: '' },
+  { label: 'Note', values: sortedNotes.value, class: '' },
   { label: 'Example', values: sortedExamples.value, class: 'example' },
 ].filter(prop => prop.values.length > 0))
 
@@ -136,13 +139,23 @@ const labelConfig = computed(() => {
       regularLabels: details.value.prefLabels ?? []
     })
   }
-  if (details.value?.altLabels.length) {
+  if (details.value?.altLabels.length || details.value?.altLabelsXL.length) {
     config.push({
       label: 'Alternative',
       values: sortedAltLabels.value,
-      hasXL: false,
-      xlLabels: [],
-      regularLabels: []
+      hasXL: (details.value.altLabelsXL?.length ?? 0) > 0,
+      xlLabels: details.value.altLabelsXL ?? [],
+      regularLabels: details.value.altLabels ?? []
+    })
+  }
+  if (details.value?.hiddenLabels.length || details.value?.hiddenLabelsXL.length) {
+    config.push({
+      label: 'Hidden',
+      values: sortedHiddenLabels.value,
+      hasXL: (details.value.hiddenLabelsXL?.length ?? 0) > 0,
+      xlLabels: details.value.hiddenLabelsXL ?? [],
+      regularLabels: details.value.hiddenLabels ?? [],
+      isHidden: true
     })
   }
   return config
@@ -187,20 +200,6 @@ function exportAsJson() {
   })
 }
 
-
-// Format date for display
-function formatDate(dateStr: string): string {
-  try {
-    const date = new Date(dateStr)
-    return date.toLocaleDateString(undefined, {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    })
-  } catch {
-    return dateStr
-  }
-}
 
 // Watch for viewing scheme changes
 watch(
@@ -285,7 +284,12 @@ watch(
         <div v-for="prop in labelConfig" :key="prop.label" class="property-row">
           <label>{{ prop.label }}</label>
           <div class="label-values">
-            <span v-for="(label, i) in prop.values" :key="i" class="label-value">
+            <span
+              v-for="(label, i) in prop.values"
+              :key="i"
+              class="label-value"
+              :class="{ 'hidden-label': prop.isHidden }"
+            >
               {{ label.value }}
               <span v-if="label.lang" class="lang-tag">{{ label.lang }}</span>
             </span>
@@ -363,12 +367,12 @@ watch(
 
         <div v-if="details.created" class="property-row">
           <label>Created</label>
-          <span class="metadata-value">{{ formatDate(details.created) }}</span>
+          <span class="metadata-value">{{ formatTemporalValue(details.created, 'xsd:date') }}<span class="datatype-tag">xsd:date</span></span>
         </div>
 
         <div v-if="details.modified" class="property-row">
           <label>Modified</label>
-          <span class="metadata-value">{{ formatDate(details.modified) }}</span>
+          <span class="metadata-value">{{ formatTemporalValue(details.modified, 'xsd:date') }}<span class="datatype-tag">xsd:date</span></span>
         </div>
       </section>
 
@@ -403,8 +407,9 @@ watch(
                 <span class="material-symbols-outlined link-icon">open_in_new</span>
               </a>
               <span v-else class="other-value">
-                {{ val.value }}
+                {{ formatPropertyValue(val.value, val.datatype) }}
                 <span v-if="val.lang" class="lang-tag">{{ val.lang }}</span>
+                <span v-else-if="val.datatype" class="datatype-tag">{{ val.datatype }}</span>
               </span>
             </template>
           </div>
@@ -579,6 +584,11 @@ watch(
   color: var(--ae-text-muted);
 }
 
+.label-value.hidden-label {
+  color: var(--ae-text-secondary);
+  font-style: italic;
+}
+
 .lang-tag.lang-tag-first {
   margin-left: 0;
   margin-right: 0.5rem;
@@ -622,6 +632,17 @@ watch(
 
 .metadata-value {
   font-size: 0.875rem;
+}
+
+.datatype-tag {
+  font-size: 0.625rem;
+  font-family: var(--ae-font-mono);
+  background: var(--ae-bg-hover);
+  color: var(--ae-text-secondary);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  margin-left: 0.25rem;
+  vertical-align: middle;
 }
 
 .metadata-link {

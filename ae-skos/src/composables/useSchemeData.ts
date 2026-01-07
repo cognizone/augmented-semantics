@@ -33,6 +33,12 @@ export function useSchemeData() {
         {
           <${uri}> skosxl:prefLabel ?xlLabel .
           BIND("prefLabel" AS ?labelType)
+        } UNION {
+          <${uri}> skosxl:altLabel ?xlLabel .
+          BIND("altLabel" AS ?labelType)
+        } UNION {
+          <${uri}> skosxl:hiddenLabel ?xlLabel .
+          BIND("hiddenLabel" AS ?labelType)
         }
         ?xlLabel skosxl:literalForm ?literalForm .
         BIND(LANG(?literalForm) AS ?literalLang)
@@ -42,28 +48,46 @@ export function useSchemeData() {
     try {
       const results = await executeSparql(endpoint, query, { retries: 0 })
 
-      const seenXLUris = new Set<string>()
+      // Track seen URIs per label type to avoid duplicates
+      const seenPrefUris = new Set<string>()
+      const seenAltUris = new Set<string>()
+      const seenHiddenUris = new Set<string>()
 
       for (const binding of results.results.bindings) {
         const xlUri = binding.xlLabel?.value
+        const labelType = binding.labelType?.value
         const literalForm = binding.literalForm?.value
         const literalLang = binding.literalLang?.value
 
-        if (!xlUri || !literalForm) continue
-        if (seenXLUris.has(xlUri)) continue
-        seenXLUris.add(xlUri)
+        if (!xlUri || !literalForm || !labelType) continue
 
-        schemeDetails.prefLabelsXL.push({
+        const xlLabel = {
           uri: xlUri,
           literalForm: {
             value: literalForm,
             lang: literalLang || undefined,
           },
-        })
+        }
+
+        if (labelType === 'prefLabel') {
+          if (seenPrefUris.has(xlUri)) continue
+          seenPrefUris.add(xlUri)
+          schemeDetails.prefLabelsXL.push(xlLabel)
+        } else if (labelType === 'altLabel') {
+          if (seenAltUris.has(xlUri)) continue
+          seenAltUris.add(xlUri)
+          schemeDetails.altLabelsXL.push(xlLabel)
+        } else if (labelType === 'hiddenLabel') {
+          if (seenHiddenUris.has(xlUri)) continue
+          seenHiddenUris.add(xlUri)
+          schemeDetails.hiddenLabelsXL.push(xlLabel)
+        }
       }
 
       logger.debug('useSchemeData', 'Loaded XL labels', {
         prefLabelsXL: schemeDetails.prefLabelsXL.length,
+        altLabelsXL: schemeDetails.altLabelsXL.length,
+        hiddenLabelsXL: schemeDetails.hiddenLabelsXL.length,
       })
     } catch (e) {
       logger.debug('useSchemeData', 'SKOS-XL labels not available or query failed', { error: e })
@@ -84,11 +108,11 @@ export function useSchemeData() {
         <${uri}> ?predicate ?value .
         FILTER (?predicate NOT IN (
           rdf:type,
-          skos:prefLabel, skos:altLabel,
+          skos:prefLabel, skos:altLabel, skos:hiddenLabel,
           skos:definition, skos:scopeNote, skos:historyNote,
-          skos:changeNote, skos:editorialNote, skos:example,
+          skos:changeNote, skos:editorialNote, skos:note, skos:example,
           skos:hasTopConcept,
-          skosxl:prefLabel,
+          skosxl:prefLabel, skosxl:altLabel, skosxl:hiddenLabel,
           dct:title, dct:description,
           dct:creator, dct:created, dct:modified,
           dct:publisher, dct:rights, dct:license
@@ -99,12 +123,13 @@ export function useSchemeData() {
     try {
       const results = await executeSparql(endpoint, query, { retries: 0 })
 
-      const propMap = new Map<string, Map<string, { value: string; lang?: string; isUri: boolean }>>()
+      const propMap = new Map<string, Map<string, { value: string; lang?: string; datatype?: string; isUri: boolean }>>()
 
       for (const binding of results.results.bindings) {
         const predicate = binding.predicate?.value
         const value = binding.value?.value
         const lang = binding.value?.['xml:lang']
+        const datatype = binding.value?.datatype
         const isUri = binding.value?.type === 'uri'
 
         if (!predicate || !value) continue
@@ -112,9 +137,9 @@ export function useSchemeData() {
         if (!propMap.has(predicate)) {
           propMap.set(predicate, new Map())
         }
-        const key = `${value}|${lang || ''}`
+        const key = `${value}|${lang || ''}|${datatype || ''}`
         if (!propMap.get(predicate)!.has(key)) {
-          propMap.get(predicate)!.set(key, { value, lang, isUri })
+          propMap.get(predicate)!.set(key, { value, lang, datatype, isUri })
         }
       }
 
@@ -148,12 +173,11 @@ export function useSchemeData() {
       WHERE {
         <${uri}> ?property ?value .
         FILTER (?property IN (
-          skos:prefLabel, skos:altLabel,
+          skos:prefLabel, skos:altLabel, skos:hiddenLabel,
           skos:definition, skos:scopeNote, skos:historyNote,
-          skos:changeNote, skos:editorialNote, skos:example,
+          skos:changeNote, skos:editorialNote, skos:note, skos:example,
           dct:title, dct:description, dct:creator, dct:created, dct:modified,
-          dct:publisher, dct:rights, dct:license,
-          rdfs:label
+          dct:publisher, dct:rights, dct:license
         ))
       }
     `)
@@ -165,11 +189,13 @@ export function useSchemeData() {
         uri,
         prefLabels: [],
         altLabels: [],
+        hiddenLabels: [],
         definitions: [],
         scopeNotes: [],
         historyNotes: [],
         changeNotes: [],
         editorialNotes: [],
+        notes: [],
         examples: [],
         title: [],
         description: [],
@@ -178,6 +204,8 @@ export function useSchemeData() {
         rights: [],
         license: [],
         prefLabelsXL: [],
+        altLabelsXL: [],
+        hiddenLabelsXL: [],
         otherProperties: [],
       }
 
@@ -189,10 +217,10 @@ export function useSchemeData() {
 
         if (prop.endsWith('prefLabel')) {
           schemeDetails.prefLabels.push({ value: val, lang })
-        } else if (prop.endsWith('#label') || prop.endsWith('/label')) {
-          schemeDetails.prefLabels.push({ value: val, lang })
         } else if (prop.endsWith('altLabel')) {
           schemeDetails.altLabels.push({ value: val, lang })
+        } else if (prop.endsWith('hiddenLabel')) {
+          schemeDetails.hiddenLabels.push({ value: val, lang })
         } else if (prop.endsWith('definition')) {
           schemeDetails.definitions.push({ value: val, lang })
         } else if (prop.endsWith('scopeNote')) {
@@ -203,6 +231,8 @@ export function useSchemeData() {
           schemeDetails.changeNotes.push({ value: val, lang })
         } else if (prop.endsWith('editorialNote')) {
           schemeDetails.editorialNotes.push({ value: val, lang })
+        } else if (prop.endsWith('#note')) {
+          schemeDetails.notes.push({ value: val, lang })
         } else if (prop.endsWith('example')) {
           schemeDetails.examples.push({ value: val, lang })
         } else if (prop.endsWith('title')) {
