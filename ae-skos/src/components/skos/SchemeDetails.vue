@@ -3,39 +3,29 @@
  * SchemeDetails - SKOS concept scheme property display
  *
  * Shows comprehensive scheme information organized in sections.
- * Each section and property is only displayed if values exist.
- *
- * Sections:
- * - Labels: prefLabel, altLabel, SKOS-XL extended labels
- * - Title: dct:title (if different from prefLabel)
- * - Documentation: definition, description, scopeNote, historyNote, etc.
- * - Metadata: creator, created, modified
- * - Other Properties: non-SKOS predicates
- *
- * Implementation uses config-driven template rendering via documentationConfig
- * and labelConfig arrays to minimize duplication. Data loading handled by
- * useSchemeData composable.
+ * Uses shared components for consistent rendering.
  *
  * @see /spec/ae-skos/sko02-SchemeSelector.md
  */
 import { ref, watch, computed } from 'vue'
 import { useSchemeStore } from '../../stores'
-import { isValidURI, formatQualifiedName } from '../../services'
-import { useDelayedLoading, useLabelResolver, useElapsedTime, useClipboard, useResourceExport, useSchemeData } from '../../composables'
-import { getPredicateName, getUriFragment, formatTemporalValue, formatPropertyValue } from '../../utils/displayUtils'
-import Message from 'primevue/message'
-import ProgressSpinner from 'primevue/progressspinner'
-import Menu from 'primevue/menu'
+import { isValidURI } from '../../services'
+import { useDelayedLoading, useLabelResolver, useElapsedTime, useResourceExport, useSchemeData, useDeprecation } from '../../composables'
+import { getUriFragment, formatTemporalValue, formatDatatype } from '../../utils/displayUtils'
 import { useToast } from 'primevue/usetoast'
-import XLLabelsGroup from '../common/XLLabelsGroup.vue'
 import RawRdfDialog from '../common/RawRdfDialog.vue'
+import DetailsStates from '../common/DetailsStates.vue'
+import DetailsHeader from '../common/DetailsHeader.vue'
+import LabelsSection from '../common/LabelsSection.vue'
+import DocumentationSection from '../common/DocumentationSection.vue'
+import OtherPropertiesSection from '../common/OtherPropertiesSection.vue'
 
 const schemeStore = useSchemeStore()
 const toast = useToast()
 const { selectSchemeLabel, sortLabels, shouldShowLangTag } = useLabelResolver()
-const { copyToClipboard } = useClipboard()
 const { exportAsTurtle, downloadFile } = useResourceExport()
 const { details, loading, error, resolvedPredicates, loadDetails } = useSchemeData()
+const { showIndicator: showDeprecationIndicator } = useDeprecation()
 
 // Local state
 const showRawRdfDialog = ref(false)
@@ -43,18 +33,16 @@ const showRawRdfDialog = ref(false)
 // Track elapsed time when loading
 const loadingElapsed = useElapsedTime(loading)
 
-// Export menu
-const exportMenu = ref()
+// Export menu items
 const exportMenuItems = [
   { label: 'Export as JSON', icon: 'pi pi-file', command: () => exportAsJson() },
   { label: 'Export as Turtle', icon: 'pi pi-code', command: () => details.value && exportAsTurtle(details.value.uri) },
 ]
 
-// Delayed loading - show spinner only after 300ms to prevent flicker
+// Delayed loading
 const showLoading = useDelayedLoading(loading)
 
-// Get preferred label (full LabelValue for language info)
-// Uses selectSchemeLabel: prefLabel > xlPrefLabel > title > rdfsLabel
+// Preferred label for header
 const preferredLabelObj = computed(() => {
   if (!details.value) return null
   return selectSchemeLabel({
@@ -64,35 +52,25 @@ const preferredLabelObj = computed(() => {
   })
 })
 
-// Get preferred label string
-const preferredLabel = computed(() => {
-  return preferredLabelObj.value?.value || null
-})
-
-// Get language of displayed label
-const displayLang = computed(() => {
-  return preferredLabelObj.value?.lang || null
-})
-
-// Should we show the language tag in header?
-const showHeaderLangTag = computed(() => {
-  return displayLang.value && shouldShowLangTag(displayLang.value)
-})
+const preferredLabel = computed(() => preferredLabelObj.value?.value || details.value?.uri.split('/').pop() || '')
+const displayLang = computed(() => preferredLabelObj.value?.lang || null)
+const showHeaderLangTag = computed(() => displayLang.value ? shouldShowLangTag(displayLang.value) : false)
 
 // Helper to create sorted computed properties
-// Type assertion: we only use getSorted for LabelValue[] fields
 const getSorted = (field: keyof NonNullable<typeof details.value>) =>
   computed(() => {
     const value = details.value?.[field]
     return value && Array.isArray(value) ? sortLabels(value as any) : []
   })
 
-// Sorted label arrays
+// Sorted arrays
 const sortedPrefLabels = getSorted('prefLabels')
 const sortedAltLabels = getSorted('altLabels')
 const sortedHiddenLabels = getSorted('hiddenLabels')
+const sortedLabels = getSorted('labels')
 const sortedDefinitions = getSorted('definitions')
 const sortedDescriptions = getSorted('description')
+const sortedComments = getSorted('comments')
 const sortedScopeNotes = getSorted('scopeNotes')
 const sortedHistoryNotes = getSorted('historyNotes')
 const sortedChangeNotes = getSorted('changeNotes')
@@ -107,30 +85,17 @@ const sortedOtherProperties = computed(() => {
   return [...details.value.otherProperties].sort((a, b) => {
     const aResolved = resolvedPredicates.value.get(a.predicate)
     const bResolved = resolvedPredicates.value.get(b.predicate)
-    const aName = aResolved ? formatQualifiedName(aResolved) : a.predicate
-    const bName = bResolved ? formatQualifiedName(bResolved) : b.predicate
+    const aName = aResolved?.localName || a.predicate
+    const bName = bResolved?.localName || b.predicate
     return aName.localeCompare(bName)
   })
 })
 
-// Documentation properties config
-const documentationConfig = computed(() => [
-  { label: 'Definition', values: sortedDefinitions.value, class: '' },
-  { label: 'Description', values: sortedDescriptions.value, class: '' },
-  { label: 'Scope Note', values: sortedScopeNotes.value, class: '' },
-  { label: 'History Note', values: sortedHistoryNotes.value, class: '' },
-  { label: 'Change Note', values: sortedChangeNotes.value, class: '' },
-  { label: 'Editorial Note', values: sortedEditorialNotes.value, class: '' },
-  { label: 'Note', values: sortedNotes.value, class: '' },
-  { label: 'Example', values: sortedExamples.value, class: 'example' },
-].filter(prop => prop.values.length > 0))
-
-const hasDocumentation = computed(() => documentationConfig.value.length > 0)
-
-// Label properties config
+// Label config for LabelsSection
 const labelConfig = computed(() => {
+  if (!details.value) return []
   const config = []
-  if (details.value?.prefLabels.length || details.value?.prefLabelsXL.length) {
+  if (details.value.prefLabels.length || details.value.prefLabelsXL.length) {
     config.push({
       label: 'Preferred',
       values: sortedPrefLabels.value,
@@ -139,7 +104,7 @@ const labelConfig = computed(() => {
       regularLabels: details.value.prefLabels ?? []
     })
   }
-  if (details.value?.altLabels.length || details.value?.altLabelsXL.length) {
+  if (details.value.altLabels.length || details.value.altLabelsXL.length) {
     config.push({
       label: 'Alternative',
       values: sortedAltLabels.value,
@@ -148,7 +113,7 @@ const labelConfig = computed(() => {
       regularLabels: details.value.altLabels ?? []
     })
   }
-  if (details.value?.hiddenLabels.length || details.value?.hiddenLabelsXL.length) {
+  if (details.value.hiddenLabels.length || details.value.hiddenLabelsXL.length) {
     config.push({
       label: 'Hidden',
       values: sortedHiddenLabels.value,
@@ -158,17 +123,41 @@ const labelConfig = computed(() => {
       isHidden: true
     })
   }
+  if (details.value.labels?.length) {
+    config.push({
+      label: 'Label',
+      values: sortedLabels.value,
+    })
+  }
   return config
 })
 
-const hasLabels = computed(() => labelConfig.value.length > 0)
+// Has any labels to show (for section visibility including notation)
+const hasLabels = computed(() =>
+  labelConfig.value.length > 0 || (details.value?.notations?.length ?? 0) > 0
+)
 
-// Metadata links config (creator, publisher, rights, license)
+// Documentation config for DocumentationSection
+const documentationConfig = computed(() => [
+  { label: 'Definition', values: sortedDefinitions.value },
+  { label: 'Description', values: sortedDescriptions.value },
+  { label: 'Comment', values: sortedComments.value },
+  { label: 'Scope Note', values: sortedScopeNotes.value },
+  { label: 'History Note', values: sortedHistoryNotes.value },
+  { label: 'Change Note', values: sortedChangeNotes.value },
+  { label: 'Editorial Note', values: sortedEditorialNotes.value },
+  { label: 'Note', values: sortedNotes.value },
+  { label: 'Example', values: sortedExamples.value, class: 'example' },
+].filter(prop => prop.values.length > 0))
+
+// Metadata links config
 const metadataLinksConfig = computed(() => [
   { label: 'Creator', values: details.value?.creator || [] },
   { label: 'Publisher', values: details.value?.publisher || [] },
+  { label: 'See Also', values: details.value?.seeAlso || [] },
   { label: 'Rights', values: details.value?.rights || [] },
   { label: 'License', values: details.value?.license || [] },
+  { label: 'License (CC)', values: details.value?.ccLicense || [] },
 ].filter(m => m.values.length > 0))
 
 // Export as JSON
@@ -200,6 +189,9 @@ function exportAsJson() {
   })
 }
 
+function clearError() {
+  error.value = null
+}
 
 // Watch for viewing scheme changes
 watch(
@@ -215,207 +207,119 @@ watch(
 
 <template>
   <div class="scheme-details">
-    <!-- Loading state -->
-    <div v-if="showLoading" class="loading-container">
-      <ProgressSpinner style="width: 40px; height: 40px" />
-      <span>
-        Loading scheme...
-        <template v-if="loadingElapsed.show.value">
-          ({{ loadingElapsed.elapsed.value }}s)
-        </template>
-      </span>
-    </div>
+    <DetailsStates
+      :loading="loading"
+      :show-loading="showLoading"
+      :has-data="!!details"
+      :error="error"
+      loading-text="Loading scheme..."
+      empty-icon="schema"
+      empty-title="No scheme selected"
+      empty-subtitle="Select a scheme from the dropdown or click 'In Scheme' on a concept"
+      :elapsed="loadingElapsed"
+      @clear-error="clearError"
+    >
+      <!-- Details content - wrapped in v-if because Vue evaluates slot expressions before child renders -->
+      <div v-if="details" class="details-content">
+        <DetailsHeader
+          icon="folder"
+          icon-class="icon-folder"
+          :title="preferredLabel"
+          :uri="details.uri"
+          :lang-tag="displayLang || undefined"
+          :show-lang-tag="showHeaderLangTag"
+          :deprecated="details.deprecated && showDeprecationIndicator"
+          deprecated-tooltip="This concept scheme is deprecated"
+          :export-menu-items="exportMenuItems"
+          @show-raw-rdf="showRawRdfDialog = true"
+        />
 
-    <!-- Empty state -->
-    <div v-else-if="!loading && !details && !error" class="empty-state">
-      <span class="material-symbols-outlined empty-icon">schema</span>
-      <p>No scheme selected</p>
-      <small>Select a scheme from the dropdown or click "In Scheme" on a concept</small>
-    </div>
-
-    <!-- Error state -->
-    <Message v-else-if="error" severity="error" :closable="true" @close="error = null">
-      {{ error }}
-    </Message>
-
-    <!-- Details -->
-    <div v-else-if="details" class="details-content">
-      <!-- Header -->
-      <div class="details-header">
-        <div class="header-icon-wrapper">
-          <span class="material-symbols-outlined header-icon icon-folder">folder</span>
-        </div>
-        <div class="header-content">
-          <h2 class="scheme-label">
-            {{ preferredLabel || details.uri.split('/').pop() }}
-            <span v-if="showHeaderLangTag" class="header-lang-tag">{{ displayLang }}</span>
-          </h2>
-          <div class="scheme-uri">
-            <span class="uri-text mono">{{ details.uri }}</span>
-            <button
-              class="copy-btn"
-              title="Copy URI"
-              @click="copyToClipboard(details.uri, 'URI')"
-            >
-              <span class="material-symbols-outlined icon-sm">content_copy</span>
-            </button>
+        <LabelsSection v-if="hasLabels" :items="labelConfig">
+          <div v-if="details.notations?.length" class="property-row">
+            <label>Notation</label>
+            <div class="label-values">
+              <span v-for="(n, i) in details.notations" :key="i" class="notation-wrapper">
+                <code class="notation">{{ n.value }}</code>
+                <span v-if="n.datatype" class="datatype-tag">{{ formatDatatype(n.datatype) }}</span>
+              </span>
+            </div>
           </div>
-        </div>
-        <div class="header-actions">
-          <button class="action-btn" title="View RDF" @click="showRawRdfDialog = true">
-            <span class="material-symbols-outlined">code</span>
-          </button>
-          <button class="action-btn" title="Export" @click="(event: Event) => exportMenu.toggle(event)">
-            <span class="material-symbols-outlined">download</span>
-          </button>
-          <a v-if="isValidURI(details.uri)" :href="details.uri" target="_blank" class="action-btn" title="Open in new tab">
-            <span class="material-symbols-outlined">open_in_new</span>
-          </a>
-          <Menu ref="exportMenu" :model="exportMenuItems" :popup="true" />
-        </div>
-      </div>
+        </LabelsSection>
 
-      <!-- Labels Section -->
-      <section v-if="hasLabels" class="details-section">
-        <h3 class="section-title">
-          <span class="material-symbols-outlined section-icon">translate</span>
-          Labels
-        </h3>
-        <div v-for="prop in labelConfig" :key="prop.label" class="property-row">
-          <label>{{ prop.label }}</label>
-          <div class="label-values">
-            <span
-              v-for="(label, i) in prop.values"
-              :key="i"
-              class="label-value"
-              :class="{ 'hidden-label': prop.isHidden }"
-            >
-              {{ label.value }}
-              <span v-if="label.lang" class="lang-tag">{{ label.lang }}</span>
+        <!-- Dublin Core Title (scheme-specific) -->
+        <section v-if="sortedTitles.length" class="details-section">
+          <h3 class="section-title">
+            <span class="material-symbols-outlined section-icon">title</span>
+            Title
+          </h3>
+          <div class="property-row">
+            <div class="doc-values">
+              <p v-for="(title, i) in sortedTitles" :key="i" class="doc-value">
+                <span v-if="title.lang" class="lang-tag lang-tag-first">{{ title.lang }}</span>
+                <span class="doc-text">{{ title.value }}</span>
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <DocumentationSection :items="documentationConfig" />
+
+        <!-- Metadata Section (scheme-specific) -->
+        <section v-if="metadataLinksConfig.length || details.versionInfo || details.created || details.modified || details.issued" class="details-section">
+          <h3 class="section-title">
+            <span class="material-symbols-outlined section-icon">info</span>
+            Metadata
+          </h3>
+
+          <div v-for="meta in metadataLinksConfig" :key="meta.label" class="property-row">
+            <label>{{ meta.label }}</label>
+            <div class="metadata-values">
+              <template v-for="(val, i) in meta.values" :key="i">
+                <a v-if="isValidURI(val)" :href="val" target="_blank" class="metadata-link">
+                  {{ getUriFragment(val) }}
+                  <span class="material-symbols-outlined link-icon">open_in_new</span>
+                </a>
+                <span v-else class="metadata-value">{{ val }}</span>
+              </template>
+            </div>
+          </div>
+
+          <div v-if="details.versionInfo" class="property-row">
+            <label>Version</label>
+            <span class="metadata-value">{{ details.versionInfo }}</span>
+          </div>
+
+          <div v-if="details.issued" class="property-row">
+            <label>Issued</label>
+            <span class="metadata-value">
+              {{ formatTemporalValue(details.issued, 'xsd:date') }}
+              <span class="datatype-tag">xsd:date</span>
             </span>
           </div>
-          <XLLabelsGroup
-            v-if="prop.hasXL"
-            :labels="prop.xlLabels"
-            :regular-labels="prop.regularLabels"
-          />
-        </div>
-      </section>
 
-      <!-- Dublin Core Title (if different from prefLabel) -->
-      <section v-if="sortedTitles.length" class="details-section">
-        <h3 class="section-title">
-          <span class="material-symbols-outlined section-icon">title</span>
-          Title
-        </h3>
-        <div class="property-row">
-          <div class="doc-values">
-            <p
-              v-for="(title, i) in sortedTitles"
-              :key="i"
-              class="doc-value"
-            >
-              <span v-if="title.lang" class="lang-tag lang-tag-first">{{ title.lang }}</span>
-              <span class="doc-text">{{ title.value }}</span>
-            </p>
+          <div v-if="details.created" class="property-row">
+            <label>Created</label>
+            <span class="metadata-value">
+              {{ formatTemporalValue(details.created, 'xsd:date') }}
+              <span class="datatype-tag">xsd:date</span>
+            </span>
           </div>
-        </div>
-      </section>
 
-      <!-- Documentation Section -->
-      <section v-if="hasDocumentation" class="details-section">
-        <h3 class="section-title">
-          <span class="material-symbols-outlined section-icon">description</span>
-          Documentation
-        </h3>
-        <div v-for="prop in documentationConfig" :key="prop.label" class="property-row">
-          <label>{{ prop.label }}</label>
-          <div class="doc-values">
-            <p v-for="(item, i) in prop.values" :key="i" :class="['doc-value', prop.class]">
-              <span v-if="item.lang" class="lang-tag lang-tag-first">{{ item.lang }}</span>
-              <span class="doc-text">{{ item.value }}</span>
-            </p>
+          <div v-if="details.modified" class="property-row">
+            <label>Modified</label>
+            <span class="metadata-value">
+              {{ formatTemporalValue(details.modified, 'xsd:date') }}
+              <span class="datatype-tag">xsd:date</span>
+            </span>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <!-- Metadata Section -->
-      <section v-if="metadataLinksConfig.length || details.created || details.modified" class="details-section">
-        <h3 class="section-title">
-          <span class="material-symbols-outlined section-icon">info</span>
-          Metadata
-        </h3>
-
-        <!-- Config-driven metadata links (creator, publisher, rights, license) -->
-        <div v-for="meta in metadataLinksConfig" :key="meta.label" class="property-row">
-          <label>{{ meta.label }}</label>
-          <div class="metadata-values">
-            <template v-for="(val, i) in meta.values" :key="i">
-              <a
-                v-if="isValidURI(val)"
-                :href="val"
-                target="_blank"
-                class="metadata-link"
-              >
-                {{ getUriFragment(val) }}
-                <span class="material-symbols-outlined link-icon">open_in_new</span>
-              </a>
-              <span v-else class="metadata-value">{{ val }}</span>
-            </template>
-          </div>
-        </div>
-
-        <div v-if="details.created" class="property-row">
-          <label>Created</label>
-          <span class="metadata-value">{{ formatTemporalValue(details.created, 'xsd:date') }}<span class="datatype-tag">xsd:date</span></span>
-        </div>
-
-        <div v-if="details.modified" class="property-row">
-          <label>Modified</label>
-          <span class="metadata-value">{{ formatTemporalValue(details.modified, 'xsd:date') }}<span class="datatype-tag">xsd:date</span></span>
-        </div>
-      </section>
-
-      <!-- Other Properties Section -->
-      <section v-if="details.otherProperties.length" class="details-section">
-        <h3 class="section-title">
-          <span class="material-symbols-outlined section-icon">more_horiz</span>
-          Other Properties
-        </h3>
-        <div v-for="prop in sortedOtherProperties" :key="prop.predicate" class="property-row">
-          <label class="predicate-label">
-            <a
-              v-if="isValidURI(prop.predicate)"
-              :href="prop.predicate"
-              target="_blank"
-              class="predicate-link"
-            >
-              {{ getPredicateName(prop.predicate, resolvedPredicates.get(prop.predicate)) }}
-              <span class="material-symbols-outlined link-icon">open_in_new</span>
-            </a>
-            <span v-else>{{ getPredicateName(prop.predicate, resolvedPredicates.get(prop.predicate)) }}</span>
-          </label>
-          <div class="other-values">
-            <template v-for="(val, i) in prop.values" :key="i">
-              <a
-                v-if="val.isUri && isValidURI(val.value)"
-                :href="val.value"
-                target="_blank"
-                class="other-value uri-value"
-              >
-                {{ getUriFragment(val.value) }}
-                <span class="material-symbols-outlined link-icon">open_in_new</span>
-              </a>
-              <span v-else class="other-value">
-                {{ formatPropertyValue(val.value, val.datatype) }}
-                <span v-if="val.lang" class="lang-tag">{{ val.lang }}</span>
-                <span v-else-if="val.datatype" class="datatype-tag">{{ val.datatype }}</span>
-              </span>
-            </template>
-          </div>
-        </div>
-      </section>
-    </div>
+        <OtherPropertiesSection
+          :properties="sortedOtherProperties"
+          :resolved-predicates="resolvedPredicates"
+        />
+      </div>
+    </DetailsStates>
 
     <!-- Raw RDF Dialog -->
     <RawRdfDialog
@@ -434,32 +338,6 @@ watch(
   overflow: hidden;
 }
 
-.loading-container,
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  padding: 2rem;
-  color: var(--ae-text-secondary);
-  flex: 1;
-}
-
-.empty-icon {
-  font-size: 2.5rem;
-  opacity: 0.5;
-}
-
-.empty-state p {
-  margin: 0;
-  font-weight: 500;
-}
-
-.empty-state small {
-  font-size: 0.75rem;
-}
-
 .details-content {
   flex: 1;
   overflow: auto;
@@ -467,91 +345,7 @@ watch(
   max-width: 900px;
 }
 
-/* Header */
-.details-header {
-  display: flex;
-  align-items: flex-start;
-  gap: 1rem;
-  margin-bottom: 2rem;
-}
-
-.header-icon-wrapper {
-  padding: 0.75rem;
-  background: color-mix(in srgb, var(--ae-icon-folder) 15%, transparent);
-  border: 1px solid color-mix(in srgb, var(--ae-icon-folder) 25%, transparent);
-  border-radius: 0.75rem;
-}
-
-.header-icon {
-  font-size: 2.5rem;
-}
-
-.header-content {
-  flex: 1;
-  min-width: 0;
-}
-
-.scheme-label {
-  margin: 0 0 0.375rem 0;
-  font-size: 1.375rem;
-  font-weight: 600;
-  color: var(--ae-text-primary);
-  word-break: break-word;
-}
-
-.header-lang-tag {
-  font-size: 0.625rem;
-  font-weight: normal;
-  background: var(--ae-bg-hover);
-  color: var(--ae-text-secondary);
-  padding: 0.1rem 0.4rem;
-  border-radius: 3px;
-  margin-left: 0.5rem;
-  vertical-align: middle;
-}
-
-.scheme-uri {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.125rem 0.375rem;
-  background: var(--ae-bg-elevated);
-  border: 1px solid var(--ae-border-color);
-  border-radius: 3px;
-}
-
-.uri-text {
-  font-size: 0.6875rem;
-  color: var(--ae-text-secondary);
-  word-break: break-all;
-}
-
-.copy-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  padding: 0;
-  background: none;
-  border: none;
-  border-radius: 3px;
-  cursor: pointer;
-  color: var(--ae-text-secondary);
-  transition: color 0.15s;
-}
-
-.copy-btn:hover {
-  color: var(--ae-text-primary);
-}
-
-.header-actions {
-  display: flex;
-  gap: 0.25rem;
-  flex-shrink: 0;
-}
-
-/* Sections */
+/* Scheme-specific sections */
 .details-section {
   margin-bottom: 2rem;
 }
@@ -566,32 +360,6 @@ watch(
   font-weight: 500;
   color: var(--ae-text-secondary);
   margin-bottom: 0.25rem;
-}
-
-.label-values {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-.label-value {
-  font-size: 0.875rem;
-}
-
-.label-value:not(:last-child)::after {
-  content: '·';
-  margin-left: 0.5rem;
-  color: var(--ae-text-muted);
-}
-
-.label-value.hidden-label {
-  color: var(--ae-text-secondary);
-  font-style: italic;
-}
-
-.lang-tag.lang-tag-first {
-  margin-left: 0;
-  margin-right: 0.5rem;
 }
 
 .doc-values {
@@ -613,15 +381,11 @@ watch(
   grid-column: 1;
   align-self: start;
   margin-top: 0.1rem;
+  margin-right: 0.5rem;
 }
 
 .doc-value .doc-text {
   grid-column: 2;
-}
-
-.doc-value.example {
-  font-style: italic;
-  color: var(--ae-text-secondary);
 }
 
 .metadata-values {
@@ -632,17 +396,6 @@ watch(
 
 .metadata-value {
   font-size: 0.875rem;
-}
-
-.datatype-tag {
-  font-size: 0.625rem;
-  font-family: var(--ae-font-mono);
-  background: var(--ae-bg-hover);
-  color: var(--ae-text-secondary);
-  padding: 0.1rem 0.3rem;
-  border-radius: 3px;
-  margin-left: 0.25rem;
-  vertical-align: middle;
 }
 
 .metadata-link {
@@ -657,47 +410,23 @@ watch(
   font-size: 14px;
 }
 
-/* Other Properties */
-.predicate-label {
-  font-family: var(--ae-font-mono);
-  font-size: 0.8125rem;
-}
-
-.predicate-link {
-  color: var(--ae-accent);
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-
-.predicate-link:hover {
-  text-decoration: underline;
-}
-
-.other-values {
+.label-values {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
 }
 
-.other-value {
-  font-size: 0.875rem;
-  background: var(--ae-bg-elevated);
-  border: 1px solid var(--ae-border-color);
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-}
-
-.other-value.uri-value {
-  color: var(--ae-accent);
-  text-decoration: none;
+.notation-wrapper {
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
 }
 
-.other-value.uri-value:hover {
-  text-decoration: underline;
+.notation {
+  font-size: 0.875rem;
+  background: var(--ae-bg-hover);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  border: 1px solid var(--ae-border-color);
 }
 </style>

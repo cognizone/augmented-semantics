@@ -67,9 +67,12 @@ export interface ConceptDetails {
 
 export interface SchemeDetails {
   uri: string
+  deprecated?: boolean        // owl:deprecated
   prefLabels: LabelValue[]
   altLabels: LabelValue[]
   hiddenLabels: LabelValue[]
+  labels: LabelValue[]        // rdfs:label
+  notations: NotationValue[]  // skos:notation
   definitions: LabelValue[]
   scopeNotes: LabelValue[]
   historyNotes: LabelValue[]
@@ -77,14 +80,19 @@ export interface SchemeDetails {
   editorialNotes: LabelValue[]
   notes: LabelValue[]
   examples: LabelValue[]
+  comments: LabelValue[]      // rdfs:comment
   title: LabelValue[]
   description: LabelValue[]
   creator: string[]
   created?: string
   modified?: string
+  issued?: string             // dct:issued
+  versionInfo?: string        // owl:versionInfo
   publisher: string[]
   rights: string[]
   license: string[]
+  ccLicense: string[]         // cc:license
+  seeAlso: string[]           // rdfs:seeAlso
   // SKOS-XL extended labels
   prefLabelsXL: XLLabel[]
   altLabelsXL: XLLabel[]

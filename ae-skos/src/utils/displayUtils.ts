@@ -64,7 +64,8 @@ export function formatTemporalValue(value: string, datatype?: string): string {
   try {
     if (dtype === 'time') {
       // xsd:time - strip milliseconds if present
-      return value.split('.')[0]
+      const parts = value.split('.')
+      return parts[0] ?? value
     }
 
     const date = new Date(value)
@@ -76,7 +77,8 @@ export function formatTemporalValue(value: string, datatype?: string): string {
     }
 
     // xsd:date or default - return date only
-    return date.toISOString().split('T')[0]
+    const dateParts = date.toISOString().split('T')
+    return dateParts[0] ?? value
   } catch {
     return value
   }
@@ -107,6 +109,30 @@ export function formatPropertyValue(value: string, datatype?: string): string {
   }
 
   return value
+}
+
+/**
+ * Format a datatype URI to short prefixed form
+ * @param datatype - Full URI or short form
+ * @returns Short prefixed form (e.g., "xsd:decimal")
+ */
+export function formatDatatype(datatype: string): string {
+  if (!datatype) return ''
+  // Already short form
+  if (datatype.startsWith('xsd:') || datatype.startsWith('rdf:')) return datatype
+  // XSD namespace
+  if (datatype.includes('XMLSchema#')) {
+    return 'xsd:' + datatype.split('#').pop()
+  }
+  // RDF namespace
+  if (datatype.includes('rdf-syntax-ns#')) {
+    return 'rdf:' + datatype.split('#').pop()
+  }
+  // Fallback: extract fragment
+  if (datatype.includes('#')) {
+    return datatype.split('#').pop() || datatype
+  }
+  return datatype
 }
 
 /**

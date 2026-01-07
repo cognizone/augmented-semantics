@@ -345,7 +345,8 @@ function findNode(uri: string, nodes: ConceptNode[]): ConceptNode | null {
 
 // Go to URI directly
 function goToUri() {
-  const uri = gotoUri.value.trim()
+  // Sanitize: trim whitespace and remove accidental < > from turtle/sparql copies
+  const uri = gotoUri.value.trim().replace(/^<|>$/g, '')
   if (uri) {
     selectConcept(uri)
     gotoUri.value = ''

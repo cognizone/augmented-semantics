@@ -65,12 +65,18 @@ Full property display panel for selected concept scheme, organized in sections.
 
 **Implementation:** `SchemeDetails.vue` with `useSchemeData.ts` composable
 
+**Header:**
+- `owl:deprecated` - Shown as deprecation badge indicator (when true)
+
 **Display Sections** (each shown only if properties exist):
 
 1. **Labels**
    - `skos:prefLabel` - Preferred labels
    - `skos:altLabel` - Alternative labels
-   - `skosxl:prefLabel` - SKOS-XL extended labels with collapsible viewer
+   - `skos:hiddenLabel` - Hidden labels
+   - `rdfs:label` - Generic labels
+   - `skos:notation` - Notations with datatype display
+   - `skosxl:prefLabel` / `skosxl:altLabel` / `skosxl:hiddenLabel` - SKOS-XL extended labels with collapsible viewer
 
 2. **Title** (if different from prefLabel)
    - `dct:title` - Dublin Core title
@@ -78,19 +84,28 @@ Full property display panel for selected concept scheme, organized in sections.
 3. **Documentation**
    - `skos:definition` - Formal definitions
    - `dct:description` - General descriptions
+   - `rdfs:comment` - Comments
    - `skos:scopeNote` - Usage scope notes
    - `skos:historyNote` - Historical information
    - `skos:changeNote` - Change documentation
    - `skos:editorialNote` - Editorial notes
+   - `skos:note` - General notes
    - `skos:example` - Usage examples (styled italic)
 
 4. **Metadata**
    - `dct:creator` - Creator(s) with URI links
+   - `dct:publisher` - Publisher(s) with URI links
+   - `rdfs:seeAlso` - Related resources with URI links
+   - `dct:rights` - Rights information
+   - `dct:license` - License information
+   - `owl:versionInfo` - Version information
+   - `dct:issued` - Issue date (formatted)
    - `dct:created` - Creation date (formatted)
    - `dct:modified` - Last modified date (formatted)
 
 5. **Other Properties**
-   - Non-SKOS/non-DCT predicates
+   - All other predicates not explicitly handled above
+   - `rdf:type` is excluded
    - Predicates resolved to `prefix:localName` format
    - URI values shown as links
 
@@ -177,26 +192,45 @@ interface SchemeState {
 // Full scheme details for property display
 interface SchemeDetails {
   uri: string
+  deprecated?: boolean           // owl:deprecated
   // Labels
   prefLabels: LabelValue[]
   altLabels: LabelValue[]
+  hiddenLabels: LabelValue[]
+  labels: LabelValue[]           // rdfs:label
+  notations: NotationValue[]     // skos:notation
   prefLabelsXL: XLLabel[]
+  altLabelsXL: XLLabel[]
+  hiddenLabelsXL: XLLabel[]
   // Documentation
   definitions: LabelValue[]
   scopeNotes: LabelValue[]
   historyNotes: LabelValue[]
   changeNotes: LabelValue[]
   editorialNotes: LabelValue[]
+  notes: LabelValue[]            // skos:note
   examples: LabelValue[]
+  comments: LabelValue[]         // rdfs:comment
   title: LabelValue[]
   description: LabelValue[]
   // Metadata
   creator: string[]
+  publisher: string[]
+  rights: string[]
+  license: string[]
+  seeAlso: string[]              // rdfs:seeAlso
+  versionInfo?: string           // owl:versionInfo
+  issued?: string                // dct:issued
   created?: string
   modified?: string
   // Other properties
   otherProperties: OtherProperty[]
   topConceptCount?: number
+}
+
+interface NotationValue {
+  value: string
+  datatype?: string
 }
 
 interface LabelValue {

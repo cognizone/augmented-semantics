@@ -108,14 +108,16 @@ export function useSchemeData() {
         <${uri}> ?predicate ?value .
         FILTER (?predicate NOT IN (
           rdf:type,
-          skos:prefLabel, skos:altLabel, skos:hiddenLabel,
+          skos:prefLabel, skos:altLabel, skos:hiddenLabel, skos:notation,
           skos:definition, skos:scopeNote, skos:historyNote,
           skos:changeNote, skos:editorialNote, skos:note, skos:example,
           skos:hasTopConcept,
           skosxl:prefLabel, skosxl:altLabel, skosxl:hiddenLabel,
+          rdfs:label, rdfs:comment, rdfs:seeAlso,
           dct:title, dct:description,
-          dct:creator, dct:created, dct:modified,
-          dct:publisher, dct:rights, dct:license
+          dct:creator, dct:created, dct:modified, dct:issued,
+          dct:publisher, dct:rights, dct:license, cc:license,
+          owl:deprecated, owl:versionInfo
         ))
       }
     `)
@@ -173,11 +175,13 @@ export function useSchemeData() {
       WHERE {
         <${uri}> ?property ?value .
         FILTER (?property IN (
-          skos:prefLabel, skos:altLabel, skos:hiddenLabel,
+          skos:prefLabel, skos:altLabel, skos:hiddenLabel, skos:notation,
           skos:definition, skos:scopeNote, skos:historyNote,
           skos:changeNote, skos:editorialNote, skos:note, skos:example,
+          rdfs:label, rdfs:comment, rdfs:seeAlso,
           dct:title, dct:description, dct:creator, dct:created, dct:modified,
-          dct:publisher, dct:rights, dct:license
+          dct:issued, dct:publisher, dct:rights, dct:license, cc:license,
+          owl:deprecated, owl:versionInfo
         ))
       }
     `)
@@ -190,6 +194,8 @@ export function useSchemeData() {
         prefLabels: [],
         altLabels: [],
         hiddenLabels: [],
+        labels: [],
+        notations: [],
         definitions: [],
         scopeNotes: [],
         historyNotes: [],
@@ -197,12 +203,15 @@ export function useSchemeData() {
         editorialNotes: [],
         notes: [],
         examples: [],
+        comments: [],
         title: [],
         description: [],
         creator: [],
         publisher: [],
         rights: [],
         license: [],
+        ccLicense: [],
+        seeAlso: [],
         prefLabelsXL: [],
         altLabelsXL: [],
         hiddenLabelsXL: [],
@@ -255,9 +264,39 @@ export function useSchemeData() {
           if (!schemeDetails.rights.includes(val)) {
             schemeDetails.rights.push(val)
           }
+        } else if (prop.endsWith('ns#license')) {
+          // cc:license (Creative Commons)
+          if (!schemeDetails.ccLicense.includes(val)) {
+            schemeDetails.ccLicense.push(val)
+          }
         } else if (prop.endsWith('license')) {
+          // dct:license (Dublin Core)
           if (!schemeDetails.license.includes(val)) {
             schemeDetails.license.push(val)
+          }
+        } else if (prop.endsWith('#label')) {
+          // rdfs:label
+          schemeDetails.labels.push({ value: val, lang })
+        } else if (prop.endsWith('#comment')) {
+          // rdfs:comment
+          schemeDetails.comments.push({ value: val, lang })
+        } else if (prop.endsWith('notation')) {
+          // skos:notation
+          const datatype = binding.value?.datatype
+          schemeDetails.notations.push({ value: val, datatype })
+        } else if (prop.endsWith('issued')) {
+          // dct:issued
+          schemeDetails.issued = val
+        } else if (prop.endsWith('#deprecated')) {
+          // owl:deprecated
+          schemeDetails.deprecated = val === 'true' || val === '1'
+        } else if (prop.endsWith('versionInfo')) {
+          // owl:versionInfo
+          schemeDetails.versionInfo = val
+        } else if (prop.endsWith('#seeAlso')) {
+          // rdfs:seeAlso
+          if (!schemeDetails.seeAlso.includes(val)) {
+            schemeDetails.seeAlso.push(val)
           }
         }
       }

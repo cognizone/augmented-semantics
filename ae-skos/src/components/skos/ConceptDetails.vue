@@ -20,13 +20,14 @@
 import { ref, watch, computed } from 'vue'
 import { useConceptStore, useSettingsStore } from '../../stores'
 import { isValidURI } from '../../services'
-import { useDelayedLoading, useLabelResolver, useConceptData, useConceptNavigation, useClipboard, useResourceExport, useDeprecation } from '../../composables'
-import { getPredicateName, formatPropertyValue, getRefLabel, getUriFragment } from '../../utils/displayUtils'
-import Message from 'primevue/message'
-import ProgressSpinner from 'primevue/progressspinner'
-import Menu from 'primevue/menu'
-import XLLabelsGroup from '../common/XLLabelsGroup.vue'
+import { useDelayedLoading, useLabelResolver, useConceptData, useConceptNavigation, useResourceExport, useDeprecation, useElapsedTime } from '../../composables'
+import { getRefLabel, getUriFragment, formatDatatype } from '../../utils/displayUtils'
 import RawRdfDialog from '../common/RawRdfDialog.vue'
+import DetailsStates from '../common/DetailsStates.vue'
+import DetailsHeader from '../common/DetailsHeader.vue'
+import LabelsSection from '../common/LabelsSection.vue'
+import DocumentationSection from '../common/DocumentationSection.vue'
+import OtherPropertiesSection from '../common/OtherPropertiesSection.vue'
 
 const emit = defineEmits<{
   selectConcept: [uri: string]
@@ -37,15 +38,16 @@ const settingsStore = useSettingsStore()
 const { selectLabelWithXL, sortLabels, shouldShowLangTag } = useLabelResolver()
 const { details, loading, error, resolvedPredicates, loadDetails } = useConceptData()
 const { navigateTo, handleSchemeClick, isLocalScheme } = useConceptNavigation(emit)
-const { copyToClipboard } = useClipboard()
 const { exportAsJson, exportAsTurtle, exportAsCsv } = useResourceExport()
 const { showIndicator: showDeprecationIndicator } = useDeprecation()
 
 // Local state
 const showRawRdfDialog = ref(false)
 
-// Export menu
-const exportMenu = ref()
+// Track elapsed time when loading
+const loadingElapsed = useElapsedTime(loading)
+
+// Export menu items
 const exportMenuItems = [
   { label: 'Export as JSON', icon: 'pi pi-file', command: () => details.value && exportAsJson(details.value) },
   { label: 'Export as Turtle', icon: 'pi pi-code', command: () => details.value && exportAsTurtle(details.value.uri) },
@@ -74,12 +76,12 @@ const displayLang = computed(() => {
 
 // Should we show the language tag in header?
 const showHeaderLangTag = computed(() => {
-  return displayLang.value && shouldShowLangTag(displayLang.value)
+  return displayLang.value ? shouldShowLangTag(displayLang.value) : false
 })
 
 // Get display title (notation + label if both exist)
 const displayTitle = computed(() => {
-  if (!details.value) return null
+  if (!details.value) return ''
   const label = preferredLabel.value
   const notation = details.value.notations[0]?.value
 
@@ -89,11 +91,16 @@ const displayTitle = computed(() => {
   return notation || label || 'Unnamed Concept'
 })
 
+// Icon props based on whether concept has children
+const headerIcon = computed(() => details.value?.narrower?.length ? 'label' : 'circle')
+const headerIconClass = computed(() => details.value?.narrower?.length ? 'icon-label' : 'icon-leaf')
+const headerWrapperClass = computed(() => details.value?.narrower?.length ? '' : 'wrapper-leaf')
+
 // Factory for sorted label computeds
 const getSorted = <K extends keyof NonNullable<typeof details.value>>(field: K) =>
   computed(() => details.value ? sortLabels(details.value[field] as any) : [])
 
-// Sorted label arrays (preferred lang first, then fallback, then rest alphabetically)
+// Sorted label arrays
 const sortedPrefLabels = getSorted('prefLabels')
 const sortedAltLabels = getSorted('altLabels')
 const sortedHiddenLabels = getSorted('hiddenLabels')
@@ -105,16 +112,56 @@ const sortedEditorialNotes = getSorted('editorialNotes')
 const sortedNotes = getSorted('notes')
 const sortedExamples = getSorted('examples')
 
-// Documentation config for DRY template rendering
+// Label config for LabelsSection
+const labelConfig = computed(() => {
+  if (!details.value) return []
+  const config = []
+  if (details.value.prefLabels.length || details.value.prefLabelsXL.length) {
+    config.push({
+      label: 'Preferred',
+      values: sortedPrefLabels.value,
+      hasXL: (details.value.prefLabelsXL?.length ?? 0) > 0,
+      xlLabels: details.value.prefLabelsXL ?? [],
+      regularLabels: details.value.prefLabels ?? []
+    })
+  }
+  if (details.value.altLabels.length || details.value.altLabelsXL.length) {
+    config.push({
+      label: 'Alternative',
+      values: sortedAltLabels.value,
+      hasXL: (details.value.altLabelsXL?.length ?? 0) > 0,
+      xlLabels: details.value.altLabelsXL ?? [],
+      regularLabels: details.value.altLabels ?? []
+    })
+  }
+  if (details.value.hiddenLabels.length || details.value.hiddenLabelsXL.length) {
+    config.push({
+      label: 'Hidden',
+      values: sortedHiddenLabels.value,
+      hasXL: (details.value.hiddenLabelsXL?.length ?? 0) > 0,
+      xlLabels: details.value.hiddenLabelsXL ?? [],
+      regularLabels: details.value.hiddenLabels ?? [],
+      isHidden: true
+    })
+  }
+  return config
+})
+
+// Has any labels to show (for section visibility)
+const hasLabels = computed(() =>
+  labelConfig.value.length > 0 || (details.value?.notations?.length ?? 0) > 0
+)
+
+// Documentation config for DocumentationSection
 const documentationConfig = computed(() => [
-  { label: 'Definition', items: sortedDefinitions.value },
-  { label: 'Scope Note', items: sortedScopeNotes.value },
-  { label: 'History Note', items: sortedHistoryNotes.value },
-  { label: 'Change Note', items: sortedChangeNotes.value },
-  { label: 'Editorial Note', items: sortedEditorialNotes.value },
-  { label: 'Note', items: sortedNotes.value },
-  { label: 'Example', items: sortedExamples.value, class: 'example' },
-].filter(d => d.items.length > 0))
+  { label: 'Definition', values: sortedDefinitions.value },
+  { label: 'Scope Note', values: sortedScopeNotes.value },
+  { label: 'History Note', values: sortedHistoryNotes.value },
+  { label: 'Change Note', values: sortedChangeNotes.value },
+  { label: 'Editorial Note', values: sortedEditorialNotes.value },
+  { label: 'Note', values: sortedNotes.value },
+  { label: 'Example', values: sortedExamples.value, class: 'example' },
+].filter(d => d.values.length > 0))
 
 // Mappings config for DRY template rendering
 const mappingsConfig = computed(() => [
@@ -131,11 +178,15 @@ const sortedOtherProperties = computed(() => {
   return [...details.value.otherProperties].sort((a, b) => {
     const aResolved = resolvedPredicates.value.get(a.predicate)
     const bResolved = resolvedPredicates.value.get(b.predicate)
-    const aName = getPredicateName(a.predicate, aResolved)
-    const bName = getPredicateName(b.predicate, bResolved)
+    const aName = aResolved?.localName || a.predicate
+    const bName = bResolved?.localName || b.predicate
     return aName.localeCompare(bName)
   })
 })
+
+function clearError() {
+  error.value = null
+}
 
 // Watch for selected concept changes
 watch(
@@ -151,301 +202,155 @@ watch(
 
 <template>
   <div class="concept-details">
-    <!-- Loading state (delayed to prevent flicker) -->
-    <div v-if="showLoading" class="loading-container">
-      <ProgressSpinner style="width: 40px; height: 40px" />
-      <span>Loading details...</span>
-    </div>
+    <DetailsStates
+      :loading="loading"
+      :show-loading="showLoading"
+      :has-data="!!details"
+      :error="error"
+      loading-text="Loading details..."
+      empty-icon="info"
+      empty-title="No concept selected"
+      empty-subtitle="Select a concept from the tree or search"
+      :elapsed="loadingElapsed"
+      @clear-error="clearError"
+    >
+      <!-- Details content - wrapped in v-if because Vue evaluates slot expressions before child renders -->
+      <div v-if="details" class="details-content">
+        <DetailsHeader
+          :icon="headerIcon"
+          :icon-class="headerIconClass"
+          :wrapper-class="headerWrapperClass"
+          :title="displayTitle"
+          :uri="details.uri"
+          :lang-tag="displayLang || undefined"
+          :show-lang-tag="showHeaderLangTag"
+          :deprecated="details.deprecated && showDeprecationIndicator"
+          deprecated-tooltip="This concept is deprecated"
+          :export-menu-items="exportMenuItems"
+          @show-raw-rdf="showRawRdfDialog = true"
+        />
 
-    <!-- Empty state -->
-    <div v-else-if="!loading && !details && !error" class="empty-state">
-      <span class="material-symbols-outlined empty-icon">info</span>
-      <p>No concept selected</p>
-      <small>Select a concept from the tree or search</small>
-    </div>
-
-    <!-- Error state -->
-    <Message v-else-if="error" severity="error" :closable="true" @close="error = null">
-      {{ error }}
-    </Message>
-
-    <!-- Details -->
-    <div v-else-if="details" class="details-content">
-      <!-- Header -->
-      <div class="details-header">
-        <div class="header-icon-wrapper" :class="{ 'wrapper-leaf': !details.narrower?.length }">
-          <span v-if="details.narrower?.length" class="material-symbols-outlined header-icon icon-label">label</span>
-          <span v-else class="material-symbols-outlined header-icon icon-leaf">circle</span>
-        </div>
-        <div class="header-content">
-          <h2 class="concept-label">
-            {{ displayTitle }}
-            <span v-if="showHeaderLangTag" class="header-lang-tag">{{ displayLang }}</span>
-            <span v-if="details?.deprecated && showDeprecationIndicator" class="deprecation-badge" v-tooltip="'This concept is deprecated'">Deprecated</span>
-          </h2>
-          <div class="concept-uri">
-            <span class="uri-text mono">{{ details.uri }}</span>
-            <button
-              class="copy-btn"
-              title="Copy URI"
-              @click="copyToClipboard(details.uri, 'URI')"
-            >
-              <span class="material-symbols-outlined icon-sm">content_copy</span>
-            </button>
-          </div>
-        </div>
-        <div class="header-actions">
-          <button class="action-btn" title="View RDF" @click="showRawRdfDialog = true">
-            <span class="material-symbols-outlined">code</span>
-          </button>
-          <button class="action-btn" title="Export" @click="(event: Event) => exportMenu.toggle(event)">
-            <span class="material-symbols-outlined">download</span>
-          </button>
-          <a v-if="isValidURI(details.uri)" :href="details.uri" target="_blank" class="action-btn" title="Open in new tab">
-            <span class="material-symbols-outlined">open_in_new</span>
-          </a>
-          <Menu ref="exportMenu" :model="exportMenuItems" :popup="true" />
-        </div>
-      </div>
-
-      <!-- Labels Section - only shown if any label or notation exists -->
-      <section v-if="details.prefLabels.length || details.altLabels.length || details.hiddenLabels.length || details.notations.length || details.prefLabelsXL.length || details.altLabelsXL.length || details.hiddenLabelsXL.length" class="details-section">
-        <h3 class="section-title">
-          <span class="material-symbols-outlined section-icon">translate</span>
-          Labels
-        </h3>
-
-        <div v-if="details.prefLabels.length || details.prefLabelsXL.length" class="property-row">
-          <label>Preferred</label>
-          <div class="label-values">
-            <span
-              v-for="(label, i) in sortedPrefLabels"
-              :key="i"
-              class="label-value"
-            >
-              {{ label.value }}
-              <span v-if="label.lang" class="lang-tag">{{ label.lang }}</span>
-            </span>
-          </div>
-          <XLLabelsGroup
-            v-if="details.prefLabelsXL.length"
-            :labels="details.prefLabelsXL"
-            :regular-labels="details.prefLabels"
-          />
-        </div>
-
-        <div v-if="details.altLabels.length || details.altLabelsXL.length" class="property-row">
-          <label>Alternative</label>
-          <div class="label-values">
-            <span
-              v-for="(label, i) in sortedAltLabels"
-              :key="i"
-              class="label-value"
-            >
-              {{ label.value }}
-              <span v-if="label.lang" class="lang-tag">{{ label.lang }}</span>
-            </span>
-          </div>
-          <XLLabelsGroup
-            v-if="details.altLabelsXL.length"
-            :labels="details.altLabelsXL"
-            :regular-labels="details.altLabels"
-          />
-        </div>
-
-        <div v-if="details.hiddenLabels.length || details.hiddenLabelsXL.length" class="property-row">
-          <label>Hidden</label>
-          <div class="label-values">
-            <span
-              v-for="(label, i) in sortedHiddenLabels"
-              :key="i"
-              class="label-value hidden-label"
-            >
-              {{ label.value }}
-              <span v-if="label.lang" class="lang-tag">{{ label.lang }}</span>
-            </span>
-          </div>
-          <XLLabelsGroup
-            v-if="details.hiddenLabelsXL.length"
-            :labels="details.hiddenLabelsXL"
-            :regular-labels="details.hiddenLabels"
-          />
-        </div>
-
-        <div v-if="details.notations.length" class="property-row">
-          <label>Notation</label>
-          <div class="label-values">
-            <span v-for="(n, i) in details.notations" :key="i" class="notation-wrapper">
-              <code class="notation">{{ n.value }}</code>
-              <span v-if="settingsStore.showDatatypes && n.datatype" class="datatype-tag">{{ n.datatype }}</span>
-            </span>
-          </div>
-        </div>
-      </section>
-
-      <!-- Documentation Section -->
-      <section v-if="details.definitions.length || details.scopeNotes.length || details.historyNotes.length || details.changeNotes.length || details.editorialNotes.length || details.notes.length || details.examples.length" class="details-section">
-        <h3 class="section-title">
-          <span class="material-symbols-outlined section-icon">description</span>
-          Documentation
-        </h3>
-
-        <div v-for="doc in documentationConfig" :key="doc.label" class="property-row">
-          <label>{{ doc.label }}</label>
-          <div class="doc-values">
-            <p
-              v-for="(item, i) in doc.items"
-              :key="i"
-              class="doc-value"
-              :class="doc.class"
-            >
-              <span v-if="item.lang" class="lang-tag lang-tag-first">{{ item.lang }}</span>
-              <span class="doc-text">{{ item.value }}</span>
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <!-- Hierarchy Section -->
-      <section v-if="details.broader.length || details.narrower.length" class="details-section">
-        <h3 class="section-title">
-          <span class="material-symbols-outlined section-icon">account_tree</span>
-          Hierarchy
-        </h3>
-
-        <div v-if="details.broader.length" class="property-row">
-          <label>Broader</label>
-          <div class="concept-chips">
-            <span
-              v-for="ref in details.broader"
-              :key="ref.uri"
-              class="concept-chip clickable"
-              @click="navigateTo(ref)"
-            >
-              {{ getRefLabel(ref) }}<span v-if="ref.lang && shouldShowLangTag(ref.lang)" class="lang-tag">{{ ref.lang }}</span>
-            </span>
-          </div>
-        </div>
-
-        <div v-if="details.narrower.length" class="property-row">
-          <label>Narrower</label>
-          <div class="concept-chips">
-            <span
-              v-for="ref in details.narrower"
-              :key="ref.uri"
-              class="concept-chip clickable"
-              @click="navigateTo(ref)"
-            >
-              {{ getRefLabel(ref) }}<span v-if="ref.lang && shouldShowLangTag(ref.lang)" class="lang-tag">{{ ref.lang }}</span>
-            </span>
-          </div>
-        </div>
-      </section>
-
-      <!-- Relations Section -->
-      <section v-if="details.related.length" class="details-section">
-        <h3 class="section-title">
-          <span class="material-symbols-outlined section-icon">link</span>
-          Relations
-        </h3>
-
-        <div class="property-row">
-          <label>Related</label>
-          <div class="concept-chips">
-            <span
-              v-for="ref in details.related"
-              :key="ref.uri"
-              class="concept-chip clickable"
-              @click="navigateTo(ref)"
-            >
-              {{ getRefLabel(ref) }}<span v-if="ref.lang && shouldShowLangTag(ref.lang)" class="lang-tag">{{ ref.lang }}</span>
-            </span>
-          </div>
-        </div>
-      </section>
-
-      <!-- Mappings Section -->
-      <section v-if="details.exactMatch.length || details.closeMatch.length || details.broadMatch.length || details.narrowMatch.length || details.relatedMatch.length" class="details-section">
-        <h3 class="section-title">
-          <span class="material-symbols-outlined section-icon">swap_horiz</span>
-          Mappings
-        </h3>
-
-        <div v-for="mapping in mappingsConfig" :key="mapping.label" class="property-row">
-          <label>{{ mapping.label }}</label>
-          <div class="mapping-links">
-            <template v-for="uri in mapping.uris" :key="uri">
-              <a v-if="isValidURI(uri)" :href="uri" target="_blank" class="mapping-link">
-                {{ getUriFragment(uri) }}
-                <span class="material-symbols-outlined link-icon">open_in_new</span>
-              </a>
-              <span v-else class="mapping-text">{{ getUriFragment(uri) }}</span>
-            </template>
-          </div>
-        </div>
-      </section>
-
-      <!-- Scheme Section -->
-      <section v-if="details.inScheme.length" class="details-section">
-        <h3 class="section-title">
-          <span class="material-symbols-outlined section-icon">schema</span>
-          Schemes
-        </h3>
-        <div class="property-row">
-          <label>In Scheme</label>
-          <div class="concept-chips">
-            <span
-              v-for="ref in details.inScheme"
-              :key="ref.uri"
-              :class="['concept-chip', { clickable: isLocalScheme(ref.uri) }]"
-              @click="handleSchemeClick(ref)"
-            >
-              {{ getRefLabel(ref) }}<span v-if="ref.lang && shouldShowLangTag(ref.lang)" class="lang-tag">{{ ref.lang }}</span>
-            </span>
-          </div>
-        </div>
-      </section>
-
-      <!-- Other Properties Section -->
-      <section v-if="details.otherProperties.length" class="details-section">
-        <h3 class="section-title">
-          <span class="material-symbols-outlined section-icon">info</span>
-          Other Properties
-        </h3>
-        <div v-for="prop in sortedOtherProperties" :key="prop.predicate" class="property-row">
-          <label class="predicate-label">
-            <a
-              v-if="isValidURI(prop.predicate)"
-              :href="prop.predicate"
-              target="_blank"
-              class="predicate-link"
-            >
-              {{ getPredicateName(prop.predicate, resolvedPredicates.get(prop.predicate)) }}
-              <span class="material-symbols-outlined link-icon">open_in_new</span>
-            </a>
-            <span v-else>{{ getPredicateName(prop.predicate, resolvedPredicates.get(prop.predicate)) }}</span>
-          </label>
-          <div class="other-values">
-            <template v-for="(val, i) in prop.values" :key="i">
-              <a
-                v-if="val.isUri && isValidURI(val.value)"
-                :href="val.value"
-                target="_blank"
-                class="other-value uri-value"
-              >
-                {{ getUriFragment(val.value) }}
-                <span class="material-symbols-outlined link-icon">open_in_new</span>
-              </a>
-              <span v-else class="other-value">
-                {{ formatPropertyValue(val.value, val.datatype) }}
-                <span v-if="val.lang" class="lang-tag">{{ val.lang }}</span>
-                <span v-else-if="val.datatype" class="datatype-tag">{{ val.datatype }}</span>
+        <!-- Labels Section with Notation slot -->
+        <LabelsSection v-if="hasLabels" :items="labelConfig">
+          <div v-if="details.notations.length" class="property-row">
+            <label>Notation</label>
+            <div class="label-values">
+              <span v-for="(n, i) in details.notations" :key="i" class="notation-wrapper">
+                <code class="notation">{{ n.value }}</code>
+                <span v-if="settingsStore.showDatatypes && n.datatype" class="datatype-tag">{{ formatDatatype(n.datatype) }}</span>
               </span>
-            </template>
+            </div>
           </div>
-        </div>
-      </section>
-    </div>
+        </LabelsSection>
+
+        <DocumentationSection :items="documentationConfig" />
+
+        <!-- Hierarchy Section (concept-specific) -->
+        <section v-if="details.broader.length || details.narrower.length" class="details-section">
+          <h3 class="section-title">
+            <span class="material-symbols-outlined section-icon">account_tree</span>
+            Hierarchy
+          </h3>
+
+          <div v-if="details.broader.length" class="property-row">
+            <label>Broader</label>
+            <div class="concept-chips">
+              <span
+                v-for="ref in details.broader"
+                :key="ref.uri"
+                class="concept-chip clickable"
+                @click="navigateTo(ref)"
+              >
+                {{ getRefLabel(ref) }}<span v-if="ref.lang && shouldShowLangTag(ref.lang)" class="lang-tag">{{ ref.lang }}</span>
+              </span>
+            </div>
+          </div>
+
+          <div v-if="details.narrower.length" class="property-row">
+            <label>Narrower</label>
+            <div class="concept-chips">
+              <span
+                v-for="ref in details.narrower"
+                :key="ref.uri"
+                class="concept-chip clickable"
+                @click="navigateTo(ref)"
+              >
+                {{ getRefLabel(ref) }}<span v-if="ref.lang && shouldShowLangTag(ref.lang)" class="lang-tag">{{ ref.lang }}</span>
+              </span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Relations Section (concept-specific) -->
+        <section v-if="details.related.length" class="details-section">
+          <h3 class="section-title">
+            <span class="material-symbols-outlined section-icon">link</span>
+            Relations
+          </h3>
+
+          <div class="property-row">
+            <label>Related</label>
+            <div class="concept-chips">
+              <span
+                v-for="ref in details.related"
+                :key="ref.uri"
+                class="concept-chip clickable"
+                @click="navigateTo(ref)"
+              >
+                {{ getRefLabel(ref) }}<span v-if="ref.lang && shouldShowLangTag(ref.lang)" class="lang-tag">{{ ref.lang }}</span>
+              </span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Mappings Section (concept-specific) -->
+        <section v-if="mappingsConfig.length" class="details-section">
+          <h3 class="section-title">
+            <span class="material-symbols-outlined section-icon">swap_horiz</span>
+            Mappings
+          </h3>
+
+          <div v-for="mapping in mappingsConfig" :key="mapping.label" class="property-row">
+            <label>{{ mapping.label }}</label>
+            <div class="mapping-links">
+              <template v-for="uri in mapping.uris" :key="uri">
+                <a v-if="isValidURI(uri)" :href="uri" target="_blank" class="mapping-link">
+                  {{ getUriFragment(uri) }}
+                  <span class="material-symbols-outlined link-icon">open_in_new</span>
+                </a>
+                <span v-else class="mapping-text">{{ getUriFragment(uri) }}</span>
+              </template>
+            </div>
+          </div>
+        </section>
+
+        <!-- Scheme Section (concept-specific) -->
+        <section v-if="details.inScheme.length" class="details-section">
+          <h3 class="section-title">
+            <span class="material-symbols-outlined section-icon">schema</span>
+            Schemes
+          </h3>
+          <div class="property-row">
+            <label>In Scheme</label>
+            <div class="concept-chips">
+              <span
+                v-for="ref in details.inScheme"
+                :key="ref.uri"
+                :class="['concept-chip', { clickable: isLocalScheme(ref.uri) }]"
+                @click="handleSchemeClick(ref)"
+              >
+                {{ getRefLabel(ref) }}<span v-if="ref.lang && shouldShowLangTag(ref.lang)" class="lang-tag">{{ ref.lang }}</span>
+              </span>
+            </div>
+          </div>
+        </section>
+
+        <OtherPropertiesSection
+          :properties="sortedOtherProperties"
+          :resolved-predicates="resolvedPredicates"
+        />
+      </div>
+    </DetailsStates>
 
     <!-- Raw RDF Dialog -->
     <RawRdfDialog
@@ -464,32 +369,6 @@ watch(
   overflow: hidden;
 }
 
-.loading-container,
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  padding: 2rem;
-  color: var(--ae-text-secondary);
-  flex: 1;
-}
-
-.empty-icon {
-  font-size: 2.5rem;
-  opacity: 0.5;
-}
-
-.empty-state p {
-  margin: 0;
-  font-weight: 500;
-}
-
-.empty-state small {
-  font-size: 0.75rem;
-}
-
 .details-content {
   flex: 1;
   overflow: auto;
@@ -497,108 +376,7 @@ watch(
   max-width: 900px;
 }
 
-/* Header */
-.details-header {
-  display: flex;
-  align-items: flex-start;
-  gap: 1rem;
-  margin-bottom: 2rem;
-}
-
-.header-icon-wrapper {
-  padding: 0.75rem;
-  background: color-mix(in srgb, var(--ae-icon-label) 15%, transparent);
-  border: 1px solid color-mix(in srgb, var(--ae-icon-label) 25%, transparent);
-  border-radius: 0.75rem;
-}
-
-.header-icon-wrapper.wrapper-leaf {
-  background: color-mix(in srgb, var(--ae-icon-leaf) 15%, transparent);
-  border-color: color-mix(in srgb, var(--ae-icon-leaf) 25%, transparent);
-}
-
-.header-icon {
-  font-size: 2.5rem;
-}
-
-.header-content {
-  flex: 1;
-  min-width: 0;
-}
-
-.concept-label {
-  margin: 0 0 0.375rem 0;
-  font-size: 1.375rem;
-  font-weight: 600;
-  color: var(--ae-text-primary);
-  word-break: break-word;
-}
-
-.header-lang-tag {
-  font-size: 0.625rem;
-  font-weight: normal;
-  background: var(--ae-bg-hover);
-  color: var(--ae-text-secondary);
-  padding: 0.1rem 0.4rem;
-  border-radius: 3px;
-  margin-left: 0.5rem;
-  vertical-align: middle;
-}
-
-.deprecation-badge {
-  font-size: 0.625rem;
-  font-weight: 600;
-  background: color-mix(in srgb, var(--ae-status-warning) 20%, transparent);
-  color: var(--ae-status-warning);
-  padding: 0.1rem 0.4rem;
-  border-radius: 3px;
-  margin-left: 0.5rem;
-  vertical-align: middle;
-  text-transform: uppercase;
-}
-
-.concept-uri {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.125rem 0.375rem;
-  background: var(--ae-bg-elevated);
-  border: 1px solid var(--ae-border-color);
-  border-radius: 3px;
-}
-
-.uri-text {
-  font-size: 0.6875rem;
-  color: var(--ae-text-secondary);
-  word-break: break-all;
-}
-
-.copy-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  padding: 0;
-  background: none;
-  border: none;
-  border-radius: 3px;
-  cursor: pointer;
-  color: var(--ae-text-secondary);
-  transition: color 0.15s;
-}
-
-.copy-btn:hover {
-  color: var(--ae-text-primary);
-}
-
-.header-actions {
-  display: flex;
-  gap: 0.25rem;
-  flex-shrink: 0;
-}
-
-/* Sections */
+/* Concept-specific sections */
 .details-section {
   margin-bottom: 2rem;
 }
@@ -609,7 +387,7 @@ watch(
 
 .property-row label {
   display: block;
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   font-weight: 500;
   color: var(--ae-text-secondary);
   margin-bottom: 0.25rem;
@@ -619,38 +397,6 @@ watch(
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
-  margin-left: 0.75rem;
-}
-
-.label-value {
-  font-size: 0.875rem;
-}
-
-.label-value:not(:last-child)::after {
-  content: '·';
-  margin-left: 0.5rem;
-  color: var(--ae-text-muted);
-}
-
-.label-value.hidden-label {
-  font-style: italic;
-  color: var(--ae-text-secondary);
-}
-
-.datatype-tag {
-  font-size: 0.625rem;
-  font-family: var(--ae-font-mono);
-  background: var(--ae-bg-hover);
-  color: var(--ae-text-secondary);
-  padding: 0.1rem 0.3rem;
-  border-radius: 3px;
-  margin-left: 0.25rem;
-  vertical-align: middle;
-}
-
-.lang-tag.lang-tag-first {
-  margin-left: 0;
-  margin-right: 0.5rem;
 }
 
 .notation-wrapper {
@@ -667,42 +413,10 @@ watch(
   border: 1px solid var(--ae-border-color);
 }
 
-.doc-values {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  margin-left: 0.75rem;
-}
-
-.doc-value {
-  margin: 0;
-  font-size: 0.875rem;
-  line-height: 1.5;
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 0;
-}
-
-.doc-value .lang-tag-first {
-  grid-column: 1;
-  align-self: start;
-  margin-top: 0.1rem;
-}
-
-.doc-value .doc-text {
-  grid-column: 2;
-}
-
-.doc-value.example {
-  font-style: italic;
-  color: var(--ae-text-secondary);
-}
-
 .concept-chips {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
-  margin-left: 0.75rem;
 }
 
 .concept-chip {
@@ -728,7 +442,6 @@ watch(
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
-  margin-left: 0.75rem;
 }
 
 .mapping-link {
@@ -741,51 +454,5 @@ watch(
 
 .link-icon {
   font-size: 14px;
-}
-
-/* Other Properties */
-.predicate-label {
-  font-family: var(--ae-font-mono);
-  font-size: 0.8125rem;
-}
-
-.predicate-link {
-  color: var(--ae-accent);
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-
-.predicate-link:hover {
-  text-decoration: underline;
-}
-
-.other-values {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-left: 0.75rem;
-}
-
-.other-value {
-  font-size: 0.875rem;
-}
-
-.other-value:not(:last-child)::after {
-  content: ' · ';
-  color: var(--ae-text-muted);
-}
-
-.other-value.uri-value {
-  color: var(--ae-accent);
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-
-.other-value.uri-value:hover {
-  text-decoration: underline;
 }
 </style>

@@ -223,10 +223,10 @@ onMounted(() => {
     <Splitter class="main-splitter" :gutterSize="4">
       <!-- Left Panel: Tree, Search, History -->
       <SplitterPanel
+        v-if="showSidebar"
         :size="30"
         :minSize="20"
         class="left-panel"
-        v-show="showSidebar"
       >
         <Tabs v-model:value="activeTab" class="sidebar-tabs">
           <TabList>

@@ -209,6 +209,135 @@ describe('useSchemeData', () => {
       expect(details.value?.examples).toHaveLength(1)
     })
 
+    it('handles rdfs:label and rdfs:comment', async () => {
+      ;(executeSparql as Mock).mockResolvedValueOnce({
+        results: {
+          bindings: [
+            { property: { value: 'http://www.w3.org/2000/01/rdf-schema#label' }, value: { value: 'RDFS Label', 'xml:lang': 'en' } },
+            { property: { value: 'http://www.w3.org/2000/01/rdf-schema#comment' }, value: { value: 'RDFS Comment', 'xml:lang': 'en' } },
+          ],
+        },
+      })
+      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
+      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
+
+      const { loadDetails, details } = useSchemeData()
+      await loadDetails('http://example.org/scheme/1')
+
+      expect(details.value?.labels).toHaveLength(1)
+      expect(details.value?.labels[0].value).toBe('RDFS Label')
+      expect(details.value?.comments).toHaveLength(1)
+      expect(details.value?.comments[0].value).toBe('RDFS Comment')
+    })
+
+    it('handles skos:notation with datatype', async () => {
+      ;(executeSparql as Mock).mockResolvedValueOnce({
+        results: {
+          bindings: [
+            { property: { value: 'http://www.w3.org/2004/02/skos/core#notation' }, value: { value: 'ABC123', datatype: 'http://example.org/notationType' } },
+          ],
+        },
+      })
+      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
+      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
+
+      const { loadDetails, details } = useSchemeData()
+      await loadDetails('http://example.org/scheme/1')
+
+      expect(details.value?.notations).toHaveLength(1)
+      expect(details.value?.notations[0].value).toBe('ABC123')
+      expect(details.value?.notations[0].datatype).toBe('http://example.org/notationType')
+    })
+
+    it('handles dct:issued', async () => {
+      ;(executeSparql as Mock).mockResolvedValueOnce({
+        results: {
+          bindings: [
+            { property: { value: 'http://purl.org/dc/terms/issued' }, value: { value: '2023-05-15' } },
+          ],
+        },
+      })
+      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
+      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
+
+      const { loadDetails, details } = useSchemeData()
+      await loadDetails('http://example.org/scheme/1')
+
+      expect(details.value?.issued).toBe('2023-05-15')
+    })
+
+    it('handles owl:deprecated', async () => {
+      ;(executeSparql as Mock).mockResolvedValueOnce({
+        results: {
+          bindings: [
+            { property: { value: 'http://www.w3.org/2002/07/owl#deprecated' }, value: { value: 'true' } },
+          ],
+        },
+      })
+      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
+      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
+
+      const { loadDetails, details } = useSchemeData()
+      await loadDetails('http://example.org/scheme/1')
+
+      expect(details.value?.deprecated).toBe(true)
+    })
+
+    it('handles owl:versionInfo', async () => {
+      ;(executeSparql as Mock).mockResolvedValueOnce({
+        results: {
+          bindings: [
+            { property: { value: 'http://www.w3.org/2002/07/owl#versionInfo' }, value: { value: '1.2.3' } },
+          ],
+        },
+      })
+      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
+      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
+
+      const { loadDetails, details } = useSchemeData()
+      await loadDetails('http://example.org/scheme/1')
+
+      expect(details.value?.versionInfo).toBe('1.2.3')
+    })
+
+    it('handles rdfs:seeAlso', async () => {
+      ;(executeSparql as Mock).mockResolvedValueOnce({
+        results: {
+          bindings: [
+            { property: { value: 'http://www.w3.org/2000/01/rdf-schema#seeAlso' }, value: { value: 'http://example.org/related1' } },
+            { property: { value: 'http://www.w3.org/2000/01/rdf-schema#seeAlso' }, value: { value: 'http://example.org/related2' } },
+          ],
+        },
+      })
+      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
+      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
+
+      const { loadDetails, details } = useSchemeData()
+      await loadDetails('http://example.org/scheme/1')
+
+      expect(details.value?.seeAlso).toHaveLength(2)
+      expect(details.value?.seeAlso).toContain('http://example.org/related1')
+      expect(details.value?.seeAlso).toContain('http://example.org/related2')
+    })
+
+    it('deduplicates rdfs:seeAlso', async () => {
+      ;(executeSparql as Mock).mockResolvedValueOnce({
+        results: {
+          bindings: [
+            { property: { value: 'http://www.w3.org/2000/01/rdf-schema#seeAlso' }, value: { value: 'http://example.org/related1' } },
+            { property: { value: 'http://www.w3.org/2000/01/rdf-schema#seeAlso' }, value: { value: 'http://example.org/related1' } },
+          ],
+        },
+      })
+      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
+      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
+
+      const { loadDetails, details } = useSchemeData()
+      await loadDetails('http://example.org/scheme/1')
+
+      expect(details.value?.seeAlso).toHaveLength(1)
+    })
+
     it('sets error on query failure', async () => {
       ;(executeSparql as Mock).mockRejectedValueOnce(new Error('Network error'))
 

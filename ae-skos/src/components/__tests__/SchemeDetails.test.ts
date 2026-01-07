@@ -96,6 +96,32 @@ describe('SchemeDetails', () => {
           Menu: { template: '<div class="p-menu"></div>', props: ['model', 'popup'] },
           XLLabelsGroup: { template: '<div class="xl-labels-group"></div>', props: ['xlLabels', 'regularLabels', 'title', 'showHidden'] },
           RawRdfDialog: { template: '<div class="raw-rdf-dialog" v-if="visible"></div>', props: ['visible', 'resourceUri'] },
+          // Shared components
+          DetailsStates: {
+            template: `<div class="details-states">
+              <div v-if="loading" class="loading-state"></div>
+              <div v-else-if="error" class="error-state"><div class="p-message p-message-error">{{ error }}</div></div>
+              <div v-else-if="!hasData" class="empty-state">{{ emptyTitle }}</div>
+              <slot v-else />
+            </div>`,
+            props: ['loading', 'showLoading', 'hasData', 'error', 'loadingText', 'emptyIcon', 'emptyTitle', 'emptySubtitle', 'elapsed'],
+          },
+          DetailsHeader: {
+            template: '<div class="details-header"><h2>{{ title }}</h2><span class="uri">{{ uri }}</span></div>',
+            props: ['icon', 'iconClass', 'wrapperClass', 'title', 'uri', 'langTag', 'showLangTag', 'deprecated', 'deprecatedTooltip', 'exportMenuItems'],
+          },
+          LabelsSection: {
+            template: '<div class="labels-section"><template v-for="item in items" :key="item.label"><span v-for="(v, i) in item.values" :key="i">{{ v.value }}</span></template><slot /></div>',
+            props: ['items', 'title', 'icon'],
+          },
+          DocumentationSection: {
+            template: '<div class="documentation-section"><template v-for="item in items" :key="item.label"><span v-for="(v, i) in item.values" :key="i">{{ v.value }}</span></template></div>',
+            props: ['items', 'title', 'icon'],
+          },
+          OtherPropertiesSection: {
+            template: '<div class="other-properties-section"></div>',
+            props: ['properties', 'resolvedPredicates', 'title', 'icon'],
+          },
         },
       },
     })
@@ -110,7 +136,7 @@ describe('SchemeDetails', () => {
     it('shows empty state when no scheme viewed', () => {
       const wrapper = mountSchemeDetails()
       expect(wrapper.find('.empty-state').exists()).toBe(true)
-      expect(wrapper.text()).toContain('Select a scheme')
+      expect(wrapper.text()).toContain('No scheme selected')
     })
   })
 
@@ -147,20 +173,27 @@ describe('SchemeDetails', () => {
         prefLabels: [{ value: 'Test Scheme', lang: 'en' }],
         altLabels: [],
         hiddenLabels: [],
+        labels: [],
+        notations: [],
         definitions: [{ value: 'A test scheme definition', lang: 'en' }],
         scopeNotes: [],
         historyNotes: [],
         changeNotes: [],
         editorialNotes: [],
+        notes: [],
         examples: [],
+        comments: [],
         title: [{ value: 'DC Title', lang: 'en' }],
         description: [{ value: 'DC Description', lang: 'en' }],
         creator: ['http://example.org/person/1'],
         created: '2024-01-01',
         modified: '2024-06-15',
+        issued: '2024-01-01',
         publisher: [],
         rights: [],
         license: [],
+        ccLicense: [],
+        seeAlso: [],
         prefLabelsXL: [],
         altLabelsXL: [],
         hiddenLabelsXL: [],
@@ -207,18 +240,24 @@ describe('SchemeDetails', () => {
         prefLabels: [{ value: 'Test Scheme', lang: 'en' }],
         altLabels: [],
         hiddenLabels: [],
+        labels: [],
+        notations: [],
         definitions: [],
         scopeNotes: [],
         historyNotes: [],
         changeNotes: [],
         editorialNotes: [],
+        notes: [],
         examples: [],
+        comments: [],
         title: [],
         description: [],
         creator: [],
         publisher: [],
         rights: [],
         license: [],
+        ccLicense: [],
+        seeAlso: [],
         prefLabelsXL: [],
         altLabelsXL: [],
         hiddenLabelsXL: [],
