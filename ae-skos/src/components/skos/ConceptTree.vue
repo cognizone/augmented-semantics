@@ -348,7 +348,17 @@ function goToUri() {
   // Sanitize: trim whitespace and remove accidental < > from turtle/sparql copies
   const uri = gotoUri.value.trim().replace(/^<|>$/g, '')
   if (uri) {
-    selectConcept(uri)
+    // Check if this URI is a known scheme
+    const isScheme = schemeStore.schemes.some(s => s.uri === uri)
+    if (isScheme) {
+      // Select the scheme in the dropdown (triggers tree loading via watcher)
+      schemeStore.selectScheme(uri)
+      // Show scheme details on the right
+      schemeStore.viewScheme(uri)
+    } else {
+      // Treat as a concept
+      selectConcept(uri)
+    }
     gotoUri.value = ''
   }
 }
