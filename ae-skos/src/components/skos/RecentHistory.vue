@@ -10,6 +10,7 @@
 import { computed } from 'vue'
 import { useConceptStore } from '../../stores'
 import { useLabelResolver } from '../../composables'
+import { useConfirm } from 'primevue/useconfirm'
 import Listbox from 'primevue/listbox'
 
 import type { HistoryEntry } from '../../types'
@@ -20,6 +21,7 @@ const emit = defineEmits<{
 
 const conceptStore = useConceptStore()
 const { shouldShowLangTag } = useLabelResolver()
+const confirm = useConfirm()
 
 // Computed
 const history = computed(() => conceptStore.recentHistory)
@@ -47,9 +49,17 @@ function selectItem(entry: HistoryEntry) {
   emit('selectConcept', entry)
 }
 
-// Clear history
+// Clear history with confirmation
 function clearHistory() {
-  conceptStore.clearHistory()
+  confirm.require({
+    message: 'Clear all recent history?',
+    header: 'Confirm',
+    icon: 'pi pi-exclamation-triangle',
+    acceptClass: 'p-button-danger',
+    accept: () => {
+      conceptStore.clearHistory()
+    }
+  })
 }
 </script>
 
@@ -150,7 +160,7 @@ function clearHistory() {
 
 .clear-btn:hover {
   background: var(--ae-bg-hover);
-  color: var(--ae-text-primary);
+  color: var(--ae-status-error);
 }
 
 .empty-state {
