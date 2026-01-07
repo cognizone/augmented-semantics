@@ -7,7 +7,7 @@
  * @see /spec/ae-skos/sko04-ConceptDetails.md
  */
 import { ref, type Ref } from 'vue'
-import { useEndpointStore, useLanguageStore } from '../stores'
+import { useEndpointStore, useLanguageStore, useSchemeStore, useConceptStore } from '../stores'
 import { executeSparql, withPrefixes, logger, resolveUris, formatQualifiedName } from '../services'
 import { useDeprecation } from './useDeprecation'
 import type { ConceptDetails } from '../types'
@@ -15,6 +15,7 @@ import type { ConceptDetails } from '../types'
 export function useConceptData() {
   const endpointStore = useEndpointStore()
   const languageStore = useLanguageStore()
+  const schemeStore = useSchemeStore()
   const { isDeprecatedFromProperties } = useDeprecation()
 
   // State
@@ -253,7 +254,7 @@ export function useConceptData() {
           rdf:type,
           skos:prefLabel, skos:altLabel, skos:hiddenLabel, skos:notation,
           skos:definition, skos:scopeNote, skos:historyNote,
-          skos:changeNote, skos:editorialNote, skos:example,
+          skos:changeNote, skos:editorialNote, skos:note, skos:example,
           skos:broader, skos:narrower, skos:related,
           skos:inScheme, skos:exactMatch, skos:closeMatch,
           skos:broadMatch, skos:narrowMatch, skos:relatedMatch,
@@ -323,6 +324,33 @@ export function useConceptData() {
   }
 
   /**
+   * Auto-select scheme if concept belongs to a different scheme than currently selected.
+   * This ensures the tree view stays in sync when navigating via "go to URI".
+   */
+  function autoSelectSchemeIfNeeded(inSchemeRefs: Array<{ uri: string }>) {
+    if (inSchemeRefs.length === 0) return
+
+    const inSchemeUris = inSchemeRefs.map(s => s.uri)
+
+    // If current scheme is already one of concept's schemes, do nothing
+    if (schemeStore.selectedUri && inSchemeUris.includes(schemeStore.selectedUri)) {
+      return
+    }
+
+    // Find first inScheme that exists in available schemes
+    const validScheme = inSchemeUris.find(uri =>
+      schemeStore.schemes.some(s => s.uri === uri)
+    )
+
+    if (validScheme) {
+      logger.info('useConceptData', 'Auto-selecting scheme from concept inScheme', {
+        scheme: validScheme
+      })
+      schemeStore.selectScheme(validScheme)
+    }
+  }
+
+  /**
    * Load complete concept details
    */
   async function loadDetails(uri: string): Promise<void> {
@@ -339,10 +367,11 @@ export function useConceptData() {
       WHERE {
         <${uri}> ?property ?value .
         FILTER (?property IN (
+          rdf:type,
           skos:prefLabel, skos:altLabel, skos:hiddenLabel,
           rdfs:label, dct:title,
           skos:definition, skos:scopeNote, skos:historyNote,
-          skos:changeNote, skos:editorialNote, skos:example,
+          skos:changeNote, skos:editorialNote, skos:note, skos:example,
           skos:notation, skos:broader, skos:narrower, skos:related,
           skos:inScheme, skos:exactMatch, skos:closeMatch,
           skos:broadMatch, skos:narrowMatch, skos:relatedMatch
@@ -363,6 +392,7 @@ export function useConceptData() {
         historyNotes: [],
         changeNotes: [],
         editorialNotes: [],
+        notes: [],
         examples: [],
         notations: [],
         broader: [],
@@ -380,11 +410,20 @@ export function useConceptData() {
         otherProperties: [],
       }
 
+      // Collect rdf:type values to detect ConceptScheme
+      const types: string[] = []
+
       // Process results
       for (const binding of results.results.bindings) {
         const prop = binding.property?.value || ''
         const val = binding.value?.value || ''
         const lang = binding.value?.['xml:lang']
+
+        // Collect types for later checking
+        if (prop === 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type') {
+          types.push(val)
+          continue
+        }
 
         if (prop.endsWith('prefLabel')) {
           conceptDetails.prefLabels.push({ value: val, lang })
@@ -408,6 +447,8 @@ export function useConceptData() {
           conceptDetails.changeNotes.push({ value: val, lang })
         } else if (prop.endsWith('editorialNote')) {
           conceptDetails.editorialNotes.push({ value: val, lang })
+        } else if (prop.endsWith('#note')) {
+          conceptDetails.notes.push({ value: val, lang })
         } else if (prop.endsWith('example')) {
           conceptDetails.examples.push({ value: val, lang })
         } else if (prop.endsWith('notation')) {
@@ -454,6 +495,16 @@ export function useConceptData() {
         }
       }
 
+      // Check if this is actually a ConceptScheme - redirect to scheme viewing if so
+      if (types.includes('http://www.w3.org/2004/02/skos/core#ConceptScheme')) {
+        logger.info('useConceptData', 'URI is a ConceptScheme, redirecting to scheme view', { uri })
+        loading.value = false
+        const conceptStore = useConceptStore()
+        schemeStore.viewScheme(uri)
+        conceptStore.selectConcept(null)
+        return
+      }
+
       // Load labels for related concepts
       await loadRelatedLabels(conceptDetails)
 
@@ -497,6 +548,9 @@ export function useConceptData() {
       })
 
       details.value = conceptDetails
+
+      // Auto-select scheme if concept belongs to a different scheme
+      autoSelectSchemeIfNeeded(conceptDetails.inScheme)
     } catch (e: unknown) {
       const errMsg = e && typeof e === 'object' && 'message' in e
         ? (e as { message: string }).message

@@ -92,9 +92,7 @@ vi.mock('../../composables/useEndpointAnalysis', () => ({
     analysisLog: mockAnalysisLog,
     reanalyzeEndpoint: vi.fn().mockResolvedValue({
       supportsNamedGraphs: true,
-      graphCount: 5,
-      graphCountExact: true,
-      hasDuplicateTriples: false,
+      skosGraphCount: 5,
       analyzedAt: new Date().toISOString(),
       languages: [{ lang: 'en', count: 100 }],
     }),
@@ -143,14 +141,15 @@ vi.mock('../../composables/useLanguagePriorities', () => ({
 // Mock capabilities composable
 vi.mock('../../composables/useEndpointCapabilities', () => ({
   useEndpointCapabilities: () => ({
-    graphStatus: ref('Unknown'),
-    graphSeverity: ref('secondary'),
-    graphIcon: ref('pi pi-question'),
-    graphDescription: ref(null),
-    duplicateStatus: ref('Unknown'),
-    duplicateSeverity: ref('secondary'),
-    duplicateIcon: ref('pi pi-question'),
-    duplicateDescription: ref(null),
+    graphSupportStatus: ref('Unknown'),
+    graphSupportSeverity: ref('secondary'),
+    graphSupportIcon: ref('pi pi-question'),
+    graphSupportDescription: ref(null),
+    skosGraphStatus: ref('Unknown'),
+    skosGraphSeverity: ref('secondary'),
+    skosGraphIcon: ref('pi pi-question'),
+    skosGraphDescription: ref(null),
+    formatCount: vi.fn((n: number) => n.toLocaleString('de-DE')),
   }),
 }))
 
@@ -159,9 +158,7 @@ vi.mock('../../services/sparql', () => ({
   testConnection: vi.fn().mockResolvedValue({ success: true }),
   analyzeEndpoint: vi.fn().mockResolvedValue({
     supportsNamedGraphs: true,
-    graphCount: 5,
-    graphCountExact: true,
-    hasDuplicateTriples: false,
+    skosGraphCount: 5,
     analyzedAt: new Date().toISOString(),
     languages: [{ lang: 'en', count: 100 }],
   }),
@@ -319,16 +316,6 @@ describe('EndpointWizard', () => {
       const wrapper = mountEndpointWizard()
       const capabilitiesPanel = wrapper.find('[data-value="2"]')
       expect(capabilitiesPanel.exists()).toBe(true)
-    })
-
-    it('shows Named Graphs capability', () => {
-      const wrapper = mountEndpointWizard()
-      expect(wrapper.text()).toContain('Named Graphs')
-    })
-
-    it('shows Duplicate Triples capability', () => {
-      const wrapper = mountEndpointWizard()
-      expect(wrapper.text()).toContain('Duplicate Triples')
     })
 
     it('shows Re-analyze button', () => {

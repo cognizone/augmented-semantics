@@ -34,16 +34,11 @@ export interface DetectedLanguage {
 }
 
 export interface EndpointAnalysis {
-  // Named graphs
+  // Named graphs support
   supportsNamedGraphs: boolean | null  // null = not supported by endpoint, false = none, true = has graphs
-  graphCount: number | null            // null = count failed, number = exact or estimated
-  graphCountExact: boolean             // true = exact count, false = estimated (10000+)
 
   // SKOS graphs
   skosGraphCount: number | null        // null = detection failed, number = graphs with Concept or ConceptScheme
-
-  // Duplicates
-  hasDuplicateTriples: boolean | null  // null = detection not supported
 
   // Languages (sorted by count descending)
   languages?: DetectedLanguage[]

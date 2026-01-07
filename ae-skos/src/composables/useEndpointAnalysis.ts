@@ -3,7 +3,7 @@
  *
  * Handles SPARQL endpoint capability analysis including:
  * - Named graph detection
- * - Duplicate triple detection
+ * - SKOS graph detection
  * - Language detection
  * - Analysis logging for user feedback
  *
@@ -14,7 +14,6 @@ import {
   analyzeEndpoint as analyzeEndpointService,
   detectGraphs,
   detectSkosGraphs,
-  detectDuplicates,
   detectLanguages,
 } from '../services/sparql'
 import { useElapsedTime } from './useElapsedTime'
@@ -47,10 +46,8 @@ export function useEndpointAnalysis() {
 
       return {
         supportsNamedGraphs: analysis.supportsNamedGraphs,
-        graphCount: analysis.graphCount,
-        graphCountExact: analysis.graphCountExact,
         skosGraphCount: analysis.skosGraphCount,
-        hasDuplicateTriples: analysis.hasDuplicateTriples,
+        languages: analysis.languages,
         analyzedAt: analysis.analyzedAt,
       }
     } catch (e) {
@@ -70,81 +67,54 @@ export function useEndpointAnalysis() {
     analyzeStep.value = 'Analyzing...'
 
     try {
-      // Step 1: Detect graphs
-      logStep('(1/4) Detecting named graphs...', 'pending')
+      // Step 1: Detect graph support
+      logStep('(1/3) Detecting graph support...', 'pending')
       const graphResult = await detectGraphs(endpoint)
 
       if (graphResult.supportsNamedGraphs === null) {
-        updateLastLog(`(1/4) Graphs: not supported`, 'warning')
+        updateLastLog(`(1/3) Graph support: unknown`, 'warning')
       } else if (graphResult.supportsNamedGraphs === false) {
-        updateLastLog(`(1/4) Graphs: none found`, 'info')
+        updateLastLog(`(1/3) Graph support: no`, 'info')
       } else {
-        const countStr = graphResult.graphCountExact
-          ? `${graphResult.graphCount} graphs`
-          : `${graphResult.graphCount}+ graphs`
-        updateLastLog(`(1/4) Graphs: ${countStr} (${formatQueryMethod(graphResult.queryMethod)})`, 'success')
+        updateLastLog(`(1/3) Graph support: yes`, 'success')
       }
 
       // Step 2: Detect SKOS graphs (only if graphs supported)
       let skosGraphCount: number | null = null
       let skosGraphUris: string[] | null = null
       if (graphResult.supportsNamedGraphs === true) {
-        logStep('(2/4) Detecting SKOS graphs...', 'pending')
+        logStep('(2/3) Detecting SKOS graphs...', 'pending')
         const skosResult = await detectSkosGraphs(endpoint)
         skosGraphCount = skosResult.skosGraphCount
         skosGraphUris = skosResult.skosGraphUris
         if (skosGraphCount === null) {
-          updateLastLog(`(2/4) SKOS graphs: detection failed`, 'warning')
+          updateLastLog(`(2/3) SKOS graphs: detection failed`, 'warning')
         } else if (skosGraphCount === 0) {
-          updateLastLog(`(2/4) SKOS graphs: none found`, 'warning')
+          updateLastLog(`(2/3) SKOS graphs: none found`, 'warning')
         } else {
           const batchInfo = skosGraphUris ? ' (will batch)' : ' (too many to batch)'
-          updateLastLog(`(2/4) SKOS graphs: ${skosGraphCount}${batchInfo}`, 'success')
+          updateLastLog(`(2/3) SKOS graphs: ${skosGraphCount}${batchInfo}`, 'success')
         }
       } else {
-        logStep('(2/4) SKOS graphs: not applicable (no graph support)', 'info')
+        logStep('(2/3) SKOS graphs: skipped (no graph support)', 'info')
       }
 
-      // Step 3: Detect duplicates (only if multiple graphs exist)
-      let hasDuplicateTriples: boolean | null = null
-      if (graphResult.supportsNamedGraphs === true && graphResult.graphCount && graphResult.graphCount > 1) {
-        logStep('(3/4) Checking for duplicates...', 'pending')
-        const duplicateResult = await detectDuplicates(endpoint)
-        hasDuplicateTriples = duplicateResult.hasDuplicates
-        if (hasDuplicateTriples) {
-          updateLastLog(`(3/4) Duplicates: found across graphs`, 'warning')
-        } else {
-          updateLastLog(`(3/4) Duplicates: none`, 'success')
-        }
-      } else if (graphResult.supportsNamedGraphs === null) {
-        // Graphs not supported = no duplicates possible
-        hasDuplicateTriples = false
-        logStep('(3/4) Duplicates: not applicable (no graph support)', 'info')
-      } else {
-        // No graphs or single graph = no duplicates possible
-        hasDuplicateTriples = false
-        logStep('(3/4) Duplicates: none (single graph)', 'info')
-      }
-
-      // Step 4: Detect languages
-      // Use batched detection if we have SKOS graph URIs, otherwise fall back to full query
-      const useGraphScope = hasDuplicateTriples === true
+      // Step 3: Detect languages
+      // Use graph scope if we found SKOS graphs
+      const useGraphScope = skosGraphUris !== null && skosGraphUris.length > 0
       const queryMode = skosGraphUris
         ? `batched, ${skosGraphUris.length} graphs`
-        : useGraphScope ? 'graph-scoped' : 'default'
-      logStep(`(4/4) Detecting languages (${queryMode})...`, 'pending')
+        : 'default'
+      logStep(`(3/3) Detecting languages (${queryMode})...`, 'pending')
       const languages = await detectLanguages(endpoint, useGraphScope, skosGraphUris)
-      updateLastLog(`(4/4) Languages: found ${languages.length} (${queryMode})`, 'success')
+      updateLastLog(`(3/3) Languages: found ${languages.length} (${queryMode})`, 'success')
 
       // Calculate total duration
       analysisDuration.value = Math.round((performance.now() - startTime) / 1000)
 
       const analysis = {
         supportsNamedGraphs: graphResult.supportsNamedGraphs,
-        graphCount: graphResult.graphCount,
-        graphCountExact: graphResult.graphCountExact,
         skosGraphCount,
-        hasDuplicateTriples,
         languages,
         analyzedAt: new Date().toISOString(),
       }
@@ -177,19 +147,6 @@ export function useEndpointAnalysis() {
     if (last) {
       last.message = message
       last.status = status
-    }
-  }
-
-  /**
-   * Format query method for display
-   */
-  function formatQueryMethod(method: string): string {
-    switch (method) {
-      case 'empty-pattern': return 'empty graph pattern'
-      case 'blank-node-pattern': return 'triple pattern'
-      case 'fallback-limit': return 'enumeration'
-      case 'none': return 'not supported'
-      default: return method
     }
   }
 

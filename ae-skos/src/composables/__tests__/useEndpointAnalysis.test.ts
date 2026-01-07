@@ -8,7 +8,6 @@ vi.mock('../../services/sparql', () => ({
   analyzeEndpoint: vi.fn(),
   detectGraphs: vi.fn(),
   detectSkosGraphs: vi.fn(),
-  detectDuplicates: vi.fn(),
   detectLanguages: vi.fn(),
 }))
 
@@ -16,7 +15,6 @@ import {
   analyzeEndpoint as analyzeEndpointService,
   detectGraphs,
   detectSkosGraphs,
-  detectDuplicates,
   detectLanguages,
 } from '../../services/sparql'
 
@@ -49,9 +47,8 @@ describe('useEndpointAnalysis', () => {
     it('performs simple analysis and returns result', async () => {
       const mockAnalysis = {
         supportsNamedGraphs: true,
-        graphCount: 5,
-        graphCountExact: true,
-        hasDuplicateTriples: false,
+        skosGraphCount: 5,
+        languages: [{ lang: 'en', count: 100 }],
         analyzedAt: '2024-01-01T00:00:00Z',
       }
       ;(analyzeEndpointService as Mock).mockResolvedValue(mockAnalysis)
@@ -87,12 +84,8 @@ describe('useEndpointAnalysis', () => {
     it('performs full analysis with logging', async () => {
       ;(detectGraphs as Mock).mockResolvedValue({
         supportsNamedGraphs: true,
-        graphCount: 3,
-        graphCountExact: true,
-        queryMethod: 'empty-pattern',
       })
       ;(detectSkosGraphs as Mock).mockResolvedValue({ skosGraphCount: 2, skosGraphUris: ['http://g1', 'http://g2'] })
-      ;(detectDuplicates as Mock).mockResolvedValue({ hasDuplicates: false })
       ;(detectLanguages as Mock).mockResolvedValue([
         { lang: 'en', count: 100 },
         { lang: 'fr', count: 50 },
@@ -103,41 +96,17 @@ describe('useEndpointAnalysis', () => {
       const result = await reanalyzeEndpoint(mockEndpoint)
 
       expect(result.supportsNamedGraphs).toBe(true)
-      expect(result.graphCount).toBe(3)
       expect(result.skosGraphCount).toBe(2)
-      expect(result.hasDuplicateTriples).toBe(false)
       expect(result.languages).toHaveLength(2)
       expect(result.analyzedAt).toBeDefined()
 
-      // Check log entries (4 steps: graphs, skos graphs, duplicates, languages)
-      expect(analysisLog.value).toHaveLength(4)
+      // Check log entries (3 steps: graphs, skos graphs, languages)
+      expect(analysisLog.value).toHaveLength(3)
     })
 
-    it('skips duplicate check for single graph', async () => {
-      ;(detectGraphs as Mock).mockResolvedValue({
-        supportsNamedGraphs: true,
-        graphCount: 1,
-        graphCountExact: true,
-        queryMethod: 'empty-pattern',
-      })
-      ;(detectSkosGraphs as Mock).mockResolvedValue({ skosGraphCount: 1, skosGraphUris: ['http://g1'] })
-      ;(detectLanguages as Mock).mockResolvedValue([])
-
-      const { reanalyzeEndpoint, analysisLog } = useEndpointAnalysis()
-
-      const result = await reanalyzeEndpoint(mockEndpoint)
-
-      expect(detectDuplicates).not.toHaveBeenCalled()
-      expect(result.hasDuplicateTriples).toBe(false)
-      expect(analysisLog.value.some(e => e.message.includes('single graph'))).toBe(true)
-    })
-
-    it('skips duplicate check when graphs not supported', async () => {
+    it('skips SKOS graph detection when graphs not supported', async () => {
       ;(detectGraphs as Mock).mockResolvedValue({
         supportsNamedGraphs: null,
-        graphCount: null,
-        graphCountExact: false,
-        queryMethod: 'none',
       })
       ;(detectLanguages as Mock).mockResolvedValue([])
 
@@ -145,69 +114,43 @@ describe('useEndpointAnalysis', () => {
 
       const result = await reanalyzeEndpoint(mockEndpoint)
 
-      expect(detectDuplicates).not.toHaveBeenCalled()
-      expect(result.hasDuplicateTriples).toBe(false)
-      expect(analysisLog.value.some(e => e.message.includes('not supported'))).toBe(true)
-    })
-
-    it('uses graph-scoped language detection when duplicates exist and too many graphs', async () => {
-      ;(detectGraphs as Mock).mockResolvedValue({
-        supportsNamedGraphs: true,
-        graphCount: 5,
-        graphCountExact: true,
-        queryMethod: 'empty-pattern',
-      })
-      // Return null for skosGraphUris (too many graphs to batch)
-      ;(detectSkosGraphs as Mock).mockResolvedValue({ skosGraphCount: 600, skosGraphUris: null })
-      ;(detectDuplicates as Mock).mockResolvedValue({ hasDuplicates: true })
-      ;(detectLanguages as Mock).mockResolvedValue([])
-
-      const { reanalyzeEndpoint, analysisLog } = useEndpointAnalysis()
-
-      await reanalyzeEndpoint(mockEndpoint)
-
-      // When no skosGraphUris available, falls back to graph-scoped
-      expect(detectLanguages).toHaveBeenCalledWith(mockEndpoint, true, null)
-      expect(analysisLog.value.some(e => e.message.includes('graph-scoped'))).toBe(true)
+      expect(detectSkosGraphs).not.toHaveBeenCalled()
+      expect(result.skosGraphCount).toBe(null)
+      expect(analysisLog.value.some(e => e.message.includes('skipped'))).toBe(true)
     })
 
     it('uses batched language detection when SKOS graph URIs available', async () => {
       const mockGraphUris = ['http://ex.org/g1', 'http://ex.org/g2', 'http://ex.org/g3']
       ;(detectGraphs as Mock).mockResolvedValue({
         supportsNamedGraphs: true,
-        graphCount: 5,
-        graphCountExact: true,
-        queryMethod: 'empty-pattern',
       })
       ;(detectSkosGraphs as Mock).mockResolvedValue({ skosGraphCount: 3, skosGraphUris: mockGraphUris })
-      ;(detectDuplicates as Mock).mockResolvedValue({ hasDuplicates: false })
       ;(detectLanguages as Mock).mockResolvedValue([])
 
       const { reanalyzeEndpoint, analysisLog } = useEndpointAnalysis()
 
       await reanalyzeEndpoint(mockEndpoint)
 
-      // When skosGraphUris available, uses batched detection
-      expect(detectLanguages).toHaveBeenCalledWith(mockEndpoint, false, mockGraphUris)
+      // When skosGraphUris available, uses batched detection with useGraphScope=true
+      expect(detectLanguages).toHaveBeenCalledWith(mockEndpoint, true, mockGraphUris)
       expect(analysisLog.value.some(e => e.message.includes('batched'))).toBe(true)
     })
 
-    it('logs graph count with approximation when not exact', async () => {
+    it('uses default language detection when no SKOS graph URIs', async () => {
       ;(detectGraphs as Mock).mockResolvedValue({
         supportsNamedGraphs: true,
-        graphCount: 10000,
-        graphCountExact: false,
-        queryMethod: 'fallback-limit',
       })
-      ;(detectSkosGraphs as Mock).mockResolvedValue({ skosGraphCount: 500, skosGraphUris: null })
-      ;(detectDuplicates as Mock).mockResolvedValue({ hasDuplicates: false })
+      // Return null for skosGraphUris (too many graphs to batch)
+      ;(detectSkosGraphs as Mock).mockResolvedValue({ skosGraphCount: 600, skosGraphUris: null })
       ;(detectLanguages as Mock).mockResolvedValue([])
 
       const { reanalyzeEndpoint, analysisLog } = useEndpointAnalysis()
 
       await reanalyzeEndpoint(mockEndpoint)
 
-      expect(analysisLog.value.some(e => e.message.includes('10000+'))).toBe(true)
+      // When no skosGraphUris available, falls back to default
+      expect(detectLanguages).toHaveBeenCalledWith(mockEndpoint, false, null)
+      expect(analysisLog.value.some(e => e.message.includes('default'))).toBe(true)
     })
 
     it('handles errors during reanalysis', async () => {
@@ -244,9 +187,6 @@ describe('useEndpointAnalysis', () => {
     it('resets all analysis state', async () => {
       ;(detectGraphs as Mock).mockResolvedValue({
         supportsNamedGraphs: true,
-        graphCount: 1,
-        graphCountExact: true,
-        queryMethod: 'empty-pattern',
       })
       ;(detectSkosGraphs as Mock).mockResolvedValue({ skosGraphCount: 1, skosGraphUris: ['http://g1'] })
       ;(detectLanguages as Mock).mockResolvedValue([])

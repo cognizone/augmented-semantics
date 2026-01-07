@@ -282,119 +282,28 @@ export async function testConnection(
   }
 }
 
-export type GraphQueryMethod = 'empty-pattern' | 'blank-node-pattern' | 'fallback-limit' | 'none'
-
 /**
- * Detect named graphs in endpoint
+ * Detect if endpoint supports named graphs using a simple ASK query.
+ * Returns true if any named graph exists, false if none, null if not supported.
+ *
+ * @see /spec/ae-skos/sko01-LanguageSelector.md
  */
 export async function detectGraphs(
   endpoint: SPARQLEndpoint
 ): Promise<{
   supportsNamedGraphs: boolean | null
-  graphCount: number | null
-  graphCountExact: boolean
-  queryMethod: GraphQueryMethod
 }> {
-  // Step 1: Try COUNT with empty graph pattern (fastest)
-  const countQuery1 = `
-    SELECT (COUNT(DISTINCT ?g) AS ?count)
-    WHERE { GRAPH ?g { } }
-  `
-
-  try {
-    const results = await executeSparql(endpoint, countQuery1, { retries: 1 })
-    const count = parseInt(results.results.bindings[0]?.count?.value || '0', 10)
-
-    // Only return if we found graphs - count=0 might be a false negative
-    // (some endpoints don't support empty graph patterns properly)
-    if (count > 0) {
-      return {
-        supportsNamedGraphs: true,
-        graphCount: count,
-        graphCountExact: true,
-        queryMethod: 'empty-pattern',
-      }
-    }
-    // count=0: continue to next step
-  } catch {
-    // Empty pattern not supported, try next
-  }
-
-  // Step 2: Try COUNT with blank node pattern
-  const countQuery2 = `
-    SELECT (COUNT(DISTINCT ?graph) AS ?count)
-    WHERE { GRAPH ?graph { [] [] [] } }
-  `
-
-  try {
-    const results = await executeSparql(endpoint, countQuery2, { retries: 1 })
-    const count = parseInt(results.results.bindings[0]?.count?.value || '0', 10)
-
-    // Only return if we found graphs - count=0 might be a false negative
-    if (count > 0) {
-      return {
-        supportsNamedGraphs: true,
-        graphCount: count,
-        graphCountExact: true,
-        queryMethod: 'blank-node-pattern',
-      }
-    }
-    // count=0: continue to fallback
-  } catch {
-    // COUNT failed, try fallback
-  }
-
-  // Step 3: Fallback - check if at least 10001 graphs exist
-  const fallbackQuery = `
-    SELECT DISTINCT ?graph
-    WHERE { GRAPH ?graph { ?s ?p ?o } }
-    LIMIT 10001
-  `
-
-  try {
-    const results = await executeSparql(endpoint, fallbackQuery, { retries: 1 })
-    const count = results.results.bindings.length
-
-    return {
-      supportsNamedGraphs: count > 0,
-      graphCount: count === 10001 ? 10000 : count, // 10001 means "10000+"
-      graphCountExact: count < 10001, // exact only if < 10001
-      queryMethod: 'fallback-limit',
-    }
-  } catch {
-    // GRAPH queries not supported by this endpoint
-    return {
-      supportsNamedGraphs: null, // unknown/not supported
-      graphCount: null,
-      graphCountExact: false,
-      queryMethod: 'none',
-    }
-  }
-}
-
-/**
- * Detect duplicate triples across graphs
- */
-export async function detectDuplicates(
-  endpoint: SPARQLEndpoint
-): Promise<{ hasDuplicates: boolean }> {
-  // ASK query: returns true if any triple exists in multiple graphs
-  const query = `
-    ASK {
-      GRAPH ?g1 { ?s ?p ?o }
-      GRAPH ?g2 { ?s ?p ?o }
-      FILTER (?g1 != ?g2)
-    }
-  `
+  const query = `ASK { GRAPH ?g { ?s ?p ?o } }`
 
   try {
     const results = await executeSparql(endpoint, query, { retries: 1 })
     // ASK queries return { boolean: true/false }
-    const hasDuplicates = (results as unknown as { boolean: boolean }).boolean === true
+    const hasGraphs = (results as unknown as { boolean: boolean }).boolean === true
 
-    return { hasDuplicates }
+    return { supportsNamedGraphs: hasGraphs }
   } catch {
-    return { hasDuplicates: false }
+    // GRAPH queries not supported by this endpoint
+    return { supportsNamedGraphs: null }
   }
 }
 
@@ -602,41 +511,30 @@ export async function analyzeEndpoint(
   endpoint: SPARQLEndpoint
 ): Promise<{
   supportsNamedGraphs: boolean | null
-  graphCount: number | null
-  graphCountExact: boolean
   skosGraphCount: number | null
-  hasDuplicateTriples: boolean | null
   languages: { lang: string; count: number }[]
   analyzedAt: string
 }> {
-  // Step 1: Detect named graphs
+  // Step 1: Detect named graphs support
   const graphResult = await detectGraphs(endpoint)
 
   // Step 2: Detect SKOS graphs (only if graphs supported)
   let skosGraphCount: number | null = null
+  let skosGraphUris: string[] | null = null
   if (graphResult.supportsNamedGraphs === true) {
     const skosResult = await detectSkosGraphs(endpoint)
     skosGraphCount = skosResult.skosGraphCount
+    skosGraphUris = skosResult.skosGraphUris
   }
 
-  // Step 3: Check for duplicates (only if multiple graphs exist)
-  let hasDuplicateTriples: boolean | null = null
-  if (graphResult.supportsNamedGraphs === true && graphResult.graphCount && graphResult.graphCount > 1) {
-    const duplicateResult = await detectDuplicates(endpoint)
-    hasDuplicateTriples = duplicateResult.hasDuplicates
-  }
-
-  // Step 4: Detect languages
-  // Use GRAPH scope if duplicates exist to ensure concept+labels are in same graph
-  const useGraphScope = hasDuplicateTriples === true
-  const languages = await detectLanguages(endpoint, useGraphScope)
+  // Step 3: Detect languages
+  // Use GRAPH scope if we found SKOS graphs to ensure concept+labels are in same graph
+  const useGraphScope = skosGraphUris !== null && skosGraphUris.length > 0
+  const languages = await detectLanguages(endpoint, useGraphScope, skosGraphUris)
 
   return {
     supportsNamedGraphs: graphResult.supportsNamedGraphs,
-    graphCount: graphResult.graphCount,
-    graphCountExact: graphResult.graphCountExact,
     skosGraphCount,
-    hasDuplicateTriples,
     languages,
     analyzedAt: new Date().toISOString(),
   }

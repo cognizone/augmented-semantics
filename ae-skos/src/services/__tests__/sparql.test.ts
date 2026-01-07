@@ -11,7 +11,6 @@ import {
   testConnection,
   detectGraphs,
   detectSkosGraphs,
-  detectDuplicates,
   detectLanguages,
   withPrefixes,
   buildQueryWithGraphs,
@@ -394,30 +393,24 @@ describe('detectGraphs', () => {
     vi.restoreAllMocks()
   })
 
-  it('returns graph count from endpoint', async () => {
-    // COUNT query returns count result
-    const mockResults = createSparqlResults([
-      { count: '5' },
-    ])
-    global.fetch = mockFetchSuccess(mockResults)
+  it('returns true when endpoint has named graphs', async () => {
+    // ASK query returns { boolean: true }
+    global.fetch = mockFetchSuccess({ boolean: true })
 
     const endpoint = createMockEndpoint()
     const result = await detectGraphs(endpoint)
 
     expect(result.supportsNamedGraphs).toBe(true)
-    expect(result.graphCount).toBe(5)
-    expect(result.graphCountExact).toBe(true)
   })
 
-  it('returns zero for endpoints without named graphs', async () => {
-    // All three steps return 0/empty, so we end up at Step 3 with no graphs
-    global.fetch = mockFetchSuccess(createEmptyResults())
+  it('returns false when endpoint has no named graphs', async () => {
+    // ASK query returns { boolean: false }
+    global.fetch = mockFetchSuccess({ boolean: false })
 
     const endpoint = createMockEndpoint()
     const result = await detectGraphs(endpoint)
 
     expect(result.supportsNamedGraphs).toBe(false)
-    expect(result.graphCount).toBe(0)
   })
 
   it('returns null on query failure', async () => {
@@ -427,7 +420,6 @@ describe('detectGraphs', () => {
     const result = await detectGraphs(endpoint)
 
     expect(result.supportsNamedGraphs).toBe(null)
-    expect(result.graphCount).toBe(null)
   })
 })
 
@@ -492,41 +484,6 @@ describe('detectSkosGraphs', () => {
 
     expect(result.skosGraphCount).toBe(null)
     expect(result.skosGraphUris).toBe(null)
-  })
-})
-
-describe('detectDuplicates', () => {
-  afterEach(() => {
-    vi.restoreAllMocks()
-  })
-
-  it('detects duplicates when present', async () => {
-    // ASK queries return { boolean: true/false }
-    global.fetch = mockFetchSuccess({ boolean: true })
-
-    const endpoint = createMockEndpoint()
-    const result = await detectDuplicates(endpoint)
-
-    expect(result.hasDuplicates).toBe(true)
-  })
-
-  it('returns no duplicates when none found', async () => {
-    // ASK queries return { boolean: true/false }
-    global.fetch = mockFetchSuccess({ boolean: false })
-
-    const endpoint = createMockEndpoint()
-    const result = await detectDuplicates(endpoint)
-
-    expect(result.hasDuplicates).toBe(false)
-  })
-
-  it('handles query failure gracefully', async () => {
-    global.fetch = mockFetchError(500, 'Server Error')
-
-    const endpoint = createMockEndpoint()
-    const result = await detectDuplicates(endpoint)
-
-    expect(result.hasDuplicates).toBe(false)
   })
 })
 

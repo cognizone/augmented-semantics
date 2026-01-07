@@ -65,18 +65,10 @@ const {
   graphSupportSeverity,
   graphSupportIcon,
   graphSupportDescription,
-  graphStatus,
-  graphSeverity,
-  graphIcon,
-  graphDescription,
   skosGraphStatus,
   skosGraphSeverity,
   skosGraphIcon,
   skosGraphDescription,
-  duplicateStatus,
-  duplicateSeverity,
-  duplicateIcon,
-  duplicateDescription,
 } = useEndpointCapabilities(endpointForLanguage)
 
 const authOptions = [
@@ -185,12 +177,9 @@ async function runAnalysis() {
       ...tempEndpoint.value,
       analysis: {
         supportsNamedGraphs: analysis.supportsNamedGraphs,
-        graphCount: analysis.graphCount,
-        graphCountExact: analysis.graphCountExact,
         skosGraphCount: analysis.skosGraphCount,
-        hasDuplicateTriples: analysis.hasDuplicateTriples,
-        analyzedAt: analysis.analyzedAt,
         languages: analysis.languages,
+        analyzedAt: analysis.analyzedAt,
       },
     }
 
@@ -424,18 +413,6 @@ function handleClose() {
                 </p>
               </div>
 
-              <!-- Named Graphs (count) -->
-              <div class="capability-item">
-                <div class="capability-row">
-                  <i :class="graphIcon"></i>
-                  <span class="capability-label">Named Graphs</span>
-                  <Tag :severity="graphSeverity">{{ graphStatus }}</Tag>
-                </div>
-                <p v-if="graphDescription" class="capability-description">
-                  {{ graphDescription }}
-                </p>
-              </div>
-
               <!-- SKOS Graphs (count) -->
               <div class="capability-item">
                 <div class="capability-row">
@@ -445,18 +422,6 @@ function handleClose() {
                 </div>
                 <p v-if="skosGraphDescription" class="capability-description">
                   {{ skosGraphDescription }}
-                </p>
-              </div>
-
-              <!-- Duplicate Triples -->
-              <div class="capability-item">
-                <div class="capability-row">
-                  <i :class="duplicateIcon"></i>
-                  <span class="capability-label">Duplicate Triples</span>
-                  <Tag :severity="duplicateSeverity">{{ duplicateStatus }}</Tag>
-                </div>
-                <p v-if="duplicateDescription" class="capability-description">
-                  {{ duplicateDescription }}
                 </p>
               </div>
 

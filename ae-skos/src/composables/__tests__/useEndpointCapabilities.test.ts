@@ -25,9 +25,7 @@ describe('useEndpointCapabilities', () => {
     it('returns Unknown when supportsNamedGraphs is null', () => {
       const endpoint = ref<SPARQLEndpoint | null>(createEndpoint({
         supportsNamedGraphs: null,
-        graphCount: null,
-        graphCountExact: false,
-        hasDuplicateTriples: null,
+        skosGraphCount: null,
         analyzedAt: '2024-01-01',
       }))
       const { graphSupportStatus } = useEndpointCapabilities(endpoint)
@@ -37,9 +35,7 @@ describe('useEndpointCapabilities', () => {
     it('returns Yes when graphs are supported', () => {
       const endpoint = ref<SPARQLEndpoint | null>(createEndpoint({
         supportsNamedGraphs: true,
-        graphCount: 5,
-        graphCountExact: true,
-        hasDuplicateTriples: false,
+        skosGraphCount: 5,
         analyzedAt: '2024-01-01',
       }))
       const { graphSupportStatus } = useEndpointCapabilities(endpoint)
@@ -49,9 +45,7 @@ describe('useEndpointCapabilities', () => {
     it('returns No when graphs are not supported', () => {
       const endpoint = ref<SPARQLEndpoint | null>(createEndpoint({
         supportsNamedGraphs: false,
-        graphCount: null,
-        graphCountExact: false,
-        hasDuplicateTriples: false,
+        skosGraphCount: null,
         analyzedAt: '2024-01-01',
       }))
       const { graphSupportStatus } = useEndpointCapabilities(endpoint)
@@ -69,9 +63,6 @@ describe('useEndpointCapabilities', () => {
     it('returns Unknown when skosGraphCount is undefined', () => {
       const endpoint = ref<SPARQLEndpoint | null>(createEndpoint({
         supportsNamedGraphs: true,
-        graphCount: 5,
-        graphCountExact: true,
-        hasDuplicateTriples: false,
         analyzedAt: '2024-01-01',
         // skosGraphCount not set
       }))
@@ -82,10 +73,7 @@ describe('useEndpointCapabilities', () => {
     it('returns Unknown when skosGraphCount is null', () => {
       const endpoint = ref<SPARQLEndpoint | null>(createEndpoint({
         supportsNamedGraphs: true,
-        graphCount: 5,
-        graphCountExact: true,
         skosGraphCount: null,
-        hasDuplicateTriples: false,
         analyzedAt: '2024-01-01',
       }))
       const { skosGraphStatus } = useEndpointCapabilities(endpoint)
@@ -95,10 +83,7 @@ describe('useEndpointCapabilities', () => {
     it('returns None when skosGraphCount is 0', () => {
       const endpoint = ref<SPARQLEndpoint | null>(createEndpoint({
         supportsNamedGraphs: true,
-        graphCount: 5,
-        graphCountExact: true,
         skosGraphCount: 0,
-        hasDuplicateTriples: false,
         analyzedAt: '2024-01-01',
       }))
       const { skosGraphStatus } = useEndpointCapabilities(endpoint)
@@ -108,10 +93,7 @@ describe('useEndpointCapabilities', () => {
     it('returns singular graph when count is 1', () => {
       const endpoint = ref<SPARQLEndpoint | null>(createEndpoint({
         supportsNamedGraphs: true,
-        graphCount: 5,
-        graphCountExact: true,
         skosGraphCount: 1,
-        hasDuplicateTriples: false,
         analyzedAt: '2024-01-01',
       }))
       const { skosGraphStatus } = useEndpointCapabilities(endpoint)
@@ -121,10 +103,7 @@ describe('useEndpointCapabilities', () => {
     it('returns plural graphs when count > 1', () => {
       const endpoint = ref<SPARQLEndpoint | null>(createEndpoint({
         supportsNamedGraphs: true,
-        graphCount: 10,
-        graphCountExact: true,
         skosGraphCount: 5,
-        hasDuplicateTriples: false,
         analyzedAt: '2024-01-01',
       }))
       const { skosGraphStatus } = useEndpointCapabilities(endpoint)
@@ -134,10 +113,7 @@ describe('useEndpointCapabilities', () => {
     it('formats large numbers with thousand separators', () => {
       const endpoint = ref<SPARQLEndpoint | null>(createEndpoint({
         supportsNamedGraphs: true,
-        graphCount: 10000,
-        graphCountExact: true,
         skosGraphCount: 1234,
-        hasDuplicateTriples: false,
         analyzedAt: '2024-01-01',
       }))
       const { skosGraphStatus } = useEndpointCapabilities(endpoint)
@@ -155,10 +131,7 @@ describe('useEndpointCapabilities', () => {
     it('returns warn when count is 0', () => {
       const endpoint = ref<SPARQLEndpoint | null>(createEndpoint({
         supportsNamedGraphs: true,
-        graphCount: 5,
-        graphCountExact: true,
         skosGraphCount: 0,
-        hasDuplicateTriples: false,
         analyzedAt: '2024-01-01',
       }))
       const { skosGraphSeverity } = useEndpointCapabilities(endpoint)
@@ -168,10 +141,7 @@ describe('useEndpointCapabilities', () => {
     it('returns success when count > 0', () => {
       const endpoint = ref<SPARQLEndpoint | null>(createEndpoint({
         supportsNamedGraphs: true,
-        graphCount: 5,
-        graphCountExact: true,
         skosGraphCount: 3,
-        hasDuplicateTriples: false,
         analyzedAt: '2024-01-01',
       }))
       const { skosGraphSeverity } = useEndpointCapabilities(endpoint)
@@ -189,10 +159,7 @@ describe('useEndpointCapabilities', () => {
     it('returns message when count is 0', () => {
       const endpoint = ref<SPARQLEndpoint | null>(createEndpoint({
         supportsNamedGraphs: true,
-        graphCount: 5,
-        graphCountExact: true,
         skosGraphCount: 0,
-        hasDuplicateTriples: false,
         analyzedAt: '2024-01-01',
       }))
       const { skosGraphDescription } = useEndpointCapabilities(endpoint)
@@ -202,10 +169,7 @@ describe('useEndpointCapabilities', () => {
     it('returns singular description when count is 1', () => {
       const endpoint = ref<SPARQLEndpoint | null>(createEndpoint({
         supportsNamedGraphs: true,
-        graphCount: 5,
-        graphCountExact: true,
         skosGraphCount: 1,
-        hasDuplicateTriples: false,
         analyzedAt: '2024-01-01',
       }))
       const { skosGraphDescription } = useEndpointCapabilities(endpoint)
@@ -215,84 +179,11 @@ describe('useEndpointCapabilities', () => {
     it('returns plural description when count > 1', () => {
       const endpoint = ref<SPARQLEndpoint | null>(createEndpoint({
         supportsNamedGraphs: true,
-        graphCount: 10,
-        graphCountExact: true,
         skosGraphCount: 5,
-        hasDuplicateTriples: false,
         analyzedAt: '2024-01-01',
       }))
       const { skosGraphDescription } = useEndpointCapabilities(endpoint)
       expect(skosGraphDescription.value).toBe('5 graphs contain SKOS data')
-    })
-  })
-
-  describe('duplicateStatus', () => {
-    it('returns Unknown when no analysis', () => {
-      const endpoint = ref<SPARQLEndpoint | null>(createEndpoint())
-      const { duplicateStatus } = useEndpointCapabilities(endpoint)
-      expect(duplicateStatus.value).toBe('Unknown')
-    })
-
-    it('returns Detected when duplicates found', () => {
-      const endpoint = ref<SPARQLEndpoint | null>(createEndpoint({
-        supportsNamedGraphs: true,
-        graphCount: 5,
-        graphCountExact: true,
-        hasDuplicateTriples: true,
-        analyzedAt: '2024-01-01',
-      }))
-      const { duplicateStatus } = useEndpointCapabilities(endpoint)
-      expect(duplicateStatus.value).toBe('Detected')
-    })
-
-    it('returns None when no duplicates', () => {
-      const endpoint = ref<SPARQLEndpoint | null>(createEndpoint({
-        supportsNamedGraphs: true,
-        graphCount: 5,
-        graphCountExact: true,
-        hasDuplicateTriples: false,
-        analyzedAt: '2024-01-01',
-      }))
-      const { duplicateStatus } = useEndpointCapabilities(endpoint)
-      expect(duplicateStatus.value).toBe('None')
-    })
-  })
-
-  describe('graphStatus', () => {
-    it('returns graph count with exact number', () => {
-      const endpoint = ref<SPARQLEndpoint | null>(createEndpoint({
-        supportsNamedGraphs: true,
-        graphCount: 5,
-        graphCountExact: true,
-        hasDuplicateTriples: false,
-        analyzedAt: '2024-01-01',
-      }))
-      const { graphStatus } = useEndpointCapabilities(endpoint)
-      expect(graphStatus.value).toBe('5 graphs')
-    })
-
-    it('returns graph count with plus when not exact', () => {
-      const endpoint = ref<SPARQLEndpoint | null>(createEndpoint({
-        supportsNamedGraphs: true,
-        graphCount: 1000,
-        graphCountExact: false,
-        hasDuplicateTriples: false,
-        analyzedAt: '2024-01-01',
-      }))
-      const { graphStatus } = useEndpointCapabilities(endpoint)
-      expect(graphStatus.value).toBe('1.000+ graphs')
-    })
-
-    it('returns Not supported when null', () => {
-      const endpoint = ref<SPARQLEndpoint | null>(createEndpoint({
-        supportsNamedGraphs: null,
-        graphCount: null,
-        graphCountExact: false,
-        hasDuplicateTriples: false,
-        analyzedAt: '2024-01-01',
-      }))
-      const { graphStatus } = useEndpointCapabilities(endpoint)
-      expect(graphStatus.value).toBe('Not supported')
     })
   })
 
@@ -301,19 +192,6 @@ describe('useEndpointCapabilities', () => {
       const endpoint = ref<SPARQLEndpoint | null>(null)
       const { formatCount } = useEndpointCapabilities(endpoint)
       expect(formatCount(1234567)).toBe('1.234.567')
-    })
-  })
-
-  describe('formatQueryMethod', () => {
-    it('formats query method names', () => {
-      const endpoint = ref<SPARQLEndpoint | null>(null)
-      const { formatQueryMethod } = useEndpointCapabilities(endpoint)
-
-      expect(formatQueryMethod('empty-pattern')).toBe('empty graph pattern')
-      expect(formatQueryMethod('blank-node-pattern')).toBe('triple pattern')
-      expect(formatQueryMethod('fallback-limit')).toBe('enumeration')
-      expect(formatQueryMethod('none')).toBe('not supported')
-      expect(formatQueryMethod('custom')).toBe('custom')
     })
   })
 })
