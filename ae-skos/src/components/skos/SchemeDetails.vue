@@ -234,18 +234,6 @@ watch(
           @show-raw-rdf="showRawRdfDialog = true"
         />
 
-        <LabelsSection v-if="hasLabels" :items="labelConfig">
-          <div v-if="details.notations?.length" class="property-row">
-            <label>Notation</label>
-            <div class="label-values">
-              <span v-for="(n, i) in details.notations" :key="i" class="notation-wrapper">
-                <code class="notation">{{ n.value }}</code>
-                <span v-if="n.datatype" class="datatype-tag">{{ formatDatatype(n.datatype) }}</span>
-              </span>
-            </div>
-          </div>
-        </LabelsSection>
-
         <!-- Dublin Core Title (scheme-specific) -->
         <section v-if="sortedTitles.length" class="details-section">
           <h3 class="section-title">
@@ -261,6 +249,18 @@ watch(
             </div>
           </div>
         </section>
+
+        <LabelsSection v-if="hasLabels" :items="labelConfig">
+          <div v-if="details.notations?.length" class="property-row">
+            <label>Notation</label>
+            <div class="label-values">
+              <span v-for="(n, i) in details.notations" :key="i" class="notation-wrapper">
+                <code class="notation">{{ n.value }}</code>
+                <span v-if="n.datatype" class="datatype-tag">{{ formatDatatype(n.datatype) }}</span>
+              </span>
+            </div>
+          </div>
+        </LabelsSection>
 
         <DocumentationSection :items="documentationConfig" />
 

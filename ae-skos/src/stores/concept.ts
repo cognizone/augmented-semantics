@@ -57,7 +57,7 @@ export const useConceptStore = defineStore('concept', () => {
 
   const isExpanded = computed(() => (uri: string) => expanded.value.has(uri))
 
-  const recentHistory = computed(() => history.value.slice(0, 10))
+  const recentHistory = computed(() => history.value.slice(0, MAX_HISTORY))
 
   // Actions - Tree
   function setTopConcepts(concepts: ConceptNode[]) {

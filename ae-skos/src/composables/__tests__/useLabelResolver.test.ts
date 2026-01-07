@@ -63,7 +63,7 @@ describe('useLabelResolver', () => {
       expect(result[0]?.lang).toBe('nl') // preferred first
     })
 
-    it('places no-lang labels after preferred language', () => {
+    it('places xsd:string (no-lang) labels first', () => {
       const languageStore = useLanguageStore()
       languageStore.setPreferred('en')
 
@@ -76,8 +76,8 @@ describe('useLabelResolver', () => {
 
       const result = sortLabels(labels)
       expect(result).toHaveLength(3)
-      expect(result[0]?.lang).toBe('en')      // preferred
-      expect(result[1]?.lang).toBeUndefined() // no-lang
+      expect(result[0]?.lang).toBeUndefined() // xsd:string first
+      expect(result[1]?.lang).toBe('en')      // preferred
       expect(result[2]?.lang).toBe('de')      // alphabetical
     })
 

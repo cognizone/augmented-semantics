@@ -123,9 +123,9 @@ export function useLabelResolver() {
   /**
    * Sort and deduplicate labels:
    * 1. Deduplicate by value+lang combination
-   * 2. Preferred language first
-   * 3. Endpoint's language priorities (in order)
-   * 4. Labels without language tag
+   * 2. xsd:string (no language tag) first
+   * 3. Preferred language
+   * 4. Endpoint's language priorities (in order)
    * 5. Remaining languages alphabetically
    */
   function sortLabels(labels: LabelValue[]): LabelValue[] {
@@ -147,7 +147,11 @@ export function useLabelResolver() {
       const aLang = a.lang || ''
       const bLang = b.lang || ''
 
-      // Preferred language comes first
+      // xsd:string (no-lang) labels come first
+      if (!aLang && bLang) return -1
+      if (aLang && !bLang) return 1
+
+      // Preferred language comes next
       if (aLang === preferred && bLang !== preferred) return -1
       if (bLang === preferred && aLang !== preferred) return 1
 
@@ -157,10 +161,6 @@ export function useLabelResolver() {
       if (aIdx !== -1 && bIdx === -1) return -1
       if (bIdx !== -1 && aIdx === -1) return 1
       if (aIdx !== -1 && bIdx !== -1 && aIdx !== bIdx) return aIdx - bIdx
-
-      // No-lang labels come before other languages
-      if (!aLang && bLang) return -1
-      if (aLang && !bLang) return 1
 
       // Rest alphabetically by language code
       return aLang.localeCompare(bLang)

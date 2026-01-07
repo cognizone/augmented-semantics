@@ -331,14 +331,16 @@ describe('concept store', () => {
       expect(store.history).toEqual([])
     })
 
-    it('returns recent 10 in recentHistory getter', () => {
+    it('returns all history entries in recentHistory getter (up to MAX_HISTORY of 50)', () => {
       const store = useConceptStore()
 
-      for (let i = 0; i < 15; i++) {
+      // Add 55 entries (more than MAX_HISTORY)
+      for (let i = 0; i < 55; i++) {
         store.addToHistory({ uri: `http://ex.org/c${i}`, label: `Concept ${i}` })
       }
 
-      expect(store.recentHistory.length).toBe(10)
+      // Should return all 50 (MAX_HISTORY)
+      expect(store.recentHistory.length).toBe(50)
     })
 
     it('loads history from localStorage on init', () => {

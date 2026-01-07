@@ -16,6 +16,7 @@ export interface ConceptScheme {
   creator?: string
   created?: string
   modified?: string
+  deprecated?: boolean
 }
 
 // Simple reference (breadcrumb, relations, search results)

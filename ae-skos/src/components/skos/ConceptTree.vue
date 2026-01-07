@@ -73,6 +73,7 @@ const treeNodes = computed((): TreeNode[] => {
         label: scheme.label,
         showLangTag: scheme.labelLang ? shouldShowLangTag(scheme.labelLang) : false,
         lang: scheme.labelLang,
+        deprecated: scheme.deprecated,
       },
       leaf: topNodes.length === 0,
       children: topNodes,
@@ -612,7 +613,7 @@ watch(
               <span v-if="slotProps.node.data?.showLangTag" class="lang-tag">
                 {{ slotProps.node.data.lang }}
               </span>
-              <span v-if="slotProps.node.data?.deprecated && showDeprecationIndicator && !slotProps.node.data?.isScheme" class="deprecated-badge">deprecated</span>
+              <span v-if="slotProps.node.data?.deprecated && showDeprecationIndicator" class="deprecated-badge">deprecated</span>
             </span>
             <ProgressSpinner
               v-if="loadingChildren.has(slotProps.node.key)"
@@ -796,18 +797,6 @@ watch(
 
 .tree-node.deprecated {
   opacity: 0.6;
-}
-
-.deprecated-badge {
-  font-size: 0.625rem;
-  font-weight: 600;
-  background: color-mix(in srgb, var(--ae-status-warning) 20%, transparent);
-  color: var(--ae-status-warning);
-  padding: 0.05rem 0.3rem;
-  border-radius: 3px;
-  margin-left: 0.25rem;
-  flex-shrink: 0;
-  text-transform: lowercase;
 }
 
 .node-label {

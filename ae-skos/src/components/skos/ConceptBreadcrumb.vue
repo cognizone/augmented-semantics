@@ -88,9 +88,10 @@ async function loadSchemes() {
   endpointStore.setStatus('connecting')
 
   const query = withPrefixes(`
-    SELECT DISTINCT ?scheme ?label ?labelLang ?labelType
+    SELECT DISTINCT ?scheme ?label ?labelLang ?labelType ?deprecated
     WHERE {
       ?scheme a skos:ConceptScheme .
+      OPTIONAL { ?scheme owl:deprecated ?deprecated . }
       OPTIONAL {
         {
           ?scheme skos:prefLabel ?label .
@@ -116,6 +117,7 @@ async function loadSchemes() {
     // Group by scheme URI and pick best label
     const schemeMap = new Map<string, {
       labels: { value: string; lang: string; type: string }[]
+      deprecated: boolean
     }>()
 
     for (const b of results.results.bindings) {
@@ -123,10 +125,19 @@ async function loadSchemes() {
       if (!uri) continue
 
       if (!schemeMap.has(uri)) {
-        schemeMap.set(uri, { labels: [] })
+        schemeMap.set(uri, { labels: [], deprecated: false })
       }
 
       const entry = schemeMap.get(uri)!
+
+      // Check deprecated status
+      if (b.deprecated?.value) {
+        const val = b.deprecated.value.toLowerCase()
+        if (val === 'true' || val === '1') {
+          entry.deprecated = true
+        }
+      }
+
       if (b.label?.value) {
         entry.labels.push({
           value: b.label.value,
@@ -154,7 +165,7 @@ async function loadSchemes() {
         }
       }
 
-      return { uri, label: bestLabel, labelLang: bestLabelLang }
+      return { uri, label: bestLabel, labelLang: bestLabelLang, deprecated: data.deprecated || undefined }
     })
 
     logger.info('ConceptBreadcrumb', `Loaded ${uniqueSchemes.length} schemes`)

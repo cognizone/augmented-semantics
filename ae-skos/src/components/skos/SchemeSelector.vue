@@ -68,7 +68,7 @@ const selectedSchemeDetails = ref<ConceptScheme | null>(null)
 
 // Computed
 const dropdownOptions = computed(() => {
-  const options: { label: string; value: string | null; uri: string | null; lang?: string; showLangTag: boolean }[] = [
+  const options: { label: string; value: string | null; uri: string | null; lang?: string; showLangTag: boolean; deprecated?: boolean }[] = [
     { label: 'All Schemes', value: null, uri: null, showLangTag: false },
   ]
 
@@ -80,6 +80,7 @@ const dropdownOptions = computed(() => {
       uri: scheme.uri,
       lang: scheme.labelLang,
       showLangTag: showTag,
+      deprecated: scheme.deprecated,
     })
   })
 
@@ -104,11 +105,12 @@ async function loadSchemes() {
   error.value = null
   endpointStore.setStatus('connecting')
 
-  // Query with all label types including SKOS-XL
+  // Query with all label types including SKOS-XL and deprecated status
   const query = withPrefixes(`
-    SELECT DISTINCT ?scheme ?label ?labelLang ?labelType
+    SELECT DISTINCT ?scheme ?label ?labelLang ?labelType ?deprecated
     WHERE {
       ?scheme a skos:ConceptScheme .
+      OPTIONAL { ?scheme owl:deprecated ?deprecated . }
       OPTIONAL {
         {
           ?scheme skos:prefLabel ?label .
@@ -136,6 +138,7 @@ async function loadSchemes() {
     // Group by scheme URI and pick best label
     const schemeMap = new Map<string, {
       labels: { value: string; lang: string; type: string }[]
+      deprecated: boolean
     }>()
 
     for (const b of results.results.bindings) {
@@ -143,10 +146,20 @@ async function loadSchemes() {
       if (!uri) continue
 
       if (!schemeMap.has(uri)) {
-        schemeMap.set(uri, { labels: [] })
+        schemeMap.set(uri, { labels: [], deprecated: false })
       }
 
       const entry = schemeMap.get(uri)!
+
+      // Check deprecated status
+      if (b.deprecated?.value) {
+        logger.debug('SchemeSelector', 'Deprecated value found', { uri, deprecated: b.deprecated })
+        const val = b.deprecated.value.toLowerCase()
+        if (val === 'true' || val === '1') {
+          entry.deprecated = true
+        }
+      }
+
       if (b.label?.value) {
         entry.labels.push({
           value: b.label.value,
@@ -175,11 +188,11 @@ async function loadSchemes() {
         }
       }
 
-      return { uri, label: bestLabel, labelLang: bestLabelLang }
+      return { uri, label: bestLabel, labelLang: bestLabelLang, deprecated: data.deprecated || undefined }
     })
 
     logger.info('SchemeSelector', `Loaded ${uniqueSchemes.length} schemes`, {
-      schemes: uniqueSchemes.map(s => s.label || s.uri),
+      schemes: uniqueSchemes.map(s => ({ label: s.label || s.uri, deprecated: s.deprecated })),
     })
 
     setConnected()
@@ -293,12 +306,13 @@ watch(
         </div>
       </template>
       <template #option="slotProps">
-        <div class="scheme-option">
+        <div class="scheme-option" :class="{ deprecated: slotProps.option.deprecated }">
           <div class="scheme-label-row">
             <span class="scheme-label">{{ slotProps.option.label }}</span>
             <span v-if="slotProps.option.showLangTag" class="lang-tag">
               {{ slotProps.option.lang }}
             </span>
+            <span v-if="slotProps.option.deprecated" class="deprecated-badge">deprecated</span>
           </div>
           <span v-if="slotProps.option.uri" class="scheme-uri">
             {{ slotProps.option.uri }}
@@ -485,6 +499,10 @@ watch(
   text-overflow: ellipsis;
   white-space: nowrap;
   max-width: 250px;
+}
+
+.scheme-option.deprecated .scheme-label {
+  opacity: 0.7;
 }
 
 .info-btn {

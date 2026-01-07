@@ -117,7 +117,7 @@ export function useSchemeData() {
           dct:title, dct:description,
           dct:creator, dct:created, dct:modified, dct:issued,
           dct:publisher, dct:rights, dct:license, cc:license,
-          owl:deprecated, owl:versionInfo
+          owl:versionInfo
         ))
       }
     `)

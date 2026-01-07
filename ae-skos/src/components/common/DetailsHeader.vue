@@ -60,9 +60,9 @@ function handleExport(event: Event) {
         <span v-if="showLangTag && langTag" class="header-lang-tag">{{ langTag }}</span>
         <span
           v-if="deprecated"
-          class="deprecation-badge"
+          class="deprecated-badge"
           v-tooltip="deprecatedTooltip"
-        >Deprecated</span>
+        >deprecated</span>
       </h2>
       <div class="resource-uri">
         <span class="uri-text mono">{{ uri }}</span>
@@ -149,17 +149,6 @@ function handleExport(event: Event) {
   background: var(--ae-bg-hover);
   color: var(--ae-text-secondary);
   padding: 0.1rem 0.4rem;
-  border-radius: 3px;
-  margin-left: 0.5rem;
-  vertical-align: middle;
-}
-
-.deprecation-badge {
-  font-size: 0.625rem;
-  font-weight: 500;
-  background: var(--ae-warning-bg, #fef3c7);
-  color: var(--ae-warning-text, #92400e);
-  padding: 0.15rem 0.5rem;
   border-radius: 3px;
   margin-left: 0.5rem;
   vertical-align: middle;
