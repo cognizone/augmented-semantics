@@ -7,11 +7,11 @@
  *
  * @see /spec/ae-skos/sko06-Utilities.md
  */
-import { computed } from 'vue'
+import { ref, computed } from 'vue'
 import { useConceptStore, useEndpointStore, useSchemeStore } from '../../stores'
 import { useLabelResolver } from '../../composables'
-import { useConfirm } from 'primevue/useconfirm'
 import Listbox from 'primevue/listbox'
+import HistoryDeleteDialog from './HistoryDeleteDialog.vue'
 
 import type { HistoryEntry } from '../../types'
 
@@ -23,7 +23,9 @@ const conceptStore = useConceptStore()
 const endpointStore = useEndpointStore()
 const schemeStore = useSchemeStore()
 const { shouldShowLangTag } = useLabelResolver()
-const confirm = useConfirm()
+
+// Dialog state
+const showDeleteDialog = ref(false)
 
 // Context helpers
 function getEndpointName(url?: string): string | undefined {
@@ -66,15 +68,11 @@ function selectItem(entry: HistoryEntry) {
 
 // Clear history with confirmation
 function clearHistory() {
-  confirm.require({
-    message: 'Clear all recent history?',
-    header: 'Confirm',
-    icon: 'pi pi-exclamation-triangle',
-    acceptClass: 'p-button-danger',
-    accept: () => {
-      conceptStore.clearHistory()
-    }
-  })
+  showDeleteDialog.value = true
+}
+
+function handleDeleteConfirm() {
+  conceptStore.clearHistory()
 }
 </script>
 
@@ -130,6 +128,12 @@ function clearHistory() {
         </div>
       </template>
     </Listbox>
+
+    <!-- Delete Confirmation Dialog -->
+    <HistoryDeleteDialog
+      v-model:visible="showDeleteDialog"
+      @confirm="handleDeleteConfirm"
+    />
   </div>
 </template>
 

@@ -5,7 +5,6 @@ import { useUIStore, useConceptStore, useSettingsStore, useLanguageStore, useEnd
 import Toast from 'primevue/toast'
 import Button from 'primevue/button'
 import Dialog from 'primevue/dialog'
-import ConfirmDialog from 'primevue/confirmdialog'
 import Checkbox from 'primevue/checkbox'
 import Select from 'primevue/select'
 import Menu from 'primevue/menu'
@@ -189,7 +188,6 @@ onUnmounted(() => {
 
     <!-- Toast notifications -->
     <Toast />
-    <ConfirmDialog />
 
     <!-- Endpoint Manager Dialog -->
     <EndpointManager v-model:visible="showEndpointManager" />
