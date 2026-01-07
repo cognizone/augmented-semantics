@@ -77,6 +77,24 @@ const currentSchemeName = computed(() => {
   return schemeStore.selected.label || schemeStore.selected.uri.split('/').pop() || 'Scheme'
 })
 
+// Go to scheme home (show scheme details)
+function goHome() {
+  const scheme = schemeStore.selected
+  if (scheme) {
+    conceptStore.selectConcept(null)
+    schemeStore.viewScheme(scheme.uri)
+    conceptStore.scrollTreeToTop()
+    // Add to history
+    conceptStore.addToHistory({
+      uri: scheme.uri,
+      label: scheme.label || scheme.uri,
+      lang: scheme.labelLang,
+      endpointUrl: endpointStore.current?.url,
+      type: 'scheme',
+    })
+  }
+}
+
 // Helper to select best label based on language priorities
 function selectBestLabelByLanguage(
   labels: { value: string; lang: string; type: string }[]
@@ -417,7 +435,7 @@ watch(
 <template>
   <div class="concept-breadcrumb">
     <!-- Home button (always visible, first) -->
-    <button class="home-btn" @click="emit('selectConcept', '')" title="Go to root">
+    <button class="home-btn" @click="goHome" title="Go to scheme">
       <span class="material-symbols-outlined">home</span>
     </button>
 

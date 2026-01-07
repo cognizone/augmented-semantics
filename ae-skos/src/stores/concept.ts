@@ -52,6 +52,9 @@ export const useConceptStore = defineStore('concept', () => {
   const loadingDetails = ref(false)
   const loadingSearch = ref(false)
 
+  // State - UI triggers
+  const shouldScrollToTop = ref(false)
+
   // Getters
   const hasSelection = computed(() => selectedUri.value !== null)
 
@@ -188,6 +191,15 @@ export const useConceptStore = defineStore('concept', () => {
     loadingSearch.value = loading
   }
 
+  // Actions - UI triggers
+  function scrollTreeToTop() {
+    shouldScrollToTop.value = true
+  }
+
+  function resetScrollToTop() {
+    shouldScrollToTop.value = false
+  }
+
   // Actions - Reset
   function reset() {
     topConcepts.value = []
@@ -256,6 +268,9 @@ export const useConceptStore = defineStore('concept', () => {
     setLoadingTree,
     setLoadingDetails,
     setLoadingSearch,
+    scrollTreeToTop,
+    resetScrollToTop,
+    shouldScrollToTop,
     reset,
     clearAllChildren,
   }

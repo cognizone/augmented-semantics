@@ -566,6 +566,18 @@ watch(
     }
   }
 )
+
+// Watch for scroll-to-top trigger (from home button in breadcrumb)
+watch(
+  () => conceptStore.shouldScrollToTop,
+  (should) => {
+    if (should) {
+      const wrapper = document.querySelector('.tree-wrapper')
+      wrapper?.scrollTo({ top: 0, behavior: 'smooth' })
+      conceptStore.resetScrollToTop()
+    }
+  }
+)
 </script>
 
 <template>
