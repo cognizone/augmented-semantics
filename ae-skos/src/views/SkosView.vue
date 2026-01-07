@@ -32,6 +32,12 @@ const schemeStore = useSchemeStore()
 const languageStore = useLanguageStore()
 const endpointStore = useEndpointStore()
 
+// Sidebar tab with computed getter/setter for v-model binding
+const sidebarTab = computed({
+  get: () => uiStore.sidebarTab,
+  set: (value: 'browse' | 'search' | 'recent') => uiStore.setSidebarTab(value),
+})
+
 // Handle concept selection from any component
 function selectConcept(uri: string) {
   if (uri) {
@@ -240,7 +246,7 @@ onMounted(() => {
         :minSize="20"
         class="left-panel"
       >
-        <Tabs v-model:value="uiStore.sidebarTab" class="sidebar-tabs">
+        <Tabs v-model:value="sidebarTab" class="sidebar-tabs">
           <TabList>
             <Tab value="browse">Browse</Tab>
             <Tab value="search">Search</Tab>
