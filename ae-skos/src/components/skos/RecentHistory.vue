@@ -8,7 +8,7 @@
  * @see /spec/ae-skos/sko06-Utilities.md
  */
 import { computed } from 'vue'
-import { useConceptStore } from '../../stores'
+import { useConceptStore, useEndpointStore, useSchemeStore } from '../../stores'
 import { useLabelResolver } from '../../composables'
 import { useConfirm } from 'primevue/useconfirm'
 import Listbox from 'primevue/listbox'
@@ -20,8 +20,23 @@ const emit = defineEmits<{
 }>()
 
 const conceptStore = useConceptStore()
+const endpointStore = useEndpointStore()
+const schemeStore = useSchemeStore()
 const { shouldShowLangTag } = useLabelResolver()
 const confirm = useConfirm()
+
+// Context helpers
+function getEndpointName(url?: string): string | undefined {
+  if (!url) return undefined
+  const endpoint = endpointStore.endpoints.find(e => e.url === url)
+  return endpoint?.name
+}
+
+function getSchemeName(uri?: string): string | undefined {
+  if (!uri) return undefined
+  const scheme = schemeStore.schemes.find(s => s.uri === uri)
+  return scheme?.label || uri.split('/').pop()
+}
 
 // Computed
 const history = computed(() => conceptStore.recentHistory)
@@ -98,14 +113,19 @@ function clearHistory() {
             class="material-symbols-outlined item-icon"
             :class="slotProps.option.type === 'scheme' ? 'icon-folder' : (slotProps.option.hasNarrower ? 'icon-label' : 'icon-leaf')"
           >{{ slotProps.option.type === 'scheme' ? 'folder' : (slotProps.option.hasNarrower ? 'label' : 'circle') }}</span>
-          <span class="item-label">
-            {{ slotProps.option.notation && slotProps.option.label
-              ? `${slotProps.option.notation} - ${slotProps.option.label}`
-              : slotProps.option.notation || slotProps.option.label }}
-            <span v-if="slotProps.option.lang && shouldShowLangTag(slotProps.option.lang)" class="lang-tag">
-              {{ slotProps.option.lang }}
+          <div class="item-content">
+            <span class="item-label">
+              {{ slotProps.option.notation && slotProps.option.label
+                ? `${slotProps.option.notation} - ${slotProps.option.label}`
+                : slotProps.option.notation || slotProps.option.label }}
+              <span v-if="slotProps.option.lang && shouldShowLangTag(slotProps.option.lang)" class="lang-tag">
+                {{ slotProps.option.lang }}
+              </span>
             </span>
-          </span>
+            <span v-if="getEndpointName(slotProps.option.endpointUrl) || getSchemeName(slotProps.option.schemeUri)" class="item-context">
+              {{ getEndpointName(slotProps.option.endpointUrl) }}<template v-if="getEndpointName(slotProps.option.endpointUrl) && getSchemeName(slotProps.option.schemeUri)"> · </template>{{ getSchemeName(slotProps.option.schemeUri) }}
+            </span>
+          </div>
           <span class="item-time">{{ formatRelativeTime(slotProps.option.accessedAt) }}</span>
         </div>
       </template>
@@ -210,9 +230,23 @@ function clearHistory() {
   flex-shrink: 0;
 }
 
-.item-label {
+.item-content {
   flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.item-label {
   font-size: 0.875rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.item-context {
+  font-size: 0.7rem;
+  color: var(--ae-text-muted);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
