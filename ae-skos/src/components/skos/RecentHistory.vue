@@ -1,8 +1,8 @@
 <script setup lang="ts">
 /**
- * RecentHistory - Recently viewed concepts
+ * RecentHistory - Recently viewed concepts and schemes
  *
- * Displays the last 10 concepts viewed with relative timestamps.
+ * Displays the last 50 items viewed with relative timestamps.
  * Persisted across sessions in localStorage.
  *
  * @see /spec/ae-skos/sko06-Utilities.md
@@ -71,7 +71,7 @@ function clearHistory() {
     </div>
 
     <div v-if="!hasHistory" class="empty-state">
-      <small>No recent concepts</small>
+      <small>No recent items</small>
     </div>
 
     <Listbox
@@ -84,6 +84,10 @@ function clearHistory() {
     >
       <template #option="slotProps">
         <div class="history-item">
+          <span
+            class="material-symbols-outlined item-icon"
+            :class="slotProps.option.type === 'scheme' ? 'icon-folder' : (slotProps.option.hasNarrower ? 'icon-label' : 'icon-leaf')"
+          >{{ slotProps.option.type === 'scheme' ? 'folder' : (slotProps.option.hasNarrower ? 'label' : 'circle') }}</span>
           <span class="item-label">
             {{ slotProps.option.notation && slotProps.option.label
               ? `${slotProps.option.notation} - ${slotProps.option.label}`
@@ -186,10 +190,14 @@ function clearHistory() {
 
 .history-item {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  gap: 1rem;
+  gap: 0.5rem;
   width: 100%;
+}
+
+.item-icon {
+  font-size: 16px;
+  flex-shrink: 0;
 }
 
 .item-label {
@@ -204,5 +212,6 @@ function clearHistory() {
   font-size: 0.7rem;
   color: var(--ae-text-secondary);
   white-space: nowrap;
+  margin-left: auto;
 }
 </style>

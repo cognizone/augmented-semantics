@@ -58,6 +58,12 @@ export interface ConceptDetails {
   broadMatch: string[]
   narrowMatch: string[]
   relatedMatch: string[]
+  // Metadata (Dublin Core / RDFS)
+  identifier: string[]        // dc:identifier
+  created?: string            // dct:created
+  modified?: string           // dct:modified
+  status?: string             // dct:status
+  seeAlso: string[]           // rdfs:seeAlso
   // SKOS-XL extended labels
   prefLabelsXL: XLLabel[]
   altLabelsXL: XLLabel[]
@@ -166,4 +172,6 @@ export interface HistoryEntry {
   accessedAt: string
   endpointUrl?: string
   schemeUri?: string
+  type?: 'concept' | 'scheme'
+  hasNarrower?: boolean
 }

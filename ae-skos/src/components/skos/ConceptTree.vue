@@ -123,6 +123,14 @@ const selectedKey = computed<TreeSelectionKeys | undefined>({
         if (scheme && uri === scheme.uri) {
           conceptStore.selectConcept(null) // Clear concept selection when viewing scheme
           schemeStore.viewScheme(uri)
+          // Add to history
+          conceptStore.addToHistory({
+            uri: scheme.uri,
+            label: scheme.label || scheme.uri,
+            lang: scheme.labelLang,
+            endpointUrl: endpointStore.current?.url,
+            type: 'scheme',
+          })
         } else {
           selectConcept(uri)
         }
@@ -329,6 +337,7 @@ function selectConcept(uri: string) {
       lang: node.lang,
       endpointUrl: endpointStore.current?.url,
       schemeUri: schemeStore.selectedUri || undefined,
+      hasNarrower: node.hasNarrower,
     })
   }
 }
@@ -351,13 +360,21 @@ function goToUri() {
   const uri = gotoUri.value.trim().replace(/^<|>$/g, '')
   if (uri) {
     // Check if this URI is a known scheme
-    const isScheme = schemeStore.schemes.some(s => s.uri === uri)
-    if (isScheme) {
+    const scheme = schemeStore.schemes.find(s => s.uri === uri)
+    if (scheme) {
       // Select the scheme in the dropdown (triggers tree loading via watcher)
       schemeStore.selectScheme(uri)
       // Clear concept selection and show scheme details on the right
       conceptStore.selectConcept(null)
       schemeStore.viewScheme(uri)
+      // Add to history
+      conceptStore.addToHistory({
+        uri: scheme.uri,
+        label: scheme.label || scheme.uri,
+        lang: scheme.labelLang,
+        endpointUrl: endpointStore.current?.url,
+        type: 'scheme',
+      })
     } else {
       // Treat as a concept
       selectConcept(uri)

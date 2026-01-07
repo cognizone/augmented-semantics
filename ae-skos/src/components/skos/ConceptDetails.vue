@@ -21,7 +21,7 @@ import { ref, watch, computed } from 'vue'
 import { useConceptStore, useSettingsStore } from '../../stores'
 import { isValidURI } from '../../services'
 import { useDelayedLoading, useLabelResolver, useConceptData, useConceptNavigation, useResourceExport, useDeprecation, useElapsedTime } from '../../composables'
-import { getRefLabel, getUriFragment, formatDatatype } from '../../utils/displayUtils'
+import { getRefLabel, getUriFragment, formatDatatype, formatTemporalValue } from '../../utils/displayUtils'
 import RawRdfDialog from '../common/RawRdfDialog.vue'
 import DetailsStates from '../common/DetailsStates.vue'
 import DetailsHeader from '../common/DetailsHeader.vue'
@@ -171,6 +171,15 @@ const mappingsConfig = computed(() => [
   { label: 'Narrow Match', uris: details.value?.narrowMatch || [] },
   { label: 'Related Match', uris: details.value?.relatedMatch || [] },
 ].filter(m => m.uris.length > 0))
+
+// Has any metadata to show
+const hasMetadata = computed(() =>
+  (details.value?.identifier?.length ?? 0) > 0 ||
+  details.value?.created ||
+  details.value?.modified ||
+  details.value?.status ||
+  (details.value?.seeAlso?.length ?? 0) > 0
+)
 
 // Sorted other properties (alphabetically by qualified name)
 const sortedOtherProperties = computed(() => {
@@ -342,6 +351,54 @@ watch(
                 {{ getRefLabel(ref) }}<span v-if="ref.lang && shouldShowLangTag(ref.lang)" class="lang-tag">{{ ref.lang }}</span>
               </span>
             </div>
+          </div>
+        </section>
+
+        <!-- Metadata Section (concept-specific) -->
+        <section v-if="hasMetadata" class="details-section">
+          <h3 class="section-title">
+            <span class="material-symbols-outlined section-icon">info</span>
+            Metadata
+          </h3>
+
+          <div v-if="details.identifier?.length" class="property-row">
+            <label>Identifier</label>
+            <div class="metadata-values">
+              <span v-for="(id, i) in details.identifier" :key="i" class="metadata-value">{{ id }}</span>
+            </div>
+          </div>
+
+          <div v-if="details.status" class="property-row">
+            <label>Status</label>
+            <span class="metadata-value">{{ details.status }}</span>
+          </div>
+
+          <div v-if="details.seeAlso?.length" class="property-row">
+            <label>See Also</label>
+            <div class="metadata-values">
+              <template v-for="(uri, i) in details.seeAlso" :key="i">
+                <a :href="uri" target="_blank" class="metadata-link">
+                  {{ getUriFragment(uri) }}
+                  <span class="material-symbols-outlined link-icon">open_in_new</span>
+                </a>
+              </template>
+            </div>
+          </div>
+
+          <div v-if="details.created" class="property-row">
+            <label>Created</label>
+            <span class="metadata-value">
+              {{ formatTemporalValue(details.created, 'xsd:date') }}
+              <span class="datatype-tag">xsd:date</span>
+            </span>
+          </div>
+
+          <div v-if="details.modified" class="property-row">
+            <label>Modified</label>
+            <span class="metadata-value">
+              {{ formatTemporalValue(details.modified, 'xsd:date') }}
+              <span class="datatype-tag">xsd:date</span>
+            </span>
           </div>
         </section>
 

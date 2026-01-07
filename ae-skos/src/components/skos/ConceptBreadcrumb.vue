@@ -46,7 +46,27 @@ const schemeOptions = computed(() => {
 
 const selectedScheme = computed({
   get: () => schemeStore.selectedUri,
-  set: (uri: string | null) => schemeStore.selectScheme(uri),
+  set: (uri: string | null) => {
+    schemeStore.selectScheme(uri)
+    // When selecting a scheme from dropdown, also show its details and clear concept selection
+    if (uri) {
+      conceptStore.selectConcept(null)
+      schemeStore.viewScheme(uri)
+      // Add to history
+      const scheme = schemeStore.schemes.find(s => s.uri === uri)
+      if (scheme) {
+        conceptStore.addToHistory({
+          uri: scheme.uri,
+          label: scheme.label || scheme.uri,
+          lang: scheme.labelLang,
+          endpointUrl: endpointStore.current?.url,
+          type: 'scheme',
+        })
+      }
+    } else {
+      schemeStore.viewScheme(null)
+    }
+  },
 })
 
 const currentSchemeName = computed(() => {

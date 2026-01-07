@@ -258,7 +258,8 @@ export function useConceptData() {
           skos:broader, skos:narrower, skos:related,
           skos:inScheme, skos:exactMatch, skos:closeMatch,
           skos:broadMatch, skos:narrowMatch, skos:relatedMatch,
-          skosxl:prefLabel, skosxl:altLabel, skosxl:hiddenLabel
+          skosxl:prefLabel, skosxl:altLabel, skosxl:hiddenLabel,
+          dc:identifier, dct:created, dct:modified, dct:status, rdfs:seeAlso
         ))
       }
     `)
@@ -374,7 +375,8 @@ export function useConceptData() {
           skos:changeNote, skos:editorialNote, skos:note, skos:example,
           skos:notation, skos:broader, skos:narrower, skos:related,
           skos:inScheme, skos:exactMatch, skos:closeMatch,
-          skos:broadMatch, skos:narrowMatch, skos:relatedMatch
+          skos:broadMatch, skos:narrowMatch, skos:relatedMatch,
+          dc:identifier, dct:created, dct:modified, dct:status, rdfs:seeAlso
         ))
       }
     `)
@@ -404,6 +406,8 @@ export function useConceptData() {
         broadMatch: [],
         narrowMatch: [],
         relatedMatch: [],
+        identifier: [],
+        seeAlso: [],
         prefLabelsXL: [],
         altLabelsXL: [],
         hiddenLabelsXL: [],
@@ -491,6 +495,27 @@ export function useConceptData() {
         } else if (prop.endsWith('relatedMatch')) {
           if (!conceptDetails.relatedMatch.includes(val)) {
             conceptDetails.relatedMatch.push(val)
+          }
+        } else if (prop.endsWith('identifier')) {
+          if (!conceptDetails.identifier.includes(val)) {
+            conceptDetails.identifier.push(val)
+          }
+        } else if (prop.endsWith('created')) {
+          if (!conceptDetails.created) {
+            conceptDetails.created = val
+          }
+        } else if (prop.endsWith('modified')) {
+          if (!conceptDetails.modified) {
+            conceptDetails.modified = val
+          }
+        } else if (prop.endsWith('status')) {
+          if (!conceptDetails.status) {
+            // Extract fragment if it's a URI
+            conceptDetails.status = val.includes('/') ? val.split('/').pop() || val : val
+          }
+        } else if (prop.endsWith('seeAlso')) {
+          if (!conceptDetails.seeAlso.includes(val)) {
+            conceptDetails.seeAlso.push(val)
           }
         }
       }

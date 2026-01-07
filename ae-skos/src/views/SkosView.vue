@@ -49,7 +49,7 @@ function selectConcept(uri: string) {
 }
 
 // Handle history selection - may need to switch endpoint/scheme
-async function selectFromHistory(entry: { uri: string; endpointUrl?: string; schemeUri?: string }) {
+async function selectFromHistory(entry: { uri: string; endpointUrl?: string; schemeUri?: string; type?: 'concept' | 'scheme' }) {
   let needsWait = false
 
   // Switch endpoint if different
@@ -61,13 +61,28 @@ async function selectFromHistory(entry: { uri: string; endpointUrl?: string; sch
     }
   }
 
-  // Switch scheme if different
+  // Wait for Vue reactivity to propagate endpoint changes
+  if (needsWait) {
+    await nextTick()
+    needsWait = false
+  }
+
+  // Handle scheme entries
+  if (entry.type === 'scheme') {
+    schemeStore.selectScheme(entry.uri)
+    conceptStore.selectConcept(null)
+    schemeStore.viewScheme(entry.uri)
+    activeTab.value = 'browse'
+    return
+  }
+
+  // Switch scheme if different (for concepts)
   if (entry.schemeUri && entry.schemeUri !== schemeStore.selectedUri) {
     schemeStore.selectScheme(entry.schemeUri)
     needsWait = true
   }
 
-  // Wait for Vue reactivity to propagate endpoint/scheme changes
+  // Wait for Vue reactivity to propagate scheme changes
   if (needsWait) {
     await nextTick()
   }
