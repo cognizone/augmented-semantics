@@ -50,7 +50,7 @@ Click the endpoint badge in the header toolbar, then select "Manage endpoints...
 1. Click **Add Endpoint** in the Endpoint Manager
 2. The setup wizard opens with multiple steps:
 
-![Endpoint wizard showing the connection step](screenshot-endpoint-wizard.png)
+<img src="screenshot-endpoint-wizard.png" alt="Endpoint wizard showing the connection step" width="500">
 
 #### Step 1: Connection
 
@@ -69,13 +69,13 @@ The wizard automatically analyzes the endpoint to detect:
 - SKOS concept schemes
 - Languages used in labels
 
-![Analysis step showing detected schemes and languages](screenshot-endpoint-analysis.png)
+<img src="screenshot-endpoint-analysis.png" alt="Analysis step showing detected schemes and languages" width="500">
 
 #### Step 3: Language Priorities
 
 Drag and drop languages to set your preferred order. Labels will be shown in the first available language from this list.
 
-![Language priority configuration with drag-and-drop](screenshot-language-priorities.png)
+<img src="screenshot-language-priorities.png" alt="Language priority configuration with drag-and-drop" width="500">
 
 ### Managing Your Endpoints
 
