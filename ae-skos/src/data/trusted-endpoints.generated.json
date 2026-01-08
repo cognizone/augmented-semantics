@@ -1,0 +1,447 @@
+[
+  {
+    "name": "Fedlex",
+    "url": "https://fedlex.data.admin.ch/sparqlendpoint",
+    "description": "The official publishing platform for Swiss federal law. It exposes the Classified Compilation of legislation as a hierarchical concept scheme, allowing navigation through Swiss legal domains (Systematic Collection of Federal Law).",
+    "analysis": {
+      "hasSkosContent": true,
+      "supportsNamedGraphs": true,
+      "skosGraphCount": 47,
+      "languages": [
+        {
+          "lang": "it",
+          "count": 33758
+        },
+        {
+          "lang": "de",
+          "count": 32708
+        },
+        {
+          "lang": "fr",
+          "count": 32476
+        },
+        {
+          "lang": "en",
+          "count": 1542
+        },
+        {
+          "lang": "rm",
+          "count": 1307
+        }
+      ],
+      "analyzedAt": "2026-01-08T12:30:09.923Z"
+    },
+    "suggestedLanguagePriorities": [
+      "en",
+      "it",
+      "de",
+      "fr",
+      "rm"
+    ]
+  },
+  {
+    "name": "AGROVOC",
+    "url": "https://agrovoc.fao.org/sparql",
+    "description": "Maintained by the FAO (UN), this is a massive multilingual thesaurus covering agriculture, forestry, fisheries, food, and related environmental concepts.",
+    "analysis": {
+      "hasSkosContent": true,
+      "supportsNamedGraphs": true,
+      "skosGraphCount": 1,
+      "languages": [
+        {
+          "lang": "en",
+          "count": 83264
+        },
+        {
+          "lang": "ar",
+          "count": 83262
+        },
+        {
+          "lang": "es",
+          "count": 83262
+        },
+        {
+          "lang": "fr",
+          "count": 83262
+        },
+        {
+          "lang": "ru",
+          "count": 83262
+        },
+        {
+          "lang": "tr",
+          "count": 83012
+        },
+        {
+          "lang": "sw",
+          "count": 82910
+        },
+        {
+          "lang": "zh",
+          "count": 82266
+        },
+        {
+          "lang": "de",
+          "count": 78022
+        },
+        {
+          "lang": "it",
+          "count": 77558
+        },
+        {
+          "lang": "cs",
+          "count": 76522
+        },
+        {
+          "lang": "pt",
+          "count": 72058
+        },
+        {
+          "lang": "pl",
+          "count": 68906
+        },
+        {
+          "lang": "th",
+          "count": 68528
+        },
+        {
+          "lang": "hu",
+          "count": 68408
+        },
+        {
+          "lang": "ro",
+          "count": 68326
+        },
+        {
+          "lang": "sk",
+          "count": 67620
+        },
+        {
+          "lang": "ka",
+          "count": 64554
+        },
+        {
+          "lang": "ja",
+          "count": 61296
+        },
+        {
+          "lang": "uk",
+          "count": 59018
+        }
+      ],
+      "analyzedAt": "2026-01-08T12:30:30.769Z"
+    },
+    "suggestedLanguagePriorities": [
+      "en",
+      "ar",
+      "es",
+      "fr",
+      "ru",
+      "tr",
+      "sw",
+      "zh",
+      "de",
+      "it"
+    ]
+  },
+  {
+    "name": "BnF",
+    "url": "https://data.bnf.fr/sparql",
+    "description": "The National Library of France. It hosts RAMEAU, the primary subject heading authority for French libraries, along with extensive concepts regarding authors, works, and periods.",
+    "analysis": {
+      "hasSkosContent": true,
+      "supportsNamedGraphs": true,
+      "skosGraphCount": 1,
+      "languages": [
+        {
+          "lang": "fr",
+          "count": 7064523
+        },
+        {
+          "lang": "en",
+          "count": 390068
+        },
+        {
+          "lang": "ru",
+          "count": 35928
+        },
+        {
+          "lang": "la",
+          "count": 16278
+        },
+        {
+          "lang": "de",
+          "count": 15605
+        },
+        {
+          "lang": "zh",
+          "count": 15047
+        },
+        {
+          "lang": "it",
+          "count": 14379
+        },
+        {
+          "lang": "ar",
+          "count": 13839
+        },
+        {
+          "lang": "es",
+          "count": 11378
+        },
+        {
+          "lang": "ja",
+          "count": 7865
+        },
+        {
+          "lang": "bg",
+          "count": 7081
+        },
+        {
+          "lang": "sr",
+          "count": 4568
+        },
+        {
+          "lang": "sa",
+          "count": 3370
+        },
+        {
+          "lang": "hi",
+          "count": 2981
+        },
+        {
+          "lang": "uk",
+          "count": 2622
+        },
+        {
+          "lang": "hr",
+          "count": 2367
+        },
+        {
+          "lang": "el",
+          "count": 1765
+        },
+        {
+          "lang": "he",
+          "count": 1681
+        },
+        {
+          "lang": "pt",
+          "count": 1407
+        },
+        {
+          "lang": "pl",
+          "count": 1278
+        }
+      ],
+      "analyzedAt": "2026-01-08T12:31:18.371Z"
+    },
+    "suggestedLanguagePriorities": [
+      "en",
+      "fr",
+      "ru",
+      "la",
+      "de",
+      "zh",
+      "it",
+      "ar",
+      "es",
+      "ja"
+    ]
+  },
+  {
+    "name": "ZBW STW Thesaurus",
+    "url": "https://zbw.eu/beta/sparql/stw/query",
+    "description": "The 'Standard Thesaurus for Economics' maintained by the Leibniz Information Centre. It provides a highly structured vocabulary for economics and business studies.",
+    "analysis": {
+      "hasSkosContent": true,
+      "supportsNamedGraphs": false,
+      "skosGraphCount": null,
+      "languages": [
+        {
+          "lang": "de",
+          "count": 20186
+        },
+        {
+          "lang": "en",
+          "count": 13657
+        }
+      ],
+      "analyzedAt": "2026-01-08T12:31:18.983Z"
+    },
+    "suggestedLanguagePriorities": [
+      "en",
+      "de"
+    ]
+  },
+  {
+    "name": "DBpedia",
+    "url": "https://dbpedia.org/sparql",
+    "description": "The semantic extraction of Wikipedia. It serves as a general knowledge hub, defining millions of entities and concepts that are linked to external thesauri (like YAGO or Wikidata).",
+    "analysis": {
+      "hasSkosContent": true,
+      "supportsNamedGraphs": true,
+      "skosGraphCount": 1,
+      "languages": [
+        {
+          "lang": "en",
+          "count": 2565313
+        }
+      ],
+      "analyzedAt": "2026-01-08T12:31:19.329Z"
+    },
+    "suggestedLanguagePriorities": [
+      "en"
+    ]
+  },
+  {
+    "name": "NERC Vocabulary Server",
+    "url": "https://vocab.nerc.ac.uk/sparql/",
+    "description": "Managed by the British Oceanographic Data Centre. It provides standard vocabularies for oceanography and earth sciences, used globally to tag marine data.",
+    "analysis": {
+      "hasSkosContent": true,
+      "supportsNamedGraphs": false,
+      "skosGraphCount": null,
+      "languages": [
+        {
+          "lang": "en",
+          "count": 361729
+        },
+        {
+          "lang": "fr",
+          "count": 2158
+        },
+        {
+          "lang": "es",
+          "count": 370
+        },
+        {
+          "lang": "pt",
+          "count": 92
+        },
+        {
+          "lang": "no",
+          "count": 24
+        },
+        {
+          "lang": "ga",
+          "count": 2
+        }
+      ],
+      "analyzedAt": "2026-01-08T12:31:29.666Z"
+    },
+    "suggestedLanguagePriorities": [
+      "en",
+      "fr",
+      "es",
+      "pt",
+      "no",
+      "ga"
+    ]
+  },
+  {
+    "name": "Legilux",
+    "url": "https://data.legilux.public.lu/sparqlendpoint",
+    "description": "The official legal portal of the Grand Duchy of Luxembourg. It provides access to legislation and the 'Mémorial' (official journal) using a structured legal vocabulary.",
+    "analysis": {
+      "hasSkosContent": true,
+      "supportsNamedGraphs": true,
+      "skosGraphCount": 74,
+      "languages": [
+        {
+          "lang": "fr",
+          "count": 5518
+        },
+        {
+          "lang": "en",
+          "count": 428
+        },
+        {
+          "lang": "de",
+          "count": 349
+        },
+        {
+          "lang": "et",
+          "count": 281
+        },
+        {
+          "lang": "it",
+          "count": 261
+        },
+        {
+          "lang": "mt",
+          "count": 261
+        },
+        {
+          "lang": "lv",
+          "count": 261
+        },
+        {
+          "lang": "pl",
+          "count": 261
+        },
+        {
+          "lang": "hu",
+          "count": 261
+        },
+        {
+          "lang": "nl",
+          "count": 261
+        },
+        {
+          "lang": "lt",
+          "count": 261
+        },
+        {
+          "lang": "ga",
+          "count": 261
+        },
+        {
+          "lang": "el",
+          "count": 261
+        },
+        {
+          "lang": "bg",
+          "count": 261
+        },
+        {
+          "lang": "cs",
+          "count": 261
+        },
+        {
+          "lang": "pt",
+          "count": 261
+        },
+        {
+          "lang": "ro",
+          "count": 261
+        },
+        {
+          "lang": "sk",
+          "count": 261
+        },
+        {
+          "lang": "sl",
+          "count": 261
+        },
+        {
+          "lang": "sv",
+          "count": 261
+        }
+      ],
+      "analyzedAt": "2026-01-08T12:31:30.239Z"
+    },
+    "suggestedLanguagePriorities": [
+      "en",
+      "fr",
+      "de",
+      "et",
+      "it",
+      "mt",
+      "lv",
+      "pl",
+      "hu",
+      "nl"
+    ]
+  }
+]

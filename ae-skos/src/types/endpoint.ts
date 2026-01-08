@@ -34,6 +34,9 @@ export interface DetectedLanguage {
 }
 
 export interface EndpointAnalysis {
+  // SKOS content (first check)
+  hasSkosContent: boolean              // Has ConceptScheme or Concept
+
   // Named graphs support
   supportsNamedGraphs: boolean | null  // null = not supported by endpoint, false = none, true = has graphs
 
@@ -47,3 +50,20 @@ export interface EndpointAnalysis {
 }
 
 export type EndpointStatus = 'disconnected' | 'connecting' | 'connected' | 'error'
+
+/**
+ * Trusted endpoint source definition (manually curated)
+ */
+export interface TrustedEndpointSource {
+  name: string
+  url: string
+  description?: string
+}
+
+/**
+ * Trusted endpoint with pre-calculated analysis (generated at build time)
+ */
+export interface TrustedEndpoint extends TrustedEndpointSource {
+  analysis: EndpointAnalysis
+  suggestedLanguagePriorities: string[]
+}
