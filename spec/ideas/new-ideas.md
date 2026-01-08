@@ -7,7 +7,9 @@ New ideas: copy them into ideas.md, remove the list here (but keep the file and 
     as au side issue one we are there (in inconsistent state) we cannot select other concept scheme anymore
 - using endswith logic to find the properties??
 - navigation to related concepts in same database should be via the tool. for example the main taxonomy + it/fr/de taxosare
-- it seems that breadcrumb does not correctly refresh after selecting a search result or a recent item. it stays on the current concept scheme 
 - search config icon is too big
 - add an option to explicitely show xsd:string 
-- goto URI function should first sanatize the uri by removing spaces on both start/end and removing accidental < or > copies
+- let's drive the dark/light mode via an icon close to the other settings
+- deprecated label is hard to see in light mode
+- build reusable component for "clear history" and "delete endpoint" popup? does it make sense?
+- user manual images

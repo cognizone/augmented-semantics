@@ -25,8 +25,7 @@ AE SKOS connects directly to SPARQL endpoints in your browser - no backend serve
 
 When you first open AE SKOS, you'll see an empty interface prompting you to configure an endpoint.
 
-<!-- IMAGE: screenshot-first-launch.png -->
-<!-- Caption: Initial screen showing the endpoint configuration prompt -->
+![Initial screen showing the endpoint configuration prompt](screenshot-first-launch.png)
 
 ### Quick Start
 
@@ -44,24 +43,24 @@ When you first open AE SKOS, you'll see an empty interface prompting you to conf
 
 Click the endpoint badge in the header toolbar, then select "Manage endpoints..." from the dropdown.
 
-<!-- IMAGE: screenshot-endpoint-dropdown.png -->
-<!-- Caption: Endpoint dropdown showing the "Manage endpoints..." option -->
+<img src="screenshot-endpoint-dropdown.png" alt="Endpoint dropdown showing the Manage endpoints option" width="300">
 
 ### Adding a New Endpoint
 
 1. Click **Add Endpoint** in the Endpoint Manager
 2. The setup wizard opens with multiple steps:
 
-<!-- IMAGE: screenshot-endpoint-wizard.png -->
-<!-- Caption: Endpoint wizard showing the connection step -->
+![Endpoint wizard showing the connection step](screenshot-endpoint-wizard.png)
 
 #### Step 1: Connection
 
-- **Name**: A friendly name for this endpoint (e.g., "UNESCO Thesaurus")
-- **URL**: The SPARQL endpoint URL (e.g., `https://vocabularies.unesco.org/sparql`)
+- **Name**: A friendly name for this endpoint (e.g., "Fedlex")
+- **URL**: The SPARQL endpoint URL (e.g., `https://fedlex.data.admin.ch/sparqlendpoint`)
 - **Authentication**: Optional - supports Basic Auth, API Key, or Bearer Token
 
 Click **Test Connection** to verify the endpoint is reachable.
+
+![Example endpoint configuration for Fedlex](screenshot-endpoint-fedlex.png)
 
 #### Step 2: Analysis
 
@@ -70,30 +69,44 @@ The wizard automatically analyzes the endpoint to detect:
 - SKOS concept schemes
 - Languages used in labels
 
-<!-- IMAGE: screenshot-endpoint-analysis.png -->
-<!-- Caption: Analysis step showing detected schemes and languages -->
+![Analysis step showing detected schemes and languages](screenshot-endpoint-analysis.png)
 
 #### Step 3: Language Priorities
 
 Drag and drop languages to set your preferred order. Labels will be shown in the first available language from this list.
 
-<!-- IMAGE: screenshot-language-priorities.png -->
-<!-- Caption: Language priority configuration with drag-and-drop -->
+![Language priority configuration with drag-and-drop](screenshot-language-priorities.png)
+
+### Managing Your Endpoints
+
+Once you've added endpoints, they appear in the Endpoint Manager list.
+
+![Endpoint Manager showing configured endpoints](screenshot-endpoint-list.png)
+
+Each endpoint shows:
+- **Name**: The friendly name you assigned
+- **URL**: The SPARQL endpoint address
+- **Active badge**: Indicates the currently selected endpoint
+
+### Activating an Endpoint
+
+To switch to a different endpoint, click the link icon (<img src="icon-link.svg" height="16">) next to the endpoint you want to use. The clicked endpoint becomes active (indicated by the "active" badge) and is used for all browsing and search operations. Your tree view and details panel will update to show data from the newly activated endpoint.
 
 ### Editing an Endpoint
 
-Click the configure button (⚙️) next to any endpoint to reopen the wizard with existing settings.
+Click the configure button (<img src="icon-tune.svg" height="16">) next to any endpoint to reopen the wizard with existing settings.
 
 ### Deleting an Endpoint
 
 Click the delete button (🗑️) next to an endpoint. A confirmation dialog will appear before deletion.
 
-<!-- IMAGE: screenshot-endpoint-delete.png -->
-<!-- Caption: Delete confirmation dialog -->
+<img src="screenshot-endpoint-delete.png" alt="Delete confirmation dialog" width="400">
 
 ### Switching Endpoints
 
 Click the endpoint badge in the header and select a different endpoint from the dropdown.
+
+<img src="screenshot-endpoint-switch.png" alt="Switching endpoints via header dropdown" width="300">
 
 ---
 
@@ -104,7 +117,7 @@ Click the endpoint badge in the header and select a different endpoint from the 
 Use the scheme dropdown in the breadcrumb bar to select a concept scheme.
 
 <!-- IMAGE: screenshot-scheme-dropdown.png -->
-<!-- Caption: Scheme dropdown showing available concept schemes -->
+![Scheme dropdown showing available concept schemes](screenshot-scheme-dropdown.png)
 
 When you select a scheme:
 - The tree loads with top-level concepts
@@ -121,7 +134,7 @@ When viewing a scheme (no concept selected), the right panel displays:
 - **Other Properties**: Any additional RDF properties
 
 <!-- IMAGE: screenshot-scheme-details.png -->
-<!-- Caption: Scheme details panel showing labels and metadata -->
+![Scheme details panel showing labels and metadata](screenshot-scheme-details.png)
 
 ### Deprecated Schemes
 
@@ -136,7 +149,7 @@ Schemes marked as deprecated show a "deprecated" badge next to their name in bot
 The concept tree displays a hierarchical view of concepts within the selected scheme.
 
 <!-- IMAGE: screenshot-concept-tree.png -->
-<!-- Caption: Concept tree showing expanded hierarchy with different node types -->
+![Concept tree showing expanded hierarchy with different node types](screenshot-concept-tree.png)
 
 **Node Icons:**
 | Icon | Meaning |
@@ -163,7 +176,7 @@ Click on any concept label to:
 Use the "Go to URI..." input at the top of the tree to navigate directly to any concept or scheme by its URI.
 
 <!-- IMAGE: screenshot-goto-uri.png -->
-<!-- Caption: Go to URI input field -->
+![Go to URI input field](screenshot-goto-uri.png)
 
 **Supported URIs:**
 - **Concept URI**: Selects the concept and reveals it in the tree
@@ -183,7 +196,7 @@ Click the home button (🏠) in the breadcrumb to:
 The breadcrumb shows the path from the scheme to the current concept.
 
 <!-- IMAGE: screenshot-breadcrumb.png -->
-<!-- Caption: Breadcrumb showing: Home > Scheme > Parent > Child > Current -->
+![Breadcrumb showing: Home > Scheme > Parent > Child > Current](screenshot-breadcrumb.png)
 
 Click any segment to navigate to that level.
 
@@ -194,7 +207,7 @@ Deprecated concepts are visually indicated with:
 - Reduced opacity (60%)
 
 <!-- IMAGE: screenshot-deprecated-concept.png -->
-<!-- Caption: Deprecated concept in tree with badge -->
+![Deprecated concept in tree with badge](screenshot-deprecated-concept.png)
 
 ---
 
@@ -205,7 +218,7 @@ Deprecated concepts are visually indicated with:
 When a concept is selected, the right panel shows comprehensive information:
 
 <!-- IMAGE: screenshot-concept-details.png -->
-<!-- Caption: Full concept details panel -->
+![Full concept details panel](screenshot-concept-details.png)
 
 #### Labels Section
 - **Preferred Labels**: Primary labels (skos:prefLabel)
@@ -244,12 +257,12 @@ Any additional RDF properties not covered above.
 The details header includes action buttons:
 
 <!-- IMAGE: screenshot-details-header.png -->
-<!-- Caption: Details header showing copy and expand buttons -->
+![Details header showing copy and expand buttons](screenshot-details-header.png)
 
 | Button | Action |
 |--------|--------|
 | 📋 | Copy URI to clipboard |
-| 🔗 | Copy as "Label" \<URI\> format |
+| <img src="icon-link.svg" height="16"> | Copy as "Label" \<URI\> format |
 | ↗️ | Open URI in new tab |
 
 ---
@@ -261,7 +274,7 @@ The details header includes action buttons:
 Click the **Search** tab in the left sidebar to access the search panel.
 
 <!-- IMAGE: screenshot-search-panel.png -->
-<!-- Caption: Search panel with input and results -->
+![Search panel with input and results](screenshot-search-panel.png)
 
 ### Basic Search
 
@@ -279,7 +292,7 @@ Results show:
 Click the settings icon (⚙️) next to the search input to configure:
 
 <!-- IMAGE: screenshot-search-settings.png -->
-<!-- Caption: Search settings popover -->
+![Search settings popover](screenshot-search-settings.png)
 
 **Search In:**
 - Preferred Labels (default: on)
@@ -307,7 +320,7 @@ Click any search result to:
 Click the **Recent** tab in the left sidebar to see your browsing history.
 
 <!-- IMAGE: screenshot-recent-history.png -->
-<!-- Caption: Recent history panel showing visited concepts and schemes -->
+![Recent history panel showing visited concepts and schemes](screenshot-recent-history.png)
 
 Each entry shows:
 - Icon indicating type (folder for schemes, label/circle for concepts)
@@ -327,7 +340,7 @@ Click any history entry to:
 Click the delete button (🗑️) in the history header. A confirmation dialog appears before clearing.
 
 <!-- IMAGE: screenshot-clear-history.png -->
-<!-- Caption: Clear history confirmation dialog -->
+![Clear history confirmation dialog](screenshot-clear-history.png)
 
 ### History Persistence
 
@@ -342,7 +355,7 @@ History is saved to your browser's localStorage and persists across sessions. Up
 Click the settings icon (⚙️) in the header toolbar.
 
 <!-- IMAGE: screenshot-settings-dialog.png -->
-<!-- Caption: Settings dialog with all options -->
+![Settings dialog with all options](screenshot-settings-dialog.png)
 
 ### Language
 
