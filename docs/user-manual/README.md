@@ -50,7 +50,7 @@ Click the endpoint badge in the header toolbar, then select "Manage endpoints...
 1. Click **Add Endpoint** in the Endpoint Manager
 2. The setup wizard opens with multiple steps:
 
-<img src="screenshot-endpoint-wizard.png" alt="Endpoint wizard showing the connection step" width="500">
+![Endpoint wizard showing the connection step](screenshot-endpoint-wizard.png)
 
 #### Step 1: Connection
 
@@ -60,7 +60,7 @@ Click the endpoint badge in the header toolbar, then select "Manage endpoints...
 
 Click **Test Connection** to verify the endpoint is reachable.
 
-![Example endpoint configuration for Fedlex](screenshot-endpoint-fedlex.png)
+<img src="screenshot-endpoint-fedlex.png" alt="Example endpoint configuration for Fedlex" width="500">
 
 #### Step 2: Analysis
 
