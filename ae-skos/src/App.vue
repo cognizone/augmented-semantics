@@ -170,9 +170,20 @@ onUnmounted(() => {
           <span class="material-symbols-outlined dropdown-arrow">arrow_drop_down</span>
         </button>
         <Menu ref="languageMenu" :model="languageMenuItems" :popup="true" />
-        <button class="header-icon-btn" aria-label="Settings" @click="showSettingsDialog = true">
-          <span class="material-symbols-outlined">settings</span>
-        </button>
+        <div class="header-icons">
+          <a
+            href="https://github.com/cognizone/augmented-semantics/blob/main/docs/user-manual/README.md"
+            target="_blank"
+            class="header-icon-btn"
+            aria-label="Documentation"
+            title="Documentation"
+          >
+            <span class="material-symbols-outlined">help_outline</span>
+          </a>
+          <button class="header-icon-btn" aria-label="Settings" @click="showSettingsDialog = true">
+            <span class="material-symbols-outlined">settings</span>
+          </button>
+        </div>
       </div>
     </header>
 
@@ -438,6 +449,14 @@ onUnmounted(() => {
 
 .header-icon-btn .material-symbols-outlined {
   font-size: 18px;
+}
+
+.header-icons {
+  display: flex;
+}
+
+.header-icons .header-icon-btn {
+  text-decoration: none;
 }
 
 .app-main {
