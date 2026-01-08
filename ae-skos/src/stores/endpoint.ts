@@ -9,9 +9,13 @@
  */
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { SPARQLEndpoint, EndpointStatus, AppError } from '../types'
+import type { SPARQLEndpoint, EndpointStatus, AppError, TrustedEndpoint } from '../types'
+import trustedEndpointsData from '../data/trusted-endpoints.generated.json'
 
 const STORAGE_KEY = 'ae-endpoints'
+
+// Type assertion for imported JSON
+const trustedEndpoints = trustedEndpointsData as TrustedEndpoint[]
 
 export const useEndpointStore = defineStore('endpoint', () => {
   // State
@@ -33,6 +37,12 @@ export const useEndpointStore = defineStore('endpoint', () => {
       return bTime - aTime
     })
   )
+
+  // Trusted endpoints not yet added by the user (matched by URL)
+  const availableTrustedEndpoints = computed(() => {
+    const existingUrls = new Set(endpoints.value.map(e => e.url))
+    return trustedEndpoints.filter(te => !existingUrls.has(te.url))
+  })
 
   // Actions
   function loadFromStorage() {
@@ -58,6 +68,24 @@ export const useEndpointStore = defineStore('endpoint', () => {
     const newEndpoint: SPARQLEndpoint = {
       ...endpoint,
       id: crypto.randomUUID(),
+      createdAt: new Date().toISOString(),
+      accessCount: 0,
+    }
+    endpoints.value.push(newEndpoint)
+    saveToStorage()
+    return newEndpoint
+  }
+
+  /**
+   * Add a trusted endpoint with pre-calculated analysis data
+   */
+  function addTrustedEndpoint(trustedEndpoint: TrustedEndpoint) {
+    const newEndpoint: SPARQLEndpoint = {
+      id: crypto.randomUUID(),
+      name: trustedEndpoint.name,
+      url: trustedEndpoint.url,
+      analysis: trustedEndpoint.analysis,
+      languagePriorities: trustedEndpoint.suggestedLanguagePriorities,
       createdAt: new Date().toISOString(),
       accessCount: 0,
     }
@@ -132,9 +160,11 @@ export const useEndpointStore = defineStore('endpoint', () => {
     // Getters
     current,
     sortedEndpoints,
+    availableTrustedEndpoints,
     // Actions
     loadFromStorage,
     addEndpoint,
+    addTrustedEndpoint,
     updateEndpoint,
     removeEndpoint,
     selectEndpoint,

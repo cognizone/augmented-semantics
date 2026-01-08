@@ -13,7 +13,7 @@
 import { ref, computed } from 'vue'
 import { useEndpointStore } from '../../stores'
 import { testConnection } from '../../services/sparql'
-import type { SPARQLEndpoint } from '../../types'
+import type { SPARQLEndpoint, TrustedEndpoint } from '../../types'
 
 import Dialog from 'primevue/dialog'
 import Button from 'primevue/button'
@@ -36,6 +36,15 @@ const endpointStore = useEndpointStore()
 
 // Banner state
 const showInfoBanner = ref(true)
+
+// Suggested endpoints collapsed state (persisted)
+const SUGGESTED_COLLAPSED_KEY = 'ae-suggested-endpoints-collapsed'
+const suggestedCollapsed = ref(localStorage.getItem(SUGGESTED_COLLAPSED_KEY) === 'true')
+
+function toggleSuggestedCollapsed() {
+  suggestedCollapsed.value = !suggestedCollapsed.value
+  localStorage.setItem(SUGGESTED_COLLAPSED_KEY, String(suggestedCollapsed.value))
+}
 
 // Dialog state
 const showWizard = ref(false)
@@ -121,6 +130,13 @@ async function handleTestConnection(endpoint: SPARQLEndpoint) {
   testingEndpointId.value = null
 }
 
+// Trusted Endpoint Handlers
+function handleAddTrustedEndpoint(trusted: TrustedEndpoint) {
+  const newEndpoint = endpointStore.addTrustedEndpoint(trusted)
+  endpointStore.selectEndpoint(newEndpoint.id)
+  endpointStore.setStatus('connected')
+}
+
 // Utility Functions
 // Note: This is for UI timestamps (lastAccessedAt), not RDF dates.
 // For RDF dates use formatTemporalValue from displayUtils.
@@ -160,6 +176,55 @@ function formatUIDate(dateStr?: string) {
         <button class="dismiss-btn" @click="showInfoBanner = false" aria-label="Dismiss">
           <span class="material-symbols-outlined">close</span>
         </button>
+      </div>
+
+      <!-- Suggested Endpoints -->
+      <div v-if="endpointStore.availableTrustedEndpoints.length > 0" class="suggested-section">
+        <button class="suggested-header" @click="toggleSuggestedCollapsed">
+          <span class="material-symbols-outlined">verified</span>
+          <span class="suggested-header-text">Suggested Endpoints</span>
+          <span class="suggested-count">{{ endpointStore.availableTrustedEndpoints.length }}</span>
+          <span class="material-symbols-outlined chevron" :class="{ 'chevron-collapsed': suggestedCollapsed }">
+            expand_more
+          </span>
+        </button>
+        <div v-show="!suggestedCollapsed" class="suggested-list">
+          <div
+            v-for="trusted in endpointStore.availableTrustedEndpoints"
+            :key="trusted.url"
+            class="suggested-item"
+          >
+            <div class="suggested-info">
+              <span class="suggested-name">{{ trusted.name }}</span>
+              <span v-if="trusted.description" class="suggested-description">{{ trusted.description }}</span>
+              <span class="suggested-url">{{ trusted.url }}</span>
+              <div v-if="trusted.analysis.languages && trusted.analysis.languages.length > 0" class="suggested-langs">
+                <Tag
+                  v-for="lang in trusted.analysis.languages.slice(0, 3)"
+                  :key="lang.lang"
+                  severity="secondary"
+                  class="lang-tag"
+                >
+                  {{ lang.lang }}
+                </Tag>
+                <span v-if="trusted.analysis.languages.length > 3" class="more-langs">
+                  +{{ trusted.analysis.languages.length - 3 }}
+                </span>
+              </div>
+            </div>
+            <Button
+              label="Add"
+              size="small"
+              severity="secondary"
+              outlined
+              @click="handleAddTrustedEndpoint(trusted)"
+            >
+              <template #icon>
+                <span class="material-symbols-outlined btn-icon-small">add</span>
+              </template>
+            </Button>
+          </div>
+        </div>
       </div>
 
       <!-- Header -->
@@ -352,6 +417,129 @@ function formatUIDate(dateStr?: string) {
 
 .dismiss-btn .material-symbols-outlined {
   font-size: 1.125rem;
+}
+
+/* Suggested Endpoints */
+.suggested-section {
+  background: var(--ae-bg-elevated);
+  border: 1px solid var(--ae-border-color);
+  border-radius: 0.375rem;
+  padding: 1rem;
+}
+
+.suggested-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+  background: none;
+  border: none;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--ae-text-primary);
+  cursor: pointer;
+  text-align: left;
+}
+
+.suggested-header:hover {
+  color: var(--ae-accent);
+}
+
+.suggested-header .material-symbols-outlined {
+  font-size: 1.125rem;
+  color: var(--ae-accent);
+}
+
+.suggested-header-text {
+  flex: 1;
+}
+
+.suggested-count {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--ae-text-muted);
+  background: var(--ae-bg-surface);
+  padding: 0.125rem 0.5rem;
+  border-radius: 1rem;
+}
+
+.chevron {
+  color: var(--ae-text-muted);
+  transition: transform 0.2s ease;
+}
+
+.chevron-collapsed {
+  transform: rotate(-90deg);
+}
+
+.suggested-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.suggested-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem;
+  background: var(--ae-bg-surface);
+  border: 1px solid var(--ae-border-color);
+  border-radius: 0.25rem;
+}
+
+.suggested-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.suggested-name {
+  font-weight: 500;
+  color: var(--ae-text-primary);
+  font-size: 0.8125rem;
+}
+
+.suggested-description {
+  font-size: 0.75rem;
+  color: var(--ae-text-secondary);
+  line-height: 1.4;
+}
+
+.suggested-url {
+  font-family: var(--ae-font-mono);
+  font-size: 0.75rem;
+  color: var(--ae-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.suggested-langs {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 0.25rem;
+}
+
+.suggested-langs .lang-tag {
+  font-size: 0.625rem;
+  padding: 0.125rem 0.375rem;
+}
+
+.more-langs {
+  font-size: 0.625rem;
+  color: var(--ae-text-muted);
+}
+
+.btn-icon-small {
+  font-size: 1rem;
+  margin-right: 0.125rem;
 }
 
 /* List Header */

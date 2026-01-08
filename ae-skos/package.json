@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "prebuild": "npx tsx scripts/prebuild-endpoints.ts",
     "build": "vue-tsc -b && vite build",
     "preview": "vite preview",
     "test": "vitest",
