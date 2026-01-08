@@ -10,6 +10,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { ConceptScheme, SchemeDetails } from '../types'
+import { eventBus } from '../services'
 
 const STORAGE_KEY = 'ae-skos-scheme'
 
@@ -66,6 +67,17 @@ export const useSchemeStore = defineStore('scheme', () => {
     saveToStorage()
   }
 
+  /**
+   * Select scheme with event coordination.
+   * Emits scheme:selected for other components to react.
+   */
+  async function selectSchemeWithEvent(uri: string | null) {
+    selectedUri.value = uri
+    saveToStorage()
+    const scheme = uri ? schemes.value.find(s => s.uri === uri) ?? null : null
+    await eventBus.emit('scheme:selected', scheme)
+  }
+
   function setLoading(isLoading: boolean) {
     loading.value = isLoading
   }
@@ -111,6 +123,7 @@ export const useSchemeStore = defineStore('scheme', () => {
     loadFromStorage,
     setSchemes,
     selectScheme,
+    selectSchemeWithEvent,
     setLoading,
     reset,
     viewScheme,

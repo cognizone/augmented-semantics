@@ -11,6 +11,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { SPARQLEndpoint, EndpointStatus, AppError, TrustedEndpoint } from '../types'
 import trustedEndpointsData from '../data/trusted-endpoints.generated.json'
+import { eventBus } from '../services'
 
 const STORAGE_KEY = 'ae-endpoints'
 
@@ -136,6 +137,24 @@ export const useEndpointStore = defineStore('endpoint', () => {
     }
   }
 
+  /**
+   * Select endpoint with event coordination.
+   * Emits endpoint:changed for other components to react.
+   */
+  async function selectEndpointWithEvent(id: string | null) {
+    currentId.value = id
+    if (id) {
+      const endpoint = endpoints.value.find(e => e.id === id)
+      if (endpoint) {
+        updateEndpoint(id, {
+          lastAccessedAt: new Date().toISOString(),
+          accessCount: endpoint.accessCount + 1,
+        })
+        await eventBus.emit('endpoint:changed', endpoint)
+      }
+    }
+  }
+
   function setStatus(newStatus: EndpointStatus) {
     status.value = newStatus
   }
@@ -168,6 +187,7 @@ export const useEndpointStore = defineStore('endpoint', () => {
     updateEndpoint,
     removeEndpoint,
     selectEndpoint,
+    selectEndpointWithEvent,
     setStatus,
     setError,
     clearError,

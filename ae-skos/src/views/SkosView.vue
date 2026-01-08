@@ -39,11 +39,11 @@ const sidebarTab = computed({
 })
 
 // Handle concept selection from any component
-function selectConcept(uri: string) {
+async function selectConcept(uri: string) {
   if (uri) {
     // Clear scheme viewing when selecting a concept
     schemeStore.viewScheme(null)
-    conceptStore.selectConcept(uri)
+    await conceptStore.selectConceptWithEvent(uri)
     // Switch to browse tab when selecting a concept
     uiStore.setSidebarTab('browse')
   } else {

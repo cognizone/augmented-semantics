@@ -46,6 +46,7 @@ describe('useEndpointAnalysis', () => {
   describe('analyzeEndpoint', () => {
     it('performs simple analysis and returns result', async () => {
       const mockAnalysis = {
+        hasSkosContent: true,
         supportsNamedGraphs: true,
         skosGraphCount: 5,
         languages: [{ lang: 'en', count: 100 }],

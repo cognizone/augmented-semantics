@@ -28,12 +28,15 @@ vi.mock('../../services/sparql', () => ({
 }))
 
 import { executeSparql } from '../../services/sparql'
+import { eventBus } from '../../services/eventBus'
 import type { Mock } from 'vitest'
 
 describe('ConceptTree', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
+    // Clear event bus handlers from previous tests
+    eventBus.clear()
 
     // Set up default endpoint
     const endpointStore = useEndpointStore()
@@ -53,6 +56,8 @@ describe('ConceptTree', () => {
 
   afterEach(() => {
     vi.restoreAllMocks()
+    // Clear event bus handlers
+    eventBus.clear()
   })
 
   function mountConceptTree() {
@@ -441,9 +446,9 @@ describe('ConceptTree', () => {
           },
         })
 
-        // Select a concept not in tree (triggers reveal)
+        // Select a concept not in tree (triggers reveal via event)
         const conceptStore = useConceptStore()
-        conceptStore.selectConcept('http://example.org/concept/child')
+        await conceptStore.selectConceptWithEvent('http://example.org/concept/child')
         await flushPromises()
         await nextTick()
 
@@ -481,7 +486,7 @@ describe('ConceptTree', () => {
         })
 
         const conceptStore = useConceptStore()
-        conceptStore.selectConcept('http://example.org/concept/root')
+        await conceptStore.selectConceptWithEvent('http://example.org/concept/root')
         await flushPromises()
         await nextTick()
 
@@ -503,7 +508,7 @@ describe('ConceptTree', () => {
         ;(executeSparql as Mock).mockRejectedValueOnce(new Error('Network error'))
 
         const conceptStore = useConceptStore()
-        conceptStore.selectConcept('http://example.org/concept/deep')
+        await conceptStore.selectConceptWithEvent('http://example.org/concept/deep')
         await flushPromises()
         await nextTick()
 
@@ -562,7 +567,10 @@ describe('ConceptTree', () => {
           },
         })
 
-        conceptStore.selectConcept('http://example.org/concept/child')
+        await conceptStore.selectConceptWithEvent('http://example.org/concept/child')
+        await flushPromises()
+        await nextTick()
+        // Wait for async reveal to complete
         await flushPromises()
         await nextTick()
 
@@ -570,23 +578,26 @@ describe('ConceptTree', () => {
         expect(conceptStore.expanded.has('http://example.org/concept/root')).toBe(true)
       })
 
-      it('does not reveal when tree is loading', async () => {
+      it('stores pending reveal when tree is loading', async () => {
         const conceptStore = useConceptStore()
 
-        // Start loading
+        // Mock top concepts query
+        ;(executeSparql as Mock).mockResolvedValue({
+          results: { bindings: [] },
+        })
+
+        // Mount component so event handlers are registered
+        mountConceptTree()
+        await flushPromises()
+
+        // Set loading state AFTER initial mount to simulate ongoing tree load
         conceptStore.setLoadingTree(true)
 
-        // Select concept while loading
-        conceptStore.selectConcept('http://example.org/concept/test')
-        await flushPromises()
-        await nextTick()
+        // Select concept while loading - should store pending reveal
+        await conceptStore.selectConceptWithEvent('http://example.org/concept/test')
 
-        // No ancestor query should be made while loading
-        // (only the initial top concepts query would be in progress)
-        const ancestorQueries = (executeSparql as Mock).mock.calls.filter((c: unknown[]) =>
-          typeof c[1] === 'string' && c[1].includes('skos:broader+')
-        )
-        expect(ancestorQueries).toHaveLength(0)
+        // Pending reveal should be stored (not processed immediately)
+        expect(conceptStore.pendingRevealUri).toBe('http://example.org/concept/test')
       })
     })
 
@@ -623,7 +634,7 @@ describe('ConceptTree', () => {
           results: { bindings: [] },
         })
 
-        conceptStore.selectConcept('http://example.org/concept/deep')
+        await conceptStore.selectConceptWithEvent('http://example.org/concept/deep')
         await flushPromises()
         await nextTick()
 

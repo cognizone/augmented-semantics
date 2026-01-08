@@ -16,6 +16,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { ConceptNode, ConceptRef, ConceptDetails, SearchResult, SearchSettings, HistoryEntry } from '../types'
+import { eventBus } from '../services'
 
 const HISTORY_STORAGE_KEY = 'ae-skos-history'
 const MAX_HISTORY = 50
@@ -54,6 +55,9 @@ export const useConceptStore = defineStore('concept', () => {
 
   // State - UI triggers
   const shouldScrollToTop = ref(false)
+
+  // State - Event coordination
+  const pendingRevealUri = ref<string | null>(null)
 
   // Getters
   const hasSelection = computed(() => selectedUri.value !== null)
@@ -107,6 +111,42 @@ export const useConceptStore = defineStore('concept', () => {
   // Actions - Selection
   function selectConcept(uri: string | null) {
     selectedUri.value = uri
+  }
+
+  /**
+   * Select concept with event coordination.
+   * Emits concept:selecting then concept:selected for other components to react.
+   */
+  async function selectConceptWithEvent(uri: string | null) {
+    if (uri) {
+      await eventBus.emit('concept:selecting', uri)
+    }
+    selectedUri.value = uri
+    await eventBus.emit('concept:selected', uri)
+  }
+
+  /**
+   * Request reveal of a concept in the tree.
+   * Called when concept is selected while tree is still loading.
+   */
+  function requestReveal(uri: string) {
+    pendingRevealUri.value = uri
+  }
+
+  /**
+   * Mark concept as revealed in the tree.
+   * Clears pending reveal and emits concept:revealed.
+   */
+  async function markConceptRevealed(uri: string) {
+    pendingRevealUri.value = null
+    await eventBus.emit('concept:revealed', uri)
+  }
+
+  /**
+   * Clear pending reveal request.
+   */
+  function clearPendingReveal() {
+    pendingRevealUri.value = null
   }
 
   function setDetails(newDetails: ConceptDetails | null) {
@@ -246,6 +286,7 @@ export const useConceptStore = defineStore('concept', () => {
     loadingTree,
     loadingDetails,
     loadingSearch,
+    pendingRevealUri,
     // Getters
     hasSelection,
     isExpanded,
@@ -258,6 +299,10 @@ export const useConceptStore = defineStore('concept', () => {
     toggleNode,
     updateNodeChildren,
     selectConcept,
+    selectConceptWithEvent,
+    requestReveal,
+    markConceptRevealed,
+    clearPendingReveal,
     setDetails,
     setBreadcrumb,
     setSearchQuery,

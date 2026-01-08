@@ -11,9 +11,10 @@
  *
  * @see /spec/ae-skos/sko03-ConceptTree.md
  */
-import { ref, watch, computed, nextTick } from 'vue'
+import { ref, watch, computed, nextTick, onMounted, onUnmounted } from 'vue'
 import { useConceptStore, useEndpointStore, useSchemeStore, useLanguageStore } from '../../stores'
-import { executeSparql, withPrefixes, logger } from '../../services'
+import { executeSparql, withPrefixes, logger, eventBus } from '../../services'
+import type { EventSubscription } from '../../services'
 import { useDelayedLoading, useLabelResolver, useElapsedTime, useDeprecation, useConceptBindings, useConceptTreeQueries } from '../../composables'
 import type { ConceptNode } from '../../types'
 import Tree from 'primevue/tree'
@@ -194,6 +195,7 @@ async function loadTopConcepts(offset = 0) {
     conceptStore.setLoadingTree(true)
     topConceptsOffset.value = 0
     hasMoreTopConcepts.value = true
+    await eventBus.emit('tree:loading', undefined)
   } else {
     loadingMoreTopConcepts.value = true
   }
@@ -221,6 +223,8 @@ async function loadTopConcepts(offset = 0) {
 
     if (isFirstPage) {
       conceptStore.setTopConcepts(concepts)
+      // Emit tree:loaded for event coordination (triggers pending reveals)
+      await eventBus.emit('tree:loaded', concepts)
     } else {
       conceptStore.appendTopConcepts(concepts)
     }
@@ -323,9 +327,9 @@ function onNodeCollapse(node: TreeNode) {
 }
 
 // Handle node select
-function selectConcept(uri: string) {
+async function selectConcept(uri: string) {
   schemeStore.viewScheme(null) // Clear scheme viewing when selecting a concept
-  conceptStore.selectConcept(uri)
+  await conceptStore.selectConceptWithEvent(uri)
 
   // Find node for history (includes notation and lang)
   const node = findNode(uri, conceptStore.topConcepts)
@@ -532,11 +536,9 @@ watch(
   { deep: true }
 )
 
-// Reveal concept in tree when selected from history/search/URL
-// (only if not already visible in the tree)
-async function tryRevealSelectedConcept() {
-  const uri = conceptStore.selectedUri
-  if (!uri || conceptStore.loadingTree) return
+// Reveal concept in tree when selected (event-driven to avoid race conditions)
+async function revealConceptIfNeeded(uri: string) {
+  logger.debug('ConceptTree', 'Revealing concept (event-driven)', { uri })
 
   // Check if concept is already in the loaded tree
   const existingNode = findNode(uri, conceptStore.topConcepts)
@@ -548,24 +550,49 @@ async function tryRevealSelectedConcept() {
     await nextTick()
     scrollToNode(uri)
   }
+
+  // Mark as revealed for coordination
+  await conceptStore.markConceptRevealed(uri)
 }
 
-// Watch for concept selection changes
-watch(
-  () => conceptStore.selectedUri,
-  () => tryRevealSelectedConcept()
-)
+// Event subscriptions for cleanup
+const eventSubscriptions: EventSubscription[] = []
 
-// Also trigger reveal when tree finishes loading (handles race condition with history nav)
-watch(
-  () => conceptStore.loadingTree,
-  (loading, wasLoading) => {
-    // When loading finishes, try to reveal the selected concept
-    if (wasLoading && !loading && conceptStore.selectedUri) {
-      tryRevealSelectedConcept()
-    }
-  }
-)
+// Setup event-driven reveal logic (replaces watchers that had race conditions)
+onMounted(() => {
+  // When a concept is selected, reveal it in the tree
+  eventSubscriptions.push(
+    eventBus.on('concept:selected', async (uri) => {
+      if (!uri) return
+
+      // If tree is still loading, store the request for later
+      if (conceptStore.loadingTree) {
+        logger.debug('ConceptTree', 'Tree loading, storing pending reveal', { uri })
+        conceptStore.requestReveal(uri)
+        return
+      }
+
+      // Tree is ready - reveal immediately
+      await revealConceptIfNeeded(uri)
+    })
+  )
+
+  // When tree finishes loading, check for pending reveal
+  eventSubscriptions.push(
+    eventBus.on('tree:loaded', async () => {
+      const pending = conceptStore.pendingRevealUri
+      if (pending) {
+        logger.debug('ConceptTree', 'Tree loaded, revealing pending concept', { uri: pending })
+        await revealConceptIfNeeded(pending)
+      }
+    })
+  )
+})
+
+// Cleanup subscriptions
+onUnmounted(() => {
+  eventSubscriptions.forEach(sub => sub.unsubscribe())
+})
 
 // Watch for scroll-to-top trigger (from home button in breadcrumb)
 watch(

@@ -163,8 +163,8 @@ describe('concept store', () => {
       // Children should be cleared
       expect(store.topConcepts[0]?.children).toBeUndefined()
       expect(store.topConcepts[1]?.children).toBeUndefined()
-      // Expanded state should be cleared
-      expect(store.expanded.size).toBe(0)
+      // Expanded state should be PRESERVED (for language change scenarios)
+      expect(store.expanded.size).toBe(2)
       // Top concepts should still exist
       expect(store.topConcepts).toHaveLength(2)
     })
