@@ -176,6 +176,7 @@ async function runAnalysis() {
     tempEndpoint.value = {
       ...tempEndpoint.value,
       analysis: {
+        hasSkosContent: true,
         supportsNamedGraphs: analysis.supportsNamedGraphs,
         skosGraphCount: analysis.skosGraphCount,
         languages: analysis.languages,
@@ -183,8 +184,8 @@ async function runAnalysis() {
       },
     }
 
-    // Load language priorities from analysis
-    loadPriorities(tempEndpoint.value)
+    // Load language priorities from analysis (non-null since we just assigned it)
+    loadPriorities(tempEndpoint.value!)
 
     // Brief delay to show "Done!"
     await new Promise(resolve => setTimeout(resolve, 500))
@@ -203,7 +204,7 @@ async function handleReanalyze() {
   try {
     const analysis = await reanalyzeEndpoint(tempEndpoint.value)
     tempEndpoint.value = { ...tempEndpoint.value, analysis }
-    loadPriorities(tempEndpoint.value)
+    loadPriorities(tempEndpoint.value!)
   } catch {
     // Error handled in composable
   }

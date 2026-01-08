@@ -3,9 +3,10 @@
  *
  * Run with: npx tsx scripts/prebuild-endpoints.ts
  */
-import { readFileSync, writeFileSync } from 'fs'
+import { readFileSync, writeFileSync, existsSync } from 'fs'
 import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'
+import { createHash } from 'crypto'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
@@ -202,10 +203,10 @@ async function analyzeEndpoint(url: string): Promise<EndpointAnalysis | null> {
   console.log(`  - Detecting languages...`)
   let languages = await detectLanguages(url, skosGraphUris)
 
-  // Filter to valid ISO language codes and limit to top 20
+  // Filter to valid ISO language codes and limit to top 50
   languages = languages
     .filter(l => isValidLanguageCode(l.lang))
-    .slice(0, 20)
+    .slice(0, 50)
 
   return {
     hasSkosContent: true,
@@ -218,7 +219,7 @@ async function analyzeEndpoint(url: string): Promise<EndpointAnalysis | null> {
 
 // Generate language priorities from detected languages
 function generateLanguagePriorities(languages: DetectedLanguage[]): string[] {
-  // Take top languages by count, with 'en' first if present
+  // Take all languages by count, with 'en' first if present
   const langs = languages.map(l => l.lang)
 
   // Move 'en' to front if present
@@ -228,17 +229,34 @@ function generateLanguagePriorities(languages: DetectedLanguage[]): string[] {
     langs.unshift('en')
   }
 
-  // Limit to top 10 languages
-  return langs.slice(0, 10)
+  return langs
 }
 
 // Main
 async function main() {
+  const forceRebuild = process.argv.includes('--force')
   const sourcePath = join(__dirname, '../src/data/trusted-endpoints.json')
   const outputPath = join(__dirname, '../src/data/trusted-endpoints.generated.json')
 
+  // Read source and compute hash
+  const sourceContent = readFileSync(sourcePath, 'utf-8')
+  const sourceHash = createHash('md5').update(sourceContent).digest('hex')
+
+  // Check if rebuild is needed
+  if (!forceRebuild && existsSync(outputPath)) {
+    try {
+      const existing = JSON.parse(readFileSync(outputPath, 'utf-8'))
+      if (existing._sourceHash === sourceHash) {
+        console.log('✓ Source unchanged, skipping rebuild. Use --force to rebuild.')
+        return
+      }
+    } catch {
+      // Continue with rebuild if can't read existing file
+    }
+  }
+
   console.log('Reading trusted endpoints source...')
-  const sources: TrustedEndpointSource[] = JSON.parse(readFileSync(sourcePath, 'utf-8'))
+  const sources: TrustedEndpointSource[] = JSON.parse(sourceContent)
 
   console.log(`Found ${sources.length} endpoints to analyze.\n`)
 
@@ -271,7 +289,8 @@ async function main() {
   }
 
   console.log('Writing generated file...')
-  writeFileSync(outputPath, JSON.stringify(results, null, 2))
+  const output = { _sourceHash: sourceHash, endpoints: results }
+  writeFileSync(outputPath, JSON.stringify(output, null, 2))
   console.log(`✓ Generated: ${outputPath}`)
 }
 

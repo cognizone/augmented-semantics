@@ -14,8 +14,8 @@ import trustedEndpointsData from '../data/trusted-endpoints.generated.json'
 
 const STORAGE_KEY = 'ae-endpoints'
 
-// Type assertion for imported JSON
-const trustedEndpoints = trustedEndpointsData as TrustedEndpoint[]
+// Type assertion for imported JSON (structure: { _sourceHash, endpoints })
+const trustedEndpoints = (trustedEndpointsData as { endpoints: TrustedEndpoint[] }).endpoints
 
 export const useEndpointStore = defineStore('endpoint', () => {
   // State

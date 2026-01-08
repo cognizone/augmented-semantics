@@ -214,6 +214,7 @@ export const useConceptStore = defineStore('concept', () => {
   /**
    * Clear all cached children from tree nodes.
    * Called when language changes to force reload with new labels.
+   * Keeps expanded state intact so tree structure is preserved.
    */
   function clearAllChildren() {
     function clearChildren(nodes: ConceptNode[]) {
@@ -225,7 +226,7 @@ export const useConceptStore = defineStore('concept', () => {
       }
     }
     clearChildren(topConcepts.value)
-    expanded.value.clear()
+    // Don't clear expanded - keep tree structure intact when language changes
   }
 
   // Initialize

@@ -266,113 +266,122 @@ const breadcrumbItems = computed(() => {
   })
 })
 
-// Load breadcrumb path for concept
+// Track current request to ignore stale responses
+let breadcrumbRequestId = 0
+
+// Load breadcrumb path for concept using iterative queries (fast on large endpoints)
 async function loadBreadcrumb(uri: string) {
   const endpoint = endpointStore.current
   if (!endpoint) return
 
-  logger.debug('Breadcrumb', 'Loading path', { uri })
+  // Track this request
+  const requestId = ++breadcrumbRequestId
+
+  logger.debug('Breadcrumb', 'Loading path iteratively', { uri, requestId })
   loading.value = true
 
-  // Query to get all broader concepts recursively with all label types (including SKOS-XL) and notation
-  const query = withPrefixes(`
-    SELECT ?concept ?label ?labelLang ?labelType ?notation ?depth
-    WHERE {
-      <${uri}> skos:broader* ?concept .
-      OPTIONAL { ?concept skos:notation ?notation }
-      OPTIONAL {
-        {
-          ?concept skos:prefLabel ?label .
-          BIND("prefLabel" AS ?labelType)
-        } UNION {
-          ?concept skosxl:prefLabel/skosxl:literalForm ?label .
-          BIND("xlPrefLabel" AS ?labelType)
-        } UNION {
-          ?concept dct:title ?label .
-          BIND("title" AS ?labelType)
-        } UNION {
-          ?concept rdfs:label ?label .
-          BIND("rdfsLabel" AS ?labelType)
-        }
-        BIND(LANG(?label) AS ?labelLang)
-      }
-      {
-        SELECT ?concept (COUNT(?mid) AS ?depth)
-        WHERE {
-          <${uri}> skos:broader* ?mid .
-          ?mid skos:broader* ?concept .
-        }
-        GROUP BY ?concept
-      }
-    }
-    ORDER BY DESC(?depth)
-  `)
+  const path: ConceptRef[] = []
+  let current: string | null = uri
+  const visited = new Set<string>()
+  const MAX_DEPTH = 20  // Safety limit to prevent infinite loops
 
   try {
-    const results = await executeSparql(endpoint, query, { retries: 0 })
+    while (current && !visited.has(current) && path.length < MAX_DEPTH) {
+      visited.add(current)
 
-    // Group by concept URI and pick best label
-    const conceptMap = new Map<string, {
-      labels: { value: string; lang: string; type: string }[]
-      notation?: string
-      depth: number
-    }>()
-
-    for (const b of results.results.bindings) {
-      const conceptUri = b.concept?.value
-      if (!conceptUri) continue
-
-      const depth = parseInt(b.depth?.value || '0', 10)
-
-      if (!conceptMap.has(conceptUri)) {
-        conceptMap.set(conceptUri, { labels: [], depth })
-      }
-
-      const entry = conceptMap.get(conceptUri)!
-
-      // Store notation (first one wins)
-      if (b.notation?.value && !entry.notation) {
-        entry.notation = b.notation.value
-      }
-
-      if (b.label?.value) {
-        entry.labels.push({
-          value: b.label.value,
-          lang: b.labelLang?.value || '',
-          type: b.labelType?.value || 'prefLabel'
-        })
-      }
-    }
-
-    // Convert to path with best label selection
-    const path: ConceptRef[] = Array.from(conceptMap.entries())
-      .sort((a, b) => b[1].depth - a[1].depth) // Sort by depth descending
-      .map(([conceptUri, data]) => {
-        // Pick best label: prefLabel > xlPrefLabel > title > rdfsLabel, with language priority
-        const labelPriority = ['prefLabel', 'xlPrefLabel', 'title', 'rdfsLabel']
-        let bestLabel: string | undefined
-        let bestLabelLang: string | undefined
-
-        for (const labelType of labelPriority) {
-          const labelsOfType = data.labels.filter(l => l.type === labelType)
-          if (!labelsOfType.length) continue
-
-          const preferred = labelsOfType.find(l => l.lang === languageStore.preferred)
-          const noLang = labelsOfType.find(l => l.lang === '')
-          const any = labelsOfType[0]
-
-          const selected = preferred || noLang || any
-          if (selected) {
-            bestLabel = selected.value
-            bestLabelLang = selected.lang || undefined
-            break
+      // Simple query for ONE concept's broader + labels (fast!)
+      const query = withPrefixes(`
+        SELECT ?broader ?label ?labelLang ?labelType ?notation
+        WHERE {
+          OPTIONAL { <${current}> skos:broader ?broader }
+          OPTIONAL { <${current}> skos:notation ?notation }
+          OPTIONAL {
+            {
+              <${current}> skos:prefLabel ?label .
+              BIND("prefLabel" AS ?labelType)
+            } UNION {
+              <${current}> skosxl:prefLabel/skosxl:literalForm ?label .
+              BIND("xlPrefLabel" AS ?labelType)
+            } UNION {
+              <${current}> dct:title ?label .
+              BIND("title" AS ?labelType)
+            } UNION {
+              <${current}> rdfs:label ?label .
+              BIND("rdfsLabel" AS ?labelType)
+            }
+            BIND(LANG(?label) AS ?labelLang)
           }
         }
+      `)
 
-        return { uri: conceptUri, label: bestLabel, lang: bestLabelLang, notation: data.notation }
-      })
+      const results = await executeSparql(endpoint, query, { retries: 0 })
 
-    logger.debug('Breadcrumb', `Loaded path with ${path.length} items`)
+      // Check for stale request after each query
+      if (requestId !== breadcrumbRequestId) {
+        logger.debug('Breadcrumb', 'Ignoring stale response', { requestId, current: breadcrumbRequestId })
+        return
+      }
+
+      // Collect labels and find broader
+      const labels: { value: string; lang: string; type: string }[] = []
+      let notation: string | undefined
+      let broader: string | null = null
+
+      for (const b of results.results.bindings) {
+        if (b.broader?.value && !broader) {
+          broader = b.broader.value
+        }
+        if (b.notation?.value && !notation) {
+          notation = b.notation.value
+        }
+        const labelValue = b.label?.value
+        if (labelValue) {
+          const labelLang = b.labelLang?.value || ''
+          const labelType = b.labelType?.value || 'prefLabel'
+          const exists = labels.some(l =>
+            l.value === labelValue && l.lang === labelLang && l.type === labelType
+          )
+          if (!exists) {
+            labels.push({
+              value: labelValue,
+              lang: labelLang,
+              type: labelType
+            })
+          }
+        }
+      }
+
+      // Pick best label: prefLabel > xlPrefLabel > title > rdfsLabel, with language priority
+      const labelPriority = ['prefLabel', 'xlPrefLabel', 'title', 'rdfsLabel']
+      let bestLabel: string | undefined
+      let bestLabelLang: string | undefined
+
+      for (const labelType of labelPriority) {
+        const labelsOfType = labels.filter(l => l.type === labelType)
+        if (!labelsOfType.length) continue
+
+        const preferred = labelsOfType.find(l => l.lang === languageStore.preferred)
+        const noLang = labelsOfType.find(l => l.lang === '')
+        const any = labelsOfType[0]
+
+        const selected = preferred || noLang || any
+        if (selected) {
+          bestLabel = selected.value
+          bestLabelLang = selected.lang || undefined
+          break
+        }
+      }
+
+      path.push({ uri: current, label: bestLabel, lang: bestLabelLang, notation })
+
+      // Move to broader (or stop if none)
+      current = broader
+    }
+
+    // Reverse to get root→leaf order
+    path.reverse()
+
+    logger.debug('Breadcrumb', `Loaded path with ${path.length} items (${path.length} queries)`)
     conceptStore.setBreadcrumb(path)
   } catch (e) {
     logger.warn('Breadcrumb', 'Failed to load path, using simple fallback', { error: e })
@@ -418,10 +427,10 @@ function navigateTo(uri: string) {
   emit('selectConcept', uri)
 }
 
-// Watch for selection changes
+// Watch for selection OR language changes to reload breadcrumb
 watch(
-  () => conceptStore.selectedUri,
-  (uri) => {
+  [() => conceptStore.selectedUri, () => languageStore.preferred],
+  ([uri]) => {
     if (uri) {
       loadBreadcrumb(uri)
     } else {

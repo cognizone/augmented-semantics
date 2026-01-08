@@ -45,6 +45,7 @@ export function useEndpointAnalysis() {
       analyzing.value = false
 
       return {
+        hasSkosContent: true,
         supportsNamedGraphs: analysis.supportsNamedGraphs,
         skosGraphCount: analysis.skosGraphCount,
         languages: analysis.languages,
@@ -113,6 +114,7 @@ export function useEndpointAnalysis() {
       analysisDuration.value = Math.round((performance.now() - startTime) / 1000)
 
       const analysis = {
+        hasSkosContent: true,
         supportsNamedGraphs: graphResult.supportsNamedGraphs,
         skosGraphCount,
         languages,
