@@ -15,11 +15,6 @@
     "description": "The National Library of France. It hosts RAMEAU, the primary subject heading authority for French libraries, along with extensive concepts regarding authors, works, and periods."
   },
   {
-    "name": "ZBW STW Thesaurus",
-    "url": "https://zbw.eu/beta/sparql/stw/query",
-    "description": "The 'Standard Thesaurus for Economics' maintained by the Leibniz Information Centre. It provides a highly structured vocabulary for economics and business studies."
-  },
-  {
     "name": "DBpedia",
     "url": "https://dbpedia.org/sparql",
     "description": "The semantic extraction of Wikipedia. It serves as a general knowledge hub, defining millions of entities and concepts that are linked to external thesauri (like YAGO or Wikidata)."
@@ -33,6 +28,11 @@
     "name": "Legilux",
     "url": "https://data.legilux.public.lu/sparqlendpoint",
     "description": "The official legal portal of the Grand Duchy of Luxembourg. It provides access to legislation and the 'Mémorial' (official journal) using a structured legal vocabulary."
+  },
+  {
+    "name": "EU Publications Office",
+    "url": "https://publications.europa.eu/webapi/rdf/sparql",
+    "description": "The CELLAR repository of the EU Publications Office. It hosts EU Vocabularies including EuroVoc, corporate bodies, countries, languages, and other authority tables used across EU institutions."
   },
   {
     "name": "Nobel Prize",

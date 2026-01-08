@@ -29,7 +29,7 @@
           "count": 1307
         }
       ],
-      "analyzedAt": "2026-01-08T12:30:09.923Z"
+      "analyzedAt": "2026-01-08T12:38:22.650Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -129,7 +129,7 @@
           "count": 59018
         }
       ],
-      "analyzedAt": "2026-01-08T12:30:30.769Z"
+      "analyzedAt": "2026-01-08T12:38:40.062Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -234,7 +234,7 @@
           "count": 1278
         }
       ],
-      "analyzedAt": "2026-01-08T12:31:18.371Z"
+      "analyzedAt": "2026-01-08T12:39:32.566Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -247,31 +247,6 @@
       "ar",
       "es",
       "ja"
-    ]
-  },
-  {
-    "name": "ZBW STW Thesaurus",
-    "url": "https://zbw.eu/beta/sparql/stw/query",
-    "description": "The 'Standard Thesaurus for Economics' maintained by the Leibniz Information Centre. It provides a highly structured vocabulary for economics and business studies.",
-    "analysis": {
-      "hasSkosContent": true,
-      "supportsNamedGraphs": false,
-      "skosGraphCount": null,
-      "languages": [
-        {
-          "lang": "de",
-          "count": 20186
-        },
-        {
-          "lang": "en",
-          "count": 13657
-        }
-      ],
-      "analyzedAt": "2026-01-08T12:31:18.983Z"
-    },
-    "suggestedLanguagePriorities": [
-      "en",
-      "de"
     ]
   },
   {
@@ -288,7 +263,7 @@
           "count": 2565313
         }
       ],
-      "analyzedAt": "2026-01-08T12:31:19.329Z"
+      "analyzedAt": "2026-01-08T12:39:32.837Z"
     },
     "suggestedLanguagePriorities": [
       "en"
@@ -328,7 +303,7 @@
           "count": 2
         }
       ],
-      "analyzedAt": "2026-01-08T12:31:29.666Z"
+      "analyzedAt": "2026-01-08T12:39:42.936Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -429,7 +404,7 @@
           "count": 261
         }
       ],
-      "analyzedAt": "2026-01-08T12:31:30.239Z"
+      "analyzedAt": "2026-01-08T12:39:43.522Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -442,6 +417,111 @@
       "pl",
       "hu",
       "nl"
+    ]
+  },
+  {
+    "name": "EU Publications Office",
+    "url": "https://publications.europa.eu/webapi/rdf/sparql",
+    "description": "The CELLAR repository of the EU Publications Office. It hosts EU Vocabularies including EuroVoc, corporate bodies, countries, languages, and other authority tables used across EU institutions.",
+    "analysis": {
+      "hasSkosContent": true,
+      "supportsNamedGraphs": true,
+      "skosGraphCount": 501,
+      "languages": [
+        {
+          "lang": "en",
+          "count": 897934
+        },
+        {
+          "lang": "fr",
+          "count": 848912
+        },
+        {
+          "lang": "de",
+          "count": 780424
+        },
+        {
+          "lang": "it",
+          "count": 761319
+        },
+        {
+          "lang": "es",
+          "count": 759943
+        },
+        {
+          "lang": "pl",
+          "count": 746848
+        },
+        {
+          "lang": "fi",
+          "count": 743253
+        },
+        {
+          "lang": "cs",
+          "count": 740926
+        },
+        {
+          "lang": "nl",
+          "count": 739852
+        },
+        {
+          "lang": "da",
+          "count": 736635
+        },
+        {
+          "lang": "pt",
+          "count": 735928
+        },
+        {
+          "lang": "hu",
+          "count": 735648
+        },
+        {
+          "lang": "sv",
+          "count": 735405
+        },
+        {
+          "lang": "et",
+          "count": 735235
+        },
+        {
+          "lang": "lt",
+          "count": 733002
+        },
+        {
+          "lang": "sk",
+          "count": 732231
+        },
+        {
+          "lang": "lv",
+          "count": 730352
+        },
+        {
+          "lang": "el",
+          "count": 728724
+        },
+        {
+          "lang": "ro",
+          "count": 726177
+        },
+        {
+          "lang": "sl",
+          "count": 723938
+        }
+      ],
+      "analyzedAt": "2026-01-08T12:41:15.118Z"
+    },
+    "suggestedLanguagePriorities": [
+      "en",
+      "fr",
+      "de",
+      "it",
+      "es",
+      "pl",
+      "fi",
+      "cs",
+      "nl",
+      "da"
     ]
   }
 ]
