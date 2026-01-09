@@ -1,6 +1,6 @@
 export { useEndpointStore } from './endpoint'
 export { useLanguageStore } from './language'
-export { useSchemeStore } from './scheme'
+export { useSchemeStore, ORPHAN_SCHEME_URI, ORPHAN_SCHEME } from './scheme'
 export { useConceptStore } from './concept'
 export { useUIStore } from './ui'
 export { useSettingsStore } from './settings'

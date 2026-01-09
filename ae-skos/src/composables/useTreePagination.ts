@@ -8,7 +8,7 @@
  */
 
 import { ref } from 'vue'
-import { useConceptStore, useEndpointStore, useSchemeStore, useLanguageStore } from '../stores'
+import { useConceptStore, useEndpointStore, useSchemeStore, useLanguageStore, ORPHAN_SCHEME_URI } from '../stores'
 import { executeSparql, logger, eventBus } from '../services'
 import { useConceptBindings, useConceptTreeQueries } from './index'
 import type { ConceptNode } from '../types'
@@ -60,8 +60,8 @@ export function useTreePagination() {
     const scheme = schemeStore.selected
     if (!endpoint) return
 
-    // Require a scheme to be selected
-    if (!scheme) {
+    // Require a scheme to be selected (not "All Schemes" or "Orphan Concepts")
+    if (!scheme || scheme.uri === ORPHAN_SCHEME_URI) {
       conceptStore.setTopConcepts([])
       return
     }

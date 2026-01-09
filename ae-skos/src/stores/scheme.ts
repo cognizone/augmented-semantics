@@ -14,6 +14,15 @@ import { logger } from '../services'
 
 const STORAGE_KEY = 'ae-skos-scheme'
 
+/** Special URI for orphan concepts (not linked to any scheme) */
+export const ORPHAN_SCHEME_URI = '~orphans~'
+
+/** Pseudo-scheme for orphan concepts */
+export const ORPHAN_SCHEME: ConceptScheme = {
+  uri: ORPHAN_SCHEME_URI,
+  label: 'Orphan Concepts',
+}
+
 export const useSchemeStore = defineStore('scheme', () => {
   // State
   const schemes = ref<ConceptScheme[]>([])
@@ -26,8 +35,13 @@ export const useSchemeStore = defineStore('scheme', () => {
   const loadingDetails = ref(false)
 
   // Getters
-  const selected = computed(() =>
-    schemes.value.find(s => s.uri === selectedUri.value) ?? null
+  const selected = computed(() => {
+    if (selectedUri.value === ORPHAN_SCHEME_URI) return ORPHAN_SCHEME
+    return schemes.value.find(s => s.uri === selectedUri.value) ?? null
+  })
+
+  const isOrphanSchemeSelected = computed(() =>
+    selectedUri.value === ORPHAN_SCHEME_URI
   )
 
   const sortedSchemes = computed(() =>
@@ -107,6 +121,7 @@ export const useSchemeStore = defineStore('scheme', () => {
     loadingDetails,
     // Getters
     selected,
+    isOrphanSchemeSelected,
     sortedSchemes,
     // Actions
     loadFromStorage,

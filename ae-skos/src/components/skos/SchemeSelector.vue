@@ -9,7 +9,7 @@
  * @see /spec/ae-skos/sko02-SchemeSelector.md
  */
 import { ref, computed, watch } from 'vue'
-import { useSchemeStore, useEndpointStore, useLanguageStore } from '../../stores'
+import { useSchemeStore, useEndpointStore, useLanguageStore, ORPHAN_SCHEME_URI } from '../../stores'
 import { executeSparql, withPrefixes, logger, isValidURI } from '../../services'
 import { formatTemporalValue } from '../../utils/displayUtils'
 import { useLabelResolver } from '../../composables'
@@ -70,6 +70,7 @@ const selectedSchemeDetails = ref<ConceptScheme | null>(null)
 const dropdownOptions = computed(() => {
   const options: { label: string; value: string | null; uri: string | null; lang?: string; showLangTag: boolean; deprecated?: boolean }[] = [
     { label: 'All Schemes', value: null, uri: null, showLangTag: false },
+    { label: 'Orphan Concepts', value: ORPHAN_SCHEME_URI, uri: ORPHAN_SCHEME_URI, showLangTag: false },
   ]
 
   schemeStore.sortedSchemes.forEach(scheme => {

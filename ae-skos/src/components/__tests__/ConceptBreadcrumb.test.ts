@@ -210,9 +210,9 @@ describe('ConceptBreadcrumb', () => {
       await wrapper.find('.p-select').trigger('click')
       await nextTick()
 
-      // Select a scheme
+      // Select a scheme (index 2: after "All Schemes" and "Orphan Concepts")
       const options = wrapper.findAll('.p-select-option')
-      await options[1]?.trigger('click') // Select "Scheme One"
+      await options[2]?.trigger('click') // Select "Scheme One"
       await nextTick()
 
       expect(schemeStore.viewingSchemeUri).toBe('http://ex.org/scheme/1')

@@ -284,6 +284,7 @@ watch(
       <span class="material-symbols-outlined empty-icon">folder_open</span>
       <p>No concepts found</p>
       <small v-if="!schemeStore.selected">Select a concept scheme to browse</small>
+      <small v-else-if="schemeStore.isOrphanSchemeSelected">Orphan concepts will appear here</small>
       <small v-else>This scheme has no top-level concepts</small>
     </div>
 

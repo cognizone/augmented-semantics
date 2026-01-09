@@ -8,7 +8,7 @@
  * @see /spec/ae-skos/sko03-ConceptTree.md
  */
 import { ref, watch, computed } from 'vue'
-import { useConceptStore, useEndpointStore, useLanguageStore, useSchemeStore, useUIStore } from '../../stores'
+import { useConceptStore, useEndpointStore, useLanguageStore, useSchemeStore, useUIStore, ORPHAN_SCHEME_URI } from '../../stores'
 import { executeSparql, withPrefixes, logger } from '../../services'
 import { useLabelResolver } from '../../composables'
 import type { ConceptRef, ConceptScheme } from '../../types'
@@ -33,6 +33,7 @@ const loading = ref(false)
 const schemeOptions = computed(() => {
   const options: { label: string; value: string | null }[] = [
     { label: 'All Schemes', value: null },
+    { label: 'Orphan Concepts', value: ORPHAN_SCHEME_URI },
   ]
 
   schemeStore.sortedSchemes.forEach(scheme => {
