@@ -203,6 +203,10 @@ watch(
   (uri) => {
     if (uri) {
       loadDetails(uri)
+    } else {
+      // Clear details when no concept selected (e.g., endpoint switch)
+      details.value = null
+      error.value = null
     }
   },
   { immediate: true }
