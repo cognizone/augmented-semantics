@@ -325,33 +325,6 @@ export function useConceptData() {
   }
 
   /**
-   * Auto-select scheme if concept belongs to a different scheme than currently selected.
-   * This ensures the tree view stays in sync when navigating via "go to URI".
-   */
-  function autoSelectSchemeIfNeeded(inSchemeRefs: Array<{ uri: string }>) {
-    if (inSchemeRefs.length === 0) return
-
-    const inSchemeUris = inSchemeRefs.map(s => s.uri)
-
-    // If current scheme is already one of concept's schemes, do nothing
-    if (schemeStore.selectedUri && inSchemeUris.includes(schemeStore.selectedUri)) {
-      return
-    }
-
-    // Find first inScheme that exists in available schemes
-    const validScheme = inSchemeUris.find(uri =>
-      schemeStore.schemes.some(s => s.uri === uri)
-    )
-
-    if (validScheme) {
-      logger.info('useConceptData', 'Auto-selecting scheme from concept inScheme', {
-        scheme: validScheme
-      })
-      schemeStore.selectScheme(validScheme)
-    }
-  }
-
-  /**
    * Load complete concept details
    */
   async function loadDetails(uri: string): Promise<void> {
@@ -573,9 +546,6 @@ export function useConceptData() {
       })
 
       details.value = conceptDetails
-
-      // Auto-select scheme if concept belongs to a different scheme
-      autoSelectSchemeIfNeeded(conceptDetails.inScheme)
     } catch (e: unknown) {
       const errMsg = e && typeof e === 'object' && 'message' in e
         ? (e as { message: string }).message

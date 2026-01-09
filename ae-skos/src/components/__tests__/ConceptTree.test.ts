@@ -452,10 +452,10 @@ describe('ConceptTree', () => {
         await flushPromises()
         await nextTick()
 
-        // Verify ancestor query was made
+        // Verify ancestor query was made (uses broader or inverse narrower)
         const calls = (executeSparql as Mock).mock.calls
         const ancestorQuery = calls.find((c: unknown[]) =>
-          typeof c[1] === 'string' && c[1].includes('skos:broader+')
+          typeof c[1] === 'string' && c[1].includes('skos:broader|^skos:narrower')
         )
         expect(ancestorQuery).toBeDefined()
       })

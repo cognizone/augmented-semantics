@@ -395,17 +395,22 @@ async function fetchAncestorPath(uri: string): Promise<{ uri: string; label?: st
   logger.debug('ConceptTree', 'Fetching ancestor path', { concept: uri })
 
   // Query all ancestors with their depth (distance from concept)
+  // Uses both broader and inverse narrower to support all SKOS patterns
   const query = withPrefixes(`
     SELECT DISTINCT ?ancestor ?label ?notation ?depth
     WHERE {
-      <${uri}> skos:broader+ ?ancestor .
+      <${uri}> (skos:broader|^skos:narrower)+ ?ancestor .
       {
         SELECT ?ancestor (COUNT(?mid) AS ?depth)
         WHERE {
-          <${uri}> skos:broader+ ?mid .
-          ?mid skos:broader* ?ancestor .
-          ?ancestor skos:broader* ?root .
-          FILTER NOT EXISTS { ?root skos:broader ?parent }
+          <${uri}> (skos:broader|^skos:narrower)+ ?mid .
+          ?mid (skos:broader|^skos:narrower)* ?ancestor .
+          ?ancestor (skos:broader|^skos:narrower)* ?root .
+          FILTER NOT EXISTS {
+            { ?root skos:broader ?parent }
+            UNION
+            { ?parent skos:narrower ?root }
+          }
         }
         GROUP BY ?ancestor
       }
@@ -472,30 +477,25 @@ async function revealConcept(uri: string) {
 
 // Scroll to a node in the tree
 function scrollToNode(uri: string) {
-  // Find the tree node element by its key
   const treeWrapper = document.querySelector('.tree-wrapper')
-  if (!treeWrapper) return
+  if (!treeWrapper) {
+    logger.debug('ConceptTree', 'scrollToNode: no tree wrapper found')
+    return
+  }
 
-  // PrimeVue Tree uses data-p-key attribute for node identification
-  const nodeElement = treeWrapper.querySelector(`[data-pc-section="nodechildren"] [data-p-key="${CSS.escape(uri)}"]`) ||
-                      treeWrapper.querySelector(`[data-pc-section="nodetogglebutton"]`)?.closest(`[data-p-key="${CSS.escape(uri)}"]`)
+  // Strategy 1: Find by data-p-key attribute (PrimeVue's node identifier)
+  let nodeElement = treeWrapper.querySelector(`[data-p-key="${CSS.escape(uri)}"]`)
 
-  // Alternative: find by checking the node content
+  // Strategy 2: Find the currently highlighted node (fallback)
   if (!nodeElement) {
-    // Try to find by traversing the tree
-    const allNodes = treeWrapper.querySelectorAll('.p-tree-node')
-    for (const node of allNodes) {
-      const nodeContent = node as HTMLElement
-      // Check if this node's key matches (stored in data attribute or component data)
-      if (nodeContent.getAttribute('data-p-key') === uri) {
-        nodeContent.scrollIntoView({ behavior: 'smooth', block: 'center' })
-        return
-      }
-    }
+    nodeElement = treeWrapper.querySelector('.p-tree-node-content.p-highlight')
   }
 
   if (nodeElement) {
-    (nodeElement as HTMLElement).scrollIntoView({ behavior: 'smooth', block: 'center' })
+    logger.debug('ConceptTree', 'scrollToNode: scrolling to node', { uri })
+    nodeElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  } else {
+    logger.debug('ConceptTree', 'scrollToNode: node not found', { uri })
   }
 }
 

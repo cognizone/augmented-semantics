@@ -7,9 +7,10 @@
  *
  * @see /spec/common/com04-URLRouting.md
  */
-import { computed, watch, onMounted, nextTick } from 'vue'
+import { computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUIStore, useConceptStore, useSchemeStore, useLanguageStore, useEndpointStore } from '../stores'
+import { useConceptSelection } from '../composables'
 import { URL_PARAMS } from '../router'
 import ConceptTree from '../components/skos/ConceptTree.vue'
 import ConceptDetails from '../components/skos/ConceptDetails.vue'
@@ -31,6 +32,7 @@ const conceptStore = useConceptStore()
 const schemeStore = useSchemeStore()
 const languageStore = useLanguageStore()
 const endpointStore = useEndpointStore()
+const { selectConceptWithScheme } = useConceptSelection()
 
 // Sidebar tab with computed getter/setter for v-model binding
 const sidebarTab = computed({
@@ -38,39 +40,14 @@ const sidebarTab = computed({
   set: (value: 'browse' | 'search' | 'recent') => uiStore.setSidebarTab(value),
 })
 
-// Handle concept selection from any component
+// Handle concept selection from any component (unified approach)
 async function selectConcept(uri: string) {
-  if (uri) {
-    // Clear scheme viewing when selecting a concept
-    schemeStore.viewScheme(null)
-    await conceptStore.selectConceptWithEvent(uri)
-    // Switch to browse tab when selecting a concept
-    uiStore.setSidebarTab('browse')
-  } else {
-    conceptStore.selectConcept(null)
-  }
+  await selectConceptWithScheme(uri)
 }
 
 // Handle history selection - may need to switch endpoint/scheme
 async function selectFromHistory(entry: { uri: string; endpointUrl?: string; schemeUri?: string; type?: 'concept' | 'scheme' }) {
-  let needsWait = false
-
-  // Switch endpoint if different
-  if (entry.endpointUrl && entry.endpointUrl !== endpointStore.current?.url) {
-    const endpoint = endpointStore.endpoints.find(e => e.url === entry.endpointUrl)
-    if (endpoint) {
-      endpointStore.selectEndpoint(endpoint.id)
-      needsWait = true
-    }
-  }
-
-  // Wait for Vue reactivity to propagate endpoint changes
-  if (needsWait) {
-    await nextTick()
-    needsWait = false
-  }
-
-  // Handle scheme entries
+  // Handle scheme entries specially (not a concept selection)
   if (entry.type === 'scheme') {
     schemeStore.selectScheme(entry.uri)
     conceptStore.selectConcept(null)
@@ -79,19 +56,8 @@ async function selectFromHistory(entry: { uri: string; endpointUrl?: string; sch
     return
   }
 
-  // Switch scheme if different (for concepts)
-  if (entry.schemeUri && entry.schemeUri !== schemeStore.selectedUri) {
-    schemeStore.selectScheme(entry.schemeUri)
-    needsWait = true
-  }
-
-  // Wait for Vue reactivity to propagate scheme changes
-  if (needsWait) {
-    await nextTick()
-  }
-
-  // Select the concept (now with correct endpoint/scheme context)
-  selectConcept(entry.uri)
+  // Use unified selection for concepts (handles endpoint/scheme switching)
+  await selectConceptWithScheme(entry.uri, entry.schemeUri, entry.endpointUrl)
 }
 
 // Computed
