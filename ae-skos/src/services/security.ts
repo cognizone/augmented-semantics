@@ -109,16 +109,6 @@ export function sanitizeHtml(html: string): string {
 }
 
 /**
- * Escape HTML entities for safe display
- * Use when you need to show content as plain text
- */
-export function escapeHtml(text: string): string {
-  const div = document.createElement('div')
-  div.textContent = text
-  return div.innerHTML
-}
-
-/**
  * Check endpoint URL security
  */
 export interface EndpointSecurityCheck {

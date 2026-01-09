@@ -10,7 +10,7 @@
  *
  * @see /spec/common/com04-URLRouting.md
  */
-import { createRouter, createWebHistory, type RouteLocationNormalized } from 'vue-router'
+import { createRouter, createWebHistory } from 'vue-router'
 import SkosView from '../views/SkosView.vue'
 
 const router = createRouter({
@@ -32,16 +32,5 @@ export const URL_PARAMS = {
   LANG: 'lang',
   SEARCH: 'q',
 } as const
-
-// Parse URL parameters
-export function parseUrlParams(route: RouteLocationNormalized) {
-  return {
-    endpoint: route.query[URL_PARAMS.ENDPOINT] as string | undefined,
-    scheme: route.query[URL_PARAMS.SCHEME] as string | undefined,
-    concept: route.query[URL_PARAMS.CONCEPT] as string | undefined,
-    lang: route.query[URL_PARAMS.LANG] as string | undefined,
-    search: route.query[URL_PARAMS.SEARCH] as string | undefined,
-  }
-}
 
 export default router

@@ -179,20 +179,6 @@ export function useLabelResolver() {
     return lang !== languageStore.preferred
   }
 
-  /**
-   * Get the preferred display language.
-   */
-  function getDisplayLanguage(): string {
-    return languageStore.preferred
-  }
-
-  /**
-   * Get the preferred language.
-   */
-  function getPreferred(): string {
-    return languageStore.preferred
-  }
-
   return {
     selectLabel,
     selectLabelWithXL,
@@ -200,7 +186,5 @@ export function useLabelResolver() {
     selectSchemeLabel,
     sortLabels,
     shouldShowLangTag,
-    getDisplayLanguage,
-    getPreferred,
   }
 }

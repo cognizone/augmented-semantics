@@ -3,7 +3,6 @@
  *
  * Manages:
  * - Loading states
- * - Error display
  * - Dialog visibility
  * - Layout (sidebar, view mode, mobile tabs)
  * - Responsive breakpoints
@@ -12,7 +11,6 @@
  */
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { AppError } from '../types'
 
 export type ViewMode = 'tree' | 'flat'
 export type MobileTab = 'tree' | 'details' | 'search'
@@ -21,9 +19,6 @@ export type SidebarTab = 'browse' | 'search' | 'recent'
 export const useUIStore = defineStore('ui', () => {
   // State - Loading
   const loading = ref<Record<string, boolean>>({})
-
-  // State - Errors
-  const errors = ref<AppError[]>([])
 
   // State - Dialogs
   const openDialogs = ref<string[]>([])
@@ -48,12 +43,6 @@ export const useUIStore = defineStore('ui', () => {
   // Getters
   const isLoading = computed(() => (key: string) => loading.value[key] ?? false)
 
-  const hasErrors = computed(() => errors.value.length > 0)
-
-  const latestError = computed(() => errors.value[0] ?? null)
-
-  const isDialogOpen = computed(() => (id: string) => openDialogs.value.includes(id))
-
   const isDesktop = computed(() => !isMobile.value && !isTablet.value)
 
   // Actions - Loading
@@ -61,34 +50,7 @@ export const useUIStore = defineStore('ui', () => {
     loading.value[key] = isLoading
   }
 
-  function clearLoading() {
-    loading.value = {}
-  }
-
-  // Actions - Errors
-  function addError(error: AppError) {
-    errors.value.unshift(error)
-  }
-
-  function removeError(timestamp: string) {
-    errors.value = errors.value.filter(e => e.timestamp !== timestamp)
-  }
-
-  function clearErrors() {
-    errors.value = []
-  }
-
   // Actions - Dialogs
-  function openDialog(id: string) {
-    if (!openDialogs.value.includes(id)) {
-      openDialogs.value.push(id)
-    }
-  }
-
-  function closeDialog(id: string) {
-    openDialogs.value = openDialogs.value.filter(d => d !== id)
-  }
-
   function closeAllDialogs() {
     openDialogs.value = []
   }
@@ -170,7 +132,6 @@ export const useUIStore = defineStore('ui', () => {
   return {
     // State
     loading,
-    errors,
     openDialogs,
     sidebarOpen,
     viewMode,
@@ -180,18 +141,9 @@ export const useUIStore = defineStore('ui', () => {
     isTablet,
     // Getters
     isLoading,
-    hasErrors,
-    latestError,
-    isDialogOpen,
     isDesktop,
     // Actions
     setLoading,
-    clearLoading,
-    addError,
-    removeError,
-    clearErrors,
-    openDialog,
-    closeDialog,
     closeAllDialogs,
     toggleSidebar,
     setSidebarOpen,

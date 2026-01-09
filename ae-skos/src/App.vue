@@ -470,10 +470,6 @@ onUnmounted(() => {
   .header-right {
     display: none;
   }
-
-  .connection-badge {
-    display: none;
-  }
 }
 
 /* Settings dialog */

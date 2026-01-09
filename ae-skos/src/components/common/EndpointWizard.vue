@@ -627,19 +627,6 @@ function handleClose() {
   margin-top: 0.5rem;
 }
 
-.progress-indicator {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem;
-  background: var(--p-content-hover-background);
-  border-radius: var(--p-border-radius);
-}
-
-.progress-indicator i {
-  font-size: 1rem;
-}
-
 .success-icon {
   color: var(--p-green-500);
 }

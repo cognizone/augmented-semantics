@@ -30,7 +30,3 @@ export type RecoveryAction =
   | { type: 'configure'; target: 'endpoint' | 'auth' }
   | { type: 'refresh' }
   | { type: 'dismiss' }
-
-export interface LoadingState {
-  [key: string]: boolean
-}
