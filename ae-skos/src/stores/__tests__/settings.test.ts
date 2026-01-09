@@ -273,4 +273,48 @@ describe('settings store', () => {
       expect(store.showPreferredLanguageTag).toBe(false) // uses default
     })
   })
+
+  describe('logLevel', () => {
+    it('starts with warn as default', () => {
+      const store = useSettingsStore()
+      expect(store.logLevel).toBe('warn')
+    })
+
+    it('can be changed via setLogLevel', () => {
+      const store = useSettingsStore()
+
+      store.setLogLevel('debug')
+      expect(store.logLevel).toBe('debug')
+
+      store.setLogLevel('error')
+      expect(store.logLevel).toBe('error')
+    })
+
+    it('persists to localStorage', () => {
+      const store = useSettingsStore()
+
+      store.setLogLevel('info')
+      expect(localStorage.setItem).toHaveBeenCalled()
+    })
+
+    it('loads from localStorage on init', () => {
+      const storedSettings = {
+        logLevel: 'debug',
+      }
+
+      vi.mocked(localStorage.getItem).mockReturnValue(JSON.stringify(storedSettings))
+
+      const store = useSettingsStore()
+      expect(store.logLevel).toBe('debug')
+    })
+
+    it('resets to warn on resetToDefaults', () => {
+      const store = useSettingsStore()
+
+      store.setLogLevel('debug')
+      store.resetToDefaults()
+
+      expect(store.logLevel).toBe('warn')
+    })
+  })
 })
