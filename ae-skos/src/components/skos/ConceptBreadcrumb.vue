@@ -293,7 +293,11 @@ async function loadBreadcrumb(uri: string) {
       const query = withPrefixes(`
         SELECT ?broader ?label ?labelLang ?labelType ?notation
         WHERE {
-          OPTIONAL { <${current}> skos:broader ?broader }
+          OPTIONAL {
+            { <${current}> skos:broader ?broader }
+            UNION
+            { ?broader skos:narrower <${current}> }
+          }
           OPTIONAL { <${current}> skos:notation ?notation }
           OPTIONAL {
             {
