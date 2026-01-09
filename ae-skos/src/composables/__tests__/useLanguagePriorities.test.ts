@@ -4,7 +4,7 @@
  * Tests for language priority management composable.
  * @see /spec/common/com01-EndpointManager.md
  */
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { ref } from 'vue'
 import { useLanguagePriorities } from '../useLanguagePriorities'
 import type { SPARQLEndpoint } from '../../types'

@@ -4,8 +4,8 @@
  * Tests for recent history display and interactions.
  * @see /spec/ae-skos/sko06-Utilities.md
  */
-import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { mount, flushPromises } from '@vue/test-utils'
+import { describe, it, expect, beforeEach } from 'vitest'
+import { mount } from '@vue/test-utils'
 import { setActivePinia, createPinia } from 'pinia'
 import { nextTick } from 'vue'
 import RecentHistory from '../skos/RecentHistory.vue'

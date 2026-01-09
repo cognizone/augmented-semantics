@@ -5,7 +5,7 @@
  * @see /spec/common/com01-EndpointManager.md
  */
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
-import { mount, flushPromises } from '@vue/test-utils'
+import { mount } from '@vue/test-utils'
 import { setActivePinia, createPinia } from 'pinia'
 import { ref, reactive, nextTick } from 'vue'
 import EndpointWizard from '../common/EndpointWizard.vue'

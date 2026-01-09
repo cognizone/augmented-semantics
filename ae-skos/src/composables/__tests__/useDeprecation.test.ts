@@ -4,7 +4,7 @@
  * Tests for deprecation detection utilities.
  * @see /spec/ae-skos/sko04-ConceptDetails.md
  */
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useDeprecation } from '../useDeprecation'
 import { useSettingsStore, DEFAULT_DEPRECATION_RULES } from '../../stores/settings'
