@@ -12,7 +12,7 @@
  * @see /CLAUDE.md (Debugging section)
  */
 
-type LogLevel = 'debug' | 'info' | 'warn' | 'error'
+export type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'fatal'
 
 interface LogEntry {
   timestamp: string
@@ -22,9 +22,21 @@ interface LogEntry {
   data?: unknown
 }
 
+// Log level priority (higher = more severe)
+const LOG_LEVEL_PRIORITY: Record<LogLevel, number> = {
+  debug: 0,
+  info: 1,
+  warn: 2,
+  error: 3,
+  fatal: 4,
+}
+
 // Store recent logs for debugging
 const LOG_HISTORY_SIZE = 100
 const logHistory: LogEntry[] = []
+
+// Minimum log level (can be changed at runtime)
+let minLevel: LogLevel = 'warn'
 
 // Log level colors for console
 const LEVEL_COLORS: Record<LogLevel, string> = {
@@ -32,6 +44,7 @@ const LEVEL_COLORS: Record<LogLevel, string> = {
   info: '#2196F3',
   warn: '#FF9800',
   error: '#F44336',
+  fatal: '#B71C1C',
 }
 
 // Check if we're in development mode
@@ -52,14 +65,14 @@ function log(level: LogLevel, component: string, message: string, data?: unknown
     data,
   }
 
-  // Store in history
+  // Store in history (always, regardless of min level)
   logHistory.push(entry)
   if (logHistory.length > LOG_HISTORY_SIZE) {
     logHistory.shift()
   }
 
-  // Only log to console in development, or for errors
-  if (!isDev && level !== 'error') {
+  // Check if level meets minimum threshold
+  if (LOG_LEVEL_PRIORITY[level] < LOG_LEVEL_PRIORITY[minLevel]) {
     return
   }
 
@@ -85,6 +98,22 @@ export const logger = {
 
   error: (component: string, message: string, data?: unknown) =>
     log('error', component, message, data),
+
+  fatal: (component: string, message: string, data?: unknown) =>
+    log('fatal', component, message, data),
+
+  /**
+   * Set minimum log level for console output
+   * Logs below this level are still stored in history but not printed
+   */
+  setMinLevel: (level: LogLevel): void => {
+    minLevel = level
+  },
+
+  /**
+   * Get current minimum log level
+   */
+  getMinLevel: (): LogLevel => minLevel,
 
   /**
    * Get recent log history (useful for debugging)

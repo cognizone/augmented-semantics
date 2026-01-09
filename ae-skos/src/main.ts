@@ -8,6 +8,7 @@ import Tooltip from 'primevue/tooltip'
 
 import router from './router'
 import App from './App.vue'
+import { logger } from './services'
 
 import 'primeicons/primeicons.css'
 import '@ae/styles'
@@ -37,5 +38,14 @@ app.use(ConfirmationService)
 
 // Directives
 app.directive('tooltip', Tooltip)
+
+// Global error handler for uncaught errors
+app.config.errorHandler = (err, instance, info) => {
+  logger.error('GlobalErrorHandler', 'Uncaught error', {
+    error: err,
+    component: instance?.$options?.name,
+    info,
+  })
+}
 
 app.mount('#app')

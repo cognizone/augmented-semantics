@@ -8,7 +8,7 @@
  */
 import { defineStore } from 'pinia'
 import { ref, watch } from 'vue'
-import { logger } from '../services'
+import { logger, type LogLevel } from '../services'
 
 const STORAGE_KEY = 'ae-skos-settings'
 
@@ -52,6 +52,9 @@ export interface AppSettings {
   // Deprecation settings
   showDeprecationIndicator: boolean   // Show deprecation visual indicators
   deprecationRules: DeprecationRule[] // Configurable deprecation detection rules
+
+  // Developer settings
+  logLevel: LogLevel                  // Minimum log level for console output
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -61,6 +64,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   showPreferredLanguageTag: false,
   showDeprecationIndicator: true,
   deprecationRules: DEFAULT_DEPRECATION_RULES,
+  logLevel: 'warn',
 }
 
 export const useSettingsStore = defineStore('settings', () => {
@@ -71,6 +75,7 @@ export const useSettingsStore = defineStore('settings', () => {
   const showPreferredLanguageTag = ref(DEFAULT_SETTINGS.showPreferredLanguageTag)
   const showDeprecationIndicator = ref(DEFAULT_SETTINGS.showDeprecationIndicator)
   const deprecationRules = ref<DeprecationRule[]>([...DEFAULT_DEPRECATION_RULES])
+  const logLevel = ref<LogLevel>(DEFAULT_SETTINGS.logLevel)
 
   // Apply dark mode to document
   function applyDarkMode(isDark: boolean) {
@@ -106,6 +111,10 @@ export const useSettingsStore = defineStore('settings', () => {
         if (settings.deprecationRules !== undefined) {
           deprecationRules.value = settings.deprecationRules
         }
+        if (settings.logLevel !== undefined) {
+          logLevel.value = settings.logLevel
+          logger.setMinLevel(settings.logLevel)
+        }
       }
     } catch (e) {
       logger.error('SettingsStore', 'Failed to load settings', { error: e })
@@ -122,6 +131,7 @@ export const useSettingsStore = defineStore('settings', () => {
         showPreferredLanguageTag: showPreferredLanguageTag.value,
         showDeprecationIndicator: showDeprecationIndicator.value,
         deprecationRules: deprecationRules.value,
+        logLevel: logLevel.value,
       }
       localStorage.setItem(STORAGE_KEY, JSON.stringify(settings))
     } catch (e) {
@@ -156,6 +166,12 @@ export const useSettingsStore = defineStore('settings', () => {
     saveSettings()
   }
 
+  function setLogLevel(level: LogLevel) {
+    logLevel.value = level
+    logger.setMinLevel(level)
+    saveSettings()
+  }
+
   function resetToDefaults() {
     darkMode.value = DEFAULT_SETTINGS.darkMode
     applyDarkMode(DEFAULT_SETTINGS.darkMode)
@@ -164,6 +180,8 @@ export const useSettingsStore = defineStore('settings', () => {
     showPreferredLanguageTag.value = DEFAULT_SETTINGS.showPreferredLanguageTag
     showDeprecationIndicator.value = DEFAULT_SETTINGS.showDeprecationIndicator
     deprecationRules.value = [...DEFAULT_DEPRECATION_RULES]
+    logLevel.value = DEFAULT_SETTINGS.logLevel
+    logger.setMinLevel(DEFAULT_SETTINGS.logLevel)
     saveSettings()
   }
 
@@ -181,6 +199,7 @@ export const useSettingsStore = defineStore('settings', () => {
       showPreferredLanguageTag.value,
       showDeprecationIndicator.value,
       deprecationRules.value,
+      logLevel.value,
     ],
     () => saveSettings(),
     { deep: true }
@@ -197,12 +216,14 @@ export const useSettingsStore = defineStore('settings', () => {
     showPreferredLanguageTag,
     showDeprecationIndicator,
     deprecationRules,
+    logLevel,
     // Actions
     setDarkMode,
     setShowDatatypes,
     setShowLanguageTags,
     setShowDeprecationIndicator,
     setDeprecationRules,
+    setLogLevel,
     resetToDefaults,
     loadSettings,
   }

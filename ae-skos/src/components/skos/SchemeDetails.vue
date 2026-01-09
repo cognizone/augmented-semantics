@@ -8,7 +8,7 @@
  * @see /spec/ae-skos/sko02-SchemeSelector.md
  */
 import { ref, watch, computed } from 'vue'
-import { useSchemeStore } from '../../stores'
+import { useSchemeStore, ORPHAN_SCHEME_URI } from '../../stores'
 import { isValidURI } from '../../services'
 import { useDelayedLoading, useLabelResolver, useElapsedTime, useResourceExport, useSchemeData, useDeprecation } from '../../composables'
 import { getUriFragment, formatTemporalValue, formatDatatype } from '../../utils/displayUtils'
@@ -198,6 +198,38 @@ watch(
   () => schemeStore.viewingSchemeUri,
   (uri) => {
     if (uri) {
+      // Handle orphan pseudo-scheme specially (no SPARQL data to load)
+      if (uri === ORPHAN_SCHEME_URI) {
+        details.value = {
+          uri: ORPHAN_SCHEME_URI,
+          prefLabels: [{ value: 'Orphan Concepts' }],
+          altLabels: [],
+          hiddenLabels: [],
+          labels: [],
+          notations: [],
+          definitions: [{ value: 'Concepts not linked to any concept scheme.' }],
+          scopeNotes: [],
+          historyNotes: [],
+          changeNotes: [],
+          editorialNotes: [],
+          notes: [],
+          examples: [],
+          comments: [],
+          title: [],
+          description: [],
+          creator: [],
+          publisher: [],
+          rights: [],
+          license: [],
+          ccLicense: [],
+          seeAlso: [],
+          prefLabelsXL: [],
+          altLabelsXL: [],
+          hiddenLabelsXL: [],
+          otherProperties: [],
+        }
+        return
+      }
       loadDetails(uri)
     }
   },

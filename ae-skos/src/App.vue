@@ -78,6 +78,15 @@ const languageMenuItems = computed(() => {
   }))
 })
 
+// Log level options for settings dropdown
+const logLevelOptions = [
+  { label: 'Debug (verbose)', value: 'debug' },
+  { label: 'Info', value: 'info' },
+  { label: 'Warn (default)', value: 'warn' },
+  { label: 'Error', value: 'error' },
+  { label: 'Fatal (critical only)', value: 'fatal' },
+]
+
 // Language display names
 const languageNames: Record<string, string> = {
   en: 'English', nl: 'Nederlands', fr: 'Français', de: 'Deutsch',
@@ -318,6 +327,29 @@ onUnmounted(() => {
             </div>
           </div>
         </section>
+
+        <!-- Developer Section -->
+        <section class="settings-section">
+          <h3 class="section-title">
+            <span class="material-symbols-outlined section-icon">code</span>
+            Developer
+          </h3>
+
+          <div class="setting-row">
+            <label class="setting-label">Log level</label>
+            <Select
+              :modelValue="settingsStore.logLevel"
+              :options="logLevelOptions"
+              optionLabel="label"
+              optionValue="value"
+              class="log-level-select select-compact"
+              @change="(e: any) => settingsStore.setLogLevel(e.value)"
+            />
+            <p class="setting-hint">
+              Minimum log level shown in browser console (F12). All logs are stored in history.
+            </p>
+          </div>
+        </section>
       </div>
 
       <template #footer>
@@ -552,5 +584,17 @@ onUnmounted(() => {
 
 .rule-value {
   font-family: var(--ae-font-mono);
+}
+
+.setting-label {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--ae-text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.log-level-select {
+  width: 100%;
 }
 </style>

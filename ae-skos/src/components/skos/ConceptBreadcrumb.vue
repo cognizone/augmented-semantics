@@ -31,9 +31,9 @@ const loading = ref(false)
 
 // Scheme dropdown options
 const schemeOptions = computed(() => {
-  const options: { label: string; value: string | null }[] = [
+  const options: { label: string; value: string | null; isOrphan?: boolean }[] = [
     { label: 'All Schemes', value: null },
-    { label: 'Orphan Concepts', value: ORPHAN_SCHEME_URI },
+    { label: 'Orphan Concepts', value: ORPHAN_SCHEME_URI, isOrphan: true },
   ]
 
   schemeStore.sortedSchemes.forEach(scheme => {
@@ -471,6 +471,12 @@ watch(
       <template #value>
         <span class="scheme-value">{{ currentSchemeName }}</span>
       </template>
+      <template #option="slotProps">
+        <div class="scheme-option" :class="{ orphan: slotProps.option.isOrphan }">
+          <span v-if="slotProps.option.isOrphan" class="material-symbols-outlined orphan-icon">link_off</span>
+          <span>{{ slotProps.option.label }}</span>
+        </div>
+      </template>
     </Select>
 
     <!-- Breadcrumb path (only when concept selected) -->
@@ -508,6 +514,22 @@ watch(
 
 .scheme-value {
   white-space: nowrap;
+}
+
+.scheme-option {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.scheme-option.orphan {
+  color: var(--ae-text-secondary);
+  font-style: italic;
+}
+
+.orphan-icon {
+  font-size: 14px;
+  color: var(--ae-text-muted);
 }
 
 /* Separator */

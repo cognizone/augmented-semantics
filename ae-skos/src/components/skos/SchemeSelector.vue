@@ -68,9 +68,9 @@ const selectedSchemeDetails = ref<ConceptScheme | null>(null)
 
 // Computed
 const dropdownOptions = computed(() => {
-  const options: { label: string; value: string | null; uri: string | null; lang?: string; showLangTag: boolean; deprecated?: boolean }[] = [
+  const options: { label: string; value: string | null; uri: string | null; lang?: string; showLangTag: boolean; deprecated?: boolean; isOrphan?: boolean }[] = [
     { label: 'All Schemes', value: null, uri: null, showLangTag: false },
-    { label: 'Orphan Concepts', value: ORPHAN_SCHEME_URI, uri: ORPHAN_SCHEME_URI, showLangTag: false },
+    { label: 'Orphan Concepts', value: ORPHAN_SCHEME_URI, uri: ORPHAN_SCHEME_URI, showLangTag: false, isOrphan: true },
   ]
 
   schemeStore.sortedSchemes.forEach(scheme => {
@@ -307,15 +307,16 @@ watch(
         </div>
       </template>
       <template #option="slotProps">
-        <div class="scheme-option" :class="{ deprecated: slotProps.option.deprecated }">
+        <div class="scheme-option" :class="{ deprecated: slotProps.option.deprecated, orphan: slotProps.option.isOrphan }">
           <div class="scheme-label-row">
+            <span v-if="slotProps.option.isOrphan" class="material-symbols-outlined orphan-icon">link_off</span>
             <span class="scheme-label">{{ slotProps.option.label }}</span>
             <span v-if="slotProps.option.showLangTag" class="lang-tag">
               {{ slotProps.option.lang }}
             </span>
             <span v-if="slotProps.option.deprecated" class="deprecated-badge">deprecated</span>
           </div>
-          <span v-if="slotProps.option.uri" class="scheme-uri">
+          <span v-if="slotProps.option.uri && !slotProps.option.isOrphan" class="scheme-uri">
             {{ slotProps.option.uri }}
           </span>
         </div>
@@ -504,6 +505,16 @@ watch(
 
 .scheme-option.deprecated .scheme-label {
   opacity: 0.7;
+}
+
+.scheme-option.orphan {
+  color: var(--ae-text-secondary);
+  font-style: italic;
+}
+
+.orphan-icon {
+  font-size: 14px;
+  color: var(--ae-text-muted);
 }
 
 .info-btn {
