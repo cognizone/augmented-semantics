@@ -47,7 +47,7 @@ const emit = defineEmits<{
 const activeStep = ref<'1' | '2' | '3'>('1')
 
 // Form state (Step 1)
-const { form, formValid, securityCheck, trustCheck, resetForm, loadEndpoint, useExample, buildEndpoint } = useEndpointForm()
+const { form, formValid, securityCheck, trustCheck, resetForm, loadEndpoint, buildEndpoint } = useEndpointForm()
 const { testing, testResult, testConnection: testConn, clearResult } = useEndpointTest()
 const { analyzing, analyzeStep, analyzeElapsed, analysisLog, reanalyzeEndpoint, clearAnalysis } = useEndpointAnalysis()
 
@@ -142,10 +142,6 @@ function handleFormUpdate(newForm: BasicInfoForm) {
 async function handleTest() {
   const endpoint = buildEndpoint('test')
   await testConn(endpoint)
-}
-
-function handleUseExample(example: { name: string; url: string }) {
-  useExample(example)
 }
 
 function handleNextFromBasicInfo(activateCallback: (step: string) => void) {
@@ -280,7 +276,6 @@ function handleClose() {
             @test="handleTest"
             @next="handleNextFromBasicInfo(activateCallback)"
             @close="handleClose"
-            @useExample="handleUseExample"
           />
         </StepPanel>
 

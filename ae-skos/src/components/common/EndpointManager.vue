@@ -13,7 +13,7 @@
 import { ref, computed } from 'vue'
 import { useEndpointStore } from '../../stores'
 import { testConnection } from '../../services/sparql'
-import type { SPARQLEndpoint, TrustedEndpoint } from '../../types'
+import type { SPARQLEndpoint, SuggestedEndpoint } from '../../types'
 
 import Dialog from 'primevue/dialog'
 import Button from 'primevue/button'
@@ -130,9 +130,9 @@ async function handleTestConnection(endpoint: SPARQLEndpoint) {
   testingEndpointId.value = null
 }
 
-// Trusted Endpoint Handlers
-function handleAddTrustedEndpoint(trusted: TrustedEndpoint) {
-  const newEndpoint = endpointStore.addTrustedEndpoint(trusted)
+// Suggested Endpoint Handlers
+function handleAddSuggestedEndpoint(suggested: SuggestedEndpoint) {
+  const newEndpoint = endpointStore.addSuggestedEndpoint(suggested)
   endpointStore.selectEndpoint(newEndpoint.id)
   endpointStore.setStatus('connected')
 }
@@ -179,36 +179,36 @@ function formatUIDate(dateStr?: string) {
       </div>
 
       <!-- Suggested Endpoints -->
-      <div v-if="endpointStore.availableTrustedEndpoints.length > 0" class="suggested-section">
+      <div v-if="endpointStore.availableSuggestedEndpoints.length > 0" class="suggested-section">
         <button class="suggested-header" @click="toggleSuggestedCollapsed">
           <span class="material-symbols-outlined">verified</span>
           <span class="suggested-header-text">Suggested Endpoints</span>
-          <span class="suggested-count">{{ endpointStore.availableTrustedEndpoints.length }}</span>
+          <span class="suggested-count">{{ endpointStore.availableSuggestedEndpoints.length }}</span>
           <span class="material-symbols-outlined chevron" :class="{ 'chevron-collapsed': suggestedCollapsed }">
             expand_more
           </span>
         </button>
         <div v-show="!suggestedCollapsed" class="suggested-list">
           <div
-            v-for="trusted in endpointStore.availableTrustedEndpoints"
-            :key="trusted.url"
+            v-for="suggested in endpointStore.availableSuggestedEndpoints"
+            :key="suggested.url"
             class="suggested-item"
           >
             <div class="suggested-info">
-              <span class="suggested-name">{{ trusted.name }}</span>
-              <span v-if="trusted.description" class="suggested-description">{{ trusted.description }}</span>
-              <span class="suggested-url">{{ trusted.url }}</span>
-              <div v-if="trusted.analysis.languages && trusted.analysis.languages.length > 0" class="suggested-langs">
+              <span class="suggested-name">{{ suggested.name }}</span>
+              <span v-if="suggested.description" class="suggested-description">{{ suggested.description }}</span>
+              <span class="suggested-url">{{ suggested.url }}</span>
+              <div v-if="suggested.analysis.languages && suggested.analysis.languages.length > 0" class="suggested-langs">
                 <Tag
-                  v-for="lang in trusted.analysis.languages.slice(0, 3)"
+                  v-for="lang in suggested.analysis.languages.slice(0, 3)"
                   :key="lang.lang"
                   severity="secondary"
                   class="lang-tag"
                 >
                   {{ lang.lang }}
                 </Tag>
-                <span v-if="trusted.analysis.languages.length > 3" class="more-langs">
-                  +{{ trusted.analysis.languages.length - 3 }}
+                <span v-if="suggested.analysis.languages.length > 3" class="more-langs">
+                  +{{ suggested.analysis.languages.length - 3 }}
                 </span>
               </div>
             </div>
@@ -217,7 +217,7 @@ function formatUIDate(dateStr?: string) {
               size="small"
               severity="secondary"
               outlined
-              @click="handleAddTrustedEndpoint(trusted)"
+              @click="handleAddSuggestedEndpoint(suggested)"
             >
               <template #icon>
                 <span class="material-symbols-outlined btn-icon-small">add</span>

@@ -52,18 +52,18 @@ export interface EndpointAnalysis {
 export type EndpointStatus = 'disconnected' | 'connecting' | 'connected' | 'error'
 
 /**
- * Trusted endpoint source definition (manually curated)
+ * Suggested endpoint source definition (manually curated)
  */
-export interface TrustedEndpointSource {
+export interface SuggestedEndpointSource {
   name: string
   url: string
   description?: string
 }
 
 /**
- * Trusted endpoint with pre-calculated analysis (generated at build time)
+ * Suggested endpoint with pre-calculated analysis (generated at build time)
  */
-export interface TrustedEndpoint extends TrustedEndpointSource {
+export interface SuggestedEndpoint extends SuggestedEndpointSource {
   analysis: EndpointAnalysis
   suggestedLanguagePriorities: string[]
 }

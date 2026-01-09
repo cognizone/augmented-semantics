@@ -1,5 +1,5 @@
 /**
- * Prebuild script to analyze trusted endpoints and generate pre-calculated data.
+ * Prebuild script to analyze suggested endpoints and generate pre-calculated data.
  *
  * Run with: npx tsx scripts/prebuild-endpoints.ts
  */
@@ -11,7 +11,7 @@ import { createHash } from 'crypto'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
 // Types
-interface TrustedEndpointSource {
+interface SuggestedEndpointSource {
   name: string
   url: string
 }
@@ -29,7 +29,7 @@ interface EndpointAnalysis {
   analyzedAt: string
 }
 
-interface TrustedEndpoint extends TrustedEndpointSource {
+interface SuggestedEndpoint extends SuggestedEndpointSource {
   analysis: EndpointAnalysis
   suggestedLanguagePriorities: string[]
 }
@@ -235,8 +235,8 @@ function generateLanguagePriorities(languages: DetectedLanguage[]): string[] {
 // Main
 async function main() {
   const forceRebuild = process.argv.includes('--force')
-  const sourcePath = join(__dirname, '../src/data/trusted-endpoints.json')
-  const outputPath = join(__dirname, '../src/data/trusted-endpoints.generated.json')
+  const sourcePath = join(__dirname, '../src/data/suggested-endpoints.json')
+  const outputPath = join(__dirname, '../src/data/suggested-endpoints.generated.json')
 
   // Read source and compute hash
   const sourceContent = readFileSync(sourcePath, 'utf-8')
@@ -255,12 +255,12 @@ async function main() {
     }
   }
 
-  console.log('Reading trusted endpoints source...')
-  const sources: TrustedEndpointSource[] = JSON.parse(sourceContent)
+  console.log('Reading suggested endpoints source...')
+  const sources: SuggestedEndpointSource[] = JSON.parse(sourceContent)
 
   console.log(`Found ${sources.length} endpoints to analyze.\n`)
 
-  const results: TrustedEndpoint[] = []
+  const results: SuggestedEndpoint[] = []
 
   for (const source of sources) {
     console.log(`Analyzing: ${source.name} (${source.url})`)

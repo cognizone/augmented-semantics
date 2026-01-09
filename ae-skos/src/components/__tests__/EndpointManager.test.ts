@@ -160,35 +160,35 @@ describe('EndpointManager', () => {
     })
   })
 
-  describe('trusted endpoints section', () => {
+  describe('suggested endpoints section', () => {
     it('shows suggested endpoints section', () => {
-      // Trusted endpoints come from generated JSON
-      // This section should be visible if availableTrustedEndpoints > 0
+      // Suggested endpoints come from generated JSON
+      // This section should be visible if availableSuggestedEndpoints > 0
       const endpointStore = useEndpointStore()
       const wrapper = mountEndpointManager()
 
-      // If there are available trusted endpoints, section should exist
-      if (endpointStore.availableTrustedEndpoints.length > 0) {
+      // If there are available suggested endpoints, section should exist
+      if (endpointStore.availableSuggestedEndpoints.length > 0) {
         expect(wrapper.find('.suggested-section').exists()).toBe(true)
       }
     })
 
-    it('shows trusted endpoint count badge', () => {
+    it('shows suggested endpoint count badge', () => {
       const endpointStore = useEndpointStore()
       const wrapper = mountEndpointManager()
 
-      if (endpointStore.availableTrustedEndpoints.length > 0) {
+      if (endpointStore.availableSuggestedEndpoints.length > 0) {
         const countBadge = wrapper.find('.suggested-count')
         expect(countBadge.exists()).toBe(true)
-        expect(countBadge.text()).toBe(String(endpointStore.availableTrustedEndpoints.length))
+        expect(countBadge.text()).toBe(String(endpointStore.availableSuggestedEndpoints.length))
       }
     })
 
-    it('adds trusted endpoint when clicked', async () => {
+    it('adds suggested endpoint when clicked', async () => {
       const endpointStore = useEndpointStore()
 
-      if (endpointStore.availableTrustedEndpoints.length === 0) {
-        // Skip test if no trusted endpoints available
+      if (endpointStore.availableSuggestedEndpoints.length === 0) {
+        // Skip test if no suggested endpoints available
         return
       }
 
@@ -245,8 +245,8 @@ describe('EndpointManager', () => {
     it('toggles suggested section on header click', async () => {
       const endpointStore = useEndpointStore()
 
-      if (endpointStore.availableTrustedEndpoints.length === 0) {
-        return // Skip if no trusted endpoints
+      if (endpointStore.availableSuggestedEndpoints.length === 0) {
+        return // Skip if no suggested endpoints
       }
 
       const wrapper = mountEndpointManager()

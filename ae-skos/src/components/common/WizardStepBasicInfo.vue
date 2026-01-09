@@ -40,7 +40,6 @@ const emit = defineEmits<{
   test: []
   next: []
   close: []
-  useExample: [example: { name: string; url: string }]
 }>()
 
 const authOptions = [
@@ -48,12 +47,6 @@ const authOptions = [
   { label: 'Basic Auth', value: 'basic' },
   { label: 'API Key', value: 'apikey' },
   { label: 'Bearer Token', value: 'bearer' },
-]
-
-const exampleEndpoints = [
-  { name: 'DBpedia', url: 'https://dbpedia.org/sparql' },
-  { name: 'Wikidata', url: 'https://query.wikidata.org/sparql' },
-  { name: 'EU Publications', url: 'https://publications.europa.eu/webapi/rdf/sparql' },
 ]
 
 // Helper to update form fields
@@ -77,20 +70,6 @@ const trustLabel = (level: string) => {
 
 <template>
   <div class="step-content">
-    <!-- Example suggestions -->
-    <div v-if="!isEditing && !form.url" class="examples-section">
-      <span class="examples-label">Quick add:</span>
-      <Button
-        v-for="ex in exampleEndpoints"
-        :key="ex.url"
-        :label="ex.name"
-        size="small"
-        severity="secondary"
-        text
-        @click="$emit('useExample', ex)"
-      />
-    </div>
-
     <!-- Name -->
     <div class="form-field">
       <label for="ep-name">Name</label>
@@ -278,22 +257,6 @@ const trustLabel = (level: string) => {
 .footer-right {
   display: flex;
   gap: 0.5rem;
-}
-
-.examples-section {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem;
-  background: var(--p-content-hover-background);
-  border-radius: var(--p-border-radius);
-  flex-wrap: wrap;
-}
-
-.examples-label {
-  font-size: 0.75rem;
-  color: var(--p-text-muted-color);
-  font-weight: 500;
 }
 
 .form-field {

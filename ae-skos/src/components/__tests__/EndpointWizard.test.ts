@@ -292,11 +292,6 @@ describe('EndpointWizard', () => {
       expect(wrapper.find('.p-select').exists()).toBe(true)
     })
 
-    it('renders example buttons when no URL', () => {
-      const wrapper = mountEndpointWizard()
-      expect(wrapper.text()).toContain('Quick add')
-    })
-
     it('shows test connection button', () => {
       const wrapper = mountEndpointWizard()
       expect(wrapper.text()).toContain('Test Connection')

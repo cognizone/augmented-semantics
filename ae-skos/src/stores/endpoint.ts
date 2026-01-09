@@ -9,14 +9,14 @@
  */
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { SPARQLEndpoint, EndpointStatus, AppError, TrustedEndpoint } from '../types'
-import trustedEndpointsData from '../data/trusted-endpoints.generated.json'
+import type { SPARQLEndpoint, EndpointStatus, AppError, SuggestedEndpoint } from '../types'
+import suggestedEndpointsData from '../data/suggested-endpoints.generated.json'
 import { logger } from '../services'
 
 const STORAGE_KEY = 'ae-endpoints'
 
 // Type assertion for imported JSON (structure: { _sourceHash, endpoints })
-const trustedEndpoints = (trustedEndpointsData as { endpoints: TrustedEndpoint[] }).endpoints
+const suggestedEndpoints = (suggestedEndpointsData as { endpoints: SuggestedEndpoint[] }).endpoints
 
 export const useEndpointStore = defineStore('endpoint', () => {
   // State
@@ -39,10 +39,10 @@ export const useEndpointStore = defineStore('endpoint', () => {
     })
   )
 
-  // Trusted endpoints not yet added by the user (matched by URL)
-  const availableTrustedEndpoints = computed(() => {
+  // Suggested endpoints not yet added by the user (matched by URL)
+  const availableSuggestedEndpoints = computed(() => {
     const existingUrls = new Set(endpoints.value.map(e => e.url))
-    return trustedEndpoints.filter(te => !existingUrls.has(te.url))
+    return suggestedEndpoints.filter(te => !existingUrls.has(te.url))
   })
 
   // Actions
@@ -78,15 +78,15 @@ export const useEndpointStore = defineStore('endpoint', () => {
   }
 
   /**
-   * Add a trusted endpoint with pre-calculated analysis data
+   * Add a suggested endpoint with pre-calculated analysis data
    */
-  function addTrustedEndpoint(trustedEndpoint: TrustedEndpoint) {
+  function addSuggestedEndpoint(suggestedEndpoint: SuggestedEndpoint) {
     const newEndpoint: SPARQLEndpoint = {
       id: crypto.randomUUID(),
-      name: trustedEndpoint.name,
-      url: trustedEndpoint.url,
-      analysis: trustedEndpoint.analysis,
-      languagePriorities: trustedEndpoint.suggestedLanguagePriorities,
+      name: suggestedEndpoint.name,
+      url: suggestedEndpoint.url,
+      analysis: suggestedEndpoint.analysis,
+      languagePriorities: suggestedEndpoint.suggestedLanguagePriorities,
       createdAt: new Date().toISOString(),
       accessCount: 0,
     }
@@ -161,11 +161,11 @@ export const useEndpointStore = defineStore('endpoint', () => {
     // Getters
     current,
     sortedEndpoints,
-    availableTrustedEndpoints,
+    availableSuggestedEndpoints,
     // Actions
     loadFromStorage,
     addEndpoint,
-    addTrustedEndpoint,
+    addSuggestedEndpoint,
     updateEndpoint,
     removeEndpoint,
     selectEndpoint,
