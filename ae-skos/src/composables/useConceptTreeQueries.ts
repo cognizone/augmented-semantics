@@ -53,9 +53,8 @@ export function useConceptTreeQueries() {
         SELECT DISTINCT ?concept (COUNT(DISTINCT ?narrower) AS ?narrowerCount) ${deprecationSelectVars}
         WHERE {
           {
-            # Explicit top concept via topConceptOf or hasTopConcept
+            # Explicit top concept via topConceptOf or hasTopConcept (no inScheme required)
             ?concept a skos:Concept .
-            ?concept skos:inScheme <${schemeUri}> .
             { ?concept skos:topConceptOf <${schemeUri}> }
             UNION
             { <${schemeUri}> skos:hasTopConcept ?concept }
