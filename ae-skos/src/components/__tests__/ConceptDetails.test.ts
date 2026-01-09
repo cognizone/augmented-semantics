@@ -333,6 +333,56 @@ describe('ConceptDetails', () => {
 
       expect(wrapper.find('.empty-state').exists()).toBe(true)
     })
+
+    it('clears details when selectedUri becomes null (e.g., endpoint switch)', async () => {
+      const conceptStore = useConceptStore()
+      conceptStore.selectConcept('http://example.org/concept/1')
+
+      // Simulate loaded details
+      mockDetails.value = {
+        uri: 'http://example.org/concept/1',
+        prefLabels: [{ value: 'Test Concept', lang: 'en' }],
+        altLabels: [],
+        hiddenLabels: [],
+        definitions: [],
+        scopeNotes: [],
+        historyNotes: [],
+        changeNotes: [],
+        editorialNotes: [],
+        notes: [],
+        examples: [],
+        notations: [],
+        broader: [],
+        narrower: [],
+        related: [],
+        inScheme: [],
+        exactMatch: [],
+        closeMatch: [],
+        broadMatch: [],
+        narrowMatch: [],
+        relatedMatch: [],
+        identifier: [],
+        seeAlso: [],
+        prefLabelsXL: [],
+        altLabelsXL: [],
+        hiddenLabelsXL: [],
+        otherProperties: [],
+      }
+
+      const wrapper = mountConceptDetails()
+      await nextTick()
+
+      // Should show content
+      expect(wrapper.find('.empty-state').exists()).toBe(false)
+      expect(wrapper.text()).toContain('Test Concept')
+
+      // Clear selection (simulating endpoint switch)
+      conceptStore.selectConcept(null)
+      await nextTick()
+
+      // Details should be cleared - showing empty state
+      expect(wrapper.find('.empty-state').exists()).toBe(true)
+    })
   })
 
   describe('settings', () => {
