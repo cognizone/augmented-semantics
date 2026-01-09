@@ -11,6 +11,7 @@
  * @see /spec/common/com06-Security.md
  */
 import DOMPurify from 'dompurify'
+import { logger } from './logger'
 
 /**
  * Escape special characters for SPARQL string literals
@@ -253,7 +254,7 @@ export function storeCredentials(
     }
     sessionStorage.setItem(CREDENTIALS_KEY, JSON.stringify(existing))
   } catch (e) {
-    console.error('Failed to store credentials:', e)
+    logger.error('Security', 'Failed to store credentials', { error: e })
   }
 }
 
@@ -276,7 +277,7 @@ export function clearCredentials(endpointId: string): void {
     delete existing[endpointId]
     sessionStorage.setItem(CREDENTIALS_KEY, JSON.stringify(existing))
   } catch (e) {
-    console.error('Failed to clear credentials:', e)
+    logger.error('Security', 'Failed to clear credentials', { error: e })
   }
 }
 

@@ -8,6 +8,7 @@
  */
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import { logger } from '../services'
 
 const STORAGE_KEY = 'ae-preferred-language'
 
@@ -42,7 +43,7 @@ export const useLanguageStore = defineStore('language', () => {
     try {
       localStorage.setItem(STORAGE_KEY, lang)
     } catch (e) {
-      console.error('Failed to save preferred language:', e)
+      logger.error('LanguageStore', 'Failed to save preferred language', { error: e })
     }
   }
 

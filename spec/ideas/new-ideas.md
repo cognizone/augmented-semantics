@@ -13,3 +13,7 @@ New ideas: copy them into ideas.md, remove the list here (but keep the file and 
 - deprecated label is hard to see in light mode
 - build reusable component for "clear history" and "delete endpoint" popup? does it make sense?
 - user manual images
+- does not jump to the correct location in the tree
+- problem with long list of languages (agrovoc only has 10?)
+- switching endpoint should clear both tree as right part
+- switching language works more or less ok but tree is not correct

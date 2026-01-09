@@ -8,6 +8,7 @@
  */
 import { defineStore } from 'pinia'
 import { ref, watch } from 'vue'
+import { logger } from '../services'
 
 const STORAGE_KEY = 'ae-skos-settings'
 
@@ -107,7 +108,7 @@ export const useSettingsStore = defineStore('settings', () => {
         }
       }
     } catch (e) {
-      console.error('Failed to load settings:', e)
+      logger.error('SettingsStore', 'Failed to load settings', { error: e })
     }
   }
 
@@ -124,7 +125,7 @@ export const useSettingsStore = defineStore('settings', () => {
       }
       localStorage.setItem(STORAGE_KEY, JSON.stringify(settings))
     } catch (e) {
-      console.error('Failed to save settings:', e)
+      logger.error('SettingsStore', 'Failed to save settings', { error: e })
     }
   }
 

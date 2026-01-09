@@ -248,7 +248,7 @@ async function loadSchemeDetails(uri: string) {
       }
     }
   } catch (e) {
-    console.error('Failed to load scheme details:', e)
+    logger.error('SchemeSelector', 'Failed to load scheme details', { error: e })
   }
 }
 

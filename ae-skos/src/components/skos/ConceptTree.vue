@@ -11,17 +11,22 @@
  *
  * @see /spec/ae-skos/sko03-ConceptTree.md
  */
-import { ref, watch, computed, nextTick, onMounted, onUnmounted } from 'vue'
+import { ref, watch, computed, onMounted, onUnmounted } from 'vue'
 import { useConceptStore, useEndpointStore, useSchemeStore, useLanguageStore } from '../../stores'
-import { executeSparql, withPrefixes, logger, eventBus } from '../../services'
+import { logger, eventBus } from '../../services'
 import type { EventSubscription } from '../../services'
-import { useDelayedLoading, useLabelResolver, useElapsedTime, useDeprecation, useConceptBindings, useConceptTreeQueries } from '../../composables'
+import {
+  useDelayedLoading,
+  useLabelResolver,
+  useElapsedTime,
+  useDeprecation,
+  useTreePagination,
+  useTreeNavigation,
+  useTreeSelection,
+} from '../../composables'
 import type { ConceptNode } from '../../types'
 import Tree from 'primevue/tree'
 import type { TreeNode } from 'primevue/treenode'
-
-type TreeExpandedKeys = Record<string, boolean>
-type TreeSelectionKeys = Record<string, boolean>
 import Message from 'primevue/message'
 import ProgressSpinner from 'primevue/progressspinner'
 
@@ -31,8 +36,6 @@ const schemeStore = useSchemeStore()
 const languageStore = useLanguageStore()
 const { shouldShowLangTag } = useLabelResolver()
 const { showIndicator: showDeprecationIndicator } = useDeprecation()
-const { processBindings } = useConceptBindings()
-const { buildTopConceptsQuery, buildChildrenQuery } = useConceptTreeQueries()
 
 // Delayed loading - show spinner only after 300ms to prevent flicker
 const showTreeLoading = useDelayedLoading(computed(() => conceptStore.loadingTree))
@@ -40,24 +43,43 @@ const showTreeLoading = useDelayedLoading(computed(() => conceptStore.loadingTre
 // Elapsed time for tree loading (shows after 1s delay)
 const treeLoadingElapsed = useElapsedTime(computed(() => conceptStore.loadingTree))
 
-// Pagination config
-const PAGE_SIZE = 200
-
-// Pagination state for top concepts
-const topConceptsOffset = ref(0)
-const hasMoreTopConcepts = ref(true)
-const loadingMoreTopConcepts = ref(false)
-
 // Ref to tree wrapper for scrolling
 const treeWrapperRef = ref<HTMLElement | null>(null)
 
-// Pagination state for children (keyed by parent URI)
-const childrenPagination = ref<Map<string, { offset: number; hasMore: boolean; loading: boolean }>>(new Map())
-
 // Local state
-const error = ref<string | null>(null)
-const loadingChildren = ref<Set<string>>(new Set())
 const gotoUri = ref('')
+
+// Initialize composables with dependencies
+const {
+  hasMoreTopConcepts,
+  loadingMoreTopConcepts,
+  loadingChildren,
+  error,
+  loadTopConcepts,
+  loadMoreTopConcepts,
+  loadChildren,
+  findNode,
+} = useTreePagination()
+
+const {
+  revealConceptIfNeeded,
+  scrollToTop,
+} = useTreeNavigation({
+  treeWrapperRef,
+  loadChildren,
+  findNode,
+})
+
+const {
+  selectedKey,
+  expandedKeys,
+  onNodeExpand,
+  onNodeCollapse,
+  selectConcept,
+} = useTreeSelection({
+  loadChildren,
+  findNode,
+})
 
 // Convert our ConceptNode[] to PrimeVue tree format
 // If a scheme is selected, show it as the root with top concepts as children
@@ -106,261 +128,6 @@ function convertToTreeNode(node: ConceptNode): TreeNode {
   }
 }
 
-// Selected node keys for PrimeVue Tree
-const selectedKey = computed<TreeSelectionKeys | undefined>({
-  get: () => {
-    // Show scheme as selected when viewing scheme details
-    if (schemeStore.viewingSchemeUri) {
-      return { [schemeStore.viewingSchemeUri]: true }
-    }
-    if (conceptStore.selectedUri) {
-      return { [conceptStore.selectedUri]: true }
-    }
-    return undefined
-  },
-  set: (keys) => {
-    if (keys) {
-      const uri = Object.keys(keys)[0]
-      if (uri) {
-        // Check if this is the scheme node
-        const scheme = schemeStore.selected
-        if (scheme && uri === scheme.uri) {
-          conceptStore.selectConcept(null) // Clear concept selection when viewing scheme
-          schemeStore.viewScheme(uri)
-          // Add to history
-          conceptStore.addToHistory({
-            uri: scheme.uri,
-            label: scheme.label || scheme.uri,
-            lang: scheme.labelLang,
-            endpointUrl: endpointStore.current?.url,
-            type: 'scheme',
-          })
-        } else {
-          selectConcept(uri)
-        }
-      }
-    }
-  },
-})
-
-// Expanded keys for PrimeVue Tree
-const expandedKeys = computed<TreeExpandedKeys>({
-  get: () => {
-    const keys: TreeExpandedKeys = {}
-    // Auto-expand the scheme node if present
-    const scheme = schemeStore.selected
-    if (scheme) {
-      keys[scheme.uri] = true
-    }
-    conceptStore.expanded.forEach(uri => {
-      keys[uri] = true
-    })
-    return keys
-  },
-  set: (keys) => {
-    // Sync expanded state
-    const newExpanded = new Set(Object.keys(keys || {}))
-    conceptStore.expanded.forEach(uri => {
-      if (!newExpanded.has(uri)) {
-        conceptStore.collapseNode(uri)
-      }
-    })
-    newExpanded.forEach(uri => {
-      if (!conceptStore.expanded.has(uri)) {
-        conceptStore.expandNode(uri)
-      }
-    })
-  },
-})
-
-// Load top concepts for selected scheme
-async function loadTopConcepts(offset = 0) {
-  const endpoint = endpointStore.current
-  const scheme = schemeStore.selected
-  if (!endpoint) return
-
-  // Require a scheme to be selected
-  if (!scheme) {
-    conceptStore.setTopConcepts([])
-    return
-  }
-
-  const isFirstPage = offset === 0
-
-  logger.info('ConceptTree', 'Loading top concepts', {
-    scheme: scheme?.uri || 'all',
-    language: languageStore.preferred,
-    offset,
-    pageSize: PAGE_SIZE
-  })
-
-  if (isFirstPage) {
-    conceptStore.setLoadingTree(true)
-    topConceptsOffset.value = 0
-    hasMoreTopConcepts.value = true
-    await eventBus.emit('tree:loading', undefined)
-  } else {
-    loadingMoreTopConcepts.value = true
-  }
-  error.value = null
-
-  const query = buildTopConceptsQuery(scheme.uri, PAGE_SIZE, offset)
-
-  logger.debug('ConceptTree', 'Top concepts query', { query })
-
-  try {
-    const results = await executeSparql(endpoint, query, { retries: 1 })
-
-    // Process bindings into sorted ConceptNode[]
-    const concepts = processBindings(results.results.bindings)
-
-    // Check if there are more results (we fetched PAGE_SIZE + 1)
-    const hasMore = concepts.length > PAGE_SIZE
-    if (hasMore) {
-      concepts.pop() // Remove the extra item used for detection
-    }
-    hasMoreTopConcepts.value = hasMore
-    topConceptsOffset.value = offset
-
-    logger.info('ConceptTree', `Loaded ${concepts.length} top concepts`, { hasMore, offset })
-
-    if (isFirstPage) {
-      conceptStore.setTopConcepts(concepts)
-      // Emit tree:loaded for event coordination (triggers pending reveals)
-      await eventBus.emit('tree:loaded', concepts)
-    } else {
-      conceptStore.appendTopConcepts(concepts)
-    }
-  } catch (e: unknown) {
-    const errMsg = e && typeof e === 'object' && 'message' in e
-      ? (e as { message: string }).message
-      : 'Unknown error'
-    logger.error('ConceptTree', 'Failed to load top concepts', { error: e })
-    error.value = `Failed to load concepts: ${errMsg}`
-    if (isFirstPage) {
-      conceptStore.setTopConcepts([])
-    }
-  } finally {
-    conceptStore.setLoadingTree(false)
-    loadingMoreTopConcepts.value = false
-  }
-}
-
-// Load more top concepts (next page)
-async function loadMoreTopConcepts() {
-  if (!hasMoreTopConcepts.value || loadingMoreTopConcepts.value) return
-  const nextOffset = topConceptsOffset.value + PAGE_SIZE
-  await loadTopConcepts(nextOffset)
-}
-
-// Load children for a node
-async function loadChildren(uri: string, offset = 0) {
-  const endpoint = endpointStore.current
-  if (!endpoint) return
-
-  const isFirstPage = offset === 0
-
-  // Prevent duplicate requests
-  if (isFirstPage && loadingChildren.value.has(uri)) return
-  const pagination = childrenPagination.value.get(uri)
-  if (!isFirstPage && pagination?.loading) return
-
-  if (isFirstPage) {
-    loadingChildren.value.add(uri)
-    childrenPagination.value.set(uri, { offset: 0, hasMore: true, loading: true })
-  } else if (pagination) {
-    pagination.loading = true
-  }
-
-  logger.debug('ConceptTree', 'Loading children', { parent: uri, offset, pageSize: PAGE_SIZE })
-
-  const query = buildChildrenQuery(uri, PAGE_SIZE, offset)
-
-  try {
-    const results = await executeSparql(endpoint, query, { retries: 1 })
-
-    // Process bindings into sorted ConceptNode[]
-    const children = processBindings(results.results.bindings)
-
-    // Check if there are more results
-    const hasMore = children.length > PAGE_SIZE
-    if (hasMore) {
-      children.pop()
-    }
-
-    // Update pagination state
-    childrenPagination.value.set(uri, { offset, hasMore, loading: false })
-
-    logger.debug('ConceptTree', `Loaded ${children.length} children for ${uri}`, { hasMore, offset })
-
-    if (isFirstPage) {
-      conceptStore.updateNodeChildren(uri, children)
-    } else {
-      // Append to existing children
-      const node = findNode(uri, conceptStore.topConcepts)
-      if (node?.children) {
-        node.children = [...node.children, ...children]
-      }
-    }
-  } catch (e) {
-    logger.error('ConceptTree', 'Failed to load children', { parent: uri, error: e })
-  } finally {
-    loadingChildren.value.delete(uri)
-    const pag = childrenPagination.value.get(uri)
-    if (pag) pag.loading = false
-  }
-}
-
-// Handle node expand
-function onNodeExpand(node: TreeNode) {
-  const conceptNode = node.data as ConceptNode | undefined
-  if (conceptNode?.hasNarrower && !conceptNode.children && node.key) {
-    loadChildren(String(node.key))
-  }
-  if (node.key) {
-    conceptStore.expandNode(String(node.key))
-  }
-}
-
-// Handle node collapse
-function onNodeCollapse(node: TreeNode) {
-  if (node.key) {
-    conceptStore.collapseNode(String(node.key))
-  }
-}
-
-// Handle node select
-async function selectConcept(uri: string) {
-  schemeStore.viewScheme(null) // Clear scheme viewing when selecting a concept
-  await conceptStore.selectConceptWithEvent(uri)
-
-  // Find node for history (includes notation and lang)
-  const node = findNode(uri, conceptStore.topConcepts)
-  if (node) {
-    conceptStore.addToHistory({
-      uri,
-      label: node.label || uri,
-      notation: node.notation,
-      lang: node.lang,
-      endpointUrl: endpointStore.current?.url,
-      schemeUri: schemeStore.selectedUri || undefined,
-      hasNarrower: node.hasNarrower,
-    })
-  }
-}
-
-// Find node by URI in tree
-function findNode(uri: string, nodes: ConceptNode[]): ConceptNode | null {
-  for (const node of nodes) {
-    if (node.uri === uri) return node
-    if (node.children) {
-      const found = findNode(uri, node.children)
-      if (found) return found
-    }
-  }
-  return null
-}
-
 // Go to URI directly
 function goToUri() {
   // Sanitize: trim whitespace and remove accidental < > from turtle/sparql copies
@@ -387,139 +154,6 @@ function goToUri() {
       selectConcept(uri)
     }
     gotoUri.value = ''
-  }
-}
-
-// Fetch ancestor path for a concept (from root to parent)
-async function fetchAncestorPath(uri: string): Promise<{ uri: string; label?: string; notation?: string }[]> {
-  const endpoint = endpointStore.current
-  if (!endpoint) return []
-
-  logger.debug('ConceptTree', 'Fetching ancestor path', { concept: uri })
-
-  // Query all ancestors with their depth (distance from concept)
-  // Uses both broader and inverse narrower to support all SKOS patterns
-  const query = withPrefixes(`
-    SELECT DISTINCT ?ancestor ?label ?notation ?depth
-    WHERE {
-      <${uri}> (skos:broader|^skos:narrower)+ ?ancestor .
-      {
-        SELECT ?ancestor (COUNT(?mid) AS ?depth)
-        WHERE {
-          <${uri}> (skos:broader|^skos:narrower)+ ?mid .
-          ?mid (skos:broader|^skos:narrower)* ?ancestor .
-          ?ancestor (skos:broader|^skos:narrower)* ?root .
-          FILTER NOT EXISTS {
-            { ?root skos:broader ?parent }
-            UNION
-            { ?parent skos:narrower ?root }
-          }
-        }
-        GROUP BY ?ancestor
-      }
-      OPTIONAL { ?ancestor skos:prefLabel ?label . FILTER(LANG(?label) = "${languageStore.preferred}" || LANG(?label) = "") }
-      OPTIONAL { ?ancestor skos:notation ?notation }
-    }
-    ORDER BY DESC(?depth)
-  `)
-
-  try {
-    const results = await executeSparql(endpoint, query, { retries: 1 })
-
-    const ancestors: { uri: string; label?: string; notation?: string }[] = []
-    const seen = new Set<string>()
-
-    for (const b of results.results.bindings) {
-      const ancestorUri = b.ancestor?.value
-      if (!ancestorUri || seen.has(ancestorUri)) continue
-      seen.add(ancestorUri)
-
-      ancestors.push({
-        uri: ancestorUri,
-        label: b.label?.value,
-        notation: b.notation?.value,
-      })
-    }
-
-    logger.debug('ConceptTree', `Found ${ancestors.length} ancestors`, { ancestors: ancestors.map(a => a.uri) })
-    return ancestors
-  } catch (e) {
-    logger.error('ConceptTree', 'Failed to fetch ancestor path', { concept: uri, error: e })
-    return []
-  }
-}
-
-// Reveal a concept in the tree (expand ancestors and scroll to it)
-async function revealConcept(uri: string) {
-  logger.info('ConceptTree', 'Revealing concept in tree', { uri })
-
-  // Fetch ancestor path
-  const ancestors = await fetchAncestorPath(uri)
-
-  // Expand each ancestor (loading children if needed)
-  for (const ancestor of ancestors) {
-    // Expand the ancestor node
-    conceptStore.expandNode(ancestor.uri)
-
-    // Load children if not already loaded
-    const existingNode = findNode(ancestor.uri, conceptStore.topConcepts)
-    if (existingNode && existingNode.hasNarrower && !existingNode.children) {
-      await loadChildren(ancestor.uri)
-    }
-  }
-
-  // Also expand the scheme if present
-  if (schemeStore.selectedUri) {
-    conceptStore.expandNode(schemeStore.selectedUri)
-  }
-
-  // Scroll to the concept after DOM updates
-  // Use double nextTick + small delay to ensure PrimeVue Tree has rendered
-  await nextTick()
-  await nextTick()
-  // Additional delay for PrimeVue animation/rendering
-  await new Promise(resolve => setTimeout(resolve, 100))
-  scrollToNode(uri)
-}
-
-// Scroll to a node in the tree
-function scrollToNode(uri: string) {
-  const treeWrapper = treeWrapperRef.value
-  if (!treeWrapper) {
-    logger.debug('ConceptTree', 'scrollToNode: no tree wrapper ref')
-    return
-  }
-
-  // PrimeVue 4 Tree uses aria-selected="true" on selected li elements
-  // Try multiple strategies to find the node
-  const selectors = [
-    // PrimeVue 4: aria-selected on the treenode li
-    '[aria-selected="true"]',
-    // Alternative: selected content div
-    '.p-tree-node-selected',
-    // Legacy: p-highlight class
-    '.p-tree-node-content.p-highlight',
-  ]
-
-  let nodeElement: HTMLElement | null = null
-  for (const selector of selectors) {
-    nodeElement = treeWrapper.querySelector(selector) as HTMLElement | null
-    if (nodeElement) {
-      logger.debug('ConceptTree', 'scrollToNode: found with selector', { selector, uri })
-      break
-    }
-  }
-
-  if (nodeElement) {
-    // Calculate position relative to the scrollable container
-    const wrapperRect = treeWrapper.getBoundingClientRect()
-    const nodeRect = nodeElement.getBoundingClientRect()
-    const relativeTop = nodeRect.top - wrapperRect.top + treeWrapper.scrollTop
-    // Scroll to center the node in the container
-    const targetScroll = relativeTop - (wrapperRect.height / 2) + (nodeRect.height / 2)
-    treeWrapper.scrollTo({ top: targetScroll, behavior: 'smooth' })
-  } else {
-    logger.debug('ConceptTree', 'scrollToNode: node not found, tried selectors', { uri, selectors })
   }
 }
 
@@ -559,26 +193,6 @@ watch(
   },
   { deep: true }
 )
-
-// Reveal concept in tree when selected (event-driven to avoid race conditions)
-async function revealConceptIfNeeded(uri: string) {
-  logger.debug('ConceptTree', 'Revealing concept (event-driven)', { uri })
-
-  // Check if concept is already in the loaded tree
-  const existingNode = findNode(uri, conceptStore.topConcepts)
-  if (!existingNode) {
-    // Concept not in tree - expand ancestors to reveal it
-    await revealConcept(uri)
-  } else {
-    // Concept is in tree - just scroll to it
-    await nextTick()
-    await new Promise(resolve => setTimeout(resolve, 50))
-    scrollToNode(uri)
-  }
-
-  // Mark as revealed for coordination
-  await conceptStore.markConceptRevealed(uri)
-}
 
 // Event subscriptions for cleanup
 const eventSubscriptions: EventSubscription[] = []
@@ -624,7 +238,7 @@ watch(
   () => conceptStore.shouldScrollToTop,
   (should) => {
     if (should) {
-      treeWrapperRef.value?.scrollTo({ top: 0, behavior: 'smooth' })
+      scrollToTop()
       conceptStore.resetScrollToTop()
     }
   }
