@@ -10,6 +10,8 @@ import { ref, type Ref } from 'vue'
 import { useEndpointStore, useLanguageStore, useSchemeStore, useConceptStore } from '../stores'
 import { executeSparql, withPrefixes, logger, resolveUris, formatQualifiedName } from '../services'
 import { useDeprecation } from './useDeprecation'
+import { useXLLabels } from './useXLLabels'
+import { useOtherProperties, CONCEPT_EXCLUDED_PREDICATES } from './useOtherProperties'
 import type { ConceptDetails } from '../types'
 
 export function useConceptData() {
@@ -17,6 +19,8 @@ export function useConceptData() {
   const languageStore = useLanguageStore()
   const schemeStore = useSchemeStore()
   const { isDeprecatedFromProperties } = useDeprecation()
+  const { loadXLLabels } = useXLLabels()
+  const { loadOtherProperties } = useOtherProperties()
 
   // State
   const details: Ref<ConceptDetails | null> = ref(null)
@@ -163,164 +167,6 @@ export function useConceptData() {
       })
     } catch (e) {
       logger.warn('useConceptData', 'Failed to load related labels', { error: e })
-    }
-  }
-
-  /**
-   * Load SKOS-XL extended labels
-   */
-  async function loadXLLabels(uri: string, conceptDetails: ConceptDetails): Promise<void> {
-    const endpoint = endpointStore.current
-    if (!endpoint) return
-
-    // Query for XL labels
-    const query = withPrefixes(`
-      SELECT ?xlLabel ?labelType ?literalForm ?literalLang
-      WHERE {
-        {
-          <${uri}> skosxl:prefLabel ?xlLabel .
-          BIND("prefLabel" AS ?labelType)
-        } UNION {
-          <${uri}> skosxl:altLabel ?xlLabel .
-          BIND("altLabel" AS ?labelType)
-        } UNION {
-          <${uri}> skosxl:hiddenLabel ?xlLabel .
-          BIND("hiddenLabel" AS ?labelType)
-        }
-        ?xlLabel skosxl:literalForm ?literalForm .
-        BIND(LANG(?literalForm) AS ?literalLang)
-      }
-    `)
-
-    try {
-      const results = await executeSparql(endpoint, query, { retries: 0 })
-
-      // Track seen URIs to deduplicate
-      const seenXLUris = new Set<string>()
-
-      for (const binding of results.results.bindings) {
-        const xlUri = binding.xlLabel?.value
-        const labelType = binding.labelType?.value
-        const literalForm = binding.literalForm?.value
-        const literalLang = binding.literalLang?.value
-
-        if (!xlUri || !literalForm) continue
-
-        // Deduplicate by XL label URI
-        if (seenXLUris.has(xlUri)) continue
-        seenXLUris.add(xlUri)
-
-        const xlLabel = {
-          uri: xlUri,
-          literalForm: {
-            value: literalForm,
-            lang: literalLang || undefined,
-          },
-        }
-
-        if (labelType === 'prefLabel') {
-          conceptDetails.prefLabelsXL.push(xlLabel)
-        } else if (labelType === 'altLabel') {
-          conceptDetails.altLabelsXL.push(xlLabel)
-        } else if (labelType === 'hiddenLabel') {
-          conceptDetails.hiddenLabelsXL.push(xlLabel)
-        }
-      }
-
-      logger.debug('useConceptData', 'Loaded XL labels', {
-        prefLabelsXL: conceptDetails.prefLabelsXL.length,
-        altLabelsXL: conceptDetails.altLabelsXL.length,
-        hiddenLabelsXL: conceptDetails.hiddenLabelsXL.length,
-      })
-    } catch (e) {
-      // SKOS-XL may not be supported by all endpoints, silently skip
-      logger.debug('useConceptData', 'SKOS-XL labels not available or query failed', { error: e })
-    }
-  }
-
-  /**
-   * Load other (non-SKOS) properties
-   */
-  async function loadOtherProperties(uri: string, conceptDetails: ConceptDetails): Promise<void> {
-    const endpoint = endpointStore.current
-    if (!endpoint) return
-
-    // Query for properties not explicitly displayed in dedicated sections
-    const query = withPrefixes(`
-      SELECT ?predicate ?value
-      WHERE {
-        <${uri}> ?predicate ?value .
-        FILTER (?predicate NOT IN (
-          rdf:type,
-          skos:prefLabel, skos:altLabel, skos:hiddenLabel, skos:notation,
-          skos:definition, skos:scopeNote, skos:historyNote,
-          skos:changeNote, skos:editorialNote, skos:note, skos:example,
-          skos:broader, skos:narrower, skos:related,
-          skos:inScheme, skos:exactMatch, skos:closeMatch,
-          skos:broadMatch, skos:narrowMatch, skos:relatedMatch,
-          skosxl:prefLabel, skosxl:altLabel, skosxl:hiddenLabel,
-          dc:identifier, dct:created, dct:modified, dct:status, rdfs:seeAlso
-        ))
-      }
-    `)
-
-    try {
-      const results = await executeSparql(endpoint, query, { retries: 0 })
-
-      // Collect all datatypes for resolution
-      const datatypeUris = new Set<string>()
-
-      // Group by predicate with deduplication
-      const propMap = new Map<string, Map<string, { value: string; lang?: string; datatype?: string; isUri: boolean }>>()
-
-      for (const binding of results.results.bindings) {
-        const predicate = binding.predicate?.value
-        const value = binding.value?.value
-        const lang = binding.value?.['xml:lang']
-        const datatype = binding.value?.datatype
-        const isUri = binding.value?.type === 'uri'
-
-        if (!predicate || !value) continue
-
-        if (datatype) {
-          datatypeUris.add(datatype)
-        }
-
-        if (!propMap.has(predicate)) {
-          propMap.set(predicate, new Map())
-        }
-        // Deduplicate by value+lang combination
-        const key = `${value}|${lang || ''}`
-        if (!propMap.get(predicate)!.has(key)) {
-          propMap.get(predicate)!.set(key, { value, lang, datatype, isUri })
-        }
-      }
-
-      // Resolve datatype URIs to short forms
-      const datatypeMap = datatypeUris.size > 0
-        ? await resolveUris(Array.from(datatypeUris))
-        : new Map()
-
-      // Convert to OtherProperty array with resolved datatypes
-      conceptDetails.otherProperties = Array.from(propMap.entries()).map(([predicate, valuesMap]) => ({
-        predicate,
-        values: Array.from(valuesMap.values()).map(v => {
-          if (v.datatype) {
-            const resolved = datatypeMap.get(v.datatype)
-            if (resolved) {
-              v.datatype = formatQualifiedName(resolved)
-            }
-          }
-          return v
-        }),
-      }))
-
-      logger.debug('useConceptData', 'Loaded other properties', {
-        count: conceptDetails.otherProperties.length,
-      })
-    } catch (e) {
-      // Silently skip if query fails
-      logger.debug('useConceptData', 'Failed to load other properties', { error: e })
     }
   }
 
@@ -507,10 +353,14 @@ export function useConceptData() {
       await loadRelatedLabels(conceptDetails)
 
       // Load SKOS-XL extended labels
-      await loadXLLabels(uri, conceptDetails)
+      await loadXLLabels(uri, conceptDetails, { source: 'useConceptData' })
 
       // Load other (non-SKOS) properties
-      await loadOtherProperties(uri, conceptDetails)
+      await loadOtherProperties(uri, conceptDetails, {
+        excludedPredicates: CONCEPT_EXCLUDED_PREDICATES,
+        resolveDatatypes: true,
+        source: 'useConceptData',
+      })
 
       // Check deprecation status from loaded properties
       conceptDetails.deprecated = isDeprecatedFromProperties(conceptDetails.otherProperties)

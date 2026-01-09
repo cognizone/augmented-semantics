@@ -9,154 +9,20 @@
 import { ref, type Ref } from 'vue'
 import { useEndpointStore } from '../stores'
 import { executeSparql, withPrefixes, logger, resolveUris } from '../services'
+import { useXLLabels } from './useXLLabels'
+import { useOtherProperties, SCHEME_EXCLUDED_PREDICATES } from './useOtherProperties'
 import type { SchemeDetails } from '../types'
 
 export function useSchemeData() {
   const endpointStore = useEndpointStore()
+  const { loadXLLabels } = useXLLabels()
+  const { loadOtherProperties } = useOtherProperties()
 
   // State
   const details: Ref<SchemeDetails | null> = ref(null)
   const loading = ref(false)
   const error: Ref<string | null> = ref(null)
   const resolvedPredicates: Ref<Map<string, { prefix: string; localName: string }>> = ref(new Map())
-
-  /**
-   * Load SKOS-XL extended labels
-   */
-  async function loadXLLabels(uri: string, schemeDetails: SchemeDetails): Promise<void> {
-    const endpoint = endpointStore.current
-    if (!endpoint) return
-
-    const query = withPrefixes(`
-      SELECT ?xlLabel ?labelType ?literalForm ?literalLang
-      WHERE {
-        {
-          <${uri}> skosxl:prefLabel ?xlLabel .
-          BIND("prefLabel" AS ?labelType)
-        } UNION {
-          <${uri}> skosxl:altLabel ?xlLabel .
-          BIND("altLabel" AS ?labelType)
-        } UNION {
-          <${uri}> skosxl:hiddenLabel ?xlLabel .
-          BIND("hiddenLabel" AS ?labelType)
-        }
-        ?xlLabel skosxl:literalForm ?literalForm .
-        BIND(LANG(?literalForm) AS ?literalLang)
-      }
-    `)
-
-    try {
-      const results = await executeSparql(endpoint, query, { retries: 0 })
-
-      // Track seen URIs per label type to avoid duplicates
-      const seenPrefUris = new Set<string>()
-      const seenAltUris = new Set<string>()
-      const seenHiddenUris = new Set<string>()
-
-      for (const binding of results.results.bindings) {
-        const xlUri = binding.xlLabel?.value
-        const labelType = binding.labelType?.value
-        const literalForm = binding.literalForm?.value
-        const literalLang = binding.literalLang?.value
-
-        if (!xlUri || !literalForm || !labelType) continue
-
-        const xlLabel = {
-          uri: xlUri,
-          literalForm: {
-            value: literalForm,
-            lang: literalLang || undefined,
-          },
-        }
-
-        if (labelType === 'prefLabel') {
-          if (seenPrefUris.has(xlUri)) continue
-          seenPrefUris.add(xlUri)
-          schemeDetails.prefLabelsXL.push(xlLabel)
-        } else if (labelType === 'altLabel') {
-          if (seenAltUris.has(xlUri)) continue
-          seenAltUris.add(xlUri)
-          schemeDetails.altLabelsXL.push(xlLabel)
-        } else if (labelType === 'hiddenLabel') {
-          if (seenHiddenUris.has(xlUri)) continue
-          seenHiddenUris.add(xlUri)
-          schemeDetails.hiddenLabelsXL.push(xlLabel)
-        }
-      }
-
-      logger.debug('useSchemeData', 'Loaded XL labels', {
-        prefLabelsXL: schemeDetails.prefLabelsXL.length,
-        altLabelsXL: schemeDetails.altLabelsXL.length,
-        hiddenLabelsXL: schemeDetails.hiddenLabelsXL.length,
-      })
-    } catch (e) {
-      logger.debug('useSchemeData', 'SKOS-XL labels not available or query failed', { error: e })
-    }
-  }
-
-  /**
-   * Load other (non-SKOS) properties
-   */
-  async function loadOtherProperties(uri: string, schemeDetails: SchemeDetails): Promise<void> {
-    const endpoint = endpointStore.current
-    if (!endpoint) return
-
-    // Query for properties not explicitly displayed in dedicated sections
-    const query = withPrefixes(`
-      SELECT ?predicate ?value
-      WHERE {
-        <${uri}> ?predicate ?value .
-        FILTER (?predicate NOT IN (
-          rdf:type,
-          skos:prefLabel, skos:altLabel, skos:hiddenLabel, skos:notation,
-          skos:definition, skos:scopeNote, skos:historyNote,
-          skos:changeNote, skos:editorialNote, skos:note, skos:example,
-          skos:hasTopConcept,
-          skosxl:prefLabel, skosxl:altLabel, skosxl:hiddenLabel,
-          rdfs:label, rdfs:comment, rdfs:seeAlso,
-          dct:title, dct:description,
-          dct:creator, dct:created, dct:modified, dct:issued,
-          dct:publisher, dct:rights, dct:license, cc:license,
-          owl:versionInfo
-        ))
-      }
-    `)
-
-    try {
-      const results = await executeSparql(endpoint, query, { retries: 0 })
-
-      const propMap = new Map<string, Map<string, { value: string; lang?: string; datatype?: string; isUri: boolean }>>()
-
-      for (const binding of results.results.bindings) {
-        const predicate = binding.predicate?.value
-        const value = binding.value?.value
-        const lang = binding.value?.['xml:lang']
-        const datatype = binding.value?.datatype
-        const isUri = binding.value?.type === 'uri'
-
-        if (!predicate || !value) continue
-
-        if (!propMap.has(predicate)) {
-          propMap.set(predicate, new Map())
-        }
-        const key = `${value}|${lang || ''}|${datatype || ''}`
-        if (!propMap.get(predicate)!.has(key)) {
-          propMap.get(predicate)!.set(key, { value, lang, datatype, isUri })
-        }
-      }
-
-      schemeDetails.otherProperties = Array.from(propMap.entries()).map(([predicate, valuesMap]) => ({
-        predicate,
-        values: Array.from(valuesMap.values()),
-      }))
-
-      logger.debug('useSchemeData', 'Loaded other properties', {
-        count: schemeDetails.otherProperties.length,
-      })
-    } catch (e) {
-      logger.debug('useSchemeData', 'Failed to load other properties', { error: e })
-    }
-  }
 
   /**
    * Load complete scheme details
@@ -302,10 +168,14 @@ export function useSchemeData() {
       }
 
       // Load SKOS-XL labels
-      await loadXLLabels(uri, schemeDetails)
+      await loadXLLabels(uri, schemeDetails, { source: 'useSchemeData' })
 
       // Load other (non-SKOS) properties
-      await loadOtherProperties(uri, schemeDetails)
+      await loadOtherProperties(uri, schemeDetails, {
+        excludedPredicates: SCHEME_EXCLUDED_PREDICATES,
+        resolveDatatypes: false,
+        source: 'useSchemeData',
+      })
 
       // Resolve prefixes for other properties
       if (schemeDetails.otherProperties.length > 0) {

@@ -143,6 +143,24 @@ export interface XLLabelRelation {
   target: XLLabel
 }
 
+/**
+ * Common interface for types that support SKOS-XL labels.
+ * Used by shared composables to load XL labels into ConceptDetails or SchemeDetails.
+ */
+export interface XLLabelTarget {
+  prefLabelsXL: XLLabel[]
+  altLabelsXL: XLLabel[]
+  hiddenLabelsXL: XLLabel[]
+}
+
+/**
+ * Common interface for types that support other (non-SKOS) properties.
+ * Used by shared composables to load additional properties.
+ */
+export interface OtherPropertiesTarget {
+  otherProperties: OtherProperty[]
+}
+
 export interface SearchResult {
   uri: string
   label: string
