@@ -48,6 +48,9 @@ const topConceptsOffset = ref(0)
 const hasMoreTopConcepts = ref(true)
 const loadingMoreTopConcepts = ref(false)
 
+// Ref to tree wrapper for scrolling
+const treeWrapperRef = ref<HTMLElement | null>(null)
+
 // Pagination state for children (keyed by parent URI)
 const childrenPagination = ref<Map<string, { offset: number; hasMore: boolean; loading: boolean }>>(new Map())
 
@@ -471,31 +474,52 @@ async function revealConcept(uri: string) {
   }
 
   // Scroll to the concept after DOM updates
+  // Use double nextTick + small delay to ensure PrimeVue Tree has rendered
   await nextTick()
+  await nextTick()
+  // Additional delay for PrimeVue animation/rendering
+  await new Promise(resolve => setTimeout(resolve, 100))
   scrollToNode(uri)
 }
 
 // Scroll to a node in the tree
 function scrollToNode(uri: string) {
-  const treeWrapper = document.querySelector('.tree-wrapper')
+  const treeWrapper = treeWrapperRef.value
   if (!treeWrapper) {
-    logger.debug('ConceptTree', 'scrollToNode: no tree wrapper found')
+    logger.debug('ConceptTree', 'scrollToNode: no tree wrapper ref')
     return
   }
 
-  // Strategy 1: Find by data-p-key attribute (PrimeVue's node identifier)
-  let nodeElement = treeWrapper.querySelector(`[data-p-key="${CSS.escape(uri)}"]`)
+  // PrimeVue 4 Tree uses aria-selected="true" on selected li elements
+  // Try multiple strategies to find the node
+  const selectors = [
+    // PrimeVue 4: aria-selected on the treenode li
+    '[aria-selected="true"]',
+    // Alternative: selected content div
+    '.p-tree-node-selected',
+    // Legacy: p-highlight class
+    '.p-tree-node-content.p-highlight',
+  ]
 
-  // Strategy 2: Find the currently highlighted node (fallback)
-  if (!nodeElement) {
-    nodeElement = treeWrapper.querySelector('.p-tree-node-content.p-highlight')
+  let nodeElement: HTMLElement | null = null
+  for (const selector of selectors) {
+    nodeElement = treeWrapper.querySelector(selector) as HTMLElement | null
+    if (nodeElement) {
+      logger.debug('ConceptTree', 'scrollToNode: found with selector', { selector, uri })
+      break
+    }
   }
 
   if (nodeElement) {
-    logger.debug('ConceptTree', 'scrollToNode: scrolling to node', { uri })
-    nodeElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    // Calculate position relative to the scrollable container
+    const wrapperRect = treeWrapper.getBoundingClientRect()
+    const nodeRect = nodeElement.getBoundingClientRect()
+    const relativeTop = nodeRect.top - wrapperRect.top + treeWrapper.scrollTop
+    // Scroll to center the node in the container
+    const targetScroll = relativeTop - (wrapperRect.height / 2) + (nodeRect.height / 2)
+    treeWrapper.scrollTo({ top: targetScroll, behavior: 'smooth' })
   } else {
-    logger.debug('ConceptTree', 'scrollToNode: node not found', { uri })
+    logger.debug('ConceptTree', 'scrollToNode: node not found, tried selectors', { uri, selectors })
   }
 }
 
@@ -548,6 +572,7 @@ async function revealConceptIfNeeded(uri: string) {
   } else {
     // Concept is in tree - just scroll to it
     await nextTick()
+    await new Promise(resolve => setTimeout(resolve, 50))
     scrollToNode(uri)
   }
 
@@ -599,8 +624,7 @@ watch(
   () => conceptStore.shouldScrollToTop,
   (should) => {
     if (should) {
-      const wrapper = document.querySelector('.tree-wrapper')
-      wrapper?.scrollTo({ top: 0, behavior: 'smooth' })
+      treeWrapperRef.value?.scrollTo({ top: 0, behavior: 'smooth' })
       conceptStore.resetScrollToTop()
     }
   }
@@ -650,7 +674,7 @@ watch(
     </div>
 
     <!-- Tree -->
-    <div v-else class="tree-wrapper" @scroll="onTreeScroll">
+    <div v-else ref="treeWrapperRef" class="tree-wrapper" @scroll="onTreeScroll">
       <Tree
         v-model:selectionKeys="selectedKey"
         v-model:expandedKeys="expandedKeys"
