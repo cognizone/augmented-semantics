@@ -516,6 +516,16 @@ export async function analyzeEndpoint(
   skosGraphCount: number | null
   languages: { lang: string; count: number }[]
   analyzedAt: string
+  totalConcepts?: number
+  relationships?: {
+    hasInScheme: boolean
+    hasTopConceptOf: boolean
+    hasHasTopConcept: boolean
+    hasBroader: boolean
+    hasNarrower: boolean
+    hasBroaderTransitive: boolean
+    hasNarrowerTransitive: boolean
+  }
 }> {
   // Step 1: Detect named graphs support
   const graphResult = await detectGraphs(endpoint)
@@ -534,11 +544,74 @@ export async function analyzeEndpoint(
   const useGraphScope = skosGraphUris !== null && skosGraphUris.length > 0
   const languages = await detectLanguages(endpoint, useGraphScope, skosGraphUris)
 
+  // Step 4: Count total concepts
+  const countQuery = withPrefixes(`
+    SELECT (COUNT(DISTINCT ?concept) AS ?count)
+    WHERE {
+      ?concept a skos:Concept .
+    }
+  `)
+  let totalConcepts: number | undefined
+  try {
+    const countResult = await executeSparql(endpoint, countQuery, { retries: 1 })
+    totalConcepts = parseInt(countResult.results.bindings[0]?.count?.value || '0', 10)
+  } catch (e) {
+    logger.warn('sparql', 'Failed to count concepts', { error: e })
+  }
+
+  // Step 5: Detect relationship availability
+  // Use EXISTS at dataset level to check if ANY concept has these relationships
+  const relQuery = withPrefixes(`
+    SELECT
+      (EXISTS { ?c a skos:Concept . ?c skos:inScheme ?x } AS ?hasInScheme)
+      (EXISTS { ?c a skos:Concept . ?c skos:topConceptOf ?x } AS ?hasTopConceptOf)
+      (EXISTS { ?s skos:hasTopConcept ?x } AS ?hasHasTopConcept)
+      (EXISTS { ?c a skos:Concept . ?c skos:broader ?x } AS ?hasBroader)
+      (EXISTS { ?c a skos:Concept . ?c skos:narrower ?x } AS ?hasNarrower)
+      (EXISTS { ?c a skos:Concept . ?c skos:broaderTransitive ?x } AS ?hasBroaderTransitive)
+      (EXISTS { ?c a skos:Concept . ?c skos:narrowerTransitive ?x } AS ?hasNarrowerTransitive)
+    WHERE {}
+  `)
+  let relationships: {
+    hasInScheme: boolean
+    hasTopConceptOf: boolean
+    hasHasTopConcept: boolean
+    hasBroader: boolean
+    hasNarrower: boolean
+    hasBroaderTransitive: boolean
+    hasNarrowerTransitive: boolean
+  } | undefined
+  try {
+    const relResult = await executeSparql(endpoint, relQuery, { retries: 1 })
+    const binding = relResult.results.bindings[0]
+    if (binding) {
+      // Helper to parse EXISTS results - some endpoints return "true"/"false", others return "1"/"0"
+      const parseExists = (value?: string): boolean => {
+        if (!value) return false
+        return value === 'true' || value === '1'
+      }
+
+      relationships = {
+        hasInScheme: parseExists(binding.hasInScheme?.value),
+        hasTopConceptOf: parseExists(binding.hasTopConceptOf?.value),
+        hasHasTopConcept: parseExists(binding.hasHasTopConcept?.value),
+        hasBroader: parseExists(binding.hasBroader?.value),
+        hasNarrower: parseExists(binding.hasNarrower?.value),
+        hasBroaderTransitive: parseExists(binding.hasBroaderTransitive?.value),
+        hasNarrowerTransitive: parseExists(binding.hasNarrowerTransitive?.value),
+      }
+    }
+  } catch (e) {
+    logger.warn('sparql', 'Failed to detect relationships', { error: e })
+  }
+
   return {
     supportsNamedGraphs: graphResult.supportsNamedGraphs,
     skosGraphCount,
     languages,
     analyzedAt: new Date().toISOString(),
+    totalConcepts,
+    relationships,
   }
 }
 

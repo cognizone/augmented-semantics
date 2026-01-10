@@ -1,5 +1,5 @@
 {
-  "_sourceHash": "9a76924fe80e78a192831903c3bfdd62",
+  "_sourceHash": "73d6ef093d7c69f72e8902ee5b1982fb",
   "endpoints": [
     {
       "name": "Fedlex",
@@ -31,7 +31,17 @@
             "count": 1307
           }
         ],
-        "analyzedAt": "2026-01-08T18:09:25.121Z"
+        "totalConcepts": 49063,
+        "relationships": {
+          "hasInScheme": true,
+          "hasTopConceptOf": true,
+          "hasHasTopConcept": true,
+          "hasBroader": true,
+          "hasNarrower": true,
+          "hasBroaderTransitive": true,
+          "hasNarrowerTransitive": false
+        },
+        "analyzedAt": "2026-01-10T14:36:47.132Z"
       },
       "suggestedLanguagePriorities": [
         "en",
@@ -251,7 +261,17 @@
             "count": 12
           }
         ],
-        "analyzedAt": "2026-01-08T18:09:43.954Z"
+        "totalConcepts": 41628,
+        "relationships": {
+          "hasInScheme": true,
+          "hasTopConceptOf": true,
+          "hasHasTopConcept": true,
+          "hasBroader": true,
+          "hasNarrower": true,
+          "hasBroaderTransitive": false,
+          "hasNarrowerTransitive": false
+        },
+        "analyzedAt": "2026-01-10T14:36:58.067Z"
       },
       "suggestedLanguagePriorities": [
         "en",
@@ -516,7 +536,17 @@
             "count": 128
           }
         ],
-        "analyzedAt": "2026-01-08T18:10:29.811Z"
+        "totalConcepts": 21135720,
+        "relationships": {
+          "hasInScheme": true,
+          "hasTopConceptOf": false,
+          "hasHasTopConcept": false,
+          "hasBroader": true,
+          "hasNarrower": true,
+          "hasBroaderTransitive": false,
+          "hasNarrowerTransitive": false
+        },
+        "analyzedAt": "2026-01-10T14:38:08.246Z"
       },
       "suggestedLanguagePriorities": [
         "en",
@@ -585,7 +615,17 @@
             "count": 2565313
           }
         ],
-        "analyzedAt": "2026-01-08T18:10:44.528Z"
+        "totalConcepts": 2509422,
+        "relationships": {
+          "hasInScheme": false,
+          "hasTopConceptOf": false,
+          "hasHasTopConcept": false,
+          "hasBroader": true,
+          "hasNarrower": false,
+          "hasBroaderTransitive": false,
+          "hasNarrowerTransitive": false
+        },
+        "analyzedAt": "2026-01-10T14:38:11.971Z"
       },
       "suggestedLanguagePriorities": [
         "en"
@@ -602,7 +642,7 @@
         "languages": [
           {
             "lang": "en",
-            "count": 361729
+            "count": 361733
           },
           {
             "lang": "fr",
@@ -625,7 +665,17 @@
             "count": 2
           }
         ],
-        "analyzedAt": "2026-01-08T18:10:53.766Z"
+        "totalConcepts": 361743,
+        "relationships": {
+          "hasInScheme": true,
+          "hasTopConceptOf": true,
+          "hasHasTopConcept": true,
+          "hasBroader": true,
+          "hasNarrower": true,
+          "hasBroaderTransitive": false,
+          "hasNarrowerTransitive": false
+        },
+        "analyzedAt": "2026-01-10T14:38:33.261Z"
       },
       "suggestedLanguagePriorities": [
         "en",
@@ -806,7 +856,17 @@
             "count": 52
           }
         ],
-        "analyzedAt": "2026-01-08T18:10:54.448Z"
+        "totalConcepts": 13882,
+        "relationships": {
+          "hasInScheme": true,
+          "hasTopConceptOf": true,
+          "hasHasTopConcept": true,
+          "hasBroader": true,
+          "hasNarrower": true,
+          "hasBroaderTransitive": false,
+          "hasNarrowerTransitive": false
+        },
+        "analyzedAt": "2026-01-10T14:38:33.979Z"
       },
       "suggestedLanguagePriorities": [
         "en",
@@ -862,99 +922,99 @@
         "languages": [
           {
             "lang": "en",
-            "count": 897852
+            "count": 897846
           },
           {
             "lang": "fr",
-            "count": 848830
+            "count": 848824
           },
           {
             "lang": "de",
-            "count": 780341
+            "count": 780335
           },
           {
             "lang": "it",
-            "count": 761238
+            "count": 761227
           },
           {
             "lang": "es",
-            "count": 759861
+            "count": 759850
           },
           {
             "lang": "pl",
-            "count": 746767
+            "count": 746756
           },
           {
             "lang": "fi",
-            "count": 743172
+            "count": 743161
           },
           {
             "lang": "cs",
-            "count": 740844
+            "count": 740833
           },
           {
             "lang": "nl",
-            "count": 739772
+            "count": 739761
           },
           {
             "lang": "da",
-            "count": 736555
+            "count": 736544
           },
           {
             "lang": "pt",
-            "count": 735846
+            "count": 735835
           },
           {
             "lang": "hu",
-            "count": 735566
+            "count": 735555
           },
           {
             "lang": "sv",
-            "count": 735321
+            "count": 735310
           },
           {
             "lang": "et",
-            "count": 735153
+            "count": 735141
           },
           {
             "lang": "lt",
-            "count": 732920
+            "count": 732909
           },
           {
             "lang": "sk",
-            "count": 732150
+            "count": 732139
           },
           {
             "lang": "lv",
-            "count": 730271
+            "count": 730260
           },
           {
             "lang": "el",
-            "count": 728642
+            "count": 728631
           },
           {
             "lang": "ro",
-            "count": 726094
+            "count": 726082
           },
           {
             "lang": "sl",
-            "count": 723856
+            "count": 723845
           },
           {
             "lang": "bg",
-            "count": 719319
+            "count": 719308
           },
           {
             "lang": "mt",
-            "count": 718147
+            "count": 718136
           },
           {
             "lang": "hr",
-            "count": 715525
+            "count": 715513
           },
           {
             "lang": "ga",
-            "count": 432502
+            "count": 432491
           },
           {
             "lang": "tr",
@@ -1061,7 +1121,17 @@
             "count": 155
           }
         ],
-        "analyzedAt": "2026-01-08T18:12:17.386Z"
+        "totalConcepts": 322625,
+        "relationships": {
+          "hasInScheme": true,
+          "hasTopConceptOf": true,
+          "hasHasTopConcept": true,
+          "hasBroader": true,
+          "hasNarrower": true,
+          "hasBroaderTransitive": false,
+          "hasNarrowerTransitive": false
+        },
+        "analyzedAt": "2026-01-10T14:40:50.471Z"
       },
       "suggestedLanguagePriorities": [
         "en",
@@ -1114,6 +1184,61 @@
         "hsb",
         "rm",
         "fo"
+      ]
+    },
+    {
+      "name": "Cordis Datalab",
+      "url": "https://cordis.europa.eu/datalab/sparql",
+      "description": "EU's research and innovation database. Contains information about EU-funded research projects, participants, publications, and results from Framework Programmes (FP7, Horizon 2020, Horizon Europe).",
+      "analysis": {
+        "hasSkosContent": true,
+        "supportsNamedGraphs": true,
+        "skosGraphCount": 3,
+        "languages": [
+          {
+            "lang": "en",
+            "count": 1079
+          },
+          {
+            "lang": "it",
+            "count": 1064
+          },
+          {
+            "lang": "pl",
+            "count": 1064
+          },
+          {
+            "lang": "de",
+            "count": 1064
+          },
+          {
+            "lang": "fr",
+            "count": 1064
+          },
+          {
+            "lang": "es",
+            "count": 1064
+          }
+        ],
+        "totalConcepts": 207632,
+        "relationships": {
+          "hasInScheme": true,
+          "hasTopConceptOf": true,
+          "hasHasTopConcept": false,
+          "hasBroader": true,
+          "hasNarrower": false,
+          "hasBroaderTransitive": false,
+          "hasNarrowerTransitive": false
+        },
+        "analyzedAt": "2026-01-10T14:40:51.395Z"
+      },
+      "suggestedLanguagePriorities": [
+        "en",
+        "it",
+        "pl",
+        "de",
+        "fr",
+        "es"
       ]
     }
   ]

@@ -9,8 +9,10 @@
 
 import { ref } from 'vue'
 import { useConceptStore, useEndpointStore, useSchemeStore, useLanguageStore, ORPHAN_SCHEME_URI } from '../stores'
-import { executeSparql, logger, eventBus } from '../services'
+import { executeSparql, logger, eventBus, withPrefixes } from '../services'
 import { useConceptBindings, useConceptTreeQueries } from './index'
+import { calculateOrphanConcepts } from './useOrphanConcepts'
+import { createInitialProgress, type OrphanProgress } from './useOrphanProgress'
 import type { ConceptNode } from '../types'
 
 // Pagination config
@@ -38,6 +40,12 @@ export function useTreePagination() {
   // Error state
   const error = ref<string | null>(null)
 
+  // Orphan concepts cache
+  const orphanConceptUris = ref<string[]>([])
+
+  // Orphan progress state
+  const orphanProgress = ref<OrphanProgress>(createInitialProgress())
+
   /**
    * Find a node by URI in the concept tree
    */
@@ -60,9 +68,15 @@ export function useTreePagination() {
     const scheme = schemeStore.selected
     if (!endpoint) return
 
-    // Require a scheme to be selected (not "All Schemes" or "Orphan Concepts")
-    if (!scheme || scheme.uri === ORPHAN_SCHEME_URI) {
+    // No scheme selected
+    if (!scheme) {
       conceptStore.setTopConcepts([])
+      return
+    }
+
+    // Handle orphan scheme
+    if (scheme.uri === ORPHAN_SCHEME_URI) {
+      await loadOrphanConcepts(offset)
       return
     }
 
@@ -121,6 +135,107 @@ export function useTreePagination() {
       if (isFirstPage) {
         conceptStore.setTopConcepts([])
       }
+    } finally {
+      conceptStore.setLoadingTree(false)
+      loadingMoreTopConcepts.value = false
+    }
+  }
+
+  /**
+   * Load orphan concepts
+   */
+  async function loadOrphanConcepts(offset: number = 0) {
+    const endpoint = endpointStore.current
+    if (!endpoint) return
+
+    const isFirstPage = offset === 0
+
+    // First load: calculate orphans
+    if (isFirstPage) {
+      conceptStore.setLoadingTree(true)
+      await eventBus.emit('tree:loading', undefined)
+
+      // Reset progress state
+      orphanProgress.value = createInitialProgress()
+
+      try {
+        // Calculate orphans with progress callback
+        orphanConceptUris.value = await calculateOrphanConcepts(endpoint, (progress) => {
+          orphanProgress.value = { ...progress }
+        })
+        topConceptsOffset.value = 0
+        hasMoreTopConcepts.value = orphanConceptUris.value.length > PAGE_SIZE
+
+        logger.info('TreePagination', `Loaded ${orphanConceptUris.value.length} orphan URIs`)
+      } catch (e) {
+        logger.error('TreePagination', 'Failed to calculate orphans', { error: e })
+        conceptStore.setLoadingTree(false)
+        return
+      }
+    } else {
+      loadingMoreTopConcepts.value = true
+    }
+
+    // Paginate through orphan URIs and fetch labels
+    const start = offset
+    const end = Math.min(offset + PAGE_SIZE, orphanConceptUris.value.length)
+    const pageUris = orphanConceptUris.value.slice(start, end)
+
+    if (pageUris.length === 0) {
+      conceptStore.setLoadingTree(false)
+      loadingMoreTopConcepts.value = false
+      return
+    }
+
+    // Build query to get labels for this page of orphan URIs
+    const valuesClause = pageUris.map(uri => `<${uri}>`).join(' ')
+    const query = withPrefixes(`
+      SELECT ?concept ?label ?labelLang ?labelType ?notation (COUNT(DISTINCT ?narrower) AS ?narrowerCount)
+      WHERE {
+        VALUES ?concept { ${valuesClause} }
+
+        # Narrower count
+        OPTIONAL {
+          ?concept skos:narrower ?narrower .
+        }
+
+        # Label resolution
+        OPTIONAL { ?concept skos:notation ?notation }
+        OPTIONAL {
+          {
+            ?concept skos:prefLabel ?label .
+            BIND("prefLabel" AS ?labelType)
+          } UNION {
+            ?concept skosxl:prefLabel/skosxl:literalForm ?label .
+            BIND("xlPrefLabel" AS ?labelType)
+          } UNION {
+            ?concept dct:title ?label .
+            BIND("title" AS ?labelType)
+          } UNION {
+            ?concept rdfs:label ?label .
+            BIND("rdfsLabel" AS ?labelType)
+          }
+          BIND(LANG(?label) AS ?labelLang)
+        }
+      }
+      GROUP BY ?concept ?label ?labelLang ?labelType ?notation
+    `)
+
+    try {
+      const results = await executeSparql(endpoint, query)
+      const concepts = processBindings(results.results.bindings)
+
+      if (isFirstPage) {
+        conceptStore.setTopConcepts(concepts)
+        await eventBus.emit('tree:loaded', concepts)
+      } else {
+        conceptStore.appendTopConcepts(concepts)
+      }
+
+      topConceptsOffset.value = end
+      hasMoreTopConcepts.value = end < orphanConceptUris.value.length
+    } catch (e) {
+      logger.error('TreePagination', 'Failed to load orphan labels', { error: e })
     } finally {
       conceptStore.setLoadingTree(false)
       loadingMoreTopConcepts.value = false
@@ -216,6 +331,7 @@ export function useTreePagination() {
     childrenPagination,
     loadingChildren,
     error,
+    orphanProgress,
     // Functions
     loadTopConcepts,
     loadMoreTopConcepts,

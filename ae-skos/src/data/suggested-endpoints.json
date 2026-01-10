@@ -35,8 +35,8 @@
     "description": "The CELLAR repository of the EU Publications Office. It hosts EU Vocabularies including EuroVoc, corporate bodies, countries, languages, and other authority tables used across EU institutions."
   },
   {
-    "name": "Nobel Prize",
-    "url": "https://data.nobelprize.org/store/sparql",
-    "description": "The official linked dataset of the Nobel Foundation. It contains concepts regarding the prize categories (Physics, Peace, etc.), laureates, and their affiliations."
+    "name": "Cordis Datalab",
+    "url": "https://cordis.europa.eu/datalab/sparql",
+    "description": "EU's research and innovation database. Contains information about EU-funded research projects, participants, publications, and results from Framework Programmes (FP7, Horizon 2020, Horizon Europe)."
   }
 ]

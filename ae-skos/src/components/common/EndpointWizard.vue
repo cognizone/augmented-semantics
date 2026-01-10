@@ -68,6 +68,14 @@ const {
   skosGraphSeverity,
   skosGraphIcon,
   skosGraphDescription,
+  conceptCountStatus,
+  conceptCountSeverity,
+  conceptCountIcon,
+  conceptCountDescription,
+  relationshipsStatus,
+  relationshipsSeverity,
+  relationshipsIcon,
+  relationshipsDescription,
 } = useEndpointCapabilities(endpointForLanguage)
 
 const isEditing = computed(() => !!props.endpoint)
@@ -191,9 +199,17 @@ async function runAnalysis() {
         supportsNamedGraphs: analysis.supportsNamedGraphs,
         skosGraphCount: analysis.skosGraphCount,
         languages: analysis.languages,
+        totalConcepts: analysis.totalConcepts,
+        relationships: analysis.relationships,
         analyzedAt: analysis.analyzedAt,
       },
     }
+
+    // Log analysis results for debugging
+    console.log('📊 Analysis result (runAnalysis):', {
+      totalConcepts: tempEndpoint.value?.analysis?.totalConcepts,
+      relationships: tempEndpoint.value?.analysis?.relationships
+    })
 
     // Load language priorities from analysis
     loadPriorities(tempEndpoint.value!)
@@ -215,6 +231,13 @@ async function handleReanalyze() {
   try {
     const analysis = await reanalyzeEndpoint(tempEndpoint.value)
     tempEndpoint.value = { ...tempEndpoint.value, analysis }
+
+    // Log analysis results for debugging
+    console.log('📊 Analysis result (handleReanalyze):', {
+      totalConcepts: tempEndpoint.value?.analysis?.totalConcepts,
+      relationships: tempEndpoint.value?.analysis?.relationships
+    })
+
     loadPriorities(tempEndpoint.value!)
   } catch {
     // Error handled in composable
@@ -290,11 +313,21 @@ function handleClose() {
             :skosGraphSeverity="skosGraphSeverity"
             :skosGraphIcon="skosGraphIcon"
             :skosGraphDescription="skosGraphDescription"
+            :conceptCountStatus="conceptCountStatus"
+            :conceptCountSeverity="conceptCountSeverity"
+            :conceptCountIcon="conceptCountIcon"
+            :conceptCountDescription="conceptCountDescription"
+            :relationshipsStatus="relationshipsStatus"
+            :relationshipsSeverity="relationshipsSeverity"
+            :relationshipsIcon="relationshipsIcon"
+            :relationshipsDescription="relationshipsDescription"
             :analyzing="analyzing"
             :analyzeElapsedShow="analyzeElapsed.show.value"
             :analyzeElapsedValue="analyzeElapsed.elapsed.value"
             :analysisLog="analysisLog"
             :analyzedAt="tempEndpoint?.analysis?.analyzedAt ?? null"
+            :totalConcepts="tempEndpoint?.analysis?.totalConcepts ?? null"
+            :relationships="tempEndpoint?.analysis?.relationships ?? null"
             @reanalyze="handleReanalyze"
             @next="activateCallback('3')"
             @back="activateCallback('1')"

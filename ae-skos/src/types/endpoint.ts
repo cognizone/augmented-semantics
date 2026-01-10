@@ -47,6 +47,18 @@ export interface EndpointAnalysis {
   languages?: DetectedLanguage[]
 
   analyzedAt: string
+
+  // SKOS statistics
+  totalConcepts?: number
+  relationships?: {
+    hasInScheme: boolean
+    hasTopConceptOf: boolean
+    hasHasTopConcept: boolean
+    hasBroader: boolean
+    hasNarrower: boolean
+    hasBroaderTransitive: boolean
+    hasNarrowerTransitive: boolean
+  }
 }
 
 export type EndpointStatus = 'disconnected' | 'connecting' | 'connected' | 'error'

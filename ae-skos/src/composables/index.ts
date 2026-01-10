@@ -13,6 +13,14 @@ export { useEndpointForm } from './useEndpointForm'
 export { useEndpointTest } from './useEndpointTest'
 export { useLanguagePriorities } from './useLanguagePriorities'
 export { useLabelResolver } from './useLabelResolver'
+export { calculateOrphanConcepts } from './useOrphanConcepts'
+export { buildOrphanExclusionQueries, buildAllConceptsQuery } from './useOrphanQueries'
+export {
+  createInitialProgress,
+  type OrphanProgress,
+  type QueryResult,
+  type ProgressCallback
+} from './useOrphanProgress'
 export { useOtherProperties, CONCEPT_EXCLUDED_PREDICATES, SCHEME_EXCLUDED_PREDICATES } from './useOtherProperties'
 export { useResourceExport } from './useResourceExport'
 export { useSchemeData } from './useSchemeData'
