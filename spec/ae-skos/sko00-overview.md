@@ -53,6 +53,7 @@ These common specifications apply to all components:
 | sko04 | ConceptDetails | [sko04-ConceptDetails](./sko04-ConceptDetails.md) | Property display for selected concept |
 | sko05 | SearchBox | [sko05-SearchBox](./sko05-SearchBox.md) | Search and autocomplete |
 | sko06 | Utilities | [sko06-Utilities](./sko06-Utilities.md) | Copy, raw view, history |
+| sko08 | DeveloperTools | [sko08-DeveloperTools](./sko08-DeveloperTools.md) | Debug logging and development settings |
 
 ## Technology
 

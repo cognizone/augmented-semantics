@@ -295,6 +295,70 @@ eventBus.on('language:changed', () => {
 });
 ```
 
+### Advanced Event Features
+
+The event bus supports priority-based execution, one-time handlers, and async operations.
+
+**Priority Execution:**
+```typescript
+interface EventOptions {
+  priority?: number;  // Lower = earlier execution (default: 100)
+  once?: boolean;     // Auto-unsubscribe after first call (default: false)
+}
+
+// High-priority handler runs first
+eventBus.on('concept:selected', prepareUI, { priority: 1 });
+
+// Normal priority handler runs second
+eventBus.on('concept:selected', loadDetails, { priority: 100 });
+
+// Low-priority handler runs last
+eventBus.on('concept:selected', updateHistory, { priority: 200 });
+```
+
+**Once-Only Handlers:**
+```typescript
+// Auto-unsubscribe after first execution
+eventBus.on('app:mounted', initializeAnalytics, { once: true });
+
+// Equivalent to manual unsubscribe
+const handler = () => {
+  // ... initialization code
+  eventBus.off('app:mounted', handler);
+};
+eventBus.on('app:mounted', handler);
+```
+
+**Async Handler Support:**
+Handlers can return Promises. Errors are isolated per handler (one handler's error doesn't prevent others from executing).
+
+```typescript
+eventBus.on('concept:selected', async (uri) => {
+  try {
+    await loadConceptDetails(uri);
+  } catch (error) {
+    // Error is caught and logged, but other handlers still execute
+    console.error('Failed to load details:', error);
+  }
+});
+```
+
+**Additional Event Types:**
+
+| Event | Payload | Triggered When |
+|-------|---------|----------------|
+| `concept:selecting` | `string` (URI) | Before concept selection (preparation) |
+| `concept:revealed` | `string` (URI) | After concept scrolled into view |
+| `tree:loading` | - | Tree starting to load |
+| `tree:loaded` | `ConceptNode[]` | Tree finished loading |
+
+**Use Cases:**
+
+- **Priority**: Ensure preparation happens before processing (e.g., clear old data before loading new)
+- **Once**: One-time initialization tasks (e.g., analytics setup, feature tours)
+- **Async**: Non-blocking operations that shouldn't delay UI updates
+- **Error isolation**: Prevent one component's failure from affecting others
+
 ## Initialization Sequence
 
 ```

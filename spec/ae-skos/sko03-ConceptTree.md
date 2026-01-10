@@ -225,6 +225,115 @@ loadingTree Watch fires when load completes
 If selectedUri exists → reveal concept
 ```
 
+**Reveal Coordination Mechanism:**
+
+To prevent race conditions when selecting concepts while the tree is loading, the implementation uses event-driven coordination with pending reveal state:
+
+**Concept Store State:**
+```typescript
+interface ConceptState {
+  // ... existing fields
+  pendingRevealUri: string | null  // Concept awaiting reveal
+}
+
+// Methods
+requestReveal(uri: string): void
+markConceptRevealed(uri: string): void
+clearPendingReveal(): void
+```
+
+**Event-Driven Flow:**
+```
+User clicks concept from search/history (different scheme)
+         ↓
+selectConceptWithScheme(uri, schemeUri)
+         ↓
+conceptStore.requestReveal(uri)  ← Set pending reveal
+         ↓
+schemeStore.setSelectedScheme(schemeUri)
+         ↓
+ConceptTree: watch scheme change → clear tree
+         ↓
+ConceptTree: load top concepts
+         ↓
+ConceptTree: emit tree:loaded event
+         ↓
+ConceptTree: event listener checks pendingRevealUri
+         ↓
+If pending → useTreeNavigation.revealConcept(uri)
+         ↓
+After scroll completes
+         ↓
+conceptStore.markConceptRevealed(uri)
+         ↓
+emit concept:revealed event
+```
+
+**Events Used:**
+- `tree:loading` - Tree starting to load
+- `tree:loaded` (payload: ConceptNode[]) - Tree finished loading
+- `concept:revealed` (payload: string URI) - After scroll to view
+
+**Benefits:**
+- Prevents multiple simultaneous reveal attempts
+- Handles scheme switching correctly
+- Works across tabs and navigation types
+- Clean separation of concerns (store manages state, component handles UI)
+
+### Cross-Scheme Navigation
+
+Automatic scheme discovery and navigation for concepts from different schemes.
+
+**Use Cases:**
+1. Clicking concepts in search results from other schemes
+2. Clicking concepts in history from other schemes
+3. Clicking related concepts (broader, narrower, related) that are in different schemes
+4. Direct URI navigation from URL parameters
+
+**Implementation:** `useConceptSelection` composable
+
+**Methods:**
+```typescript
+async function findSchemeForConcept(uri: string): Promise<string | null>
+async function selectConceptWithScheme(
+  uri: string,
+  schemeUri?: string,
+  endpointUrl?: string
+): Promise<void>
+```
+
+**Scheme Discovery Query:**
+```sparql
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+
+SELECT DISTINCT ?scheme WHERE {
+  {
+    # Direct inScheme link
+    <CONCEPT_URI> skos:inScheme ?scheme .
+  } UNION {
+    # Top concept marker
+    ?scheme skos:hasTopConcept <CONCEPT_URI> .
+  } UNION {
+    # Traverse up hierarchy to find ancestor's scheme
+    <CONCEPT_URI> (skos:broader|^skos:narrower)+ ?ancestor .
+    ?ancestor skos:inScheme ?scheme .
+  }
+} LIMIT 1
+```
+
+**Navigation Flow:**
+1. If `endpointUrl` provided and different from current → switch endpoint
+2. If `schemeUri` not provided → discover via SPARQL query
+3. Switch scheme **before** selecting concept (order critical for tree loading)
+4. Call `requestReveal(uri)` to coordinate with tree loading
+5. Switch to browse tab (if currently on search or other tab)
+
+**Integration Points:**
+- SearchBox: Click search result → `selectConceptWithScheme(uri)`
+- RecentHistory: Click history item → `selectConceptWithScheme(uri, schemeUri, endpointUrl)`
+- ConceptDetails: Click relation → `selectConceptWithScheme(uri)` (discovers scheme)
+- URL parameters: `?concept=URI` → `selectConceptWithScheme(uri)` (discovers scheme)
+
 ## Label Resolution (Consistent Across All Components)
 
 All components (Tree, Breadcrumb, Details, Search) MUST use the centralized label resolution functions from `useLabelResolver`.
@@ -352,6 +461,48 @@ Toggle between:
 │ ▶ Environment                  │
 └────────────────────────────────┘
 ```
+
+**Scheme as Tree Root:**
+
+When a scheme is selected, the tree wraps top concepts under a synthetic scheme root node:
+
+```
+┌────────────────────────────────┐
+│ 🔍 [Go to URI...]              │
+├────────────────────────────────┤
+│ ▼ 🗂 Albania Thesaurus         │  ← Scheme root node
+│   ├─ ▶ 123 - Geographic...    │  ← Top concepts
+│   ├─ ▶ 456 - Administrative   │
+│   └─ ▶ 789 - Economic...      │
+└────────────────────────────────┘
+```
+
+**Scheme Node Properties:**
+```typescript
+{
+  key: scheme.uri,
+  data: { isScheme: true },
+  label: scheme.prefLabel,  // Resolved via useLabelResolver
+  icon: 'folder_special',   // Material Symbol
+  children: topConcepts,    // Array of ConceptNode[]
+  leaf: false,              // Always expandable (even if no top concepts)
+}
+```
+
+**Behavior:**
+- **Always visible**: Shown even if scheme has no top concepts (appears as leaf node)
+- **Auto-expanded**: Added to `expandedKeys` automatically when scheme loads
+- **Clickable**: Clicking navigates to SchemeDetails view (not ConceptDetails)
+- **Scroll target**: Home button scrolls to this root node
+
+**Why synthetic node:**
+- Provides clear visual hierarchy (scheme contains concepts)
+- Makes home button behavior intuitive (scroll to scheme)
+- Consistent with file system tree patterns users understand
+- Allows scheme-level actions in tree context menu (future)
+
+**Contrast with "All Schemes":**
+When "All Schemes" is selected, no scheme root appears - only top concepts from all schemes are shown at root level.
 
 ### Breadcrumb
 

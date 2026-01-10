@@ -38,6 +38,67 @@ WHERE {
 LIMIT 500
 ```
 
+### Orphan Concepts Pseudo-Scheme
+
+A special pseudo-scheme represents concepts not associated with any ConceptScheme.
+
+**URI:** `~orphans~` (constant)
+
+**Purpose:**
+- Helps identify concepts that lack `skos:inScheme` links
+- Useful for data quality checking
+- Provides navigation to orphaned concepts
+
+**Data Model:**
+```typescript
+export const ORPHAN_SCHEME_URI = '~orphans~'
+
+// Pseudo-scheme object added to scheme list
+{
+  uri: ORPHAN_SCHEME_URI,
+  prefLabel: [{ value: 'Orphan Concepts', lang: 'en' }],
+  isOrphan: true  // Flag for special handling
+}
+```
+
+**Display in Dropdown:**
+- Appears at bottom of scheme list (after real schemes)
+- Icon: `link_off` (Material Symbol)
+- Text style: Italic to differentiate from real schemes
+- URI hidden (shows "Orphan Concepts" label only)
+
+**Behavior when selected:**
+- Tree shows empty state (no top concepts)
+- Breadcrumb shows "Orphan Concepts" instead of raw URI
+- Search scope can include orphan concepts
+- Details view not available (pseudo-scheme has no properties)
+
+**Detection Query (Future):**
+```sparql
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+
+SELECT DISTINCT ?concept
+WHERE {
+  ?concept a skos:Concept .
+  FILTER NOT EXISTS { ?concept skos:inScheme ?scheme }
+}
+LIMIT 1000
+```
+
+**Current Implementation:**
+The pseudo-scheme appears in the dropdown but doesn't currently load orphan concepts in the tree. The detection query would be added when orphan concept loading is implemented.
+
+**UI Example:**
+```
+┌─────────────────────────────────────┐
+│ Albania Thesaurus            [▼]   │
+│ Europe Thesaurus                    │
+│ Geographic Names                    │
+│ ─────────────────────────────       │
+│ 🔗 Orphan Concepts (italic)         │
+└─────────────────────────────────────┘
+```
+
 ### Label Resolution
 
 Same logic as concepts for consistency:

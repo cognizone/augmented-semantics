@@ -176,22 +176,34 @@ ORDER BY DESC(?count)
 
 ### Analysis Data Model
 
+**Note:** The implementation uses a SKOS-centric analysis approach optimized for SKOS vocabularies, which differs from the generic graph analysis described above.
+
 ```typescript
 interface EndpointAnalysis {
-  // Named graphs
+  // SKOS Content (replaces generic graph detection)
+  hasSkosContent: boolean              // true if endpoint contains SKOS ConceptSchemes or Concepts
   supportsNamedGraphs: boolean | null  // null = not supported, false = none, true = has graphs
-  graphCount: number | null            // null = count failed, number = exact or estimated
-  graphCountExact: boolean             // true = exact count, false = estimated (10000+)
-
-  // Duplicates
-  hasDuplicateTriples: boolean | null  // null = detection not supported
+  skosGraphCount: number | null        // null = count failed, number = SKOS graphs found
 
   // Languages (sorted by count descending)
-  languages?: { lang: string; count: number }[]
+  languages?: DetectedLanguage[]
 
   analyzedAt: string  // ISO timestamp
 }
+
+interface DetectedLanguage {
+  lang: string   // ISO 639-1 code (e.g., 'en')
+  count: number  // Number of labels found
+}
 ```
+
+**Changes from generic specification:**
+- `hasSkosContent` replaces generic content detection (SKOS-specific)
+- `skosGraphCount` counts only graphs containing SKOS data (not all graphs)
+- `graphCount` and `graphCountExact` removed (generic graph counting not implemented)
+- `hasDuplicateTriples` removed (duplicate detection not implemented)
+
+See **SKOS-Specific Analysis** section below for implementation details.
 
 ### Analysis Log Display
 
@@ -204,6 +216,86 @@ During re-analysis, show step-by-step progress with colored status indicators:
 | Warning | Triangle | Orange |
 | Error | X circle | Red |
 | Info | Info circle | Gray |
+
+### SKOS-Specific Analysis
+
+The implemented analysis focuses on detecting SKOS content and optimizing for SKOS vocabulary endpoints.
+
+**SKOS Graph Detection Query:**
+```sparql
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+
+SELECT DISTINCT ?g WHERE {
+  GRAPH ?g {
+    {
+      # Detect ConceptSchemes
+      ?s a skos:ConceptScheme .
+    }
+    UNION
+    {
+      # Detect Concepts with labels
+      ?s a skos:Concept .
+      ?s skos:prefLabel ?label .
+    }
+  }
+} LIMIT 501
+```
+
+**Detection Logic:**
+1. Query returns up to 501 SKOS graphs
+2. If count ≤ 500: Store graph URIs for batched language detection
+3. If count > 500: Only store count (too many to batch)
+
+**Named Graph Support:**
+```sparql
+# Simple boolean check for named graph support
+ASK { GRAPH ?g { ?s ?p ?o } }
+```
+
+Returns:
+- `true` - Endpoint supports GRAPH keyword
+- `false` - Default graph only
+- `null` - Query failed
+
+**Batched Language Detection:**
+
+When ≤ 500 SKOS graphs are found, language detection uses batched graph-scoped queries for better performance:
+
+```sparql
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX skosxl: <http://www.w3.org/2008/05/skos-xl#>
+
+SELECT ?lang (COUNT(?label) AS ?count)
+WHERE {
+  # Batch of up to 10 graphs per query
+  VALUES ?g { <graph1> <graph2> <graph3> ... }
+  GRAPH ?g {
+    ?concept a skos:Concept .
+    {
+      ?concept skos:prefLabel|skos:altLabel|skos:hiddenLabel ?label .
+    } UNION {
+      ?concept skosxl:prefLabel/skosxl:literalForm ?label .
+    } UNION {
+      ?concept skosxl:altLabel/skosxl:literalForm ?label .
+    }
+    BIND(LANG(?label) AS ?lang)
+    FILTER(?lang != "")
+  }
+}
+GROUP BY ?lang
+ORDER BY DESC(?count)
+```
+
+**Batching Strategy:**
+- Groups of 10 graphs per query (configurable)
+- Reduces query count for large endpoints
+- Prevents timeout on endpoints with 500+ graphs
+
+**Why SKOS-Centric:**
+1. **Performance** - Scoped to SKOS data only, ignoring non-vocabulary graphs
+2. **Relevance** - AE SKOS tool only works with SKOS vocabularies
+3. **Batching** - Enables efficient language detection on large endpoints
+4. **Simplicity** - Avoids complex duplicate detection queries
 
 ## Endpoint Data Model
 
@@ -531,12 +623,197 @@ Value: JSON array of SPARQLEndpoint objects
 - Disconnected/error (red)
 - Testing (yellow/spinner)
 
-## Example Endpoints
+## Suggested Endpoints
 
-Pre-configured suggestions for new users:
+Pre-configured endpoints with pre-calculated analysis results, optimized for new users and common SKOS vocabularies.
 
-| Name | URL |
-|------|-----|
-| DBpedia | https://dbpedia.org/sparql |
-| Wikidata | https://query.wikidata.org/sparql |
-| EU Publications | https://publications.europa.eu/webapi/rdf/sparql |
+### Build System
+
+**Purpose:** Pre-analyze popular endpoints at build time to avoid runtime delays and provide instant configuration.
+
+**Architecture:**
+
+```
+suggested-endpoints.json (manual curation)
+         ↓
+    prebuild-endpoints.ts (build script)
+         ↓
+suggested-endpoints.generated.json (committed)
+         ↓
+    EndpointStore (runtime)
+```
+
+### Data Model
+
+```typescript
+interface SuggestedEndpointSource {
+  name: string
+  url: string
+  description?: string
+  suggestedLanguagePriorities?: string[]  // Recommended language order
+}
+
+interface SuggestedEndpoint extends SuggestedEndpointSource {
+  analysis: EndpointAnalysis        // Pre-calculated analysis
+  sourceHash: string                 // Hash for cache invalidation
+}
+```
+
+### Source File: `suggested-endpoints.json`
+
+Manually curated list of recommended SKOS endpoints:
+
+```json
+[
+  {
+    "name": "Fedlex",
+    "url": "https://fedlex.data.admin.ch/sparql",
+    "description": "Swiss Federal Law",
+    "suggestedLanguagePriorities": ["de", "fr", "it", "rm", "en"]
+  },
+  {
+    "name": "AGROVOC",
+    "url": "https://agrovoc.fao.org/sparql",
+    "description": "Agricultural vocabulary",
+    "suggestedLanguagePriorities": ["en", "fr", "es"]
+  }
+]
+```
+
+**Fields:**
+- `name` - Display name for endpoint
+- `url` - SPARQL endpoint URL (must be publicly accessible with CORS)
+- `description` - Short description of the vocabulary
+- `suggestedLanguagePriorities` - Recommended language order for this vocabulary
+
+### Build Script: `prebuild-endpoints.ts`
+
+Runs during `npm run build` to analyze endpoints and generate cached results.
+
+**Process:**
+1. Read `suggested-endpoints.json`
+2. For each endpoint:
+   - Connect to endpoint
+   - Run full analysis (SKOS detection, graphs, languages)
+   - Calculate source hash (for change detection)
+   - Store analysis results
+3. Write `suggested-endpoints.generated.json`
+4. Commit generated file to repository
+
+**Source Hash Calculation:**
+```typescript
+import { createHash } from 'crypto'
+
+function calculateSourceHash(source: SuggestedEndpointSource): string {
+  const content = JSON.stringify(source)
+  return createHash('sha256').update(content).digest('hex').slice(0, 16)
+}
+```
+
+**Benefits:**
+- No runtime analysis delay
+- Pre-tested endpoints (broken endpoints can be removed before build)
+- Version control for analysis results
+- Fast first-time user experience
+
+### Generated File: `suggested-endpoints.generated.json`
+
+Auto-generated file (committed to repo):
+
+```json
+[
+  {
+    "name": "Fedlex",
+    "url": "https://fedlex.data.admin.ch/sparql",
+    "description": "Swiss Federal Law",
+    "suggestedLanguagePriorities": ["de", "fr", "it", "rm", "en"],
+    "analysis": {
+      "hasSkosContent": true,
+      "supportsNamedGraphs": true,
+      "skosGraphCount": 3,
+      "languages": [
+        { "lang": "de", "count": 45123 },
+        { "lang": "fr", "count": 44891 },
+        { "lang": "it", "count": 44567 }
+      ],
+      "analyzedAt": "2025-01-10T10:30:00.000Z"
+    },
+    "sourceHash": "a3f5c8d2e1b4f9a7"
+  }
+]
+```
+
+### Runtime Integration
+
+**Store Method:**
+```typescript
+function addSuggestedEndpoint(suggested: SuggestedEndpoint): void {
+  const endpoint: SPARQLEndpoint = {
+    id: uuid(),
+    name: suggested.name,
+    url: suggested.url,
+    analysis: suggested.analysis,
+    languagePriorities: suggested.suggestedLanguagePriorities,
+    createdAt: new Date().toISOString(),
+    accessCount: 0,
+  }
+
+  endpoints.value.push(endpoint)
+  saveToLocalStorage()
+}
+```
+
+**UI Integration:**
+In EndpointWizard Step 1, show suggested endpoints as quick-add buttons:
+
+```
+┌─────────────────────────────────────────────────────┐
+│ SUGGESTED ENDPOINTS                                 │
+├─────────────────────────────────────────────────────┤
+│ [Fedlex]  [AGROVOC]  [EU Publications]  [BnF]      │
+│ [GeoNames]  [GEMET]  [STW]  [TheSoz]                │
+└─────────────────────────────────────────────────────┘
+```
+
+Clicking a suggestion:
+1. Creates new endpoint with suggested values
+2. Uses pre-calculated analysis (no runtime delay)
+3. Sets suggested language priorities
+4. Saves to localStorage
+5. Switches to new endpoint
+
+**Filtering:**
+Only show suggestions that aren't already added:
+
+```typescript
+const availableSuggestedEndpoints = computed(() => {
+  const existingUrls = new Set(endpoints.value.map(e => e.url))
+  return suggestedEndpoints.filter(s => !existingUrls.has(s.url))
+})
+```
+
+### Update Strategy
+
+**When to rebuild:**
+- Adding new suggested endpoints to source file
+- Endpoint URL changes
+- Source hash changes (indicates manual update)
+- Monthly automated rebuild (optional CI job)
+
+**Cache Invalidation:**
+If sourceHash doesn't match, endpoint is re-analyzed at runtime.
+
+### Current Suggested Endpoints
+
+| Name | URL | Languages | Graphs |
+|------|-----|-----------|--------|
+| Fedlex | https://fedlex.data.admin.ch/sparql | de, fr, it, rm | 3 |
+| AGROVOC | https://agrovoc.fao.org/sparql | en, fr, es, ... | 1 |
+| EU Publications | https://publications.europa.eu/webapi/rdf/sparql | 24 languages | 50+ |
+| BnF (French National Library) | https://data.bnf.fr/sparql | fr, en | 1 |
+| GeoNames | https://factforge.net/sparql | en | Multiple |
+| GEMET | https://semantic.eea.europa.eu/sparql | en, fr, de, ... | 1 |
+| STW Economics | http://zbw.eu/beta/sparql/stw/query | de, en | 1 |
+| TheSoz | https://sparql.gesis.org/sparql | de, en | 1 |
+
+**Note:** Exact numbers may vary based on last analysis date.
