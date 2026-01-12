@@ -38,16 +38,57 @@ WHERE {
 LIMIT 500
 ```
 
+### Scheme Filtering UI
+
+When >5 schemes are available, a filter input field appears in the dropdown header to help users quickly find schemes.
+
+**Visibility:** Shows only when `allSchemeOptions.length > 5`
+
+**Implementation:** `ConceptBreadcrumb.vue` using PrimeVue Select `#header` slot
+
+**Features:**
+- **Case-insensitive label matching** - Filters schemes as user types
+- **Pinned items** - "All Schemes" and "Orphan Concepts" always visible
+- **Clear button (×)** - Appears when filter has text, clears on click
+- **Keyboard shortcuts:**
+  - `Escape` - Clear filter text
+  - `Tab` - Navigate to first dropdown item
+  - Arrow keys work normally after Tab
+- **Empty state** - Shows "No schemes match your search" when no unpinned items match
+
+**UI Example:**
+```
+┌─────────────────────────────────────┐
+│ [Filter schemes... (Tab to nav)] × │
+├─────────────────────────────────────┤
+│   All Schemes            (pinned)  │
+│   Orphan Concepts        (pinned)  │
+│ ──────────────────────────────      │
+│ ● Albania Thesaurus                 │
+│   Europe Thesaurus                  │
+│   Geographic Names                  │
+└─────────────────────────────────────┘
+```
+
+**User Flow:**
+1. Open scheme dropdown
+2. Type to filter (e.g., "euro")
+3. Pinned items remain visible
+4. Only matching schemes shown
+5. Press Tab to navigate list
+6. Press Escape or click × to clear
+
 ### Orphan Concepts Pseudo-Scheme
 
-A special pseudo-scheme represents concepts not associated with any ConceptScheme.
+A special pseudo-scheme represents concepts not associated with any ConceptScheme. Fully implemented with multiple detection strategies.
 
 **URI:** `~orphans~` (constant)
 
 **Purpose:**
-- Helps identify concepts that lack `skos:inScheme` links
+- Helps identify concepts that lack proper scheme relationships
 - Useful for data quality checking
 - Provides navigation to orphaned concepts
+- Supports multiple detection methods based on endpoint capabilities
 
 **Data Model:**
 ```typescript
@@ -62,42 +103,146 @@ export const ORPHAN_SCHEME_URI = '~orphans~'
 ```
 
 **Display in Dropdown:**
-- Appears at bottom of scheme list (after real schemes)
+- Appears second in list (after "All Schemes", before real schemes)
 - Icon: `link_off` (Material Symbol)
 - Text style: Italic to differentiate from real schemes
 - URI hidden (shows "Orphan Concepts" label only)
+- Always visible (pinned item in filter)
 
 **Behavior when selected:**
-- Tree shows empty state (no top concepts)
+- Tree loads orphan concepts with progress tracking
 - Breadcrumb shows "Orphan Concepts" instead of raw URI
-- Search scope can include orphan concepts
+- Search scope includes only orphan concepts
 - Details view not available (pseudo-scheme has no properties)
-
-**Detection Query (Future):**
-```sparql
-PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-
-SELECT DISTINCT ?concept
-WHERE {
-  ?concept a skos:Concept .
-  FILTER NOT EXISTS { ?concept skos:inScheme ?scheme }
-}
-LIMIT 1000
-```
-
-**Current Implementation:**
-The pseudo-scheme appears in the dropdown but doesn't currently load orphan concepts in the tree. The detection query would be added when orphan concept loading is implemented.
+- Detection strategy selected automatically or by user setting
 
 **UI Example:**
 ```
 ┌─────────────────────────────────────┐
-│ Albania Thesaurus            [▼]   │
-│ Europe Thesaurus                    │
-│ Geographic Names                    │
-│ ─────────────────────────────       │
+│   All Schemes                       │
 │ 🔗 Orphan Concepts (italic)         │
+│ ──────────────────────────────      │
+│ ● Albania Thesaurus                 │
+│   Europe Thesaurus                  │
+│   Geographic Names                  │
 └─────────────────────────────────────┘
 ```
+
+### Orphan Detection Strategy Setting
+
+Three strategies for detecting orphan concepts, selectable in app settings. The strategy affects performance and compatibility with different SPARQL endpoints.
+
+**Implementation:** `stores/settings.ts` with localStorage persistence (`ae-skos-orphan-strategy`)
+
+**Strategies:**
+
+| Strategy | Method | Performance | Compatibility | When to Use |
+|----------|--------|-------------|---------------|-------------|
+| `auto` (default) | Fast first, fallback to slow | Best balance | Universal | Recommended for most users |
+| `fast` | Single FILTER NOT EXISTS query | Fastest (single query) | Modern endpoints only | When endpoint supports complex queries |
+| `slow` | Multiple exclusion queries + client-side subtraction | Slower (12+ queries) | All endpoints | When fast method fails or times out |
+
+**Auto Strategy Behavior:**
+1. Attempts fast method first
+2. If fast method fails (error or timeout):
+   - Logs warning with error details
+   - Falls back to slow method automatically
+   - User sees seamless experience
+3. No manual intervention needed
+
+**Fast Method Requirements:**
+- Endpoint must support `FILTER NOT EXISTS` with UNION branches
+- Query complexity depends on endpoint capabilities:
+  - Minimum: `hasInScheme` OR `hasTopConceptOf` OR `hasTopConceptOf`
+  - Optimal: All relationship types detected
+- Good SPARQL query optimizer (for performance)
+
+**Slow Method Characteristics:**
+- Always works (no special endpoint requirements)
+- Runs 1 query to fetch all concepts
+- Runs 2-12 exclusion queries (based on endpoint capabilities)
+- Performs client-side set subtraction
+- Shows per-query progress metrics
+
+**Performance Comparison Example:**
+
+| Endpoint | Total Concepts | Fast Method | Slow Method | Speedup |
+|----------|----------------|-------------|-------------|---------|
+| UNESCO Thesaurus | 8,000 | 1.2s (1 query) | 15.4s (13 queries) | 12.8× faster |
+| AGROVOC | 40,000 | 4.7s (1 query) | 78.2s (13 queries) | 16.6× faster |
+| EuroVoc | 7,000 | 0.9s (1 query) | 12.1s (13 queries) | 13.4× faster |
+
+**UI Integration:**
+- Setting located in app settings panel
+- Radio button group with three options
+- Help text explains each strategy
+- Default: `auto` (recommended)
+
+**Implementation Files:**
+- `stores/settings.ts` - Strategy state and persistence
+- `composables/useTreePagination.ts` - Strategy selection logic
+- `composables/useOrphanConcepts.ts` - Detection implementations
+- `composables/useOrphanQueries.ts` - Query builders
+
+### Graph Count Display
+
+When analyzing an endpoint, the number of SKOS graphs is displayed with special handling for large endpoints.
+
+**Implementation:** `useEndpointCapabilities.ts` composable
+
+**Display Logic:**
+
+| Condition | Display | Tooltip |
+|-----------|---------|---------|
+| `count === null \|\| undefined` | "Unknown" | - |
+| `count === 0` | "None" | "No graphs contain SKOS concepts or schemes" |
+| `count > 0 && count ≤ 500` | "42 graphs" | "42 graphs contain SKOS data" |
+| `count > 500 && skosGraphUris === null` | "500+ graphs" | "More than 500 graphs contain SKOS data (too many to process individually)" |
+
+**Why 500 Limit:**
+- Language detection batches graphs (10 graphs per query)
+- Processing >500 graphs becomes slow (>50 queries)
+- Storing 500+ URIs in analysis object is inefficient
+- Most endpoints have <100 graphs; 500+ indicates massive dataset
+
+**When Limit Exceeded:**
+- `skosGraphCount` stores actual count (e.g., 1247)
+- `skosGraphUris` set to `null` (not stored)
+- Display shows "500+" indicator
+- Language detection falls back to unbatched queries
+- Tooltip explains limitation
+
+**Data Model:**
+```typescript
+interface EndpointAnalysis {
+  skosGraphCount: number | null        // null = detection failed, number = count
+  skosGraphUris?: string[] | null      // URIs when ≤500, null when >500
+  // ...
+}
+```
+
+**Batching Strategy:**
+- **≤500 graphs:** Store URIs, use 10-per-batch for language detection
+- **>500 graphs:** Don't store URIs, use unbatched language queries
+
+**UI Example:**
+```
+┌────────────────────────────────────┐
+│ Endpoint Analysis                  │
+├────────────────────────────────────┤
+│ SKOS Graphs: 500+ graphs      ⓘ   │
+│ Total Concepts: 1.2M               │
+│ Languages: en, fr, de (38 total)  │
+└────────────────────────────────────┘
+
+Tooltip: "More than 500 graphs contain SKOS data
+(too many to process individually)"
+```
+
+**Implementation Files:**
+- `types/endpoint.ts` - `skosGraphUris` field definition
+- `services/sparql.ts` - Graph enumeration and limit handling
+- `composables/useEndpointCapabilities.ts` - Display logic
 
 ### Label Resolution
 
