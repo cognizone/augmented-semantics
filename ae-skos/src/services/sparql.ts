@@ -514,6 +514,7 @@ export async function analyzeEndpoint(
 ): Promise<{
   supportsNamedGraphs: boolean | null
   skosGraphCount: number | null
+  skosGraphUris?: string[] | null
   languages: { lang: string; count: number }[]
   analyzedAt: string
   totalConcepts?: number
@@ -608,6 +609,7 @@ export async function analyzeEndpoint(
   return {
     supportsNamedGraphs: graphResult.supportsNamedGraphs,
     skosGraphCount,
+    skosGraphUris,
     languages,
     analyzedAt: new Date().toISOString(),
     totalConcepts,

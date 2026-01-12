@@ -42,6 +42,7 @@ export interface EndpointAnalysis {
 
   // SKOS graphs
   skosGraphCount: number | null        // null = detection failed, number = graphs with Concept or ConceptScheme
+  skosGraphUris?: string[] | null      // Graph URIs when count <= 500, null when too many to process
 
   // Languages (sorted by count descending)
   languages?: DetectedLanguage[]

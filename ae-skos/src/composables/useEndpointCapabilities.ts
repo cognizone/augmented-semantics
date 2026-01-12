@@ -43,6 +43,9 @@ export function useEndpointCapabilities(endpoint: Ref<SPARQLEndpoint | null>) {
     if (!analysis || analysis.skosGraphCount === undefined) return 'Unknown'
     if (analysis.skosGraphCount === null) return 'Unknown'
     if (analysis.skosGraphCount === 0) return 'None'
+    // Show "500+" if we hit the limit (skosGraphUris will be null)
+    const hitLimit = analysis.skosGraphCount > 500 && !analysis.skosGraphUris
+    if (hitLimit) return `500+ graphs`
     return `${formatCount(analysis.skosGraphCount)} graph${analysis.skosGraphCount === 1 ? '' : 's'}`
   })
 
@@ -64,6 +67,13 @@ export function useEndpointCapabilities(endpoint: Ref<SPARQLEndpoint | null>) {
     const analysis = endpoint.value?.analysis
     if (!analysis || analysis.skosGraphCount === undefined || analysis.skosGraphCount === null) return null
     if (analysis.skosGraphCount === 0) return 'No graphs contain SKOS concepts or schemes'
+
+    // Check if we hit the limit (too many to list individually)
+    const hitLimit = analysis.skosGraphCount > 500 && !analysis.skosGraphUris
+    if (hitLimit) {
+      return `More than 500 graphs contain SKOS data (too many to process individually)`
+    }
+
     return `${formatCount(analysis.skosGraphCount)} graph${analysis.skosGraphCount === 1 ? '' : 's'} contain SKOS data`
   })
 
