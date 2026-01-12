@@ -8,9 +8,9 @@
  */
 import type { SPARQLEndpoint } from '../types'
 import { executeSparql } from '../services'
-import { buildAllConceptsQuery, buildOrphanExclusionQueries } from './useOrphanQueries'
+import { buildAllConceptsQuery, buildOrphanExclusionQueries, buildSingleOrphanQuery } from './useOrphanQueries'
 import { logger } from '../services'
-import type { ProgressCallback } from './useOrphanProgress'
+import type { ProgressCallback, QueryResult } from './useOrphanProgress'
 
 const PAGE_SIZE = 5000
 
@@ -139,7 +139,7 @@ export async function calculateOrphanConcepts(
 
   // Step 3: Fetch excluded concepts (all queries)
   const excludedConcepts = new Set<string>()
-  const completedQueries: Array<{ name: string; excludedCount: number; remainingAfter: number; duration: number }> = []
+  const completedQueries: QueryResult[] = []
   const skippedQueries: string[] = []
 
   // Report phase start
@@ -256,6 +256,116 @@ export async function calculateOrphanConcepts(
     remainingCandidates: orphanUris.length,
     completedQueries: [...completedQueries],
     skippedQueries: [...skippedQueries],
+    currentQueryName: null,
+  })
+
+  return orphanUris.sort()
+}
+
+/**
+ * Calculate orphan concepts using a single FILTER NOT EXISTS query.
+ * Much faster than multi-query approach but requires modern SPARQL endpoint.
+ *
+ * This uses a single paginated query with FILTER NOT EXISTS to find orphans.
+ * The query only includes UNION branches for properties that exist in the endpoint.
+ *
+ * @param endpoint - SPARQL endpoint with analysis
+ * @param onProgress - Optional progress callback
+ * @returns Array of orphan concept URIs
+ * @throws Error if query cannot be built (missing capabilities)
+ *
+ * @see /spec/ae-skos/sko02-SchemeSelector.md
+ */
+export async function calculateOrphanConceptsFast(
+  endpoint: SPARQLEndpoint,
+  onProgress?: ProgressCallback
+): Promise<string[]> {
+  logger.info('OrphanConcepts', 'Starting fast single-query orphan detection')
+
+  // Validate query can be built
+  const testQuery = buildSingleOrphanQuery(endpoint, 1, 0)
+  if (!testQuery) {
+    throw new Error('Cannot build single orphan query: endpoint analysis missing or no relationships available')
+  }
+
+  const totalConcepts = endpoint.analysis?.totalConcepts ?? 0
+  const orphanUris: string[] = []
+  let offset = 0
+  let hasMore = true
+
+  // Report initial progress
+  onProgress?.({
+    phase: 'running-exclusions',
+    totalConcepts,
+    fetchedConcepts: 0,
+    remainingCandidates: 0,
+    completedQueries: [],
+    skippedQueries: [],
+    currentQueryName: 'single-query-orphan-detection',
+  })
+
+  const startTime = Date.now()
+
+  // Paginated execution
+  while (hasMore) {
+    const query = buildSingleOrphanQuery(endpoint, PAGE_SIZE + 1, offset)
+    if (!query) {
+      throw new Error('Failed to build orphan query')
+    }
+
+    const results = await executeSparql(endpoint, query)
+    const uris = results.results.bindings
+      .map(b => b.concept?.value)
+      .filter(Boolean) as string[]
+
+    // +1 detection pattern
+    hasMore = uris.length > PAGE_SIZE
+    if (hasMore) {
+      uris.pop()
+    }
+
+    orphanUris.push(...uris)
+    offset += PAGE_SIZE
+
+    // Report progress after each batch
+    onProgress?.({
+      phase: 'running-exclusions',
+      totalConcepts,
+      fetchedConcepts: orphanUris.length,
+      remainingCandidates: orphanUris.length,
+      completedQueries: [],
+      skippedQueries: [],
+      currentQueryName: 'single-query-orphan-detection',
+    })
+
+    logger.debug('OrphanConcepts', `Fetched ${orphanUris.length} orphans so far`, {
+      batchSize: uris.length,
+      hasMore,
+    })
+  }
+
+  const duration = Date.now() - startTime
+
+  logger.info('OrphanConcepts', `Fast orphan detection complete: ${orphanUris.length} orphans found`, {
+    orphanCount: orphanUris.length,
+    totalConcepts,
+    duration: `${(duration / 1000).toFixed(1)}s`,
+  })
+
+  // Report completion
+  onProgress?.({
+    phase: 'complete',
+    totalConcepts,
+    fetchedConcepts: orphanUris.length,
+    remainingCandidates: orphanUris.length,
+    completedQueries: [{
+      name: 'single-query-orphan-detection',
+      excludedCount: totalConcepts - orphanUris.length,
+      cumulativeExcluded: totalConcepts - orphanUris.length,
+      remainingAfter: orphanUris.length,
+      duration,
+    }],
+    skippedQueries: [],
     currentQueryName: null,
   })
 

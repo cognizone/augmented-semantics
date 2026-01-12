@@ -169,10 +169,16 @@ function onTreeScroll(event: Event) {
 }
 
 // Orphan progress helpers
-function getPhaseLabel(phase: string): string {
+function getPhaseLabel(phase: string, currentQueryName: string | null): string {
+  // Detect if using single-query approach
+  const isSingleQuery = currentQueryName === 'single-query-orphan-detection'
+
   switch (phase) {
     case 'fetching-all': return 'Phase 1/3: Fetching Concepts'
-    case 'running-exclusions': return 'Phase 2/3: Running Exclusion Queries'
+    case 'running-exclusions':
+      return isSingleQuery
+        ? 'Executing Single Query'
+        : 'Phase 2/3: Running Exclusion Queries'
     case 'calculating': return 'Phase 3/3: Calculating Orphans'
     case 'complete': return 'Complete'
     default: return 'Loading...'
@@ -305,7 +311,7 @@ watch(
       <template v-else>
         <div class="orphan-progress">
           <div class="progress-header">
-            <span class="progress-phase">{{ getPhaseLabel(orphanProgress.phase) }}</span>
+            <span class="progress-phase">{{ getPhaseLabel(orphanProgress.phase, orphanProgress.currentQueryName) }}</span>
             <span v-if="treeLoadingElapsed.show.value" class="progress-time">({{ treeLoadingElapsed.elapsed.value }}s)</span>
           </div>
 
@@ -333,19 +339,37 @@ watch(
 
           <!-- Phase 2: Running exclusions -->
           <div v-else-if="orphanProgress.phase === 'running-exclusions'" class="progress-detail">
-            <div class="progress-counts">
-              <span class="count-label">Starting:</span>
-              <span class="count-value">{{ orphanProgress.totalConcepts.toLocaleString() }} concepts</span>
-            </div>
-            <div class="progress-counts">
-              <span class="count-label">Remaining:</span>
-              <span class="count-value">{{ orphanProgress.remainingCandidates.toLocaleString() }} candidates</span>
-            </div>
+            <!-- Single-query approach shows different stats -->
+            <template v-if="orphanProgress.currentQueryName === 'single-query-orphan-detection'">
+              <div class="progress-counts">
+                <span class="count-label">All concepts in endpoint:</span>
+                <span class="count-value">{{ orphanProgress.totalConcepts.toLocaleString() }}</span>
+              </div>
+              <div class="progress-counts">
+                <span class="count-label">Orphans found:</span>
+                <span class="count-value">{{ orphanProgress.remainingCandidates.toLocaleString() }}</span>
+              </div>
+              <div class="progress-current">
+                Fetching orphan concepts with optimized single query...
+              </div>
+            </template>
 
-            <!-- Current query -->
-            <div v-if="orphanProgress.currentQueryName" class="progress-current">
-              Running: {{ formatQueryName(orphanProgress.currentQueryName) }}
-            </div>
+            <!-- Multi-query approach shows elimination stats -->
+            <template v-else>
+              <div class="progress-counts">
+                <span class="count-label">Starting:</span>
+                <span class="count-value">{{ orphanProgress.totalConcepts.toLocaleString() }} concepts</span>
+              </div>
+              <div class="progress-counts">
+                <span class="count-label">Remaining:</span>
+                <span class="count-value">{{ orphanProgress.remainingCandidates.toLocaleString() }} candidates</span>
+              </div>
+
+              <!-- Current query -->
+              <div v-if="orphanProgress.currentQueryName" class="progress-current">
+                Running: {{ formatQueryName(orphanProgress.currentQueryName) }}
+              </div>
+            </template>
 
             <!-- Completed queries (expandable) -->
             <details v-if="orphanProgress.completedQueries.length > 0" class="progress-queries">

@@ -13,8 +13,8 @@ export { useEndpointForm } from './useEndpointForm'
 export { useEndpointTest } from './useEndpointTest'
 export { useLanguagePriorities } from './useLanguagePriorities'
 export { useLabelResolver } from './useLabelResolver'
-export { calculateOrphanConcepts } from './useOrphanConcepts'
-export { buildOrphanExclusionQueries, buildAllConceptsQuery } from './useOrphanQueries'
+export { calculateOrphanConcepts, calculateOrphanConceptsFast } from './useOrphanConcepts'
+export { buildOrphanExclusionQueries, buildAllConceptsQuery, buildSingleOrphanQuery } from './useOrphanQueries'
 export {
   createInitialProgress,
   type OrphanProgress,

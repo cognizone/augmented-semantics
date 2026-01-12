@@ -12,6 +12,9 @@ import { logger, type LogLevel } from '../services'
 
 const STORAGE_KEY = 'ae-skos-settings'
 
+// Orphan detection strategy
+export type OrphanDetectionStrategy = 'auto' | 'fast' | 'slow'
+
 // Deprecation detection rule
 export interface DeprecationRule {
   id: string
@@ -54,7 +57,8 @@ export interface AppSettings {
   deprecationRules: DeprecationRule[] // Configurable deprecation detection rules
 
   // Developer settings
-  logLevel: LogLevel                  // Minimum log level for console output
+  logLevel: LogLevel                          // Minimum log level for console output
+  orphanDetectionStrategy: OrphanDetectionStrategy  // Orphan detection method (auto/fast/slow)
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -65,6 +69,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   showDeprecationIndicator: true,
   deprecationRules: DEFAULT_DEPRECATION_RULES,
   logLevel: 'warn',
+  orphanDetectionStrategy: 'auto',
 }
 
 export const useSettingsStore = defineStore('settings', () => {
@@ -76,6 +81,7 @@ export const useSettingsStore = defineStore('settings', () => {
   const showDeprecationIndicator = ref(DEFAULT_SETTINGS.showDeprecationIndicator)
   const deprecationRules = ref<DeprecationRule[]>([...DEFAULT_DEPRECATION_RULES])
   const logLevel = ref<LogLevel>(DEFAULT_SETTINGS.logLevel)
+  const orphanDetectionStrategy = ref<OrphanDetectionStrategy>(DEFAULT_SETTINGS.orphanDetectionStrategy)
 
   // Apply dark mode to document
   function applyDarkMode(isDark: boolean) {
@@ -115,6 +121,9 @@ export const useSettingsStore = defineStore('settings', () => {
           logLevel.value = settings.logLevel
           logger.setMinLevel(settings.logLevel)
         }
+        if (settings.orphanDetectionStrategy !== undefined) {
+          orphanDetectionStrategy.value = settings.orphanDetectionStrategy
+        }
       }
     } catch (e) {
       logger.error('SettingsStore', 'Failed to load settings', { error: e })
@@ -132,6 +141,7 @@ export const useSettingsStore = defineStore('settings', () => {
         showDeprecationIndicator: showDeprecationIndicator.value,
         deprecationRules: deprecationRules.value,
         logLevel: logLevel.value,
+        orphanDetectionStrategy: orphanDetectionStrategy.value,
       }
       localStorage.setItem(STORAGE_KEY, JSON.stringify(settings))
     } catch (e) {
@@ -172,6 +182,11 @@ export const useSettingsStore = defineStore('settings', () => {
     saveSettings()
   }
 
+  function setOrphanDetectionStrategy(strategy: OrphanDetectionStrategy) {
+    orphanDetectionStrategy.value = strategy
+    saveSettings()
+  }
+
   function resetToDefaults() {
     darkMode.value = DEFAULT_SETTINGS.darkMode
     applyDarkMode(DEFAULT_SETTINGS.darkMode)
@@ -181,6 +196,7 @@ export const useSettingsStore = defineStore('settings', () => {
     showDeprecationIndicator.value = DEFAULT_SETTINGS.showDeprecationIndicator
     deprecationRules.value = [...DEFAULT_DEPRECATION_RULES]
     logLevel.value = DEFAULT_SETTINGS.logLevel
+    orphanDetectionStrategy.value = DEFAULT_SETTINGS.orphanDetectionStrategy
     logger.setMinLevel(DEFAULT_SETTINGS.logLevel)
     saveSettings()
   }
@@ -189,6 +205,11 @@ export const useSettingsStore = defineStore('settings', () => {
   watch(darkMode, (isDark) => {
     applyDarkMode(isDark)
     saveSettings()
+  })
+
+  // Watch logLevel to update logger
+  watch(logLevel, (level) => {
+    logger.setMinLevel(level)
   })
 
   // Auto-save on any change (alternative to manual save in each setter)
@@ -200,6 +221,7 @@ export const useSettingsStore = defineStore('settings', () => {
       showDeprecationIndicator.value,
       deprecationRules.value,
       logLevel.value,
+      orphanDetectionStrategy.value,
     ],
     () => saveSettings(),
     { deep: true }
@@ -217,6 +239,7 @@ export const useSettingsStore = defineStore('settings', () => {
     showDeprecationIndicator,
     deprecationRules,
     logLevel,
+    orphanDetectionStrategy,
     // Actions
     setDarkMode,
     setShowDatatypes,
@@ -224,6 +247,7 @@ export const useSettingsStore = defineStore('settings', () => {
     setShowDeprecationIndicator,
     setDeprecationRules,
     setLogLevel,
+    setOrphanDetectionStrategy,
     resetToDefaults,
     loadSettings,
   }

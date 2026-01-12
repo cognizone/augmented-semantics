@@ -8,10 +8,10 @@
  */
 
 import { ref } from 'vue'
-import { useConceptStore, useEndpointStore, useSchemeStore, useLanguageStore, ORPHAN_SCHEME_URI } from '../stores'
+import { useConceptStore, useEndpointStore, useSchemeStore, useLanguageStore, useSettingsStore, ORPHAN_SCHEME_URI } from '../stores'
 import { executeSparql, logger, eventBus, withPrefixes } from '../services'
 import { useConceptBindings, useConceptTreeQueries } from './index'
-import { calculateOrphanConcepts } from './useOrphanConcepts'
+import { calculateOrphanConcepts, calculateOrphanConceptsFast } from './useOrphanConcepts'
 import { createInitialProgress, type OrphanProgress } from './useOrphanProgress'
 import type { ConceptNode } from '../types'
 
@@ -23,6 +23,7 @@ export function useTreePagination() {
   const endpointStore = useEndpointStore()
   const schemeStore = useSchemeStore()
   const languageStore = useLanguageStore()
+  const settingsStore = useSettingsStore()
   const { processBindings } = useConceptBindings()
   const { buildTopConceptsQuery, buildChildrenQuery } = useConceptTreeQueries()
 
@@ -158,15 +159,41 @@ export function useTreePagination() {
       // Reset progress state
       orphanProgress.value = createInitialProgress()
 
+      const strategy = settingsStore.orphanDetectionStrategy ?? 'auto'
+
       try {
-        // Calculate orphans with progress callback
-        orphanConceptUris.value = await calculateOrphanConcepts(endpoint, (progress) => {
-          orphanProgress.value = { ...progress }
-        })
+        if (strategy === 'slow') {
+          // Explicitly use slow multi-query
+          orphanConceptUris.value = await calculateOrphanConcepts(endpoint, (progress) => {
+            orphanProgress.value = { ...progress }
+          })
+          logger.info('TreePagination', `Loaded ${orphanConceptUris.value.length} orphan URIs (slow multi-query)`)
+        } else if (strategy === 'fast') {
+          // Explicitly use fast single-query (may fail)
+          orphanConceptUris.value = await calculateOrphanConceptsFast(endpoint, (progress) => {
+            orphanProgress.value = { ...progress }
+          })
+          logger.info('TreePagination', `Loaded ${orphanConceptUris.value.length} orphan URIs (fast single-query)`)
+        } else {
+          // Auto: Try fast first, fallback to slow on error
+          try {
+            orphanConceptUris.value = await calculateOrphanConceptsFast(endpoint, (progress) => {
+              orphanProgress.value = { ...progress }
+            })
+            logger.info('TreePagination', `Fast orphan detection succeeded: ${orphanConceptUris.value.length} orphans`)
+          } catch (fastError) {
+            logger.warn('TreePagination', 'Fast orphan detection failed, falling back to multi-query', {
+              error: fastError
+            })
+            orphanConceptUris.value = await calculateOrphanConcepts(endpoint, (progress) => {
+              orphanProgress.value = { ...progress }
+            })
+            logger.info('TreePagination', `Slow orphan detection succeeded: ${orphanConceptUris.value.length} orphans`)
+          }
+        }
+
         topConceptsOffset.value = 0
         hasMoreTopConcepts.value = orphanConceptUris.value.length > PAGE_SIZE
-
-        logger.info('TreePagination', `Loaded ${orphanConceptUris.value.length} orphan URIs`)
       } catch (e) {
         logger.error('TreePagination', 'Failed to calculate orphans', { error: e })
         conceptStore.setLoadingTree(false)

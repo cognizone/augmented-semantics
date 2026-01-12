@@ -87,6 +87,13 @@ const logLevelOptions = [
   { label: 'Fatal (critical only)', value: 'fatal' },
 ]
 
+// Orphan detection strategy options for settings dropdown
+const orphanDetectionStrategyOptions = [
+  { label: 'Auto (recommended)', value: 'auto' },
+  { label: 'Fast (single query)', value: 'fast' },
+  { label: 'Slow (multi query)', value: 'slow' },
+]
+
 // Language display names
 const languageNames: Record<string, string> = {
   en: 'English', nl: 'Nederlands', fr: 'Français', de: 'Deutsch',
@@ -338,15 +345,28 @@ onUnmounted(() => {
           <div class="setting-row">
             <label class="setting-label">Log level</label>
             <Select
-              :modelValue="settingsStore.logLevel"
+              v-model="settingsStore.logLevel"
               :options="logLevelOptions"
               optionLabel="label"
               optionValue="value"
               class="log-level-select select-compact"
-              @change="(e: any) => settingsStore.setLogLevel(e.value)"
             />
             <p class="setting-hint">
               Minimum log level shown in browser console (F12). All logs are stored in history.
+            </p>
+          </div>
+
+          <div class="setting-row">
+            <label class="setting-label">Orphan detection strategy</label>
+            <Select
+              v-model="settingsStore.orphanDetectionStrategy"
+              :options="orphanDetectionStrategyOptions"
+              optionLabel="label"
+              optionValue="value"
+              class="orphan-strategy-select select-compact"
+            />
+            <p class="setting-hint">
+              Method for finding orphan concepts. Auto tries fast single-query with fallback to slow multi-query.
             </p>
           </div>
         </section>
@@ -595,6 +615,10 @@ onUnmounted(() => {
 }
 
 .log-level-select {
+  width: 100%;
+}
+
+.orphan-strategy-select {
   width: 100%;
 }
 </style>
