@@ -14,6 +14,7 @@ import { useLabelResolver } from '../../composables'
 import type { ConceptRef, ConceptScheme } from '../../types'
 import Breadcrumb from 'primevue/breadcrumb'
 import Select from 'primevue/select'
+import InputText from 'primevue/inputtext'
 
 const emit = defineEmits<{
   selectConcept: [uri: string]
@@ -28,12 +29,22 @@ const { shouldShowLangTag } = useLabelResolver()
 
 // Local state
 const loading = ref(false)
+const filterValue = ref('')
 
-// Scheme dropdown options
-const schemeOptions = computed(() => {
-  const options: { label: string; value: string | null; isOrphan?: boolean }[] = [
-    { label: 'All Schemes', value: null },
-    { label: 'Orphan Concepts', value: ORPHAN_SCHEME_URI, isOrphan: true },
+// Handle keyboard in filter input
+function onFilterKeyDown(event: KeyboardEvent) {
+  if (event.key === 'Escape') {
+    // Clear filter on Escape
+    filterValue.value = ''
+  }
+  // Arrow keys and Tab work naturally - no interception needed
+}
+
+// All scheme options (unfiltered)
+const allSchemeOptions = computed(() => {
+  const options: { label: string; value: string | null; isOrphan?: boolean; isPinned?: boolean }[] = [
+    { label: 'All Schemes', value: null, isPinned: true },
+    { label: 'Orphan Concepts', value: ORPHAN_SCHEME_URI, isOrphan: true, isPinned: true },
   ]
 
   schemeStore.sortedSchemes.forEach(scheme => {
@@ -44,6 +55,22 @@ const schemeOptions = computed(() => {
   })
 
   return options
+})
+
+// Filtered scheme options
+const schemeOptions = computed(() => {
+  if (!filterValue.value) {
+    return allSchemeOptions.value
+  }
+
+  const filter = filterValue.value.toLowerCase()
+  return allSchemeOptions.value.filter(option => {
+    // Always show pinned items
+    if (option.isPinned) return true
+
+    // Filter regular schemes by label
+    return option.label.toLowerCase().includes(filter)
+  })
 })
 
 const selectedScheme = computed({
@@ -468,6 +495,26 @@ watch(
       class="scheme-select select-compact"
       :disabled="!endpointStore.current || schemeOptions.length <= 1"
     >
+      <template #header v-if="allSchemeOptions.length > 5">
+        <div class="scheme-filter-container">
+          <div class="filter-input-wrapper">
+            <InputText
+              v-model="filterValue"
+              placeholder="Filter schemes... (Tab to navigate)"
+              class="scheme-filter"
+              @keydown="onFilterKeyDown"
+            />
+            <button
+              v-if="filterValue"
+              @click="filterValue = ''"
+              class="filter-clear-btn"
+              aria-label="Clear filter"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      </template>
       <template #value>
         <span class="scheme-value">{{ currentSchemeName }}</span>
       </template>
@@ -475,6 +522,11 @@ watch(
         <div class="scheme-option" :class="{ orphan: slotProps.option.isOrphan }">
           <span v-if="slotProps.option.isOrphan" class="material-symbols-outlined orphan-icon">link_off</span>
           <span>{{ slotProps.option.label }}</span>
+        </div>
+      </template>
+      <template #empty>
+        <div class="empty-message">
+          {{ filterValue ? 'No schemes match your search' : 'No schemes available' }}
         </div>
       </template>
     </Select>
@@ -505,6 +557,79 @@ watch(
   background: var(--ae-bg-elevated);
   border-bottom: 1px solid var(--ae-border-color);
   min-height: 40px;
+}
+
+/* Scheme filter (inside dropdown header) */
+.scheme-filter-container {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--ae-border-color);
+  background: var(--ae-bg-base);
+}
+
+.filter-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.scheme-filter {
+  width: 100%;
+  padding: 0.375rem 0.5rem;
+  padding-right: 2rem;
+  font-size: 0.8125rem;
+  background: transparent;
+  border: 1px solid var(--ae-border-color);
+  border-radius: 4px;
+  color: var(--ae-text-primary);
+  transition: border-color 0.15s;
+}
+
+.scheme-filter:focus {
+  outline: none;
+  border-color: var(--ae-accent);
+}
+
+.scheme-filter::placeholder {
+  color: var(--ae-text-muted);
+  font-style: italic;
+}
+
+.filter-clear-btn {
+  position: absolute;
+  right: 0.25rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1.5rem;
+  height: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  color: var(--ae-text-secondary);
+  font-size: 1.25rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  padding: 0;
+  line-height: 1;
+}
+
+.filter-clear-btn:hover {
+  background: var(--ae-bg-hover);
+  color: var(--ae-text-primary);
+}
+
+.filter-clear-btn:active {
+  transform: translateY(-50%) scale(0.9);
+}
+
+.empty-message {
+  padding: 1rem;
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--ae-text-secondary);
+  font-style: italic;
 }
 
 /* Scheme selector */
