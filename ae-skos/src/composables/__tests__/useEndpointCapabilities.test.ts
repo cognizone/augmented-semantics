@@ -114,10 +114,55 @@ describe('useEndpointCapabilities', () => {
       const endpoint = ref<SPARQLEndpoint | null>(createEndpoint({
         supportsNamedGraphs: true,
         skosGraphCount: 1234,
+        skosGraphUris: new Array(1234).fill('http://example.org/graph'), // Provide array to avoid 500+ display
         analyzedAt: '2024-01-01',
       }))
       const { skosGraphStatus } = useEndpointCapabilities(endpoint)
       expect(skosGraphStatus.value).toBe('1.234 graphs')
+    })
+
+    it('shows "500+ graphs" when count > 500 and skosGraphUris is null', () => {
+      const endpoint = ref<SPARQLEndpoint | null>(createEndpoint({
+        supportsNamedGraphs: true,
+        skosGraphCount: 750,
+        skosGraphUris: null, // Hit the limit, couldn't enumerate
+        analyzedAt: '2024-01-01',
+      }))
+      const { skosGraphStatus } = useEndpointCapabilities(endpoint)
+      expect(skosGraphStatus.value).toBe('500+ graphs')
+    })
+
+    it('shows "500+ graphs" when count is exactly 501 and skosGraphUris is null', () => {
+      const endpoint = ref<SPARQLEndpoint | null>(createEndpoint({
+        supportsNamedGraphs: true,
+        skosGraphCount: 501,
+        skosGraphUris: null,
+        analyzedAt: '2024-01-01',
+      }))
+      const { skosGraphStatus } = useEndpointCapabilities(endpoint)
+      expect(skosGraphStatus.value).toBe('500+ graphs')
+    })
+
+    it('shows exact count when count > 500 but skosGraphUris array exists', () => {
+      const endpoint = ref<SPARQLEndpoint | null>(createEndpoint({
+        supportsNamedGraphs: true,
+        skosGraphCount: 600,
+        skosGraphUris: new Array(600).fill('http://example.org/graph'), // Array exists
+        analyzedAt: '2024-01-01',
+      }))
+      const { skosGraphStatus } = useEndpointCapabilities(endpoint)
+      expect(skosGraphStatus.value).toBe('600 graphs')
+    })
+
+    it('shows exact count when count ≤ 500', () => {
+      const endpoint = ref<SPARQLEndpoint | null>(createEndpoint({
+        supportsNamedGraphs: true,
+        skosGraphCount: 500,
+        skosGraphUris: new Array(500).fill('http://example.org/graph'),
+        analyzedAt: '2024-01-01',
+      }))
+      const { skosGraphStatus } = useEndpointCapabilities(endpoint)
+      expect(skosGraphStatus.value).toBe('500 graphs')
     })
   })
 
@@ -184,6 +229,50 @@ describe('useEndpointCapabilities', () => {
       }))
       const { skosGraphDescription } = useEndpointCapabilities(endpoint)
       expect(skosGraphDescription.value).toBe('5 graphs contain SKOS data')
+    })
+
+    it('returns special limit message when count > 500 and skosGraphUris is null', () => {
+      const endpoint = ref<SPARQLEndpoint | null>(createEndpoint({
+        supportsNamedGraphs: true,
+        skosGraphCount: 750,
+        skosGraphUris: null, // Hit the limit
+        analyzedAt: '2024-01-01',
+      }))
+      const { skosGraphDescription } = useEndpointCapabilities(endpoint)
+      expect(skosGraphDescription.value).toBe('More than 500 graphs contain SKOS data (too many to process individually)')
+    })
+
+    it('returns exact description when count > 500 but skosGraphUris array exists', () => {
+      const endpoint = ref<SPARQLEndpoint | null>(createEndpoint({
+        supportsNamedGraphs: true,
+        skosGraphCount: 600,
+        skosGraphUris: new Array(600).fill('http://example.org/graph'),
+        analyzedAt: '2024-01-01',
+      }))
+      const { skosGraphDescription } = useEndpointCapabilities(endpoint)
+      expect(skosGraphDescription.value).toBe('600 graphs contain SKOS data')
+    })
+
+    it('returns exact description when count ≤ 500', () => {
+      const endpoint = ref<SPARQLEndpoint | null>(createEndpoint({
+        supportsNamedGraphs: true,
+        skosGraphCount: 500,
+        skosGraphUris: new Array(500).fill('http://example.org/graph'),
+        analyzedAt: '2024-01-01',
+      }))
+      const { skosGraphDescription } = useEndpointCapabilities(endpoint)
+      expect(skosGraphDescription.value).toBe('500 graphs contain SKOS data')
+    })
+
+    it('formats large numbers in description with thousand separators', () => {
+      const endpoint = ref<SPARQLEndpoint | null>(createEndpoint({
+        supportsNamedGraphs: true,
+        skosGraphCount: 1234,
+        skosGraphUris: new Array(1234).fill('http://example.org/graph'),
+        analyzedAt: '2024-01-01',
+      }))
+      const { skosGraphDescription } = useEndpointCapabilities(endpoint)
+      expect(skosGraphDescription.value).toBe('1.234 graphs contain SKOS data')
     })
   })
 

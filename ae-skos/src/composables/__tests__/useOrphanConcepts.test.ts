@@ -476,7 +476,13 @@ describe('useOrphanConcepts', () => {
       const mockExecuteSparql = executeSparql as ReturnType<typeof vi.fn>
       let runningExclusionsProgress: ProgressState | null = null
 
-      mockExecuteSparql.mockResolvedValue(createBindings([]))
+      // Return some concepts for fetchAllConcepts, then empty for exclusion queries
+      mockExecuteSparql
+        .mockResolvedValueOnce(createBindings([
+          'http://example.org/concept1',
+          'http://example.org/concept2',
+        ]))
+        .mockResolvedValue(createBindings([]))
 
       await calculateOrphanConcepts(endpoint, (progress) => {
         if (progress.phase === 'running-exclusions' && progress.completedQueries.length > 0) {

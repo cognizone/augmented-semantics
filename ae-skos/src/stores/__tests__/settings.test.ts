@@ -317,4 +317,110 @@ describe('settings store', () => {
       expect(store.logLevel).toBe('warn')
     })
   })
+
+  describe('orphan detection strategy', () => {
+    it('starts with auto as default', () => {
+      const store = useSettingsStore()
+      expect(store.orphanDetectionStrategy).toBe('auto')
+    })
+
+    it('can be changed via setOrphanDetectionStrategy', () => {
+      const store = useSettingsStore()
+
+      store.setOrphanDetectionStrategy('fast')
+      expect(store.orphanDetectionStrategy).toBe('fast')
+
+      store.setOrphanDetectionStrategy('slow')
+      expect(store.orphanDetectionStrategy).toBe('slow')
+
+      store.setOrphanDetectionStrategy('auto')
+      expect(store.orphanDetectionStrategy).toBe('auto')
+    })
+
+    it('persists to localStorage', () => {
+      const store = useSettingsStore()
+
+      store.setOrphanDetectionStrategy('fast')
+      expect(localStorage.setItem).toHaveBeenCalled()
+    })
+
+    it('loads from localStorage on init', () => {
+      const storedSettings = {
+        orphanDetectionStrategy: 'slow',
+      }
+
+      vi.mocked(localStorage.getItem).mockReturnValue(JSON.stringify(storedSettings))
+
+      const store = useSettingsStore()
+      expect(store.orphanDetectionStrategy).toBe('slow')
+    })
+
+    it('loads fast strategy from localStorage', () => {
+      const storedSettings = {
+        orphanDetectionStrategy: 'fast',
+      }
+
+      vi.mocked(localStorage.getItem).mockReturnValue(JSON.stringify(storedSettings))
+
+      const store = useSettingsStore()
+      expect(store.orphanDetectionStrategy).toBe('fast')
+    })
+
+    it('loads auto strategy from localStorage', () => {
+      const storedSettings = {
+        orphanDetectionStrategy: 'auto',
+      }
+
+      vi.mocked(localStorage.getItem).mockReturnValue(JSON.stringify(storedSettings))
+
+      const store = useSettingsStore()
+      expect(store.orphanDetectionStrategy).toBe('auto')
+    })
+
+    it('resets to auto on resetToDefaults', () => {
+      const store = useSettingsStore()
+
+      store.setOrphanDetectionStrategy('slow')
+      expect(store.orphanDetectionStrategy).toBe('slow')
+
+      store.resetToDefaults()
+      expect(store.orphanDetectionStrategy).toBe('auto')
+    })
+
+    it('uses default when not in stored settings', () => {
+      const storedSettings = {
+        darkMode: true,
+        // orphanDetectionStrategy not included
+      }
+
+      vi.mocked(localStorage.getItem).mockReturnValue(JSON.stringify(storedSettings))
+
+      const store = useSettingsStore()
+      expect(store.orphanDetectionStrategy).toBe('auto')
+    })
+
+    it('can be changed via direct assignment', async () => {
+      const store = useSettingsStore()
+
+      // Simulate v-model behavior (direct ref assignment)
+      store.orphanDetectionStrategy = 'fast'
+      await new Promise(resolve => setTimeout(resolve, 0)) // Wait for watcher
+
+      expect(store.orphanDetectionStrategy).toBe('fast')
+      expect(localStorage.setItem).toHaveBeenCalled()
+    })
+
+    it('is included in saved settings', () => {
+      const store = useSettingsStore()
+
+      store.setOrphanDetectionStrategy('slow')
+
+      // Verify localStorage was called with correct data
+      const calls = vi.mocked(localStorage.setItem).mock.calls
+      const lastCall = calls[calls.length - 1]
+      const savedData = JSON.parse(lastCall[1] as string)
+
+      expect(savedData.orphanDetectionStrategy).toBe('slow')
+    })
+  })
 })

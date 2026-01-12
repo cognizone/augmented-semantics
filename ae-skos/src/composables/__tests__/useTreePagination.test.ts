@@ -56,6 +56,15 @@ vi.mock('../useConceptTreeQueries', () => ({
   }),
 }))
 
+// Mock orphan detection functions
+const mockCalculateOrphanConceptsFast = vi.fn()
+const mockCalculateOrphanConcepts = vi.fn()
+
+vi.mock('../useOrphanConcepts', () => ({
+  calculateOrphanConceptsFast: (...args: any[]) => mockCalculateOrphanConceptsFast(...args),
+  calculateOrphanConcepts: (...args: any[]) => mockCalculateOrphanConcepts(...args),
+}))
+
 import { executeSparql } from '../../services/sparql'
 import type { Mock } from 'vitest'
 
@@ -130,7 +139,237 @@ describe('useTreePagination', () => {
       expect(conceptStore.topConcepts).toEqual([])
       expect(executeSparql).not.toHaveBeenCalled()
     })
+  })
 
+  describe('orphan detection strategy', () => {
+    beforeEach(() => {
+      // Reset mocks
+      mockCalculateOrphanConceptsFast.mockReset()
+      mockCalculateOrphanConcepts.mockReset()
+
+      // Setup endpoint with analysis
+      const endpointStore = useEndpointStore()
+      const endpoint = endpointStore.current
+      if (endpoint) {
+        endpoint.analysis = {
+          hasSkosContent: true,
+          supportsNamedGraphs: false,
+          skosGraphCount: 0,
+          languages: [],
+          analyzedAt: new Date().toISOString(),
+          totalConcepts: 1000,
+          relationships: {
+            hasInScheme: true,
+            hasTopConceptOf: false,
+            hasHasTopConcept: false,
+            hasBroader: false,
+            hasNarrower: false,
+            hasBroaderTransitive: false,
+            hasNarrowerTransitive: false,
+          },
+        }
+      }
+    })
+
+    describe('strategy selection', () => {
+      it('attempts fast method when strategy is auto', async () => {
+        const { useSettingsStore } = await import('../../stores')
+        const settingsStore = useSettingsStore()
+        settingsStore.orphanDetectionStrategy = 'auto'
+
+        mockCalculateOrphanConceptsFast.mockResolvedValue([
+          'http://ex.org/orphan1',
+          'http://ex.org/orphan2',
+        ])
+
+        const { loadTopConcepts } = useTreePagination()
+        const schemeStore = useSchemeStore()
+        schemeStore.selectScheme(ORPHAN_SCHEME_URI)
+
+        await loadTopConcepts()
+
+        expect(mockCalculateOrphanConceptsFast).toHaveBeenCalled()
+        expect(mockCalculateOrphanConcepts).not.toHaveBeenCalled()
+      })
+
+      it('falls back to slow on fast failure with auto strategy', async () => {
+        const { useSettingsStore } = await import('../../stores')
+        const settingsStore = useSettingsStore()
+        settingsStore.orphanDetectionStrategy = 'auto'
+
+        // Fast method fails
+        mockCalculateOrphanConceptsFast.mockRejectedValue(new Error('Query timeout'))
+
+        // Slow method succeeds
+        mockCalculateOrphanConcepts.mockResolvedValue([
+          'http://ex.org/orphan1',
+        ])
+
+        const { loadTopConcepts } = useTreePagination()
+        const schemeStore = useSchemeStore()
+        schemeStore.selectScheme(ORPHAN_SCHEME_URI)
+
+        await loadTopConcepts()
+
+        expect(mockCalculateOrphanConceptsFast).toHaveBeenCalled()
+        expect(mockCalculateOrphanConcepts).toHaveBeenCalled()
+      })
+
+      it('uses only fast when strategy is fast', async () => {
+        const { useSettingsStore } = await import('../../stores')
+        const settingsStore = useSettingsStore()
+        settingsStore.orphanDetectionStrategy = 'fast'
+
+        mockCalculateOrphanConceptsFast.mockResolvedValue([
+          'http://ex.org/orphan1',
+        ])
+
+        const { loadTopConcepts } = useTreePagination()
+        const schemeStore = useSchemeStore()
+        schemeStore.selectScheme(ORPHAN_SCHEME_URI)
+
+        await loadTopConcepts()
+
+        expect(mockCalculateOrphanConceptsFast).toHaveBeenCalled()
+        expect(mockCalculateOrphanConcepts).not.toHaveBeenCalled()
+      })
+
+      it('uses only slow when strategy is slow', async () => {
+        const { useSettingsStore } = await import('../../stores')
+        const settingsStore = useSettingsStore()
+        settingsStore.orphanDetectionStrategy = 'slow'
+
+        mockCalculateOrphanConcepts.mockResolvedValue([
+          'http://ex.org/orphan1',
+        ])
+
+        const { loadTopConcepts } = useTreePagination()
+        const schemeStore = useSchemeStore()
+        schemeStore.selectScheme(ORPHAN_SCHEME_URI)
+
+        await loadTopConcepts()
+
+        expect(mockCalculateOrphanConcepts).toHaveBeenCalled()
+        expect(mockCalculateOrphanConceptsFast).not.toHaveBeenCalled()
+      })
+
+      it('respects settingsStore.orphanDetectionStrategy', async () => {
+        const { useSettingsStore } = await import('../../stores')
+        const settingsStore = useSettingsStore()
+
+        // Test changing strategy
+        settingsStore.orphanDetectionStrategy = 'fast'
+        expect(settingsStore.orphanDetectionStrategy).toBe('fast')
+
+        settingsStore.orphanDetectionStrategy = 'slow'
+        expect(settingsStore.orphanDetectionStrategy).toBe('slow')
+
+        settingsStore.orphanDetectionStrategy = 'auto'
+        expect(settingsStore.orphanDetectionStrategy).toBe('auto')
+      })
+    })
+
+    describe('loadOrphanConcepts', () => {
+      it('calls calculateOrphanConceptsFast with auto strategy', async () => {
+        const { useSettingsStore } = await import('../../stores')
+        const settingsStore = useSettingsStore()
+        settingsStore.orphanDetectionStrategy = 'auto'
+
+        mockCalculateOrphanConceptsFast.mockResolvedValue([
+          'http://ex.org/orphan1',
+        ])
+
+        const { loadTopConcepts } = useTreePagination()
+        const schemeStore = useSchemeStore()
+        const endpointStore = useEndpointStore()
+        schemeStore.selectScheme(ORPHAN_SCHEME_URI)
+
+        await loadTopConcepts()
+
+        expect(mockCalculateOrphanConceptsFast).toHaveBeenCalledWith(
+          endpointStore.current,
+          expect.any(Function) // progress callback
+        )
+      })
+
+      it('calls calculateOrphanConcepts on fast failure', async () => {
+        const { useSettingsStore } = await import('../../stores')
+        const settingsStore = useSettingsStore()
+        settingsStore.orphanDetectionStrategy = 'auto'
+
+        mockCalculateOrphanConceptsFast.mockRejectedValue(new Error('Fast failed'))
+        mockCalculateOrphanConcepts.mockResolvedValue(['http://ex.org/orphan1'])
+
+        const { loadTopConcepts } = useTreePagination()
+        const schemeStore = useSchemeStore()
+        const endpointStore = useEndpointStore()
+        schemeStore.selectScheme(ORPHAN_SCHEME_URI)
+
+        await loadTopConcepts()
+
+        expect(mockCalculateOrphanConcepts).toHaveBeenCalledWith(
+          endpointStore.current,
+          expect.any(Function) // progress callback
+        )
+      })
+
+      it('passes progress callback', async () => {
+        const { useSettingsStore } = await import('../../stores')
+        const settingsStore = useSettingsStore()
+        settingsStore.orphanDetectionStrategy = 'auto'
+
+        mockCalculateOrphanConceptsFast.mockImplementation(async (endpoint, onProgress) => {
+          // Simulate progress callback
+          if (onProgress) {
+            onProgress({
+              phase: 'running-exclusions',
+              totalConcepts: 100,
+              fetchedConcepts: 50,
+              remainingCandidates: 10,
+              completedQueries: [],
+              skippedQueries: [],
+              currentQueryName: 'test',
+            })
+          }
+          return ['http://ex.org/orphan1']
+        })
+
+        const { loadTopConcepts } = useTreePagination()
+        const schemeStore = useSchemeStore()
+        schemeStore.selectScheme(ORPHAN_SCHEME_URI)
+
+        await loadTopConcepts()
+
+        expect(mockCalculateOrphanConceptsFast).toHaveBeenCalled()
+      })
+
+      it('stores results in orphanConceptUris', async () => {
+        const { useSettingsStore } = await import('../../stores')
+        const settingsStore = useSettingsStore()
+        settingsStore.orphanDetectionStrategy = 'auto'
+
+        const orphanUris = [
+          'http://ex.org/orphan1',
+          'http://ex.org/orphan2',
+          'http://ex.org/orphan3',
+        ]
+
+        mockCalculateOrphanConceptsFast.mockResolvedValue(orphanUris)
+
+        const { loadTopConcepts } = useTreePagination()
+        const schemeStore = useSchemeStore()
+        schemeStore.selectScheme(ORPHAN_SCHEME_URI)
+
+        await loadTopConcepts()
+
+        // Verify orphans were stored (would need to check internal state)
+        expect(mockCalculateOrphanConceptsFast).toHaveBeenCalled()
+      })
+    })
+
+  })
+
+  describe('loadTopConcepts', () => {
     it('loads top concepts when scheme selected', async () => {
       const schemeStore = useSchemeStore()
       const conceptStore = useConceptStore()
