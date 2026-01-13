@@ -220,7 +220,7 @@ onMounted(() => {
           </TabList>
           <TabPanels>
             <TabPanel value="browse">
-              <ConceptTree />
+              <ConceptTree @select-concept="selectConcept" />
             </TabPanel>
             <TabPanel value="search">
               <SearchBox @select-concept="selectConcept" />

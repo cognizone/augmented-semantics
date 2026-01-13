@@ -30,6 +30,11 @@ import type { TreeNode } from 'primevue/treenode'
 import Message from 'primevue/message'
 import ProgressSpinner from 'primevue/progressspinner'
 
+// Define emitted events
+const emit = defineEmits<{
+  selectConcept: [uri: string]
+}>()
+
 const conceptStore = useConceptStore()
 const endpointStore = useEndpointStore()
 const schemeStore = useSchemeStore()
@@ -151,8 +156,8 @@ function goToUri() {
         type: 'scheme',
       })
     } else {
-      // Treat as a concept
-      selectConcept(uri)
+      // Treat as a concept - emit to parent for unified handling
+      emit('selectConcept', uri)
     }
     gotoUri.value = ''
   }
@@ -675,7 +680,7 @@ watch(
   flex-shrink: 0;
 }
 
-.tree-node.deprecated {
+.tree-node.deprecated .node-label {
   opacity: 0.6;
 }
 
