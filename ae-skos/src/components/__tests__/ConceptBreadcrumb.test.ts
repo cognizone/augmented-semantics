@@ -851,6 +851,29 @@ describe('ConceptBreadcrumb', () => {
 
         expect(schemeStore.selectedUri).toBe('http://ex.org/scheme/2')
       })
+
+      it('clears filter when scheme is selected via component setter', async () => {
+        const wrapper = mountBreadcrumb()
+        await nextTick()
+
+        // Set filter text
+        const vm = wrapper.vm as any
+        vm.filterValue = 'test filter'
+        await nextTick()
+        expect(vm.filterValue).toBe('test filter')
+
+        // Select scheme through the component's computed setter
+        // This simulates what happens when the Select component emits a change
+        vm.selectedScheme = 'http://ex.org/scheme/2'
+        await nextTick()
+
+        // Filter should be cleared
+        expect(vm.filterValue).toBe('')
+
+        // Scheme should be selected in store
+        const schemeStore = useSchemeStore()
+        expect(schemeStore.selectedUri).toBe('http://ex.org/scheme/2')
+      })
     })
   })
 })

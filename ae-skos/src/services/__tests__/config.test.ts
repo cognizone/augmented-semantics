@@ -151,6 +151,20 @@ describe('config service', () => {
         expect(getConfig()?.appName).toBe('My Custom App')
         expect(getConfig()?.documentationUrl).toBe('https://wiki.example.org/help')
       })
+
+      it('parses logoUrl', async () => {
+        const config: AppConfig = {
+          appName: 'Logo Test App',
+          logoUrl: '/config/custom-logo.png',
+          endpoints: [{ name: 'Endpoint', url: 'https://sparql.example.org' }],
+        }
+        global.fetch = mockFetchSuccess(config)
+        const { loadConfig, getConfig } = await import('../config')
+
+        await loadConfig()
+
+        expect(getConfig()?.logoUrl).toBe('/config/custom-logo.png')
+      })
     })
 
     describe('invalid config', () => {

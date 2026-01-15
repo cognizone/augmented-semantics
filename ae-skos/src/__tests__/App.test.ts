@@ -2,22 +2,30 @@
  * App Component Tests
  *
  * Tests for main application shell, focusing on header functionality.
+ *
+ * Note: Config-related tests (logo, appName, error banner) are limited due to
+ * vitest mock hoisting issues with Vue reactive refs. The config service
+ * is fully tested in config.test.ts.
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { setActivePinia, createPinia } from 'pinia'
-import { ref } from 'vue'
+import { ref, readonly } from 'vue'
 import App from '../App.vue'
 import { useSettingsStore, useEndpointStore } from '../stores'
+import type { ResolvedConfig } from '../types'
 
-// Mock the config service
+// Default config for most tests (no config, no error)
+const defaultConfig: ResolvedConfig = {
+  configMode: false,
+  config: null,
+  loaded: true,
+  error: null,
+}
+
+// Mock the config service with default state
 vi.mock('../services/config', () => ({
-  useConfig: () => ref({
-    configMode: false,
-    config: null,
-    loading: false,
-    error: null,
-  }),
+  useConfig: () => readonly(ref(defaultConfig)),
   loadConfig: vi.fn().mockResolvedValue(undefined),
 }))
 
@@ -136,6 +144,32 @@ describe('App', () => {
       const wrapper = mountApp()
       const toggleBtn = wrapper.find('button[aria-label="Toggle dark mode"]')
       expect(toggleBtn.attributes('title')).toBe('Switch to light mode')
+    })
+  })
+
+  describe('app name and document title', () => {
+    it('displays default app name when no config', () => {
+      const wrapper = mountApp()
+      expect(wrapper.find('.app-title').text()).toBe('AE SKOS')
+    })
+
+    it('sets document.title to default when no config', () => {
+      mountApp()
+      expect(document.title).toBe('AE SKOS')
+    })
+  })
+
+  describe('logo', () => {
+    it('does not show logo when no config and not config mode', () => {
+      const wrapper = mountApp()
+      expect(wrapper.find('.app-logo').exists()).toBe(false)
+    })
+  })
+
+  describe('config error banner', () => {
+    it('does not show error banner when no error', () => {
+      const wrapper = mountApp()
+      expect(wrapper.find('.config-error-banner').exists()).toBe(false)
     })
   })
 })
