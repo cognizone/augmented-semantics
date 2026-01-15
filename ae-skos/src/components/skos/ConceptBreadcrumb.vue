@@ -77,6 +77,7 @@ const selectedScheme = computed({
   get: () => schemeStore.selectedUri,
   set: (uri: string | null) => {
     schemeStore.selectScheme(uri)
+    filterValue.value = ''
     // When selecting a scheme from dropdown, also show its details and clear concept selection
     if (uri) {
       conceptStore.selectConcept(null)
