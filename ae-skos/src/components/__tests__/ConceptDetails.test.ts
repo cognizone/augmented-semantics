@@ -111,6 +111,7 @@ describe('ConceptDetails', () => {
             props: ['loading', 'showLoading', 'hasData', 'error', 'loadingText', 'emptyIcon', 'emptyTitle', 'emptySubtitle', 'elapsed'],
           },
           DetailsHeader: {
+            name: 'DetailsHeader',
             template: '<div class="details-header"><h2>{{ title }}</h2><span class="uri">{{ uri }}</span></div>',
             props: ['icon', 'iconClass', 'wrapperClass', 'title', 'uri', 'langTag', 'showLangTag', 'deprecated', 'deprecatedTooltip', 'exportMenuItems'],
           },
@@ -400,6 +401,95 @@ describe('ConceptDetails', () => {
 
       settingsStore.setShowDatatypes(true)
       expect(settingsStore.showDatatypes).toBe(true)
+    })
+  })
+
+  describe('icon wrapper class', () => {
+    beforeEach(() => {
+      const conceptStore = useConceptStore()
+      conceptStore.selectConcept('http://example.org/concept/1')
+    })
+
+    it('passes wrapper-label class when concept has narrower', async () => {
+      mockDetails.value = {
+        uri: 'http://example.org/concept/1',
+        prefLabels: [{ value: 'Parent Concept', lang: 'en' }],
+        altLabels: [],
+        hiddenLabels: [],
+        definitions: [],
+        scopeNotes: [],
+        historyNotes: [],
+        changeNotes: [],
+        editorialNotes: [],
+        notes: [],
+        examples: [],
+        notations: [],
+        broader: [],
+        narrower: [{ uri: 'http://example.org/child/1', label: 'Child Concept' }],
+        related: [],
+        inScheme: [],
+        exactMatch: [],
+        closeMatch: [],
+        broadMatch: [],
+        narrowMatch: [],
+        relatedMatch: [],
+        identifier: [],
+        seeAlso: [],
+        prefLabelsXL: [],
+        altLabelsXL: [],
+        hiddenLabelsXL: [],
+        otherProperties: [],
+      }
+
+      const wrapper = mountConceptDetails()
+      await nextTick()
+
+      const header = wrapper.findComponent({ name: 'DetailsHeader' })
+      expect(header.exists()).toBe(true)
+      expect(header.props('wrapperClass')).toBe('wrapper-label')
+      expect(header.props('iconClass')).toBe('icon-label')
+      expect(header.props('icon')).toBe('label')
+    })
+
+    it('passes wrapper-leaf class when concept has no narrower', async () => {
+      mockDetails.value = {
+        uri: 'http://example.org/concept/1',
+        prefLabels: [{ value: 'Leaf Concept', lang: 'en' }],
+        altLabels: [],
+        hiddenLabels: [],
+        definitions: [],
+        scopeNotes: [],
+        historyNotes: [],
+        changeNotes: [],
+        editorialNotes: [],
+        notes: [],
+        examples: [],
+        notations: [],
+        broader: [],
+        narrower: [],
+        related: [],
+        inScheme: [],
+        exactMatch: [],
+        closeMatch: [],
+        broadMatch: [],
+        narrowMatch: [],
+        relatedMatch: [],
+        identifier: [],
+        seeAlso: [],
+        prefLabelsXL: [],
+        altLabelsXL: [],
+        hiddenLabelsXL: [],
+        otherProperties: [],
+      }
+
+      const wrapper = mountConceptDetails()
+      await nextTick()
+
+      const header = wrapper.findComponent({ name: 'DetailsHeader' })
+      expect(header.exists()).toBe(true)
+      expect(header.props('wrapperClass')).toBe('wrapper-leaf')
+      expect(header.props('iconClass')).toBe('icon-leaf')
+      expect(header.props('icon')).toBe('circle')
     })
   })
 })
