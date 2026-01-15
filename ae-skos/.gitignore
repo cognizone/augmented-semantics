@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Experimental work
+sandbox
+
 # Test coverage
 coverage
 

@@ -81,7 +81,6 @@ const {
   expandedKeys,
   onNodeExpand,
   onNodeCollapse,
-  selectConcept,
 } = useTreeSelection({
   loadChildren,
   findNode,
