@@ -32,7 +32,7 @@ export async function loadConfig(): Promise<ResolvedConfig> {
   }
 
   try {
-    const response = await fetch(CONFIG_PATH)
+    const response = await fetch(CONFIG_PATH, { cache: 'no-store' })
 
     if (response.status === 404) {
       // No config file - this is expected for dev/default deployments

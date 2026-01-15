@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { RouterView } from 'vue-router'
 import { useUIStore, useConceptStore, useSettingsStore, useLanguageStore, useEndpointStore } from './stores'
 import { useConfig } from './services'
@@ -23,6 +23,12 @@ const showEndpointManager = ref(false)
 
 // Config-based computed properties
 const appName = computed(() => config.value.config?.appName ?? 'AE SKOS')
+
+// Update document title when appName changes
+watch(appName, (name) => {
+  document.title = name
+}, { immediate: true })
+
 const logoUrl = computed(() =>
   config.value.config?.logoUrl ?? (config.value.configMode ? '/config/logo.png' : null)
 )
@@ -238,6 +244,12 @@ onUnmounted(() => {
 
     <!-- Breadcrumb -->
     <ConceptBreadcrumb @select-concept="selectConcept" />
+
+    <!-- Config error banner -->
+    <div v-if="config.error" class="config-error-banner">
+      <span class="material-symbols-outlined">error</span>
+      <span>Failed to load config: {{ config.error }}</span>
+    </div>
 
     <!-- Main Content -->
     <main class="app-main">
@@ -649,5 +661,19 @@ onUnmounted(() => {
 
 .orphan-strategy-select {
   width: 100%;
+}
+
+.config-error-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: #d32f2f;
+  color: white;
+  font-size: 0.875rem;
+}
+
+.config-error-banner .material-symbols-outlined {
+  font-size: 1.25rem;
 }
 </style>

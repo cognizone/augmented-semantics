@@ -148,17 +148,35 @@ function selectBestLabelByLanguage(
   return labels[0]
 }
 
-// Load schemes from endpoint
+// Load schemes from endpoint (uses schemeUris whitelist from analysis)
 async function loadSchemes() {
   const endpoint = endpointStore.current
   if (!endpoint) return
 
-  logger.info('ConceptBreadcrumb', 'Loading concept schemes', { endpoint: endpoint.url })
+  // Get whitelist from endpoint analysis
+  const schemeUris = endpoint.analysis?.schemeUris || []
+  logger.info('ConceptBreadcrumb', 'Loading concept schemes', {
+    endpoint: endpoint.url,
+    whitelistCount: schemeUris.length
+  })
+
+  // If no schemes in whitelist, set empty and return
+  if (schemeUris.length === 0) {
+    logger.info('ConceptBreadcrumb', 'No schemes in whitelist, setting empty')
+    schemeStore.setSchemes([])
+    endpointStore.setStatus('connected')
+    return
+  }
+
   endpointStore.setStatus('connecting')
+
+  // Build VALUES clause for whitelist
+  const valuesClause = schemeUris.map(uri => `<${uri}>`).join(' ')
 
   const query = withPrefixes(`
     SELECT DISTINCT ?scheme ?label ?labelLang ?labelType ?deprecated
     WHERE {
+      VALUES ?scheme { ${valuesClause} }
       ?scheme a skos:ConceptScheme .
       OPTIONAL { ?scheme owl:deprecated ?deprecated . }
       OPTIONAL {
@@ -183,11 +201,16 @@ async function loadSchemes() {
   try {
     const results = await executeSparql(endpoint, query, { retries: 1 })
 
-    // Group by scheme URI and pick best label
+    // Initialize map with ALL whitelist URIs (so we include schemes without labels)
     const schemeMap = new Map<string, {
       labels: { value: string; lang: string; type: string }[]
       deprecated: boolean
     }>()
+
+    // Pre-populate with whitelist URIs
+    for (const uri of schemeUris) {
+      schemeMap.set(uri, { labels: [], deprecated: false })
+    }
 
     for (const b of results.results.bindings) {
       const uri = b.scheme?.value
@@ -216,7 +239,7 @@ async function loadSchemes() {
       }
     }
 
-    // Convert to ConceptScheme[] with best label selection
+    // Convert to ConceptScheme[] with best label selection (includes all whitelist URIs)
     const uniqueSchemes: ConceptScheme[] = Array.from(schemeMap.entries()).map(([uri, data]) => {
       const labelPriority = ['prefLabel', 'xlPrefLabel', 'title', 'rdfsLabel']
       let bestLabel: string | undefined

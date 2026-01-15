@@ -56,22 +56,31 @@ See [com03-ErrorHandling](./com03-ErrorHandling.md) for retry logic details.
 
 Run analysis queries on connection to detect endpoint characteristics.
 
-### Three-Step Analysis
+### Analysis Steps
 
 Analysis runs automatically on endpoint connection and can be re-triggered via "Re-analyze" button.
+
+**Steps:**
+1. **SKOS Content** - Check for ConceptSchemes or Concepts
+2. **Named Graphs** - Detect graph support
+3. **SKOS Graphs** - Count graphs with SKOS content
+4. **Concept Schemes** - Detect and store scheme URIs (max 200)
+5. **Concept Count** - Count total concepts
+6. **Relationships** - Detect SKOS relationship capabilities
+7. **Languages** - Detect available label languages
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │ SPARQL Capabilities                                    [×]  │
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
-│ ✓ (1/3) Graphs: 12 graphs (empty graph pattern)            │
-│ ✓ (2/3) Duplicates: none                                    │
-│ ✓ (3/3) Languages: found 5 (default)                        │
-│                                                             │
-│ Named Graphs:  Yes (12 graphs)                              │
-│ Duplicates:    No                                           │
-│ Languages:     en, fr, de, it, rm                           │
+│ ✓ (1/7) SKOS Content: found                                │
+│ ✓ (2/7) Named Graphs: 12 graphs                            │
+│ ✓ (3/7) SKOS Graphs: 3 graphs                              │
+│ ✓ (4/7) Concept Schemes: 101 schemes                       │
+│ ✓ (5/7) Concepts: 3,439 total                              │
+│ ✓ (6/7) Relationships: 5/7 detected                        │
+│ ✓ (7/7) Languages: 45 languages                            │
 │                                                             │
 │ Last analyzed: 2 hours ago                                  │
 ├─────────────────────────────────────────────────────────────┤
@@ -185,6 +194,23 @@ interface EndpointAnalysis {
   supportsNamedGraphs: boolean | null  // null = not supported, false = none, true = has graphs
   skosGraphCount: number | null        // null = count failed, number = SKOS graphs found
 
+  // Concept Schemes (URIs only - labels fetched dynamically)
+  schemeUris?: string[]         // List of scheme URIs (max 200)
+  schemeCount?: number          // Total count found
+  schemesLimited?: boolean      // true if more schemes exist than stored
+
+  // SKOS Statistics
+  totalConcepts?: number        // Total concept count
+  relationships?: {             // Detected SKOS relationship capabilities
+    hasInScheme: boolean
+    hasTopConceptOf: boolean
+    hasHasTopConcept: boolean
+    hasBroader: boolean
+    hasNarrower: boolean
+    hasBroaderTransitive: boolean
+    hasNarrowerTransitive: boolean
+  }
+
   // Languages (sorted by count descending)
   languages?: DetectedLanguage[]
 
@@ -202,6 +228,7 @@ interface DetectedLanguage {
 - `skosGraphCount` counts only graphs containing SKOS data (not all graphs)
 - `graphCount` and `graphCountExact` removed (generic graph counting not implemented)
 - `hasDuplicateTriples` removed (duplicate detection not implemented)
+- `schemeUris` stores the whitelist of concept schemes to display in the UI
 
 See **SKOS-Specific Analysis** section below for implementation details.
 
@@ -390,6 +417,55 @@ When "500+ graphs" is displayed:
 "More than 500 graphs contain SKOS data (too many to process individually).
 Language detection will use unbatched queries."
 ```
+
+### Concept Scheme Detection
+
+Detects SKOS ConceptSchemes and stores their URIs for use in the SchemeSelector.
+
+**Purpose:**
+- Provides whitelist of schemes for SchemeSelector dropdown
+- Enables config-driven scheme visibility (app.json controls which schemes appear)
+- Labels fetched dynamically based on language priorities
+
+**Detection Query:**
+```sparql
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+
+SELECT (COUNT(DISTINCT ?scheme) AS ?count)
+WHERE {
+  ?scheme a skos:ConceptScheme .
+}
+```
+
+Then fetch URIs (limited to MAX_STORED_SCHEMES = 200):
+```sparql
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+
+SELECT DISTINCT ?scheme
+WHERE {
+  ?scheme a skos:ConceptScheme .
+}
+LIMIT 200
+```
+
+**Data Model:**
+```typescript
+interface EndpointAnalysis {
+  schemeUris?: string[]      // URIs of detected schemes (max 200)
+  schemeCount?: number       // Total count found
+  schemesLimited?: boolean   // true if count > 200
+}
+```
+
+**Processing Logic:**
+1. Count total schemes
+2. If count ≤ 200: Store all URIs, `schemesLimited = false`
+3. If count > 200: Store first 200 URIs, `schemesLimited = true`
+
+**Usage:**
+- SchemeSelector uses `schemeUris` as whitelist (no fallback discovery)
+- app.json can override with custom scheme list for branded deployments
+- Labels fetched at runtime via VALUES clause query
 
 ### Relationship Capabilities
 

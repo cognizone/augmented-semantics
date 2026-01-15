@@ -95,22 +95,35 @@ const selectedScheme = computed({
 
 const currentScheme = computed(() => schemeStore.selected)
 
-// Load schemes from endpoint
+// Load schemes from endpoint using schemeUris whitelist
 async function loadSchemes() {
   const endpoint = endpointStore.current
   if (!endpoint) return
 
-  logger.info('SchemeSelector', 'Loading concept schemes', { endpoint: endpoint.url })
+  // Use schemeUris from endpoint analysis as the definitive whitelist
+  const schemeUris = endpoint.analysis?.schemeUris || []
+
+  if (schemeUris.length === 0) {
+    logger.info('SchemeSelector', 'No scheme URIs configured for endpoint', { endpoint: endpoint.url })
+    schemeStore.setSchemes([])
+    setConnected()
+    return
+  }
+
+  logger.info('SchemeSelector', 'Loading concept schemes', { endpoint: endpoint.url, count: schemeUris.length })
 
   loading.value = true
   error.value = null
   endpointStore.setStatus('connecting')
 
-  // Query with all label types including SKOS-XL and deprecated status
+  // Build VALUES clause for specific URIs
+  const valuesClause = schemeUris.map(uri => `<${uri}>`).join(' ')
+
+  // Query with VALUES clause to fetch only configured schemes
   const query = withPrefixes(`
     SELECT DISTINCT ?scheme ?label ?labelLang ?labelType ?deprecated
     WHERE {
-      ?scheme a skos:ConceptScheme .
+      VALUES ?scheme { ${valuesClause} }
       OPTIONAL { ?scheme owl:deprecated ?deprecated . }
       OPTIONAL {
         {
@@ -136,19 +149,19 @@ async function loadSchemes() {
   try {
     const results = await executeSparql(endpoint, query, { retries: 1 })
 
-    // Group by scheme URI and pick best label
+    // Initialize map with all configured URIs (ensures they appear even if no data returned)
     const schemeMap = new Map<string, {
       labels: { value: string; lang: string; type: string }[]
       deprecated: boolean
     }>()
+    for (const uri of schemeUris) {
+      schemeMap.set(uri, { labels: [], deprecated: false })
+    }
 
+    // Process query results
     for (const b of results.results.bindings) {
       const uri = b.scheme?.value
-      if (!uri) continue
-
-      if (!schemeMap.has(uri)) {
-        schemeMap.set(uri, { labels: [], deprecated: false })
-      }
+      if (!uri || !schemeMap.has(uri)) continue
 
       const entry = schemeMap.get(uri)!
 

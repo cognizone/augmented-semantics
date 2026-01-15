@@ -31,17 +31,32 @@ import { executeSparql } from '../../services/sparql'
 import type { Mock } from 'vitest'
 
 describe('ConceptBreadcrumb', () => {
-  beforeEach(() => {
-    setActivePinia(createPinia())
-    vi.clearAllMocks()
-
-    // Set up default endpoint
+  // Helper to set up endpoint with schemeUris whitelist
+  function setupEndpointWithSchemes(schemeUris: string[] = []) {
     const endpointStore = useEndpointStore()
     const endpoint = endpointStore.addEndpoint({
       name: 'Test Endpoint',
       url: 'https://example.org/sparql',
+      analysis: schemeUris.length > 0 ? {
+        hasSkosContent: true,
+        supportsNamedGraphs: false,
+        skosGraphCount: 0,
+        schemeUris,
+        schemeCount: schemeUris.length,
+        schemesLimited: false,
+        analyzedAt: new Date().toISOString(),
+      } : undefined,
     })
     endpointStore.selectEndpoint(endpoint.id)
+    return endpoint
+  }
+
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    vi.clearAllMocks()
+
+    // Set up default endpoint (no schemes)
+    setupEndpointWithSchemes([])
 
     // Set language
     const languageStore = useLanguageStore()
@@ -132,7 +147,13 @@ describe('ConceptBreadcrumb', () => {
   })
 
   describe('scheme selector', () => {
+    const testSchemeUris = ['http://ex.org/scheme/1', 'http://ex.org/scheme/2']
+
     beforeEach(() => {
+      // Re-setup endpoint with scheme URIs (fresh pinia to override the default)
+      setActivePinia(createPinia())
+      setupEndpointWithSchemes(testSchemeUris)
+
       // Mock schemes response
       ;(executeSparql as Mock).mockResolvedValue({
         results: {
@@ -160,7 +181,9 @@ describe('ConceptBreadcrumb', () => {
     })
 
     it('shows selected scheme name', async () => {
-      const schemeStore = useSchemeStore()
+      // Re-setup with single scheme for auto-select (fresh pinia)
+      setActivePinia(createPinia())
+      setupEndpointWithSchemes(['http://ex.org/scheme/1'])
 
       // Mock schemes query to return our scheme
       ;(executeSparql as Mock).mockResolvedValue({
@@ -174,7 +197,8 @@ describe('ConceptBreadcrumb', () => {
       const wrapper = mountBreadcrumb()
       await flushPromises()
 
-      // Should auto-select since only one scheme
+      // Should auto-select since only one scheme (get store AFTER pinia reset)
+      const schemeStore = useSchemeStore()
       expect(schemeStore.selectedUri).toBe('http://ex.org/scheme/1')
       expect(wrapper.find('.scheme-value').text()).toBe('Test Scheme')
     })
@@ -228,11 +252,12 @@ describe('ConceptBreadcrumb', () => {
   })
 
   describe('home button', () => {
-    it('clears concept and shows scheme details when clicked', async () => {
-      const conceptStore = useConceptStore()
-      const schemeStore = useSchemeStore()
+    beforeEach(() => {
+      // Setup endpoint with single scheme for auto-select (fresh pinia)
+      setActivePinia(createPinia())
+      setupEndpointWithSchemes(['http://ex.org/scheme/1'])
 
-      // Mock single scheme so it gets auto-selected
+      // Mock single scheme response
       ;(executeSparql as Mock).mockResolvedValue({
         results: {
           bindings: [
@@ -240,6 +265,12 @@ describe('ConceptBreadcrumb', () => {
           ],
         },
       })
+    })
+
+    it('clears concept and shows scheme details when clicked', async () => {
+      // Get stores after pinia setup
+      const conceptStore = useConceptStore()
+      const schemeStore = useSchemeStore()
 
       const wrapper = mountBreadcrumb()
       await flushPromises()
@@ -258,15 +289,6 @@ describe('ConceptBreadcrumb', () => {
     it('scrolls tree to top when clicked', async () => {
       const conceptStore = useConceptStore()
 
-      // Mock single scheme so it gets auto-selected
-      ;(executeSparql as Mock).mockResolvedValue({
-        results: {
-          bindings: [
-            { scheme: { value: 'http://ex.org/scheme/1' }, label: { value: 'Test Scheme' }, labelLang: { value: 'en' }, labelType: { value: 'prefLabel' } },
-          ],
-        },
-      })
-
       const wrapper = mountBreadcrumb()
       await flushPromises()
 
@@ -278,15 +300,6 @@ describe('ConceptBreadcrumb', () => {
 
     it('adds scheme to history when clicked', async () => {
       const conceptStore = useConceptStore()
-
-      // Mock single scheme so it gets auto-selected
-      ;(executeSparql as Mock).mockResolvedValue({
-        results: {
-          bindings: [
-            { scheme: { value: 'http://ex.org/scheme/1' }, label: { value: 'Test Scheme' }, labelLang: { value: 'en' }, labelType: { value: 'prefLabel' } },
-          ],
-        },
-      })
 
       const wrapper = mountBreadcrumb()
       await flushPromises()
@@ -386,6 +399,20 @@ describe('ConceptBreadcrumb', () => {
   })
 
   describe('language changes', () => {
+    beforeEach(() => {
+      // Setup endpoint with schemes (fresh pinia)
+      setActivePinia(createPinia())
+      setupEndpointWithSchemes(['http://ex.org/scheme/1'])
+
+      ;(executeSparql as Mock).mockResolvedValue({
+        results: {
+          bindings: [
+            { scheme: { value: 'http://ex.org/scheme/1' }, label: { value: 'Test Scheme' }, labelLang: { value: 'en' }, labelType: { value: 'prefLabel' } },
+          ],
+        },
+      })
+    })
+
     it('reloads schemes when language changes', async () => {
       const languageStore = useLanguageStore()
 
@@ -450,7 +477,9 @@ describe('ConceptBreadcrumb', () => {
 
   describe('auto-select single scheme', () => {
     it('auto-selects when only one scheme exists', async () => {
-      const schemeStore = useSchemeStore()
+      // Setup endpoint with single scheme (fresh pinia)
+      setActivePinia(createPinia())
+      setupEndpointWithSchemes(['http://ex.org/scheme/1'])
 
       // Mock single scheme response
       ;(executeSparql as Mock).mockResolvedValue({
@@ -464,6 +493,8 @@ describe('ConceptBreadcrumb', () => {
       mountBreadcrumb()
       await flushPromises()
 
+      // Get store AFTER pinia reset
+      const schemeStore = useSchemeStore()
       expect(schemeStore.selectedUri).toBe('http://ex.org/scheme/1')
     })
   })

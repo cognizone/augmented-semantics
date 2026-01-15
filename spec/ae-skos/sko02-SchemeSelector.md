@@ -6,18 +6,28 @@ Component for listing and selecting SKOS Concept Schemes.
 
 ### List Concept Schemes
 
-Query all available concept schemes from the endpoint with all label types.
+Schemes are loaded from the endpoint's pre-configured `schemeUris` whitelist (stored during endpoint analysis). Labels are fetched dynamically using a VALUES clause query.
 
-**Query:**
+**Source:** `endpoint.analysis.schemeUris` - array of scheme URIs detected during endpoint creation/analysis (max 200)
+
+**Behavior:**
+- Only schemes in `schemeUris` are shown (no discovery fallback)
+- If `schemeUris` is empty or missing, dropdown shows no schemes
+- Labels are fetched dynamically based on current language priorities
+- All configured URIs appear even if no label data is found (shows URI as fallback)
+
+**Query (with VALUES clause):**
 ```sparql
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 PREFIX skosxl: <http://www.w3.org/2008/05/skos-xl#>
 PREFIX dct: <http://purl.org/dc/terms/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
 
-SELECT DISTINCT ?scheme ?label ?labelLang ?labelType
+SELECT DISTINCT ?scheme ?label ?labelLang ?labelType ?deprecated
 WHERE {
-  ?scheme a skos:ConceptScheme .
+  VALUES ?scheme { <uri1> <uri2> ... }
+  OPTIONAL { ?scheme owl:deprecated ?deprecated . }
   OPTIONAL {
     {
       ?scheme skos:prefLabel ?label .
@@ -35,8 +45,12 @@ WHERE {
     BIND(LANG(?label) AS ?labelLang)
   }
 }
-LIMIT 500
 ```
+
+**Why config-driven (not discovery):**
+- Deployment can control which schemes are visible in the app
+- `app.json` defines the exact schemes for a branded deployment
+- Consistent with endpoint analysis flow (schemes detected once, stored)
 
 ### Scheme Filtering UI
 
