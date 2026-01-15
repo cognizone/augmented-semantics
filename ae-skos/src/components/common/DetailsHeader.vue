@@ -121,6 +121,11 @@ function handleExport(event: Event) {
   border-radius: 0.75rem;
 }
 
+.header-icon-wrapper.wrapper-label {
+  background: color-mix(in srgb, var(--ae-icon-label) 15%, transparent);
+  border-color: color-mix(in srgb, var(--ae-icon-label) 25%, transparent);
+}
+
 .header-icon-wrapper.wrapper-leaf {
   background: color-mix(in srgb, var(--ae-icon-leaf) 15%, transparent);
   border-color: color-mix(in srgb, var(--ae-icon-leaf) 25%, transparent);

@@ -94,7 +94,7 @@ const displayTitle = computed(() => {
 // Icon props based on whether concept has children
 const headerIcon = computed(() => details.value?.narrower?.length ? 'label' : 'circle')
 const headerIconClass = computed(() => details.value?.narrower?.length ? 'icon-label' : 'icon-leaf')
-const headerWrapperClass = computed(() => details.value?.narrower?.length ? '' : 'wrapper-leaf')
+const headerWrapperClass = computed(() => details.value?.narrower?.length ? 'wrapper-label' : 'wrapper-leaf')
 
 // Factory for sorted label computeds
 const getSorted = <K extends keyof NonNullable<typeof details.value>>(field: K) =>
