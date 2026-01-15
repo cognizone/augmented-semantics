@@ -170,6 +170,12 @@ const DEFAULT_DEPRECATION_RULES: DeprecationRule[] = [
 - `not-equals`: Deprecated when predicate value does NOT equal configured value
 - `exists`: Deprecated when predicate exists with any value
 
+### Dark Mode Toggle
+
+Dark mode is accessible via a dedicated header icon (sun/moon) for quick one-click toggling:
+- In light mode: shows moon icon (click to switch to dark)
+- In dark mode: shows sun icon (click to switch to light)
+
 ### Settings Dialog
 
 The Settings dialog (accessible via toolbar) is organized into sections:
