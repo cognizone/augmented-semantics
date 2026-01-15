@@ -64,16 +64,15 @@ When >5 schemes are available, a filter input field appears in the dropdown head
 - **Case-insensitive label matching** - Filters schemes as user types
 - **Pinned items** - "All Schemes" and "Orphan Concepts" always visible
 - **Clear button (×)** - Appears when filter has text, clears on click
+- **Auto-clear on selection** - Filter text resets when a scheme is selected
 - **Keyboard shortcuts:**
   - `Escape` - Clear filter text
-  - `Tab` - Navigate to first dropdown item
-  - Arrow keys work normally after Tab
 - **Empty state** - Shows "No schemes match your search" when no unpinned items match
 
 **UI Example:**
 ```
 ┌─────────────────────────────────────┐
-│ [Filter schemes... (Tab to nav)] × │
+│ [Filter schemes...]              × │
 ├─────────────────────────────────────┤
 │   All Schemes            (pinned)  │
 │   Orphan Concepts        (pinned)  │
@@ -89,8 +88,8 @@ When >5 schemes are available, a filter input field appears in the dropdown head
 2. Type to filter (e.g., "euro")
 3. Pinned items remain visible
 4. Only matching schemes shown
-5. Press Tab to navigate list
-6. Press Escape or click × to clear
+5. Click to select a scheme (filter auto-clears)
+6. Or press Escape / click × to clear filter
 
 ### Orphan Concepts Pseudo-Scheme
 
