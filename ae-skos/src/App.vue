@@ -23,6 +23,9 @@ const showEndpointManager = ref(false)
 
 // Config-based computed properties
 const appName = computed(() => config.value.config?.appName ?? 'AE SKOS')
+const logoUrl = computed(() =>
+  config.value.config?.logoUrl ?? (config.value.configMode ? '/config/logo.png' : null)
+)
 const docsUrl = computed(() =>
   config.value.config?.documentationUrl ??
   'https://github.com/cognizone/augmented-semantics/blob/main/docs/user-manual/README.md'
@@ -177,6 +180,13 @@ onUnmounted(() => {
         >
           <span class="material-symbols-outlined">menu</span>
         </button>
+        <img
+          v-if="logoUrl"
+          :src="logoUrl"
+          alt=""
+          class="app-logo"
+          @error="($event.target as HTMLImageElement).style.display = 'none'"
+        />
         <h1 class="app-title">{{ appName }}</h1>
         <!-- Endpoint selector badge (hidden in single endpoint mode) -->
         <button
@@ -450,6 +460,12 @@ onUnmounted(() => {
 .menu-button:hover {
   background: var(--ae-bg-hover);
   color: var(--ae-text-primary);
+}
+
+.app-logo {
+  height: 28px;
+  width: auto;
+  object-fit: contain;
 }
 
 .app-title {

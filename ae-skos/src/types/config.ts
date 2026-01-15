@@ -30,6 +30,8 @@ export interface ConfigEndpoint extends SuggestedEndpointSource {
 export interface AppConfig {
   /** Custom application name (displayed in header) */
   appName?: string
+  /** Custom logo URL (displayed before app name in header) */
+  logoUrl?: string
   /** Link to documentation (replaces default GitHub docs link) */
   documentationUrl?: string
   /** Pre-configured SPARQL endpoints (when set, disables user endpoint management) */

@@ -36,11 +36,11 @@ Browser-only tools that connect directly to SPARQL endpoints via HTTP. No backen
     - `sko04-ConceptDetails.md` - Concept property display
     - `sko05-SearchBox.md` - Search and autocomplete
     - `sko06-Utilities.md` - Copy, raw view, history
+    - `sko07-Testing.md` - Testing strategy and patterns
+    - `sko08-DeveloperTools.md` - Developer tools and debugging
   - `/spec/ae-rdf/` - AE RDF specifications
   - `/spec/ae-owl/` - AE OWL specifications
   - `/spec/ae-shacl/` - AE SHACL specifications
-  - `/spec/task/` - Implementation task lists
-    - `ae-skos-tasks.md` - AE SKOS implementation plan
 
 ## Packages
 
@@ -75,9 +75,10 @@ See `/packages/styles/DECISIONS.md` for what's shared vs app-specific.
 | Key | Purpose |
 |-----|---------|
 | `ae-endpoints` | Saved SPARQL endpoints |
-| `ae-language` | Language preferences |
+| `ae-preferred-language` | Language preferences |
 | `ae-skos-scheme` | Last selected scheme |
 | `ae-skos-history` | Recently viewed concepts |
+| `ae-skos-settings` | App settings (dark mode, etc.) |
 
 ## Implementation Patterns
 
@@ -159,9 +160,11 @@ Only CSS variables and base setup - no utility classes yet.
 |-------|---------|
 | `.icon-folder`, `.icon-label`, `.icon-leaf` | SKOS semantic type colors |
 | `.action-btn`, `.section-title`, `.lang-tag` | Component patterns |
+| `.datatype-tag`, `.deprecated-badge` | Data type and status indicators |
 | `.sr-only`, `.mono`, `.truncate` | Utility classes |
 | `.dropdown-trigger`, `.select-compact` | Dropdown patterns |
 | `.p-menu`, `.p-select`, `.p-dialog`, `.p-button` | PrimeVue overrides |
+| `.p-datatable`, `.p-stepper` | PrimeVue data display overrides |
 
 ### Font Sizes
 
@@ -174,10 +177,12 @@ Only CSS variables and base setup - no utility classes yet.
 ### Colors
 
 Always use CSS variables from `style.css`:
-- `--ae-bg-*` for backgrounds
+- `--ae-bg-*` for backgrounds (`--ae-bg-elevated`, `--ae-bg-hover`)
 - `--ae-text-*` for text colors
 - `--ae-border-color` for borders
-- `--ae-accent` for interactive elements
+- `--ae-accent`, `--ae-accent-hover` for interactive elements
+- `--ae-status-warning` for deprecation/warning indicators
+- `--ae-icon-folder`, `--ae-icon-label`, `--ae-icon-leaf` for SKOS icons
 
 ### Font Variables
 
