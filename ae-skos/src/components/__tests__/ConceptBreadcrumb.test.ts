@@ -809,19 +809,6 @@ describe('ConceptBreadcrumb', () => {
         expect(vm.filterValue).toBe('')
       })
 
-      it('placeholder mentions Tab navigation', async () => {
-        const wrapper = mountBreadcrumb()
-        await nextTick()
-
-
-        // Open the dropdown
-        await wrapper.find('.scheme-select').trigger('click')
-        await nextTick()
-        const filter = wrapper.find('.scheme-filter')
-        const placeholder = filter.attributes('placeholder')
-
-        expect(placeholder).toContain('Tab')
-      })
     })
 
     describe('selection behavior', () => {

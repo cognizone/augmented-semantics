@@ -523,7 +523,7 @@ watch(
           <div class="filter-input-wrapper">
             <InputText
               v-model="filterValue"
-              placeholder="Filter schemes... (Tab to navigate)"
+              placeholder="Filter schemes..."
               class="scheme-filter"
               @keydown="onFilterKeyDown"
             />
