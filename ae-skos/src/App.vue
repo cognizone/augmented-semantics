@@ -209,6 +209,16 @@ onUnmounted(() => {
           >
             <span class="material-symbols-outlined">help_outline</span>
           </a>
+          <button
+            class="header-icon-btn"
+            aria-label="Toggle dark mode"
+            :title="settingsStore.darkMode ? 'Switch to light mode' : 'Switch to dark mode'"
+            @click="settingsStore.setDarkMode(!settingsStore.darkMode)"
+          >
+            <span class="material-symbols-outlined">
+              {{ settingsStore.darkMode ? 'light_mode' : 'dark_mode' }}
+            </span>
+          </button>
           <button class="header-icon-btn" aria-label="Settings" @click="showSettingsDialog = true">
             <span class="material-symbols-outlined">settings</span>
           </button>
@@ -272,16 +282,6 @@ onUnmounted(() => {
             <span class="material-symbols-outlined section-icon">palette</span>
             Display
           </h3>
-
-          <div class="setting-row">
-            <label class="checkbox-label">
-              <Checkbox v-model="settingsStore.darkMode" :binary="true" />
-              <span class="checkbox-text">
-                Dark mode
-                <small>Use dark color scheme</small>
-              </span>
-            </label>
-          </div>
 
           <div class="setting-row">
             <label class="checkbox-label">
