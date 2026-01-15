@@ -17,6 +17,7 @@ sandbox
 
 # Local config (user-specific)
 public/config/app.json
+public/config/logo.png
 
 # Test coverage
 coverage
