@@ -357,8 +357,6 @@ describe('ConceptTree', () => {
     })
 
     it('handles concept URI normally when not a known scheme', async () => {
-      const conceptStore = useConceptStore()
-
       ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
 
       const wrapper = mountConceptTree()
@@ -374,8 +372,9 @@ describe('ConceptTree', () => {
       await flushPromises()
       await nextTick()
 
-      // Concept should be selected
-      expect(conceptStore.selectedUri).toBe('http://example.org/concept/123')
+      // Component should emit selectConcept event (parent handles store update)
+      expect(wrapper.emitted('selectConcept')).toBeTruthy()
+      expect(wrapper.emitted('selectConcept')![0]).toEqual(['http://example.org/concept/123'])
     })
 
     it('clears input after successful navigation', async () => {
