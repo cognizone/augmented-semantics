@@ -1237,6 +1237,7 @@ The config file is optional and deployment-specific (not committed to source con
 ```typescript
 interface AppConfig {
   appName?: string           // Custom app title (default: "AE SKOS")
+  logoUrl?: string           // Custom logo URL (displayed in header)
   documentationUrl?: string  // Custom help link URL (default: GitHub docs)
   endpoints?: ConfigEndpoint[]
 }
@@ -1262,6 +1263,7 @@ interface ConfigEndpoint extends SuggestedEndpointSource {
 ```json
 {
   "appName": "My Organization SKOS Browser",
+  "logoUrl": "/config/logo.png",
   "documentationUrl": "https://wiki.example.com/skos-browser",
   "endpoints": [
     {
@@ -1291,6 +1293,19 @@ interface ConfigEndpoint extends SuggestedEndpointSource {
 | Config with 1 endpoint | Locked | Custom | **Hidden** | Hidden |
 | Config with 2+ endpoints | Locked | Custom | Visible | Hidden |
 
+### App Customization
+
+**App Name (`appName`):**
+- Displayed in header
+- Sets browser tab title (`document.title`)
+- Default: "AE SKOS"
+
+**Logo (`logoUrl`):**
+- Displayed before app name in header
+- Can be absolute URL or relative path (e.g., `/config/logo.png`)
+- In config mode without explicit logoUrl, falls back to `/config/logo.png`
+- Hidden if not configured and not in config mode
+
 ### Loading
 
 Config is loaded at app bootstrap, **before** Vue app creation:
@@ -1306,8 +1321,16 @@ async function bootstrap() {
 ### Fallback Behavior
 
 - **404 (no config file):** Normal operation, user manages endpoints
-- **Invalid JSON:** Logs error, falls back to normal operation
+- **Invalid JSON:** Shows error banner, falls back to normal operation
 - **Missing endpoints:** Config mode not activated (appName/docsUrl still apply)
+
+### Config Error Display
+
+When `app.json` exists but contains invalid JSON:
+- Red error banner appears below breadcrumb bar
+- Shows message: "Failed to load config: [error details]"
+- App falls back to normal operation (user-managed endpoints)
+- Helps developers identify config issues quickly
 
 ### Store Integration
 
