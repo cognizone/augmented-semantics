@@ -11,15 +11,19 @@ import type { SPARQLEndpoint } from '../../types'
 import type { ProgressState } from '../useOrphanProgress'
 
 // Mock the SPARQL execution module
-vi.mock('../../services', () => ({
-  executeSparql: vi.fn(),
-  logger: {
-    info: vi.fn(),
-    debug: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-  },
-}))
+vi.mock('../../services', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../services')>()
+  return {
+    ...actual,
+    executeSparql: vi.fn(),
+    logger: {
+      info: vi.fn(),
+      debug: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+    },
+  }
+})
 
 // Mock the query builders
 vi.mock('../useOrphanQueries', () => ({

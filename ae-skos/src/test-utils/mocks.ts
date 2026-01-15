@@ -5,7 +5,7 @@
  * @see /spec/ae-skos/sko07-Testing.md
  */
 import { vi } from 'vitest'
-import type { SPARQLEndpoint } from '../types'
+import type { SPARQLEndpoint, AppConfig, ConfigEndpoint } from '../types'
 import type { SPARQLResults } from '../services/sparql'
 
 // --- Endpoint Mocks ---
@@ -197,5 +197,24 @@ export function createMockScheme(uri: string, label: string, notation?: string) 
     uri,
     label,
     notation,
+  }
+}
+
+// --- Config Mocks ---
+
+export function createMockConfigEndpoint(overrides: Partial<ConfigEndpoint> = {}): ConfigEndpoint {
+  return {
+    name: 'Test Config Endpoint',
+    url: 'https://config.example.org/sparql',
+    ...overrides,
+  }
+}
+
+export function createMockConfig(overrides: Partial<AppConfig> = {}): AppConfig {
+  return {
+    appName: 'Test App',
+    documentationUrl: 'https://docs.example.org',
+    endpoints: [createMockConfigEndpoint()],
+    ...overrides,
   }
 }

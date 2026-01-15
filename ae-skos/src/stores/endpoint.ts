@@ -11,7 +11,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { SPARQLEndpoint, EndpointStatus, AppError, SuggestedEndpoint } from '../types'
 import suggestedEndpointsData from '../data/suggested-endpoints.generated.json'
-import { logger } from '../services'
+import { logger, isConfigMode, getConfig } from '../services'
 
 const STORAGE_KEY = 'ae-endpoints'
 
@@ -24,6 +24,7 @@ export const useEndpointStore = defineStore('endpoint', () => {
   const currentId = ref<string | null>(null)
   const status = ref<EndpointStatus>('disconnected')
   const error = ref<AppError | null>(null)
+  const configMode = ref(false)
 
   // Getters
   const current = computed(() =>
@@ -45,8 +46,19 @@ export const useEndpointStore = defineStore('endpoint', () => {
     return suggestedEndpoints.filter(te => !existingUrls.has(te.url))
   })
 
+  // Check if only one endpoint is configured (hide dropdown)
+  const isSingleEndpoint = computed(() =>
+    configMode.value && endpoints.value.length === 1
+  )
+
   // Actions
   function loadFromStorage() {
+    // Check if we should use config instead
+    if (isConfigMode()) {
+      loadFromConfig()
+      return
+    }
+
     try {
       const stored = localStorage.getItem(STORAGE_KEY)
       if (stored) {
@@ -54,6 +66,37 @@ export const useEndpointStore = defineStore('endpoint', () => {
       }
     } catch (e) {
       logger.error('EndpointStore', 'Failed to load endpoints from storage', { error: e })
+    }
+  }
+
+  /**
+   * Load endpoints from external config file
+   * Called when config mode is active
+   */
+  function loadFromConfig() {
+    const config = getConfig()
+    if (!config?.endpoints) return
+
+    configMode.value = true
+    logger.info('EndpointStore', 'Loading endpoints from config', {
+      count: config.endpoints.length,
+    })
+
+    // Convert ConfigEndpoint to SPARQLEndpoint
+    endpoints.value = config.endpoints.map((ce, index) => ({
+      id: `config-${index}`,
+      name: ce.name,
+      url: ce.url,
+      auth: ce.auth,
+      analysis: ce.analysis,
+      languagePriorities: ce.suggestedLanguagePriorities,
+      createdAt: new Date().toISOString(),
+      accessCount: 0,
+    }))
+
+    // Auto-select first endpoint
+    if (endpoints.value.length > 0) {
+      currentId.value = endpoints.value[0].id
     }
   }
 
@@ -66,6 +109,11 @@ export const useEndpointStore = defineStore('endpoint', () => {
   }
 
   function addEndpoint(endpoint: Omit<SPARQLEndpoint, 'id' | 'createdAt' | 'accessCount'>) {
+    if (configMode.value) {
+      logger.warn('EndpointStore', 'Cannot add endpoints in config mode')
+      return null
+    }
+
     const newEndpoint: SPARQLEndpoint = {
       ...endpoint,
       id: crypto.randomUUID(),
@@ -81,6 +129,11 @@ export const useEndpointStore = defineStore('endpoint', () => {
    * Add a suggested endpoint with pre-calculated analysis data
    */
   function addSuggestedEndpoint(suggestedEndpoint: SuggestedEndpoint) {
+    if (configMode.value) {
+      logger.warn('EndpointStore', 'Cannot add endpoints in config mode')
+      return null
+    }
+
     const newEndpoint: SPARQLEndpoint = {
       id: crypto.randomUUID(),
       name: suggestedEndpoint.name,
@@ -116,6 +169,11 @@ export const useEndpointStore = defineStore('endpoint', () => {
   }
 
   function removeEndpoint(id: string) {
+    if (configMode.value) {
+      logger.warn('EndpointStore', 'Cannot remove endpoints in config mode')
+      return
+    }
+
     endpoints.value = endpoints.value.filter(e => e.id !== id)
     if (currentId.value === id) {
       currentId.value = null
@@ -158,10 +216,12 @@ export const useEndpointStore = defineStore('endpoint', () => {
     currentId,
     status,
     error,
+    configMode,
     // Getters
     current,
     sortedEndpoints,
     availableSuggestedEndpoints,
+    isSingleEndpoint,
     // Actions
     loadFromStorage,
     addEndpoint,

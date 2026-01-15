@@ -104,6 +104,94 @@ Once deployed, users can add the SPARQL endpoint in the app:
 
 The endpoint is stored in the browser's local storage.
 
+## Pre-configured Deployment (Optional)
+
+For deployments where you want to pre-configure endpoints without user setup, create a configuration file.
+
+### Configuration File
+
+Create `config/app.json` in the deployment folder (alongside `index.html`):
+
+```json
+{
+  "appName": "My Vocabulary Browser",
+  "documentationUrl": "https://wiki.example.com/vocab-browser",
+  "endpoints": [
+    {
+      "name": "Production Vocabulary",
+      "url": "/sparql"
+    }
+  ]
+}
+```
+
+### Configuration Options
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `appName` | No | Custom app title (default: "AE SKOS") |
+| `documentationUrl` | No | Help link URL (default: GitHub docs) |
+| `endpoints` | No | Pre-configured SPARQL endpoints |
+
+### Endpoint Configuration
+
+Each endpoint supports:
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `name` | Yes | Display name |
+| `url` | Yes | SPARQL endpoint URL (can be relative with proxy) |
+| `auth` | No | Authentication config (see below) |
+| `analysis` | No | Pre-calculated endpoint analysis |
+| `suggestedLanguagePriorities` | No | Language preference order (e.g., `["en", "fr"]`) |
+
+#### Authentication Example
+
+```json
+{
+  "endpoints": [
+    {
+      "name": "Protected Endpoint",
+      "url": "/sparql",
+      "auth": {
+        "type": "basic",
+        "credentials": {
+          "username": "user",
+          "password": "pass"
+        }
+      }
+    }
+  ]
+}
+```
+
+Supported auth types: `none`, `basic`, `bearer`, `apikey`
+
+### Behavior
+
+- **With endpoints configured**: Users cannot add/remove endpoints (locked mode)
+- **Single endpoint**: Endpoint dropdown is completely hidden
+- **Multiple endpoints**: Dropdown visible but "Manage endpoints" option hidden
+- **No config file**: App works as normal (user manages endpoints via UI)
+
+### Cache Headers
+
+To ensure config updates take effect immediately, configure cache headers:
+
+#### nginx
+```nginx
+location /config/ {
+    add_header Cache-Control "no-cache, must-revalidate";
+}
+```
+
+#### Apache
+```apache
+<Directory /var/www/ae-skos/config>
+    Header set Cache-Control "no-cache, must-revalidate"
+</Directory>
+```
+
 ## Alternative: Direct Endpoint Access
 
 If you cannot use a reverse proxy, users can connect directly to the SPARQL endpoint. In this case, the endpoint must allow CORS requests by returning these headers:

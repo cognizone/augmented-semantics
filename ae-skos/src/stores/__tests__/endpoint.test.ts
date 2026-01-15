@@ -8,6 +8,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useEndpointStore } from '../endpoint'
+import * as configService from '../../services/config'
 
 describe('endpoint store', () => {
   beforeEach(() => {

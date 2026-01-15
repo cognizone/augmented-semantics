@@ -1138,3 +1138,127 @@ If sourceHash doesn't match, endpoint is re-analyzed at runtime.
 | TheSoz | https://sparql.gesis.org/sparql | de, en | 1 |
 
 **Note:** Exact numbers may vary based on last analysis date.
+
+## External Configuration (Config Mode)
+
+Pre-configured deployment mode for customer installations where endpoint management should be locked down.
+
+### Purpose
+
+Allows administrators to deploy AE SKOS with pre-configured endpoints that users cannot modify. Useful for:
+- Customer-specific installations
+- Locked-down vocabulary browsers
+- Single-endpoint deployments (where endpoint selector is hidden entirely)
+
+### Config File
+
+**Location:** `public/config/app.json` → served at `/config/app.json`
+
+The config file is optional and deployment-specific (not committed to source control).
+
+### Config Schema
+
+```typescript
+interface AppConfig {
+  appName?: string           // Custom app title (default: "AE SKOS")
+  documentationUrl?: string  // Custom help link URL (default: GitHub docs)
+  endpoints?: ConfigEndpoint[]
+}
+
+interface ConfigEndpoint extends SuggestedEndpointSource {
+  auth?: EndpointAuth                      // Optional authentication
+  analysis?: EndpointAnalysis              // Pre-calculated analysis (optional)
+  suggestedLanguagePriorities?: string[]   // Language preference order
+}
+```
+
+**Minimal config example:**
+```json
+{
+  "appName": "My Vocabulary Browser",
+  "endpoints": [
+    { "name": "Production", "url": "https://vocab.example.com/sparql" }
+  ]
+}
+```
+
+**Full config example** (with pre-calculated analysis):
+```json
+{
+  "appName": "My Organization SKOS Browser",
+  "documentationUrl": "https://wiki.example.com/skos-browser",
+  "endpoints": [
+    {
+      "name": "Production Vocabulary",
+      "url": "https://vocab.example.com/sparql",
+      "auth": { "type": "basic", "credentials": { "username": "user", "password": "pass" } },
+      "analysis": {
+        "hasSkosContent": true,
+        "supportsNamedGraphs": true,
+        "skosGraphCount": 1,
+        "languages": [{ "lang": "en", "count": 5000 }],
+        "totalConcepts": 5000,
+        "relationships": { "hasInScheme": true, "hasBroader": true },
+        "analyzedAt": "2026-01-15T00:00:00.000Z"
+      },
+      "suggestedLanguagePriorities": ["en", "fr"]
+    }
+  ]
+}
+```
+
+### Behavior Matrix
+
+| Config State | Endpoints | App Name | Endpoint Dropdown | Manage Endpoints |
+|--------------|-----------|----------|-------------------|------------------|
+| No config (404) | User-managed | "AE SKOS" | Visible | Visible |
+| Config with 1 endpoint | Locked | Custom | **Hidden** | Hidden |
+| Config with 2+ endpoints | Locked | Custom | Visible | Hidden |
+
+### Loading
+
+Config is loaded at app bootstrap, **before** Vue app creation:
+
+```typescript
+async function bootstrap() {
+  await loadConfig()  // Load config first
+  const app = createApp(App)
+  // ... rest of setup
+}
+```
+
+### Fallback Behavior
+
+- **404 (no config file):** Normal operation, user manages endpoints
+- **Invalid JSON:** Logs error, falls back to normal operation
+- **Missing endpoints:** Config mode not activated (appName/docsUrl still apply)
+
+### Store Integration
+
+The endpoint store checks config mode on initialization:
+
+```typescript
+function loadFromStorage() {
+  if (isConfigMode()) {
+    loadFromConfig()  // Load endpoints from config
+    return
+  }
+  // Normal localStorage loading...
+}
+```
+
+**Mutation Guards:**
+In config mode, these operations are blocked (return `null`):
+- `addEndpoint()`
+- `addSuggestedEndpoint()`
+- `removeEndpoint()`
+
+### Implementation
+
+| File | Purpose |
+|------|---------|
+| `services/config.ts` | Config loading service |
+| `types/config.ts` | TypeScript interfaces |
+| `stores/endpoint.ts` | Config mode support |
+| `App.vue` | Conditional UI rendering |
+| `DEPLOYMENT.md` | Deployment documentation |

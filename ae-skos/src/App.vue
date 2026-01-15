@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { RouterView } from 'vue-router'
 import { useUIStore, useConceptStore, useSettingsStore, useLanguageStore, useEndpointStore } from './stores'
+import { useConfig } from './services'
 import Toast from 'primevue/toast'
 import Button from 'primevue/button'
 import Dialog from 'primevue/dialog'
@@ -17,7 +18,15 @@ const conceptStore = useConceptStore()
 const settingsStore = useSettingsStore()
 const languageStore = useLanguageStore()
 const endpointStore = useEndpointStore()
+const config = useConfig()
 const showEndpointManager = ref(false)
+
+// Config-based computed properties
+const appName = computed(() => config.value.config?.appName ?? 'AE SKOS')
+const docsUrl = computed(() =>
+  config.value.config?.documentationUrl ??
+  'https://github.com/cognizone/augmented-semantics/blob/main/docs/user-manual/README.md'
+)
 const showSettingsDialog = ref(false)
 const endpointMenu = ref()
 const languageMenu = ref()
@@ -30,15 +39,18 @@ const endpointMenuItems = computed(() => {
     command: () => endpointStore.selectEndpoint(ep.id),
   }))
 
-  if (items.length > 0) {
-    items.push({ separator: true } as any)
-  }
+  // Only add "Manage endpoints" if NOT in config mode
+  if (!endpointStore.configMode) {
+    if (items.length > 0) {
+      items.push({ separator: true } as any)
+    }
 
-  items.push({
-    label: 'Manage endpoints...',
-    icon: 'pi pi-cog',
-    command: () => { showEndpointManager.value = true },
-  })
+    items.push({
+      label: 'Manage endpoints...',
+      icon: 'pi pi-cog',
+      command: () => { showEndpointManager.value = true },
+    })
+  }
 
   return items
 })
@@ -165,9 +177,10 @@ onUnmounted(() => {
         >
           <span class="material-symbols-outlined">menu</span>
         </button>
-        <h1 class="app-title">AE SKOS</h1>
-        <!-- Endpoint selector badge -->
+        <h1 class="app-title">{{ appName }}</h1>
+        <!-- Endpoint selector badge (hidden in single endpoint mode) -->
         <button
+          v-if="!endpointStore.isSingleEndpoint"
           class="dropdown-trigger"
           :class="endpointStore.status"
           aria-label="Select endpoint"
@@ -177,7 +190,7 @@ onUnmounted(() => {
           <span>{{ endpointStore.current?.name || 'No endpoint' }}</span>
           <span class="material-symbols-outlined dropdown-arrow">arrow_drop_down</span>
         </button>
-        <Menu ref="endpointMenu" :model="endpointMenuItems" :popup="true" />
+        <Menu v-if="!endpointStore.isSingleEndpoint" ref="endpointMenu" :model="endpointMenuItems" :popup="true" />
       </div>
       <div class="header-right">
         <button class="dropdown-trigger" @click="(e) => languageMenu.toggle(e)" aria-label="Select language">
@@ -188,7 +201,7 @@ onUnmounted(() => {
         <Menu ref="languageMenu" :model="languageMenuItems" :popup="true" />
         <div class="header-icons">
           <a
-            href="https://github.com/cognizone/augmented-semantics/blob/main/docs/user-manual/README.md"
+            :href="docsUrl"
             target="_blank"
             class="header-icon-btn"
             aria-label="Documentation"
@@ -216,8 +229,8 @@ onUnmounted(() => {
     <!-- Toast notifications -->
     <Toast />
 
-    <!-- Endpoint Manager Dialog -->
-    <EndpointManager v-model:visible="showEndpointManager" />
+    <!-- Endpoint Manager Dialog (hidden in config mode) -->
+    <EndpointManager v-if="!endpointStore.configMode" v-model:visible="showEndpointManager" />
 
     <!-- Settings Dialog -->
     <Dialog

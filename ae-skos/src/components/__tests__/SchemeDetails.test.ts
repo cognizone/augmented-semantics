@@ -27,10 +27,14 @@ vi.mock('primevue/usetoast', () => ({
 }))
 
 // Mock services
-vi.mock('../../services', () => ({
-  isValidURI: vi.fn((uri) => uri?.startsWith('http')),
-  fetchRawRdf: vi.fn(),
-}))
+vi.mock('../../services', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../services')>()
+  return {
+    ...actual,
+    isValidURI: vi.fn((uri: string) => uri?.startsWith('http')),
+    fetchRawRdf: vi.fn(),
+  }
+})
 
 // Mock useSchemeData composable
 const mockDetails = ref(null)

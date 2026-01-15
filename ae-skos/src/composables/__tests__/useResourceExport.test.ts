@@ -11,8 +11,8 @@ vi.mock('primevue/usetoast', () => ({
 }))
 
 // Mock fetchRawRdf
-vi.mock('../../services', async () => {
-  const actual = await vi.importActual('../../services')
+vi.mock('../../services', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../services')>()
   return {
     ...actual,
     fetchRawRdf: vi.fn()

@@ -8,48 +8,61 @@ import Tooltip from 'primevue/tooltip'
 
 import router from './router'
 import App from './App.vue'
-import { logger, diagnoseEndpoint, executeSparql, withPrefixes } from './services'
+import { logger, loadConfig, diagnoseEndpoint, executeSparql, withPrefixes } from './services'
 import { useEndpointStore } from './stores'
 
 import 'primeicons/primeicons.css'
 import '@ae/styles'
 import './style.css'
 
-const app = createApp(App)
+/**
+ * Bootstrap the application
+ * Loads external config before creating Vue app to ensure
+ * stores have access to config during initialization.
+ */
+async function bootstrap() {
+  // Step 1: Load external config (handles 404 gracefully)
+  await loadConfig()
 
-// Pinia
-const pinia = createPinia()
-app.use(pinia)
+  // Step 2: Create Vue app
+  const app = createApp(App)
 
-// Vue Router
-app.use(router)
+  // Step 3: Setup Pinia (stores will check config during initialization)
+  const pinia = createPinia()
+  app.use(pinia)
 
-// PrimeVue
-app.use(PrimeVue, {
-  theme: {
-    preset: Aura,
-    options: {
-      darkModeSelector: '.dark-mode',
-      cssLayer: false,
+  // Vue Router
+  app.use(router)
+
+  // PrimeVue
+  app.use(PrimeVue, {
+    theme: {
+      preset: Aura,
+      options: {
+        darkModeSelector: '.dark-mode',
+        cssLayer: false,
+      },
     },
-  },
-})
-app.use(ToastService)
-app.use(ConfirmationService)
-
-// Directives
-app.directive('tooltip', Tooltip)
-
-// Global error handler for uncaught errors
-app.config.errorHandler = (err, instance, info) => {
-  logger.error('GlobalErrorHandler', 'Uncaught error', {
-    error: err,
-    component: instance?.$options?.name,
-    info,
   })
+  app.use(ToastService)
+  app.use(ConfirmationService)
+
+  // Directives
+  app.directive('tooltip', Tooltip)
+
+  // Global error handler for uncaught errors
+  app.config.errorHandler = (err, instance, info) => {
+    logger.error('GlobalErrorHandler', 'Uncaught error', {
+      error: err,
+      component: instance?.$options?.name,
+      info,
+    })
+  }
+
+  app.mount('#app')
 }
 
-app.mount('#app')
+bootstrap()
 
 // Dev mode diagnostics
 if (import.meta.env.DEV) {

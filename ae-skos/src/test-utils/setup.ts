@@ -8,6 +8,31 @@ import { vi, beforeEach, afterEach } from 'vitest'
 import { config } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 
+// --- Config Service Mock ---
+// Default mock for config service - tests can override as needed
+// We mock the config module directly so it's available when tests use importOriginal
+vi.mock('../services/config', () => ({
+  loadConfig: vi.fn(() => Promise.resolve({ configMode: false, config: null, loaded: true, error: null })),
+  useConfig: vi.fn(() => ({ value: { configMode: false, config: null, loaded: true, error: null } })),
+  isConfigMode: vi.fn(() => false),
+  isSingleEndpointMode: vi.fn(() => false),
+  getConfig: vi.fn(() => null),
+}))
+
+// Also mock the barrel export for tests that mock '../../services' directly
+// This ensures config exports are always available
+vi.mock('../services', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../services')>()
+  return {
+    ...actual,
+    isConfigMode: vi.fn(() => false),
+    isSingleEndpointMode: vi.fn(() => false),
+    getConfig: vi.fn(() => null),
+    loadConfig: vi.fn(() => Promise.resolve({ configMode: false, config: null, loaded: true, error: null })),
+    useConfig: vi.fn(() => ({ value: { configMode: false, config: null, loaded: true, error: null } })),
+  }
+})
+
 // --- Browser API Mocks ---
 
 // Mock crypto.randomUUID
