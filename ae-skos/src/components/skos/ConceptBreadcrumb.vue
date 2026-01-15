@@ -639,6 +639,8 @@ watch(
 
 .scheme-value {
   white-space: nowrap;
+  color: var(--ae-text-primary);
+  font-weight: 500;
 }
 
 .scheme-option {
@@ -680,7 +682,7 @@ watch(
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  color: var(--ae-text-secondary);
+  color: var(--ae-text-primary);
   transition: background-color 0.15s, color 0.15s;
 }
 
@@ -703,7 +705,7 @@ watch(
 
 .breadcrumb-link {
   cursor: pointer;
-  color: var(--ae-text-secondary);
+  color: var(--ae-text-primary);
   text-decoration: none;
   font-size: 0.8125rem;
   display: flex;
