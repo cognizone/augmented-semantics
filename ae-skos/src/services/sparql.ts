@@ -313,6 +313,9 @@ export async function detectGraphs(
 export const LANGUAGE_DETECTION_BATCH_SIZE = 10
 export const LANGUAGE_DETECTION_MAX_GRAPHS = 500
 
+// Configuration constant for scheme detection
+export const MAX_STORED_SCHEMES = 200
+
 export interface SkosGraphResult {
   skosGraphCount: number | null
   skosGraphUris: string[] | null  // URIs when count <= maxGraphs, null otherwise
@@ -372,6 +375,73 @@ export async function detectSkosGraphs(
     }
   } catch {
     return { skosGraphCount: null, skosGraphUris: null }
+  }
+}
+
+export interface SchemeDetectionResult {
+  schemeUris: string[]
+  schemeCount: number
+  schemesLimited: boolean
+}
+
+/**
+ * Detect concept schemes in the endpoint.
+ * Returns URIs only (no labels) for storage efficiency.
+ *
+ * Strategy:
+ * 1. Count total schemes first
+ * 2. If count <= limit, fetch all URIs
+ * 3. If count > limit, fetch first N and mark as limited
+ */
+export async function detectConceptSchemes(
+  endpoint: SPARQLEndpoint,
+  maxSchemes: number = MAX_STORED_SCHEMES
+): Promise<SchemeDetectionResult> {
+  // First, count schemes
+  const countQuery = withPrefixes(`
+    SELECT (COUNT(DISTINCT ?scheme) AS ?count)
+    WHERE {
+      ?scheme a skos:ConceptScheme .
+    }
+  `)
+
+  let totalCount = 0
+  try {
+    const countResult = await executeSparql(endpoint, countQuery, { retries: 1 })
+    totalCount = parseInt(countResult.results.bindings[0]?.count?.value || '0', 10)
+  } catch (e) {
+    logger.warn('sparql', 'Failed to count schemes', { error: e })
+    return { schemeUris: [], schemeCount: 0, schemesLimited: false }
+  }
+
+  // If no schemes, return early
+  if (totalCount === 0) {
+    return { schemeUris: [], schemeCount: 0, schemesLimited: false }
+  }
+
+  // Fetch URIs (limited to maxSchemes)
+  const urisQuery = withPrefixes(`
+    SELECT DISTINCT ?scheme
+    WHERE {
+      ?scheme a skos:ConceptScheme .
+    }
+    LIMIT ${maxSchemes}
+  `)
+
+  try {
+    const urisResult = await executeSparql(endpoint, urisQuery, { retries: 1 })
+    const schemeUris = urisResult.results.bindings
+      .map(b => b.scheme?.value)
+      .filter((uri): uri is string => !!uri)
+
+    return {
+      schemeUris,
+      schemeCount: totalCount,
+      schemesLimited: totalCount > maxSchemes
+    }
+  } catch (e) {
+    logger.warn('sparql', 'Failed to fetch scheme URIs', { error: e })
+    return { schemeUris: [], schemeCount: totalCount, schemesLimited: false }
   }
 }
 
@@ -527,6 +597,9 @@ export async function analyzeEndpoint(
     hasBroaderTransitive: boolean
     hasNarrowerTransitive: boolean
   }
+  schemeUris?: string[]
+  schemeCount?: number
+  schemesLimited?: boolean
 }> {
   // Step 1: Detect named graphs support
   const graphResult = await detectGraphs(endpoint)
@@ -606,6 +679,9 @@ export async function analyzeEndpoint(
     logger.warn('sparql', 'Failed to detect relationships', { error: e })
   }
 
+  // Step 6: Detect concept schemes
+  const schemeResult = await detectConceptSchemes(endpoint)
+
   return {
     supportsNamedGraphs: graphResult.supportsNamedGraphs,
     skosGraphCount,
@@ -614,6 +690,9 @@ export async function analyzeEndpoint(
     analyzedAt: new Date().toISOString(),
     totalConcepts,
     relationships,
+    schemeUris: schemeResult.schemeUris,
+    schemeCount: schemeResult.schemeCount,
+    schemesLimited: schemeResult.schemesLimited,
   }
 }
 

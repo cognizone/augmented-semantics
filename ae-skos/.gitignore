@@ -15,6 +15,9 @@ dist-ssr
 # Experimental work
 sandbox
 
+# Local config (user-specific)
+public/config/app.json
+
 # Test coverage
 coverage
 

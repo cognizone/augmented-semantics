@@ -49,6 +49,11 @@ export interface EndpointAnalysis {
 
   analyzedAt: string
 
+  // Concept schemes (URIs only - labels fetched dynamically)
+  schemeUris?: string[]         // List of scheme URIs (max 200)
+  schemeCount?: number          // Total count found
+  schemesLimited?: boolean      // true if more exist than stored
+
   // SKOS statistics
   totalConcepts?: number
   relationships?: {

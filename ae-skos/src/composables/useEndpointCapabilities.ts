@@ -77,6 +77,39 @@ export function useEndpointCapabilities(endpoint: Ref<SPARQLEndpoint | null>) {
     return `${formatCount(analysis.skosGraphCount)} graph${analysis.skosGraphCount === 1 ? '' : 's'} contain SKOS data`
   })
 
+  // Scheme count
+  const schemeCountStatus = computed(() => {
+    const analysis = endpoint.value?.analysis
+    if (!analysis || analysis.schemeCount === undefined) return 'Unknown'
+    if (analysis.schemeCount === 0) return 'None'
+    if (analysis.schemesLimited) return `${analysis.schemeCount}+`
+    return `${formatCount(analysis.schemeCount)} scheme${analysis.schemeCount === 1 ? '' : 's'}`
+  })
+
+  const schemeCountSeverity = computed(() => {
+    const analysis = endpoint.value?.analysis
+    if (!analysis || analysis.schemeCount === undefined) return 'secondary'
+    if (analysis.schemeCount === 0) return 'warn'
+    return 'success'
+  })
+
+  const schemeCountIcon = computed(() => {
+    const analysis = endpoint.value?.analysis
+    if (!analysis || analysis.schemeCount === undefined) return 'pi pi-question-circle muted-icon'
+    if (analysis.schemeCount === 0) return 'pi pi-exclamation-triangle warning-icon'
+    return 'pi pi-check-circle success-icon'
+  })
+
+  const schemeCountDescription = computed(() => {
+    const analysis = endpoint.value?.analysis
+    if (!analysis || analysis.schemeCount === undefined) return 'Could not determine scheme count'
+    if (analysis.schemeCount === 0) return 'No concept schemes found'
+    if (analysis.schemesLimited) {
+      return `${analysis.schemeCount} schemes found (first ${analysis.schemeUris?.length || 0} stored)`
+    }
+    return `${formatCount(analysis.schemeCount)} concept scheme${analysis.schemeCount === 1 ? '' : 's'} found`
+  })
+
   // Concept count
   const conceptCountStatus = computed(() => {
     const analysis = endpoint.value?.analysis
@@ -153,6 +186,11 @@ export function useEndpointCapabilities(endpoint: Ref<SPARQLEndpoint | null>) {
     skosGraphSeverity,
     skosGraphIcon,
     skosGraphDescription,
+    // Concept schemes
+    schemeCountStatus,
+    schemeCountSeverity,
+    schemeCountIcon,
+    schemeCountDescription,
     // SKOS statistics
     conceptCountStatus,
     conceptCountSeverity,

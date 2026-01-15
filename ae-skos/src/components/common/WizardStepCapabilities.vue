@@ -21,6 +21,11 @@ const props = defineProps<{
   skosGraphSeverity: 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast' | undefined
   skosGraphIcon: string
   skosGraphDescription: string | null
+  // Concept schemes
+  schemeCountStatus: string
+  schemeCountSeverity: 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast' | undefined
+  schemeCountIcon: string
+  schemeCountDescription: string | null
   // SKOS statistics (summary)
   conceptCountStatus: string
   conceptCountSeverity: 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast' | undefined
@@ -116,6 +121,18 @@ function formatRelName(key: string): string {
         </div>
         <p v-if="conceptCountDescription" class="capability-description">
           {{ conceptCountDescription }}
+        </p>
+      </div>
+
+      <!-- Concept Schemes -->
+      <div class="capability-item">
+        <div class="capability-row">
+          <i :class="schemeCountIcon"></i>
+          <span class="capability-label">Concept Schemes</span>
+          <Tag :severity="schemeCountSeverity">{{ schemeCountStatus }}</Tag>
+        </div>
+        <p v-if="schemeCountDescription" class="capability-description">
+          {{ schemeCountDescription }}
         </p>
       </div>
 

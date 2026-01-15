@@ -68,6 +68,10 @@ const {
   skosGraphSeverity,
   skosGraphIcon,
   skosGraphDescription,
+  schemeCountStatus,
+  schemeCountSeverity,
+  schemeCountIcon,
+  schemeCountDescription,
   conceptCountStatus,
   conceptCountSeverity,
   conceptCountIcon,
@@ -201,6 +205,9 @@ async function runAnalysis() {
         languages: analysis.languages,
         totalConcepts: analysis.totalConcepts,
         relationships: analysis.relationships,
+        schemeUris: analysis.schemeUris,
+        schemeCount: analysis.schemeCount,
+        schemesLimited: analysis.schemesLimited,
         analyzedAt: analysis.analyzedAt,
       },
     }
@@ -313,6 +320,10 @@ function handleClose() {
             :skosGraphSeverity="skosGraphSeverity"
             :skosGraphIcon="skosGraphIcon"
             :skosGraphDescription="skosGraphDescription"
+            :schemeCountStatus="schemeCountStatus"
+            :schemeCountSeverity="schemeCountSeverity"
+            :schemeCountIcon="schemeCountIcon"
+            :schemeCountDescription="schemeCountDescription"
             :conceptCountStatus="conceptCountStatus"
             :conceptCountSeverity="conceptCountSeverity"
             :conceptCountIcon="conceptCountIcon"
