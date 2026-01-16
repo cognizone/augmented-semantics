@@ -7,6 +7,7 @@ A browser-based tool for exploring SKOS (Simple Knowledge Organization System) v
 - [Getting Started](#getting-started)
 - [Managing Endpoints](#managing-endpoints)
 - [Browsing Concept Schemes](#browsing-concept-schemes)
+- [Orphan Concepts](#orphan-concepts)
 - [Navigating the Concept Tree](#navigating-the-concept-tree)
 - [Viewing Details](#viewing-details)
 - [Searching](#searching)
@@ -25,6 +26,10 @@ AE SKOS connects directly to SPARQL endpoints in your browser - no backend serve
 
 When you first open AE SKOS, you'll see an empty interface prompting you to configure an endpoint.
 
+AE SKOS can operate in two modes:
+1. **Standard mode** - You add and manage your own endpoints (continue with Quick Start below)
+2. **Pre-configured mode** - Endpoints are already set up by an administrator (skip to [Browsing Concept Schemes](#browsing-concept-schemes))
+
 ![Initial screen showing the endpoint configuration prompt](screenshot-first-launch.png)
 
 ### Quick Start
@@ -39,6 +44,8 @@ When you first open AE SKOS, you'll see an empty interface prompting you to conf
 
 ## Managing Endpoints
 
+> **Note:** AE SKOS is primarily designed for use with public SPARQL endpoints. While authentication options (Basic Auth, API Key, Bearer Token) are available, they are experimental and not extensively tested. For sensitive data, consult your organization's security policies.
+
 ### Opening the Endpoint Manager
 
 Click the endpoint badge in the header toolbar, then select "Manage endpoints..." from the dropdown.
@@ -50,7 +57,7 @@ Click the endpoint badge in the header toolbar, then select "Manage endpoints...
 1. Click **Add Endpoint** in the Endpoint Manager
 2. The setup wizard opens with multiple steps:
 
-![Endpoint wizard showing the connection step](screenshot-endpoint-wizard.png)
+<img src="screenshot-endpoint-wizard.png" alt="Endpoint wizard showing the connection step" width="720">
 
 #### Step 1: Connection
 
@@ -81,7 +88,7 @@ Drag and drop languages to set your preferred order. Labels will be shown in the
 
 Once you've added endpoints, they appear in the Endpoint Manager list.
 
-![Endpoint Manager showing configured endpoints](screenshot-endpoint-list.png)
+<img src="screenshot-endpoint-list.png" alt="Endpoint Manager showing configured endpoints" width="720">
 
 Each endpoint shows:
 - **Name**: The friendly name you assigned
@@ -119,6 +126,8 @@ Use the scheme dropdown in the breadcrumb bar to select a concept scheme.
 <!-- IMAGE: screenshot-scheme-dropdown.png -->
 ![Scheme dropdown showing available concept schemes](screenshot-scheme-dropdown.png)
 
+**Filtering Schemes:** For endpoints with many schemes, use the filter input at the top of the dropdown. Type to filter schemes by name - the list updates as you type. The filter automatically clears after you make a selection.
+
 When you select a scheme:
 - The tree loads with top-level concepts
 - The right panel shows scheme details
@@ -139,6 +148,49 @@ When viewing a scheme (no concept selected), the right panel displays:
 ### Deprecated Schemes
 
 Schemes marked as deprecated show a "deprecated" badge next to their name in both the dropdown and the tree.
+
+---
+
+## Orphan Concepts
+
+### What Are Orphan Concepts?
+
+Orphan concepts are concepts that lack proper hierarchical relationships within their scheme. Specifically, a concept is considered an orphan if it:
+- Has no `skos:broader` relationship to a parent concept
+- Has no `skos:topConceptOf` relationship to a scheme
+- Is not referenced as a `skos:narrower` of another concept
+
+These concepts exist in the vocabulary but are disconnected from the main hierarchy, making them difficult to discover through normal browsing.
+
+### Finding Orphan Concepts
+
+To view orphan concepts:
+
+1. Open the scheme dropdown in the breadcrumb bar
+2. Look for "Orphan Concepts" at the top of the list (if orphans exist)
+3. Select "Orphan Concepts" to load them in the tree
+
+When you select Orphan Concepts:
+- The tree shows all orphan concepts as a flat list
+- The right panel displays information about the orphan collection
+- You can click any concept to view its details
+
+### Orphan Detection Process
+
+The first time you access Orphan Concepts for an endpoint, the application runs a detection process:
+- Progress is displayed as concepts are analyzed
+- Detection runs in the background
+- Results are cached for subsequent access
+
+### Hiding the Orphan Selector
+
+If you don't need the orphan concepts feature, you can hide it:
+
+1. Open Settings (⚙️ in the header)
+2. Find "Show Orphan Concepts in Scheme Selector"
+3. Toggle it off
+
+The Orphan Concepts option will no longer appear in the scheme dropdown.
 
 ---
 
@@ -370,6 +422,8 @@ Select your preferred language for viewing labels. Only languages detected in th
 | Show Language Tags | Display language codes on labels |
 | Include Preferred Language | Show tag even when label matches your preference |
 
+**Quick Dark Mode Toggle:** You can also toggle dark mode directly from the header toolbar using the sun/moon icon, without opening the Settings dialog.
+
 ### Deprecation Settings
 
 | Setting | Description |
@@ -380,6 +434,28 @@ Select your preferred language for viewing labels. Only languages detected in th
 Configure which conditions indicate deprecation:
 - OWL Deprecated: `owl:deprecated = true`
 - EU Vocabularies Status: Status not equal to CURRENT
+
+### Developer Options
+
+| Setting | Description |
+|---------|-------------|
+| Developer Mode | Enable advanced debugging features |
+
+When Developer Mode is enabled:
+- A download button appears next to each endpoint in the Endpoint Manager
+- Click the download button to export endpoint data as JSON
+- The export includes: endpoint name, URL, analysis data, and language priorities
+
+This feature is useful for debugging endpoint configurations or sharing setup information.
+
+### Pre-configured Deployments
+
+Some deployments of AE SKOS may be pre-configured by administrators:
+- A custom logo may appear in the header for branded deployments
+- Endpoint management features may be restricted
+- Some settings (like Developer Mode) may be hidden
+
+If you're using a pre-configured deployment and need to modify settings, contact your administrator. Administrators can find setup instructions in the [Deployment Guide](https://github.com/cognizone/augmented-semantics/blob/main/ae-skos/DEPLOYMENT.md).
 
 ### Reset to Defaults
 
