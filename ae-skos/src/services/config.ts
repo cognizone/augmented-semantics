@@ -50,6 +50,19 @@ export async function loadConfig(): Promise<ResolvedConfig> {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`)
     }
 
+    // Check if response is actually JSON (some servers return HTML for missing files)
+    const contentType = response.headers.get('content-type')
+    if (!contentType || !contentType.includes('application/json')) {
+      logger.debug('ConfigService', 'Config response is not JSON, treating as no config', { contentType })
+      state.value = {
+        configMode: false,
+        config: null,
+        loaded: true,
+        error: null,
+      }
+      return state.value
+    }
+
     const config: AppConfig = await response.json()
 
     // Validate config structure

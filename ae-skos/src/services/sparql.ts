@@ -697,36 +697,6 @@ export async function analyzeEndpoint(
 }
 
 /**
- * Build a query with selected graphs (FROM clauses)
- */
-export function buildQueryWithGraphs(
-  query: string,
-  selectedGraphs?: string[]
-): string {
-  if (!selectedGraphs || selectedGraphs.length === 0) {
-    return query
-  }
-
-  // Find WHERE clause and insert FROM clauses before it
-  const fromClauses = selectedGraphs
-    .map(g => `FROM <${g}>`)
-    .join('\n')
-
-  // Simple regex to find WHERE (case insensitive)
-  const whereMatch = query.match(/\bWHERE\b/i)
-  if (whereMatch && whereMatch.index !== undefined) {
-    return (
-      query.slice(0, whereMatch.index) +
-      fromClauses +
-      '\n' +
-      query.slice(whereMatch.index)
-    )
-  }
-
-  return query
-}
-
-/**
  * Add standard prefixes to a query if not already present
  */
 export function withPrefixes(query: string): string {

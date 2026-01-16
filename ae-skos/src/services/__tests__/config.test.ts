@@ -25,6 +25,7 @@ function mockFetchSuccess(config: AppConfig) {
     ok: true,
     status: 200,
     statusText: 'OK',
+    headers: new Headers({ 'content-type': 'application/json' }),
     json: async () => config,
   })
 }
@@ -42,6 +43,19 @@ function mockFetchInvalidJson() {
     ok: true,
     status: 200,
     statusText: 'OK',
+    headers: new Headers({ 'content-type': 'application/json' }),
+    json: async () => {
+      throw new SyntaxError('Unexpected token')
+    },
+  })
+}
+
+function mockFetchHtmlResponse() {
+  return vi.fn().mockResolvedValue({
+    ok: true,
+    status: 200,
+    statusText: 'OK',
+    headers: new Headers({ 'content-type': 'text/html' }),
     json: async () => {
       throw new SyntaxError('Unexpected token')
     },
@@ -87,6 +101,19 @@ describe('config service', () => {
         const { loadConfig } = await import('../config')
 
         await expect(loadConfig()).resolves.not.toThrow()
+      })
+
+      it('handles HTML response (SPA fallback) as no config', async () => {
+        // Some servers return 200 OK with HTML for missing files instead of 404
+        global.fetch = mockFetchHtmlResponse()
+        const { loadConfig } = await import('../config')
+
+        const result = await loadConfig()
+
+        expect(result.configMode).toBe(false)
+        expect(result.config).toBeNull()
+        expect(result.loaded).toBe(true)
+        expect(result.error).toBeNull()
       })
     })
 

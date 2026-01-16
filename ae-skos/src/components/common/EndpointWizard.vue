@@ -60,6 +60,10 @@ const { priorities, endpointLanguages, loadPriorities, getLanguageCount, getLang
 
 // Capabilities state (Step 2)
 const {
+  skosContentStatus,
+  skosContentSeverity,
+  skosContentIcon,
+  skosContentDescription,
   graphSupportStatus,
   graphSupportSeverity,
   graphSupportIcon,
@@ -312,6 +316,10 @@ function handleClose() {
         <!-- Step 2: Capabilities -->
         <StepPanel v-slot="{ activateCallback }" value="2">
           <WizardStepCapabilities
+            :skosContentStatus="skosContentStatus"
+            :skosContentSeverity="skosContentSeverity"
+            :skosContentIcon="skosContentIcon"
+            :skosContentDescription="skosContentDescription"
             :graphSupportStatus="graphSupportStatus"
             :graphSupportSeverity="graphSupportSeverity"
             :graphSupportIcon="graphSupportIcon"
@@ -337,7 +345,6 @@ function handleClose() {
             :analyzeElapsedValue="analyzeElapsed.elapsed.value"
             :analysisLog="analysisLog"
             :analyzedAt="tempEndpoint?.analysis?.analyzedAt ?? null"
-            :totalConcepts="tempEndpoint?.analysis?.totalConcepts ?? null"
             :relationships="tempEndpoint?.analysis?.relationships ?? null"
             @reanalyze="handleReanalyze"
             @next="activateCallback('3')"

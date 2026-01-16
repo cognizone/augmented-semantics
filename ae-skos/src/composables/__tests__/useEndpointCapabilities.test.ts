@@ -15,6 +15,125 @@ function createEndpoint(analysis?: SPARQLEndpoint['analysis']): SPARQLEndpoint {
 }
 
 describe('useEndpointCapabilities', () => {
+  describe('skosContentStatus', () => {
+    it('returns Unknown when no analysis', () => {
+      const endpoint = ref<SPARQLEndpoint | null>(createEndpoint())
+      const { skosContentStatus } = useEndpointCapabilities(endpoint)
+      expect(skosContentStatus.value).toBe('Unknown')
+    })
+
+    it('returns Unknown when hasSkosContent is undefined', () => {
+      const endpoint = ref<SPARQLEndpoint | null>(createEndpoint({
+        supportsNamedGraphs: true,
+        skosGraphCount: 5,
+        analyzedAt: '2024-01-01',
+        // hasSkosContent not set
+      }))
+      const { skosContentStatus } = useEndpointCapabilities(endpoint)
+      expect(skosContentStatus.value).toBe('Unknown')
+    })
+
+    it('returns Yes when hasSkosContent is true', () => {
+      const endpoint = ref<SPARQLEndpoint | null>(createEndpoint({
+        hasSkosContent: true,
+        supportsNamedGraphs: true,
+        skosGraphCount: 5,
+        analyzedAt: '2024-01-01',
+      }))
+      const { skosContentStatus } = useEndpointCapabilities(endpoint)
+      expect(skosContentStatus.value).toBe('Yes')
+    })
+
+    it('returns No when hasSkosContent is false', () => {
+      const endpoint = ref<SPARQLEndpoint | null>(createEndpoint({
+        hasSkosContent: false,
+        supportsNamedGraphs: true,
+        skosGraphCount: 0,
+        analyzedAt: '2024-01-01',
+      }))
+      const { skosContentStatus } = useEndpointCapabilities(endpoint)
+      expect(skosContentStatus.value).toBe('No')
+    })
+  })
+
+  describe('skosContentSeverity', () => {
+    it('returns secondary when unknown', () => {
+      const endpoint = ref<SPARQLEndpoint | null>(createEndpoint())
+      const { skosContentSeverity } = useEndpointCapabilities(endpoint)
+      expect(skosContentSeverity.value).toBe('secondary')
+    })
+
+    it('returns success when hasSkosContent is true', () => {
+      const endpoint = ref<SPARQLEndpoint | null>(createEndpoint({
+        hasSkosContent: true,
+        analyzedAt: '2024-01-01',
+      }))
+      const { skosContentSeverity } = useEndpointCapabilities(endpoint)
+      expect(skosContentSeverity.value).toBe('success')
+    })
+
+    it('returns warn when hasSkosContent is false', () => {
+      const endpoint = ref<SPARQLEndpoint | null>(createEndpoint({
+        hasSkosContent: false,
+        analyzedAt: '2024-01-01',
+      }))
+      const { skosContentSeverity } = useEndpointCapabilities(endpoint)
+      expect(skosContentSeverity.value).toBe('warn')
+    })
+  })
+
+  describe('skosContentIcon', () => {
+    it('returns question circle when unknown', () => {
+      const endpoint = ref<SPARQLEndpoint | null>(createEndpoint())
+      const { skosContentIcon } = useEndpointCapabilities(endpoint)
+      expect(skosContentIcon.value).toContain('pi-question-circle')
+    })
+
+    it('returns check circle when hasSkosContent is true', () => {
+      const endpoint = ref<SPARQLEndpoint | null>(createEndpoint({
+        hasSkosContent: true,
+        analyzedAt: '2024-01-01',
+      }))
+      const { skosContentIcon } = useEndpointCapabilities(endpoint)
+      expect(skosContentIcon.value).toContain('pi-check-circle')
+    })
+
+    it('returns warning triangle when hasSkosContent is false', () => {
+      const endpoint = ref<SPARQLEndpoint | null>(createEndpoint({
+        hasSkosContent: false,
+        analyzedAt: '2024-01-01',
+      }))
+      const { skosContentIcon } = useEndpointCapabilities(endpoint)
+      expect(skosContentIcon.value).toContain('pi-exclamation-triangle')
+    })
+  })
+
+  describe('skosContentDescription', () => {
+    it('returns unknown message when no analysis', () => {
+      const endpoint = ref<SPARQLEndpoint | null>(createEndpoint())
+      const { skosContentDescription } = useEndpointCapabilities(endpoint)
+      expect(skosContentDescription.value).toBe('Could not determine if endpoint contains SKOS data')
+    })
+
+    it('returns positive message when hasSkosContent is true', () => {
+      const endpoint = ref<SPARQLEndpoint | null>(createEndpoint({
+        hasSkosContent: true,
+        analyzedAt: '2024-01-01',
+      }))
+      const { skosContentDescription } = useEndpointCapabilities(endpoint)
+      expect(skosContentDescription.value).toBe('Endpoint contains SKOS concepts or schemes')
+    })
+
+    it('returns negative message when hasSkosContent is false', () => {
+      const endpoint = ref<SPARQLEndpoint | null>(createEndpoint({
+        hasSkosContent: false,
+        analyzedAt: '2024-01-01',
+      }))
+      const { skosContentDescription } = useEndpointCapabilities(endpoint)
+      expect(skosContentDescription.value).toBe('No SKOS concepts or schemes found in endpoint')
+    })
+  })
+
   describe('graphSupportStatus', () => {
     it('returns Unknown when no analysis', () => {
       const endpoint = ref<SPARQLEndpoint | null>(createEndpoint())

@@ -13,7 +13,6 @@ import {
   detectSkosGraphs,
   detectLanguages,
   withPrefixes,
-  buildQueryWithGraphs,
 } from '../sparql'
 import {
   createMockEndpoint,
@@ -723,33 +722,5 @@ describe('withPrefixes', () => {
     const result = withPrefixes(query)
 
     expect(result).toBe(query)
-  })
-})
-
-describe('buildQueryWithGraphs', () => {
-  it('returns original query when no graphs selected', () => {
-    const query = 'SELECT * WHERE { ?s ?p ?o }'
-    expect(buildQueryWithGraphs(query, undefined)).toBe(query)
-    expect(buildQueryWithGraphs(query, [])).toBe(query)
-  })
-
-  it('adds FROM clauses before WHERE', () => {
-    const query = 'SELECT * WHERE { ?s ?p ?o }'
-    const result = buildQueryWithGraphs(query, [
-      'http://example.org/graph1',
-      'http://example.org/graph2',
-    ])
-
-    expect(result).toContain('FROM <http://example.org/graph1>')
-    expect(result).toContain('FROM <http://example.org/graph2>')
-    expect(result.indexOf('FROM')).toBeLessThan(result.indexOf('WHERE'))
-  })
-
-  it('handles case-insensitive WHERE', () => {
-    const query = 'SELECT * where { ?s ?p ?o }'
-    const result = buildQueryWithGraphs(query, ['http://example.org/graph1'])
-
-    expect(result).toContain('FROM <http://example.org/graph1>')
-    expect(result).toContain('where')
   })
 })

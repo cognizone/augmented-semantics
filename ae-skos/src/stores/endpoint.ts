@@ -96,7 +96,7 @@ export const useEndpointStore = defineStore('endpoint', () => {
 
     // Auto-select first endpoint
     if (endpoints.value.length > 0) {
-      currentId.value = endpoints.value[0].id
+      currentId.value = endpoints.value[0]?.id ?? null
     }
   }
 

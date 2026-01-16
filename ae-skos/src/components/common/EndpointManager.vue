@@ -92,15 +92,17 @@ function handleWizardSave(endpoint: SPARQLEndpoint) {
       auth: endpoint.auth,
     })
 
-    // Update with analysis and language priorities
-    endpointStore.updateEndpoint(newEndpoint.id, {
-      analysis: endpoint.analysis,
-      languagePriorities: endpoint.languagePriorities,
-    })
+    if (newEndpoint) {
+      // Update with analysis and language priorities
+      endpointStore.updateEndpoint(newEndpoint.id, {
+        analysis: endpoint.analysis,
+        languagePriorities: endpoint.languagePriorities,
+      })
 
-    // Auto-select and set connected
-    endpointStore.selectEndpoint(newEndpoint.id)
-    endpointStore.setStatus('connected')
+      // Auto-select and set connected
+      endpointStore.selectEndpoint(newEndpoint.id)
+      endpointStore.setStatus('connected')
+    }
   }
 }
 
@@ -133,8 +135,10 @@ async function handleTestConnection(endpoint: SPARQLEndpoint) {
 // Suggested Endpoint Handlers
 function handleAddSuggestedEndpoint(suggested: SuggestedEndpoint) {
   const newEndpoint = endpointStore.addSuggestedEndpoint(suggested)
-  endpointStore.selectEndpoint(newEndpoint.id)
-  endpointStore.setStatus('connected')
+  if (newEndpoint) {
+    endpointStore.selectEndpoint(newEndpoint.id)
+    endpointStore.setStatus('connected')
+  }
 }
 
 // Utility Functions

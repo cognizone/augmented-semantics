@@ -13,6 +13,10 @@ import Tag from 'primevue/tag'
 
 const props = defineProps<{
   // Capability display
+  skosContentStatus: string
+  skosContentSeverity: 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast' | undefined
+  skosContentIcon: string
+  skosContentDescription: string | null
   graphSupportStatus: string
   graphSupportSeverity: 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast' | undefined
   graphSupportIcon: string
@@ -42,7 +46,6 @@ const props = defineProps<{
   analysisLog: AnalysisLogEntry[]
   analyzedAt: string | null
   // SKOS statistics (detail - keep for expansion)
-  totalConcepts: number | null
   relationships: Record<string, boolean> | null
 }>()
 
@@ -51,14 +54,6 @@ defineEmits<{
   next: []
   back: []
 }>()
-
-// Debug logging for statistics props
-watch(() => [props.totalConcepts, props.relationships], ([tc, rel]) => {
-  console.log('📊 WizardStepCapabilities received:', {
-    totalConcepts: tc,
-    relationships: rel
-  })
-}, { immediate: true })
 
 // Auto-hide analysis log after completion
 const showAnalysisLog = ref(true)
@@ -112,6 +107,18 @@ function formatRelName(key: string): string {
 <template>
   <div class="step-content">
     <div class="capabilities-info">
+      <!-- SKOS Content -->
+      <div class="capability-item">
+        <div class="capability-row">
+          <i :class="skosContentIcon"></i>
+          <span class="capability-label">SKOS Content</span>
+          <Tag :severity="skosContentSeverity">{{ skosContentStatus }}</Tag>
+        </div>
+        <p v-if="skosContentDescription" class="capability-description">
+          {{ skosContentDescription }}
+        </p>
+      </div>
+
       <!-- Concept Count -->
       <div class="capability-item">
         <div class="capability-row">

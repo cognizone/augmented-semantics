@@ -56,6 +56,9 @@ export interface AppSettings {
   showDeprecationIndicator: boolean   // Show deprecation visual indicators
   deprecationRules: DeprecationRule[] // Configurable deprecation detection rules
 
+  // Scheme selector settings
+  showOrphansSelector: boolean    // Show "Orphan Concepts" option in scheme dropdown
+
   // Developer settings
   logLevel: LogLevel                          // Minimum log level for console output
   orphanDetectionStrategy: OrphanDetectionStrategy  // Orphan detection method (auto/fast/slow)
@@ -68,6 +71,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   showPreferredLanguageTag: false,
   showDeprecationIndicator: true,
   deprecationRules: DEFAULT_DEPRECATION_RULES,
+  showOrphansSelector: true,
   logLevel: 'warn',
   orphanDetectionStrategy: 'auto',
 }
@@ -80,6 +84,7 @@ export const useSettingsStore = defineStore('settings', () => {
   const showPreferredLanguageTag = ref(DEFAULT_SETTINGS.showPreferredLanguageTag)
   const showDeprecationIndicator = ref(DEFAULT_SETTINGS.showDeprecationIndicator)
   const deprecationRules = ref<DeprecationRule[]>([...DEFAULT_DEPRECATION_RULES])
+  const showOrphansSelector = ref(DEFAULT_SETTINGS.showOrphansSelector)
   const logLevel = ref<LogLevel>(DEFAULT_SETTINGS.logLevel)
   const orphanDetectionStrategy = ref<OrphanDetectionStrategy>(DEFAULT_SETTINGS.orphanDetectionStrategy)
 
@@ -117,6 +122,9 @@ export const useSettingsStore = defineStore('settings', () => {
         if (settings.deprecationRules !== undefined) {
           deprecationRules.value = settings.deprecationRules
         }
+        if (settings.showOrphansSelector !== undefined) {
+          showOrphansSelector.value = settings.showOrphansSelector
+        }
         if (settings.logLevel !== undefined) {
           logLevel.value = settings.logLevel
           logger.setMinLevel(settings.logLevel)
@@ -140,6 +148,7 @@ export const useSettingsStore = defineStore('settings', () => {
         showPreferredLanguageTag: showPreferredLanguageTag.value,
         showDeprecationIndicator: showDeprecationIndicator.value,
         deprecationRules: deprecationRules.value,
+        showOrphansSelector: showOrphansSelector.value,
         logLevel: logLevel.value,
         orphanDetectionStrategy: orphanDetectionStrategy.value,
       }
@@ -195,6 +204,7 @@ export const useSettingsStore = defineStore('settings', () => {
     showPreferredLanguageTag.value = DEFAULT_SETTINGS.showPreferredLanguageTag
     showDeprecationIndicator.value = DEFAULT_SETTINGS.showDeprecationIndicator
     deprecationRules.value = [...DEFAULT_DEPRECATION_RULES]
+    showOrphansSelector.value = DEFAULT_SETTINGS.showOrphansSelector
     logLevel.value = DEFAULT_SETTINGS.logLevel
     orphanDetectionStrategy.value = DEFAULT_SETTINGS.orphanDetectionStrategy
     logger.setMinLevel(DEFAULT_SETTINGS.logLevel)
@@ -220,6 +230,7 @@ export const useSettingsStore = defineStore('settings', () => {
       showPreferredLanguageTag.value,
       showDeprecationIndicator.value,
       deprecationRules.value,
+      showOrphansSelector.value,
       logLevel.value,
       orphanDetectionStrategy.value,
     ],
@@ -238,6 +249,7 @@ export const useSettingsStore = defineStore('settings', () => {
     showPreferredLanguageTag,
     showDeprecationIndicator,
     deprecationRules,
+    showOrphansSelector,
     logLevel,
     orphanDetectionStrategy,
     // Actions

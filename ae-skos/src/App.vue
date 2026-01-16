@@ -334,6 +334,16 @@ onUnmounted(() => {
               </span>
             </label>
           </div>
+
+          <div class="setting-row">
+            <label class="checkbox-label">
+              <Checkbox v-model="settingsStore.showOrphansSelector" :binary="true" />
+              <span class="checkbox-text">
+                Show orphans selector
+                <small>Display "Orphan Concepts" option in scheme dropdown</small>
+              </span>
+            </label>
+          </div>
         </section>
 
         <!-- Deprecation Section -->

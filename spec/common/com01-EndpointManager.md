@@ -736,7 +736,7 @@ EndpointManager follows a composable-based architecture with extracted dialog co
 **EndpointWizard.vue** (~600 lines)
 - 3-step stepper wizard for add/edit:
   - Step 1: Basic Info (name, URL, authentication)
-  - Step 2: Capabilities (graphs, duplicates)
+  - Step 2: Capabilities (SKOS content, graphs, schemes, concepts, relationships)
   - Step 3: Languages (drag-and-drop priority ordering)
 - Handles both add and edit modes
 
@@ -819,27 +819,49 @@ Features:
 - Builds auth configuration objects
 
 #### useEndpointCapabilities
-**Purpose:** Capability display with computed properties
+**Purpose:** Capability display with computed properties for wizard Step 2
 
 ```typescript
 function useEndpointCapabilities(endpoint: Ref<SPARQLEndpoint | null>) {
-  const graphStatus = computed(() => ...)
-  const graphSeverity = computed(() => ...)
-  const duplicateStatus = computed(() => ...)
-  const duplicateSeverity = computed(() => ...)
+  // Each capability has: status, severity, icon, description
+  // SKOS Content (Yes/No/Unknown)
+  const skosContentStatus = computed(() => ...)
+  const skosContentSeverity = computed(() => ...)
+  const skosContentIcon = computed(() => ...)
+  const skosContentDescription = computed(() => ...)
 
-  function formatQueryMethod(method?: string): string
+  // Graph Support (Yes/No/Unknown)
+  const graphSupportStatus = computed(() => ...)
+  // ... severity, icon, description
+
+  // SKOS Graphs (count display)
+  const skosGraphStatus = computed(() => ...)
+  // ... severity, icon, description
+
+  // Concept Schemes (count display)
+  const schemeCountStatus = computed(() => ...)
+  // ... severity, icon, description
+
+  // Concept Count
+  const conceptCountStatus = computed(() => ...)
+  // ... severity, icon, description
+
+  // Relationships (X/7 available)
+  const relationshipsStatus = computed(() => ...)
+  // ... severity, icon, description
+
   function formatCount(count: number): string
 
-  return { graphStatus, graphSeverity, duplicateStatus, duplicateSeverity, formatQueryMethod, formatCount }
+  return { skosContentStatus, ..., formatCount }
 }
 ```
 
 Features:
-- Computes graph capability status and display
-- Computes duplicate detection status
-- Provides severity levels for badges
-- Formats display values
+- Computes display values for all 6 capability items
+- Provides severity levels for PrimeVue Tag badges (success/warn/secondary)
+- Provides icon classes (check-circle/exclamation-triangle/question-circle)
+- Provides description text for each capability
+- Formats counts with thousand separators (German locale)
 
 #### useLanguagePriorities
 **Purpose:** Language priority management with display helpers
@@ -1321,6 +1343,7 @@ async function bootstrap() {
 ### Fallback Behavior
 
 - **404 (no config file):** Normal operation, user manages endpoints
+- **HTML response (SPA fallback):** Some servers return 200 OK with HTML instead of 404; treated as no config
 - **Invalid JSON:** Shows error banner, falls back to normal operation
 - **Missing endpoints:** Config mode not activated (appName/docsUrl still apply)
 

@@ -9,6 +9,7 @@ vi.mock('../../services/sparql', () => ({
   detectGraphs: vi.fn(),
   detectSkosGraphs: vi.fn(),
   detectLanguages: vi.fn(),
+  detectConceptSchemes: vi.fn(),
   executeSparql: vi.fn(),
   withPrefixes: vi.fn((query: string) => query),
 }))
@@ -18,6 +19,7 @@ import {
   detectGraphs,
   detectSkosGraphs,
   detectLanguages,
+  detectConceptSchemes,
   executeSparql,
 } from '../../services/sparql'
 
@@ -85,17 +87,32 @@ describe('useEndpointAnalysis', () => {
   })
 
   describe('reanalyzeEndpoint', () => {
-    // Default mock for executeSparql that returns empty/basic results
+    // Default mock for executeSparql that handles both ASK and SELECT queries
     const mockExecuteSparqlDefault = () => {
-      ;(executeSparql as Mock).mockImplementation(() => Promise.resolve({
-        results: {
-          bindings: [
-            { count: { value: '100' } },
-            // Relationship detection results
-            { hasInScheme: { value: 'true' }, hasTopConceptOf: { value: 'true' }, hasHasTopConcept: { value: 'true' }, hasBroader: { value: 'true' }, hasNarrower: { value: 'true' }, hasBroaderTransitive: { value: 'false' }, hasNarrowerTransitive: { value: 'false' } }
-          ]
+      let callCount = 0
+      ;(executeSparql as Mock).mockImplementation(() => {
+        callCount++
+        // First call is ASK query for SKOS content
+        if (callCount === 1) {
+          return Promise.resolve({ boolean: true })
         }
-      }))
+        // Subsequent calls are SELECT queries
+        return Promise.resolve({
+          results: {
+            bindings: [
+              { count: { value: '100' } },
+              // Relationship detection results
+              { hasInScheme: { value: 'true' }, hasTopConceptOf: { value: 'true' }, hasHasTopConcept: { value: 'true' }, hasBroader: { value: 'true' }, hasNarrower: { value: 'true' }, hasBroaderTransitive: { value: 'false' }, hasNarrowerTransitive: { value: 'false' } }
+            ]
+          }
+        })
+      })
+      // Default mock for detectConceptSchemes
+      ;(detectConceptSchemes as Mock).mockResolvedValue({
+        schemeUris: ['http://ex.org/scheme1'],
+        schemeCount: 1,
+        schemesLimited: false,
+      })
     }
 
     it('performs full analysis with logging', async () => {
@@ -208,20 +225,33 @@ describe('useEndpointAnalysis', () => {
 
   describe('clearAnalysis', () => {
     it('resets all analysis state', async () => {
-      // Mock executeSparql for concept count and relationships
-      ;(executeSparql as Mock).mockImplementation(() => Promise.resolve({
-        results: {
-          bindings: [
-            { count: { value: '100' } },
-            { hasInScheme: { value: 'true' }, hasTopConceptOf: { value: 'true' }, hasHasTopConcept: { value: 'true' }, hasBroader: { value: 'true' }, hasNarrower: { value: 'true' }, hasBroaderTransitive: { value: 'false' }, hasNarrowerTransitive: { value: 'false' } }
-          ]
+      // Mock executeSparql for ASK and SELECT queries
+      let callCount = 0
+      ;(executeSparql as Mock).mockImplementation(() => {
+        callCount++
+        // First call is ASK query for SKOS content
+        if (callCount === 1) {
+          return Promise.resolve({ boolean: true })
         }
-      }))
+        return Promise.resolve({
+          results: {
+            bindings: [
+              { count: { value: '100' } },
+              { hasInScheme: { value: 'true' }, hasTopConceptOf: { value: 'true' }, hasHasTopConcept: { value: 'true' }, hasBroader: { value: 'true' }, hasNarrower: { value: 'true' }, hasBroaderTransitive: { value: 'false' }, hasNarrowerTransitive: { value: 'false' } }
+            ]
+          }
+        })
+      })
       ;(detectGraphs as Mock).mockResolvedValue({
         supportsNamedGraphs: true,
       })
       ;(detectSkosGraphs as Mock).mockResolvedValue({ skosGraphCount: 1, skosGraphUris: ['http://g1'] })
       ;(detectLanguages as Mock).mockResolvedValue([])
+      ;(detectConceptSchemes as Mock).mockResolvedValue({
+        schemeUris: ['http://ex.org/scheme1'],
+        schemeCount: 1,
+        schemesLimited: false,
+      })
 
       const {
         reanalyzeEndpoint,

@@ -15,6 +15,7 @@ import {
   detectGraphs,
   detectSkosGraphs,
   detectLanguages,
+  detectConceptSchemes,
   executeSparql,
   withPrefixes,
 } from '../services/sparql'
@@ -81,8 +82,70 @@ export function useEndpointAnalysis() {
     analyzeStep.value = 'Analyzing...'
 
     try {
-      // Step 1: Count total concepts
-      logStep('(1/5) Counting concepts...', 'pending')
+      // Step 1: Check for SKOS content
+      logStep('(1/7) Checking SKOS content...', 'pending')
+      const skosCheckQuery = withPrefixes(`
+        ASK { { ?s a skos:ConceptScheme } UNION { ?s a skos:Concept } }
+      `)
+      let hasSkosContent = true
+      try {
+        const askResult = await executeSparql(endpoint, skosCheckQuery, { retries: 1 })
+        hasSkosContent = askResult.boolean === true
+        if (hasSkosContent) {
+          updateLastLog('(1/7) SKOS content: found', 'success')
+        } else {
+          updateLastLog('(1/7) SKOS content: none found', 'warning')
+        }
+      } catch (e) {
+        updateLastLog('(1/7) SKOS content: check failed', 'warning')
+        logger.warn('EndpointAnalysis', 'Failed to check SKOS content', { error: e })
+      }
+
+      // Step 2: Detect graph support
+      logStep('(2/7) Detecting graph support...', 'pending')
+      const graphResult = await detectGraphs(endpoint)
+
+      if (graphResult.supportsNamedGraphs === null) {
+        updateLastLog(`(2/7) Graph support: unknown`, 'warning')
+      } else if (graphResult.supportsNamedGraphs === false) {
+        updateLastLog(`(2/7) Graph support: no`, 'success')
+      } else {
+        updateLastLog(`(2/7) Graph support: yes`, 'success')
+      }
+
+      // Step 3: Detect SKOS graphs (only if graphs supported)
+      let skosGraphCount: number | null = null
+      let skosGraphUris: string[] | null = null
+      if (graphResult.supportsNamedGraphs === true) {
+        logStep('(3/7) Detecting SKOS graphs...', 'pending')
+        const skosResult = await detectSkosGraphs(endpoint)
+        skosGraphCount = skosResult.skosGraphCount
+        skosGraphUris = skosResult.skosGraphUris
+        if (skosGraphCount === null) {
+          updateLastLog(`(3/7) SKOS graphs: detection failed`, 'warning')
+        } else if (skosGraphCount === 0) {
+          updateLastLog(`(3/7) SKOS graphs: none found`, 'warning')
+        } else {
+          const batchInfo = skosGraphUris ? ' (will batch)' : ' (too many to batch)'
+          updateLastLog(`(3/7) SKOS graphs: ${skosGraphCount}${batchInfo}`, 'success')
+        }
+      } else {
+        logStep('(3/7) SKOS graphs: skipped (no graph support)', 'success')
+      }
+
+      // Step 4: Detect concept schemes
+      logStep('(4/7) Detecting concept schemes...', 'pending')
+      const schemeResult = await detectConceptSchemes(endpoint)
+      if (schemeResult.schemeCount === 0) {
+        updateLastLog(`(4/7) Schemes: none found`, 'warning')
+      } else if (schemeResult.schemesLimited) {
+        updateLastLog(`(4/7) Schemes: ${schemeResult.schemeCount}+ (first ${schemeResult.schemeUris.length} stored)`, 'success')
+      } else {
+        updateLastLog(`(4/7) Schemes: ${schemeResult.schemeCount}`, 'success')
+      }
+
+      // Step 5: Count total concepts
+      logStep('(5/7) Counting concepts...', 'pending')
       const countQuery = withPrefixes(`
         SELECT (COUNT(DISTINCT ?concept) AS ?count)
         WHERE {
@@ -93,15 +156,15 @@ export function useEndpointAnalysis() {
       try {
         const countResult = await executeSparql(endpoint, countQuery, { retries: 1 })
         totalConcepts = parseInt(countResult.results.bindings[0]?.count?.value || '0', 10)
-        updateLastLog(`(1/5) Concepts: ${totalConcepts?.toLocaleString() ?? 'unknown'}`, 'success')
+        updateLastLog(`(5/7) Concepts: ${totalConcepts?.toLocaleString() ?? 'unknown'}`, 'success')
       } catch (e) {
-        updateLastLog(`(1/5) Concepts: count failed`, 'warning')
+        updateLastLog(`(5/7) Concepts: count failed`, 'warning')
         logger.warn('EndpointAnalysis', 'Failed to count concepts', { error: e })
       }
 
-      // Step 2: Detect relationships
+      // Step 6: Detect relationships
       // Use EXISTS at dataset level to check if ANY concept has these relationships
-      logStep('(2/5) Detecting relationships...', 'pending')
+      logStep('(6/7) Detecting relationships...', 'pending')
       const relQuery = withPrefixes(`
         SELECT
           (EXISTS { ?c a skos:Concept . ?c skos:inScheme ?x } AS ?hasInScheme)
@@ -142,65 +205,36 @@ export function useEndpointAnalysis() {
             hasNarrowerTransitive: parseExists(binding.hasNarrowerTransitive?.value),
           }
           const trueCount = Object.values(relationships).filter(Boolean).length
-          updateLastLog(`(2/5) Relationships: ${trueCount}/7 available`, 'success')
+          updateLastLog(`(6/7) Relationships: ${trueCount}/7 available`, 'success')
         }
       } catch (e) {
-        updateLastLog(`(2/5) Relationships: detection failed`, 'warning')
+        updateLastLog(`(6/7) Relationships: detection failed`, 'warning')
         logger.warn('EndpointAnalysis', 'Failed to detect relationships', { error: e })
       }
 
-      // Step 3: Detect graph support
-      logStep('(3/5) Detecting graph support...', 'pending')
-      const graphResult = await detectGraphs(endpoint)
-
-      if (graphResult.supportsNamedGraphs === null) {
-        updateLastLog(`(3/5) Graph support: unknown`, 'warning')
-      } else if (graphResult.supportsNamedGraphs === false) {
-        updateLastLog(`(3/5) Graph support: no`, 'success')
-      } else {
-        updateLastLog(`(3/5) Graph support: yes`, 'success')
-      }
-
-      // Step 2: Detect SKOS graphs (only if graphs supported)
-      let skosGraphCount: number | null = null
-      let skosGraphUris: string[] | null = null
-      if (graphResult.supportsNamedGraphs === true) {
-        logStep('(4/5) Detecting SKOS graphs...', 'pending')
-        const skosResult = await detectSkosGraphs(endpoint)
-        skosGraphCount = skosResult.skosGraphCount
-        skosGraphUris = skosResult.skosGraphUris
-        if (skosGraphCount === null) {
-          updateLastLog(`(4/5) SKOS graphs: detection failed`, 'warning')
-        } else if (skosGraphCount === 0) {
-          updateLastLog(`(4/5) SKOS graphs: none found`, 'warning')
-        } else {
-          const batchInfo = skosGraphUris ? ' (will batch)' : ' (too many to batch)'
-          updateLastLog(`(4/5) SKOS graphs: ${skosGraphCount}${batchInfo}`, 'success')
-        }
-      } else {
-        logStep('(4/5) SKOS graphs: skipped (no graph support)', 'success')
-      }
-
-      // Step 3: Detect languages
+      // Step 7: Detect languages
       // Use graph scope if we found SKOS graphs
       const useGraphScope = skosGraphUris !== null && skosGraphUris.length > 0
       const queryMode = skosGraphUris
         ? `batched, ${skosGraphUris.length} graphs`
         : 'default'
-      logStep(`(5/5) Detecting languages (${queryMode})...`, 'pending')
+      logStep(`(7/7) Detecting languages (${queryMode})...`, 'pending')
       const languages = await detectLanguages(endpoint, useGraphScope, skosGraphUris)
-      updateLastLog(`(5/5) Languages: found ${languages.length} (${queryMode})`, 'success')
+      updateLastLog(`(7/7) Languages: found ${languages.length} (${queryMode})`, 'success')
 
       // Calculate total duration
       analysisDuration.value = Math.round((performance.now() - startTime) / 1000)
 
       const analysis = {
-        hasSkosContent: true,
+        hasSkosContent,
         supportsNamedGraphs: graphResult.supportsNamedGraphs,
         skosGraphCount,
         languages,
         totalConcepts,
         relationships,
+        schemeUris: schemeResult.schemeUris,
+        schemeCount: schemeResult.schemeCount,
+        schemesLimited: schemeResult.schemesLimited,
         analyzedAt: new Date().toISOString(),
       }
 
@@ -209,6 +243,7 @@ export function useEndpointAnalysis() {
         totalConcepts,
         relationships: relationships ? Object.keys(relationships).filter(k => relationships[k as keyof typeof relationships]).length : 0,
         languages: languages.length,
+        schemeCount: schemeResult.schemeCount,
       })
 
       analyzeStep.value = null

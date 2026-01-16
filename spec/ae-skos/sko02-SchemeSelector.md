@@ -197,6 +197,28 @@ Three strategies for detecting orphan concepts, selectable in app settings. The 
 - `composables/useOrphanConcepts.ts` - Detection implementations
 - `composables/useOrphanQueries.ts` - Query builders
 
+### Show Orphans Selector Setting
+
+Controls visibility of the "Orphan Concepts" option in the scheme dropdown.
+
+**Setting:** `showOrphansSelector` (boolean)
+**Default:** `true`
+**Location:** Settings > Display > "Show orphans selector"
+
+**Behavior:**
+- When `true`: "Orphan Concepts" appears in scheme dropdown (second position, after "All Schemes")
+- When `false`: "Orphan Concepts" is hidden from dropdown
+
+**Use Case:** Hide orphan selector when:
+- The endpoint has no orphan concepts
+- Users don't need orphan detection functionality
+- Simplifying the UI for specific deployments
+
+**Implementation:**
+- Setting stored in `stores/settings.ts`
+- Persisted to localStorage (`ae-skos-settings`)
+- Consumed by `components/skos/ConceptBreadcrumb.vue` in `allSchemeOptions` computed
+
 ### Graph Count Display
 
 When analyzing an endpoint, the number of SKOS graphs is displayed with special handling for large endpoints.

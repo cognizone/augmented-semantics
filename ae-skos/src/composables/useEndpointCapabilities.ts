@@ -10,6 +10,33 @@ import { computed, type Ref } from 'vue'
 import type { SPARQLEndpoint } from '../types'
 
 export function useEndpointCapabilities(endpoint: Ref<SPARQLEndpoint | null>) {
+  // SKOS Content (Yes/No)
+  const skosContentStatus = computed(() => {
+    const analysis = endpoint.value?.analysis
+    if (!analysis) return 'Unknown'
+    if (analysis.hasSkosContent === undefined) return 'Unknown'
+    return analysis.hasSkosContent ? 'Yes' : 'No'
+  })
+
+  const skosContentSeverity = computed(() => {
+    const analysis = endpoint.value?.analysis
+    if (!analysis || analysis.hasSkosContent === undefined) return 'secondary'
+    return analysis.hasSkosContent ? 'success' : 'warn'
+  })
+
+  const skosContentIcon = computed(() => {
+    const analysis = endpoint.value?.analysis
+    if (!analysis || analysis.hasSkosContent === undefined) return 'pi pi-question-circle muted-icon'
+    return analysis.hasSkosContent ? 'pi pi-check-circle success-icon' : 'pi pi-exclamation-triangle warning-icon'
+  })
+
+  const skosContentDescription = computed(() => {
+    const analysis = endpoint.value?.analysis
+    if (!analysis || analysis.hasSkosContent === undefined) return 'Could not determine if endpoint contains SKOS data'
+    if (analysis.hasSkosContent) return 'Endpoint contains SKOS concepts or schemes'
+    return 'No SKOS concepts or schemes found in endpoint'
+  })
+
   // Graph support capabilities (Yes/No)
   const graphSupportStatus = computed(() => {
     const analysis = endpoint.value?.analysis
@@ -176,6 +203,11 @@ export function useEndpointCapabilities(endpoint: Ref<SPARQLEndpoint | null>) {
   }
 
   return {
+    // SKOS Content (Yes/No)
+    skosContentStatus,
+    skosContentSeverity,
+    skosContentIcon,
+    skosContentDescription,
     // Graph support (Yes/No)
     graphSupportStatus,
     graphSupportSeverity,

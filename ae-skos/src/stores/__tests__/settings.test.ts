@@ -46,6 +46,11 @@ describe('settings store', () => {
       expect(store.deprecationRules[0].id).toBe('owl-deprecated')
       expect(store.deprecationRules[1].id).toBe('euvoc-status')
     })
+
+    it('starts with showOrphansSelector enabled', () => {
+      const store = useSettingsStore()
+      expect(store.showOrphansSelector).toBe(true)
+    })
   })
 
   describe('setDarkMode', () => {
@@ -194,6 +199,52 @@ describe('settings store', () => {
     })
   })
 
+  describe('showOrphansSelector', () => {
+    it('can be toggled', () => {
+      const store = useSettingsStore()
+
+      store.showOrphansSelector = false
+      expect(store.showOrphansSelector).toBe(false)
+
+      store.showOrphansSelector = true
+      expect(store.showOrphansSelector).toBe(true)
+    })
+
+    it('persists to localStorage', async () => {
+      const store = useSettingsStore()
+
+      store.showOrphansSelector = false
+      await new Promise(resolve => setTimeout(resolve, 0)) // Wait for watcher
+
+      expect(localStorage.setItem).toHaveBeenCalled()
+    })
+
+    it('loads from localStorage on init', () => {
+      const storedSettings = { showOrphansSelector: false }
+      vi.mocked(localStorage.getItem).mockReturnValue(JSON.stringify(storedSettings))
+
+      const store = useSettingsStore()
+      expect(store.showOrphansSelector).toBe(false)
+    })
+
+    it('uses default when not in stored settings', () => {
+      const storedSettings = { darkMode: true }
+      vi.mocked(localStorage.getItem).mockReturnValue(JSON.stringify(storedSettings))
+
+      const store = useSettingsStore()
+      expect(store.showOrphansSelector).toBe(true) // default
+    })
+
+    it('resets to true on resetToDefaults', () => {
+      const store = useSettingsStore()
+
+      store.showOrphansSelector = false
+      store.resetToDefaults()
+
+      expect(store.showOrphansSelector).toBe(true)
+    })
+  })
+
   describe('resetToDefaults', () => {
     it('resets all settings to defaults', () => {
       const store = useSettingsStore()
@@ -205,6 +256,7 @@ describe('settings store', () => {
       store.showPreferredLanguageTag = true
       store.showDeprecationIndicator = false
       store.setDeprecationRules([])
+      store.showOrphansSelector = false
 
       // Reset
       store.resetToDefaults()
@@ -216,6 +268,7 @@ describe('settings store', () => {
       expect(store.showPreferredLanguageTag).toBe(false)
       expect(store.showDeprecationIndicator).toBe(true)
       expect(store.deprecationRules).toHaveLength(2)
+      expect(store.showOrphansSelector).toBe(true)
     })
   })
 
