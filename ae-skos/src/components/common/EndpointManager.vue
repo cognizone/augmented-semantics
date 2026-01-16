@@ -34,9 +34,6 @@ const emit = defineEmits<{
 
 const endpointStore = useEndpointStore()
 
-// Banner state
-const showInfoBanner = ref(true)
-
 // Suggested endpoints collapsed state (persisted)
 const SUGGESTED_COLLAPSED_KEY = 'ae-suggested-endpoints-collapsed'
 const suggestedCollapsed = ref(localStorage.getItem(SUGGESTED_COLLAPSED_KEY) === 'true')
@@ -165,23 +162,6 @@ function formatUIDate(dateStr?: string) {
     position="top"
   >
     <div class="endpoint-manager-content">
-      <!-- Info Banner -->
-      <div v-if="showInfoBanner" class="info-banner">
-        <span class="material-symbols-outlined info-icon">info</span>
-        <div class="info-content">
-          <span class="info-title">Configuration Wizard Enabled</span>
-          <span class="info-text">
-            Managing endpoints is now more powerful. Clicking
-            <strong>Add Endpoint</strong> or the
-            <span class="icon-badge"><span class="material-symbols-outlined">tune</span></span>
-            configuration action will launch the new multi-step setup flow.
-          </span>
-        </div>
-        <button class="dismiss-btn" @click="showInfoBanner = false" aria-label="Dismiss">
-          <span class="material-symbols-outlined">close</span>
-        </button>
-      </div>
-
       <!-- Suggested Endpoints -->
       <div v-if="endpointStore.availableSuggestedEndpoints.length > 0" class="suggested-section">
         <button class="suggested-header" @click="toggleSuggestedCollapsed">
@@ -345,82 +325,6 @@ function formatUIDate(dateStr?: string) {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-}
-
-/* Info Banner */
-.info-banner {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-  padding: 1rem;
-  background: var(--ae-accent-bg, rgba(0, 122, 204, 0.08));
-  border: 1px solid var(--ae-accent-border, rgba(0, 122, 204, 0.2));
-  border-radius: 0.375rem;
-}
-
-.info-icon {
-  color: var(--ae-accent);
-  font-size: 1.25rem;
-  flex-shrink: 0;
-  margin-top: 0.125rem;
-}
-
-.info-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.info-title {
-  font-weight: 600;
-  color: var(--ae-text-primary);
-  font-size: 0.8125rem;
-}
-
-.info-text {
-  font-size: 0.8125rem;
-  color: var(--ae-text-secondary);
-  line-height: 1.5;
-}
-
-.icon-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--ae-bg-elevated);
-  border: 1px solid var(--ae-border-color);
-  border-radius: 0.25rem;
-  padding: 0 0.25rem;
-  height: 1.25rem;
-  vertical-align: middle;
-  margin: 0 0.125rem;
-}
-
-.icon-badge .material-symbols-outlined {
-  font-size: 0.875rem;
-  color: var(--ae-accent);
-}
-
-.dismiss-btn {
-  background: none;
-  border: none;
-  padding: 0.25rem;
-  cursor: pointer;
-  color: var(--ae-text-muted);
-  border-radius: 0.25rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.dismiss-btn:hover {
-  background: var(--ae-bg-hover);
-  color: var(--ae-text-primary);
-}
-
-.dismiss-btn .material-symbols-outlined {
-  font-size: 1.125rem;
 }
 
 /* Suggested Endpoints */

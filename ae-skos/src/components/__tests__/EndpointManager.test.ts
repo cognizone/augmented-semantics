@@ -223,24 +223,6 @@ describe('EndpointManager', () => {
     })
   })
 
-  describe('info banner', () => {
-    it('shows info banner by default', () => {
-      const wrapper = mountEndpointManager()
-      expect(wrapper.find('.info-banner').exists()).toBe(true)
-      expect(wrapper.text()).toContain('Configuration Wizard Enabled')
-    })
-
-    it('hides info banner when dismissed', async () => {
-      const wrapper = mountEndpointManager()
-
-      const dismissBtn = wrapper.find('.dismiss-btn')
-      await dismissBtn.trigger('click')
-      await nextTick()
-
-      expect(wrapper.find('.info-banner').exists()).toBe(false)
-    })
-  })
-
   describe('suggested endpoints collapse', () => {
     it('toggles suggested section on header click', async () => {
       const endpointStore = useEndpointStore()
