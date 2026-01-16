@@ -90,7 +90,7 @@ export function useEndpointAnalysis() {
       let hasSkosContent = true
       try {
         const askResult = await executeSparql(endpoint, skosCheckQuery, { retries: 1 })
-        hasSkosContent = askResult.boolean === true
+        hasSkosContent = (askResult as unknown as { boolean: boolean }).boolean === true
         if (hasSkosContent) {
           updateLastLog('(1/7) SKOS content: found', 'success')
         } else {
