@@ -6,6 +6,30 @@ AE SKOS is a browser-only application. It consists of static HTML, CSS, and Java
 
 The app connects directly to SPARQL endpoints via HTTP from the user's browser.
 
+## Deployment Modes
+
+AE SKOS supports two deployment modes:
+
+| Mode | Config File | Endpoint Management | Use Case |
+|------|-------------|---------------------|----------|
+| **Standard** | None or no `endpoints` | Users add/remove endpoints | Public demo, developer tool |
+| **Config** | [`app.json`](#configuration) with `endpoints` | Locked (admin-controlled) | Production deployment |
+
+### Standard Mode
+
+Users manage their own SPARQL endpoints through the UI:
+- Add, edit, and remove endpoints
+- Endpoints stored in browser localStorage
+- Optional: Customize app name, logo, and documentation link via [`app.json`](#configuration)
+
+### Config Mode
+
+Administrators pre-configure endpoints via [`app.json`](#configuration):
+- Users cannot add or remove endpoints
+- Single endpoint: Endpoint dropdown is hidden
+- Multiple endpoints: Dropdown visible, but "Manage Endpoints" is hidden
+- Developer mode features (like JSON export) are disabled
+
 ## Requirements
 
 - A web server (nginx, Apache, IIS, or similar)
@@ -26,6 +50,19 @@ This creates a `dist/` folder containing all static files.
 ## Deployment
 
 Copy the contents of the `dist/` folder to your web server's document root.
+
+### Directory Structure
+
+```
+/var/www/ae-skos/
+├── index.html
+├── assets/
+│   ├── index-xxxxx.js
+│   └── index-xxxxx.css
+└── config/                  # Optional - for customization
+    ├── app.json             # Configuration file
+    └── logo.png             # Custom logo (fallback)
+```
 
 ### Recommended: Same-Domain Proxy Setup
 
@@ -62,6 +99,11 @@ server {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
     }
+
+    # Disable caching for config files
+    location /config/ {
+        add_header Cache-Control "no-cache, must-revalidate";
+    }
 }
 ```
 
@@ -84,6 +126,11 @@ server {
     ProxyPass /sparql http://your-sparql-server:8890/sparql
     ProxyPassReverse /sparql http://your-sparql-server:8890/sparql
 
+    # Disable caching for config files
+    <Directory /var/www/ae-skos/config>
+        Header set Cache-Control "no-cache, must-revalidate"
+    </Directory>
+
     # SSL configuration
     SSLEngine on
     SSLCertificateFile /path/to/cert.pem
@@ -91,35 +138,21 @@ server {
 </VirtualHost>
 ```
 
-## Configuring the Endpoint in AE SKOS
-
-Once deployed, users can add the SPARQL endpoint in the app:
-
-1. Click the endpoint selector in the top bar
-2. Click "Add endpoint"
-3. Enter:
-   - **Name**: Your endpoint name
-   - **URL**: `/sparql` (relative URL works with same-domain proxy)
-4. Click Save
-
-The endpoint is stored in the browser's local storage.
-
-## Pre-configured Deployment (Optional)
-
-For deployments where you want to pre-configure endpoints without user setup, create a configuration file.
+## Configuration
 
 ### Configuration File
 
-Create `config/app.json` in the deployment folder (alongside `index.html`):
+Create `config/app.json` in the deployment folder:
 
 ```json
 {
   "appName": "My Vocabulary Browser",
-  "documentationUrl": "https://wiki.example.com/vocab-browser",
+  "logoUrl": "/config/logo.png",
+  "documentationUrl": "https://wiki.example.com/help",
   "endpoints": [
     {
       "name": "Production Vocabulary",
-      "url": "/sparql"
+      "url": "https://vocab.example.com/sparql"
     }
   ]
 }
@@ -127,11 +160,89 @@ Create `config/app.json` in the deployment folder (alongside `index.html`):
 
 ### Configuration Options
 
-| Field | Required | Description |
-|-------|----------|-------------|
-| `appName` | No | Custom app title (default: "AE SKOS") |
-| `documentationUrl` | No | Help link URL (default: GitHub docs) |
-| `endpoints` | No | Pre-configured SPARQL endpoints |
+| Field | Required | Default | Description |
+|-------|----------|---------|-------------|
+| `appName` | No | "AE SKOS" | Application title (shown in header and browser tab) |
+| `logoUrl` | No | `/config/logo.png`* | Logo image URL (shown before app name) |
+| `documentationUrl` | No | GitHub docs | Help link URL |
+| `endpoints` | No | - | Pre-configured SPARQL endpoints |
+
+\* Logo fallback only applies in config mode. In standard mode, no logo is shown unless explicitly set.
+
+### Logo Configuration
+
+The logo appears in the header before the application name.
+
+**Options:**
+
+1. **Explicit URL** - Set `logoUrl` in app.json (relative or absolute):
+   ```json
+   { "logoUrl": "/config/my-logo.png" }
+   ```
+   or external URL:
+   ```json
+   { "logoUrl": "https://cdn.example.com/logo.svg" }
+   ```
+
+2. **Default fallback** (config mode only) - Place `logo.png` in the config folder:
+   ```
+   /var/www/ae-skos/config/logo.png
+   ```
+
+3. **No logo** - In standard mode without `logoUrl`, no logo is displayed.
+
+**Notes:**
+- Recommended size: 28px height (width auto-scales)
+- Supported formats: PNG, SVG, JPG
+- If the image fails to load, it's gracefully hidden
+
+### Standard Mode Examples
+
+**Minimal (no customization):**
+No `config/app.json` file needed.
+
+**Custom branding only:**
+```json
+{
+  "appName": "Corporate Vocabulary Browser",
+  "logoUrl": "/config/corp-logo.svg",
+  "documentationUrl": "https://intranet.example.com/vocab-help"
+}
+```
+Users can still manage their own endpoints.
+
+### Config Mode Examples
+
+**Single endpoint (dropdown hidden):**
+```json
+{
+  "appName": "Product Taxonomy Browser",
+  "endpoints": [
+    {
+      "name": "Taxonomy",
+      "url": "https://taxonomy.example.com/sparql"
+    }
+  ]
+}
+```
+
+**Multiple endpoints:**
+```json
+{
+  "appName": "Vocabulary Hub",
+  "logoUrl": "/config/hub-logo.png",
+  "endpoints": [
+    {
+      "name": "Production",
+      "url": "https://vocab.example.com/sparql"
+    },
+    {
+      "name": "Staging",
+      "url": "https://staging.vocab.example.com/sparql"
+    }
+  ]
+}
+```
 
 ### Endpoint Configuration
 
@@ -141,18 +252,21 @@ Each endpoint supports:
 |-------|----------|-------------|
 | `name` | Yes | Display name |
 | `url` | Yes | SPARQL endpoint URL (can be relative with proxy) |
-| `auth` | No | Authentication config (see below) |
+| `description` | No | Short description shown in endpoint list |
+| `auth` | No | Authentication configuration |
 | `analysis` | No | Pre-calculated endpoint analysis |
-| `suggestedLanguagePriorities` | No | Language preference order (e.g., `["en", "fr"]`) |
+| `suggestedLanguagePriorities` | No | Language preference order (e.g., `["en", "fr", "de"]`) |
 
-#### Authentication Example
+### Authentication
+
+> **Note:** Authentication support is experimental. The application is primarily tested with public SPARQL endpoints. Basic auth, bearer tokens, and API keys are implemented but not extensively tested in production environments.
 
 ```json
 {
   "endpoints": [
     {
       "name": "Protected Endpoint",
-      "url": "/sparql",
+      "url": "https://secure.example.com/sparql",
       "auth": {
         "type": "basic",
         "credentials": {
@@ -165,32 +279,99 @@ Each endpoint supports:
 }
 ```
 
-Supported auth types: `none`, `basic`, `bearer`, `apikey`
+**Supported auth types:**
 
-### Behavior
+| Type | Credentials |
+|------|-------------|
+| `none` | - |
+| `basic` | `username`, `password` |
+| `bearer` | `token` |
+| `apikey` | `headerName`, `apiKey` |
 
-- **With endpoints configured**: Users cannot add/remove endpoints (locked mode)
-- **Single endpoint**: Endpoint dropdown is completely hidden
-- **Multiple endpoints**: Dropdown visible but "Manage endpoints" option hidden
-- **No config file**: App works as normal (user manages endpoints via UI)
+### Pre-calculated Analysis
 
-### Cache Headers
+The app analyzes endpoints on first connection to determine capabilities. You can skip this by providing pre-calculated analysis data. This information is used internally to optimize queries and configure the UI.
 
-To ensure config updates take effect immediately, configure cache headers:
+**Safe to customize:**
+- `languages` - Filter or reorder available languages
+- `schemeUris` - Limit which schemes appear in the dropdown
+- `schemeCount`, `totalConcepts`, `analyzedAt` - Display only, no functional impact
 
-#### nginx
-```nginx
-location /config/ {
-    add_header Cache-Control "no-cache, must-revalidate";
+**Be careful with these fields** - incorrect values may cause missing results or query errors:
+- `hasSkosContent` - Must be `true` for the app to function properly
+- `supportsNamedGraphs`, `skosGraphCount`, `skosGraphUris` - Affect query generation strategy
+- `relationships` - Used to build orphan detection queries; wrong values cause incorrect results
+
+> **Recommendation:** Use the Developer Mode JSON export to get accurate values, then customize only the safe fields listed above.
+
+**Analysis fields:**
+
+| Field | Type | Purpose |
+|-------|------|---------|
+| `hasSkosContent` | boolean | Whether endpoint contains SKOS Concepts or ConceptSchemes |
+| `supportsNamedGraphs` | boolean/null | `true` = has named graphs, `false` = no graphs, `null` = not supported |
+| `skosGraphCount` | number/null | Number of graphs containing SKOS data |
+| `skosGraphUris` | string[] | URIs of SKOS graphs (max 500, used for batched queries) |
+| `languages` | array | Detected languages with label counts, sorted by count descending |
+| `schemeUris` | string[] | ConceptScheme URIs (max 200, populates scheme dropdown) |
+| `schemeCount` | number | Total number of schemes found |
+| `schemesLimited` | boolean | `true` if more schemes exist than stored |
+| `totalConcepts` | number | Total SKOS Concept count (displayed in capabilities) |
+| `relationships` | object | Which SKOS relationships exist (used for orphan detection queries) |
+| `analyzedAt` | string | ISO timestamp of analysis |
+
+**Relationships object:**
+
+| Field | SKOS Property | Used for |
+|-------|---------------|----------|
+| `hasInScheme` | `skos:inScheme` | Scheme membership detection |
+| `hasTopConceptOf` | `skos:topConceptOf` | Top concept detection |
+| `hasHasTopConcept` | `skos:hasTopConcept` | Inverse top concept detection |
+| `hasBroader` | `skos:broader` | Hierarchy navigation |
+| `hasNarrower` | `skos:narrower` | Hierarchy navigation |
+| `hasBroaderTransitive` | `skos:broaderTransitive` | Transitive hierarchy |
+| `hasNarrowerTransitive` | `skos:narrowerTransitive` | Transitive hierarchy |
+
+**Example:**
+
+```json
+{
+  "endpoints": [
+    {
+      "name": "Vocabulary",
+      "url": "https://vocab.example.com/sparql",
+      "analysis": {
+        "hasSkosContent": true,
+        "supportsNamedGraphs": true,
+        "skosGraphCount": 3,
+        "languages": [
+          { "lang": "en", "count": 5000 },
+          { "lang": "fr", "count": 3000 }
+        ],
+        "schemeUris": [
+          "http://example.com/scheme/1",
+          "http://example.com/scheme/2"
+        ],
+        "schemeCount": 2,
+        "totalConcepts": 8000,
+        "relationships": {
+          "hasInScheme": true,
+          "hasTopConceptOf": true,
+          "hasHasTopConcept": false,
+          "hasBroader": true,
+          "hasNarrower": true,
+          "hasBroaderTransitive": false,
+          "hasNarrowerTransitive": false
+        },
+        "analyzedAt": "2024-01-15T10:30:00Z"
+      },
+      "suggestedLanguagePriorities": ["en", "fr"]
+    }
+  ]
 }
 ```
 
-#### Apache
-```apache
-<Directory /var/www/ae-skos/config>
-    Header set Cache-Control "no-cache, must-revalidate"
-</Directory>
-```
+**Tip:** Use Developer Mode (Settings → Developer → Developer mode) to export endpoint analysis as JSON, then include it in your config.
 
 ## Alternative: Direct Endpoint Access
 
@@ -206,3 +387,26 @@ Or for public endpoints:
 ```
 Access-Control-Allow-Origin: *
 ```
+
+## Troubleshooting
+
+### Config file not loading
+
+1. Check the file exists at `/config/app.json`
+2. Verify it's valid JSON (use a JSON validator)
+3. Check browser console for errors
+4. Ensure proper cache headers are set
+
+### Logo not displaying
+
+1. Verify the image path is correct
+2. Check browser console for 404 errors
+3. Ensure the image format is supported (PNG, SVG, JPG)
+4. In standard mode, `logoUrl` must be explicitly set
+
+### Endpoints locked unexpectedly
+
+Config mode activates when `app.json` contains a non-empty `endpoints` array. To enable user endpoint management:
+- Remove the `endpoints` field, OR
+- Set `endpoints` to an empty array `[]`, OR
+- Delete the `app.json` file

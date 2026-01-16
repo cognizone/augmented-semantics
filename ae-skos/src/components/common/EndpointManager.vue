@@ -145,6 +145,7 @@ function handleDownloadJson(endpoint: SPARQLEndpoint) {
     name: endpoint.name,
     url: endpoint.url,
     analysis: endpoint.analysis,
+    suggestedLanguagePriorities: endpoint.languagePriorities,
     exportedAt: new Date().toISOString(),
   }
   const content = JSON.stringify(exportData, null, 2)
