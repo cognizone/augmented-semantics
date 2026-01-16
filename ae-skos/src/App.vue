@@ -387,6 +387,16 @@ onUnmounted(() => {
             Developer
           </h3>
 
+          <div v-if="!config.configMode" class="setting-row">
+            <label class="checkbox-label">
+              <Checkbox v-model="settingsStore.developerMode" :binary="true" />
+              <span class="checkbox-text">
+                Developer mode
+                <small>Enable developer tools like JSON export in endpoint manager</small>
+              </span>
+            </label>
+          </div>
+
           <div class="setting-row">
             <label class="setting-label">Log level</label>
             <Select

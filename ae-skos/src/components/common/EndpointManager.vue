@@ -11,7 +11,7 @@
  * @see /spec/common/com01-EndpointManager.md
  */
 import { ref, computed } from 'vue'
-import { useEndpointStore } from '../../stores'
+import { useEndpointStore, useSettingsStore } from '../../stores'
 import { testConnection } from '../../services/sparql'
 import type { SPARQLEndpoint, SuggestedEndpoint } from '../../types'
 
@@ -33,6 +33,7 @@ const emit = defineEmits<{
 }>()
 
 const endpointStore = useEndpointStore()
+const settingsStore = useSettingsStore()
 
 // Suggested endpoints collapsed state (persisted)
 const SUGGESTED_COLLAPSED_KEY = 'ae-suggested-endpoints-collapsed'
@@ -136,6 +137,31 @@ function handleAddSuggestedEndpoint(suggested: SuggestedEndpoint) {
     endpointStore.selectEndpoint(newEndpoint.id)
     endpointStore.setStatus('connected')
   }
+}
+
+// Developer Mode: Download JSON
+function handleDownloadJson(endpoint: SPARQLEndpoint) {
+  const exportData = {
+    name: endpoint.name,
+    url: endpoint.url,
+    analysis: endpoint.analysis,
+    exportedAt: new Date().toISOString(),
+  }
+  const content = JSON.stringify(exportData, null, 2)
+  const filename = `${endpoint.name.replace(/[^a-z0-9]/gi, '-')}-analysis.json`
+  downloadFile(content, filename, 'application/json')
+}
+
+function downloadFile(content: string, filename: string, mimeType: string) {
+  const blob = new Blob([content], { type: mimeType })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
 }
 
 // Utility Functions
@@ -291,6 +317,14 @@ function formatUIDate(dateStr?: string) {
                 @click="openConfigureWizard(data)"
               >
                 <span class="material-symbols-outlined">tune</span>
+              </button>
+              <button
+                v-if="settingsStore.developerMode && !endpointStore.configMode"
+                class="action-btn action-btn-download"
+                title="Download analysis JSON"
+                @click="handleDownloadJson(data)"
+              >
+                <span class="material-symbols-outlined">download</span>
               </button>
               <button
                 class="action-btn action-btn-delete"
@@ -577,6 +611,15 @@ function formatUIDate(dateStr?: string) {
   color: var(--ae-accent);
   background: var(--ae-bg-hover);
   transform: scale(1.1);
+}
+
+.action-btn-download {
+  color: var(--ae-text-muted);
+}
+
+.action-btn-download:hover {
+  color: var(--ae-accent);
+  background: var(--ae-bg-hover);
 }
 
 .action-btn-delete {

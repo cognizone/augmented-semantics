@@ -245,6 +245,57 @@ describe('settings store', () => {
     })
   })
 
+  describe('developerMode', () => {
+    it('defaults to false', () => {
+      const store = useSettingsStore()
+      expect(store.developerMode).toBe(false)
+    })
+
+    it('can be toggled', () => {
+      const store = useSettingsStore()
+
+      store.developerMode = true
+      expect(store.developerMode).toBe(true)
+
+      store.developerMode = false
+      expect(store.developerMode).toBe(false)
+    })
+
+    it('persists to localStorage', async () => {
+      const store = useSettingsStore()
+
+      store.developerMode = true
+      await new Promise(resolve => setTimeout(resolve, 0)) // Wait for watcher
+
+      expect(localStorage.setItem).toHaveBeenCalled()
+    })
+
+    it('loads from localStorage on init', () => {
+      const storedSettings = { developerMode: true }
+      vi.mocked(localStorage.getItem).mockReturnValue(JSON.stringify(storedSettings))
+
+      const store = useSettingsStore()
+      expect(store.developerMode).toBe(true)
+    })
+
+    it('uses default when not in stored settings', () => {
+      const storedSettings = { darkMode: true }
+      vi.mocked(localStorage.getItem).mockReturnValue(JSON.stringify(storedSettings))
+
+      const store = useSettingsStore()
+      expect(store.developerMode).toBe(false) // default
+    })
+
+    it('resets to false on resetToDefaults', () => {
+      const store = useSettingsStore()
+
+      store.developerMode = true
+      store.resetToDefaults()
+
+      expect(store.developerMode).toBe(false)
+    })
+  })
+
   describe('resetToDefaults', () => {
     it('resets all settings to defaults', () => {
       const store = useSettingsStore()
@@ -257,6 +308,7 @@ describe('settings store', () => {
       store.showDeprecationIndicator = false
       store.setDeprecationRules([])
       store.showOrphansSelector = false
+      store.developerMode = true
 
       // Reset
       store.resetToDefaults()
@@ -269,6 +321,7 @@ describe('settings store', () => {
       expect(store.showDeprecationIndicator).toBe(true)
       expect(store.deprecationRules).toHaveLength(2)
       expect(store.showOrphansSelector).toBe(true)
+      expect(store.developerMode).toBe(false)
     })
   })
 

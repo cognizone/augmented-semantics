@@ -732,6 +732,34 @@ EndpointManager follows a composable-based architecture with extracted dialog co
 - Endpoint list with DataTable
 - CRUD operations coordination
 - Connection testing
+- Developer mode: JSON export (when enabled in settings)
+
+### Developer Mode
+
+When `developerMode` is enabled in settings, a download button appears in the endpoint list actions. This allows developers to export endpoint analysis data as JSON for use in other tools or documentation.
+
+**Availability:**
+- Hidden when config mode is active (app.json present)
+- Controlled by `Settings → Developer → Developer mode` checkbox
+
+**Export Format:**
+```json
+{
+  "name": "Endpoint Name",
+  "url": "https://example.org/sparql",
+  "analysis": {
+    "hasSkosContent": true,
+    "supportsNamedGraphs": true,
+    "skosGraphCount": 5,
+    "languages": [...],
+    "schemeUris": [...],
+    "totalConcepts": 5000,
+    "relationships": {...},
+    "analyzedAt": "2024-01-01T00:00:00Z"
+  },
+  "exportedAt": "2024-01-01T12:00:00Z"
+}
+```
 
 **EndpointWizard.vue** (~600 lines)
 - 3-step stepper wizard for add/edit:
