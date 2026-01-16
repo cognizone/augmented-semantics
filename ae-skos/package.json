@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "prebuild": "npx tsx sandbox/scripts/prebuild-endpoints.ts",
+    "prebuild": "test -f sandbox/scripts/prebuild-endpoints.ts && npx tsx sandbox/scripts/prebuild-endpoints.ts || echo 'Skipping prebuild (sandbox not available)'",
     "build": "vue-tsc -b && vite build",
     "preview": "vite preview",
     "test": "vitest",
