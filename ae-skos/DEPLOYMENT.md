@@ -255,7 +255,7 @@ Each endpoint supports:
 | `description` | No | Short description shown in endpoint list |
 | `auth` | No | Authentication configuration |
 | `analysis` | No | Pre-calculated endpoint analysis |
-| `suggestedLanguagePriorities` | No | Language preference order (e.g., `["en", "fr", "de"]`) |
+| `suggestedLanguagePriorities` | No | Language preference order for label resolution and dropdown display (e.g., `["en", "fr", "de"]`) |
 
 ### Authentication
 
@@ -293,9 +293,14 @@ Each endpoint supports:
 The app analyzes endpoints on first connection to determine capabilities. You can skip this by providing pre-calculated analysis data. This information is used internally to optimize queries and configure the UI.
 
 **Safe to customize:**
-- `languages` - Filter or reorder available languages
+- `languages` - Filter or reorder available languages in the analysis
+- `suggestedLanguagePriorities` - Set language preference order (controls label resolution and header dropdown order)
 - `schemeUris` - Limit which schemes appear in the dropdown
-- `schemeCount`, `totalConcepts`, `analyzedAt` - Display only, no functional impact
+
+> **Note:** Keep `languages` and `suggestedLanguagePriorities` in sync. Languages in `suggestedLanguagePriorities` should exist in `languages`, otherwise labels may not resolve correctly.
+
+**Display only** (safe to modify, but rarely useful):
+- `schemeCount`, `totalConcepts`, `analyzedAt` - Shown in capabilities panel but not used for queries
 
 **Be careful with these fields** - incorrect values may cause missing results or query errors:
 - `hasSkosContent` - Must be `true` for the app to function properly
