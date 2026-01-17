@@ -4,6 +4,7 @@
 
 | Endpoint | URL | Concepts | Schemes | Notes |
 |----------|-----|----------|---------|-------|
+| AgroPortal | https://sparql.agroportal.lirmm.fr/sparql | 1M+ | 194 | Agronomy ontology repository |
 | AGROVOC | https://agrovoc.fao.org/sparql | 44k+ | 1 | FAO agricultural vocabulary |
 | BnF | https://data.bnf.fr/sparql | 21M+ | 1 | Bibliothèque nationale de France |
 | Cordis Datalab | https://cordis.europa.eu/datalab/sparql | 208k | 2 | EU research projects |
@@ -43,7 +44,7 @@
 | FINTO | http://api.finto.fi/sparql | 404 | Not found | 2026-01-17 |
 | OpenAIRE | https://graph.openaire.eu/sparql | 404 | Not found | 2026-01-17 |
 | Isidore | https://isidore.science/sparql | 404 | Not found | 2026-01-17 |
-| AgroPortal | http://sparql.agroportal.lirmm.fr/sparql | 406 | Not acceptable | 2026-01-17 |
+| AgroPortal (http) | http://sparql.agroportal.lirmm.fr/sparql | 301 | Redirects to HTTPS (now working) | 2026-01-17 |
 | BioPortal (data) | https://data.bioontology.org/sparql | 401 | Auth required | 2026-01-17 |
 
 ## Endpoints Without SKOS Content
