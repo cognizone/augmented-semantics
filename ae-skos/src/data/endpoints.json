@@ -504,7 +504,7 @@
         "hasBroaderTransitive": false,
         "hasNarrowerTransitive": false
       },
-      "analyzedAt": "2026-01-17T13:10:19.337Z"
+      "analyzedAt": "2026-01-17T13:46:32.979Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -609,7 +609,7 @@
         "hasBroaderTransitive": false,
         "hasNarrowerTransitive": false
       },
-      "analyzedAt": "2026-01-17T13:10:21.632Z"
+      "analyzedAt": "2026-01-17T13:46:34.828Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -1023,7 +1023,7 @@
         "hasBroaderTransitive": false,
         "hasNarrowerTransitive": false
       },
-      "analyzedAt": "2026-01-17T13:13:27.912Z"
+      "analyzedAt": "2026-01-17T13:50:01.759Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -1138,7 +1138,7 @@
         "hasBroaderTransitive": false,
         "hasNarrowerTransitive": false
       },
-      "analyzedAt": "2026-01-17T13:13:29.591Z"
+      "analyzedAt": "2026-01-17T13:50:24.177Z"
     },
     "suggestedLanguagePriorities": [
       "en"
@@ -1449,7 +1449,7 @@
         "hasBroaderTransitive": false,
         "hasNarrowerTransitive": false
       },
-      "analyzedAt": "2026-01-17T13:13:32.174Z"
+      "analyzedAt": "2026-01-17T13:50:26.642Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -1923,7 +1923,7 @@
         "hasBroaderTransitive": false,
         "hasNarrowerTransitive": false
       },
-      "analyzedAt": "2026-01-17T13:14:57.788Z"
+      "analyzedAt": "2026-01-17T13:51:53.291Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -2087,7 +2087,7 @@
         "hasBroaderTransitive": true,
         "hasNarrowerTransitive": false
       },
-      "analyzedAt": "2026-01-17T13:15:01.645Z"
+      "analyzedAt": "2026-01-17T13:51:56.646Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -2330,7 +2330,7 @@
         "hasBroaderTransitive": true,
         "hasNarrowerTransitive": false
       },
-      "analyzedAt": "2026-01-17T13:41:38.879Z"
+      "analyzedAt": "2026-01-17T13:53:07.867Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -2638,7 +2638,7 @@
         "hasBroaderTransitive": false,
         "hasNarrowerTransitive": false
       },
-      "analyzedAt": "2026-01-17T13:15:03.179Z"
+      "analyzedAt": "2026-01-17T13:53:23.787Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -2681,6 +2681,260 @@
       "eu",
       "sq",
       "rm"
+    ]
+  },
+  {
+    "name": "Linked Open Vocabularies",
+    "url": "https://lov.linkeddata.es/dataset/lov/sparql",
+    "description": "LOV (Linked Open Vocabularies) is a catalog of reusable vocabularies for the semantic web. It indexes vocabularies for describing datasets, services, and knowledge.",
+    "analysis": {
+      "hasSkosContent": true,
+      "supportsNamedGraphs": true,
+      "skosGraphCount": 47,
+      "schemeUris": [
+        "http://data.ign.fr/id/codes/topo/typedezai/liste",
+        "http://data.ign.fr/id/codes/topo/typedevoieferree/liste",
+        "http://data.ign.fr/id/codes/topo/typedereservoir/liste",
+        "http://data.ign.fr/id/codes/topo/typedeterraindesport/liste",
+        "http://data.ign.fr/id/codes/topo/typederoute/liste",
+        "http://data.ign.fr/id/codes/topo/typedevegetation/liste",
+        "http://data.ign.fr/id/codes/topo/typederelief/liste",
+        "http://data.ign.fr/id/codes/topo/typedebatiment/liste",
+        "http://data.ign.fr/id/codes/topo/typedeconstruction/liste",
+        "http://data.ign.fr/id/codes/topo/typedelaisse/liste",
+        "http://data.ign.fr/id/codes/topo/typedetransportcable/liste",
+        "http://data.ign.fr/id/codes/topo/typedepointdeau/liste",
+        "http://data.ign.fr/id/codes/topo/typedefranchissement/liste",
+        "http://purl.org/ctic/empleo/oferta#esquemaCategorias",
+        "http://purl.org/ctic/empleo/oferta#esquemaTiposContrato",
+        "http://purl.org/linked-data/sdmx/2009/code#area",
+        "http://purl.org/linked-data/sdmx/2009/code#unitMult",
+        "http://purl.org/linked-data/sdmx/2009/code#decimals",
+        "http://purl.org/linked-data/sdmx/2009/code#confStatus",
+        "http://purl.org/linked-data/sdmx/2009/code#freq",
+        "http://purl.org/linked-data/sdmx/2009/code#timeFormat",
+        "http://purl.org/linked-data/sdmx/2009/code#sex",
+        "http://purl.org/linked-data/sdmx/2009/code#obsStatus",
+        "http://purl.org/linked-data/sdmx/2009/code#currency",
+        "http://w3id.org/charta77/jup/ElevatorCageSecondDoorLocalizationsScheme",
+        "http://w3id.org/charta77/jup/WCCategorizationsMKPOScheme",
+        "http://w3id.org/charta77/jup/DoorOpeningsScheme",
+        "http://w3id.org/charta77/jup/TapTypesScheme",
+        "http://w3id.org/charta77/jup/ElevatorTypesScheme",
+        "http://w3id.org/charta77/jup/EntranceAccessibilitiesScheme",
+        "http://w3id.org/charta77/jup/ObjectCategoriesScheme",
+        "http://w3id.org/charta77/jup/RampSurfacesScheme",
+        "http://w3id.org/charta77/jup/WashBasinUnderpassesScheme",
+        "http://w3id.org/charta77/jup/RampTypesScheme",
+        "http://w3id.org/charta77/jup/WCCabinLocalizationsScheme",
+        "http://w3id.org/charta77/jup/ObjectCategorizationsMKPOScheme",
+        "http://w3id.org/charta77/jup/ObjectInteriorAccessibilitiesScheme",
+        "http://w3id.org/charta77/jup/RampSkidsLocalizationsScheme",
+        "http://w3id.org/charta77/jup/ElevatorCageMirrorLocalizationsScheme",
+        "http://w3id.org/charta77/jup/WCCabinDispositionsScheme",
+        "http://w3id.org/charta77/jup/AOBAnnouncementsScheme",
+        "http://w3id.org/charta77/jup/WCSwitchesScheme",
+        "http://w3id.org/charta77/jup/MappableEntityMKPOFormsScheme",
+        "http://w3id.org/charta77/jup/RampSkidsMobilitiesScheme",
+        "http://w3id.org/charta77/jup/WCFlushingDifficultiesScheme",
+        "http://w3id.org/charta77/jup/BellTypesScheme",
+        "http://w3id.org/charta77/jup/HandleTypesScheme",
+        "http://w3id.org/charta77/jup/HandlePositionsScheme",
+        "http://w3id.org/charta77/jup/MappableEntityAccessesScheme",
+        "http://w3id.org/charta77/jup/EntryAreaEntriesScheme",
+        "http://w3id.org/charta77/jup/ContrastMarkingLocalizationsScheme",
+        "http://w3id.org/charta77/jup/DoorOpeningDirectionsScheme",
+        "http://w3id.org/charta77/jup/ElevatorDriveOffsScheme",
+        "http://w3id.org/charta77/jup/EntranceGuidingLinesScheme",
+        "http://w3id.org/charta77/jup/ElevatorControlFlatMarkingsScheme",
+        "http://w3id.org/charta77/jup/HandleLocalizationsScheme",
+        "http://w3id.org/charta77/jup/WCFlushingsScheme",
+        "http://w3id.org/charta77/jup/DoorTypesScheme",
+        "http://w3id.org/charta77/jup/WCBasinSpacesScheme",
+        "http://w3id.org/charta77/jup/WCChangingDesksScheme",
+        "http://w3id.org/charta77/jup/ElevatorControlReliefMarkingsScheme",
+        "http://w3id.org/charta77/jup/HandleOrientationsScheme",
+        "http://w3id.org/charta77/jup/PlatformTypesScheme",
+        "http://rdf.muninn-project.org/ontologies/appearances#EyeColorGrieveMorant",
+        "http://rdf.muninn-project.org/ontologies/appearances#EyeColorWilde",
+        "http://rdf.muninn-project.org/ontologies/appearances#EyeColorPetrequin",
+        "http://rdf.muninn-project.org/ontologies/appearances#RiddellColor",
+        "http://rdf.muninn-project.org/ontologies/appearances#MaleBodyMeasurement",
+        "http://rdf.muninn-project.org/ontologies/appearances#FemaleBodyMeasurement",
+        "http://rdf.muninn-project.org/ontologies/appearances#EyeColorICCS",
+        "http://rdf.muninn-project.org/ontologies/appearances#NebraskaDMVStandards",
+        "http://rdf.muninn-project.org/ontologies/appearances#FBIStandards",
+        "http://rdf.muninn-project.org/ontologies/appearances#EyeColorRiddell",
+        "http://rdf.muninn-project.org/ontologies/appearances#RCMPStandards",
+        "http://reference.data.gov.uk/def/payment#expenditure-category",
+        "http://vocab.getty.edu/term/kind/",
+        "http://vocab.getty.edu/term/flag/",
+        "http://vocab.getty.edu/term/type/",
+        "http://vocab.getty.edu/term/POS/",
+        "http://vocab.getty.edu/historic/",
+        "http://vocab.getty.edu/term/display/",
+        "http://vocab.getty.edu/ulan/",
+        "http://vocab.getty.edu/aat/",
+        "http://vocab.getty.edu/tgn/",
+        "http://ontologi.es/doap-bugs#STATUS_TYPES",
+        "http://ontologi.es/doap-bugs#SEVERITY_LEVELS",
+        "http://contsem.unizar.es/def/sector-publico/pproc#UrgencyTypeScheme",
+        "http://contsem.unizar.es/def/sector-publico/pproc#InformationKindScheme",
+        "http://contsem.unizar.es/def/sector-publico/pproc#ProcedureTypeScheme",
+        "http://purl.org/ctic/dcat#accessModeScheme",
+        "http://purl.org/ctic/dcat#statusScheme",
+        "http://data.ign.fr/id/codes/geofla/typedecommune/liste",
+        "http://id.insee.fr/codes/geo/typeDIRIS/liste",
+        "http://id.insee.fr/codes/geo/typeDEPCI/liste",
+        "http://rdf.muninn-project.org/ontologies/military#ProtoAirForce",
+        "http://rdf.muninn-project.org/ontologies/military#ArmyServiceBranch",
+        "http://rdf.muninn-project.org/ontologies/military#AirForceServiceBranch",
+        "http://rdf.muninn-project.org/ontologies/military#NavyServiceBranch",
+        "http://purl.org/cld/terms/CDType",
+        "http://id.loc.gov/vocabulary/relators",
+        "http://purl.org/cld/terms/Frequency",
+        "http://purl.org/cld/terms/AccrualMethod",
+        "http://purl.org/cld/terms/AccrualPolicy",
+        "http://w3id.org/charta77/jup/StepsStairsTypesScheme",
+        "http://data.europa.eu/eli/ontology#LegalValueTable",
+        "http://publications.europa.eu/resource/authority/language",
+        "http://data.europa.eu/eli/ontology#InForceTable",
+        "http://data.europa.eu/eli/ontology#AdministrativeAreaTable",
+        "http://data.europa.eu/eli/ontology#VersionTable",
+        "http://data.europa.eu/eli/ontology#ResourceTypeTable",
+        "http://sparql.cwrc.ca/ontologies/cwrc#Religion",
+        "http://sparql.cwrc.ca/ontologies/cwrc#TextLabels",
+        "http://sparql.cwrc.ca/ontologies/cwrc#NationalHeritage",
+        "http://sparql.cwrc.ca/ontologies/cwrc#SocialClass",
+        "http://sparql.cwrc.ca/ontologies/cwrc#NationalIdentity",
+        "http://sparql.cwrc.ca/ontologies/cwrc#Gender",
+        "http://sparql.cwrc.ca/ontologies/cwrc#Ethnicity",
+        "http://sparql.cwrc.ca/ontologies/cwrc#Sexuality",
+        "http://sparql.cwrc.ca/ontologies/cwrc#GeographicHeritage",
+        "http://sparql.cwrc.ca/ontologies/cwrc#RaceColour",
+        "http://sparql.cwrc.ca/ontologies/cwrc#GeographicalHeritage",
+        "http://sparql.cwrc.ca/ontologies/cwrc#PoliticalAffiliation",
+        "http://brt.basisregistraties.overheid.nl/id/begrippenkader/top10nl",
+        "http://publications.europa.eu/resource/authority/atu",
+        "http://betalinkeddata.cbs.nl/cbs/id/concept-scheme/cbs",
+        "http://purl.org/innovation/ns#social-symptoms",
+        "http://purl.org/innovation/ns#social-benefits",
+        "http://purl.org/innovation/ns#legal-symptoms",
+        "http://purl.org/innovation/ns#legal-benefits",
+        "http://purl.org/innovation/ns#health-symptoms",
+        "http://purl.org/innovation/ns#health-benefits",
+        "http://purl.org/innovation/ns#stages-of-innovation",
+        "http://purl.org/innovation/ns#economic-benefits",
+        "http://purl.org/innovation/ns#scientific-symptoms",
+        "http://purl.org/innovation/ns#scientific-benefits",
+        "http://purl.org/innovation/ns#economic-symptoms",
+        "http://data.businessgraph.io/nace/",
+        "http://data.businessgraph.io/resolution/",
+        "http://data.businessgraph.io/dataset/",
+        "http://data.businessgraph.io/type/",
+        "http://data.businessgraph.io/status/",
+        "https://www.ica.org/standards/RiC/vocabularies/documentaryFormTypes",
+        "https://www.ica.org/standards/RiC/vocabularies/recordSetTypes",
+        "http://taxref.mnhn.fr/lod/taxref-ld",
+        "https://w3id.org/nen2660/skos/term",
+        "https://w3id.org/stax/ontology",
+        "https://w3id.org/dpv#status-classes",
+        "https://w3id.org/dpv#entities-legalrole-classes",
+        "https://w3id.org/dpv#entities-organisation-classes",
+        "https://w3id.org/dpv#processing-context-properties",
+        "https://w3id.org/dpv#purposes-classes",
+        "https://w3id.org/dpv#processing-scale-classes",
+        "https://w3id.org/dpv#processing-context-classes",
+        "https://w3id.org/dpv#jurisdiction-properties",
+        "https://w3id.org/dpv#consent-status-classes",
+        "https://w3id.org/dpv#technical-measures-classes",
+        "https://w3id.org/dpv#jurisdiction-classes",
+        "https://w3id.org/dpv#physical-measures-classes",
+        "https://w3id.org/dpv#processing-properties",
+        "https://w3id.org/dpv#processing-classes",
+        "https://w3id.org/dpv#organisational-measures-classes",
+        "https://w3id.org/dpv#risk-classes",
+        "https://w3id.org/dpv#risk-properties",
+        "https://w3id.org/dpv#legal-measures-classes",
+        "https://w3id.org/dpv#context-classes",
+        "https://w3id.org/dpv#personal-data-classes",
+        "https://w3id.org/dpv#context-properties",
+        "https://w3id.org/dpv#rights-classes",
+        "https://w3id.org/dpv#TOM-properties",
+        "https://w3id.org/dpv#entities-authority-classes",
+        "https://w3id.org/dpv#consent-controls-classes",
+        "https://w3id.org/dpv#rules-classes",
+        "https://w3id.org/dpv#legal-basis-classes",
+        "https://w3id.org/dpv#entities-legalrole-properties",
+        "https://w3id.org/dpv#rules-properties",
+        "https://w3id.org/dpv#status-properties",
+        "https://w3id.org/dpv#entities-properties",
+        "https://w3id.org/dpv#entities-datasubject-classes",
+        "https://w3id.org/dpv#processing-scale-properties",
+        "https://w3id.org/dpv#entities-classes",
+        "https://w3id.org/dpv#legal-basis-properties",
+        "https://w3id.org/dpv#consent-types-classes",
+        "https://w3id.org/dpv#process-properties",
+        "https://w3id.org/dpv#process-classes",
+        "https://w3id.org/dpv#consent-properties",
+        "https://w3id.org/dpv#entities-authority-properties",
+        "https://w3id.org/dpv#rights-properties",
+        "https://w3id.org/dpv#personal-data-properties",
+        "https://w3id.org/dpv#TOM-classes",
+        "https://w3id.org/dpv#purposes-properties",
+        "https://w3id.org/dpv#entities-datasubject-properties",
+        "https://w3id.org/itsmo#ComponentInterfaceScheme",
+        "https://w3id.org/dpv#notice-classes",
+        "https://w3id.org/dpv#contract-properties",
+        "https://w3id.org/dpv#contract-status-classes",
+        "https://w3id.org/dpv#legal-basis-status-classes",
+        "https://w3id.org/dpv#contract-types-classes",
+        "https://w3id.org/dpv#notice-properties",
+        "https://w3id.org/dpv#contract-control-classes",
+        "https://w3id.org/dpv#contract-clause-classes"
+      ],
+      "schemeCount": 200,
+      "schemesLimited": false,
+      "languages": [
+        {
+          "lang": "en",
+          "count": 2954
+        },
+        {
+          "lang": "fr",
+          "count": 309
+        },
+        {
+          "lang": "cs",
+          "count": 207
+        },
+        {
+          "lang": "nl",
+          "count": 104
+        },
+        {
+          "lang": "es",
+          "count": 35
+        }
+      ],
+      "totalConcepts": 5430,
+      "relationships": {
+        "hasInScheme": true,
+        "hasTopConceptOf": true,
+        "hasHasTopConcept": true,
+        "hasBroader": true,
+        "hasNarrower": true,
+        "hasBroaderTransitive": true,
+        "hasNarrowerTransitive": true
+      },
+      "analyzedAt": "2026-01-17T14:03:13.213Z"
+    },
+    "suggestedLanguagePriorities": [
+      "en",
+      "fr",
+      "cs",
+      "nl",
+      "es"
     ]
   },
   {
@@ -2753,7 +3007,7 @@
         "hasBroaderTransitive": false,
         "hasNarrowerTransitive": false
       },
-      "analyzedAt": "2026-01-17T13:15:15.177Z"
+      "analyzedAt": "2026-01-17T13:53:36.488Z"
     },
     "suggestedLanguagePriorities": [
       "en",
