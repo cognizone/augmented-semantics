@@ -11,10 +11,45 @@
     ],
     "schemeCount": 1,
     "schemesLimited": false,
-    "languages": [],
-    "totalConcepts": null,
-    "relationships": null,
-    "analyzedAt": "2026-01-17T16:22:18.821Z"
+    "languages": [
+      {
+        "lang": "en",
+        "count": 4590
+      },
+      {
+        "lang": "es",
+        "count": 4590
+      },
+      {
+        "lang": "fr",
+        "count": 4590
+      },
+      {
+        "lang": "ar",
+        "count": 4584
+      },
+      {
+        "lang": "ru",
+        "count": 4550
+      }
+    ],
+    "totalConcepts": 4494,
+    "relationships": {
+      "hasInScheme": true,
+      "hasTopConceptOf": true,
+      "hasHasTopConcept": true,
+      "hasBroader": true,
+      "hasNarrower": true,
+      "hasBroaderTransitive": false,
+      "hasNarrowerTransitive": false
+    },
+    "analyzedAt": "2026-01-17T18:54:35.290Z"
   },
-  "suggestedLanguagePriorities": []
+  "suggestedLanguagePriorities": [
+    "en",
+    "es",
+    "fr",
+    "ar",
+    "ru"
+  ]
 }

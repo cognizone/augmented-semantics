@@ -265,11 +265,38 @@ export async function detectSchemes(url: string): Promise<{
 }
 
 export async function detectLanguages(url: string, graphUris?: string[] | null): Promise<DetectedLanguage[]> {
-  let query: string
+  const parseResults = (results: any): DetectedLanguage[] => {
+    return results.results.bindings
+      .map((b: any) => ({
+        lang: b.lang?.value || '',
+        count: parseInt(b.count?.value || '0', 10)
+      }))
+      .filter((item: DetectedLanguage) => item.lang.length > 0)
+  }
 
+  const simpleQuery = `
+    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+    PREFIX skosxl: <http://www.w3.org/2008/05/skos-xl#>
+    SELECT ?lang (COUNT(?label) AS ?count)
+    WHERE {
+      ?concept a skos:Concept .
+      {
+        ?concept skos:prefLabel|skos:altLabel ?label .
+      } UNION {
+        ?concept skosxl:prefLabel/skosxl:literalForm ?label .
+      }
+      BIND(LANG(?label) AS ?lang)
+      FILTER(?lang != "")
+    }
+    GROUP BY ?lang
+    ORDER BY DESC(?count)
+  `
+
+  // If we have graph URIs, try GRAPH-based query first (more accurate)
+  // but fall back to simple query if it fails (e.g., timeout on large endpoints)
   if (graphUris && graphUris.length > 0) {
     const valuesClause = graphUris.slice(0, 50).map(uri => `<${uri}>`).join(' ')
-    query = `
+    const graphQuery = `
       PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
       PREFIX skosxl: <http://www.w3.org/2008/05/skos-xl#>
       SELECT ?lang (COUNT(*) AS ?count)
@@ -286,34 +313,18 @@ export async function detectLanguages(url: string, graphUris?: string[] | null):
       GROUP BY ?lang
       ORDER BY DESC(?count)
     `
-  } else {
-    query = `
-      PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-      PREFIX skosxl: <http://www.w3.org/2008/05/skos-xl#>
-      SELECT ?lang (COUNT(?label) AS ?count)
-      WHERE {
-        ?concept a skos:Concept .
-        {
-          ?concept skos:prefLabel|skos:altLabel ?label .
-        } UNION {
-          ?concept skosxl:prefLabel/skosxl:literalForm ?label .
-        }
-        BIND(LANG(?label) AS ?lang)
-        FILTER(?lang != "")
-      }
-      GROUP BY ?lang
-      ORDER BY DESC(?count)
-    `
+
+    try {
+      const results = await executeSparql(url, graphQuery)
+      return parseResults(results)
+    } catch {
+      // GRAPH-based query failed (likely timeout) - fall back to simple query
+    }
   }
 
-  // Let errors propagate - runStep will catch and show "error"
-  const results = await executeSparql(url, query)
-  return results.results.bindings
-    .map((b: any) => ({
-      lang: b.lang?.value || '',
-      count: parseInt(b.count?.value || '0', 10)
-    }))
-    .filter((item: DetectedLanguage) => item.lang.length > 0)
+  // Simple query without GRAPH clause
+  const results = await executeSparql(url, simpleQuery)
+  return parseResults(results)
 }
 
 export async function detectRelationships(url: string): Promise<NonNullable<EndpointAnalysis['relationships']>> {

@@ -204,7 +204,208 @@
     ],
     "schemeCount": 194,
     "schemesLimited": true,
-    "languages": [],
+    "languages": [
+      {
+        "lang": "en",
+        "count": 1165430
+      },
+      {
+        "lang": "es",
+        "count": 756273
+      },
+      {
+        "lang": "fr",
+        "count": 490125
+      },
+      {
+        "lang": "tr",
+        "count": 273229
+      },
+      {
+        "lang": "de",
+        "count": 239780
+      },
+      {
+        "lang": "it",
+        "count": 231673
+      },
+      {
+        "lang": "cs",
+        "count": 230256
+      },
+      {
+        "lang": "ru",
+        "count": 224920
+      },
+      {
+        "lang": "pt",
+        "count": 217114
+      },
+      {
+        "lang": "zh",
+        "count": 215620
+      },
+      {
+        "lang": "pl",
+        "count": 206363
+      },
+      {
+        "lang": "ar",
+        "count": 204154
+      },
+      {
+        "lang": "hu",
+        "count": 198938
+      },
+      {
+        "lang": "sk",
+        "count": 195219
+      },
+      {
+        "lang": "th",
+        "count": 177166
+      },
+      {
+        "lang": "fi",
+        "count": 175269
+      },
+      {
+        "lang": "ja",
+        "count": 169131
+      },
+      {
+        "lang": "ro",
+        "count": 165137
+      },
+      {
+        "lang": "sw",
+        "count": 163689
+      },
+      {
+        "lang": "ka",
+        "count": 161204
+      },
+      {
+        "lang": "sv",
+        "count": 146737
+      },
+      {
+        "lang": "uk",
+        "count": 144626
+      },
+      {
+        "lang": "nl",
+        "count": 134907
+      },
+      {
+        "lang": "fa",
+        "count": 133312
+      },
+      {
+        "lang": "hi",
+        "count": 132347
+      },
+      {
+        "lang": "nb",
+        "count": 124399
+      },
+      {
+        "lang": "da",
+        "count": 117988
+      },
+      {
+        "lang": "sr",
+        "count": 115469
+      },
+      {
+        "lang": "lo",
+        "count": 97035
+      },
+      {
+        "lang": "vi",
+        "count": 94813
+      },
+      {
+        "lang": "la",
+        "count": 88986
+      },
+      {
+        "lang": "ko",
+        "count": 83343
+      },
+      {
+        "lang": "be",
+        "count": 81157
+      },
+      {
+        "lang": "te",
+        "count": 27527
+      },
+      {
+        "lang": "no",
+        "count": 22126
+      },
+      {
+        "lang": "ms",
+        "count": 21865
+      },
+      {
+        "lang": "mo",
+        "count": 21297
+      },
+      {
+        "lang": "et",
+        "count": 9658
+      },
+      {
+        "lang": "ca",
+        "count": 9398
+      },
+      {
+        "lang": "el",
+        "count": 8048
+      },
+      {
+        "lang": "eu",
+        "count": 6909
+      },
+      {
+        "lang": "hr",
+        "count": 6757
+      },
+      {
+        "lang": "ga",
+        "count": 6044
+      },
+      {
+        "lang": "sl",
+        "count": 5985
+      },
+      {
+        "lang": "bg",
+        "count": 5582
+      },
+      {
+        "lang": "lv",
+        "count": 5419
+      },
+      {
+        "lang": "lt",
+        "count": 5390
+      },
+      {
+        "lang": "mt",
+        "count": 5381
+      },
+      {
+        "lang": "nn",
+        "count": 5296
+      },
+      {
+        "lang": "is",
+        "count": 5247
+      }
+    ],
     "totalConcepts": 1022483,
     "relationships": {
       "hasInScheme": true,
@@ -215,7 +416,58 @@
       "hasBroaderTransitive": true,
       "hasNarrowerTransitive": true
     },
-    "analyzedAt": "2026-01-17T14:12:14.673Z"
+    "analyzedAt": "2026-01-17T18:42:26.793Z"
   },
-  "suggestedLanguagePriorities": []
+  "suggestedLanguagePriorities": [
+    "en",
+    "es",
+    "fr",
+    "tr",
+    "de",
+    "it",
+    "cs",
+    "ru",
+    "pt",
+    "zh",
+    "pl",
+    "ar",
+    "hu",
+    "sk",
+    "th",
+    "fi",
+    "ja",
+    "ro",
+    "sw",
+    "ka",
+    "sv",
+    "uk",
+    "nl",
+    "fa",
+    "hi",
+    "nb",
+    "da",
+    "sr",
+    "lo",
+    "vi",
+    "la",
+    "ko",
+    "be",
+    "te",
+    "no",
+    "ms",
+    "mo",
+    "et",
+    "ca",
+    "el",
+    "eu",
+    "hr",
+    "ga",
+    "sl",
+    "bg",
+    "lv",
+    "lt",
+    "mt",
+    "nn",
+    "is"
+  ]
 }
