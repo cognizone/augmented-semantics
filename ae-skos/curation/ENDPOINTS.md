@@ -32,6 +32,19 @@
 | Europeana | https://sparql.europeana.eu/ | 406 | Not acceptable | 2026-01-17 |
 | OpenLink LOD | http://lod.openlinksw.com/sparql | - | Timeout | 2026-01-17 |
 | Bioportal | http://sparql.bioontology.org/sparql | - | Timeout | 2026-01-17 |
+| Norwegian National Library | https://data.nb.no/sparql | - | Connection failed | 2026-01-17 |
+| Periodo | https://data.perio.do/sparql | 404 | Not found | 2026-01-17 |
+| Pleiades | https://pleiades.stoa.org/sparql | 404 | Not found | 2026-01-17 |
+| British Museum | https://collection.britishmuseum.org/sparql | - | Connection failed | 2026-01-17 |
+| ChEMBL | https://www.ebi.ac.uk/rdf/services/sparql | 404 | Not found | 2026-01-17 |
+| Swedish National Data | https://www.dataportal.se/sparql | 405 | Method not allowed | 2026-01-17 |
+| Italian Open Data | https://dati.gov.it/sparql | 404 | Not found | 2026-01-17 |
+| REEGLE | http://sparql.reegle.info/ | 405 | Method not allowed | 2026-01-17 |
+| FINTO | http://api.finto.fi/sparql | 404 | Not found | 2026-01-17 |
+| OpenAIRE | https://graph.openaire.eu/sparql | 404 | Not found | 2026-01-17 |
+| Isidore | https://isidore.science/sparql | 404 | Not found | 2026-01-17 |
+| AgroPortal | http://sparql.agroportal.lirmm.fr/sparql | 406 | Not acceptable | 2026-01-17 |
+| BioPortal (data) | https://data.bioontology.org/sparql | 401 | Auth required | 2026-01-17 |
 
 ## Endpoints Without SKOS Content
 
@@ -41,6 +54,8 @@
 | LinkedGeoData | http://linkedgeodata.org/sparql | Geographic data, no SKOS | 2026-01-17 |
 | YAGO | https://yago-knowledge.org/sparql/query | Knowledge graph, no SKOS | 2026-01-17 |
 | UK Parliament | https://api.parliament.uk/sparql | Parliamentary data, no SKOS | 2026-01-17 |
+| Dutch National Library | http://data.bibliotheken.nl/sparql | Library data, no SKOS | 2026-01-17 |
+| UniProt | https://sparql.uniprot.org/sparql | Protein data, no SKOS | 2026-01-17 |
 
 ## Candidates to Investigate
 
