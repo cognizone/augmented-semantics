@@ -6,9 +6,213 @@
     "hasSkosContent": true,
     "supportsNamedGraphs": true,
     "skosGraphCount": 1,
-    "schemeCount": 0,
+    "schemeUris": [
+      "http://aims.fao.org/aos/agrovoc"
+    ],
+    "schemeCount": 1,
     "schemesLimited": false,
-    "languages": [],
+    "languages": [
+      {
+        "lang": "en",
+        "count": 83360
+      },
+      {
+        "lang": "ar",
+        "count": 83358
+      },
+      {
+        "lang": "es",
+        "count": 83358
+      },
+      {
+        "lang": "fr",
+        "count": 83358
+      },
+      {
+        "lang": "ru",
+        "count": 83358
+      },
+      {
+        "lang": "tr",
+        "count": 83082
+      },
+      {
+        "lang": "sw",
+        "count": 82914
+      },
+      {
+        "lang": "zh",
+        "count": 82454
+      },
+      {
+        "lang": "de",
+        "count": 78050
+      },
+      {
+        "lang": "it",
+        "count": 77594
+      },
+      {
+        "lang": "cs",
+        "count": 76532
+      },
+      {
+        "lang": "pt",
+        "count": 72126
+      },
+      {
+        "lang": "pl",
+        "count": 68932
+      },
+      {
+        "lang": "th",
+        "count": 68538
+      },
+      {
+        "lang": "hu",
+        "count": 68436
+      },
+      {
+        "lang": "ro",
+        "count": 68408
+      },
+      {
+        "lang": "sk",
+        "count": 67636
+      },
+      {
+        "lang": "ka",
+        "count": 64556
+      },
+      {
+        "lang": "ja",
+        "count": 61304
+      },
+      {
+        "lang": "uk",
+        "count": 59088
+      },
+      {
+        "lang": "nb",
+        "count": 55124
+      },
+      {
+        "lang": "sr",
+        "count": 54850
+      },
+      {
+        "lang": "da",
+        "count": 47472
+      },
+      {
+        "lang": "sv",
+        "count": 47156
+      },
+      {
+        "lang": "nl",
+        "count": 46334
+      },
+      {
+        "lang": "vi",
+        "count": 45726
+      },
+      {
+        "lang": "la",
+        "count": 44346
+      },
+      {
+        "lang": "be",
+        "count": 42606
+      },
+      {
+        "lang": "hi",
+        "count": 40706
+      },
+      {
+        "lang": "fa",
+        "count": 39802
+      },
+      {
+        "lang": "lo",
+        "count": 34480
+      },
+      {
+        "lang": "ko",
+        "count": 25626
+      },
+      {
+        "lang": "te",
+        "count": 7836
+      },
+      {
+        "lang": "nn",
+        "count": 2036
+      },
+      {
+        "lang": "ms",
+        "count": 1718
+      },
+      {
+        "lang": "ca",
+        "count": 1180
+      },
+      {
+        "lang": "fi",
+        "count": 1032
+      },
+      {
+        "lang": "et",
+        "count": 834
+      },
+      {
+        "lang": "my",
+        "count": 564
+      },
+      {
+        "lang": "km",
+        "count": 528
+      },
+      {
+        "lang": "el",
+        "count": 394
+      },
+      {
+        "lang": "hr",
+        "count": 294
+      },
+      {
+        "lang": "sl",
+        "count": 252
+      },
+      {
+        "lang": "ga",
+        "count": 180
+      },
+      {
+        "lang": "sq",
+        "count": 102
+      },
+      {
+        "lang": "bg",
+        "count": 68
+      },
+      {
+        "lang": "se",
+        "count": 64
+      },
+      {
+        "lang": "id",
+        "count": 46
+      },
+      {
+        "lang": "lv",
+        "count": 24
+      },
+      {
+        "lang": "ne",
+        "count": 12
+      }
+    ],
     "totalConcepts": 41676,
     "relationships": {
       "hasInScheme": true,
@@ -19,7 +223,58 @@
       "hasBroaderTransitive": false,
       "hasNarrowerTransitive": false
     },
-    "analyzedAt": "2026-01-17T12:02:51.158Z"
+    "analyzedAt": "2026-01-17T12:53:12.065Z"
   },
-  "suggestedLanguagePriorities": []
+  "suggestedLanguagePriorities": [
+    "en",
+    "ar",
+    "es",
+    "fr",
+    "ru",
+    "tr",
+    "sw",
+    "zh",
+    "de",
+    "it",
+    "cs",
+    "pt",
+    "pl",
+    "th",
+    "hu",
+    "ro",
+    "sk",
+    "ka",
+    "ja",
+    "uk",
+    "nb",
+    "sr",
+    "da",
+    "sv",
+    "nl",
+    "vi",
+    "la",
+    "be",
+    "hi",
+    "fa",
+    "lo",
+    "ko",
+    "te",
+    "nn",
+    "ms",
+    "ca",
+    "fi",
+    "et",
+    "my",
+    "km",
+    "el",
+    "hr",
+    "sl",
+    "ga",
+    "sq",
+    "bg",
+    "se",
+    "id",
+    "lv",
+    "ne"
+  ]
 }

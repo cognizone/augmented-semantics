@@ -1,5 +1,5 @@
 /**
- * Curate all endpoints and merge the results.
+ * Curate all endpoints by running each endpoint's curate.ts script.
  *
  * @see /spec/ae-skos/sko09-CurationWorkflow.md
  *
@@ -8,14 +8,7 @@
 
 import { readdirSync, statSync, existsSync } from 'fs'
 import { join } from 'path'
-import {
-  readConfig,
-  analyzeEndpointWithSteps,
-  generateLanguagePriorities,
-  writeOutput,
-  type EndpointAnalysis,
-  type StepCallback,
-} from './_shared/analyze'
+import { spawn } from 'child_process'
 
 const curationDir = import.meta.dirname
 
@@ -28,105 +21,72 @@ const bold = (s: string) => `\x1b[1m${s}\x1b[0m`
 const green = (s: string) => `\x1b[32m${s}\x1b[0m`
 const red = (s: string) => `\x1b[31m${s}\x1b[0m`
 const yellow = (s: string) => `\x1b[33m${s}\x1b[0m`
-const cyan = (s: string) => `\x1b[36m${s}\x1b[0m`
 
 function formatDuration(ms: number): string {
   return `${(ms / 1000).toFixed(1)}s`
 }
 
-function formatNumber(n: number | undefined): string {
-  if (n === undefined) return '?'
-  return n.toLocaleString()
-}
-
 // =============================================================================
-// Curation Logic
+// Run Individual Curate Script
 // =============================================================================
 
 interface CurationResult {
   name: string
   success: boolean
   durationMs: number
-  analysis?: EndpointAnalysis
   error?: string
 }
 
-async function curateEndpoint(dir: string, index: number, total: number): Promise<CurationResult> {
-  const fullPath = join(curationDir, dir)
-  const configPath = join(fullPath, 'input', 'config.json')
-  const startTime = Date.now()
+function runCurateScript(dir: string, index: number, total: number): Promise<CurationResult> {
+  return new Promise((resolve) => {
+    const fullPath = join(curationDir, dir)
+    const scriptPath = join(fullPath, 'curate.ts')
+    const startTime = Date.now()
 
-  if (!existsSync(configPath)) {
-    return {
-      name: dir,
-      success: false,
-      durationMs: Date.now() - startTime,
-      error: 'No input/config.json found',
-    }
-  }
-
-  const config = readConfig(fullPath)
-
-  // Header
-  console.log('')
-  console.log(`${dim('─'.repeat(60))}`)
-  console.log(`${bold(`[${index}/${total}]`)} ${bold(config.name)}`)
-  console.log(`${dim(config.url)}`)
-  console.log('')
-
-  // Step callback for progress display
-  const STEP_NAME_WIDTH = 16
-  const RESULT_WIDTH = 12
-
-  const onStep: StepCallback = (step, stepTotal, name, durationMs, result) => {
-    const paddedName = name.padEnd(STEP_NAME_WIDTH)
-    const paddedResult = result.padStart(RESULT_WIDTH)
-    const duration = formatDuration(durationMs).padStart(6)
-    console.log(`  ${dim(`${step}/${stepTotal}`)} ${paddedName}${cyan(paddedResult)}  ${dim(duration)}`)
-  }
-
-  try {
-    const analysis = await analyzeEndpointWithSteps(config.url, onStep)
-
-    if (!analysis) {
-      console.log('')
-      console.log(`  ${red('✗')} No SKOS content found`)
-      return {
-        name: config.name,
+    if (!existsSync(scriptPath)) {
+      resolve({
+        name: dir,
         success: false,
         durationMs: Date.now() - startTime,
-        error: 'No SKOS content',
-      }
+        error: 'No curate.ts found',
+      })
+      return
     }
 
-    const suggestedLanguagePriorities = generateLanguagePriorities(analysis.languages || [])
+    console.log('')
+    console.log(`${dim('─'.repeat(60))}`)
+    console.log(`${bold(`[${index}/${total}]`)} ${bold(dir)}`)
+    console.log('')
 
-    writeOutput(fullPath, {
-      ...config,
-      analysis,
-      suggestedLanguagePriorities,
+    const child = spawn('npx', ['tsx', scriptPath], {
+      cwd: fullPath,
+      stdio: 'inherit',
+      shell: true,
     })
 
-    console.log('')
-    console.log(`  ${green('✓')} ${bold('Complete')}  ${dim(formatDuration(Date.now() - startTime))}`)
+    child.on('close', (code) => {
+      resolve({
+        name: dir,
+        success: code === 0,
+        durationMs: Date.now() - startTime,
+        error: code !== 0 ? `Exit code ${code}` : undefined,
+      })
+    })
 
-    return {
-      name: config.name,
-      success: true,
-      durationMs: Date.now() - startTime,
-      analysis,
-    }
-  } catch (error) {
-    console.log('')
-    console.log(`  ${red('✗')} Error: ${error}`)
-    return {
-      name: config.name,
-      success: false,
-      durationMs: Date.now() - startTime,
-      error: String(error),
-    }
-  }
+    child.on('error', (err) => {
+      resolve({
+        name: dir,
+        success: false,
+        durationMs: Date.now() - startTime,
+        error: err.message,
+      })
+    })
+  })
 }
+
+// =============================================================================
+// Main
+// =============================================================================
 
 async function main() {
   const overallStart = Date.now()
@@ -152,7 +112,7 @@ async function main() {
   const results: CurationResult[] = []
 
   for (let i = 0; i < endpointDirs.length; i++) {
-    const result = await curateEndpoint(endpointDirs[i], i + 1, endpointDirs.length)
+    const result = await runCurateScript(endpointDirs[i], i + 1, endpointDirs.length)
     results.push(result)
   }
 
@@ -177,15 +137,6 @@ async function main() {
       console.log(`    - ${f.name}: ${f.error}`)
     }
   }
-
-  // Totals from successful
-  const totalSchemes = successful.reduce((sum, r) => sum + (r.analysis?.schemeCount || 0), 0)
-  const totalConcepts = successful.reduce((sum, r) => sum + (r.analysis?.totalConcepts || 0), 0)
-
-  console.log('')
-  console.log(`  ${dim('Totals across all endpoints:')}`)
-  console.log(`    Schemes:  ${formatNumber(totalSchemes)}`)
-  console.log(`    Concepts: ${formatNumber(totalConcepts)}`)
 
   // Run merge
   if (successful.length > 0) {

@@ -1,0 +1,363 @@
+/**
+ * Specialized curation script for data.europa.eu
+ *
+ * This endpoint contains millions of DCAT dataset metadata graphs alongside
+ * the actual SKOS vocabularies (EU authority tables, EuroVoc, etc.).
+ *
+ * Pipeline:
+ * 1. Find SKOS graphs that have a ConceptScheme (not just loose concepts)
+ * 2. Exclude graphs that also contain dcat:Dataset (metadata graphs)
+ * 3. Run standard analysis using those specific graphs
+ *
+ * Run with: npx tsx curation/data-europa-eu/curate.ts
+ */
+
+import { writeFileSync, mkdirSync } from 'fs'
+import { join } from 'path'
+import {
+  executeSparql,
+  type EndpointAnalysis,
+  type DetectedLanguage,
+} from '../_shared/analyze'
+
+const curationDir = import.meta.dirname
+const ENDPOINT = 'https://data.europa.eu/sparql'
+
+// =============================================================================
+// Formatting
+// =============================================================================
+
+const dim = (s: string) => `\x1b[2m${s}\x1b[0m`
+const bold = (s: string) => `\x1b[1m${s}\x1b[0m`
+const green = (s: string) => `\x1b[32m${s}\x1b[0m`
+const cyan = (s: string) => `\x1b[36m${s}\x1b[0m`
+
+function formatDuration(ms: number): string {
+  return `${(ms / 1000).toFixed(1)}s`
+}
+
+// =============================================================================
+// Graph Discovery
+// =============================================================================
+
+const PAGE_SIZE = 10000
+
+async function fetchGraphsPaginated(
+  queryFn: (limit: number, offset: number) => string,
+  label: string
+): Promise<Set<string>> {
+  const allGraphs = new Set<string>()
+  let offset = 0
+
+  while (true) {
+    const query = queryFn(PAGE_SIZE, offset)
+    const results = await executeSparql(ENDPOINT, query)
+    const graphs = results.results.bindings
+      .map((b: any) => b.g?.value)
+      .filter((uri: string | undefined): uri is string => !!uri)
+
+    graphs.forEach((g: string) => allGraphs.add(g))
+    process.stdout.write(`\r  ${label}: ${allGraphs.size.toLocaleString()}...`)
+
+    if (graphs.length < PAGE_SIZE) break
+    offset += PAGE_SIZE
+  }
+
+  process.stdout.write('\n')
+  return allGraphs
+}
+
+async function fetchSkosGraphs(): Promise<Set<string>> {
+  return fetchGraphsPaginated(
+    (limit, offset) => `
+      PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+      SELECT DISTINCT ?g
+      WHERE {
+        GRAPH ?g { ?s a skos:Concept }
+      }
+      LIMIT ${limit} OFFSET ${offset}
+    `,
+    'SKOS graphs'
+  )
+}
+
+async function fetchDcatGraphs(): Promise<Set<string>> {
+  return fetchGraphsPaginated(
+    (limit, offset) => `
+      PREFIX dcat: <http://www.w3.org/ns/dcat#>
+      SELECT DISTINCT ?g
+      WHERE {
+        GRAPH ?g { ?s a dcat:Dataset }
+      }
+      LIMIT ${limit} OFFSET ${offset}
+    `,
+    'DCAT graphs'
+  )
+}
+
+async function checkGraphHasScheme(graphUri: string): Promise<boolean> {
+  const query = `
+    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+    ASK {
+      GRAPH <${graphUri}> {
+        ?s a skos:ConceptScheme .
+      }
+    }
+  `
+  const results = await executeSparql(ENDPOINT, query)
+  return results.boolean === true
+}
+
+// =============================================================================
+// Analysis (using specific graphs)
+// =============================================================================
+
+async function countConceptsInGraphs(graphUris: string[]): Promise<number> {
+  const valuesClause = graphUris.map(uri => `<${uri}>`).join(' ')
+  const query = `
+    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+    SELECT (COUNT(DISTINCT ?concept) AS ?count)
+    WHERE {
+      VALUES ?g { ${valuesClause} }
+      GRAPH ?g {
+        ?concept a skos:Concept .
+      }
+    }
+  `
+  const results = await executeSparql(ENDPOINT, query)
+  return parseInt(results.results.bindings[0]?.count?.value || '0', 10)
+}
+
+async function detectSchemesInGraphs(graphUris: string[]): Promise<string[]> {
+  const valuesClause = graphUris.map(uri => `<${uri}>`).join(' ')
+  const query = `
+    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+    SELECT DISTINCT ?scheme
+    WHERE {
+      VALUES ?g { ${valuesClause} }
+      GRAPH ?g {
+        ?scheme a skos:ConceptScheme .
+      }
+    }
+  `
+  const results = await executeSparql(ENDPOINT, query)
+  return results.results.bindings
+    .map((b: any) => b.scheme?.value)
+    .filter((uri: string | undefined): uri is string => !!uri)
+}
+
+async function detectLanguagesInGraphs(graphUris: string[]): Promise<DetectedLanguage[]> {
+  const valuesClause = graphUris.map(uri => `<${uri}>`).join(' ')
+  const query = `
+    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+    SELECT ?lang (COUNT(?label) AS ?count)
+    WHERE {
+      VALUES ?g { ${valuesClause} }
+      GRAPH ?g {
+        ?concept a skos:Concept .
+        ?concept skos:prefLabel|skos:altLabel ?label .
+      }
+      BIND(LANG(?label) AS ?lang)
+      FILTER(?lang != "")
+    }
+    GROUP BY ?lang
+    ORDER BY DESC(?count)
+  `
+  const results = await executeSparql(ENDPOINT, query)
+  return results.results.bindings
+    .map((b: any) => ({
+      lang: b.lang?.value || '',
+      count: parseInt(b.count?.value || '0', 10)
+    }))
+    .filter((item: DetectedLanguage) => item.lang.length > 0 && /^[a-z]{2,3}$/.test(item.lang))
+    .slice(0, 50)
+}
+
+async function detectRelationshipsInGraphs(graphUris: string[]): Promise<EndpointAnalysis['relationships']> {
+  const valuesClause = graphUris.map(uri => `<${uri}>`).join(' ')
+  const query = `
+    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+    SELECT
+      (EXISTS { VALUES ?g { ${valuesClause} } GRAPH ?g { ?c skos:inScheme ?x } } AS ?hasInScheme)
+      (EXISTS { VALUES ?g { ${valuesClause} } GRAPH ?g { ?c skos:topConceptOf ?x } } AS ?hasTopConceptOf)
+      (EXISTS { VALUES ?g { ${valuesClause} } GRAPH ?g { ?s skos:hasTopConcept ?x } } AS ?hasHasTopConcept)
+      (EXISTS { VALUES ?g { ${valuesClause} } GRAPH ?g { ?c skos:broader ?x } } AS ?hasBroader)
+      (EXISTS { VALUES ?g { ${valuesClause} } GRAPH ?g { ?c skos:narrower ?x } } AS ?hasNarrower)
+      (EXISTS { VALUES ?g { ${valuesClause} } GRAPH ?g { ?c skos:broaderTransitive ?x } } AS ?hasBroaderTransitive)
+      (EXISTS { VALUES ?g { ${valuesClause} } GRAPH ?g { ?c skos:narrowerTransitive ?x } } AS ?hasNarrowerTransitive)
+    WHERE {}
+  `
+  const results = await executeSparql(ENDPOINT, query)
+  const binding = results.results.bindings[0]
+
+  const parseExists = (value?: string): boolean => {
+    if (!value) return false
+    return value === 'true' || value === '1'
+  }
+
+  return {
+    hasInScheme: parseExists(binding?.hasInScheme?.value),
+    hasTopConceptOf: parseExists(binding?.hasTopConceptOf?.value),
+    hasHasTopConcept: parseExists(binding?.hasHasTopConcept?.value),
+    hasBroader: parseExists(binding?.hasBroader?.value),
+    hasNarrower: parseExists(binding?.hasNarrower?.value),
+    hasBroaderTransitive: parseExists(binding?.hasBroaderTransitive?.value),
+    hasNarrowerTransitive: parseExists(binding?.hasNarrowerTransitive?.value),
+  }
+}
+
+// =============================================================================
+// Main
+// =============================================================================
+
+async function main() {
+  const overallStart = Date.now()
+  const STEP_NAME_WIDTH = 20
+  const RESULT_WIDTH = 12
+
+  const logStep = (step: number, total: number, name: string, result: string, durationMs: number) => {
+    const paddedName = name.padEnd(STEP_NAME_WIDTH)
+    const paddedResult = result.padStart(RESULT_WIDTH)
+    const duration = formatDuration(durationMs).padStart(6)
+    console.log(`  ${dim(`${step}/${total}`)} ${paddedName}${cyan(paddedResult)}  ${dim(duration)}`)
+  }
+
+  console.log('')
+  console.log(bold('data.europa.eu - Specialized Curation'))
+  console.log(dim(ENDPOINT))
+  console.log('')
+
+  const logPreStep = (label: string, name: string, result: string, durationMs: number) => {
+    const paddedName = name.padEnd(STEP_NAME_WIDTH)
+    const paddedResult = result.padStart(RESULT_WIDTH)
+    const duration = formatDuration(durationMs).padStart(6)
+    console.log(`  ${dim(label.padStart(3))} ${paddedName}${cyan(paddedResult)}  ${dim(duration)}`)
+  }
+
+  let start: number
+
+  // Pre-step a: Fetch SKOS graphs
+  start = Date.now()
+  const skosGraphs = await fetchSkosGraphs()
+  logPreStep('a', 'SKOS graphs', skosGraphs.size.toLocaleString(), Date.now() - start)
+
+  // Pre-step b: Fetch DCAT graphs to exclude
+  start = Date.now()
+  const dcatGraphs = await fetchDcatGraphs()
+  logPreStep('b', 'DCAT graphs', dcatGraphs.size.toLocaleString(), Date.now() - start)
+
+  // Filter: remove SKOS graphs that overlap with DCAT
+  const skosOnlyGraphs = [...skosGraphs].filter(g => !dcatGraphs.has(g))
+  console.log(`  ${green('→')} ${bold(String(skosOnlyGraphs.length))} SKOS-only graphs (no DCAT overlap)`)
+
+  if (skosOnlyGraphs.length === 0) {
+    console.log('  No SKOS-only graphs found')
+    process.exit(1)
+  }
+
+  // Pre-step c: Check which graphs have ConceptScheme
+  start = Date.now()
+  const validGraphs: string[] = []
+  for (let i = 0; i < skosOnlyGraphs.length; i++) {
+    const graph = skosOnlyGraphs[i]
+    process.stdout.write(`\r  Checking for ConceptScheme: ${i + 1}/${skosOnlyGraphs.length}...`)
+    try {
+      if (await checkGraphHasScheme(graph)) {
+        validGraphs.push(graph)
+      }
+    } catch {
+      // Skip on error
+    }
+  }
+  process.stdout.write('\n')
+  logPreStep('c', 'With ConceptScheme', String(validGraphs.length), Date.now() - start)
+  console.log('')
+
+  if (validGraphs.length === 0) {
+    console.log('  No graphs with ConceptScheme found')
+    process.exit(1)
+  }
+
+  // Standard 7-step analysis
+  // 1/7 SKOS content - we know it's yes
+  logStep(1, 7, 'SKOS content', 'yes', 0)
+
+  // 2/7 Named graphs - we know it's yes
+  logStep(2, 7, 'Named graphs', 'yes', 0)
+
+  // 3/7 SKOS graphs - already discovered
+  logStep(3, 7, 'SKOS graphs', String(validGraphs.length), 0)
+
+  // 4/7 Concept schemes
+  start = Date.now()
+  const schemeUris = await detectSchemesInGraphs(validGraphs)
+  logStep(4, 7, 'Concept schemes', String(schemeUris.length), Date.now() - start)
+
+  // 5/7 Concepts
+  start = Date.now()
+  const totalConcepts = await countConceptsInGraphs(validGraphs)
+  logStep(5, 7, 'Concepts', totalConcepts.toLocaleString(), Date.now() - start)
+
+  // 6/7 Relationships
+  start = Date.now()
+  const relationships = await detectRelationshipsInGraphs(validGraphs)
+  const relCount = Object.values(relationships).filter(Boolean).length
+  logStep(6, 7, 'Relationships', `${relCount}/7`, Date.now() - start)
+
+  // 7/7 Languages
+  start = Date.now()
+  const languages = await detectLanguagesInGraphs(validGraphs)
+  logStep(7, 7, 'Languages', String(languages.length), Date.now() - start)
+
+  const totalDuration = Date.now() - overallStart
+  console.log('')
+  console.log(`  ${green('✓')} ${bold('Complete')}  ${dim(formatDuration(totalDuration))}`)
+
+  // Build output
+  const analysis: EndpointAnalysis = {
+    hasSkosContent: true,
+    supportsNamedGraphs: true,
+    skosGraphCount: validGraphs.length,
+    schemeUris: schemeUris.slice(0, 200),
+    schemeCount: schemeUris.length,
+    schemesLimited: schemeUris.length > 200,
+    languages,
+    totalConcepts,
+    relationships,
+    analyzedAt: new Date().toISOString(),
+  }
+
+  const suggestedLanguagePriorities = languages.map(l => l.lang)
+  // Move 'en' to front if present
+  const enIndex = suggestedLanguagePriorities.indexOf('en')
+  if (enIndex > 0) {
+    suggestedLanguagePriorities.splice(enIndex, 1)
+    suggestedLanguagePriorities.unshift('en')
+  }
+
+  const output = {
+    name: 'data.europa.eu',
+    url: ENDPOINT,
+    description: 'The official open data portal of the European Union. Contains EU authority tables (languages, countries, corporate bodies) and EuroVoc thesaurus.',
+    analysis,
+    suggestedLanguagePriorities,
+    // Extra: list of valid graph URIs for reference
+    _validGraphs: validGraphs,
+  }
+
+  // Write output
+  const outputDir = join(curationDir, 'output')
+  mkdirSync(outputDir, { recursive: true })
+
+  const outputPath = join(outputDir, 'endpoint.json')
+  writeFileSync(outputPath, JSON.stringify(output, null, 2))
+
+  console.log('')
+  console.log(`${green('✓')} Written: ${outputPath}`)
+  console.log('')
+}
+
+main().catch(error => {
+  console.error('Fatal error:', error)
+  process.exit(1)
+})

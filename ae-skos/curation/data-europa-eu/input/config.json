@@ -1,0 +1,5 @@
+{
+  "name": "data.europa.eu",
+  "url": "https://data.europa.eu/sparql",
+  "description": "The official open data portal of the European Union. Contains EU authority tables and EuroVoc thesaurus alongside millions of DCAT dataset metadata graphs."
+}

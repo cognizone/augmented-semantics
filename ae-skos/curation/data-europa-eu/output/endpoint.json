@@ -1,0 +1,492 @@
+{
+  "name": "data.europa.eu",
+  "url": "https://data.europa.eu/sparql",
+  "description": "The official open data portal of the European Union. Contains EU authority tables (languages, countries, corporate bodies) and EuroVoc thesaurus.",
+  "analysis": {
+    "hasSkosContent": true,
+    "supportsNamedGraphs": true,
+    "skosGraphCount": 32,
+    "schemeUris": [
+      "http://publications.europa.eu/resource/authority/licence",
+      "http://publications.europa.eu/resource/authority/access-right",
+      "http://publications.europa.eu/resource/authority/address-type",
+      "http://publications.europa.eu/resource/authority/continent",
+      "http://publications.europa.eu/resource/authority/corporate-body",
+      "http://publications.europa.eu/resource/authority/corporate-body-classification",
+      "http://publications.europa.eu/resource/authority/country",
+      "http://publications.europa.eu/resource/authority/data-theme",
+      "http://publications.europa.eu/resource/authority/dataset-status",
+      "http://publications.europa.eu/resource/authority/dataset-type",
+      "http://publications.europa.eu/resource/authority/distribution-type",
+      "http://publications.europa.eu/resource/authority/documentation-type",
+      "http://publications.europa.eu/resource/authority/frequency",
+      "http://publications.europa.eu/resource/authority/language",
+      "http://publications.europa.eu/resource/authority/measurement-unit",
+      "http://publications.europa.eu/resource/authority/notation-type",
+      "http://publications.europa.eu/resource/authority/planned-availability",
+      "http://publications.europa.eu/resource/authority/site",
+      "http://eurovoc.europa.eu/100258",
+      "http://eurovoc.europa.eu/100141",
+      "http://eurovoc.europa.eu/100163",
+      "http://eurovoc.europa.eu/100164",
+      "http://eurovoc.europa.eu/100165",
+      "http://eurovoc.europa.eu/100166",
+      "http://eurovoc.europa.eu/100167",
+      "http://eurovoc.europa.eu/100168",
+      "http://eurovoc.europa.eu/100169",
+      "http://eurovoc.europa.eu/100170",
+      "http://eurovoc.europa.eu/100171",
+      "http://eurovoc.europa.eu/100172",
+      "http://eurovoc.europa.eu/100173",
+      "http://eurovoc.europa.eu/100174",
+      "http://eurovoc.europa.eu/100175",
+      "http://eurovoc.europa.eu/100176",
+      "http://eurovoc.europa.eu/100177",
+      "http://eurovoc.europa.eu/100178",
+      "http://eurovoc.europa.eu/100179",
+      "http://eurovoc.europa.eu/100180",
+      "http://eurovoc.europa.eu/100181",
+      "http://eurovoc.europa.eu/100182",
+      "http://eurovoc.europa.eu/100183",
+      "http://eurovoc.europa.eu/100184",
+      "http://eurovoc.europa.eu/100185",
+      "http://eurovoc.europa.eu/100186",
+      "http://eurovoc.europa.eu/100187",
+      "http://eurovoc.europa.eu/100188",
+      "http://eurovoc.europa.eu/100189",
+      "http://eurovoc.europa.eu/100190",
+      "http://eurovoc.europa.eu/100191",
+      "http://eurovoc.europa.eu/100192",
+      "http://eurovoc.europa.eu/100193",
+      "http://eurovoc.europa.eu/100194",
+      "http://eurovoc.europa.eu/100195",
+      "http://eurovoc.europa.eu/100196",
+      "http://eurovoc.europa.eu/100197",
+      "http://eurovoc.europa.eu/100198",
+      "http://eurovoc.europa.eu/100199",
+      "http://eurovoc.europa.eu/100200",
+      "http://eurovoc.europa.eu/100201",
+      "http://eurovoc.europa.eu/100202",
+      "http://eurovoc.europa.eu/100203",
+      "http://eurovoc.europa.eu/100204",
+      "http://eurovoc.europa.eu/100205",
+      "http://eurovoc.europa.eu/100206",
+      "http://eurovoc.europa.eu/100207",
+      "http://eurovoc.europa.eu/100208",
+      "http://eurovoc.europa.eu/100209",
+      "http://eurovoc.europa.eu/100210",
+      "http://eurovoc.europa.eu/100211",
+      "http://eurovoc.europa.eu/100212",
+      "http://eurovoc.europa.eu/100213",
+      "http://eurovoc.europa.eu/100214",
+      "http://eurovoc.europa.eu/100215",
+      "http://eurovoc.europa.eu/100216",
+      "http://eurovoc.europa.eu/100217",
+      "http://eurovoc.europa.eu/100218",
+      "http://eurovoc.europa.eu/100219",
+      "http://eurovoc.europa.eu/100220",
+      "http://eurovoc.europa.eu/100221",
+      "http://eurovoc.europa.eu/100222",
+      "http://eurovoc.europa.eu/100223",
+      "http://eurovoc.europa.eu/100224",
+      "http://eurovoc.europa.eu/100225",
+      "http://eurovoc.europa.eu/100226",
+      "http://eurovoc.europa.eu/100227",
+      "http://eurovoc.europa.eu/100228",
+      "http://eurovoc.europa.eu/100229",
+      "http://eurovoc.europa.eu/100230",
+      "http://eurovoc.europa.eu/100231",
+      "http://eurovoc.europa.eu/100232",
+      "http://eurovoc.europa.eu/100233",
+      "http://eurovoc.europa.eu/100234",
+      "http://eurovoc.europa.eu/100235",
+      "http://eurovoc.europa.eu/100236",
+      "http://eurovoc.europa.eu/100237",
+      "http://eurovoc.europa.eu/100238",
+      "http://eurovoc.europa.eu/100239",
+      "http://eurovoc.europa.eu/100240",
+      "http://eurovoc.europa.eu/100241",
+      "http://eurovoc.europa.eu/100242",
+      "http://eurovoc.europa.eu/100243",
+      "http://eurovoc.europa.eu/100244",
+      "http://eurovoc.europa.eu/100245",
+      "http://eurovoc.europa.eu/100246",
+      "http://eurovoc.europa.eu/100247",
+      "http://eurovoc.europa.eu/100248",
+      "http://eurovoc.europa.eu/100249",
+      "http://eurovoc.europa.eu/100250",
+      "http://eurovoc.europa.eu/100251",
+      "http://eurovoc.europa.eu/100252",
+      "http://eurovoc.europa.eu/100253",
+      "http://eurovoc.europa.eu/100254",
+      "http://eurovoc.europa.eu/100255",
+      "http://eurovoc.europa.eu/100256",
+      "http://eurovoc.europa.eu/100257",
+      "http://eurovoc.europa.eu/100259",
+      "http://eurovoc.europa.eu/100260",
+      "http://eurovoc.europa.eu/100261",
+      "http://eurovoc.europa.eu/100262",
+      "http://eurovoc.europa.eu/100263",
+      "http://eurovoc.europa.eu/100264",
+      "http://eurovoc.europa.eu/100265",
+      "http://eurovoc.europa.eu/100266",
+      "http://eurovoc.europa.eu/100267",
+      "http://eurovoc.europa.eu/100268",
+      "http://eurovoc.europa.eu/100269",
+      "http://eurovoc.europa.eu/100270",
+      "http://eurovoc.europa.eu/100271",
+      "http://eurovoc.europa.eu/100272",
+      "http://eurovoc.europa.eu/100273",
+      "http://eurovoc.europa.eu/100274",
+      "http://eurovoc.europa.eu/100275",
+      "http://eurovoc.europa.eu/100276",
+      "http://eurovoc.europa.eu/100277",
+      "http://eurovoc.europa.eu/100278",
+      "http://eurovoc.europa.eu/100279",
+      "http://eurovoc.europa.eu/100280",
+      "http://eurovoc.europa.eu/100281",
+      "http://eurovoc.europa.eu/100282",
+      "http://eurovoc.europa.eu/100283",
+      "http://eurovoc.europa.eu/100284",
+      "http://eurovoc.europa.eu/100285",
+      "http://eurovoc.europa.eu/100286",
+      "http://eurovoc.europa.eu/100287",
+      "http://eurovoc.europa.eu/100288",
+      "http://eurovoc.europa.eu/100289",
+      "http://eurovoc.europa.eu/domains",
+      "http://data.europa.eu/nuts",
+      "http://data.europa.eu/nuts/scheme/2010",
+      "http://data.europa.eu/nuts/scheme/2013",
+      "http://data.europa.eu/nuts/scheme/2016",
+      "https://piveau.eu/ns/voc#OpenData5Star",
+      "https://piveau.eu/ns/scoring#scoring",
+      "http://data.europa.eu/bna/asd487ae75",
+      "http://purl.org/adms/assettype/1.0",
+      "http://purl.org/adms/interoperabilitylevel/1.0",
+      "http://purl.org/adms/licencetype/1.0",
+      "http://purl.org/adms/publishertype/1.0",
+      "http://purl.org/adms/representationtechnique/1.0",
+      "http://purl.org/adms/status/1.0",
+      "http://publications.europa.eu/resource/authority/file-type",
+      "http://publications.europa.eu/resource/authority/timeperiod",
+      "http://publications.europa.eu/resource/authority/place",
+      "http://publications.europa.eu/resource/authority/country/0003",
+      "http://publications.europa.eu/resource/authority/distribution-status",
+      "http://publications.europa.eu/resource/authority/country/0001",
+      "http://publications.europa.eu/resource/authority/country/0007",
+      "http://publications.europa.eu/resource/authority/country/0006",
+      "http://publications.europa.eu/resource/authority/country/0005",
+      "http://publications.europa.eu/resource/authority/country/0004",
+      "http://publications.europa.eu/resource/authority/country/0002",
+      "http://publications.europa.eu/resource/authority/country/0008",
+      "http://publications.europa.eu/resource/authority/country/0009",
+      "http://publications.europa.eu/resource/authority/language/0001",
+      "http://publications.europa.eu/resource/authority/language/0002",
+      "http://publications.europa.eu/resource/authority/language/0003",
+      "http://dcat-ap.de/def/plannedAvailability",
+      "http://publications.europa.eu/resource/authority/country/0010",
+      "nodeID://b4985027253"
+    ],
+    "schemeCount": 179,
+    "schemesLimited": false,
+    "languages": [
+      {
+        "lang": "cs",
+        "count": 51011
+      },
+      {
+        "lang": "en",
+        "count": 46724
+      },
+      {
+        "lang": "it",
+        "count": 44615
+      },
+      {
+        "lang": "de",
+        "count": 43199
+      },
+      {
+        "lang": "hu",
+        "count": 42433
+      },
+      {
+        "lang": "fr",
+        "count": 41673
+      },
+      {
+        "lang": "es",
+        "count": 40862
+      },
+      {
+        "lang": "nl",
+        "count": 39634
+      },
+      {
+        "lang": "lt",
+        "count": 39539
+      },
+      {
+        "lang": "mk",
+        "count": 39144
+      },
+      {
+        "lang": "pt",
+        "count": 38876
+      },
+      {
+        "lang": "el",
+        "count": 38784
+      },
+      {
+        "lang": "da",
+        "count": 38417
+      },
+      {
+        "lang": "sv",
+        "count": 37438
+      },
+      {
+        "lang": "sk",
+        "count": 37055
+      },
+      {
+        "lang": "lv",
+        "count": 36925
+      },
+      {
+        "lang": "et",
+        "count": 36728
+      },
+      {
+        "lang": "fi",
+        "count": 36621
+      },
+      {
+        "lang": "hr",
+        "count": 36449
+      },
+      {
+        "lang": "ro",
+        "count": 34517
+      },
+      {
+        "lang": "sq",
+        "count": 28676
+      },
+      {
+        "lang": "pl",
+        "count": 26263
+      },
+      {
+        "lang": "sl",
+        "count": 25991
+      },
+      {
+        "lang": "bg",
+        "count": 25803
+      },
+      {
+        "lang": "mt",
+        "count": 25642
+      },
+      {
+        "lang": "ga",
+        "count": 21873
+      },
+      {
+        "lang": "sr",
+        "count": 17704
+      },
+      {
+        "lang": "ru",
+        "count": 948
+      },
+      {
+        "lang": "tr",
+        "count": 759
+      },
+      {
+        "lang": "no",
+        "count": 743
+      },
+      {
+        "lang": "uk",
+        "count": 678
+      },
+      {
+        "lang": "is",
+        "count": 646
+      },
+      {
+        "lang": "lb",
+        "count": 508
+      },
+      {
+        "lang": "ar",
+        "count": 501
+      },
+      {
+        "lang": "ca",
+        "count": 464
+      },
+      {
+        "lang": "zh",
+        "count": 448
+      },
+      {
+        "lang": "ja",
+        "count": 436
+      },
+      {
+        "lang": "bs",
+        "count": 120
+      },
+      {
+        "lang": "be",
+        "count": 118
+      },
+      {
+        "lang": "nn",
+        "count": 106
+      },
+      {
+        "lang": "nb",
+        "count": 106
+      },
+      {
+        "lang": "rm",
+        "count": 105
+      },
+      {
+        "lang": "gl",
+        "count": 104
+      },
+      {
+        "lang": "eu",
+        "count": 98
+      },
+      {
+        "lang": "fo",
+        "count": 96
+      },
+      {
+        "lang": "sh",
+        "count": 93
+      },
+      {
+        "lang": "hsb",
+        "count": 84
+      },
+      {
+        "lang": "hi",
+        "count": 14
+      },
+      {
+        "lang": "sw",
+        "count": 13
+      },
+      {
+        "lang": "af",
+        "count": 9
+      }
+    ],
+    "totalConcepts": 26031,
+    "relationships": {
+      "hasInScheme": true,
+      "hasTopConceptOf": true,
+      "hasHasTopConcept": true,
+      "hasBroader": true,
+      "hasNarrower": true,
+      "hasBroaderTransitive": false,
+      "hasNarrowerTransitive": false
+    },
+    "analyzedAt": "2026-01-17T13:13:27.912Z"
+  },
+  "suggestedLanguagePriorities": [
+    "en",
+    "cs",
+    "it",
+    "de",
+    "hu",
+    "fr",
+    "es",
+    "nl",
+    "lt",
+    "mk",
+    "pt",
+    "el",
+    "da",
+    "sv",
+    "sk",
+    "lv",
+    "et",
+    "fi",
+    "hr",
+    "ro",
+    "sq",
+    "pl",
+    "sl",
+    "bg",
+    "mt",
+    "ga",
+    "sr",
+    "ru",
+    "tr",
+    "no",
+    "uk",
+    "is",
+    "lb",
+    "ar",
+    "ca",
+    "zh",
+    "ja",
+    "bs",
+    "be",
+    "nn",
+    "nb",
+    "rm",
+    "gl",
+    "eu",
+    "fo",
+    "sh",
+    "hsb",
+    "hi",
+    "sw",
+    "af"
+  ],
+  "_validGraphs": [
+    "http://publications.europa.eu/resource/authority/language",
+    "http://publications.europa.eu/resource/authority/corporate-body-classification",
+    "http://publications.europa.eu/resource/authority/file-type",
+    "http://publications.europa.eu/resource/authority/site",
+    "http://publications.europa.eu/resource/authority/corporate-body",
+    "http://publications.europa.eu/resource/authority/place",
+    "http://publications.europa.eu/resource/dataset/eurovoc",
+    "http://publications.europa.eu/resource/authority/eurovoc",
+    "http://publications.europa.eu/resource/authority/licence",
+    "https://piveau.eu/ns/scoring",
+    "http://publications.europa.eu/resource/authority/timeperiod",
+    "http://purl.org/adms",
+    "http://publications.europa.eu/resource/authority/planned-availability",
+    "http://publications.europa.eu/resource/authority/frequency",
+    "http://publications.europa.eu/resource/authority/continent",
+    "http://publications.europa.eu/resource/authority/country",
+    "http://publications.europa.eu/resource/authority/notation-type",
+    "http://publications.europa.eu/resource/authority/distribution-type",
+    "http://dcat-ap.de/def/plannedAvailability",
+    "http://publications.europa.eu/resource/authority/documentation-type",
+    "http://publications.europa.eu/resource/authority/dataset-type",
+    "http://publications.europa.eu/resource/authority/data-theme",
+    "http://publications.europa.eu/resource/authority/nuts",
+    "https://piveau.eu/ns/voc",
+    "http://publications.europa.eu/resource/authority/access-right",
+    "http://publications.europa.eu/resource/authority/address-type",
+    "http://publications.europa.eu/resource/authority/dataset-status",
+    "http://publications.europa.eu/resource/authority/measurement-unit",
+    "http://data.europa.eu/bna/asd487ae75",
+    "http://publications.europa.eu/resource/dataset/high-value-dataset-category",
+    "http://publications.europa.eu/resource/authority/distribution-status",
+    "http://data.europa.eu/88u/dataset/spasitnadeimos_ndvi-xml"
+  ]
+}

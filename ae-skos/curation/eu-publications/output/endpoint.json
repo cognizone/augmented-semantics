@@ -208,7 +208,7 @@
       "http://eurovoc.europa.eu/100241",
       "http://eurovoc.europa.eu/100242"
     ],
-    "schemeCount": 700,
+    "schemeCount": 200,
     "schemesLimited": true,
     "languages": [
       {
@@ -422,7 +422,7 @@
       "hasBroaderTransitive": false,
       "hasNarrowerTransitive": false
     },
-    "analyzedAt": "2026-01-17T11:51:52.476Z"
+    "analyzedAt": "2026-01-17T13:14:57.788Z"
   },
   "suggestedLanguagePriorities": [
     "en",

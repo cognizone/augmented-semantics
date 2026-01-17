@@ -154,40 +154,31 @@ export async function detectSchemes(url: string): Promise<{
   schemeCount: number
   schemesLimited: boolean
 }> {
-  const countQuery = `
+  // Fetch URIs directly - COUNT(DISTINCT) times out on some endpoints (e.g. AGROVOC)
+  // We do distinct in code instead
+  const query = `
     PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-    SELECT (COUNT(DISTINCT ?scheme) AS ?count)
+    SELECT ?scheme
     WHERE {
       ?scheme a skos:ConceptScheme .
     }
+    LIMIT ${MAX_STORED_SCHEMES + 1}
   `
 
   // Let errors propagate - runStep will catch and show "error"
-  const countResult = await executeSparql(url, countQuery)
-  const totalCount = parseInt(countResult.results.bindings[0]?.count?.value || '0', 10)
-
-  if (totalCount === 0) {
-    return { schemeUris: [], schemeCount: 0, schemesLimited: false }
-  }
-
-  const urisQuery = `
-    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-    SELECT DISTINCT ?scheme
-    WHERE {
-      ?scheme a skos:ConceptScheme .
-    }
-    LIMIT ${MAX_STORED_SCHEMES}
-  `
-
-  const urisResult = await executeSparql(url, urisQuery)
-  const schemeUris = urisResult.results.bindings
+  const result = await executeSparql(url, query)
+  const allUris = result.results.bindings
     .map((b: any) => b.scheme?.value)
     .filter((uri: string | undefined): uri is string => !!uri)
 
+  // Distinct in code
+  const schemeUris = [...new Set(allUris)].slice(0, MAX_STORED_SCHEMES)
+  const schemesLimited = allUris.length > MAX_STORED_SCHEMES
+
   return {
     schemeUris,
-    schemeCount: totalCount,
-    schemesLimited: totalCount > MAX_STORED_SCHEMES
+    schemeCount: schemeUris.length,
+    schemesLimited,
   }
 }
 
@@ -450,28 +441,51 @@ export function writeOutput(dir: string, data: CuratedEndpoint): void {
   writeFileSync(outputPath, JSON.stringify(data, null, 2))
 }
 
+// =============================================================================
+// Formatting Helpers
+// =============================================================================
+
+const dim = (s: string) => `\x1b[2m${s}\x1b[0m`
+const bold = (s: string) => `\x1b[1m${s}\x1b[0m`
+const green = (s: string) => `\x1b[32m${s}\x1b[0m`
+const cyan = (s: string) => `\x1b[36m${s}\x1b[0m`
+
+function formatDuration(ms: number): string {
+  return `${(ms / 1000).toFixed(1)}s`
+}
+
 /**
  * Convenience function for standard curation flow.
  * Reads config, analyzes endpoint, writes output.
  */
 export async function curate(dir: string): Promise<void> {
   const config = readConfig(dir)
-  console.error(`Curating: ${config.name} (${config.url})`)
+  const startTime = Date.now()
 
-  const analysis = await analyzeEndpoint(config.url)
+  console.log('')
+  console.log(bold(config.name))
+  console.log(dim(config.url))
+  console.log('')
+
+  const STEP_NAME_WIDTH = 16
+  const RESULT_WIDTH = 12
+
+  const onStep: StepCallback = (step, total, name, durationMs, result) => {
+    const paddedName = name.padEnd(STEP_NAME_WIDTH)
+    const paddedResult = result.padStart(RESULT_WIDTH)
+    const duration = formatDuration(durationMs).padStart(6)
+    console.log(`  ${dim(`${step}/${total}`)} ${paddedName}${cyan(paddedResult)}  ${dim(duration)}`)
+  }
+
+  const analysis = await analyzeEndpointWithSteps(config.url, onStep)
 
   if (!analysis) {
-    console.error(`\n✗ No SKOS content found at this endpoint`)
+    console.log('')
+    console.log(`  ${'\x1b[31m✗\x1b[0m'} No SKOS content found`)
     process.exit(1)
   }
 
   const suggestedLanguagePriorities = generateLanguagePriorities(analysis.languages || [])
-
-  const relCount = analysis.relationships
-    ? Object.values(analysis.relationships).filter(Boolean).length
-    : 0
-
-  console.error(`\n✓ Done: ${analysis.schemeCount || 0} schemes, ${analysis.totalConcepts?.toLocaleString() || '?'} concepts, ${relCount}/7 relationships, ${analysis.languages?.length || 0} languages`)
 
   writeOutput(dir, {
     ...config,
@@ -479,5 +493,6 @@ export async function curate(dir: string): Promise<void> {
     suggestedLanguagePriorities,
   })
 
-  console.error(`✓ Written: ${join(dir, 'output', 'endpoint.json')}`)
+  console.log('')
+  console.log(`  ${green('✓')} ${bold('Complete')}  ${dim(formatDuration(Date.now() - startTime))}`)
 }
