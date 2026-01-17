@@ -10,13 +10,13 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { SPARQLEndpoint, EndpointStatus, AppError, SuggestedEndpoint } from '../types'
-import suggestedEndpointsData from '../data/suggested-endpoints.generated.json'
+import suggestedEndpointsData from '../data/endpoints.json'
 import { logger, isConfigMode, getConfig } from '../services'
 
 const STORAGE_KEY = 'ae-endpoints'
 
-// Type assertion for imported JSON (structure: { _sourceHash, endpoints })
-const suggestedEndpoints = (suggestedEndpointsData as { endpoints: SuggestedEndpoint[] }).endpoints
+// Type assertion for imported JSON (plain array from merged curated files)
+const suggestedEndpoints = suggestedEndpointsData as SuggestedEndpoint[]
 
 export const useEndpointStore = defineStore('endpoint', () => {
   // State

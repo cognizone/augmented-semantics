@@ -1,0 +1,5 @@
+{
+  "name": "BnF",
+  "url": "https://data.bnf.fr/sparql",
+  "description": "The National Library of France. It hosts RAMEAU, the primary subject heading authority for French libraries, along with extensive concepts regarding authors, works, and periods."
+}

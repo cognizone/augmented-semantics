@@ -1,0 +1,5 @@
+{
+  "name": "AGROVOC",
+  "url": "https://agrovoc.fao.org/sparql",
+  "description": "Maintained by the FAO (UN), this is a massive multilingual thesaurus covering agriculture, forestry, fisheries, food, and related environmental concepts."
+}

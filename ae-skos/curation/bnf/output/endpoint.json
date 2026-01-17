@@ -1,0 +1,280 @@
+{
+  "name": "BnF",
+  "url": "https://data.bnf.fr/sparql",
+  "description": "The National Library of France. It hosts RAMEAU, the primary subject heading authority for French libraries, along with extensive concepts regarding authors, works, and periods.",
+  "analysis": {
+    "hasSkosContent": true,
+    "supportsNamedGraphs": true,
+    "skosGraphCount": 1,
+    "schemeUris": [
+      "http://data.bnf.fr/vocabulary/rameau/"
+    ],
+    "schemeCount": 1,
+    "schemesLimited": false,
+    "languages": [
+      {
+        "lang": "fr",
+        "count": 7074441
+      },
+      {
+        "lang": "en",
+        "count": 390706
+      },
+      {
+        "lang": "ru",
+        "count": 36057
+      },
+      {
+        "lang": "la",
+        "count": 16369
+      },
+      {
+        "lang": "de",
+        "count": 15700
+      },
+      {
+        "lang": "zh",
+        "count": 15071
+      },
+      {
+        "lang": "it",
+        "count": 14429
+      },
+      {
+        "lang": "ar",
+        "count": 13852
+      },
+      {
+        "lang": "es",
+        "count": 11417
+      },
+      {
+        "lang": "ja",
+        "count": 8116
+      },
+      {
+        "lang": "bg",
+        "count": 7094
+      },
+      {
+        "lang": "sr",
+        "count": 4573
+      },
+      {
+        "lang": "sa",
+        "count": 3373
+      },
+      {
+        "lang": "hi",
+        "count": 2980
+      },
+      {
+        "lang": "uk",
+        "count": 2637
+      },
+      {
+        "lang": "hr",
+        "count": 2366
+      },
+      {
+        "lang": "el",
+        "count": 1860
+      },
+      {
+        "lang": "he",
+        "count": 1692
+      },
+      {
+        "lang": "pt",
+        "count": 1427
+      },
+      {
+        "lang": "pl",
+        "count": 1289
+      },
+      {
+        "lang": "nl",
+        "count": 1058
+      },
+      {
+        "lang": "sl",
+        "count": 1004
+      },
+      {
+        "lang": "bs",
+        "count": 979
+      },
+      {
+        "lang": "ko",
+        "count": 968
+      },
+      {
+        "lang": "yi",
+        "count": 932
+      },
+      {
+        "lang": "tr",
+        "count": 930
+      },
+      {
+        "lang": "sv",
+        "count": 893
+      },
+      {
+        "lang": "ca",
+        "count": 842
+      },
+      {
+        "lang": "fa",
+        "count": 823
+      },
+      {
+        "lang": "cs",
+        "count": 811
+      },
+      {
+        "lang": "hu",
+        "count": 765
+      },
+      {
+        "lang": "mk",
+        "count": 730
+      },
+      {
+        "lang": "ro",
+        "count": 687
+      },
+      {
+        "lang": "oc",
+        "count": 590
+      },
+      {
+        "lang": "da",
+        "count": 569
+      },
+      {
+        "lang": "hy",
+        "count": 559
+      },
+      {
+        "lang": "be",
+        "count": 550
+      },
+      {
+        "lang": "no",
+        "count": 518
+      },
+      {
+        "lang": "fi",
+        "count": 503
+      },
+      {
+        "lang": "br",
+        "count": 343
+      },
+      {
+        "lang": "bn",
+        "count": 304
+      },
+      {
+        "lang": "vi",
+        "count": 212
+      },
+      {
+        "lang": "ta",
+        "count": 212
+      },
+      {
+        "lang": "ur",
+        "count": 206
+      },
+      {
+        "lang": "eu",
+        "count": 183
+      },
+      {
+        "lang": "is",
+        "count": 177
+      },
+      {
+        "lang": "et",
+        "count": 140
+      },
+      {
+        "lang": "co",
+        "count": 136
+      },
+      {
+        "lang": "bo",
+        "count": 134
+      },
+      {
+        "lang": "lv",
+        "count": 128
+      }
+    ],
+    "totalConcepts": 21189438,
+    "relationships": {
+      "hasInScheme": true,
+      "hasTopConceptOf": false,
+      "hasHasTopConcept": false,
+      "hasBroader": true,
+      "hasNarrower": true,
+      "hasBroaderTransitive": false,
+      "hasNarrowerTransitive": false
+    },
+    "analyzedAt": "2026-01-17T12:04:22.605Z"
+  },
+  "suggestedLanguagePriorities": [
+    "en",
+    "fr",
+    "ru",
+    "la",
+    "de",
+    "zh",
+    "it",
+    "ar",
+    "es",
+    "ja",
+    "bg",
+    "sr",
+    "sa",
+    "hi",
+    "uk",
+    "hr",
+    "el",
+    "he",
+    "pt",
+    "pl",
+    "nl",
+    "sl",
+    "bs",
+    "ko",
+    "yi",
+    "tr",
+    "sv",
+    "ca",
+    "fa",
+    "cs",
+    "hu",
+    "mk",
+    "ro",
+    "oc",
+    "da",
+    "hy",
+    "be",
+    "no",
+    "fi",
+    "br",
+    "bn",
+    "vi",
+    "ta",
+    "ur",
+    "eu",
+    "is",
+    "et",
+    "co",
+    "bo",
+    "lv"
+  ]
+}

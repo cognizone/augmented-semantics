@@ -1,0 +1,81 @@
+{
+  "name": "NERC Vocabulary Server",
+  "url": "https://vocab.nerc.ac.uk/sparql/",
+  "description": "Managed by the British Oceanographic Data Centre. It provides standard vocabularies for oceanography and earth sciences, used globally to tag marine data.",
+  "analysis": {
+    "hasSkosContent": true,
+    "supportsNamedGraphs": false,
+    "skosGraphCount": null,
+    "schemeUris": [
+      "http://vocab.nerc.ac.uk/scheme/NETOC_PARAM/current/",
+      "http://vocab.nerc.ac.uk/scheme/NETMAR_OCEAN/current/",
+      "http://vocab.nerc.ac.uk/scheme/SDNDEV/current/",
+      "http://vocab.nerc.ac.uk/scheme/EMODNET_CHEM/current/",
+      "http://vocab.nerc.ac.uk/scheme/ICANCOERO/current/",
+      "http://vocab.nerc.ac.uk/scheme/MIDA/current/",
+      "http://vocab.nerc.ac.uk/scheme/OCACETHES/current/",
+      "http://vocab.nerc.ac.uk/scheme/EMODNET_PEST/current/",
+      "http://vocab.nerc.ac.uk/scheme/ISO_GST/current/",
+      "http://vocab.nerc.ac.uk/scheme/EDMED_DCAT_THEMES/current/",
+      "http://vocab.nerc.ac.uk/scheme/SVX_GAZTR/current/",
+      "http://vocab.nerc.ac.uk/scheme/OG_SENSORS/current/",
+      "http://vocab.nerc.ac.uk/scheme/NETOC_PLACE/current/",
+      "http://vocab.nerc.ac.uk/scheme/NETOC_ORTHO/current/",
+      "http://vocab.nerc.ac.uk/scheme/WCATHES/current/",
+      "http://vocab.nerc.ac.uk/scheme/NETOC_INSTRUMENT/current/",
+      "http://vocab.nerc.ac.uk/scheme/INSPIRE_THEMES/current/",
+      "http://vocab.nerc.ac.uk/scheme/NETOC_PLAT/current/",
+      "http://vocab.nerc.ac.uk/scheme/NETOC_PROJ/current/",
+      "http://vocab.nerc.ac.uk/scheme/NETOC_VCOV/current/",
+      "http://vocab.nerc.ac.uk/scheme/NETOC_PLATCLASS/current/",
+      "http://vocab.nerc.ac.uk/scheme/ICANDIS/current/"
+    ],
+    "schemeCount": 22,
+    "schemesLimited": false,
+    "languages": [
+      {
+        "lang": "en",
+        "count": 361793
+      },
+      {
+        "lang": "fr",
+        "count": 2158
+      },
+      {
+        "lang": "es",
+        "count": 370
+      },
+      {
+        "lang": "pt",
+        "count": 92
+      },
+      {
+        "lang": "no",
+        "count": 24
+      },
+      {
+        "lang": "ga",
+        "count": 2
+      }
+    ],
+    "totalConcepts": 361803,
+    "relationships": {
+      "hasInScheme": true,
+      "hasTopConceptOf": true,
+      "hasHasTopConcept": true,
+      "hasBroader": true,
+      "hasNarrower": true,
+      "hasBroaderTransitive": false,
+      "hasNarrowerTransitive": false
+    },
+    "analyzedAt": "2026-01-17T12:05:06.831Z"
+  },
+  "suggestedLanguagePriorities": [
+    "en",
+    "fr",
+    "es",
+    "pt",
+    "no",
+    "ga"
+  ]
+}

@@ -1,0 +1,5 @@
+{
+  "name": "EU Publications Office",
+  "url": "https://publications.europa.eu/webapi/rdf/sparql",
+  "description": "The CELLAR repository of the EU Publications Office. It hosts EU Vocabularies including EuroVoc, corporate bodies, countries, languages, and other authority tables used across EU institutions."
+}

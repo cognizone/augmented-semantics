@@ -1,0 +1,119 @@
+{
+  "name": "Fedlex",
+  "url": "https://fedlex.data.admin.ch/sparqlendpoint",
+  "description": "The official publishing platform for Swiss federal law. It exposes the Classified Compilation of legislation as a hierarchical concept scheme, allowing navigation through Swiss legal domains (Systematic Collection of Federal Law).",
+  "analysis": {
+    "hasSkosContent": true,
+    "supportsNamedGraphs": true,
+    "skosGraphCount": 47,
+    "schemeUris": [
+      "https://fedlex.data.admin.ch/vocabulary/country",
+      "https://fedlex.data.admin.ch/vocabulary/publication-process-related-to-expression-status",
+      "https://fedlex.data.admin.ch/vocabulary/task-result-type",
+      "https://fedlex.data.admin.ch/vocabulary/legal-analysis-status",
+      "https://fedlex.data.admin.ch/vocabulary/legal-resource-genre",
+      "https://fedlex.data.admin.ch/vocabulary/type-projet",
+      "https://fedlex.data.admin.ch/vocabulary/instrument-type",
+      "https://fedlex.data.admin.ch/vocabulary/publication-process-status",
+      "https://fedlex.data.admin.ch/vocabulary/role",
+      "https://fedlex.data.admin.ch/vocabulary/treaty-status",
+      "https://fedlex.data.admin.ch/vocabulary/legal-subject-theme-de",
+      "https://fedlex.data.admin.ch/vocabulary/publication-process-stage",
+      "https://fedlex.data.admin.ch/vocabulary/impact-type",
+      "https://fedlex.data.admin.ch/vocabulary/consultation-stage",
+      "https://fedlex.data.admin.ch/vocabulary/enforcement-status",
+      "https://jurivoc.bger.ch/vocabulary/jurivoc",
+      "https://fedlex.data.admin.ch/vocabulary/legal-taxonomy",
+      "https://fedlex.data.admin.ch/vocabulary/notification-type",
+      "https://fedlex.data.admin.ch/vocabulary/migration-draft-stage-type",
+      "https://fedlex.data.admin.ch/vocabulary/treaty-subject-theme",
+      "https://fedlex.data.admin.ch/vocabulary/publication-folder-status",
+      "https://fedlex.data.admin.ch/vocabulary/treaty-accession-type",
+      "http://data.legilux.public.lu/resource/ontology/jolux#legal-subject-legal-resource",
+      "http://data.legilux.public.lu/resource/ontology/jolux#legal-subject-organisation",
+      "http://data.legilux.public.lu/resource/ontology/jolux#legal-subject-place",
+      "http://data.legilux.public.lu/resource/ontology/jolux#legal-subject-theme",
+      "http://publications.europa.eu/resource/authority/atu",
+      "http://publications.europa.eu/resource/authority/concept-status",
+      "http://publications.europa.eu/resource/authority/file-type",
+      "http://data.europa.eu/eli/ontology#AdministrativeAreaTable",
+      "http://data.europa.eu/eli/ontology#InForceTable",
+      "http://data.europa.eu/eli/ontology#ResourceTypeTable",
+      "http://data.europa.eu/eli/ontology#VersionTable",
+      "http://data.legilux.public.lu/resource/authority/legal-institution",
+      "http://data.legilux.public.lu/resource/authority/legal-institution-history",
+      "http://data.legilux.public.lu/resource/authority/license",
+      "http://data.legilux.public.lu/resource/authority/resource-type",
+      "http://data.legilux.public.lu/resource/authority/statut-application",
+      "http://data.legilux.public.lu/resource/authority/statut-transposition",
+      "http://data.legilux.public.lu/resource/authority/statut-version",
+      "http://data.legilux.public.lu/resource/authority/type-procedure",
+      "http://data.legilux.public.lu/resource/authority/user-format",
+      "https://fedlex.data.admin.ch/vocabulary/international-actor",
+      "https://fedlex.data.admin.ch/vocabulary/notation-type",
+      "https://fedlex.data.admin.ch/vocabulary/license",
+      "https://fedlex.data.admin.ch/vocabulary/eutext-subject-theme",
+      "https://fedlex.data.admin.ch/vocabulary/publication-completeness",
+      "https://fedlex.data.admin.ch/vocabulary/resource-family",
+      "https://fedlex.data.admin.ch/vocabulary/user-format",
+      "https://fedlex.data.admin.ch/vocabulary/legal-institution",
+      "https://fedlex.data.admin.ch/vocabulary/resource-type",
+      "https://fedlex.data.admin.ch/vocabulary/type-procedure",
+      "http://data.europa.eu/eli/ontology#LegalValueTable",
+      "https://fedlex.data.admin.ch/vocabulary/information-source",
+      "https://fedlex.data.admin.ch/vocabulary/treaty-type",
+      "http://publications.europa.eu/resource/authority/language",
+      "https://fedlex.data.admin.ch/vocabulary/draft-document-type",
+      "https://fedlex.data.admin.ch/vocabulary/publication-process-related-to-document-status",
+      "https://fedlex.data.admin.ch/vocabulary/subdivision-type",
+      "https://fedlex.data.admin.ch/vocabulary/legal-subject-theme-fr",
+      "https://fedlex.data.admin.ch/vocabulary/legal-subject-theme-it",
+      "https://fedlex.data.admin.ch/vocabulary/publication-process-related-to-manifestation-status",
+      "https://fedlex.data.admin.ch/vocabulary/consultation-status",
+      "https://fedlex.data.admin.ch/vocabulary/publication-folder-stage",
+      "https://fedlex.data.admin.ch/vocabulary/rs-abbreviation"
+    ],
+    "schemeCount": 65,
+    "schemesLimited": false,
+    "languages": [
+      {
+        "lang": "it",
+        "count": 33758
+      },
+      {
+        "lang": "de",
+        "count": 32720
+      },
+      {
+        "lang": "fr",
+        "count": 32476
+      },
+      {
+        "lang": "en",
+        "count": 1542
+      },
+      {
+        "lang": "rm",
+        "count": 1307
+      }
+    ],
+    "totalConcepts": 49075,
+    "relationships": {
+      "hasInScheme": true,
+      "hasTopConceptOf": true,
+      "hasHasTopConcept": true,
+      "hasBroader": true,
+      "hasNarrower": true,
+      "hasBroaderTransitive": true,
+      "hasNarrowerTransitive": false
+    },
+    "analyzedAt": "2026-01-17T11:51:54.568Z"
+  },
+  "suggestedLanguagePriorities": [
+    "en",
+    "it",
+    "de",
+    "fr",
+    "rm"
+  ]
+}

@@ -1,0 +1,5 @@
+{
+  "name": "DBpedia",
+  "url": "https://dbpedia.org/sparql",
+  "description": "The semantic extraction of Wikipedia. It serves as a general knowledge hub, defining millions of entities and concepts that are linked to external thesauri (like YAGO or Wikidata)."
+}

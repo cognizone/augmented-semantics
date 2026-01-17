@@ -1,0 +1,61 @@
+{
+  "name": "Cordis Datalab",
+  "url": "https://cordis.europa.eu/datalab/sparql",
+  "description": "EU's research and innovation database. Contains information about EU-funded research projects, participants, publications, and results from Framework Programmes (FP7, Horizon 2020, Horizon Europe).",
+  "analysis": {
+    "hasSkosContent": true,
+    "supportsNamedGraphs": true,
+    "skosGraphCount": 4,
+    "schemeUris": [
+      "http://data.europa.eu/8mn/euroscivoc/40c0f173-baa3-48a3-9fe6-d6e8fb366a00",
+      "http://data.europa.eu/s66/resource/vocabulary/ipr-type/ipr-type"
+    ],
+    "schemeCount": 2,
+    "schemesLimited": false,
+    "languages": [
+      {
+        "lang": "en",
+        "count": 1084
+      },
+      {
+        "lang": "it",
+        "count": 1069
+      },
+      {
+        "lang": "pl",
+        "count": 1069
+      },
+      {
+        "lang": "de",
+        "count": 1069
+      },
+      {
+        "lang": "fr",
+        "count": 1069
+      },
+      {
+        "lang": "es",
+        "count": 1069
+      }
+    ],
+    "totalConcepts": 207637,
+    "relationships": {
+      "hasInScheme": true,
+      "hasTopConceptOf": true,
+      "hasHasTopConcept": false,
+      "hasBroader": true,
+      "hasNarrower": false,
+      "hasBroaderTransitive": false,
+      "hasNarrowerTransitive": false
+    },
+    "analyzedAt": "2026-01-17T12:04:23.607Z"
+  },
+  "suggestedLanguagePriorities": [
+    "en",
+    "it",
+    "pl",
+    "de",
+    "fr",
+    "es"
+  ]
+}

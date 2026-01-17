@@ -1,0 +1,298 @@
+{
+  "name": "Legilux",
+  "url": "https://data.legilux.public.lu/sparqlendpoint",
+  "description": "The official legal portal of the Grand Duchy of Luxembourg. It provides access to legislation and the 'Memorial' (official journal) using a structured legal vocabulary.",
+  "analysis": {
+    "hasSkosContent": true,
+    "supportsNamedGraphs": true,
+    "skosGraphCount": 74,
+    "schemeUris": [
+      "http://data.legilux.public.lu/resource/authority/resource-type",
+      "http://data.legilux.public.lu/resource/authority/user-format",
+      "http://data.legilux.public.lu/resource/authority/statut-application",
+      "http://eurovoc.europa.eu/100141",
+      "http://publications.europa.eu/resource/authority/country",
+      "http://data.legilux.public.lu/resource/authority/government-member-title-history",
+      "http://data.legilux.public.lu/resource/authority/legal-institution",
+      "http://data.legilux.public.lu/resource/authority/legal-institution-history",
+      "http://data.legilux.public.lu/resource/authority/legal-subject-organisation",
+      "http://data.legilux.public.lu/resource/authority/legal-subject-theme",
+      "http://data.legilux.public.lu/resource/authority/person",
+      "http://publications.europa.eu/resource/authority/file-type",
+      "http://publications.europa.eu/resource/authority/language",
+      "http://publications.europa.eu/resource/dataset/corporate-body",
+      "http://publications.europa.eu/resource/dataset/event",
+      "http://publications.europa.eu/resource/dataset/fd_070",
+      "http://publications.europa.eu/resource/dataset/frequency",
+      "http://data.legilux.public.lu/resource/authority/legislature",
+      "http://data.legilux.public.lu/resource/authority/infringement-procedure-status",
+      "http://data.legilux.public.lu/resource/authority/generic-email",
+      "http://data.legilux.public.lu/resource/authority/OpinionOrConclusionType",
+      "http://data.legilux.public.lu/resource/authority/treaty-domain",
+      "http://data.legilux.public.lu/resource/authority/draft-status-conseil-etat",
+      "http://data.legilux.public.lu/resource/authority/gender",
+      "http://data.legilux.public.lu/resource/authority/committee",
+      "http://data.legilux.public.lu/resource/authority/instrument-type",
+      "http://data.legilux.public.lu/resource/authority/vote-legal-base",
+      "http://data.legilux.public.lu/resource/authority/treaty-event-type",
+      "http://data.legilux.public.lu/resource/authority/statut-transposition",
+      "http://data.legilux.public.lu/resource/authority/language",
+      "http://data.legilux.public.lu/resource/authority/treaty-type",
+      "http://data.legilux.public.lu/resource/authority/priority-level-for-government",
+      "http://data.legilux.public.lu/resource/authority/draft-status",
+      "http://data.legilux.public.lu/resource/authority/type-procedure-qp",
+      "http://data.legilux.public.lu/resource/authority/parliamentary-session",
+      "http://data.legilux.public.lu/resource/authority/infringement-origin",
+      "http://data.legilux.public.lu/resource/authority/deadline-type",
+      "http://data.legilux.public.lu/resource/authority/prov-role-type",
+      "http://data.legilux.public.lu/resource/authority/treaty-subject-theme",
+      "http://data.legilux.public.lu/resource/authority/infringement-procedure-type",
+      "http://data.legilux.public.lu/resource/authority/function",
+      "http://data.legilux.public.lu/resource/authority/legal-subject-legal-resource",
+      "http://data.legilux.public.lu/resource/authority/draft-document-type",
+      "http://data.legilux.public.lu/resource/authority/infringement-stage",
+      "http://data.legilux.public.lu/resource/authority/statut-version",
+      "http://data.legilux.public.lu/resource/authority/political-party",
+      "http://data.legilux.public.lu/resource/authority/eu-legal-institution",
+      "http://data.legilux.public.lu/resource/authority/transposition-action-type",
+      "http://publications.europa.eu/resource/authority/concept-status",
+      "http://data.legilux.public.lu/resource/authority/honorific-title",
+      "http://data.legilux.public.lu/resource/authority/opinion-or-conclusion-type",
+      "http://data.legilux.public.lu/resource/authority/event-risk-level",
+      "http://data.legilux.public.lu/resource/authority/infringement-type",
+      "http://data.legilux.public.lu/resource/authority/license",
+      "http://data.legilux.public.lu/resource/authority/legal-subject-place",
+      "http://data.legilux.public.lu/resource/authority/government-member-title",
+      "http://data.legilux.public.lu/resource/authority/vocabulary-domain",
+      "http://data.legilux.public.lu/resource/authority/priority-level-conseil-etat",
+      "http://data.legilux.public.lu/resource/authority/type-projet",
+      "http://data.legilux.public.lu/resource/authority/notification-type",
+      "http://data.legilux.public.lu/resource/authority/document-type",
+      "http://data.legilux.public.lu/resource/authority/closing-type",
+      "http://data.legilux.public.lu/resource/authority/treaty-status",
+      "http://data.legilux.public.lu/resource/authority/international-actor",
+      "http://data.legilux.public.lu/resource/authority/type-procedure",
+      "http://data.legilux.public.lu/resource/authority/type-procedure-pt",
+      "http://data.legilux.public.lu/resource/authority/application-status",
+      "http://data.legilux.public.lu/resource/authority/impact-type",
+      "http://data.legilux.public.lu/resource/authority/place-of-signature"
+    ],
+    "schemeCount": 69,
+    "schemesLimited": false,
+    "languages": [
+      {
+        "lang": "fr",
+        "count": 5517
+      },
+      {
+        "lang": "en",
+        "count": 428
+      },
+      {
+        "lang": "de",
+        "count": 349
+      },
+      {
+        "lang": "et",
+        "count": 281
+      },
+      {
+        "lang": "it",
+        "count": 261
+      },
+      {
+        "lang": "mt",
+        "count": 261
+      },
+      {
+        "lang": "lv",
+        "count": 261
+      },
+      {
+        "lang": "pl",
+        "count": 261
+      },
+      {
+        "lang": "hu",
+        "count": 261
+      },
+      {
+        "lang": "nl",
+        "count": 261
+      },
+      {
+        "lang": "lt",
+        "count": 261
+      },
+      {
+        "lang": "ga",
+        "count": 261
+      },
+      {
+        "lang": "el",
+        "count": 261
+      },
+      {
+        "lang": "bg",
+        "count": 261
+      },
+      {
+        "lang": "cs",
+        "count": 261
+      },
+      {
+        "lang": "pt",
+        "count": 261
+      },
+      {
+        "lang": "ro",
+        "count": 261
+      },
+      {
+        "lang": "sk",
+        "count": 261
+      },
+      {
+        "lang": "sl",
+        "count": 261
+      },
+      {
+        "lang": "sv",
+        "count": 261
+      },
+      {
+        "lang": "da",
+        "count": 261
+      },
+      {
+        "lang": "fi",
+        "count": 261
+      },
+      {
+        "lang": "es",
+        "count": 261
+      },
+      {
+        "lang": "hr",
+        "count": 261
+      },
+      {
+        "lang": "lb",
+        "count": 260
+      },
+      {
+        "lang": "ru",
+        "count": 59
+      },
+      {
+        "lang": "sr",
+        "count": 58
+      },
+      {
+        "lang": "bs",
+        "count": 58
+      },
+      {
+        "lang": "ca",
+        "count": 58
+      },
+      {
+        "lang": "be",
+        "count": 58
+      },
+      {
+        "lang": "is",
+        "count": 58
+      },
+      {
+        "lang": "tr",
+        "count": 58
+      },
+      {
+        "lang": "mk",
+        "count": 58
+      },
+      {
+        "lang": "uk",
+        "count": 58
+      },
+      {
+        "lang": "gl",
+        "count": 58
+      },
+      {
+        "lang": "no",
+        "count": 57
+      },
+      {
+        "lang": "fo",
+        "count": 57
+      },
+      {
+        "lang": "eu",
+        "count": 57
+      },
+      {
+        "lang": "sq",
+        "count": 57
+      },
+      {
+        "lang": "rm",
+        "count": 52
+      }
+    ],
+    "totalConcepts": 13882,
+    "relationships": {
+      "hasInScheme": true,
+      "hasTopConceptOf": true,
+      "hasHasTopConcept": true,
+      "hasBroader": true,
+      "hasNarrower": true,
+      "hasBroaderTransitive": false,
+      "hasNarrowerTransitive": false
+    },
+    "analyzedAt": "2026-01-17T11:51:55.170Z"
+  },
+  "suggestedLanguagePriorities": [
+    "en",
+    "fr",
+    "de",
+    "et",
+    "it",
+    "mt",
+    "lv",
+    "pl",
+    "hu",
+    "nl",
+    "lt",
+    "ga",
+    "el",
+    "bg",
+    "cs",
+    "pt",
+    "ro",
+    "sk",
+    "sl",
+    "sv",
+    "da",
+    "fi",
+    "es",
+    "hr",
+    "lb",
+    "ru",
+    "sr",
+    "bs",
+    "ca",
+    "be",
+    "is",
+    "tr",
+    "mk",
+    "uk",
+    "gl",
+    "no",
+    "fo",
+    "eu",
+    "sq",
+    "rm"
+  ]
+}

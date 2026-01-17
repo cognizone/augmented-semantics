@@ -1,0 +1,5 @@
+{
+  "name": "Fedlex",
+  "url": "https://fedlex.data.admin.ch/sparqlendpoint",
+  "description": "The official publishing platform for Swiss federal law. It exposes the Classified Compilation of legislation as a hierarchical concept scheme, allowing navigation through Swiss legal domains (Systematic Collection of Federal Law)."
+}

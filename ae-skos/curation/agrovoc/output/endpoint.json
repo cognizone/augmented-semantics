@@ -1,0 +1,25 @@
+{
+  "name": "AGROVOC",
+  "url": "https://agrovoc.fao.org/sparql",
+  "description": "Maintained by the FAO (UN), this is a massive multilingual thesaurus covering agriculture, forestry, fisheries, food, and related environmental concepts.",
+  "analysis": {
+    "hasSkosContent": true,
+    "supportsNamedGraphs": true,
+    "skosGraphCount": 1,
+    "schemeCount": 0,
+    "schemesLimited": false,
+    "languages": [],
+    "totalConcepts": 41676,
+    "relationships": {
+      "hasInScheme": true,
+      "hasTopConceptOf": true,
+      "hasHasTopConcept": true,
+      "hasBroader": true,
+      "hasNarrower": true,
+      "hasBroaderTransitive": false,
+      "hasNarrowerTransitive": false
+    },
+    "analyzedAt": "2026-01-17T12:02:51.158Z"
+  },
+  "suggestedLanguagePriorities": []
+}

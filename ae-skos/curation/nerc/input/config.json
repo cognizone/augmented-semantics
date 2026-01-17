@@ -1,0 +1,5 @@
+{
+  "name": "NERC Vocabulary Server",
+  "url": "https://vocab.nerc.ac.uk/sparql/",
+  "description": "Managed by the British Oceanographic Data Centre. It provides standard vocabularies for oceanography and earth sciences, used globally to tag marine data."
+}

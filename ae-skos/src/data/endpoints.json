@@ -1,0 +1,1984 @@
+[
+  {
+    "name": "AGROVOC",
+    "url": "https://agrovoc.fao.org/sparql",
+    "description": "Maintained by the FAO (UN), this is a massive multilingual thesaurus covering agriculture, forestry, fisheries, food, and related environmental concepts.",
+    "analysis": {
+      "hasSkosContent": true,
+      "supportsNamedGraphs": true,
+      "skosGraphCount": 1,
+      "schemeCount": 0,
+      "schemesLimited": false,
+      "languages": [
+        {
+          "lang": "en",
+          "count": 83360
+        },
+        {
+          "lang": "ar",
+          "count": 83358
+        },
+        {
+          "lang": "es",
+          "count": 83358
+        },
+        {
+          "lang": "fr",
+          "count": 83358
+        },
+        {
+          "lang": "ru",
+          "count": 83358
+        },
+        {
+          "lang": "tr",
+          "count": 83082
+        },
+        {
+          "lang": "sw",
+          "count": 82914
+        },
+        {
+          "lang": "zh",
+          "count": 82454
+        },
+        {
+          "lang": "de",
+          "count": 78050
+        },
+        {
+          "lang": "it",
+          "count": 77594
+        },
+        {
+          "lang": "cs",
+          "count": 76532
+        },
+        {
+          "lang": "pt",
+          "count": 72126
+        },
+        {
+          "lang": "pl",
+          "count": 68932
+        },
+        {
+          "lang": "th",
+          "count": 68538
+        },
+        {
+          "lang": "hu",
+          "count": 68436
+        },
+        {
+          "lang": "ro",
+          "count": 68408
+        },
+        {
+          "lang": "sk",
+          "count": 67636
+        },
+        {
+          "lang": "ka",
+          "count": 64556
+        },
+        {
+          "lang": "ja",
+          "count": 61304
+        },
+        {
+          "lang": "uk",
+          "count": 59088
+        },
+        {
+          "lang": "nb",
+          "count": 55124
+        },
+        {
+          "lang": "sr",
+          "count": 54850
+        },
+        {
+          "lang": "da",
+          "count": 47472
+        },
+        {
+          "lang": "sv",
+          "count": 47156
+        },
+        {
+          "lang": "nl",
+          "count": 46334
+        },
+        {
+          "lang": "vi",
+          "count": 45726
+        },
+        {
+          "lang": "la",
+          "count": 44346
+        },
+        {
+          "lang": "be",
+          "count": 42606
+        },
+        {
+          "lang": "hi",
+          "count": 40706
+        },
+        {
+          "lang": "fa",
+          "count": 39802
+        },
+        {
+          "lang": "lo",
+          "count": 34480
+        },
+        {
+          "lang": "ko",
+          "count": 25626
+        },
+        {
+          "lang": "te",
+          "count": 7836
+        },
+        {
+          "lang": "nn",
+          "count": 2036
+        },
+        {
+          "lang": "ms",
+          "count": 1718
+        },
+        {
+          "lang": "ca",
+          "count": 1180
+        },
+        {
+          "lang": "fi",
+          "count": 1032
+        },
+        {
+          "lang": "et",
+          "count": 834
+        },
+        {
+          "lang": "my",
+          "count": 564
+        },
+        {
+          "lang": "km",
+          "count": 528
+        },
+        {
+          "lang": "el",
+          "count": 394
+        },
+        {
+          "lang": "hr",
+          "count": 294
+        },
+        {
+          "lang": "sl",
+          "count": 252
+        },
+        {
+          "lang": "ga",
+          "count": 180
+        },
+        {
+          "lang": "sq",
+          "count": 102
+        },
+        {
+          "lang": "bg",
+          "count": 68
+        },
+        {
+          "lang": "se",
+          "count": 64
+        },
+        {
+          "lang": "id",
+          "count": 46
+        },
+        {
+          "lang": "lv",
+          "count": 24
+        },
+        {
+          "lang": "ne",
+          "count": 12
+        }
+      ],
+      "totalConcepts": 41676,
+      "relationships": {
+        "hasInScheme": true,
+        "hasTopConceptOf": true,
+        "hasHasTopConcept": true,
+        "hasBroader": true,
+        "hasNarrower": true,
+        "hasBroaderTransitive": false,
+        "hasNarrowerTransitive": false
+      },
+      "analyzedAt": "2026-01-17T11:48:43.677Z"
+    },
+    "suggestedLanguagePriorities": [
+      "en",
+      "ar",
+      "es",
+      "fr",
+      "ru",
+      "tr",
+      "sw",
+      "zh",
+      "de",
+      "it",
+      "cs",
+      "pt",
+      "pl",
+      "th",
+      "hu",
+      "ro",
+      "sk",
+      "ka",
+      "ja",
+      "uk",
+      "nb",
+      "sr",
+      "da",
+      "sv",
+      "nl",
+      "vi",
+      "la",
+      "be",
+      "hi",
+      "fa",
+      "lo",
+      "ko",
+      "te",
+      "nn",
+      "ms",
+      "ca",
+      "fi",
+      "et",
+      "my",
+      "km",
+      "el",
+      "hr",
+      "sl",
+      "ga",
+      "sq",
+      "bg",
+      "se",
+      "id",
+      "lv",
+      "ne"
+    ]
+  },
+  {
+    "name": "BnF",
+    "url": "https://data.bnf.fr/sparql",
+    "description": "The National Library of France. It hosts RAMEAU, the primary subject heading authority for French libraries, along with extensive concepts regarding authors, works, and periods.",
+    "analysis": {
+      "hasSkosContent": true,
+      "supportsNamedGraphs": true,
+      "skosGraphCount": 1,
+      "schemeUris": [
+        "http://data.bnf.fr/vocabulary/rameau/"
+      ],
+      "schemeCount": 1,
+      "schemesLimited": false,
+      "languages": [
+        {
+          "lang": "fr",
+          "count": 7074441
+        },
+        {
+          "lang": "en",
+          "count": 390706
+        },
+        {
+          "lang": "ru",
+          "count": 36057
+        },
+        {
+          "lang": "la",
+          "count": 16369
+        },
+        {
+          "lang": "de",
+          "count": 15700
+        },
+        {
+          "lang": "zh",
+          "count": 15071
+        },
+        {
+          "lang": "it",
+          "count": 14429
+        },
+        {
+          "lang": "ar",
+          "count": 13852
+        },
+        {
+          "lang": "es",
+          "count": 11417
+        },
+        {
+          "lang": "ja",
+          "count": 8116
+        },
+        {
+          "lang": "bg",
+          "count": 7094
+        },
+        {
+          "lang": "sr",
+          "count": 4573
+        },
+        {
+          "lang": "sa",
+          "count": 3373
+        },
+        {
+          "lang": "hi",
+          "count": 2980
+        },
+        {
+          "lang": "uk",
+          "count": 2637
+        },
+        {
+          "lang": "hr",
+          "count": 2366
+        },
+        {
+          "lang": "el",
+          "count": 1860
+        },
+        {
+          "lang": "he",
+          "count": 1692
+        },
+        {
+          "lang": "pt",
+          "count": 1427
+        },
+        {
+          "lang": "pl",
+          "count": 1289
+        },
+        {
+          "lang": "nl",
+          "count": 1058
+        },
+        {
+          "lang": "sl",
+          "count": 1004
+        },
+        {
+          "lang": "bs",
+          "count": 979
+        },
+        {
+          "lang": "ko",
+          "count": 968
+        },
+        {
+          "lang": "yi",
+          "count": 932
+        },
+        {
+          "lang": "tr",
+          "count": 930
+        },
+        {
+          "lang": "sv",
+          "count": 893
+        },
+        {
+          "lang": "ca",
+          "count": 842
+        },
+        {
+          "lang": "fa",
+          "count": 823
+        },
+        {
+          "lang": "cs",
+          "count": 811
+        },
+        {
+          "lang": "hu",
+          "count": 765
+        },
+        {
+          "lang": "mk",
+          "count": 730
+        },
+        {
+          "lang": "ro",
+          "count": 687
+        },
+        {
+          "lang": "oc",
+          "count": 590
+        },
+        {
+          "lang": "da",
+          "count": 569
+        },
+        {
+          "lang": "hy",
+          "count": 559
+        },
+        {
+          "lang": "be",
+          "count": 550
+        },
+        {
+          "lang": "no",
+          "count": 518
+        },
+        {
+          "lang": "fi",
+          "count": 503
+        },
+        {
+          "lang": "br",
+          "count": 343
+        },
+        {
+          "lang": "bn",
+          "count": 304
+        },
+        {
+          "lang": "vi",
+          "count": 212
+        },
+        {
+          "lang": "ta",
+          "count": 212
+        },
+        {
+          "lang": "ur",
+          "count": 206
+        },
+        {
+          "lang": "eu",
+          "count": 183
+        },
+        {
+          "lang": "is",
+          "count": 177
+        },
+        {
+          "lang": "et",
+          "count": 140
+        },
+        {
+          "lang": "co",
+          "count": 136
+        },
+        {
+          "lang": "bo",
+          "count": 134
+        },
+        {
+          "lang": "lv",
+          "count": 128
+        }
+      ],
+      "totalConcepts": 21189438,
+      "relationships": {
+        "hasInScheme": true,
+        "hasTopConceptOf": false,
+        "hasHasTopConcept": false,
+        "hasBroader": true,
+        "hasNarrower": true,
+        "hasBroaderTransitive": false,
+        "hasNarrowerTransitive": false
+      },
+      "analyzedAt": "2026-01-17T11:50:14.161Z"
+    },
+    "suggestedLanguagePriorities": [
+      "en",
+      "fr",
+      "ru",
+      "la",
+      "de",
+      "zh",
+      "it",
+      "ar",
+      "es",
+      "ja",
+      "bg",
+      "sr",
+      "sa",
+      "hi",
+      "uk",
+      "hr",
+      "el",
+      "he",
+      "pt",
+      "pl",
+      "nl",
+      "sl",
+      "bs",
+      "ko",
+      "yi",
+      "tr",
+      "sv",
+      "ca",
+      "fa",
+      "cs",
+      "hu",
+      "mk",
+      "ro",
+      "oc",
+      "da",
+      "hy",
+      "be",
+      "no",
+      "fi",
+      "br",
+      "bn",
+      "vi",
+      "ta",
+      "ur",
+      "eu",
+      "is",
+      "et",
+      "co",
+      "bo",
+      "lv"
+    ]
+  },
+  {
+    "name": "Cordis Datalab",
+    "url": "https://cordis.europa.eu/datalab/sparql",
+    "description": "EU's research and innovation database. Contains information about EU-funded research projects, participants, publications, and results from Framework Programmes (FP7, Horizon 2020, Horizon Europe).",
+    "analysis": {
+      "hasSkosContent": true,
+      "supportsNamedGraphs": true,
+      "skosGraphCount": 4,
+      "schemeUris": [
+        "http://data.europa.eu/8mn/euroscivoc/40c0f173-baa3-48a3-9fe6-d6e8fb366a00",
+        "http://data.europa.eu/s66/resource/vocabulary/ipr-type/ipr-type"
+      ],
+      "schemeCount": 2,
+      "schemesLimited": false,
+      "languages": [
+        {
+          "lang": "en",
+          "count": 1084
+        },
+        {
+          "lang": "it",
+          "count": 1069
+        },
+        {
+          "lang": "pl",
+          "count": 1069
+        },
+        {
+          "lang": "de",
+          "count": 1069
+        },
+        {
+          "lang": "fr",
+          "count": 1069
+        },
+        {
+          "lang": "es",
+          "count": 1069
+        }
+      ],
+      "totalConcepts": 207637,
+      "relationships": {
+        "hasInScheme": true,
+        "hasTopConceptOf": true,
+        "hasHasTopConcept": false,
+        "hasBroader": true,
+        "hasNarrower": false,
+        "hasBroaderTransitive": false,
+        "hasNarrowerTransitive": false
+      },
+      "analyzedAt": "2026-01-17T11:50:15.171Z"
+    },
+    "suggestedLanguagePriorities": [
+      "en",
+      "it",
+      "pl",
+      "de",
+      "fr",
+      "es"
+    ]
+  },
+  {
+    "name": "DBpedia",
+    "url": "https://dbpedia.org/sparql",
+    "description": "The semantic extraction of Wikipedia. It serves as a general knowledge hub, defining millions of entities and concepts that are linked to external thesauri (like YAGO or Wikidata).",
+    "analysis": {
+      "hasSkosContent": true,
+      "supportsNamedGraphs": true,
+      "skosGraphCount": 1,
+      "schemeCount": 0,
+      "schemesLimited": false,
+      "languages": [
+        {
+          "lang": "en",
+          "count": 2565313
+        }
+      ],
+      "totalConcepts": 2509422,
+      "relationships": {
+        "hasInScheme": false,
+        "hasTopConceptOf": false,
+        "hasHasTopConcept": false,
+        "hasBroader": true,
+        "hasNarrower": false,
+        "hasBroaderTransitive": false,
+        "hasNarrowerTransitive": false
+      },
+      "analyzedAt": "2026-01-17T11:50:15.583Z"
+    },
+    "suggestedLanguagePriorities": [
+      "en"
+    ]
+  },
+  {
+    "name": "ERA Data Interop",
+    "url": "https://data-interop.era.europa.eu/api/sparql",
+    "description": "European Union Agency for Railways data interoperability platform. Contains SKOS vocabularies for railway infrastructure, vehicle types, and operational concepts.",
+    "analysis": {
+      "hasSkosContent": true,
+      "supportsNamedGraphs": true,
+      "skosGraphCount": 3,
+      "schemeUris": [
+        "http://publications.europa.eu/resource/authority/country",
+        "http://data.europa.eu/949/concepts/restrictions/Restrictions",
+        "http://data.europa.eu/949/concepts/nominal-track-gauges/NominalTrackGauges",
+        "http://data.europa.eu/949/concepts/sol-natures/SoLNatures",
+        "http://data.europa.eu/949/concepts/etcs-m-versions/ETCSMVersions",
+        "http://data.europa.eu/949/concepts/gsmr-networks/GSMRNetworks",
+        "http://data.europa.eu/949/concepts/company-code-categories/CompanyCodeCategories",
+        "http://data.europa.eu/949/concepts/train-detection-numbers/FrenchTrainDetectionSystemLimitationNumbers",
+        "http://data.europa.eu/949/concepts/min-axle-load-vehicle-categories/MinAxleLoadVehicleCategories",
+        "http://data.europa.eu/949/concepts/contact-line-systems/ContactLineSystems",
+        "http://data.europa.eu/949/concepts/op-types/OperationalPointTypes",
+        "http://data.europa.eu/949/concepts/freight-corridor/FreightCorridors",
+        "http://data.europa.eu/949/concepts/contact-strip-materials/ContactStripMaterials",
+        "http://data.europa.eu/949/concepts/etcs-system-compatibilities/ETCSSystemCompatibilities",
+        "http://data.europa.eu/949/concepts/other-pantograph-heads/OtherPantographHeads",
+        "http://data.europa.eu/949/concepts/train-detection-specific-checks/TrainDetectionSystemsSpecificChecks",
+        "http://data.europa.eu/949/concepts/states/States",
+        "http://data.europa.eu/949/concepts/rolling-stock-fire/Categories",
+        "http://data.europa.eu/949/concepts/gsmr-number-active-mobiles/NumberActiveMobiles",
+        "http://data.europa.eu/949/concepts/tsi-compliances/TSICompliances",
+        "http://data.europa.eu/949/concepts/radio-system-compatibilities-data/RadioSystemCompatibilitiesData",
+        "http://data.europa.eu/949/concepts/relation-positions/RelationPositions",
+        "http://data.europa.eu/949/concepts/radio-system-compatibilities-voice/RadioSystemCompatibilitiesVoice",
+        "http://data.europa.eu/949/concepts/axle-monitoring/AxleBearingMonitoring",
+        "http://data.europa.eu/949/concepts/etcs-baselines/ETCSBaselines",
+        "http://data.europa.eu/949/concepts/tsi-existence-and-compliances/TSIExistenceAndCompliances",
+        "http://data.europa.eu/949/concepts/load-capability-line-categories/LoadCapabilityLineCategories",
+        "http://data.europa.eu/949/concepts/end-coupling-type/EndCouplingType",
+        "http://data.europa.eu/949/concepts/gauge-changeover-facilities/GaugeChangeoverFacilities",
+        "http://data.europa.eu/949/concepts/profile-num-semi-trailers/ProfileNumbersSemiTrailers",
+        "http://data.europa.eu/949/concepts/gaugings/GaugingProfiles",
+        "http://data.europa.eu/949/concepts/vehicle-types/Categories",
+        "http://data.europa.eu/949/concepts/platform-heights/PlatformHeights",
+        "http://data.europa.eu/949/concepts/compliant-pantograph-heads/CompliantPantographHeads",
+        "http://data.europa.eu/949/concepts/magnetic-braking/MagneticBraking",
+        "http://data.europa.eu/949/concepts/train-detection/TrainDetectionSystems",
+        "http://data.europa.eu/949/concepts/line-category/LineCategories",
+        "http://data.europa.eu/949/concepts/eddy-current-braking/EddyCurrentBraking",
+        "http://data.europa.eu/949/concepts/ice-conditions/IceConditions",
+        "http://data.europa.eu/949/concepts/thermal-capacity/ThermalCapacityTSIReferences",
+        "http://data.europa.eu/949/concepts/train-protection-legacy-systems/TrainProtectionLegacySystems",
+        "http://data.europa.eu/949/concepts/energy-supply-systems/EnergySupplySystems",
+        "http://data.europa.eu/949/concepts/legacy-radio-systems/LegacyRadioSystems",
+        "http://data.europa.eu/949/concepts/gsmr-optional-functions/OptionalFunctions",
+        "http://data.europa.eu/949/concepts/rail-inclinations/RailInclinations",
+        "http://data.europa.eu/949/concepts/track-running-directions/TrackRunningDirections",
+        "http://data.europa.eu/949/concepts/load-capabilities/LoadCapabilities",
+        "http://data.europa.eu/949/concepts/ten-classifications/TENClassifications",
+        "http://data.europa.eu/949/concepts/temperature-ranges/TemperatureRanges",
+        "http://data.europa.eu/949/concepts/max-amount-sandings/MaxAmountSandings",
+        "http://data.europa.eu/949/concepts/brake-parking-type/BrakeParkingType",
+        "http://data.europa.eu/949/concepts/gsmr-versions/GSMRVersions",
+        "http://data.europa.eu/949/concepts/navigabilities/Navigabilities",
+        "http://data.europa.eu/949/concepts/gsm-r-radio-data-communication/GSMRRadioDataCommunications",
+        "http://data.europa.eu/949/concepts/train-detection/FrenchTrainDetectionSystemLimitations",
+        "http://data.europa.eu/949/concepts/profile-num-swap-bodies/ProfileNumbersSwapBodies",
+        "http://data.europa.eu/949/concepts/etcs-levels/ETCSLevels",
+        "http://data.europa.eu/949/concepts/etcs-infills/ETCSInfills",
+        "http://data.europa.eu/949/concepts/other-protection-control-warning/OtherProtectionControlWarnings",
+        "http://data.europa.eu/949/concepts/etcs-situation/ETCSSituations",
+        "http://data.europa.eu/949/concepts/national-rule-classifications/national-rule-classifications",
+        "http://data.europa.eu/949/concepts/error-corrections/OnboardErrorCorrections",
+        "http://data.europa.eu/949/concepts/etcs-rbc-reject-reasons/ETCSRBCRejectionReasons",
+        "http://data.europa.eu/949/concepts/regenerative-braking/RegenerativeBraking",
+        "http://data.europa.eu/949/concepts/signal-types/SignalTypes",
+        "http://data.europa.eu/949/concepts/standard-combined-transport-containers/StandardCombinedTransportContainers",
+        "http://data.europa.eu/949/concepts/ato-s-versions/ATOSystemVersions",
+        "http://data.europa.eu/949/concepts/organisation-roles/OrgRoles",
+        "http://data.europa.eu/949/concepts/ebr-qualifier/EBReleaseQualifier",
+        "http://data.europa.eu/949/concepts/train-detection/FrequencyBandsForDetection",
+        "http://data.europa.eu/949/concepts/operational-regime-types/OperationalRegimeTypes",
+        "http://data.europa.eu/949/concepts/gsmr-cs-constraints/GSMRConstraints",
+        "http://data.europa.eu/949/concepts/cant-deficiencies/CantDeficiencies",
+        "http://data.europa.eu/949/concepts/adhf-qualifier/AdhesionFactorChange",
+        "http://data.europa.eu/949/concepts/ato-grades-automation/ATOGradeOfAutomation",
+        "http://data.europa.eu/949/concepts/gsm-r-equipment-version/GSMREquipmentVersion",
+        "http://data.europa.eu/949/concepts/safe-consist-length/SafeConsistLengthNecessary",
+        "http://data.europa.eu/949/concepts/subsidiary-location-types/SubsidiaryLocationTypes",
+        "http://data.europa.eu/949/concepts/transmitted-tcs/TransmittedTrackConditions",
+        "http://data.europa.eu/949/concepts/special-area-types/SpecialAreaTypes",
+        "http://data.europa.eu/949/concepts/etcs-equipment-on-board-level/eratv/ETCSEquipmentLevels",
+        "http://data.europa.eu/949/concepts/parameterApplicability/ValueTypes",
+        "http://data.europa.eu/949/concepts/standard-combined-transport-roller-units/StandardCombinedTransportRollerUnits",
+        "http://data.europa.eu/949/concepts/vehicle-types/SubCategories",
+        "http://data.europa.eu/949/concepts/va-authcases/VehicleAuthorisationCase",
+        "http://data.europa.eu/949/concepts/min-axle-loads-per-vehicle-category/MinAxleLoadVehicleCategories",
+        "http://data.europa.eu/949/concepts/orientations/Sides",
+        "http://data.europa.eu/949/concepts/type-version-ids/TypeVersionIds",
+        "http://data.europa.eu/949/concepts/etcs-national-packet-44-functions/ETCSNationalPacket44Functions",
+        "http://data.europa.eu/949/concepts/hot-axle-box-detector-direction/HotAxleBoxDetectorDirections",
+        "http://data.europa.eu/949/concepts/lines/ReferenceSystems",
+        "http://data.europa.eu/949/concepts/min-axle-loads-per-vehicle-category/MinAxleLoadsPerVehicleCategory",
+        "http://data.europa.eu/949/concepts/osm-classes/OSMClasses",
+        "http://data.europa.eu/949/concepts/contact-strip-materials/ContactLineSystems",
+        "http://data.europa.eu/949/concepts/orientations/OrientationDirections",
+        "http://data.europa.eu/949/concepts/ato-commsys/ATOCommSystem",
+        "http://data.europa.eu/949/concepts/etcs-reactions-contact/ETCSReactionsNVContact",
+        "http://data.europa.eu/949/concepts/conditions-use-reflective-plates/ConditionsUseReflectivePlates",
+        "http://data.europa.eu/949/concepts/lineside-distance-indication-appearance/LinesideDistanceIndicationAppearance",
+        "http://publications.europa.eu/resource/authority/language",
+        "http://data.europa.eu/949/concepts/min-axle-load-vehicle-categories/MinAxleLoadsPerVehicleCategory"
+      ],
+      "schemeCount": 101,
+      "schemesLimited": false,
+      "languages": [
+        {
+          "lang": "en",
+          "count": 3509
+        },
+        {
+          "lang": "es",
+          "count": 376
+        },
+        {
+          "lang": "cs",
+          "count": 334
+        },
+        {
+          "lang": "de",
+          "count": 334
+        },
+        {
+          "lang": "el",
+          "count": 334
+        },
+        {
+          "lang": "ro",
+          "count": 334
+        },
+        {
+          "lang": "pl",
+          "count": 334
+        },
+        {
+          "lang": "lt",
+          "count": 334
+        },
+        {
+          "lang": "lv",
+          "count": 334
+        },
+        {
+          "lang": "fr",
+          "count": 334
+        },
+        {
+          "lang": "mt",
+          "count": 334
+        },
+        {
+          "lang": "pt",
+          "count": 334
+        },
+        {
+          "lang": "sk",
+          "count": 334
+        },
+        {
+          "lang": "da",
+          "count": 334
+        },
+        {
+          "lang": "sv",
+          "count": 334
+        },
+        {
+          "lang": "ga",
+          "count": 334
+        },
+        {
+          "lang": "it",
+          "count": 334
+        },
+        {
+          "lang": "et",
+          "count": 334
+        },
+        {
+          "lang": "hr",
+          "count": 334
+        },
+        {
+          "lang": "hu",
+          "count": 334
+        },
+        {
+          "lang": "bg",
+          "count": 334
+        },
+        {
+          "lang": "sl",
+          "count": 334
+        },
+        {
+          "lang": "nl",
+          "count": 334
+        },
+        {
+          "lang": "fi",
+          "count": 334
+        },
+        {
+          "lang": "no",
+          "count": 308
+        },
+        {
+          "lang": "is",
+          "count": 308
+        },
+        {
+          "lang": "tr",
+          "count": 308
+        },
+        {
+          "lang": "uk",
+          "count": 308
+        },
+        {
+          "lang": "ru",
+          "count": 308
+        },
+        {
+          "lang": "ca",
+          "count": 258
+        },
+        {
+          "lang": "zh",
+          "count": 252
+        },
+        {
+          "lang": "ar",
+          "count": 252
+        },
+        {
+          "lang": "lb",
+          "count": 252
+        },
+        {
+          "lang": "ja",
+          "count": 252
+        },
+        {
+          "lang": "mk",
+          "count": 108
+        },
+        {
+          "lang": "sr",
+          "count": 108
+        },
+        {
+          "lang": "be",
+          "count": 58
+        },
+        {
+          "lang": "gl",
+          "count": 58
+        },
+        {
+          "lang": "bs",
+          "count": 58
+        },
+        {
+          "lang": "eu",
+          "count": 57
+        },
+        {
+          "lang": "fo",
+          "count": 57
+        },
+        {
+          "lang": "sq",
+          "count": 57
+        },
+        {
+          "lang": "rm",
+          "count": 52
+        },
+        {
+          "lang": "sh",
+          "count": 50
+        },
+        {
+          "lang": "hsb",
+          "count": 50
+        }
+      ],
+      "totalConcepts": 3439,
+      "relationships": {
+        "hasInScheme": true,
+        "hasTopConceptOf": true,
+        "hasHasTopConcept": true,
+        "hasBroader": true,
+        "hasNarrower": true,
+        "hasBroaderTransitive": false,
+        "hasNarrowerTransitive": false
+      },
+      "analyzedAt": "2026-01-17T11:50:17.800Z"
+    },
+    "suggestedLanguagePriorities": [
+      "en",
+      "es",
+      "cs",
+      "de",
+      "el",
+      "ro",
+      "pl",
+      "lt",
+      "lv",
+      "fr",
+      "mt",
+      "pt",
+      "sk",
+      "da",
+      "sv",
+      "ga",
+      "it",
+      "et",
+      "hr",
+      "hu",
+      "bg",
+      "sl",
+      "nl",
+      "fi",
+      "no",
+      "is",
+      "tr",
+      "uk",
+      "ru",
+      "ca",
+      "zh",
+      "ar",
+      "lb",
+      "ja",
+      "mk",
+      "sr",
+      "be",
+      "gl",
+      "bs",
+      "eu",
+      "fo",
+      "sq",
+      "rm",
+      "sh",
+      "hsb"
+    ]
+  },
+  {
+    "name": "EU Publications Office",
+    "url": "https://publications.europa.eu/webapi/rdf/sparql",
+    "description": "The CELLAR repository of the EU Publications Office. It hosts EU Vocabularies including EuroVoc, corporate bodies, countries, languages, and other authority tables used across EU institutions.",
+    "analysis": {
+      "hasSkosContent": true,
+      "supportsNamedGraphs": true,
+      "skosGraphCount": 501,
+      "schemeUris": [
+        "http://publications.europa.eu/resource/authority/corporate-body",
+        "http://publications.europa.eu/resource/authority/document-collection",
+        "http://publications.europa.eu/resource/authority/language",
+        "http://publications.europa.eu/resource/authority/resource-type",
+        "http://publications.europa.eu/resource/authority/country",
+        "http://publications.europa.eu/resource/authority/role-qualifier",
+        "http://publications.europa.eu/resource/directory/IAS",
+        "http://publications.europa.eu/resource/directory/ENER",
+        "http://publications.europa.eu/resource/directory/EURUN",
+        "http://publications.europa.eu/resource/directory/EDPS",
+        "http://publications.europa.eu/resource/directory/BUDG",
+        "http://publications.europa.eu/resource/directory/OLAF",
+        "http://publications.europa.eu/resource/directory/CLIMA",
+        "http://publications.europa.eu/resource/directory/OTHER_ORGA",
+        "http://eurovoc.europa.eu/100176",
+        "http://eurovoc.europa.eu/100205",
+        "http://eurovoc.europa.eu/100251",
+        "http://eurovoc.europa.eu/100267",
+        "http://publications.europa.eu/resource/authority/pub_gmd",
+        "http://publications.europa.eu/resource/directory/TAXUD",
+        "http://publications.europa.eu/resource/directory/DIGIT",
+        "http://publications.europa.eu/resource/directory/MARE",
+        "http://eurovoc.europa.eu/100185",
+        "http://publications.europa.eu/resource/directory/PUBL",
+        "http://publications.europa.eu/resource/directory/COMMU",
+        "http://publications.europa.eu/resource/authority/case-status",
+        "http://publications.europa.eu/resource/authority/com_internal_consultation_type",
+        "http://publications.europa.eu/resource/authority/com_internal_event",
+        "http://publications.europa.eu/resource/authority/com_internal_procedure",
+        "http://publications.europa.eu/resource/authority/event",
+        "http://publications.europa.eu/resource/authority/fd_010",
+        "http://publications.europa.eu/resource/authority/fd_013",
+        "http://publications.europa.eu/resource/authority/fd_014",
+        "http://publications.europa.eu/resource/authority/fd_020",
+        "http://publications.europa.eu/resource/authority/fd_030",
+        "http://publications.europa.eu/resource/authority/fd_040",
+        "http://publications.europa.eu/resource/authority/fd_050",
+        "http://publications.europa.eu/resource/authority/fd_060",
+        "http://publications.europa.eu/resource/authority/fd_070",
+        "http://publications.europa.eu/resource/authority/fd_080",
+        "http://publications.europa.eu/resource/authority/fd_091",
+        "http://publications.europa.eu/resource/authority/fd_100",
+        "http://publications.europa.eu/resource/authority/fd_110",
+        "http://publications.europa.eu/resource/authority/fd_130",
+        "http://publications.europa.eu/resource/authority/fd_140",
+        "http://publications.europa.eu/resource/authority/fd_160",
+        "http://publications.europa.eu/resource/authority/fd_271",
+        "http://publications.europa.eu/resource/authority/fd_274",
+        "http://publications.europa.eu/resource/authority/fd_285",
+        "http://publications.europa.eu/resource/authority/fd_290",
+        "http://publications.europa.eu/resource/authority/fd_300",
+        "http://publications.europa.eu/resource/authority/fd_301",
+        "http://publications.europa.eu/resource/authority/fd_305",
+        "http://publications.europa.eu/resource/authority/fd_325",
+        "http://publications.europa.eu/resource/authority/fd_330",
+        "http://publications.europa.eu/resource/authority/fd_335",
+        "http://publications.europa.eu/resource/authority/fd_340",
+        "http://publications.europa.eu/resource/authority/fd_345",
+        "http://publications.europa.eu/resource/authority/fd_350",
+        "http://publications.europa.eu/resource/authority/fd_361",
+        "http://publications.europa.eu/resource/authority/fd_365",
+        "http://publications.europa.eu/resource/authority/fd_370",
+        "http://publications.europa.eu/resource/authority/fd_375",
+        "http://publications.europa.eu/resource/authority/fd_380",
+        "http://publications.europa.eu/resource/authority/fd_395",
+        "http://publications.europa.eu/resource/authority/fd_396",
+        "http://publications.europa.eu/resource/authority/fd_400",
+        "http://publications.europa.eu/resource/authority/fd_401",
+        "http://publications.europa.eu/resource/authority/fd_406",
+        "http://publications.europa.eu/resource/authority/fd_499",
+        "http://publications.europa.eu/resource/authority/fd_500",
+        "http://publications.europa.eu/resource/authority/fd_501",
+        "http://publications.europa.eu/resource/authority/fd_535",
+        "http://publications.europa.eu/resource/authority/fd_537",
+        "http://publications.europa.eu/resource/authority/fd_555",
+        "http://publications.europa.eu/resource/authority/fd_557",
+        "http://publications.europa.eu/resource/authority/fd_577",
+        "http://publications.europa.eu/resource/authority/fd_578",
+        "http://publications.europa.eu/resource/authority/fd_600",
+        "http://publications.europa.eu/resource/authority/fd_601",
+        "http://publications.europa.eu/resource/authority/fd_602",
+        "http://publications.europa.eu/resource/authority/fd_603",
+        "http://publications.europa.eu/resource/authority/fd_604",
+        "http://publications.europa.eu/resource/authority/fd_605",
+        "http://publications.europa.eu/resource/authority/fd_606",
+        "http://publications.europa.eu/resource/authority/fd_607",
+        "http://publications.europa.eu/resource/authority/fd_608",
+        "http://publications.europa.eu/resource/authority/fd_609",
+        "http://publications.europa.eu/resource/authority/fd_610",
+        "http://publications.europa.eu/resource/authority/fd_611",
+        "http://publications.europa.eu/resource/authority/fd_612",
+        "http://publications.europa.eu/resource/authority/fd_613",
+        "http://publications.europa.eu/resource/authority/fd_700",
+        "http://publications.europa.eu/resource/authority/multilingual",
+        "http://publications.europa.eu/resource/authority/place",
+        "http://publications.europa.eu/resource/authority/procedure",
+        "http://publications.europa.eu/resource/authority/procjur",
+        "http://publications.europa.eu/resource/authority/procjur-type",
+        "http://publications.europa.eu/resource/authority/procresult",
+        "http://publications.europa.eu/resource/authority/pub_bind",
+        "http://publications.europa.eu/resource/authority/pub_div",
+        "http://publications.europa.eu/resource/authority/pub_repro",
+        "http://publications.europa.eu/resource/authority/pub_target",
+        "http://publications.europa.eu/resource/authority/pub_them14",
+        "http://publications.europa.eu/resource/authority/treaty",
+        "http://eurovoc.europa.eu/100141",
+        "http://publications.europa.eu/resource/authority/address-type",
+        "http://publications.europa.eu/resource/authority/concept-status",
+        "http://publications.europa.eu/resource/authority/documentation-type",
+        "http://publications.europa.eu/resource/authority/file-type",
+        "http://publications.europa.eu/resource/authority/frequency",
+        "http://publications.europa.eu/resource/authority/grammatical-gender",
+        "http://publications.europa.eu/resource/authority/honorific",
+        "http://publications.europa.eu/resource/authority/human-sex",
+        "http://publications.europa.eu/resource/authority/label-type",
+        "http://publications.europa.eu/resource/authority/licence",
+        "http://publications.europa.eu/resource/authority/number",
+        "http://publications.europa.eu/resource/authority/organization-type",
+        "http://publications.europa.eu/resource/authority/position-status",
+        "http://publications.europa.eu/resource/authority/product-form",
+        "http://publications.europa.eu/resource/authority/role",
+        "http://publications.europa.eu/resource/authority/site",
+        "http://publications.europa.eu/resource/authority/use-context",
+        "http://eurovoc.europa.eu/100163",
+        "http://eurovoc.europa.eu/100164",
+        "http://eurovoc.europa.eu/100165",
+        "http://eurovoc.europa.eu/100166",
+        "http://eurovoc.europa.eu/100167",
+        "http://eurovoc.europa.eu/100168",
+        "http://eurovoc.europa.eu/100169",
+        "http://eurovoc.europa.eu/100170",
+        "http://eurovoc.europa.eu/100171",
+        "http://eurovoc.europa.eu/100172",
+        "http://eurovoc.europa.eu/100173",
+        "http://eurovoc.europa.eu/100174",
+        "http://eurovoc.europa.eu/100175",
+        "http://eurovoc.europa.eu/100177",
+        "http://eurovoc.europa.eu/100178",
+        "http://eurovoc.europa.eu/100179",
+        "http://eurovoc.europa.eu/100180",
+        "http://eurovoc.europa.eu/100181",
+        "http://eurovoc.europa.eu/100182",
+        "http://eurovoc.europa.eu/100183",
+        "http://eurovoc.europa.eu/100184",
+        "http://eurovoc.europa.eu/100186",
+        "http://eurovoc.europa.eu/100187",
+        "http://eurovoc.europa.eu/100188",
+        "http://eurovoc.europa.eu/100189",
+        "http://eurovoc.europa.eu/100190",
+        "http://eurovoc.europa.eu/100191",
+        "http://eurovoc.europa.eu/100192",
+        "http://eurovoc.europa.eu/100193",
+        "http://eurovoc.europa.eu/100194",
+        "http://eurovoc.europa.eu/100195",
+        "http://eurovoc.europa.eu/100196",
+        "http://eurovoc.europa.eu/100197",
+        "http://eurovoc.europa.eu/100198",
+        "http://eurovoc.europa.eu/100199",
+        "http://eurovoc.europa.eu/100200",
+        "http://eurovoc.europa.eu/100201",
+        "http://eurovoc.europa.eu/100202",
+        "http://eurovoc.europa.eu/100203",
+        "http://eurovoc.europa.eu/100204",
+        "http://eurovoc.europa.eu/100206",
+        "http://eurovoc.europa.eu/100207",
+        "http://eurovoc.europa.eu/100208",
+        "http://eurovoc.europa.eu/100209",
+        "http://eurovoc.europa.eu/100210",
+        "http://eurovoc.europa.eu/100211",
+        "http://eurovoc.europa.eu/100212",
+        "http://eurovoc.europa.eu/100213",
+        "http://eurovoc.europa.eu/100214",
+        "http://eurovoc.europa.eu/100215",
+        "http://eurovoc.europa.eu/100216",
+        "http://eurovoc.europa.eu/100217",
+        "http://eurovoc.europa.eu/100218",
+        "http://eurovoc.europa.eu/100219",
+        "http://eurovoc.europa.eu/100220",
+        "http://eurovoc.europa.eu/100221",
+        "http://eurovoc.europa.eu/100222",
+        "http://eurovoc.europa.eu/100223",
+        "http://eurovoc.europa.eu/100224",
+        "http://eurovoc.europa.eu/100225",
+        "http://eurovoc.europa.eu/100226",
+        "http://eurovoc.europa.eu/100227",
+        "http://eurovoc.europa.eu/100228",
+        "http://eurovoc.europa.eu/100229",
+        "http://eurovoc.europa.eu/100230",
+        "http://eurovoc.europa.eu/100231",
+        "http://eurovoc.europa.eu/100232",
+        "http://eurovoc.europa.eu/100233",
+        "http://eurovoc.europa.eu/100234",
+        "http://eurovoc.europa.eu/100235",
+        "http://eurovoc.europa.eu/100236",
+        "http://eurovoc.europa.eu/100237",
+        "http://eurovoc.europa.eu/100238",
+        "http://eurovoc.europa.eu/100239",
+        "http://eurovoc.europa.eu/100240",
+        "http://eurovoc.europa.eu/100241",
+        "http://eurovoc.europa.eu/100242"
+      ],
+      "schemeCount": 700,
+      "schemesLimited": true,
+      "languages": [
+        {
+          "lang": "en",
+          "count": 897836
+        },
+        {
+          "lang": "fr",
+          "count": 848814
+        },
+        {
+          "lang": "de",
+          "count": 780324
+        },
+        {
+          "lang": "it",
+          "count": 761216
+        },
+        {
+          "lang": "es",
+          "count": 759839
+        },
+        {
+          "lang": "pl",
+          "count": 746746
+        },
+        {
+          "lang": "fi",
+          "count": 743151
+        },
+        {
+          "lang": "cs",
+          "count": 740822
+        },
+        {
+          "lang": "nl",
+          "count": 739751
+        },
+        {
+          "lang": "da",
+          "count": 736534
+        },
+        {
+          "lang": "pt",
+          "count": 735825
+        },
+        {
+          "lang": "hu",
+          "count": 735545
+        },
+        {
+          "lang": "sv",
+          "count": 735300
+        },
+        {
+          "lang": "et",
+          "count": 735131
+        },
+        {
+          "lang": "lt",
+          "count": 732899
+        },
+        {
+          "lang": "sk",
+          "count": 732129
+        },
+        {
+          "lang": "lv",
+          "count": 730249
+        },
+        {
+          "lang": "el",
+          "count": 728620
+        },
+        {
+          "lang": "ro",
+          "count": 726072
+        },
+        {
+          "lang": "sl",
+          "count": 723835
+        },
+        {
+          "lang": "bg",
+          "count": 719298
+        },
+        {
+          "lang": "mt",
+          "count": 718126
+        },
+        {
+          "lang": "hr",
+          "count": 715503
+        },
+        {
+          "lang": "ga",
+          "count": 432480
+        },
+        {
+          "lang": "tr",
+          "count": 38054
+        },
+        {
+          "lang": "mk",
+          "count": 35591
+        },
+        {
+          "lang": "no",
+          "count": 30524
+        },
+        {
+          "lang": "ru",
+          "count": 27261
+        },
+        {
+          "lang": "sq",
+          "count": 26908
+        },
+        {
+          "lang": "sr",
+          "count": 24693
+        },
+        {
+          "lang": "is",
+          "count": 9555
+        },
+        {
+          "lang": "uk",
+          "count": 5346
+        },
+        {
+          "lang": "ar",
+          "count": 4568
+        },
+        {
+          "lang": "zh",
+          "count": 4555
+        },
+        {
+          "lang": "ca",
+          "count": 4460
+        },
+        {
+          "lang": "ja",
+          "count": 4407
+        },
+        {
+          "lang": "lb",
+          "count": 4404
+        },
+        {
+          "lang": "mul",
+          "count": 462
+        },
+        {
+          "lang": "nn",
+          "count": 323
+        },
+        {
+          "lang": "nb",
+          "count": 323
+        },
+        {
+          "lang": "la",
+          "count": 278
+        },
+        {
+          "lang": "svn",
+          "count": 213
+        },
+        {
+          "lang": "be",
+          "count": 202
+        },
+        {
+          "lang": "sh",
+          "count": 186
+        },
+        {
+          "lang": "bs",
+          "count": 182
+        },
+        {
+          "lang": "gl",
+          "count": 180
+        },
+        {
+          "lang": "eu",
+          "count": 173
+        },
+        {
+          "lang": "hsb",
+          "count": 168
+        },
+        {
+          "lang": "rm",
+          "count": 157
+        },
+        {
+          "lang": "fo",
+          "count": 155
+        }
+      ],
+      "totalConcepts": 322630,
+      "relationships": {
+        "hasInScheme": true,
+        "hasTopConceptOf": true,
+        "hasHasTopConcept": true,
+        "hasBroader": true,
+        "hasNarrower": true,
+        "hasBroaderTransitive": false,
+        "hasNarrowerTransitive": false
+      },
+      "analyzedAt": "2026-01-17T11:51:52.476Z"
+    },
+    "suggestedLanguagePriorities": [
+      "en",
+      "fr",
+      "de",
+      "it",
+      "es",
+      "pl",
+      "fi",
+      "cs",
+      "nl",
+      "da",
+      "pt",
+      "hu",
+      "sv",
+      "et",
+      "lt",
+      "sk",
+      "lv",
+      "el",
+      "ro",
+      "sl",
+      "bg",
+      "mt",
+      "hr",
+      "ga",
+      "tr",
+      "mk",
+      "no",
+      "ru",
+      "sq",
+      "sr",
+      "is",
+      "uk",
+      "ar",
+      "zh",
+      "ca",
+      "ja",
+      "lb",
+      "mul",
+      "nn",
+      "nb",
+      "la",
+      "svn",
+      "be",
+      "sh",
+      "bs",
+      "gl",
+      "eu",
+      "hsb",
+      "rm",
+      "fo"
+    ]
+  },
+  {
+    "name": "Fedlex",
+    "url": "https://fedlex.data.admin.ch/sparqlendpoint",
+    "description": "The official publishing platform for Swiss federal law. It exposes the Classified Compilation of legislation as a hierarchical concept scheme, allowing navigation through Swiss legal domains (Systematic Collection of Federal Law).",
+    "analysis": {
+      "hasSkosContent": true,
+      "supportsNamedGraphs": true,
+      "skosGraphCount": 47,
+      "schemeUris": [
+        "https://fedlex.data.admin.ch/vocabulary/country",
+        "https://fedlex.data.admin.ch/vocabulary/publication-process-related-to-expression-status",
+        "https://fedlex.data.admin.ch/vocabulary/task-result-type",
+        "https://fedlex.data.admin.ch/vocabulary/legal-analysis-status",
+        "https://fedlex.data.admin.ch/vocabulary/legal-resource-genre",
+        "https://fedlex.data.admin.ch/vocabulary/type-projet",
+        "https://fedlex.data.admin.ch/vocabulary/instrument-type",
+        "https://fedlex.data.admin.ch/vocabulary/publication-process-status",
+        "https://fedlex.data.admin.ch/vocabulary/role",
+        "https://fedlex.data.admin.ch/vocabulary/treaty-status",
+        "https://fedlex.data.admin.ch/vocabulary/legal-subject-theme-de",
+        "https://fedlex.data.admin.ch/vocabulary/publication-process-stage",
+        "https://fedlex.data.admin.ch/vocabulary/impact-type",
+        "https://fedlex.data.admin.ch/vocabulary/consultation-stage",
+        "https://fedlex.data.admin.ch/vocabulary/enforcement-status",
+        "https://jurivoc.bger.ch/vocabulary/jurivoc",
+        "https://fedlex.data.admin.ch/vocabulary/legal-taxonomy",
+        "https://fedlex.data.admin.ch/vocabulary/notification-type",
+        "https://fedlex.data.admin.ch/vocabulary/migration-draft-stage-type",
+        "https://fedlex.data.admin.ch/vocabulary/treaty-subject-theme",
+        "https://fedlex.data.admin.ch/vocabulary/publication-folder-status",
+        "https://fedlex.data.admin.ch/vocabulary/treaty-accession-type",
+        "http://data.legilux.public.lu/resource/ontology/jolux#legal-subject-legal-resource",
+        "http://data.legilux.public.lu/resource/ontology/jolux#legal-subject-organisation",
+        "http://data.legilux.public.lu/resource/ontology/jolux#legal-subject-place",
+        "http://data.legilux.public.lu/resource/ontology/jolux#legal-subject-theme",
+        "http://publications.europa.eu/resource/authority/atu",
+        "http://publications.europa.eu/resource/authority/concept-status",
+        "http://publications.europa.eu/resource/authority/file-type",
+        "http://data.europa.eu/eli/ontology#AdministrativeAreaTable",
+        "http://data.europa.eu/eli/ontology#InForceTable",
+        "http://data.europa.eu/eli/ontology#ResourceTypeTable",
+        "http://data.europa.eu/eli/ontology#VersionTable",
+        "http://data.legilux.public.lu/resource/authority/legal-institution",
+        "http://data.legilux.public.lu/resource/authority/legal-institution-history",
+        "http://data.legilux.public.lu/resource/authority/license",
+        "http://data.legilux.public.lu/resource/authority/resource-type",
+        "http://data.legilux.public.lu/resource/authority/statut-application",
+        "http://data.legilux.public.lu/resource/authority/statut-transposition",
+        "http://data.legilux.public.lu/resource/authority/statut-version",
+        "http://data.legilux.public.lu/resource/authority/type-procedure",
+        "http://data.legilux.public.lu/resource/authority/user-format",
+        "https://fedlex.data.admin.ch/vocabulary/international-actor",
+        "https://fedlex.data.admin.ch/vocabulary/notation-type",
+        "https://fedlex.data.admin.ch/vocabulary/license",
+        "https://fedlex.data.admin.ch/vocabulary/eutext-subject-theme",
+        "https://fedlex.data.admin.ch/vocabulary/publication-completeness",
+        "https://fedlex.data.admin.ch/vocabulary/resource-family",
+        "https://fedlex.data.admin.ch/vocabulary/user-format",
+        "https://fedlex.data.admin.ch/vocabulary/legal-institution",
+        "https://fedlex.data.admin.ch/vocabulary/resource-type",
+        "https://fedlex.data.admin.ch/vocabulary/type-procedure",
+        "http://data.europa.eu/eli/ontology#LegalValueTable",
+        "https://fedlex.data.admin.ch/vocabulary/information-source",
+        "https://fedlex.data.admin.ch/vocabulary/treaty-type",
+        "http://publications.europa.eu/resource/authority/language",
+        "https://fedlex.data.admin.ch/vocabulary/draft-document-type",
+        "https://fedlex.data.admin.ch/vocabulary/publication-process-related-to-document-status",
+        "https://fedlex.data.admin.ch/vocabulary/subdivision-type",
+        "https://fedlex.data.admin.ch/vocabulary/legal-subject-theme-fr",
+        "https://fedlex.data.admin.ch/vocabulary/legal-subject-theme-it",
+        "https://fedlex.data.admin.ch/vocabulary/publication-process-related-to-manifestation-status",
+        "https://fedlex.data.admin.ch/vocabulary/consultation-status",
+        "https://fedlex.data.admin.ch/vocabulary/publication-folder-stage",
+        "https://fedlex.data.admin.ch/vocabulary/rs-abbreviation"
+      ],
+      "schemeCount": 65,
+      "schemesLimited": false,
+      "languages": [
+        {
+          "lang": "it",
+          "count": 33758
+        },
+        {
+          "lang": "de",
+          "count": 32720
+        },
+        {
+          "lang": "fr",
+          "count": 32476
+        },
+        {
+          "lang": "en",
+          "count": 1542
+        },
+        {
+          "lang": "rm",
+          "count": 1307
+        }
+      ],
+      "totalConcepts": 49075,
+      "relationships": {
+        "hasInScheme": true,
+        "hasTopConceptOf": true,
+        "hasHasTopConcept": true,
+        "hasBroader": true,
+        "hasNarrower": true,
+        "hasBroaderTransitive": true,
+        "hasNarrowerTransitive": false
+      },
+      "analyzedAt": "2026-01-17T11:51:54.568Z"
+    },
+    "suggestedLanguagePriorities": [
+      "en",
+      "it",
+      "de",
+      "fr",
+      "rm"
+    ]
+  },
+  {
+    "name": "Legilux",
+    "url": "https://data.legilux.public.lu/sparqlendpoint",
+    "description": "The official legal portal of the Grand Duchy of Luxembourg. It provides access to legislation and the 'Memorial' (official journal) using a structured legal vocabulary.",
+    "analysis": {
+      "hasSkosContent": true,
+      "supportsNamedGraphs": true,
+      "skosGraphCount": 74,
+      "schemeUris": [
+        "http://data.legilux.public.lu/resource/authority/resource-type",
+        "http://data.legilux.public.lu/resource/authority/user-format",
+        "http://data.legilux.public.lu/resource/authority/statut-application",
+        "http://eurovoc.europa.eu/100141",
+        "http://publications.europa.eu/resource/authority/country",
+        "http://data.legilux.public.lu/resource/authority/government-member-title-history",
+        "http://data.legilux.public.lu/resource/authority/legal-institution",
+        "http://data.legilux.public.lu/resource/authority/legal-institution-history",
+        "http://data.legilux.public.lu/resource/authority/legal-subject-organisation",
+        "http://data.legilux.public.lu/resource/authority/legal-subject-theme",
+        "http://data.legilux.public.lu/resource/authority/person",
+        "http://publications.europa.eu/resource/authority/file-type",
+        "http://publications.europa.eu/resource/authority/language",
+        "http://publications.europa.eu/resource/dataset/corporate-body",
+        "http://publications.europa.eu/resource/dataset/event",
+        "http://publications.europa.eu/resource/dataset/fd_070",
+        "http://publications.europa.eu/resource/dataset/frequency",
+        "http://data.legilux.public.lu/resource/authority/legislature",
+        "http://data.legilux.public.lu/resource/authority/infringement-procedure-status",
+        "http://data.legilux.public.lu/resource/authority/generic-email",
+        "http://data.legilux.public.lu/resource/authority/OpinionOrConclusionType",
+        "http://data.legilux.public.lu/resource/authority/treaty-domain",
+        "http://data.legilux.public.lu/resource/authority/draft-status-conseil-etat",
+        "http://data.legilux.public.lu/resource/authority/gender",
+        "http://data.legilux.public.lu/resource/authority/committee",
+        "http://data.legilux.public.lu/resource/authority/instrument-type",
+        "http://data.legilux.public.lu/resource/authority/vote-legal-base",
+        "http://data.legilux.public.lu/resource/authority/treaty-event-type",
+        "http://data.legilux.public.lu/resource/authority/statut-transposition",
+        "http://data.legilux.public.lu/resource/authority/language",
+        "http://data.legilux.public.lu/resource/authority/treaty-type",
+        "http://data.legilux.public.lu/resource/authority/priority-level-for-government",
+        "http://data.legilux.public.lu/resource/authority/draft-status",
+        "http://data.legilux.public.lu/resource/authority/type-procedure-qp",
+        "http://data.legilux.public.lu/resource/authority/parliamentary-session",
+        "http://data.legilux.public.lu/resource/authority/infringement-origin",
+        "http://data.legilux.public.lu/resource/authority/deadline-type",
+        "http://data.legilux.public.lu/resource/authority/prov-role-type",
+        "http://data.legilux.public.lu/resource/authority/treaty-subject-theme",
+        "http://data.legilux.public.lu/resource/authority/infringement-procedure-type",
+        "http://data.legilux.public.lu/resource/authority/function",
+        "http://data.legilux.public.lu/resource/authority/legal-subject-legal-resource",
+        "http://data.legilux.public.lu/resource/authority/draft-document-type",
+        "http://data.legilux.public.lu/resource/authority/infringement-stage",
+        "http://data.legilux.public.lu/resource/authority/statut-version",
+        "http://data.legilux.public.lu/resource/authority/political-party",
+        "http://data.legilux.public.lu/resource/authority/eu-legal-institution",
+        "http://data.legilux.public.lu/resource/authority/transposition-action-type",
+        "http://publications.europa.eu/resource/authority/concept-status",
+        "http://data.legilux.public.lu/resource/authority/honorific-title",
+        "http://data.legilux.public.lu/resource/authority/opinion-or-conclusion-type",
+        "http://data.legilux.public.lu/resource/authority/event-risk-level",
+        "http://data.legilux.public.lu/resource/authority/infringement-type",
+        "http://data.legilux.public.lu/resource/authority/license",
+        "http://data.legilux.public.lu/resource/authority/legal-subject-place",
+        "http://data.legilux.public.lu/resource/authority/government-member-title",
+        "http://data.legilux.public.lu/resource/authority/vocabulary-domain",
+        "http://data.legilux.public.lu/resource/authority/priority-level-conseil-etat",
+        "http://data.legilux.public.lu/resource/authority/type-projet",
+        "http://data.legilux.public.lu/resource/authority/notification-type",
+        "http://data.legilux.public.lu/resource/authority/document-type",
+        "http://data.legilux.public.lu/resource/authority/closing-type",
+        "http://data.legilux.public.lu/resource/authority/treaty-status",
+        "http://data.legilux.public.lu/resource/authority/international-actor",
+        "http://data.legilux.public.lu/resource/authority/type-procedure",
+        "http://data.legilux.public.lu/resource/authority/type-procedure-pt",
+        "http://data.legilux.public.lu/resource/authority/application-status",
+        "http://data.legilux.public.lu/resource/authority/impact-type",
+        "http://data.legilux.public.lu/resource/authority/place-of-signature"
+      ],
+      "schemeCount": 69,
+      "schemesLimited": false,
+      "languages": [
+        {
+          "lang": "fr",
+          "count": 5517
+        },
+        {
+          "lang": "en",
+          "count": 428
+        },
+        {
+          "lang": "de",
+          "count": 349
+        },
+        {
+          "lang": "et",
+          "count": 281
+        },
+        {
+          "lang": "it",
+          "count": 261
+        },
+        {
+          "lang": "mt",
+          "count": 261
+        },
+        {
+          "lang": "lv",
+          "count": 261
+        },
+        {
+          "lang": "pl",
+          "count": 261
+        },
+        {
+          "lang": "hu",
+          "count": 261
+        },
+        {
+          "lang": "nl",
+          "count": 261
+        },
+        {
+          "lang": "lt",
+          "count": 261
+        },
+        {
+          "lang": "ga",
+          "count": 261
+        },
+        {
+          "lang": "el",
+          "count": 261
+        },
+        {
+          "lang": "bg",
+          "count": 261
+        },
+        {
+          "lang": "cs",
+          "count": 261
+        },
+        {
+          "lang": "pt",
+          "count": 261
+        },
+        {
+          "lang": "ro",
+          "count": 261
+        },
+        {
+          "lang": "sk",
+          "count": 261
+        },
+        {
+          "lang": "sl",
+          "count": 261
+        },
+        {
+          "lang": "sv",
+          "count": 261
+        },
+        {
+          "lang": "da",
+          "count": 261
+        },
+        {
+          "lang": "fi",
+          "count": 261
+        },
+        {
+          "lang": "es",
+          "count": 261
+        },
+        {
+          "lang": "hr",
+          "count": 261
+        },
+        {
+          "lang": "lb",
+          "count": 260
+        },
+        {
+          "lang": "ru",
+          "count": 59
+        },
+        {
+          "lang": "sr",
+          "count": 58
+        },
+        {
+          "lang": "bs",
+          "count": 58
+        },
+        {
+          "lang": "ca",
+          "count": 58
+        },
+        {
+          "lang": "be",
+          "count": 58
+        },
+        {
+          "lang": "is",
+          "count": 58
+        },
+        {
+          "lang": "tr",
+          "count": 58
+        },
+        {
+          "lang": "mk",
+          "count": 58
+        },
+        {
+          "lang": "uk",
+          "count": 58
+        },
+        {
+          "lang": "gl",
+          "count": 58
+        },
+        {
+          "lang": "no",
+          "count": 57
+        },
+        {
+          "lang": "fo",
+          "count": 57
+        },
+        {
+          "lang": "eu",
+          "count": 57
+        },
+        {
+          "lang": "sq",
+          "count": 57
+        },
+        {
+          "lang": "rm",
+          "count": 52
+        }
+      ],
+      "totalConcepts": 13882,
+      "relationships": {
+        "hasInScheme": true,
+        "hasTopConceptOf": true,
+        "hasHasTopConcept": true,
+        "hasBroader": true,
+        "hasNarrower": true,
+        "hasBroaderTransitive": false,
+        "hasNarrowerTransitive": false
+      },
+      "analyzedAt": "2026-01-17T11:51:55.170Z"
+    },
+    "suggestedLanguagePriorities": [
+      "en",
+      "fr",
+      "de",
+      "et",
+      "it",
+      "mt",
+      "lv",
+      "pl",
+      "hu",
+      "nl",
+      "lt",
+      "ga",
+      "el",
+      "bg",
+      "cs",
+      "pt",
+      "ro",
+      "sk",
+      "sl",
+      "sv",
+      "da",
+      "fi",
+      "es",
+      "hr",
+      "lb",
+      "ru",
+      "sr",
+      "bs",
+      "ca",
+      "be",
+      "is",
+      "tr",
+      "mk",
+      "uk",
+      "gl",
+      "no",
+      "fo",
+      "eu",
+      "sq",
+      "rm"
+    ]
+  },
+  {
+    "name": "NERC Vocabulary Server",
+    "url": "https://vocab.nerc.ac.uk/sparql/",
+    "description": "Managed by the British Oceanographic Data Centre. It provides standard vocabularies for oceanography and earth sciences, used globally to tag marine data.",
+    "analysis": {
+      "hasSkosContent": true,
+      "supportsNamedGraphs": false,
+      "skosGraphCount": null,
+      "schemeUris": [
+        "http://vocab.nerc.ac.uk/scheme/NETOC_PARAM/current/",
+        "http://vocab.nerc.ac.uk/scheme/NETMAR_OCEAN/current/",
+        "http://vocab.nerc.ac.uk/scheme/SDNDEV/current/",
+        "http://vocab.nerc.ac.uk/scheme/EMODNET_CHEM/current/",
+        "http://vocab.nerc.ac.uk/scheme/ICANCOERO/current/",
+        "http://vocab.nerc.ac.uk/scheme/MIDA/current/",
+        "http://vocab.nerc.ac.uk/scheme/OCACETHES/current/",
+        "http://vocab.nerc.ac.uk/scheme/EMODNET_PEST/current/",
+        "http://vocab.nerc.ac.uk/scheme/ISO_GST/current/",
+        "http://vocab.nerc.ac.uk/scheme/EDMED_DCAT_THEMES/current/",
+        "http://vocab.nerc.ac.uk/scheme/SVX_GAZTR/current/",
+        "http://vocab.nerc.ac.uk/scheme/OG_SENSORS/current/",
+        "http://vocab.nerc.ac.uk/scheme/NETOC_PLACE/current/",
+        "http://vocab.nerc.ac.uk/scheme/NETOC_ORTHO/current/",
+        "http://vocab.nerc.ac.uk/scheme/WCATHES/current/",
+        "http://vocab.nerc.ac.uk/scheme/NETOC_INSTRUMENT/current/",
+        "http://vocab.nerc.ac.uk/scheme/INSPIRE_THEMES/current/",
+        "http://vocab.nerc.ac.uk/scheme/NETOC_PLAT/current/",
+        "http://vocab.nerc.ac.uk/scheme/NETOC_PROJ/current/",
+        "http://vocab.nerc.ac.uk/scheme/NETOC_VCOV/current/",
+        "http://vocab.nerc.ac.uk/scheme/NETOC_PLATCLASS/current/",
+        "http://vocab.nerc.ac.uk/scheme/ICANDIS/current/"
+      ],
+      "schemeCount": 22,
+      "schemesLimited": false,
+      "languages": [
+        {
+          "lang": "en",
+          "count": 361793
+        },
+        {
+          "lang": "fr",
+          "count": 2158
+        },
+        {
+          "lang": "es",
+          "count": 370
+        },
+        {
+          "lang": "pt",
+          "count": 92
+        },
+        {
+          "lang": "no",
+          "count": 24
+        },
+        {
+          "lang": "ga",
+          "count": 2
+        }
+      ],
+      "totalConcepts": 361803,
+      "relationships": {
+        "hasInScheme": true,
+        "hasTopConceptOf": true,
+        "hasHasTopConcept": true,
+        "hasBroader": true,
+        "hasNarrower": true,
+        "hasBroaderTransitive": false,
+        "hasNarrowerTransitive": false
+      },
+      "analyzedAt": "2026-01-17T11:52:07.908Z"
+    },
+    "suggestedLanguagePriorities": [
+      "en",
+      "fr",
+      "es",
+      "pt",
+      "no",
+      "ga"
+    ]
+  }
+]

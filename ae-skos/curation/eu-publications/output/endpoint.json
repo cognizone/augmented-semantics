@@ -1,0 +1,479 @@
+{
+  "name": "EU Publications Office",
+  "url": "https://publications.europa.eu/webapi/rdf/sparql",
+  "description": "The CELLAR repository of the EU Publications Office. It hosts EU Vocabularies including EuroVoc, corporate bodies, countries, languages, and other authority tables used across EU institutions.",
+  "analysis": {
+    "hasSkosContent": true,
+    "supportsNamedGraphs": true,
+    "skosGraphCount": 501,
+    "schemeUris": [
+      "http://publications.europa.eu/resource/authority/corporate-body",
+      "http://publications.europa.eu/resource/authority/document-collection",
+      "http://publications.europa.eu/resource/authority/language",
+      "http://publications.europa.eu/resource/authority/resource-type",
+      "http://publications.europa.eu/resource/authority/country",
+      "http://publications.europa.eu/resource/authority/role-qualifier",
+      "http://publications.europa.eu/resource/directory/IAS",
+      "http://publications.europa.eu/resource/directory/ENER",
+      "http://publications.europa.eu/resource/directory/EURUN",
+      "http://publications.europa.eu/resource/directory/EDPS",
+      "http://publications.europa.eu/resource/directory/BUDG",
+      "http://publications.europa.eu/resource/directory/OLAF",
+      "http://publications.europa.eu/resource/directory/CLIMA",
+      "http://publications.europa.eu/resource/directory/OTHER_ORGA",
+      "http://eurovoc.europa.eu/100176",
+      "http://eurovoc.europa.eu/100205",
+      "http://eurovoc.europa.eu/100251",
+      "http://eurovoc.europa.eu/100267",
+      "http://publications.europa.eu/resource/authority/pub_gmd",
+      "http://publications.europa.eu/resource/directory/TAXUD",
+      "http://publications.europa.eu/resource/directory/DIGIT",
+      "http://publications.europa.eu/resource/directory/MARE",
+      "http://eurovoc.europa.eu/100185",
+      "http://publications.europa.eu/resource/directory/PUBL",
+      "http://publications.europa.eu/resource/directory/COMMU",
+      "http://publications.europa.eu/resource/authority/case-status",
+      "http://publications.europa.eu/resource/authority/com_internal_consultation_type",
+      "http://publications.europa.eu/resource/authority/com_internal_event",
+      "http://publications.europa.eu/resource/authority/com_internal_procedure",
+      "http://publications.europa.eu/resource/authority/event",
+      "http://publications.europa.eu/resource/authority/fd_010",
+      "http://publications.europa.eu/resource/authority/fd_013",
+      "http://publications.europa.eu/resource/authority/fd_014",
+      "http://publications.europa.eu/resource/authority/fd_020",
+      "http://publications.europa.eu/resource/authority/fd_030",
+      "http://publications.europa.eu/resource/authority/fd_040",
+      "http://publications.europa.eu/resource/authority/fd_050",
+      "http://publications.europa.eu/resource/authority/fd_060",
+      "http://publications.europa.eu/resource/authority/fd_070",
+      "http://publications.europa.eu/resource/authority/fd_080",
+      "http://publications.europa.eu/resource/authority/fd_091",
+      "http://publications.europa.eu/resource/authority/fd_100",
+      "http://publications.europa.eu/resource/authority/fd_110",
+      "http://publications.europa.eu/resource/authority/fd_130",
+      "http://publications.europa.eu/resource/authority/fd_140",
+      "http://publications.europa.eu/resource/authority/fd_160",
+      "http://publications.europa.eu/resource/authority/fd_271",
+      "http://publications.europa.eu/resource/authority/fd_274",
+      "http://publications.europa.eu/resource/authority/fd_285",
+      "http://publications.europa.eu/resource/authority/fd_290",
+      "http://publications.europa.eu/resource/authority/fd_300",
+      "http://publications.europa.eu/resource/authority/fd_301",
+      "http://publications.europa.eu/resource/authority/fd_305",
+      "http://publications.europa.eu/resource/authority/fd_325",
+      "http://publications.europa.eu/resource/authority/fd_330",
+      "http://publications.europa.eu/resource/authority/fd_335",
+      "http://publications.europa.eu/resource/authority/fd_340",
+      "http://publications.europa.eu/resource/authority/fd_345",
+      "http://publications.europa.eu/resource/authority/fd_350",
+      "http://publications.europa.eu/resource/authority/fd_361",
+      "http://publications.europa.eu/resource/authority/fd_365",
+      "http://publications.europa.eu/resource/authority/fd_370",
+      "http://publications.europa.eu/resource/authority/fd_375",
+      "http://publications.europa.eu/resource/authority/fd_380",
+      "http://publications.europa.eu/resource/authority/fd_395",
+      "http://publications.europa.eu/resource/authority/fd_396",
+      "http://publications.europa.eu/resource/authority/fd_400",
+      "http://publications.europa.eu/resource/authority/fd_401",
+      "http://publications.europa.eu/resource/authority/fd_406",
+      "http://publications.europa.eu/resource/authority/fd_499",
+      "http://publications.europa.eu/resource/authority/fd_500",
+      "http://publications.europa.eu/resource/authority/fd_501",
+      "http://publications.europa.eu/resource/authority/fd_535",
+      "http://publications.europa.eu/resource/authority/fd_537",
+      "http://publications.europa.eu/resource/authority/fd_555",
+      "http://publications.europa.eu/resource/authority/fd_557",
+      "http://publications.europa.eu/resource/authority/fd_577",
+      "http://publications.europa.eu/resource/authority/fd_578",
+      "http://publications.europa.eu/resource/authority/fd_600",
+      "http://publications.europa.eu/resource/authority/fd_601",
+      "http://publications.europa.eu/resource/authority/fd_602",
+      "http://publications.europa.eu/resource/authority/fd_603",
+      "http://publications.europa.eu/resource/authority/fd_604",
+      "http://publications.europa.eu/resource/authority/fd_605",
+      "http://publications.europa.eu/resource/authority/fd_606",
+      "http://publications.europa.eu/resource/authority/fd_607",
+      "http://publications.europa.eu/resource/authority/fd_608",
+      "http://publications.europa.eu/resource/authority/fd_609",
+      "http://publications.europa.eu/resource/authority/fd_610",
+      "http://publications.europa.eu/resource/authority/fd_611",
+      "http://publications.europa.eu/resource/authority/fd_612",
+      "http://publications.europa.eu/resource/authority/fd_613",
+      "http://publications.europa.eu/resource/authority/fd_700",
+      "http://publications.europa.eu/resource/authority/multilingual",
+      "http://publications.europa.eu/resource/authority/place",
+      "http://publications.europa.eu/resource/authority/procedure",
+      "http://publications.europa.eu/resource/authority/procjur",
+      "http://publications.europa.eu/resource/authority/procjur-type",
+      "http://publications.europa.eu/resource/authority/procresult",
+      "http://publications.europa.eu/resource/authority/pub_bind",
+      "http://publications.europa.eu/resource/authority/pub_div",
+      "http://publications.europa.eu/resource/authority/pub_repro",
+      "http://publications.europa.eu/resource/authority/pub_target",
+      "http://publications.europa.eu/resource/authority/pub_them14",
+      "http://publications.europa.eu/resource/authority/treaty",
+      "http://eurovoc.europa.eu/100141",
+      "http://publications.europa.eu/resource/authority/address-type",
+      "http://publications.europa.eu/resource/authority/concept-status",
+      "http://publications.europa.eu/resource/authority/documentation-type",
+      "http://publications.europa.eu/resource/authority/file-type",
+      "http://publications.europa.eu/resource/authority/frequency",
+      "http://publications.europa.eu/resource/authority/grammatical-gender",
+      "http://publications.europa.eu/resource/authority/honorific",
+      "http://publications.europa.eu/resource/authority/human-sex",
+      "http://publications.europa.eu/resource/authority/label-type",
+      "http://publications.europa.eu/resource/authority/licence",
+      "http://publications.europa.eu/resource/authority/number",
+      "http://publications.europa.eu/resource/authority/organization-type",
+      "http://publications.europa.eu/resource/authority/position-status",
+      "http://publications.europa.eu/resource/authority/product-form",
+      "http://publications.europa.eu/resource/authority/role",
+      "http://publications.europa.eu/resource/authority/site",
+      "http://publications.europa.eu/resource/authority/use-context",
+      "http://eurovoc.europa.eu/100163",
+      "http://eurovoc.europa.eu/100164",
+      "http://eurovoc.europa.eu/100165",
+      "http://eurovoc.europa.eu/100166",
+      "http://eurovoc.europa.eu/100167",
+      "http://eurovoc.europa.eu/100168",
+      "http://eurovoc.europa.eu/100169",
+      "http://eurovoc.europa.eu/100170",
+      "http://eurovoc.europa.eu/100171",
+      "http://eurovoc.europa.eu/100172",
+      "http://eurovoc.europa.eu/100173",
+      "http://eurovoc.europa.eu/100174",
+      "http://eurovoc.europa.eu/100175",
+      "http://eurovoc.europa.eu/100177",
+      "http://eurovoc.europa.eu/100178",
+      "http://eurovoc.europa.eu/100179",
+      "http://eurovoc.europa.eu/100180",
+      "http://eurovoc.europa.eu/100181",
+      "http://eurovoc.europa.eu/100182",
+      "http://eurovoc.europa.eu/100183",
+      "http://eurovoc.europa.eu/100184",
+      "http://eurovoc.europa.eu/100186",
+      "http://eurovoc.europa.eu/100187",
+      "http://eurovoc.europa.eu/100188",
+      "http://eurovoc.europa.eu/100189",
+      "http://eurovoc.europa.eu/100190",
+      "http://eurovoc.europa.eu/100191",
+      "http://eurovoc.europa.eu/100192",
+      "http://eurovoc.europa.eu/100193",
+      "http://eurovoc.europa.eu/100194",
+      "http://eurovoc.europa.eu/100195",
+      "http://eurovoc.europa.eu/100196",
+      "http://eurovoc.europa.eu/100197",
+      "http://eurovoc.europa.eu/100198",
+      "http://eurovoc.europa.eu/100199",
+      "http://eurovoc.europa.eu/100200",
+      "http://eurovoc.europa.eu/100201",
+      "http://eurovoc.europa.eu/100202",
+      "http://eurovoc.europa.eu/100203",
+      "http://eurovoc.europa.eu/100204",
+      "http://eurovoc.europa.eu/100206",
+      "http://eurovoc.europa.eu/100207",
+      "http://eurovoc.europa.eu/100208",
+      "http://eurovoc.europa.eu/100209",
+      "http://eurovoc.europa.eu/100210",
+      "http://eurovoc.europa.eu/100211",
+      "http://eurovoc.europa.eu/100212",
+      "http://eurovoc.europa.eu/100213",
+      "http://eurovoc.europa.eu/100214",
+      "http://eurovoc.europa.eu/100215",
+      "http://eurovoc.europa.eu/100216",
+      "http://eurovoc.europa.eu/100217",
+      "http://eurovoc.europa.eu/100218",
+      "http://eurovoc.europa.eu/100219",
+      "http://eurovoc.europa.eu/100220",
+      "http://eurovoc.europa.eu/100221",
+      "http://eurovoc.europa.eu/100222",
+      "http://eurovoc.europa.eu/100223",
+      "http://eurovoc.europa.eu/100224",
+      "http://eurovoc.europa.eu/100225",
+      "http://eurovoc.europa.eu/100226",
+      "http://eurovoc.europa.eu/100227",
+      "http://eurovoc.europa.eu/100228",
+      "http://eurovoc.europa.eu/100229",
+      "http://eurovoc.europa.eu/100230",
+      "http://eurovoc.europa.eu/100231",
+      "http://eurovoc.europa.eu/100232",
+      "http://eurovoc.europa.eu/100233",
+      "http://eurovoc.europa.eu/100234",
+      "http://eurovoc.europa.eu/100235",
+      "http://eurovoc.europa.eu/100236",
+      "http://eurovoc.europa.eu/100237",
+      "http://eurovoc.europa.eu/100238",
+      "http://eurovoc.europa.eu/100239",
+      "http://eurovoc.europa.eu/100240",
+      "http://eurovoc.europa.eu/100241",
+      "http://eurovoc.europa.eu/100242"
+    ],
+    "schemeCount": 700,
+    "schemesLimited": true,
+    "languages": [
+      {
+        "lang": "en",
+        "count": 897836
+      },
+      {
+        "lang": "fr",
+        "count": 848814
+      },
+      {
+        "lang": "de",
+        "count": 780324
+      },
+      {
+        "lang": "it",
+        "count": 761216
+      },
+      {
+        "lang": "es",
+        "count": 759839
+      },
+      {
+        "lang": "pl",
+        "count": 746746
+      },
+      {
+        "lang": "fi",
+        "count": 743151
+      },
+      {
+        "lang": "cs",
+        "count": 740822
+      },
+      {
+        "lang": "nl",
+        "count": 739751
+      },
+      {
+        "lang": "da",
+        "count": 736534
+      },
+      {
+        "lang": "pt",
+        "count": 735825
+      },
+      {
+        "lang": "hu",
+        "count": 735545
+      },
+      {
+        "lang": "sv",
+        "count": 735300
+      },
+      {
+        "lang": "et",
+        "count": 735131
+      },
+      {
+        "lang": "lt",
+        "count": 732899
+      },
+      {
+        "lang": "sk",
+        "count": 732129
+      },
+      {
+        "lang": "lv",
+        "count": 730249
+      },
+      {
+        "lang": "el",
+        "count": 728620
+      },
+      {
+        "lang": "ro",
+        "count": 726072
+      },
+      {
+        "lang": "sl",
+        "count": 723835
+      },
+      {
+        "lang": "bg",
+        "count": 719298
+      },
+      {
+        "lang": "mt",
+        "count": 718126
+      },
+      {
+        "lang": "hr",
+        "count": 715503
+      },
+      {
+        "lang": "ga",
+        "count": 432480
+      },
+      {
+        "lang": "tr",
+        "count": 38054
+      },
+      {
+        "lang": "mk",
+        "count": 35591
+      },
+      {
+        "lang": "no",
+        "count": 30524
+      },
+      {
+        "lang": "ru",
+        "count": 27261
+      },
+      {
+        "lang": "sq",
+        "count": 26908
+      },
+      {
+        "lang": "sr",
+        "count": 24693
+      },
+      {
+        "lang": "is",
+        "count": 9555
+      },
+      {
+        "lang": "uk",
+        "count": 5346
+      },
+      {
+        "lang": "ar",
+        "count": 4568
+      },
+      {
+        "lang": "zh",
+        "count": 4555
+      },
+      {
+        "lang": "ca",
+        "count": 4460
+      },
+      {
+        "lang": "ja",
+        "count": 4407
+      },
+      {
+        "lang": "lb",
+        "count": 4404
+      },
+      {
+        "lang": "mul",
+        "count": 462
+      },
+      {
+        "lang": "nn",
+        "count": 323
+      },
+      {
+        "lang": "nb",
+        "count": 323
+      },
+      {
+        "lang": "la",
+        "count": 278
+      },
+      {
+        "lang": "svn",
+        "count": 213
+      },
+      {
+        "lang": "be",
+        "count": 202
+      },
+      {
+        "lang": "sh",
+        "count": 186
+      },
+      {
+        "lang": "bs",
+        "count": 182
+      },
+      {
+        "lang": "gl",
+        "count": 180
+      },
+      {
+        "lang": "eu",
+        "count": 173
+      },
+      {
+        "lang": "hsb",
+        "count": 168
+      },
+      {
+        "lang": "rm",
+        "count": 157
+      },
+      {
+        "lang": "fo",
+        "count": 155
+      }
+    ],
+    "totalConcepts": 322630,
+    "relationships": {
+      "hasInScheme": true,
+      "hasTopConceptOf": true,
+      "hasHasTopConcept": true,
+      "hasBroader": true,
+      "hasNarrower": true,
+      "hasBroaderTransitive": false,
+      "hasNarrowerTransitive": false
+    },
+    "analyzedAt": "2026-01-17T11:51:52.476Z"
+  },
+  "suggestedLanguagePriorities": [
+    "en",
+    "fr",
+    "de",
+    "it",
+    "es",
+    "pl",
+    "fi",
+    "cs",
+    "nl",
+    "da",
+    "pt",
+    "hu",
+    "sv",
+    "et",
+    "lt",
+    "sk",
+    "lv",
+    "el",
+    "ro",
+    "sl",
+    "bg",
+    "mt",
+    "hr",
+    "ga",
+    "tr",
+    "mk",
+    "no",
+    "ru",
+    "sq",
+    "sr",
+    "is",
+    "uk",
+    "ar",
+    "zh",
+    "ca",
+    "ja",
+    "lb",
+    "mul",
+    "nn",
+    "nb",
+    "la",
+    "svn",
+    "be",
+    "sh",
+    "bs",
+    "gl",
+    "eu",
+    "hsb",
+    "rm",
+    "fo"
+  ]
+}
