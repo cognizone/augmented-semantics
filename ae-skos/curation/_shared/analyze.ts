@@ -62,21 +62,88 @@ export type StepCallback = (step: number, total: number, name: string, durationM
 // SPARQL Execution
 // =============================================================================
 
+/**
+ * Parse SPARQL XML results into JSON format.
+ * Handles both ASK (boolean) and SELECT (bindings) results.
+ */
+function parseSparqlXml(xml: string): any {
+  // ASK query result
+  const boolMatch = xml.match(/<boolean>(\w+)<\/boolean>/)
+  if (boolMatch) {
+    return { boolean: boolMatch[1] === 'true' }
+  }
+
+  // SELECT query result - extract bindings
+  const bindings: any[] = []
+  const resultRegex = /<result>([\s\S]*?)<\/result>/g
+  let resultMatch
+
+  while ((resultMatch = resultRegex.exec(xml)) !== null) {
+    const resultXml = resultMatch[1]
+    const binding: any = {}
+
+    const bindingRegex = /<binding name="(\w+)">([\s\S]*?)<\/binding>/g
+    let bindingMatch
+
+    while ((bindingMatch = bindingRegex.exec(resultXml)) !== null) {
+      const name = bindingMatch[1]
+      const valueXml = bindingMatch[2]
+
+      // Extract value based on type (uri, literal, bnode)
+      const uriMatch = valueXml.match(/<uri>([^<]+)<\/uri>/)
+      const literalMatch = valueXml.match(/<literal[^>]*>([^<]*)<\/literal>/)
+      const bnodeMatch = valueXml.match(/<bnode>([^<]+)<\/bnode>/)
+
+      if (uriMatch) {
+        binding[name] = { type: 'uri', value: uriMatch[1] }
+      } else if (literalMatch) {
+        const langMatch = valueXml.match(/xml:lang="([^"]+)"/)
+        const dtMatch = valueXml.match(/datatype="([^"]+)"/)
+        binding[name] = {
+          type: 'literal',
+          value: literalMatch[1],
+          ...(langMatch && { 'xml:lang': langMatch[1] }),
+          ...(dtMatch && { datatype: dtMatch[1] }),
+        }
+      } else if (bnodeMatch) {
+        binding[name] = { type: 'bnode', value: bnodeMatch[1] }
+      }
+    }
+
+    bindings.push(binding)
+  }
+
+  return { results: { bindings } }
+}
+
 export async function executeSparql(url: string, query: string): Promise<any> {
+  // Trim query - some endpoints (e.g., Getty) return empty results with leading whitespace
+  const trimmedQuery = query.trim()
+
   const response = await fetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
-      'Accept': 'application/sparql-results+json',
+      'Accept': 'application/sparql-results+json, application/sparql-results+xml;q=0.9',
     },
-    body: `query=${encodeURIComponent(query)}`,
+    // format=json helps endpoints like Getty that ignore Accept header
+    body: `query=${encodeURIComponent(trimmedQuery)}&format=json`,
   })
 
   if (!response.ok) {
     throw new Error(`HTTP ${response.status}: ${response.statusText}`)
   }
 
-  return response.json()
+  const contentType = response.headers.get('Content-Type') || ''
+  const text = await response.text()
+
+  // Handle XML responses (some endpoints like Getty only return XML)
+  if (contentType.includes('xml') || text.trimStart().startsWith('<?xml') || text.trimStart().startsWith('<sparql')) {
+    return parseSparqlXml(text)
+  }
+
+  // Handle JSON responses
+  return JSON.parse(text)
 }
 
 // =============================================================================

@@ -1,0 +1,288 @@
+{
+  "name": "Getty Vocabularies",
+  "url": "http://vocab.getty.edu/sparql",
+  "description": "The Getty Research Institute's Linked Open Data vocabularies including AAT (Art & Architecture Thesaurus), TGN (Thesaurus of Geographic Names), and ULAN (Union List of Artist Names).",
+  "analysis": {
+    "hasSkosContent": true,
+    "supportsNamedGraphs": true,
+    "skosGraphCount": 0,
+    "schemeUris": [
+      "http://vocab.getty.edu/aat/",
+      "http://vocab.getty.edu/tgn/",
+      "http://vocab.getty.edu/ulan/",
+      "http://vocab.getty.edu/term/flag/",
+      "http://vocab.getty.edu/term/kind/",
+      "http://vocab.getty.edu/term/display/",
+      "http://vocab.getty.edu/historic/",
+      "http://vocab.getty.edu/term/type/",
+      "http://vocab.getty.edu/term/POS/"
+    ],
+    "schemeCount": 9,
+    "schemesLimited": false,
+    "languages": [
+      {
+        "lang": "en",
+        "count": 56488
+      },
+      {
+        "lang": "nl",
+        "count": 47125
+      },
+      {
+        "lang": "es",
+        "count": 29709
+      },
+      {
+        "lang": "fr",
+        "count": 17273
+      },
+      {
+        "lang": "de",
+        "count": 10279
+      },
+      {
+        "lang": "pt",
+        "count": 2868
+      },
+      {
+        "lang": "it",
+        "count": 2020
+      },
+      {
+        "lang": "la",
+        "count": 1867
+      },
+      {
+        "lang": "ar",
+        "count": 798
+      },
+      {
+        "lang": "he",
+        "count": 751
+      },
+      {
+        "lang": "nci",
+        "count": 488
+      },
+      {
+        "lang": "nb",
+        "count": 459
+      },
+      {
+        "lang": "nn",
+        "count": 458
+      },
+      {
+        "lang": "sr",
+        "count": 455
+      },
+      {
+        "lang": "el",
+        "count": 416
+      },
+      {
+        "lang": "sv",
+        "count": 156
+      },
+      {
+        "lang": "mi",
+        "count": 78
+      },
+      {
+        "lang": "ja",
+        "count": 65
+      },
+      {
+        "lang": "zh",
+        "count": 36
+      },
+      {
+        "lang": "nah",
+        "count": 27
+      },
+      {
+        "lang": "cs",
+        "count": 26
+      },
+      {
+        "lang": "pl",
+        "count": 25
+      },
+      {
+        "lang": "da",
+        "count": 17
+      },
+      {
+        "lang": "nhe",
+        "count": 14
+      },
+      {
+        "lang": "und",
+        "count": 4
+      },
+      {
+        "lang": "ory",
+        "count": 4
+      },
+      {
+        "lang": "tr",
+        "count": 3
+      },
+      {
+        "lang": "fi",
+        "count": 3
+      },
+      {
+        "lang": "sk",
+        "count": 3
+      },
+      {
+        "lang": "ms",
+        "count": 2
+      },
+      {
+        "lang": "oj",
+        "count": 2
+      },
+      {
+        "lang": "ga",
+        "count": 2
+      },
+      {
+        "lang": "hop",
+        "count": 2
+      },
+      {
+        "lang": "ca",
+        "count": 2
+      },
+      {
+        "lang": "sa",
+        "count": 2
+      },
+      {
+        "lang": "vi",
+        "count": 2
+      },
+      {
+        "lang": "aus",
+        "count": 2
+      },
+      {
+        "lang": "hup",
+        "count": 2
+      },
+      {
+        "lang": "tl",
+        "count": 2
+      },
+      {
+        "lang": "et",
+        "count": 1
+      },
+      {
+        "lang": "tli",
+        "count": 1
+      },
+      {
+        "lang": "tsi",
+        "count": 1
+      },
+      {
+        "lang": "ak",
+        "count": 1
+      },
+      {
+        "lang": "zu",
+        "count": 1
+      },
+      {
+        "lang": "sc",
+        "count": 1
+      },
+      {
+        "lang": "nan",
+        "count": 1
+      },
+      {
+        "lang": "my",
+        "count": 1
+      },
+      {
+        "lang": "bnt",
+        "count": 1
+      },
+      {
+        "lang": "tpi",
+        "count": 1
+      },
+      {
+        "lang": "was",
+        "count": 1
+      }
+    ],
+    "totalConcepts": 3452906,
+    "relationships": {
+      "hasInScheme": true,
+      "hasTopConceptOf": false,
+      "hasHasTopConcept": false,
+      "hasBroader": true,
+      "hasNarrower": true,
+      "hasBroaderTransitive": true,
+      "hasNarrowerTransitive": false
+    },
+    "analyzedAt": "2026-01-17T13:41:38.879Z"
+  },
+  "suggestedLanguagePriorities": [
+    "en",
+    "nl",
+    "es",
+    "fr",
+    "de",
+    "pt",
+    "it",
+    "la",
+    "ar",
+    "he",
+    "nci",
+    "nb",
+    "nn",
+    "sr",
+    "el",
+    "sv",
+    "mi",
+    "ja",
+    "zh",
+    "nah",
+    "cs",
+    "pl",
+    "da",
+    "nhe",
+    "und",
+    "ory",
+    "tr",
+    "fi",
+    "sk",
+    "ms",
+    "oj",
+    "ga",
+    "hop",
+    "ca",
+    "sa",
+    "vi",
+    "aus",
+    "hup",
+    "tl",
+    "et",
+    "tli",
+    "tsi",
+    "ak",
+    "zu",
+    "sc",
+    "nan",
+    "my",
+    "bnt",
+    "tpi",
+    "was"
+  ]
+}
