@@ -1,0 +1,5 @@
+{
+  "name": "Finto - Finnish Thesaurus and Ontology Service",
+  "url": "https://api.finto.fi/sparql",
+  "description": "Finto is a Finnish thesaurus and ontology service providing access to vocabularies used in Finland, including YSO (General Finnish Ontology) and other domain-specific vocabularies."
+}

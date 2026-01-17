@@ -120,7 +120,8 @@ export async function executeSparql(url: string, query: string): Promise<any> {
   // Trim query - some endpoints (e.g., Getty) return empty results with leading whitespace
   const trimmedQuery = query.trim()
 
-  const response = await fetch(url, {
+  // Try POST first
+  let response = await fetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
@@ -130,11 +131,25 @@ export async function executeSparql(url: string, query: string): Promise<any> {
     body: `query=${encodeURIComponent(trimmedQuery)}&format=json`,
   })
 
+  let contentType = response.headers.get('Content-Type') || ''
+
+  // Some endpoints return HTML form on POST (e.g., UNESCO) - try GET instead
+  const needsGet = !response.ok || contentType.includes('text/html')
+  if (needsGet) {
+    const getUrl = `${url}?query=${encodeURIComponent(trimmedQuery)}&format=json`
+    response = await fetch(getUrl, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/sparql-results+json, application/sparql-results+xml;q=0.9',
+      },
+    })
+    contentType = response.headers.get('Content-Type') || ''
+  }
+
   if (!response.ok) {
     throw new Error(`HTTP ${response.status}: ${response.statusText}`)
   }
 
-  const contentType = response.headers.get('Content-Type') || ''
   const text = await response.text()
 
   // Handle XML responses (some endpoints like Getty only return XML)

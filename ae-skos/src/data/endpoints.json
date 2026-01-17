@@ -2319,6 +2319,302 @@
     ]
   },
   {
+    "name": "Finto - Finnish Thesaurus and Ontology Service",
+    "url": "https://api.finto.fi/sparql",
+    "description": "Finto is a Finnish thesaurus and ontology service providing access to vocabularies used in Finland, including YSO (General Finnish Ontology) and other domain-specific vocabularies.",
+    "analysis": {
+      "hasSkosContent": true,
+      "supportsNamedGraphs": true,
+      "skosGraphCount": 83,
+      "schemeUris": [
+        "http://www.yso.fi/onto/oma/",
+        "http://www.yso.fi/onto/yso/",
+        "http://www.yso.fi/onto/allars/",
+        "http://www.yso.fi/onto/ysa/",
+        "http://www.yso.fi/onto/oma/deprecatedconceptscheme",
+        "http://www.yso.fi/onto/afo/",
+        "http://www.yso.fi/onto/afo/aggregateconceptscheme",
+        "http://www.yso.fi/onto/afo/deprecatedconceptscheme",
+        "http://avoindata.fi/onto/contentType",
+        "http://avoindata.fi/onto/topic",
+        "http://www.yso.fi/onto/kasvimofologia/conceptscheme",
+        "http://urn.fi/URN:NBN:fi:au:cn:",
+        "http://www.yso.fi/onto/collationtest1/",
+        "http://iow.csc.fi/skos/eos#sanasto",
+        "http://urn.fi/URN:NBN:fi:au:finaf:",
+        "http://www.yso.fi/onto/gtk/",
+        "http://www.yso.fi/onto/gtk/aggregateconceptscheme",
+        "http://www.yso.fi/onto/gtk/deprecatedconceptscheme",
+        "http://urn.fi/URN:NBN:fi:au:gfdc:",
+        "http://urn.fi/URN:NBN:fi:au:gfdc:G",
+        "http://www.yso.fi/onto/hero/",
+        "http://urn.fi/URN:NBN:fi:au:hklj:",
+        "http://iconclass.org/rdf/2011/09/",
+        "http://cv.iptc.org/newscodes/scene/",
+        "http://cv.iptc.org/newscodes/subjectcode/",
+        "http://cv.iptc.org/newscodes/",
+        "http://jhsmeta.fi/skos/",
+        "http://www.yso.fi/onto/juho/",
+        "http://www.yso.fi/onto/juho/deprecatedconceptscheme",
+        "http://www.yso.fi/onto/juho/aggregateconceptscheme",
+        "http://www.yso.fi/onto/jupo/",
+        "http://www.yso.fi/onto/jupo/deprecatedconceptscheme",
+        "http://www.yso.fi/onto/kassu/conceptscheme",
+        "http://www.yso.fi/onto/kauno/",
+        "http://www.yso.fi/onto/kauno/deprecatedconceptscheme",
+        "http://www.yso.fi/onto/kauno/aggregateconceptscheme",
+        "http://urn.fi/URN:NBN:fi:au:kaunokki:",
+        "http://www.yso.fi/onto/keko/",
+        "http://www.yso.fi/onto/keko/deprecatedconceptscheme",
+        "http://www.yso.fi/onto/keko/aggregateconceptscheme",
+        "http://www.yso.fi/onto/kito/",
+        "http://www.yso.fi/onto/kito/aggregateconceptscheme",
+        "http://urn.fi/URN:NBN:fi:au:kkaa:",
+        "http://www.yso.fi/onto/koko/",
+        "http://www.yso.fi/onto/koko/deprecatedconceptscheme",
+        "http://www.yso.fi/onto/kto/",
+        "http://www.yso.fi/onto/mero/",
+        "http://www.yso.fi/onto/soto/",
+        "http://www.yso.fi/onto/tao/",
+        "http://www.yso.fi/onto/tero/",
+        "http://www.yso.fi/onto/tsr/",
+        "http://www.yso.fi/onto/valo/",
+        "http://www.yso.fi/onto/kto/aggregateconceptscheme",
+        "http://www.yso.fi/onto/kulo/",
+        "http://www.yso.fi/onto/kulo/aggregateconceptscheme",
+        "http://tun.fi/MR.1",
+        "http://urn.fi/URN:NBN:fi:au:lapponica:",
+        "http://lexvo.org/id/",
+        "http://www.yso.fi/onto/mero/deprecatedconceptscheme",
+        "http://www.yso.fi/onto/tao/deprecatedconceptscheme",
+        "http://www.yso.fi/onto/tao/aggregateconceptscheme",
+        "http://www.yso.fi/onto/mero/aggregateconceptscheme",
+        "http://www.yso.fi/onto/mesh/",
+        "http://urn.fi/URN:NBN:fi:au:mts:",
+        "http://www.yso.fi/onto/musa/",
+        "http://www.yso.fi/onto/musa/deprecatedconceptscheme",
+        "http://www.yso.fi/onto/muso/",
+        "http://www.yso.fi/onto/muso/aggregateconceptscheme",
+        "http://www.yso.fi/onto/muso/deprecatedconceptscheme",
+        "http://www.yso.fi/onto/oiko/",
+        "http://www.yso.fi/onto/oiko/deprecatedconceptscheme",
+        "http://www.yso.fi/onto/oiko/aggregateconceptscheme",
+        "http://www.yso.fi/onto/okm-tieteenala/conceptscheme",
+        "http://www.yso.fi/onto/paikat/conceptscheme",
+        "http://www.yso.fi/onto/ponduskategorier/conceptscheme",
+        "http://paikkatiedot.fi/def/1001000/",
+        "http://paikkatiedot.fi/def/1001000/deprecatedconceptscheme",
+        "http://www.yso.fi/onto/puho/",
+        "http://www.yso.fi/onto/puho/aggregateconceptscheme",
+        "http://www.yso.fi/onto/puho/deprecatedconceptscheme",
+        "http://paikannimet.fi/meta/sapo#latest",
+        "http://urn.fi/urn:nbn:fi:au:seko:",
+        "http://urn.fi/urn:nbn:fi:au:seko",
+        "http://www.yso.fi/onto/skns/",
+        "http://urn.fi/URN:NBN:fi:au:slm:",
+        "http://www.yso.fi/onto/soto/aggregateconceptscheme",
+        "http://www.yso.fi/onto/soto/deprecatedconceptscheme",
+        "http://www.yso.fi/onto/tero/deprecatedconceptscheme",
+        "http://www.yso.fi/onto/tero/aggregateconceptscheme",
+        "http://www.yso.fi/onto/yso/aggregateconceptscheme",
+        "http://www.yso.fi/onto/yso/deprecatedconceptscheme",
+        "http://www.yso.fi/onto/tsr/deprecatedconceptscheme",
+        "http://www.yso.fi/onto/tsr/aggregateconceptscheme",
+        "http://urn.fi/URN:NBN:fi:au:tt:",
+        "http://urn.fi/URN:NBN:fi:au:ucum:",
+        "http://udcdata.info/udc-schema",
+        "http://www.yso.fi/onto/valo/aggregateconceptscheme",
+        "http://www.yso.fi/onto/valo/deprecatedconceptscheme",
+        "http://urn.fi/URN:NBN:fi:au:ykl:",
+        "http://www.yso.fi/onto/yse/",
+        "http://www.yso.fi/onto/yso/aika",
+        "http://www.yso.fi/onto/yso/places"
+      ],
+      "schemeCount": 102,
+      "schemesLimited": false,
+      "languages": [
+        {
+          "lang": "fi",
+          "count": 1452319
+        },
+        {
+          "lang": "sv",
+          "count": 958768
+        },
+        {
+          "lang": "en",
+          "count": 958178
+        },
+        {
+          "lang": "se",
+          "count": 261600
+        },
+        {
+          "lang": "de",
+          "count": 51933
+        },
+        {
+          "lang": "fr",
+          "count": 45129
+        },
+        {
+          "lang": "it",
+          "count": 42175
+        },
+        {
+          "lang": "et",
+          "count": 4396
+        },
+        {
+          "lang": "la",
+          "count": 2846
+        },
+        {
+          "lang": "ru",
+          "count": 2721
+        },
+        {
+          "lang": "nl",
+          "count": 2577
+        },
+        {
+          "lang": "es",
+          "count": 2533
+        },
+        {
+          "lang": "ca",
+          "count": 2366
+        },
+        {
+          "lang": "pt",
+          "count": 2160
+        },
+        {
+          "lang": "pl",
+          "count": 2060
+        },
+        {
+          "lang": "uk",
+          "count": 2039
+        },
+        {
+          "lang": "hu",
+          "count": 2010
+        },
+        {
+          "lang": "da",
+          "count": 1928
+        },
+        {
+          "lang": "cs",
+          "count": 1851
+        },
+        {
+          "lang": "nb",
+          "count": 1838
+        },
+        {
+          "lang": "lv",
+          "count": 1625
+        },
+        {
+          "lang": "ro",
+          "count": 1619
+        },
+        {
+          "lang": "sk",
+          "count": 1554
+        },
+        {
+          "lang": "lt",
+          "count": 1509
+        },
+        {
+          "lang": "hr",
+          "count": 1484
+        },
+        {
+          "lang": "el",
+          "count": 1440
+        },
+        {
+          "lang": "be",
+          "count": 1421
+        },
+        {
+          "lang": "sr",
+          "count": 1412
+        },
+        {
+          "lang": "sl",
+          "count": 1227
+        },
+        {
+          "lang": "bg",
+          "count": 1224
+        },
+        {
+          "lang": "sq",
+          "count": 990
+        },
+        {
+          "lang": "cn",
+          "count": 229
+        },
+        {
+          "lang": "sc",
+          "count": 4
+        }
+      ],
+      "totalConcepts": 891878,
+      "relationships": {
+        "hasInScheme": true,
+        "hasTopConceptOf": true,
+        "hasHasTopConcept": true,
+        "hasBroader": true,
+        "hasNarrower": true,
+        "hasBroaderTransitive": false,
+        "hasNarrowerTransitive": false
+      },
+      "analyzedAt": "2026-01-17T16:23:37.485Z"
+    },
+    "suggestedLanguagePriorities": [
+      "en",
+      "fi",
+      "sv",
+      "se",
+      "de",
+      "fr",
+      "it",
+      "et",
+      "la",
+      "ru",
+      "nl",
+      "es",
+      "ca",
+      "pt",
+      "pl",
+      "uk",
+      "hu",
+      "da",
+      "cs",
+      "nb",
+      "lv",
+      "ro",
+      "sk",
+      "lt",
+      "hr",
+      "el",
+      "be",
+      "sr",
+      "sl",
+      "bg",
+      "sq",
+      "cn",
+      "sc"
+    ]
+  },
+  {
     "name": "Getty Vocabularies",
     "url": "http://vocab.getty.edu/sparql",
     "description": "The Getty Research Institute's Linked Open Data vocabularies including AAT (Art & Architecture Thesaurus), TGN (Thesaurus of Geographic Names), and ULAN (Union List of Artist Names).",
@@ -3238,5 +3534,65 @@
       "no",
       "ga"
     ]
+  },
+  {
+    "name": "STW Thesaurus for Economics",
+    "url": "https://zbw.eu/beta/sparql/stw/query",
+    "description": "The STW Thesaurus for Economics is a comprehensive vocabulary for economics and business studies, maintained by ZBW - Leibniz Information Centre for Economics.",
+    "analysis": {
+      "hasSkosContent": true,
+      "supportsNamedGraphs": false,
+      "skosGraphCount": null,
+      "schemeUris": [
+        "http://zbw.eu/stw"
+      ],
+      "schemeCount": 1,
+      "schemesLimited": false,
+      "languages": [
+        {
+          "lang": "de",
+          "count": 20186
+        },
+        {
+          "lang": "en",
+          "count": 13657
+        }
+      ],
+      "totalConcepts": 7845,
+      "relationships": {
+        "hasInScheme": true,
+        "hasTopConceptOf": true,
+        "hasHasTopConcept": true,
+        "hasBroader": true,
+        "hasNarrower": true,
+        "hasBroaderTransitive": false,
+        "hasNarrowerTransitive": false
+      },
+      "analyzedAt": "2026-01-17T16:22:29.122Z"
+    },
+    "suggestedLanguagePriorities": [
+      "en",
+      "de"
+    ]
+  },
+  {
+    "name": "UNESCO Thesaurus",
+    "url": "https://vocabularies.unesco.org/sparql",
+    "description": "The UNESCO Thesaurus is a controlled vocabulary covering education, culture, natural sciences, social and human sciences, communication and information.",
+    "analysis": {
+      "hasSkosContent": true,
+      "supportsNamedGraphs": true,
+      "skosGraphCount": 1,
+      "schemeUris": [
+        "http://vocabularies.unesco.org/thesaurus"
+      ],
+      "schemeCount": 1,
+      "schemesLimited": false,
+      "languages": [],
+      "totalConcepts": null,
+      "relationships": null,
+      "analyzedAt": "2026-01-17T16:22:18.821Z"
+    },
+    "suggestedLanguagePriorities": []
   }
 ]

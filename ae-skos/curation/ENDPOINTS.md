@@ -13,10 +13,13 @@
 | ERA Data Interop | https://data-interop.era.europa.eu/api/sparql | 3k | 3 | EU railway agency |
 | EU Publications Office | https://publications.europa.eu/webapi/rdf/sparql | 129k | 79 | EU official publications |
 | Fedlex | https://fedlex.data.admin.ch/sparql | 3k | 3 | Swiss federal law |
+| Finto | https://api.finto.fi/sparql | 892k | 102 | Finnish thesauri and ontologies |
 | Getty Vocabularies | http://vocab.getty.edu/sparql | 3.4M+ | 9 | AAT, TGN, ULAN (custom curation) |
 | Legilux | https://data.legilux.public.lu/sparql | 2k | 9 | Luxembourg legislation |
 | Linked Open Vocabularies | https://lov.linkeddata.es/dataset/lov/sparql | 5k | 200+ | Vocabulary registry |
 | NERC Vocabulary Server | https://vocab.nerc.ac.uk/sparql/ | 362k | 22 | Oceanography vocabularies |
+| STW Economics | https://zbw.eu/beta/sparql/stw/query | 8k | 1 | Economics thesaurus (ZBW) |
+| UNESCO Thesaurus | https://vocabularies.unesco.org/sparql | - | 1 | Education, culture, sciences (GET only) |
 
 ## Failed Endpoints
 
@@ -24,9 +27,9 @@
 |----------|-----|--------|--------|--------|
 | Library of Congress | http://id.loc.gov/sparql.php | 404 | Endpoint not found | 2026-01-17 |
 | Library of Congress (https) | https://id.loc.gov/sparql.php | 403 | Access forbidden | 2026-01-17 |
-| UNESCO Thesaurus | http://vocabularies.unesco.org/sparql | 200 | Empty response | 2026-01-17 |
+| UNESCO Thesaurus (http) | http://vocabularies.unesco.org/sparql | 200 | Needs HTTPS + GET (now working) | 2026-01-17 |
 | GEMET | https://www.eionet.europa.eu/gemet/sparql | 400 | Not a SPARQL endpoint | 2026-01-17 |
-| STW Economics | http://zbw.eu/beta/sparql/stw/query | 404 | Endpoint moved/removed | 2026-01-17 |
+| STW Economics (http) | http://zbw.eu/beta/sparql/stw/query | 301 | Redirects to HTTPS (now working) | 2026-01-17 |
 | TheSoz | http://lod.gesis.org/thesoz/sparql | 200 | Returns HTML, not SPARQL | 2026-01-17 |
 | GND (DNB) | https://d-nb.info/sparql | 404 | Endpoint not found | 2026-01-17 |
 | BARTOC | https://bartoc.org/sparql | 404 | No SPARQL endpoint | 2026-01-17 |
@@ -41,7 +44,7 @@
 | Swedish National Data | https://www.dataportal.se/sparql | 405 | Method not allowed | 2026-01-17 |
 | Italian Open Data | https://dati.gov.it/sparql | 404 | Not found | 2026-01-17 |
 | REEGLE | http://sparql.reegle.info/ | 405 | Method not allowed | 2026-01-17 |
-| FINTO | http://api.finto.fi/sparql | 404 | Not found | 2026-01-17 |
+| FINTO (http) | http://api.finto.fi/sparql | 301 | Redirects to HTTPS (now working) | 2026-01-17 |
 | OpenAIRE | https://graph.openaire.eu/sparql | 404 | Not found | 2026-01-17 |
 | Isidore | https://isidore.science/sparql | 404 | Not found | 2026-01-17 |
 | AgroPortal (http) | http://sparql.agroportal.lirmm.fr/sparql | 301 | Redirects to HTTPS (now working) | 2026-01-17 |
@@ -71,3 +74,5 @@
 - Getty requires query trimming (no leading whitespace) and uses XML responses
 - data.europa.eu requires custom curation to filter DCAT graphs
 - Large endpoints (Getty, BnF) may timeout on language detection queries
+- Some endpoints only accept GET requests (UNESCO, FINTO, STW) - auto-detected via HTML response
+- HTTP endpoints often redirect to HTTPS - use HTTPS URLs

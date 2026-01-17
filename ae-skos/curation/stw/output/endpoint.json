@@ -1,0 +1,40 @@
+{
+  "name": "STW Thesaurus for Economics",
+  "url": "https://zbw.eu/beta/sparql/stw/query",
+  "description": "The STW Thesaurus for Economics is a comprehensive vocabulary for economics and business studies, maintained by ZBW - Leibniz Information Centre for Economics.",
+  "analysis": {
+    "hasSkosContent": true,
+    "supportsNamedGraphs": false,
+    "skosGraphCount": null,
+    "schemeUris": [
+      "http://zbw.eu/stw"
+    ],
+    "schemeCount": 1,
+    "schemesLimited": false,
+    "languages": [
+      {
+        "lang": "de",
+        "count": 20186
+      },
+      {
+        "lang": "en",
+        "count": 13657
+      }
+    ],
+    "totalConcepts": 7845,
+    "relationships": {
+      "hasInScheme": true,
+      "hasTopConceptOf": true,
+      "hasHasTopConcept": true,
+      "hasBroader": true,
+      "hasNarrower": true,
+      "hasBroaderTransitive": false,
+      "hasNarrowerTransitive": false
+    },
+    "analyzedAt": "2026-01-17T16:22:29.122Z"
+  },
+  "suggestedLanguagePriorities": [
+    "en",
+    "de"
+  ]
+}
