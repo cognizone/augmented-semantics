@@ -67,6 +67,17 @@ const displayTitle = computed(() => {
   return notation || label || 'Unnamed Collection'
 })
 
+// Sorted title/label arrays
+const sortedDctTitles = computed(() =>
+  details.value?.dctTitles ? sortLabels(details.value.dctTitles) : []
+)
+const sortedDcTitles = computed(() =>
+  details.value?.dcTitles ? sortLabels(details.value.dcTitles) : []
+)
+const sortedRdfsLabels = computed(() =>
+  details.value?.rdfsLabels ? sortLabels(details.value.rdfsLabels) : []
+)
+
 // Label config for LabelsSection
 const labelConfig = computed(() => {
   if (!details.value) return []
@@ -167,6 +178,52 @@ watch(
           </div>
         </LabelsSection>
 
+        <!-- Title/Label Sections (displayed separately by predicate) -->
+        <section v-if="sortedDctTitles.length" class="details-section">
+          <h3 class="section-title">
+            <span class="material-symbols-outlined section-icon">title</span>
+            Title (dct:title)
+          </h3>
+          <div class="property-row">
+            <div class="doc-values">
+              <p v-for="(title, i) in sortedDctTitles" :key="i" class="doc-value">
+                <span v-if="title.lang && shouldShowLangTag(title.lang)" class="lang-tag lang-tag-first">{{ title.lang }}</span>
+                <span class="doc-text">{{ title.value }}</span>
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section v-if="sortedDcTitles.length" class="details-section">
+          <h3 class="section-title">
+            <span class="material-symbols-outlined section-icon">title</span>
+            Title (dc:title)
+          </h3>
+          <div class="property-row">
+            <div class="doc-values">
+              <p v-for="(title, i) in sortedDcTitles" :key="i" class="doc-value">
+                <span v-if="title.lang && shouldShowLangTag(title.lang)" class="lang-tag lang-tag-first">{{ title.lang }}</span>
+                <span class="doc-text">{{ title.value }}</span>
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section v-if="sortedRdfsLabels.length" class="details-section">
+          <h3 class="section-title">
+            <span class="material-symbols-outlined section-icon">label</span>
+            Label (rdfs:label)
+          </h3>
+          <div class="property-row">
+            <div class="doc-values">
+              <p v-for="(lbl, i) in sortedRdfsLabels" :key="i" class="doc-value">
+                <span v-if="lbl.lang && shouldShowLangTag(lbl.lang)" class="lang-tag lang-tag-first">{{ lbl.lang }}</span>
+                <span class="doc-text">{{ lbl.value }}</span>
+              </p>
+            </div>
+          </div>
+        </section>
+
         <DocumentationSection :items="documentationConfig" />
 
         <!-- Members Section -->
@@ -188,7 +245,7 @@ watch(
               class="member-item"
               @click="navigateToMember(member)"
             >
-              <span class="material-symbols-outlined member-icon icon-leaf">circle</span>
+              <span class="material-symbols-outlined member-icon" :class="member.hasNarrower ? 'icon-label' : 'icon-leaf'">{{ member.hasNarrower ? 'label' : 'circle' }}</span>
               <span class="member-label">
                 {{ getRefLabel(member) }}
                 <span v-if="member.lang && shouldShowLangTag(member.lang)" class="lang-tag">
@@ -305,5 +362,31 @@ watch(
 /* Wrapper class for collection icon in header */
 :deep(.wrapper-collection) {
   background: color-mix(in srgb, var(--ae-icon-collection) 15%, transparent);
+}
+
+.doc-values {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.doc-value {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0;
+}
+
+.doc-value .lang-tag-first {
+  grid-column: 1;
+  align-self: start;
+  margin-top: 0.1rem;
+  margin-right: 0.5rem;
+}
+
+.doc-value .doc-text {
+  grid-column: 2;
 }
 </style>

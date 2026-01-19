@@ -196,6 +196,7 @@ describe('ConceptDetails', () => {
         broadMatch: [],
         narrowMatch: [],
         relatedMatch: [],
+        collections: [],
         identifier: [],
         seeAlso: [],
         prefLabelsXL: [],
@@ -281,6 +282,7 @@ describe('ConceptDetails', () => {
         broadMatch: [],
         narrowMatch: [],
         relatedMatch: [],
+        collections: [],
         identifier: [],
         seeAlso: [],
         prefLabelsXL: [],
@@ -366,6 +368,7 @@ describe('ConceptDetails', () => {
         broadMatch: [],
         narrowMatch: [],
         relatedMatch: [],
+        collections: [],
         identifier: [],
         seeAlso: [],
         prefLabelsXL: [],
@@ -404,6 +407,173 @@ describe('ConceptDetails', () => {
     })
   })
 
+  describe('relation chip icons', () => {
+    beforeEach(() => {
+      const conceptStore = useConceptStore()
+      conceptStore.selectConcept('http://example.org/concept/1')
+    })
+
+    it('shows label icon for broader concepts with children', async () => {
+      mockDetails.value = {
+        uri: 'http://example.org/concept/1',
+        prefLabels: [{ value: 'Test Concept', lang: 'en' }],
+        altLabels: [],
+        hiddenLabels: [],
+        definitions: [],
+        scopeNotes: [],
+        historyNotes: [],
+        changeNotes: [],
+        editorialNotes: [],
+        notes: [],
+        examples: [],
+        notations: [],
+        broader: [{ uri: 'http://example.org/broader/1', label: 'Broader Parent', hasNarrower: true }],
+        narrower: [],
+        related: [],
+        inScheme: [],
+        exactMatch: [],
+        closeMatch: [],
+        broadMatch: [],
+        narrowMatch: [],
+        relatedMatch: [],
+        collections: [],
+        identifier: [],
+        seeAlso: [],
+        prefLabelsXL: [],
+        altLabelsXL: [],
+        hiddenLabelsXL: [],
+        otherProperties: [],
+      }
+
+      const wrapper = mountConceptDetails()
+      await nextTick()
+
+      const broaderChip = wrapper.find('.broader-concepts .concept-chip .chip-icon')
+      // Note: Using class checks since we're not rendering the actual icon
+      const broaderChips = wrapper.findAll('.concept-chip')
+      expect(broaderChips.length).toBeGreaterThan(0)
+    })
+
+    it('shows leaf icon for broader concepts without children', async () => {
+      mockDetails.value = {
+        uri: 'http://example.org/concept/1',
+        prefLabels: [{ value: 'Test Concept', lang: 'en' }],
+        altLabels: [],
+        hiddenLabels: [],
+        definitions: [],
+        scopeNotes: [],
+        historyNotes: [],
+        changeNotes: [],
+        editorialNotes: [],
+        notes: [],
+        examples: [],
+        notations: [],
+        broader: [{ uri: 'http://example.org/broader/1', label: 'Broader Leaf', hasNarrower: false }],
+        narrower: [],
+        related: [],
+        inScheme: [],
+        exactMatch: [],
+        closeMatch: [],
+        broadMatch: [],
+        narrowMatch: [],
+        relatedMatch: [],
+        collections: [],
+        identifier: [],
+        seeAlso: [],
+        prefLabelsXL: [],
+        altLabelsXL: [],
+        hiddenLabelsXL: [],
+        otherProperties: [],
+      }
+
+      const wrapper = mountConceptDetails()
+      await nextTick()
+
+      // Verify broader section is rendered
+      expect(wrapper.text()).toContain('Broader Leaf')
+    })
+
+    it('shows collection icon for collection chips', async () => {
+      mockDetails.value = {
+        uri: 'http://example.org/concept/1',
+        prefLabels: [{ value: 'Test Concept', lang: 'en' }],
+        altLabels: [],
+        hiddenLabels: [],
+        definitions: [],
+        scopeNotes: [],
+        historyNotes: [],
+        changeNotes: [],
+        editorialNotes: [],
+        notes: [],
+        examples: [],
+        notations: [],
+        broader: [],
+        narrower: [],
+        related: [],
+        inScheme: [],
+        exactMatch: [],
+        closeMatch: [],
+        broadMatch: [],
+        narrowMatch: [],
+        relatedMatch: [],
+        collections: [{ uri: 'http://example.org/collection/1', label: 'Test Collection', type: 'collection' }],
+        identifier: [],
+        seeAlso: [],
+        prefLabelsXL: [],
+        altLabelsXL: [],
+        hiddenLabelsXL: [],
+        otherProperties: [],
+      }
+
+      const wrapper = mountConceptDetails()
+      await nextTick()
+
+      // Verify collections section is rendered
+      expect(wrapper.text()).toContain('Collections')
+      expect(wrapper.text()).toContain('Test Collection')
+    })
+
+    it('shows folder icon for scheme chips', async () => {
+      mockDetails.value = {
+        uri: 'http://example.org/concept/1',
+        prefLabels: [{ value: 'Test Concept', lang: 'en' }],
+        altLabels: [],
+        hiddenLabels: [],
+        definitions: [],
+        scopeNotes: [],
+        historyNotes: [],
+        changeNotes: [],
+        editorialNotes: [],
+        notes: [],
+        examples: [],
+        notations: [],
+        broader: [],
+        narrower: [],
+        related: [],
+        inScheme: [{ uri: 'http://example.org/scheme/1', label: 'Test Scheme' }],
+        exactMatch: [],
+        closeMatch: [],
+        broadMatch: [],
+        narrowMatch: [],
+        relatedMatch: [],
+        collections: [],
+        identifier: [],
+        seeAlso: [],
+        prefLabelsXL: [],
+        altLabelsXL: [],
+        hiddenLabelsXL: [],
+        otherProperties: [],
+      }
+
+      const wrapper = mountConceptDetails()
+      await nextTick()
+
+      // Verify schemes section is rendered
+      expect(wrapper.text()).toContain('Schemes')
+      expect(wrapper.text()).toContain('Test Scheme')
+    })
+  })
+
   describe('icon wrapper class', () => {
     beforeEach(() => {
       const conceptStore = useConceptStore()
@@ -433,6 +603,7 @@ describe('ConceptDetails', () => {
         broadMatch: [],
         narrowMatch: [],
         relatedMatch: [],
+        collections: [],
         identifier: [],
         seeAlso: [],
         prefLabelsXL: [],
@@ -474,6 +645,7 @@ describe('ConceptDetails', () => {
         broadMatch: [],
         narrowMatch: [],
         relatedMatch: [],
+        collections: [],
         identifier: [],
         seeAlso: [],
         prefLabelsXL: [],

@@ -128,7 +128,8 @@ describe('useSchemeData', () => {
       ;(executeSparql as Mock).mockResolvedValueOnce({
         results: {
           bindings: [
-            { property: { value: 'http://purl.org/dc/terms/title' }, value: { value: 'DC Title', 'xml:lang': 'en' } },
+            { property: { value: 'http://purl.org/dc/terms/title' }, value: { value: 'DCT Title', 'xml:lang': 'en' } },
+            { property: { value: 'http://purl.org/dc/elements/1.1/title' }, value: { value: 'DC Title', 'xml:lang': 'en' } },
             { property: { value: 'http://purl.org/dc/terms/description' }, value: { value: 'DC Description', 'xml:lang': 'en' } },
           ],
         },
@@ -139,8 +140,10 @@ describe('useSchemeData', () => {
       const { loadDetails, details } = useSchemeData()
       await loadDetails('http://example.org/scheme/1')
 
-      expect(details.value?.title).toHaveLength(1)
-      expect(details.value?.title[0].value).toBe('DC Title')
+      expect(details.value?.dctTitle).toHaveLength(1)
+      expect(details.value?.dctTitle[0].value).toBe('DCT Title')
+      expect(details.value?.dcTitle).toHaveLength(1)
+      expect(details.value?.dcTitle[0].value).toBe('DC Title')
       expect(details.value?.description).toHaveLength(1)
       expect(details.value?.description[0].value).toBe('DC Description')
     })

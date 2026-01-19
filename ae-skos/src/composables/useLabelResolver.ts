@@ -7,6 +7,7 @@
  * @see /spec/ae-skos/sko01-LanguageSelector.md
  */
 import { useLanguageStore, useSettingsStore, useEndpointStore } from '../stores'
+import { LABEL_PRIORITY } from '../constants'
 import type { LabelValue, XLLabel } from '../types'
 
 export function useLabelResolver() {
@@ -93,25 +94,32 @@ export function useLabelResolver() {
 
   /**
    * Select best label for a scheme.
-   * Priority: prefLabel > xlPrefLabel > title > rdfsLabel
+   * Priority: prefLabel > xlPrefLabel > dctTitle > dcTitle > rdfsLabel
    */
   function selectSchemeLabel(labels: {
     prefLabels?: LabelValue[]
     prefLabelsXL?: XLLabel[]
-    titles?: LabelValue[]
+    dctTitles?: LabelValue[]
+    dcTitles?: LabelValue[]
     rdfsLabels?: LabelValue[]
   }): LabelValue | null {
     // 1. Try prefLabel (with XL fallback)
     const prefLabel = selectLabelWithXL(labels.prefLabels || [], labels.prefLabelsXL || [])
     if (prefLabel) return prefLabel
 
-    // 2. Try title (dct:title)
-    if (labels.titles?.length) {
-      const title = selectLabel(labels.titles)
-      if (title) return title
+    // 2. Try dct:title (Dublin Core Terms - preferred)
+    if (labels.dctTitles?.length) {
+      const dctTitle = selectLabel(labels.dctTitles)
+      if (dctTitle) return dctTitle
     }
 
-    // 3. Try rdfsLabel
+    // 3. Try dc:title (Dublin Core Elements - legacy)
+    if (labels.dcTitles?.length) {
+      const dcTitle = selectLabel(labels.dcTitles)
+      if (dcTitle) return dcTitle
+    }
+
+    // 4. Try rdfsLabel
     if (labels.rdfsLabels?.length) {
       const rdfsLabel = selectLabel(labels.rdfsLabels)
       if (rdfsLabel) return rdfsLabel
@@ -179,11 +187,45 @@ export function useLabelResolver() {
     return lang !== languageStore.preferred
   }
 
+  /**
+   * Select best label from typed labels using LABEL_PRIORITY order.
+   *
+   * This function is used when labels come from SPARQL queries with ?labelType bindings.
+   * It tries each label type in priority order: prefLabel > xlPrefLabel > dctTitle > dcTitle > rdfsLabel
+   *
+   * @param labels - Array of labels with type information
+   * @param priority - Optional custom priority order (defaults to LABEL_PRIORITY)
+   * @returns Best label with its language, or undefined if no labels
+   */
+  function selectLabelByPriority(
+    labels: { value: string; lang: string; type: string }[],
+    priority: readonly string[] = LABEL_PRIORITY
+  ): { value: string; lang: string } | undefined {
+    if (!labels.length) return undefined
+
+    // Try each label type in priority order
+    for (const labelType of priority) {
+      const labelsOfType = labels.filter(l => l.type === labelType)
+      if (!labelsOfType.length) continue
+
+      // Apply language selection within this type
+      const selected = selectLabel(labelsOfType)
+      if (selected) {
+        return { value: selected.value, lang: selected.lang || '' }
+      }
+    }
+
+    // Fallback: return first available label if no priority match
+    const first = labels[0]
+    return first ? { value: first.value, lang: first.lang || '' } : undefined
+  }
+
   return {
     selectLabel,
     selectLabelWithXL,
     selectConceptLabel,
     selectSchemeLabel,
+    selectLabelByPriority,
     sortLabels,
     shouldShowLangTag,
   }

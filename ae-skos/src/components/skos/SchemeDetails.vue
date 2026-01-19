@@ -48,7 +48,8 @@ const preferredLabelObj = computed(() => {
   return selectSchemeLabel({
     prefLabels: details.value.prefLabels,
     prefLabelsXL: details.value.prefLabelsXL,
-    titles: details.value.title,
+    dctTitles: details.value.dctTitle,
+    dcTitles: details.value.dcTitle,
     rdfsLabels: details.value.labels,
   })
 })
@@ -78,7 +79,8 @@ const sortedChangeNotes = getSorted('changeNotes')
 const sortedEditorialNotes = getSorted('editorialNotes')
 const sortedNotes = getSorted('notes')
 const sortedExamples = getSorted('examples')
-const sortedTitles = getSorted('title')
+const sortedDctTitles = getSorted('dctTitle')
+const sortedDcTitles = getSorted('dcTitle')
 
 // Sorted other properties
 const sortedOtherProperties = computed(() => {
@@ -171,7 +173,8 @@ function exportAsJson() {
     altLabels: details.value.altLabels,
     definitions: details.value.definitions,
     scopeNotes: details.value.scopeNotes,
-    title: details.value.title,
+    dctTitle: details.value.dctTitle,
+    dcTitle: details.value.dcTitle,
     description: details.value.description,
     creator: details.value.creator,
     created: details.value.created,
@@ -216,7 +219,8 @@ watch(
           notes: [],
           examples: [],
           comments: [],
-          title: [],
+          dctTitle: [],
+          dcTitle: [],
           description: [],
           creator: [],
           publisher: [],
@@ -267,15 +271,31 @@ watch(
           @show-raw-rdf="showRawRdfDialog = true"
         />
 
-        <!-- Dublin Core Title (scheme-specific) -->
-        <section v-if="sortedTitles.length" class="details-section">
+        <!-- Dublin Core Terms Title (dct:title) -->
+        <section v-if="sortedDctTitles.length" class="details-section">
           <h3 class="section-title">
             <span class="material-symbols-outlined section-icon">title</span>
-            Title
+            Title (dct:title)
           </h3>
           <div class="property-row">
             <div class="doc-values">
-              <p v-for="(title, i) in sortedTitles" :key="i" class="doc-value">
+              <p v-for="(title, i) in sortedDctTitles" :key="i" class="doc-value">
+                <span v-if="title.lang" class="lang-tag lang-tag-first">{{ title.lang }}</span>
+                <span class="doc-text">{{ title.value }}</span>
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Dublin Core Elements Title (dc:title) -->
+        <section v-if="sortedDcTitles.length" class="details-section">
+          <h3 class="section-title">
+            <span class="material-symbols-outlined section-icon">title</span>
+            Title (dc:title)
+          </h3>
+          <div class="property-row">
+            <div class="doc-values">
+              <p v-for="(title, i) in sortedDcTitles" :key="i" class="doc-value">
                 <span v-if="title.lang" class="lang-tag lang-tag-first">{{ title.lang }}</span>
                 <span class="doc-text">{{ title.value }}</span>
               </p>

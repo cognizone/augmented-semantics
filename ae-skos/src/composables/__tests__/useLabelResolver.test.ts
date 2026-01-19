@@ -343,42 +343,58 @@ describe('useLabelResolver', () => {
   })
 
   describe('selectSchemeLabel', () => {
-    it('selects prefLabel over title and rdfsLabel', () => {
+    it('selects prefLabel over dctTitle and rdfsLabel', () => {
       const languageStore = useLanguageStore()
       languageStore.setPreferred('en')
 
       const { selectSchemeLabel } = useLabelResolver()
       const result = selectSchemeLabel({
         prefLabels: [{ value: 'prefLabel value', lang: 'en' }],
-        titles: [{ value: 'title value', lang: 'en' }],
+        dctTitles: [{ value: 'dctTitle value', lang: 'en' }],
         rdfsLabels: [{ value: 'rdfs value', lang: 'en' }],
       })
 
       expect(result?.value).toBe('prefLabel value')
     })
 
-    it('falls back to title when no prefLabel', () => {
+    it('falls back to dctTitle when no prefLabel', () => {
       const languageStore = useLanguageStore()
       languageStore.setPreferred('en')
 
       const { selectSchemeLabel } = useLabelResolver()
       const result = selectSchemeLabel({
         prefLabels: [],
-        titles: [{ value: 'title value', lang: 'en' }],
+        dctTitles: [{ value: 'dctTitle value', lang: 'en' }],
         rdfsLabels: [{ value: 'rdfs value', lang: 'en' }],
       })
 
-      expect(result?.value).toBe('title value')
+      expect(result?.value).toBe('dctTitle value')
     })
 
-    it('falls back to rdfsLabel when no prefLabel or title', () => {
+    it('falls back to dcTitle when no prefLabel or dctTitle', () => {
       const languageStore = useLanguageStore()
       languageStore.setPreferred('en')
 
       const { selectSchemeLabel } = useLabelResolver()
       const result = selectSchemeLabel({
         prefLabels: [],
-        titles: [],
+        dctTitles: [],
+        dcTitles: [{ value: 'dcTitle value', lang: 'en' }],
+        rdfsLabels: [{ value: 'rdfs value', lang: 'en' }],
+      })
+
+      expect(result?.value).toBe('dcTitle value')
+    })
+
+    it('falls back to rdfsLabel when no prefLabel or titles', () => {
+      const languageStore = useLanguageStore()
+      languageStore.setPreferred('en')
+
+      const { selectSchemeLabel } = useLabelResolver()
+      const result = selectSchemeLabel({
+        prefLabels: [],
+        dctTitles: [],
+        dcTitles: [],
         rdfsLabels: [{ value: 'rdfs value', lang: 'en' }],
       })
 
@@ -399,7 +415,7 @@ describe('useLabelResolver', () => {
       const { selectSchemeLabel } = useLabelResolver()
       const result = selectSchemeLabel({
         prefLabels: [],
-        titles: [
+        dctTitles: [
           { value: 'English title', lang: 'en' },
           { value: 'French title', lang: 'fr' },
         ],
@@ -407,6 +423,21 @@ describe('useLabelResolver', () => {
 
       expect(result?.value).toBe('French title')
       expect(result?.lang).toBe('fr')
+    })
+
+    it('prefers dctTitle over dcTitle', () => {
+      const languageStore = useLanguageStore()
+      languageStore.setPreferred('en')
+
+      const { selectSchemeLabel } = useLabelResolver()
+      const result = selectSchemeLabel({
+        prefLabels: [],
+        dctTitles: [{ value: 'DCT Title', lang: 'en' }],
+        dcTitles: [{ value: 'DC Title', lang: 'en' }],
+        rdfsLabels: [{ value: 'rdfs value', lang: 'en' }],
+      })
+
+      expect(result?.value).toBe('DCT Title')
     })
   })
 })

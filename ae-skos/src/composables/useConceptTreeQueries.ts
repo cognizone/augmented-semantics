@@ -8,33 +8,18 @@
  */
 import { withPrefixes } from '../services'
 import { useDeprecation } from './useDeprecation'
+import { buildOptionalLabelClause } from '../constants'
 
 /**
  * Shared label resolution clause used by both queries.
  * Priority: prefLabel > xlPrefLabel > dct:title > dc:title > rdfs:label
+ *
+ * Uses the canonical buildOptionalLabelClause from constants/labels.ts
  */
 function buildLabelClause(): string {
   return `
       OPTIONAL { ?concept skos:notation ?notation }
-      OPTIONAL {
-        {
-          ?concept skos:prefLabel ?label .
-          BIND("prefLabel" AS ?labelType)
-        } UNION {
-          ?concept skosxl:prefLabel/skosxl:literalForm ?label .
-          BIND("xlPrefLabel" AS ?labelType)
-        } UNION {
-          ?concept dct:title ?label .
-          BIND("title" AS ?labelType)
-        } UNION {
-          ?concept dc:title ?label .
-          BIND("dcTitle" AS ?labelType)
-        } UNION {
-          ?concept rdfs:label ?label .
-          BIND("rdfsLabel" AS ?labelType)
-        }
-        BIND(LANG(?label) AS ?labelLang)
-      }`
+      ${buildOptionalLabelClause('?concept')}`
 }
 
 export function useConceptTreeQueries() {

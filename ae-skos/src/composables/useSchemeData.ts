@@ -11,6 +11,7 @@ import { useEndpointStore } from '../stores'
 import { executeSparql, withPrefixes, logger, resolveUris } from '../services'
 import { useXLLabels } from './useXLLabels'
 import { useOtherProperties, SCHEME_EXCLUDED_PREDICATES } from './useOtherProperties'
+import { LABEL_PREDICATES } from '../constants'
 import type { SchemeDetails } from '../types'
 
 export function useSchemeData() {
@@ -70,7 +71,8 @@ export function useSchemeData() {
         notes: [],
         examples: [],
         comments: [],
-        title: [],
+        dctTitle: [],
+        dcTitle: [],
         description: [],
         creator: [],
         publisher: [],
@@ -110,8 +112,12 @@ export function useSchemeData() {
           schemeDetails.notes.push({ value: val, lang })
         } else if (prop.endsWith('example')) {
           schemeDetails.examples.push({ value: val, lang })
-        } else if (prop.endsWith('title')) {
-          schemeDetails.title.push({ value: val, lang })
+        } else if (prop === LABEL_PREDICATES.dctTitle.uri) {
+          // dct:title (Dublin Core Terms - preferred)
+          schemeDetails.dctTitle.push({ value: val, lang })
+        } else if (prop === LABEL_PREDICATES.dcTitle.uri) {
+          // dc:title (Dublin Core Elements - legacy)
+          schemeDetails.dcTitle.push({ value: val, lang })
         } else if (prop.endsWith('description')) {
           schemeDetails.description.push({ value: val, lang })
         } else if (prop.endsWith('creator')) {
@@ -140,7 +146,7 @@ export function useSchemeData() {
           if (!schemeDetails.license.includes(val)) {
             schemeDetails.license.push(val)
           }
-        } else if (prop.endsWith('#label')) {
+        } else if (prop === LABEL_PREDICATES.rdfsLabel.uri) {
           // rdfs:label
           schemeDetails.labels.push({ value: val, lang })
         } else if (prop.endsWith('#comment')) {

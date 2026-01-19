@@ -12,6 +12,7 @@ import { executeSparql, withPrefixes, logger, resolveUris, formatQualifiedName }
 import { useDeprecation } from './useDeprecation'
 import { useXLLabels } from './useXLLabels'
 import { useOtherProperties, CONCEPT_EXCLUDED_PREDICATES } from './useOtherProperties'
+import { LABEL_PREDICATES, LABEL_PRIORITY } from '../constants'
 import type { ConceptDetails } from '../types'
 
 export function useConceptData() {
@@ -56,6 +57,39 @@ export function useConceptData() {
   }
 
   /**
+   * Load collections that contain this concept (inverse of skos:member)
+   */
+  async function loadCollections(uri: string, conceptDetails: ConceptDetails): Promise<void> {
+    const endpoint = endpointStore.current
+    if (!endpoint) return
+
+    const query = withPrefixes(`
+      SELECT DISTINCT ?collection
+      WHERE {
+        ?collection skos:member <${uri}> .
+      }
+    `)
+
+    try {
+      const results = await executeSparql(endpoint, query, { retries: 0 })
+
+      for (const binding of results.results.bindings) {
+        const collectionUri = binding.collection?.value
+        if (collectionUri && !conceptDetails.collections.some(c => c.uri === collectionUri)) {
+          conceptDetails.collections.push({ uri: collectionUri, type: 'collection' })
+        }
+      }
+
+      logger.debug('useConceptData', 'Loaded collections', {
+        uri,
+        count: conceptDetails.collections.length
+      })
+    } catch (e) {
+      logger.warn('useConceptData', 'Failed to load collections', { uri, error: e })
+    }
+  }
+
+  /**
    * Load labels for related concepts and schemes
    */
   async function loadRelatedLabels(conceptDetails: ConceptDetails): Promise<void> {
@@ -66,16 +100,17 @@ export function useConceptData() {
       ...conceptDetails.broader,
       ...conceptDetails.narrower,
       ...conceptDetails.related,
-      ...conceptDetails.inScheme
+      ...conceptDetails.inScheme,
+      ...conceptDetails.collections
     ]
 
     if (!allRefs.length) return
 
     const uris = allRefs.map(r => `<${r.uri}>`).join(' ')
 
-    // Fetch notation, prefLabel (incl. XL), altLabel, hiddenLabel, and dct:title (for schemes)
+    /// Fetch notation, prefLabel (incl. XL), altLabel, hiddenLabel, dct:title (for schemes), and hasNarrower
     const query = withPrefixes(`
-      SELECT ?concept ?notation ?label ?labelLang ?labelType
+      SELECT ?concept ?notation ?label ?labelLang ?labelType ?hasNarrower
       WHERE {
         VALUES ?concept { ${uris} }
         OPTIONAL { ?concept skos:notation ?notation }
@@ -94,13 +129,15 @@ export function useConceptData() {
             BIND("hiddenLabel" AS ?labelType)
           } UNION {
             ?concept dct:title ?label .
-            BIND("title" AS ?labelType)
+            BIND("dctTitle" AS ?labelType)
           } UNION {
             ?concept rdfs:label ?label .
             BIND("rdfsLabel" AS ?labelType)
           }
           BIND(LANG(?label) AS ?labelLang)
         }
+        OPTIONAL { ?concept skos:narrower ?narrowerChild }
+        BIND(BOUND(?narrowerChild) AS ?hasNarrower)
       }
     `)
 
@@ -111,6 +148,7 @@ export function useConceptData() {
       const conceptData = new Map<string, {
         notation?: string
         labels: { value: string; lang: string; type: string }[]
+        hasNarrower?: boolean
       }>()
 
       for (const b of results.results.bindings) {
@@ -134,6 +172,11 @@ export function useConceptData() {
             type: b.labelType?.value || 'prefLabel'
           })
         }
+
+        // Track hasNarrower (true if any binding shows narrower exists)
+        if (b.hasNarrower?.value === 'true') {
+          data.hasNarrower = true
+        }
       }
 
       // Update refs with best label and notation
@@ -143,12 +186,11 @@ export function useConceptData() {
 
         ref.notation = data.notation
 
-        // Pick best label: prefLabel > xlPrefLabel > title > rdfsLabel, etc.
-        const labelPriority = ['prefLabel', 'xlPrefLabel', 'title', 'rdfsLabel', 'altLabel', 'hiddenLabel']
+        // Pick best label using canonical LABEL_PRIORITY
         let bestLabel: string | undefined
         let bestLang: string | undefined
 
-        for (const labelType of labelPriority) {
+        for (const labelType of LABEL_PRIORITY) {
           const labelsOfType = data.labels.filter(l => l.type === labelType)
           if (!labelsOfType.length) continue
 
@@ -163,6 +205,11 @@ export function useConceptData() {
         if (bestLabel) {
           ref.label = bestLabel
           ref.lang = bestLang
+        }
+
+        // Set hasNarrower for concept icons (only for concept refs, not schemes/collections)
+        if (data.hasNarrower !== undefined && ref.type !== 'scheme' && ref.type !== 'collection') {
+          ref.hasNarrower = data.hasNarrower
         }
       })
     } catch (e) {
@@ -189,7 +236,7 @@ export function useConceptData() {
         FILTER (?property IN (
           rdf:type,
           skos:prefLabel, skos:altLabel, skos:hiddenLabel,
-          rdfs:label, dct:title,
+          rdfs:label, dct:title, dc:title,
           skos:definition, skos:scopeNote, skos:historyNote,
           skos:changeNote, skos:editorialNote, skos:note, skos:example,
           skos:notation, skos:broader, skos:narrower, skos:related,
@@ -208,6 +255,9 @@ export function useConceptData() {
         prefLabels: [],
         altLabels: [],
         hiddenLabels: [],
+        dctTitles: [],
+        dcTitles: [],
+        rdfsLabels: [],
         definitions: [],
         scopeNotes: [],
         historyNotes: [],
@@ -225,6 +275,7 @@ export function useConceptData() {
         broadMatch: [],
         narrowMatch: [],
         relatedMatch: [],
+        collections: [],
         identifier: [],
         seeAlso: [],
         prefLabelsXL: [],
@@ -250,12 +301,15 @@ export function useConceptData() {
 
         if (prop.endsWith('prefLabel')) {
           conceptDetails.prefLabels.push({ value: val, lang })
-        } else if (prop.endsWith('#label') || prop.endsWith('/label')) {
-          // rdfs:label - treat as fallback prefLabel
-          conceptDetails.prefLabels.push({ value: val, lang })
-        } else if (prop.endsWith('title')) {
-          // dct:title - treat as fallback prefLabel
-          conceptDetails.prefLabels.push({ value: val, lang })
+        } else if (prop === LABEL_PREDICATES.rdfsLabel.uri) {
+          // rdfs:label - stored separately for display
+          conceptDetails.rdfsLabels.push({ value: val, lang })
+        } else if (prop === LABEL_PREDICATES.dctTitle.uri) {
+          // dct:title (Dublin Core Terms)
+          conceptDetails.dctTitles.push({ value: val, lang })
+        } else if (prop === LABEL_PREDICATES.dcTitle.uri) {
+          // dc:title (Dublin Core Elements)
+          conceptDetails.dcTitles.push({ value: val, lang })
         } else if (prop.endsWith('altLabel')) {
           conceptDetails.altLabels.push({ value: val, lang })
         } else if (prop.endsWith('hiddenLabel')) {
@@ -349,7 +403,10 @@ export function useConceptData() {
         return
       }
 
-      // Load labels for related concepts
+      // Load collections that contain this concept
+      await loadCollections(uri, conceptDetails)
+
+      // Load labels for related concepts and collections
       await loadRelatedLabels(conceptDetails)
 
       // Load SKOS-XL extended labels
@@ -392,7 +449,8 @@ export function useConceptData() {
       logger.info('useConceptData', 'Loaded details', {
         labels: conceptDetails.prefLabels.length,
         broader: conceptDetails.broader.length,
-        narrower: conceptDetails.narrower.length
+        narrower: conceptDetails.narrower.length,
+        collections: conceptDetails.collections.length
       })
 
       details.value = conceptDetails

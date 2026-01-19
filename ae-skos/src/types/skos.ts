@@ -27,6 +27,7 @@ export interface ConceptRef {
   lang?: string
   deprecated?: boolean
   type?: 'concept' | 'scheme' | 'collection'
+  hasNarrower?: boolean  // For icon display (leaf vs label)
 }
 
 // Tree node with expansion state
@@ -42,6 +43,10 @@ export interface ConceptDetails {
   prefLabels: LabelValue[]
   altLabels: LabelValue[]
   hiddenLabels: LabelValue[]
+  // Title/label properties (stored separately by predicate)
+  dctTitles: LabelValue[]     // dct:title (Dublin Core Terms)
+  dcTitles: LabelValue[]      // dc:title (Dublin Core Elements)
+  rdfsLabels: LabelValue[]    // rdfs:label
   definitions: LabelValue[]
   scopeNotes: LabelValue[]
   historyNotes: LabelValue[]
@@ -59,6 +64,8 @@ export interface ConceptDetails {
   broadMatch: string[]
   narrowMatch: string[]
   relatedMatch: string[]
+  // Collections (inverse of skos:member)
+  collections: ConceptRef[]   // Collections this concept belongs to
   // Metadata (Dublin Core / RDFS)
   identifier: string[]        // dc:identifier
   created?: string            // dct:created
@@ -89,7 +96,8 @@ export interface SchemeDetails {
   notes: LabelValue[]
   examples: LabelValue[]
   comments: LabelValue[]      // rdfs:comment
-  title: LabelValue[]
+  dctTitle: LabelValue[]      // dct:title (Dublin Core Terms)
+  dcTitle: LabelValue[]       // dc:title (Dublin Core Elements)
   description: LabelValue[]
   creator: string[]
   created?: string
@@ -214,6 +222,10 @@ export interface CollectionDetails {
   uri: string
   prefLabels: LabelValue[]
   altLabels: LabelValue[]
+  // Title/label properties (stored separately by predicate)
+  dctTitles: LabelValue[]     // dct:title (Dublin Core Terms)
+  dcTitles: LabelValue[]      // dc:title (Dublin Core Elements)
+  rdfsLabels: LabelValue[]    // rdfs:label
   definitions: LabelValue[]
   scopeNotes: LabelValue[]
   notes: LabelValue[]

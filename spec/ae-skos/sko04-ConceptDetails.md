@@ -99,6 +99,50 @@ WHERE {
 }
 ```
 
+### Concept Reference Enrichment
+
+When loading related concepts (broader, narrower, related), the system enriches each `ConceptRef` with:
+
+- **label**: Best matching label based on language priority
+- **notation**: SKOS notation if available
+- **hasNarrower**: Boolean indicating if the concept has children (for icon display)
+
+The `hasNarrower` flag is determined by checking if `skos:narrower` relationships exist:
+
+```sparql
+OPTIONAL { ?concept skos:narrower ?narrowerChild }
+BIND(BOUND(?narrowerChild) AS ?hasNarrower)
+```
+
+### Relation Chip Icons
+
+Each relation chip displays an icon based on the type of reference:
+
+| Chip Type | Icon | Class | Description |
+|-----------|------|-------|-------------|
+| Broader (with children) | `label` | `icon-label` | Concept has narrower concepts |
+| Broader (leaf) | `circle` | `icon-leaf` | Concept has no narrower concepts |
+| Narrower (with children) | `label` | `icon-label` | Child concept has its own children |
+| Narrower (leaf) | `circle` | `icon-leaf` | Child concept is a leaf node |
+| Related (with children) | `label` | `icon-label` | Related concept has children |
+| Related (leaf) | `circle` | `icon-leaf` | Related concept has no children |
+| Collection | `collections_bookmark` | `icon-collection` | Static icon for collections |
+| Scheme | `folder` | `icon-folder` | Static icon for concept schemes |
+
+**Icon Display Logic:**
+```html
+<!-- Concept refs (broader/narrower/related) - dynamic based on hasNarrower -->
+<span class="chip-icon" :class="ref.hasNarrower ? 'icon-label' : 'icon-leaf'">
+  {{ ref.hasNarrower ? 'label' : 'circle' }}
+</span>
+
+<!-- Collection refs - static icon -->
+<span class="chip-icon icon-collection">collections_bookmark</span>
+
+<!-- Scheme refs - static icon -->
+<span class="chip-icon icon-folder">folder</span>
+```
+
 ### Other Properties
 
 Display any additional properties not covered by SKOS core.
@@ -285,6 +329,10 @@ interface LangLiteral {
 interface ConceptRef {
   uri: string;
   label?: string;
+  notation?: string;
+  lang?: string;
+  hasNarrower?: boolean;  // For dynamic icon display
+  type?: 'collection' | 'scheme';  // For static icon display
 }
 
 interface PropertyValue {

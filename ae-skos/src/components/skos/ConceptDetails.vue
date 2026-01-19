@@ -37,7 +37,7 @@ const conceptStore = useConceptStore()
 const settingsStore = useSettingsStore()
 const { selectLabelWithXL, sortLabels, shouldShowLangTag } = useLabelResolver()
 const { details, loading, error, resolvedPredicates, loadDetails } = useConceptData()
-const { navigateTo, handleSchemeClick, isLocalScheme } = useConceptNavigation(emit)
+const { navigateTo, handleSchemeClick, isLocalScheme, navigateToCollection } = useConceptNavigation(emit)
 const { exportAsJson, exportAsTurtle, exportAsCsv } = useResourceExport()
 const { showIndicator: showDeprecationIndicator } = useDeprecation()
 
@@ -104,6 +104,9 @@ const getSorted = <K extends keyof NonNullable<typeof details.value>>(field: K) 
 const sortedPrefLabels = getSorted('prefLabels')
 const sortedAltLabels = getSorted('altLabels')
 const sortedHiddenLabels = getSorted('hiddenLabels')
+const sortedDctTitles = getSorted('dctTitles')
+const sortedDcTitles = getSorted('dcTitles')
+const sortedRdfsLabels = getSorted('rdfsLabels')
 const sortedDefinitions = getSorted('definitions')
 const sortedScopeNotes = getSorted('scopeNotes')
 const sortedHistoryNotes = getSorted('historyNotes')
@@ -256,6 +259,52 @@ watch(
           </div>
         </LabelsSection>
 
+        <!-- Title/Label Sections (displayed separately by predicate) -->
+        <section v-if="sortedDctTitles.length" class="details-section">
+          <h3 class="section-title">
+            <span class="material-symbols-outlined section-icon">title</span>
+            Title (dct:title)
+          </h3>
+          <div class="property-row">
+            <div class="doc-values">
+              <p v-for="(title, i) in sortedDctTitles" :key="i" class="doc-value">
+                <span v-if="title.lang && shouldShowLangTag(title.lang)" class="lang-tag lang-tag-first">{{ title.lang }}</span>
+                <span class="doc-text">{{ title.value }}</span>
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section v-if="sortedDcTitles.length" class="details-section">
+          <h3 class="section-title">
+            <span class="material-symbols-outlined section-icon">title</span>
+            Title (dc:title)
+          </h3>
+          <div class="property-row">
+            <div class="doc-values">
+              <p v-for="(title, i) in sortedDcTitles" :key="i" class="doc-value">
+                <span v-if="title.lang && shouldShowLangTag(title.lang)" class="lang-tag lang-tag-first">{{ title.lang }}</span>
+                <span class="doc-text">{{ title.value }}</span>
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section v-if="sortedRdfsLabels.length" class="details-section">
+          <h3 class="section-title">
+            <span class="material-symbols-outlined section-icon">label</span>
+            Label (rdfs:label)
+          </h3>
+          <div class="property-row">
+            <div class="doc-values">
+              <p v-for="(lbl, i) in sortedRdfsLabels" :key="i" class="doc-value">
+                <span v-if="lbl.lang && shouldShowLangTag(lbl.lang)" class="lang-tag lang-tag-first">{{ lbl.lang }}</span>
+                <span class="doc-text">{{ lbl.value }}</span>
+              </p>
+            </div>
+          </div>
+        </section>
+
         <DocumentationSection :items="documentationConfig" />
 
         <!-- Hierarchy Section (concept-specific) -->
@@ -274,6 +323,7 @@ watch(
                 class="concept-chip clickable"
                 @click="navigateTo(ref)"
               >
+                <span class="material-symbols-outlined chip-icon" :class="ref.hasNarrower ? 'icon-label' : 'icon-leaf'">{{ ref.hasNarrower ? 'label' : 'circle' }}</span>
                 {{ getRefLabel(ref) }}<span v-if="ref.lang && shouldShowLangTag(ref.lang)" class="lang-tag">{{ ref.lang }}</span>
               </span>
             </div>
@@ -288,6 +338,7 @@ watch(
                 class="concept-chip clickable"
                 @click="navigateTo(ref)"
               >
+                <span class="material-symbols-outlined chip-icon" :class="ref.hasNarrower ? 'icon-label' : 'icon-leaf'">{{ ref.hasNarrower ? 'label' : 'circle' }}</span>
                 {{ getRefLabel(ref) }}<span v-if="ref.lang && shouldShowLangTag(ref.lang)" class="lang-tag">{{ ref.lang }}</span>
               </span>
             </div>
@@ -310,6 +361,7 @@ watch(
                 class="concept-chip clickable"
                 @click="navigateTo(ref)"
               >
+                <span class="material-symbols-outlined chip-icon" :class="ref.hasNarrower ? 'icon-label' : 'icon-leaf'">{{ ref.hasNarrower ? 'label' : 'circle' }}</span>
                 {{ getRefLabel(ref) }}<span v-if="ref.lang && shouldShowLangTag(ref.lang)" class="lang-tag">{{ ref.lang }}</span>
               </span>
             </div>
@@ -337,6 +389,28 @@ watch(
           </div>
         </section>
 
+        <!-- Collections Section (concept-specific) -->
+        <section v-if="details.collections.length" class="details-section">
+          <h3 class="section-title">
+            <span class="material-symbols-outlined section-icon">collections_bookmark</span>
+            Collections
+          </h3>
+          <div class="property-row">
+            <label>Member of</label>
+            <div class="concept-chips">
+              <span
+                v-for="ref in details.collections"
+                :key="ref.uri"
+                class="concept-chip clickable"
+                @click="navigateToCollection(ref)"
+              >
+                <span class="material-symbols-outlined chip-icon icon-collection">collections_bookmark</span>
+                {{ getRefLabel(ref) }}<span v-if="ref.lang && shouldShowLangTag(ref.lang)" class="lang-tag">{{ ref.lang }}</span>
+              </span>
+            </div>
+          </div>
+        </section>
+
         <!-- Scheme Section (concept-specific) -->
         <section v-if="details.inScheme.length" class="details-section">
           <h3 class="section-title">
@@ -352,6 +426,7 @@ watch(
                 :class="['concept-chip', { clickable: isLocalScheme(ref.uri) }]"
                 @click="handleSchemeClick(ref)"
               >
+                <span class="material-symbols-outlined chip-icon icon-folder">folder</span>
                 {{ getRefLabel(ref) }}<span v-if="ref.lang && shouldShowLangTag(ref.lang)" class="lang-tag">{{ ref.lang }}</span>
               </span>
             </div>
@@ -499,6 +574,11 @@ watch(
   color: var(--ae-accent);
 }
 
+.chip-icon {
+  font-size: 14px;
+  margin-right: 0.25rem;
+}
+
 .mapping-links {
   display: flex;
   flex-direction: column;
@@ -515,5 +595,31 @@ watch(
 
 .link-icon {
   font-size: 14px;
+}
+
+.doc-values {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.doc-value {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0;
+}
+
+.doc-value .lang-tag-first {
+  grid-column: 1;
+  align-self: start;
+  margin-top: 0.1rem;
+  margin-right: 0.5rem;
+}
+
+.doc-value .doc-text {
+  grid-column: 2;
 }
 </style>

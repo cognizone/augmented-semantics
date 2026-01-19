@@ -52,6 +52,14 @@ export function useConceptNavigation(emit: (event: 'selectConcept', uri: string)
   }
 
   /**
+   * Navigate to a collection (show its details)
+   * @param ref - The collection reference to navigate to
+   */
+  function navigateToCollection(ref: ConceptRef): void {
+    conceptStore.selectCollection(ref.uri)
+  }
+
+  /**
    * Open an external link in a new tab
    * @param uri - The URI to open
    */
@@ -63,6 +71,7 @@ export function useConceptNavigation(emit: (event: 'selectConcept', uri: string)
     navigateTo,
     isLocalScheme,
     navigateToScheme,
+    navigateToCollection,
     handleSchemeClick,
     openExternal
   }

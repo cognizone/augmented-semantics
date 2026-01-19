@@ -10,6 +10,7 @@ import { useEndpointStore } from '../stores'
 import { executeSparql, withPrefixes, logger, resolveUris } from '../services'
 import { useLabelResolver } from './useLabelResolver'
 import { useOtherProperties, COLLECTION_EXCLUDED_PREDICATES } from './useOtherProperties'
+import { LABEL_PRIORITY } from '../constants'
 import type { CollectionDetails, LabelValue, NotationValue, ConceptRef } from '../types'
 
 export function useCollectionData() {
@@ -64,7 +65,7 @@ export function useCollectionData() {
           <${collectionUri}> dct:title ?o .
           BIND(dct:title AS ?p)
           BIND(LANG(?o) AS ?lang)
-          BIND("title" AS ?labelType)
+          BIND("dctTitle" AS ?labelType)
         }
         UNION
         {
@@ -87,10 +88,11 @@ export function useCollectionData() {
   /**
    * Build query to load collection members
    * Supports SKOS-XL labels, dct:title, dc:title, and rdfs:label for broader compatibility
+   * Also fetches hasNarrower for icon display (leaf vs label)
    */
   function buildMembersQuery(collectionUri: string): string {
     return withPrefixes(`
-      SELECT DISTINCT ?member ?label ?labelLang ?labelType ?notation WHERE {
+      SELECT DISTINCT ?member ?label ?labelLang ?labelType ?notation ?hasNarrower WHERE {
         <${collectionUri}> skos:member ?member .
 
         OPTIONAL {
@@ -102,7 +104,7 @@ export function useCollectionData() {
             BIND("xlPrefLabel" AS ?labelType)
           } UNION {
             ?member dct:title ?label .
-            BIND("title" AS ?labelType)
+            BIND("dctTitle" AS ?labelType)
           } UNION {
             ?member dc:title ?label .
             BIND("dcTitle" AS ?labelType)
@@ -113,6 +115,8 @@ export function useCollectionData() {
           BIND(LANG(?label) AS ?labelLang)
         }
         OPTIONAL { ?member skos:notation ?notation }
+        OPTIONAL { ?member skos:narrower ?narrowerChild }
+        BIND(BOUND(?narrowerChild) AS ?hasNarrower)
       }
       ORDER BY ?member
       LIMIT 500
@@ -124,7 +128,7 @@ export function useCollectionData() {
    */
   function selectLabelsByPriority(
     labels: { value: string; lang?: string; type: string }[],
-    priority: string[]
+    priority: readonly string[] = LABEL_PRIORITY
   ): LabelValue[] {
     for (const type of priority) {
       const ofType = labels.filter(l => l.type === type)
@@ -137,15 +141,18 @@ export function useCollectionData() {
 
   /**
    * Process detail bindings into CollectionDetails
-   * Uses priority-based label selection: prefLabel > xlPrefLabel > title > rdfsLabel
+   * Stores title types separately: dctTitles, dcTitles, rdfsLabels
    */
   function processDetailsBindings(
     uri: string,
     bindings: Array<Record<string, { value: string; 'xml:lang'?: string; datatype?: string }>>
   ): CollectionDetails {
-    // Group labels by type for priority selection
-    const prefLabelsByType: { value: string; lang?: string; type: string }[] = []
-    const altLabelsByType: { value: string; lang?: string; type: string }[] = []
+    // Group labels by type for separate storage
+    const prefLabels: LabelValue[] = []
+    const altLabels: LabelValue[] = []
+    const dctTitles: LabelValue[] = []
+    const dcTitles: LabelValue[] = []
+    const rdfsLabels: LabelValue[] = []
     const notations: NotationValue[] = []
     const definitions: LabelValue[] = []
     const scopeNotes: LabelValue[] = []
@@ -160,11 +167,17 @@ export function useCollectionData() {
 
       if (!predicate || !value) continue
 
-      // Handle labels with type tracking
-      if (labelType === 'prefLabel' || labelType === 'xlPrefLabel' || labelType === 'title' || labelType === 'dcTitle' || labelType === 'rdfsLabel') {
-        prefLabelsByType.push({ value, lang, type: labelType })
+      // Handle labels with type tracking - store each type separately
+      if (labelType === 'prefLabel' || labelType === 'xlPrefLabel') {
+        prefLabels.push({ value, lang })
+      } else if (labelType === 'dctTitle') {
+        dctTitles.push({ value, lang })
+      } else if (labelType === 'dcTitle') {
+        dcTitles.push({ value, lang })
+      } else if (labelType === 'rdfsLabel') {
+        rdfsLabels.push({ value, lang })
       } else if (labelType === 'altLabel' || labelType === 'xlAltLabel') {
-        altLabelsByType.push({ value, lang, type: labelType })
+        altLabels.push({ value, lang })
       } else if (predicate.endsWith('notation')) {
         notations.push({ value, datatype })
       } else if (predicate.endsWith('definition')) {
@@ -176,17 +189,13 @@ export function useCollectionData() {
       }
     }
 
-    // Convert to LabelValue[] using priority: prefLabel > xlPrefLabel > title > rdfsLabel
-    const prefLabelPriority = ['prefLabel', 'xlPrefLabel', 'title', 'dcTitle', 'rdfsLabel']
-    const prefLabels = selectLabelsByPriority(prefLabelsByType, prefLabelPriority)
-
-    const altLabelPriority = ['altLabel', 'xlAltLabel']
-    const altLabels = selectLabelsByPriority(altLabelsByType, altLabelPriority)
-
     return {
       uri,
       prefLabels,
       altLabels,
+      dctTitles,
+      dcTitles,
+      rdfsLabels,
       definitions,
       scopeNotes,
       notes,
@@ -198,6 +207,7 @@ export function useCollectionData() {
   /**
    * Process member bindings into ConceptRef array
    * Uses priority-based label selection: prefLabel > xlPrefLabel > title > rdfsLabel
+   * Also tracks hasNarrower for icon display
    */
   function processMemberBindings(
     bindings: Array<Record<string, { value: string; 'xml:lang'?: string }>>
@@ -207,6 +217,7 @@ export function useCollectionData() {
       uri: string
       labels: { value: string; lang?: string; type: string }[]
       notation?: string
+      hasNarrower?: boolean
     }>()
 
     for (const b of bindings) {
@@ -232,16 +243,20 @@ export function useCollectionData() {
       if (!entry.notation && b.notation?.value) {
         entry.notation = b.notation.value
       }
+
+      // Track hasNarrower (true if any binding shows narrower exists)
+      if (b.hasNarrower?.value === 'true') {
+        entry.hasNarrower = true
+      }
     }
 
     // Convert with priority-based label selection
-    const labelPriority = ['prefLabel', 'xlPrefLabel', 'title', 'dcTitle', 'rdfsLabel']
     const result: ConceptRef[] = []
 
     for (const entry of memberMap.values()) {
       let bestLabel: LabelValue | undefined
 
-      for (const type of labelPriority) {
+      for (const type of LABEL_PRIORITY) {
         const labelsOfType = entry.labels.filter(l => l.type === type)
         if (labelsOfType.length > 0) {
           bestLabel = selectLabel(labelsOfType.map(l => ({ value: l.value, lang: l.lang })))
@@ -254,6 +269,7 @@ export function useCollectionData() {
         label: bestLabel?.value,
         notation: entry.notation,
         lang: bestLabel?.lang,
+        hasNarrower: entry.hasNarrower,
       })
     }
 

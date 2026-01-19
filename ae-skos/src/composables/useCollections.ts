@@ -10,6 +10,7 @@ import { ref } from 'vue'
 import { useEndpointStore, useLanguageStore } from '../stores'
 import { executeSparql, withPrefixes, logger } from '../services'
 import { useLabelResolver } from './useLabelResolver'
+import { LABEL_PRIORITY } from '../constants'
 import type { CollectionNode } from '../types'
 
 export function useCollections() {
@@ -54,7 +55,7 @@ export function useCollections() {
             BIND("xlPrefLabel" AS ?labelType)
           } UNION {
             ?collection dct:title ?label .
-            BIND("title" AS ?labelType)
+            BIND("dctTitle" AS ?labelType)
           } UNION {
             ?collection dc:title ?label .
             BIND("dcTitle" AS ?labelType)
@@ -144,7 +145,7 @@ export function useCollections() {
 
     // Convert to CollectionNode array with priority-based label selection
     const result: CollectionNode[] = []
-    const labelPriority = ['prefLabel', 'xlPrefLabel', 'title', 'dcTitle', 'rdfsLabel']
+    const labelPriority = LABEL_PRIORITY
 
     for (const entry of collectionMap.values()) {
       let bestLabel: string | undefined

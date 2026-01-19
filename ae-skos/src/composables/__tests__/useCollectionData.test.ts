@@ -155,7 +155,7 @@ describe('useCollectionData', () => {
       expect(details.value?.prefLabels.some((l) => l.value === 'RDFS Label')).toBe(false)
     })
 
-    it('picks dcTitle when no prefLabel/xlPrefLabel/title exists', async () => {
+    it('stores dcTitle and rdfsLabel separately', async () => {
       ;(executeSparql as Mock).mockResolvedValueOnce({
         results: {
           bindings: [
@@ -178,10 +178,12 @@ describe('useCollectionData', () => {
       const { loadDetails, details } = useCollectionData()
       await loadDetails('http://example.org/collection/1')
 
-      // Should pick dcTitle over rdfsLabel
-      expect(details.value?.prefLabels.length).toBeGreaterThanOrEqual(1)
-      expect(details.value?.prefLabels.some((l) => l.value === 'DC Title')).toBe(true)
-      expect(details.value?.prefLabels.some((l) => l.value === 'RDFS Label')).toBe(false)
+      // dcTitle stored in dcTitles array
+      expect(details.value?.dcTitles?.length).toBeGreaterThanOrEqual(1)
+      expect(details.value?.dcTitles?.some((l) => l.value === 'DC Title')).toBe(true)
+      // rdfsLabel stored in rdfsLabels array
+      expect(details.value?.rdfsLabels?.length).toBeGreaterThanOrEqual(1)
+      expect(details.value?.rdfsLabels?.some((l) => l.value === 'RDFS Label')).toBe(true)
     })
 
     it('handles notation', async () => {
@@ -443,6 +445,50 @@ describe('useCollectionData', () => {
 
       expect(members.value[0].label).toBe('Alpha')
       expect(members.value[1].label).toBe('Zebra')
+    })
+
+    it('extracts hasNarrower for member icons', async () => {
+      ;(executeSparql as Mock)
+        .mockResolvedValueOnce({ results: { bindings: [] } }) // details
+        .mockResolvedValueOnce({
+          results: {
+            bindings: [
+              {
+                member: { value: 'http://example.org/concept/1' },
+                label: { value: 'Parent Concept' },
+                labelLang: { value: 'en' },
+                labelType: { value: 'prefLabel' },
+                hasNarrower: { value: 'true' },
+              },
+              {
+                member: { value: 'http://example.org/concept/2' },
+                label: { value: 'Leaf Concept' },
+                labelLang: { value: 'en' },
+                labelType: { value: 'prefLabel' },
+                hasNarrower: { value: 'false' },
+              },
+            ],
+          },
+        })
+
+      const { loadDetails, members, loadingMembers } = useCollectionData()
+      await loadDetails('http://example.org/collection/1')
+
+      await vi.waitFor(
+        () => {
+          expect(loadingMembers.value).toBe(false)
+        },
+        { timeout: 1000 }
+      )
+
+      // Find members by URI
+      const parentMember = members.value.find((m) => m.uri === 'http://example.org/concept/1')
+      const leafMember = members.value.find((m) => m.uri === 'http://example.org/concept/2')
+
+      // Parent has children
+      expect(parentMember?.hasNarrower).toBe(true)
+      // Leaf has no children (hasNarrower is undefined when false)
+      expect(leafMember?.hasNarrower).toBeUndefined()
     })
 
     it('updates memberCount in details after loading members', async () => {

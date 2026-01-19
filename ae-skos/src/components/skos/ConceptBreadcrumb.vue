@@ -11,6 +11,7 @@ import { ref, watch, computed } from 'vue'
 import { useConceptStore, useEndpointStore, useLanguageStore, useSchemeStore, useSettingsStore, useUIStore, ORPHAN_SCHEME_URI } from '../../stores'
 import { executeSparql, withPrefixes, logger } from '../../services'
 import { useLabelResolver } from '../../composables'
+import { LABEL_PRIORITY } from '../../constants'
 import type { ConceptRef, ConceptScheme } from '../../types'
 import Breadcrumb from 'primevue/breadcrumb'
 import Select from 'primevue/select'
@@ -195,7 +196,7 @@ async function loadSchemes() {
           BIND("xlPrefLabel" AS ?labelType)
         } UNION {
           ?scheme dct:title ?label .
-          BIND("title" AS ?labelType)
+          BIND("dctTitle" AS ?labelType)
         } UNION {
           ?scheme dc:title ?label .
           BIND("dcTitle" AS ?labelType)
@@ -251,7 +252,7 @@ async function loadSchemes() {
 
     // Convert to ConceptScheme[] with best label selection (includes all whitelist URIs)
     const uniqueSchemes: ConceptScheme[] = Array.from(schemeMap.entries()).map(([uri, data]) => {
-      const labelPriority = ['prefLabel', 'xlPrefLabel', 'title', 'dcTitle', 'rdfsLabel']
+      const labelPriority = LABEL_PRIORITY
       let bestLabel: string | undefined
       let bestLabelLang: string | undefined
 
@@ -400,7 +401,10 @@ async function loadBreadcrumb(uri: string) {
               BIND("xlPrefLabel" AS ?labelType)
             } UNION {
               <${current}> dct:title ?label .
-              BIND("title" AS ?labelType)
+              BIND("dctTitle" AS ?labelType)
+            } UNION {
+              <${current}> dc:title ?label .
+              BIND("dcTitle" AS ?labelType)
             } UNION {
               <${current}> rdfs:label ?label .
               BIND("rdfsLabel" AS ?labelType)
@@ -451,8 +455,8 @@ async function loadBreadcrumb(uri: string) {
         }
       }
 
-      // Pick best label: prefLabel > xlPrefLabel > title > rdfsLabel, with language priority
-      const labelPriority = ['prefLabel', 'xlPrefLabel', 'title', 'dcTitle', 'rdfsLabel']
+      // Pick best label using LABEL_PRIORITY constant
+      const labelPriority = LABEL_PRIORITY
       let bestLabel: string | undefined
       let bestLabelLang: string | undefined
 
@@ -460,11 +464,7 @@ async function loadBreadcrumb(uri: string) {
         const labelsOfType = labels.filter(l => l.type === labelType)
         if (!labelsOfType.length) continue
 
-        const preferred = labelsOfType.find(l => l.lang === languageStore.preferred)
-        const noLang = labelsOfType.find(l => l.lang === '')
-        const any = labelsOfType[0]
-
-        const selected = preferred || noLang || any
+        const selected = selectBestLabelByLanguage(labelsOfType)
         if (selected) {
           bestLabel = selected.value
           bestLabelLang = selected.lang || undefined
@@ -504,9 +504,13 @@ async function loadBreadcrumb(uri: string) {
         {
           <${uri}> skos:prefLabel ?label .
         } UNION {
-          <${uri}> rdfs:label ?label .
+          <${uri}> skosxl:prefLabel/skosxl:literalForm ?label .
         } UNION {
           <${uri}> dct:title ?label .
+        } UNION {
+          <${uri}> dc:title ?label .
+        } UNION {
+          <${uri}> rdfs:label ?label .
         }
         BIND(LANG(?label) AS ?labelLang)
       }
@@ -516,14 +520,13 @@ async function loadBreadcrumb(uri: string) {
       const results = await executeSparql(endpoint, simpleQuery, { retries: 0 })
       const labels = results.results.bindings.map(b => ({
         value: b.label?.value || '',
-        lang: b.labelLang?.value || ''
+        lang: b.labelLang?.value || '',
+        type: 'fallback'  // Dummy type for selectBestLabelByLanguage compatibility
       })).filter(l => l.value)
 
-      // Pick best label
-      const preferred = labels.find(l => l.lang === languageStore.preferred)
-      const noLang = labels.find(l => l.lang === '')
-      const any = labels[0]
-      const bestLabel = preferred?.value || noLang?.value || any?.value
+      // Pick best label using shared language priority logic
+      const selected = selectBestLabelByLanguage(labels)
+      const bestLabel = selected?.value
 
       conceptStore.setBreadcrumb([{ uri, label: bestLabel }])
     } catch {
@@ -571,7 +574,7 @@ async function loadCollectionBreadcrumb(collectionUri: string) {
             BIND("xlPrefLabel" AS ?labelType)
           } UNION {
             <${collectionUri}> dct:title ?label .
-            BIND("title" AS ?labelType)
+            BIND("dctTitle" AS ?labelType)
           } UNION {
             <${collectionUri}> dc:title ?label .
             BIND("dcTitle" AS ?labelType)
@@ -607,8 +610,8 @@ async function loadCollectionBreadcrumb(collectionUri: string) {
       }
     }
 
-    // Pick best label: prefLabel > xlPrefLabel > title > dcTitle > rdfsLabel
-    const labelPriority = ['prefLabel', 'xlPrefLabel', 'title', 'dcTitle', 'rdfsLabel']
+    // Pick best label using LABEL_PRIORITY constant
+    const labelPriority = LABEL_PRIORITY
     let bestLabel: string | undefined
     let bestLabelLang: string | undefined
 
@@ -616,11 +619,7 @@ async function loadCollectionBreadcrumb(collectionUri: string) {
       const labelsOfType = labels.filter(l => l.type === labelType)
       if (!labelsOfType.length) continue
 
-      const preferred = labelsOfType.find(l => l.lang === languageStore.preferred)
-      const noLang = labelsOfType.find(l => l.lang === '')
-      const any = labelsOfType[0]
-
-      const selected = preferred || noLang || any
+      const selected = selectBestLabelByLanguage(labelsOfType)
       if (selected) {
         bestLabel = selected.value
         bestLabelLang = selected.lang || undefined

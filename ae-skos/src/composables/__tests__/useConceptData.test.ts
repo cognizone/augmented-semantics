@@ -117,7 +117,7 @@ describe('useConceptData', () => {
       expect(details.value?.definitions).toHaveLength(1)
     })
 
-    it('handles rdfs:label as prefLabel', async () => {
+    it('handles rdfs:label separately', async () => {
       ;(executeSparql as Mock).mockResolvedValueOnce({
         results: {
           bindings: [
@@ -129,11 +129,11 @@ describe('useConceptData', () => {
       const { loadDetails, details } = useConceptData()
       await loadDetails('http://example.org/concept/1')
 
-      expect(details.value?.prefLabels).toHaveLength(1)
-      expect(details.value?.prefLabels[0].value).toBe('RDFS Label')
+      expect(details.value?.rdfsLabels).toHaveLength(1)
+      expect(details.value?.rdfsLabels[0].value).toBe('RDFS Label')
     })
 
-    it('handles dct:title as prefLabel', async () => {
+    it('handles dct:title separately', async () => {
       ;(executeSparql as Mock).mockResolvedValueOnce({
         results: {
           bindings: [
@@ -145,8 +145,24 @@ describe('useConceptData', () => {
       const { loadDetails, details } = useConceptData()
       await loadDetails('http://example.org/concept/1')
 
-      expect(details.value?.prefLabels).toHaveLength(1)
-      expect(details.value?.prefLabels[0].value).toBe('DC Title')
+      expect(details.value?.dctTitles).toHaveLength(1)
+      expect(details.value?.dctTitles[0].value).toBe('DC Title')
+    })
+
+    it('handles dc:title separately', async () => {
+      ;(executeSparql as Mock).mockResolvedValueOnce({
+        results: {
+          bindings: [
+            { property: { value: 'http://purl.org/dc/elements/1.1/title' }, value: { value: 'DC Elements Title', 'xml:lang': 'en' } },
+          ],
+        },
+      })
+
+      const { loadDetails, details } = useConceptData()
+      await loadDetails('http://example.org/concept/1')
+
+      expect(details.value?.dcTitles).toHaveLength(1)
+      expect(details.value?.dcTitles[0].value).toBe('DC Elements Title')
     })
 
     it('handles broader, narrower, related relations', async () => {
@@ -271,9 +287,89 @@ describe('useConceptData', () => {
     })
   })
 
+  describe('loadCollections', () => {
+    it('loads collections that contain the concept', async () => {
+      // 1. Main query (empty - no relations)
+      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
+      // 2. Collections query
+      ;(executeSparql as Mock).mockResolvedValueOnce({
+        results: {
+          bindings: [
+            { collection: { value: 'http://example.org/collection/1' } },
+            { collection: { value: 'http://example.org/collection/2' } },
+          ],
+        },
+      })
+      // 3. Related labels query (includes collections)
+      ;(executeSparql as Mock).mockResolvedValueOnce({
+        results: {
+          bindings: [
+            { concept: { value: 'http://example.org/collection/1' }, label: { value: 'Collection One' }, labelLang: { value: 'en' }, labelType: { value: 'prefLabel' } },
+            { concept: { value: 'http://example.org/collection/2' }, label: { value: 'Collection Two' }, labelLang: { value: 'en' }, labelType: { value: 'prefLabel' } },
+          ],
+        },
+      })
+      // 4. XL labels query
+      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
+      // 5. Other properties query
+      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
+
+      const { loadDetails, details } = useConceptData()
+      await loadDetails('http://example.org/concept/1')
+
+      expect(details.value?.collections).toHaveLength(2)
+      expect(details.value?.collections[0].uri).toBe('http://example.org/collection/1')
+      expect(details.value?.collections[0].label).toBe('Collection One')
+      expect(details.value?.collections[0].type).toBe('collection')
+    })
+
+    it('deduplicates collection URIs', async () => {
+      // 1. Main query
+      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
+      // 2. Collections query (same collection twice)
+      ;(executeSparql as Mock).mockResolvedValueOnce({
+        results: {
+          bindings: [
+            { collection: { value: 'http://example.org/collection/1' } },
+            { collection: { value: 'http://example.org/collection/1' } },
+          ],
+        },
+      })
+      // 3. Related labels query
+      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
+      // 4. XL labels query
+      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
+      // 5. Other properties query
+      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
+
+      const { loadDetails, details } = useConceptData()
+      await loadDetails('http://example.org/concept/1')
+
+      expect(details.value?.collections).toHaveLength(1)
+    })
+
+    it('continues silently on collections query failure', async () => {
+      // 1. Main query
+      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
+      // 2. Collections query fails
+      ;(executeSparql as Mock).mockRejectedValueOnce(new Error('Collections query failed'))
+      // 3. XL labels query
+      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
+      // 4. Other properties query
+      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
+
+      const { loadDetails, details, error } = useConceptData()
+      await loadDetails('http://example.org/concept/1')
+
+      expect(details.value).not.toBeNull()
+      expect(error.value).toBeNull()
+      expect(details.value?.collections).toHaveLength(0)
+    })
+  })
+
   describe('loadRelatedLabels', () => {
     it('loads labels for related concepts', async () => {
-      // First call returns concept with broader
+      // 1. Main query returns concept with broader
       ;(executeSparql as Mock).mockResolvedValueOnce({
         results: {
           bindings: [
@@ -281,11 +377,13 @@ describe('useConceptData', () => {
           ],
         },
       })
-      // Second call returns labels for related concepts
+      // 2. Collections query
+      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
+      // 3. Related labels query returns labels for related concepts
       ;(executeSparql as Mock).mockResolvedValueOnce({
         results: {
           bindings: [
-            { concept: { value: 'http://example.org/broader/1' }, notation: { value: 'B1' }, label: { value: 'Broader Concept' }, labelLang: { value: 'en' }, labelType: { value: 'prefLabel' } },
+            { concept: { value: 'http://example.org/broader/1' }, notation: { value: 'B1' }, label: { value: 'Broader Concept' }, labelLang: { value: 'en' }, labelType: { value: 'prefLabel' }, hasNarrower: { value: 'true' } },
           ],
         },
       })
@@ -297,7 +395,47 @@ describe('useConceptData', () => {
       expect(details.value?.broader[0].notation).toBe('B1')
     })
 
+    it('extracts hasNarrower from query results', async () => {
+      // 1. Main query returns concept with broader and narrower
+      ;(executeSparql as Mock).mockResolvedValueOnce({
+        results: {
+          bindings: [
+            { property: { value: 'http://www.w3.org/2004/02/skos/core#broader' }, value: { value: 'http://example.org/broader/1' } },
+            { property: { value: 'http://www.w3.org/2004/02/skos/core#narrower' }, value: { value: 'http://example.org/narrower/1' } },
+            { property: { value: 'http://www.w3.org/2004/02/skos/core#narrower' }, value: { value: 'http://example.org/narrower/2' } },
+          ],
+        },
+      })
+      // 2. Collections query
+      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
+      // 3. Related labels query - one with children, one without
+      ;(executeSparql as Mock).mockResolvedValueOnce({
+        results: {
+          bindings: [
+            { concept: { value: 'http://example.org/broader/1' }, label: { value: 'Broader' }, labelLang: { value: 'en' }, labelType: { value: 'prefLabel' }, hasNarrower: { value: 'true' } },
+            { concept: { value: 'http://example.org/narrower/1' }, label: { value: 'Narrower With Children' }, labelLang: { value: 'en' }, labelType: { value: 'prefLabel' }, hasNarrower: { value: 'true' } },
+            { concept: { value: 'http://example.org/narrower/2' }, label: { value: 'Narrower Leaf' }, labelLang: { value: 'en' }, labelType: { value: 'prefLabel' }, hasNarrower: { value: 'false' } },
+          ],
+        },
+      })
+
+      const { loadDetails, details } = useConceptData()
+      await loadDetails('http://example.org/concept/1')
+
+      // Broader should have hasNarrower = true
+      expect(details.value?.broader[0].hasNarrower).toBe(true)
+
+      // First narrower has children
+      const narrowerWithChildren = details.value?.narrower.find(n => n.uri === 'http://example.org/narrower/1')
+      expect(narrowerWithChildren?.hasNarrower).toBe(true)
+
+      // Second narrower is a leaf (hasNarrower = false means undefined, since we only set it when true)
+      const narrowerLeaf = details.value?.narrower.find(n => n.uri === 'http://example.org/narrower/2')
+      expect(narrowerLeaf?.hasNarrower).toBeUndefined()
+    })
+
     it('applies label type priority', async () => {
+      // 1. Main query
       ;(executeSparql as Mock).mockResolvedValueOnce({
         results: {
           bindings: [
@@ -305,7 +443,9 @@ describe('useConceptData', () => {
           ],
         },
       })
-      // Multiple label types for the same concept
+      // 2. Collections query
+      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
+      // 3. Related labels query - Multiple label types for the same concept
       ;(executeSparql as Mock).mockResolvedValueOnce({
         results: {
           bindings: [
@@ -326,6 +466,7 @@ describe('useConceptData', () => {
       const languageStore = useLanguageStore()
       languageStore.setPreferred('fr')
 
+      // 1. Main query
       ;(executeSparql as Mock).mockResolvedValueOnce({
         results: {
           bindings: [
@@ -333,6 +474,9 @@ describe('useConceptData', () => {
           ],
         },
       })
+      // 2. Collections query
+      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
+      // 3. Related labels query
       ;(executeSparql as Mock).mockResolvedValueOnce({
         results: {
           bindings: [
@@ -353,7 +497,9 @@ describe('useConceptData', () => {
     it('loads SKOS-XL extended labels', async () => {
       // 1. Main query (empty - no relations)
       ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
-      // 2. XL labels query (no loadRelatedLabels call since no relations)
+      // 2. Collections query
+      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
+      // 3. XL labels query (no loadRelatedLabels call since no relations/collections)
       ;(executeSparql as Mock).mockResolvedValueOnce({
         results: {
           bindings: [
@@ -362,14 +508,15 @@ describe('useConceptData', () => {
           ],
         },
       })
-      // 3. Other properties query
+      // 4. Other properties query
       ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
 
       const { loadDetails, details } = useConceptData()
       await loadDetails('http://example.org/concept/1')
 
       expect(details.value?.prefLabelsXL).toHaveLength(1)
-      expect(details.value?.prefLabelsXL[0].uri).toBe('http://example.org/xl/1')
+      // Note: uri is always '' because the property path syntax doesn't return the XL label URI
+      expect(details.value?.prefLabelsXL[0].uri).toBe('')
       expect(details.value?.prefLabelsXL[0].literalForm.value).toBe('XL Pref Label')
       expect(details.value?.altLabelsXL).toHaveLength(1)
     })
@@ -377,7 +524,9 @@ describe('useConceptData', () => {
     it('deduplicates XL labels by URI', async () => {
       // 1. Main query
       ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
-      // 2. XL labels query
+      // 2. Collections query
+      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
+      // 3. XL labels query
       ;(executeSparql as Mock).mockResolvedValueOnce({
         results: {
           bindings: [
@@ -386,7 +535,7 @@ describe('useConceptData', () => {
           ],
         },
       })
-      // 3. Other properties query
+      // 4. Other properties query
       ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
 
       const { loadDetails, details } = useConceptData()
@@ -398,9 +547,11 @@ describe('useConceptData', () => {
     it('continues silently on XL labels query failure', async () => {
       // 1. Main query
       ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
-      // 2. XL labels query fails
+      // 2. Collections query
+      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
+      // 3. XL labels query fails
       ;(executeSparql as Mock).mockRejectedValueOnce(new Error('XL query failed'))
-      // 3. Other properties query
+      // 4. Other properties query
       ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
 
       const { loadDetails, details, error } = useConceptData()
@@ -416,9 +567,11 @@ describe('useConceptData', () => {
     it('loads non-SKOS properties', async () => {
       // 1. Main query (empty - no relations)
       ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
-      // 2. XL labels query (no loadRelatedLabels since no relations)
+      // 2. Collections query
       ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
-      // 3. Other properties query
+      // 3. XL labels query (no loadRelatedLabels since no relations/collections)
+      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
+      // 4. Other properties query
       ;(executeSparql as Mock).mockResolvedValueOnce({
         results: {
           bindings: [
@@ -438,9 +591,11 @@ describe('useConceptData', () => {
     it('groups values by predicate', async () => {
       // 1. Main query
       ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
-      // 2. XL labels query
+      // 2. Collections query
       ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
-      // 3. Other properties query
+      // 3. XL labels query
+      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
+      // 4. Other properties query
       ;(executeSparql as Mock).mockResolvedValueOnce({
         results: {
           bindings: [
@@ -460,9 +615,11 @@ describe('useConceptData', () => {
     it('deduplicates values by value+lang', async () => {
       // 1. Main query
       ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
-      // 2. XL labels query
+      // 2. Collections query
       ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
-      // 3. Other properties query
+      // 3. XL labels query
+      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
+      // 4. Other properties query
       ;(executeSparql as Mock).mockResolvedValueOnce({
         results: {
           bindings: [
@@ -481,9 +638,11 @@ describe('useConceptData', () => {
     it('detects URI values', async () => {
       // 1. Main query
       ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
-      // 2. XL labels query
+      // 2. Collections query
       ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
-      // 3. Other properties query
+      // 3. XL labels query
+      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
+      // 4. Other properties query
       ;(executeSparql as Mock).mockResolvedValueOnce({
         results: {
           bindings: [
@@ -501,9 +660,11 @@ describe('useConceptData', () => {
     it('resolves predicate URIs', async () => {
       // 1. Main query
       ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
-      // 2. XL labels query
+      // 2. Collections query
       ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
-      // 3. Other properties query
+      // 3. XL labels query
+      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
+      // 4. Other properties query
       ;(executeSparql as Mock).mockResolvedValueOnce({
         results: {
           bindings: [
@@ -524,9 +685,11 @@ describe('useConceptData', () => {
     it('continues silently on other properties query failure', async () => {
       // 1. Main query
       ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
-      // 2. XL labels query
+      // 2. Collections query
       ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
-      // 3. Other properties query fails
+      // 3. XL labels query
+      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
+      // 4. Other properties query fails
       ;(executeSparql as Mock).mockRejectedValueOnce(new Error('Query failed'))
 
       const { loadDetails, details, error } = useConceptData()
@@ -543,6 +706,7 @@ describe('useConceptData', () => {
       const languageStore = useLanguageStore()
       languageStore.setPreferred('de')
 
+      // 1. Main query
       ;(executeSparql as Mock).mockResolvedValueOnce({
         results: {
           bindings: [
@@ -550,6 +714,9 @@ describe('useConceptData', () => {
           ],
         },
       })
+      // 2. Collections query
+      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
+      // 3. Related labels query
       ;(executeSparql as Mock).mockResolvedValueOnce({
         results: {
           bindings: [
@@ -575,6 +742,7 @@ describe('useConceptData', () => {
         languagePriorities: ['fr', 'en'], // French is first priority
       })
 
+      // 1. Main query
       ;(executeSparql as Mock).mockResolvedValueOnce({
         results: {
           bindings: [
@@ -582,6 +750,9 @@ describe('useConceptData', () => {
           ],
         },
       })
+      // 2. Collections query
+      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
+      // 3. Related labels query
       ;(executeSparql as Mock).mockResolvedValueOnce({
         results: {
           bindings: [
@@ -606,6 +777,7 @@ describe('useConceptData', () => {
         languagePriorities: ['it'], // Not available
       })
 
+      // 1. Main query
       ;(executeSparql as Mock).mockResolvedValueOnce({
         results: {
           bindings: [
@@ -613,6 +785,9 @@ describe('useConceptData', () => {
           ],
         },
       })
+      // 2. Collections query
+      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
+      // 3. Related labels query
       ;(executeSparql as Mock).mockResolvedValueOnce({
         results: {
           bindings: [
@@ -637,6 +812,7 @@ describe('useConceptData', () => {
         languagePriorities: [],
       })
 
+      // 1. Main query
       ;(executeSparql as Mock).mockResolvedValueOnce({
         results: {
           bindings: [
@@ -644,6 +820,9 @@ describe('useConceptData', () => {
           ],
         },
       })
+      // 2. Collections query
+      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
+      // 3. Related labels query
       ;(executeSparql as Mock).mockResolvedValueOnce({
         results: {
           bindings: [
