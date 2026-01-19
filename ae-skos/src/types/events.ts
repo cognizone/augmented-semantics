@@ -27,6 +27,14 @@ export interface EventPayloads {
   /** Concept has been revealed in the tree (scroll complete) */
   'concept:revealed': string
 
+  // === Collection Events ===
+
+  /** Collection selection is about to happen (for pre-selection prep) */
+  'collection:selecting': string
+
+  /** Collection was selected (URI set in store) */
+  'collection:selected': string | null
+
   // === Tree Events ===
 
   /** Tree is loading top concepts */

@@ -14,6 +14,7 @@
   --ae-icon-folder: #ca8a04;
   --ae-icon-label: #a855f7;
   --ae-icon-leaf: #22c55e;
+  --ae-icon-collection: #8b5cf6;
 }
 
 .dark-mode {
@@ -21,6 +22,7 @@
   --ae-icon-folder: #ca8a04;
   --ae-icon-label: #a855f7;
   --ae-icon-leaf: #22c55e;
+  --ae-icon-collection: #8b5cf6;
 }
 
 .icon-folder {
@@ -33,6 +35,10 @@
 
 .icon-leaf {
   color: var(--ae-icon-leaf);
+}
+
+.icon-collection {
+  color: var(--ae-icon-collection);
 }
 
 /* ============================================

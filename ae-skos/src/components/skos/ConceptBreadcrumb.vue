@@ -116,6 +116,7 @@ function goHome() {
   const scheme = schemeStore.selected
   if (scheme) {
     conceptStore.selectConcept(null)
+    conceptStore.selectCollection(null)
     schemeStore.viewScheme(scheme.uri)
     conceptStore.scrollTreeToTop()
     // Add to history
@@ -196,6 +197,9 @@ async function loadSchemes() {
           ?scheme dct:title ?label .
           BIND("title" AS ?labelType)
         } UNION {
+          ?scheme dc:title ?label .
+          BIND("dcTitle" AS ?labelType)
+        } UNION {
           ?scheme rdfs:label ?label .
           BIND("rdfsLabel" AS ?labelType)
         }
@@ -247,7 +251,7 @@ async function loadSchemes() {
 
     // Convert to ConceptScheme[] with best label selection (includes all whitelist URIs)
     const uniqueSchemes: ConceptScheme[] = Array.from(schemeMap.entries()).map(([uri, data]) => {
-      const labelPriority = ['prefLabel', 'xlPrefLabel', 'title', 'rdfsLabel']
+      const labelPriority = ['prefLabel', 'xlPrefLabel', 'title', 'dcTitle', 'rdfsLabel']
       let bestLabel: string | undefined
       let bestLabelLang: string | undefined
 
@@ -306,19 +310,41 @@ watch(
 
 // Convert breadcrumb to PrimeVue format with notation + label + lang
 const breadcrumbItems = computed(() => {
-  return conceptStore.breadcrumb.map(item => {
+  const items = conceptStore.breadcrumb
+
+  return items.map((item, index) => {
     const label = item.label || item.uri.split('/').pop() || item.uri
     // Show notation + label if both exist
     const displayLabel = item.notation && item.label
       ? `${item.notation} - ${label}`
       : item.notation || label
 
+    // Determine if this is the last (current) item
+    const isLast = index === items.length - 1
+
+    // Command depends on item type
+    let command: (() => void) | undefined
+
+    if (isLast) {
+      // Last item is current selection - no action
+      command = undefined
+    } else if (item.type === 'scheme') {
+      // Clicking scheme in collection breadcrumb goes to scheme details
+      command = () => goHome()
+    } else {
+      // Regular concept navigation
+      command = () => navigateTo(item.uri)
+    }
+
     return {
       label: displayLabel,
       uri: item.uri,
       lang: item.lang,
+      type: item.type,
+      hasNarrower: (item as ConceptRef & { hasNarrower?: boolean }).hasNarrower,
+      isLast,
       showLangTag: item.lang ? shouldShowLangTag(item.lang) : false,
-      command: () => navigateTo(item.uri),
+      command,
     }
   })
 })
@@ -346,9 +372,11 @@ async function loadBreadcrumb(uri: string) {
     while (current && !visited.has(current) && path.length < MAX_DEPTH) {
       visited.add(current)
 
-      // Simple query for ONE concept's broader + labels (fast!)
+      // Simple query for ONE concept's broader + labels + hasNarrower (fast!)
+      // hasNarrower only needed for the selected concept (first iteration)
+      const isSelectedConcept = path.length === 0
       const query = withPrefixes(`
-        SELECT ?broader ?label ?labelLang ?labelType ?notation
+        SELECT ?broader ?label ?labelLang ?labelType ?notation ${isSelectedConcept ? '?hasNarrower' : ''}
         WHERE {
           OPTIONAL {
             { <${current}> skos:broader ?broader }
@@ -356,6 +384,13 @@ async function loadBreadcrumb(uri: string) {
             { ?broader skos:narrower <${current}> }
           }
           OPTIONAL { <${current}> skos:notation ?notation }
+          ${isSelectedConcept ? `
+          OPTIONAL {
+            { <${current}> skos:narrower ?hasNarrower }
+            UNION
+            { ?hasNarrower skos:broader <${current}> }
+          }
+          ` : ''}
           OPTIONAL {
             {
               <${current}> skos:prefLabel ?label .
@@ -387,6 +422,7 @@ async function loadBreadcrumb(uri: string) {
       const labels: { value: string; lang: string; type: string }[] = []
       let notation: string | undefined
       let broader: string | null = null
+      let hasNarrower = false
 
       for (const b of results.results.bindings) {
         if (b.broader?.value && !broader) {
@@ -394,6 +430,9 @@ async function loadBreadcrumb(uri: string) {
         }
         if (b.notation?.value && !notation) {
           notation = b.notation.value
+        }
+        if (b.hasNarrower?.value) {
+          hasNarrower = true
         }
         const labelValue = b.label?.value
         if (labelValue) {
@@ -413,7 +452,7 @@ async function loadBreadcrumb(uri: string) {
       }
 
       // Pick best label: prefLabel > xlPrefLabel > title > rdfsLabel, with language priority
-      const labelPriority = ['prefLabel', 'xlPrefLabel', 'title', 'rdfsLabel']
+      const labelPriority = ['prefLabel', 'xlPrefLabel', 'title', 'dcTitle', 'rdfsLabel']
       let bestLabel: string | undefined
       let bestLabelLang: string | undefined
 
@@ -433,7 +472,19 @@ async function loadBreadcrumb(uri: string) {
         }
       }
 
-      path.push({ uri: current, label: bestLabel, lang: bestLabelLang, notation })
+      // For the selected concept (first item), include hasNarrower info
+      const item: ConceptRef = {
+        uri: current,
+        label: bestLabel,
+        lang: bestLabelLang,
+        notation,
+        type: 'concept',
+      }
+      // Store hasNarrower on the item (will be used for icon selection)
+      if (isSelectedConcept) {
+        (item as ConceptRef & { hasNarrower?: boolean }).hasNarrower = hasNarrower
+      }
+      path.push(item)
 
       // Move to broader (or stop if none)
       current = broader
@@ -488,12 +539,128 @@ function navigateTo(uri: string) {
   emit('selectConcept', uri)
 }
 
+/**
+ * Load breadcrumb for collection via SPARQL query
+ * Similar to loadBreadcrumb() but simpler (no broader chain)
+ */
+async function loadCollectionBreadcrumb(collectionUri: string) {
+  const endpoint = endpointStore.current
+  if (!endpoint) return
+
+  const scheme = schemeStore.selected
+  if (!scheme) {
+    conceptStore.setBreadcrumb([])
+    return
+  }
+
+  logger.debug('Breadcrumb', 'Loading collection labels', { uri: collectionUri })
+  loading.value = true
+
+  try {
+    // Query for collection labels using same priority as concepts
+    const query = withPrefixes(`
+      SELECT ?label ?labelLang ?labelType ?notation
+      WHERE {
+        OPTIONAL { <${collectionUri}> skos:notation ?notation }
+        OPTIONAL {
+          {
+            <${collectionUri}> skos:prefLabel ?label .
+            BIND("prefLabel" AS ?labelType)
+          } UNION {
+            <${collectionUri}> skosxl:prefLabel/skosxl:literalForm ?label .
+            BIND("xlPrefLabel" AS ?labelType)
+          } UNION {
+            <${collectionUri}> dct:title ?label .
+            BIND("title" AS ?labelType)
+          } UNION {
+            <${collectionUri}> dc:title ?label .
+            BIND("dcTitle" AS ?labelType)
+          } UNION {
+            <${collectionUri}> rdfs:label ?label .
+            BIND("rdfsLabel" AS ?labelType)
+          }
+          BIND(LANG(?label) AS ?labelLang)
+        }
+      }
+    `)
+
+    const results = await executeSparql(endpoint, query, { retries: 0 })
+
+    // Collect labels and notation
+    const labels: { value: string; lang: string; type: string }[] = []
+    let notation: string | undefined
+
+    for (const b of results.results.bindings) {
+      if (b.notation?.value && !notation) {
+        notation = b.notation.value
+      }
+      const labelValue = b.label?.value
+      if (labelValue) {
+        const labelLang = b.labelLang?.value || ''
+        const labelType = b.labelType?.value || 'prefLabel'
+        const exists = labels.some(l =>
+          l.value === labelValue && l.lang === labelLang && l.type === labelType
+        )
+        if (!exists) {
+          labels.push({ value: labelValue, lang: labelLang, type: labelType })
+        }
+      }
+    }
+
+    // Pick best label: prefLabel > xlPrefLabel > title > dcTitle > rdfsLabel
+    const labelPriority = ['prefLabel', 'xlPrefLabel', 'title', 'dcTitle', 'rdfsLabel']
+    let bestLabel: string | undefined
+    let bestLabelLang: string | undefined
+
+    for (const labelType of labelPriority) {
+      const labelsOfType = labels.filter(l => l.type === labelType)
+      if (!labelsOfType.length) continue
+
+      const preferred = labelsOfType.find(l => l.lang === languageStore.preferred)
+      const noLang = labelsOfType.find(l => l.lang === '')
+      const any = labelsOfType[0]
+
+      const selected = preferred || noLang || any
+      if (selected) {
+        bestLabel = selected.value
+        bestLabelLang = selected.lang || undefined
+        break
+      }
+    }
+
+    // Build breadcrumb with just the collection
+    const path: ConceptRef[] = [
+      {
+        uri: collectionUri,
+        label: bestLabel || collectionUri.split('/').pop() || collectionUri,
+        lang: bestLabelLang,
+        notation,
+        type: 'collection',
+      },
+    ]
+
+    conceptStore.setBreadcrumb(path)
+  } catch (e) {
+    logger.warn('Breadcrumb', 'Failed to load collection labels', { error: e })
+    // Fallback to URI fragment
+    conceptStore.setBreadcrumb([{
+      uri: collectionUri,
+      label: collectionUri.split('/').pop() || collectionUri,
+      type: 'collection',
+    }])
+  } finally {
+    loading.value = false
+  }
+}
+
 // Watch for selection OR language changes to reload breadcrumb
 watch(
-  [() => conceptStore.selectedUri, () => languageStore.preferred],
-  ([uri]) => {
-    if (uri) {
-      loadBreadcrumb(uri)
+  [() => conceptStore.selectedUri, () => conceptStore.selectedCollectionUri, () => languageStore.preferred],
+  ([conceptUri, collectionUri]) => {
+    if (conceptUri) {
+      loadBreadcrumb(conceptUri)
+    } else if (collectionUri) {
+      loadCollectionBreadcrumb(collectionUri)
     } else {
       conceptStore.setBreadcrumb([])
     }
@@ -504,15 +671,8 @@ watch(
 
 <template>
   <div class="concept-breadcrumb">
-    <!-- Home button (always visible, first) -->
-    <button class="home-btn" @click="goHome" title="Go to scheme">
-      <span class="material-symbols-outlined">home</span>
-    </button>
-
-    <!-- Separator -->
-    <span class="breadcrumb-separator">
-      <span class="material-symbols-outlined">chevron_right</span>
-    </span>
+    <!-- Scheme icon -->
+    <span class="material-symbols-outlined breadcrumb-icon icon-folder">folder</span>
 
     <!-- Scheme selector (styled like endpoint badge) -->
     <Select
@@ -567,7 +727,16 @@ watch(
       </span>
       <Breadcrumb :model="breadcrumbItems" class="breadcrumb-nav">
         <template #item="{ item }">
-          <a class="breadcrumb-link" @click.prevent="() => item.command && item.command({} as never)">
+          <span v-if="item.isLast" class="breadcrumb-current">
+            <span v-if="item.type === 'collection'" class="material-symbols-outlined breadcrumb-icon icon-collection">collections_bookmark</span>
+            <span v-else-if="item.hasNarrower" class="material-symbols-outlined breadcrumb-icon icon-label">label</span>
+            <span v-else class="material-symbols-outlined breadcrumb-icon icon-leaf">circle</span>
+            {{ item.label }}
+            <span v-if="item.showLangTag" class="lang-tag">{{ item.lang }}</span>
+          </span>
+          <a v-else class="breadcrumb-link" @click.prevent="() => item.command && item.command({} as never)">
+            <span v-if="item.type === 'collection'" class="material-symbols-outlined breadcrumb-icon icon-collection">collections_bookmark</span>
+            <span v-else class="material-symbols-outlined breadcrumb-icon icon-label">label</span>
             {{ item.label }}
             <span v-if="item.showLangTag" class="lang-tag">{{ item.lang }}</span>
           </a>
@@ -699,29 +868,10 @@ watch(
   font-size: 16px;
 }
 
-/* Home button */
-.home-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  background: none;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  color: var(--ae-text-primary);
-  transition: background-color 0.15s, color 0.15s;
-}
-
-.home-btn:hover {
-  background: var(--ae-bg-hover);
-  color: var(--ae-text-primary);
-}
-
-.home-btn .material-symbols-outlined {
-  font-size: 18px;
+/* Breadcrumb icons */
+.breadcrumb-icon {
+  font-size: 14px;
+  flex-shrink: 0;
 }
 
 /* Breadcrumb nav */
@@ -744,6 +894,14 @@ watch(
 
 .breadcrumb-link:hover {
   color: var(--ae-accent);
+}
+
+.breadcrumb-current {
+  color: var(--ae-text-secondary);
+  font-size: 0.8125rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
 }
 
 :deep(.p-breadcrumb) {

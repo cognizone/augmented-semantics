@@ -49,6 +49,7 @@ const preferredLabelObj = computed(() => {
     prefLabels: details.value.prefLabels,
     prefLabelsXL: details.value.prefLabelsXL,
     titles: details.value.title,
+    rdfsLabels: details.value.labels,
   })
 })
 

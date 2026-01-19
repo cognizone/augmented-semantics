@@ -662,4 +662,157 @@ describe('ConceptTree', () => {
       })
     })
   })
+
+  describe('goto URI with collection detection', () => {
+    beforeEach(() => {
+      const schemeStore = useSchemeStore()
+      schemeStore.schemes = [
+        { uri: 'http://example.org/scheme/1', label: 'Test Scheme' },
+      ]
+      schemeStore.selectScheme('http://example.org/scheme/1')
+
+      // Default mock for mount-time queries (top concepts + collections)
+      ;(executeSparql as Mock).mockResolvedValue({ results: { bindings: [] } })
+    })
+
+    it('emits selectCollection when URI is a collection', async () => {
+      const wrapper = mountConceptTree()
+      await flushPromises()
+      await nextTick()
+
+      // Clear previous mocks and set up for goToUri
+      ;(executeSparql as Mock).mockClear()
+      ;(executeSparql as Mock).mockResolvedValueOnce({ boolean: true }) // isCollection ASK query
+
+      const input = wrapper.find('.ae-input')
+      await input.setValue('http://example.org/collection/1')
+
+      const goBtn = wrapper.find('.goto-btn')
+      await goBtn.trigger('click')
+      await flushPromises()
+      await nextTick()
+
+      expect(wrapper.emitted('selectCollection')).toBeTruthy()
+      expect(wrapper.emitted('selectCollection')![0]).toEqual(['http://example.org/collection/1'])
+    })
+
+    it('emits selectConcept when URI is a concept (not collection)', async () => {
+      const wrapper = mountConceptTree()
+      await flushPromises()
+      await nextTick()
+
+      // Clear previous mocks and set up for goToUri
+      ;(executeSparql as Mock).mockClear()
+      ;(executeSparql as Mock)
+        .mockResolvedValueOnce({ boolean: false }) // isCollection ASK query
+        .mockResolvedValueOnce({ boolean: true }) // isConcept ASK query
+
+      const input = wrapper.find('.ae-input')
+      await input.setValue('http://example.org/concept/1')
+
+      const goBtn = wrapper.find('.goto-btn')
+      await goBtn.trigger('click')
+      await flushPromises()
+      await nextTick()
+
+      expect(wrapper.emitted('selectConcept')).toBeTruthy()
+      expect(wrapper.emitted('selectConcept')![0]).toEqual(['http://example.org/concept/1'])
+    })
+
+    it('shows warning when URI is not found as scheme, collection, or concept', async () => {
+      const wrapper = mountConceptTree()
+      await flushPromises()
+      await nextTick()
+
+      // Clear previous mocks and set up for goToUri
+      ;(executeSparql as Mock).mockClear()
+      ;(executeSparql as Mock)
+        .mockResolvedValueOnce({ boolean: false }) // isCollection ASK query
+        .mockResolvedValueOnce({ boolean: false }) // isConcept ASK query
+
+      const input = wrapper.find('.ae-input')
+      await input.setValue('http://example.org/invalid/uri')
+
+      const goBtn = wrapper.find('.goto-btn')
+      await goBtn.trigger('click')
+      await flushPromises()
+      await nextTick()
+
+      // Warning should be shown
+      expect(wrapper.find('.p-message-warn').exists()).toBe(true)
+      expect(wrapper.text()).toContain('URI not found')
+    })
+
+    it('clears warning when user starts typing', async () => {
+      const wrapper = mountConceptTree()
+      await flushPromises()
+      await nextTick()
+
+      // Clear previous mocks and set up for goToUri
+      ;(executeSparql as Mock).mockClear()
+      ;(executeSparql as Mock)
+        .mockResolvedValueOnce({ boolean: false }) // isCollection ASK query
+        .mockResolvedValueOnce({ boolean: false }) // isConcept ASK query
+
+      const input = wrapper.find('.ae-input')
+      await input.setValue('http://example.org/invalid/uri')
+
+      const goBtn = wrapper.find('.goto-btn')
+      await goBtn.trigger('click')
+      await flushPromises()
+      await nextTick()
+
+      // Warning should be shown
+      expect(wrapper.find('.p-message-warn').exists()).toBe(true)
+
+      // Start typing - warning should clear
+      await input.trigger('input')
+      await nextTick()
+
+      expect(wrapper.find('.p-message-warn').exists()).toBe(false)
+    })
+
+    it('isCollection returns false when no endpoint', async () => {
+      const endpointStore = useEndpointStore()
+      endpointStore.selectEndpoint(null as unknown as string)
+
+      const wrapper = mountConceptTree()
+      await flushPromises()
+      await nextTick()
+
+      const input = wrapper.find('.ae-input')
+      await input.setValue('http://example.org/collection/1')
+
+      const goBtn = wrapper.find('.goto-btn')
+      await goBtn.trigger('click')
+      await flushPromises()
+      await nextTick()
+
+      // Should show warning since isCollection returns false without endpoint
+      expect(wrapper.find('.p-message-warn').exists()).toBe(true)
+    })
+
+    it('handles isCollection query errors gracefully', async () => {
+      const wrapper = mountConceptTree()
+      await flushPromises()
+      await nextTick()
+
+      // Clear previous mocks and set up for goToUri with error
+      ;(executeSparql as Mock).mockClear()
+      ;(executeSparql as Mock)
+        .mockRejectedValueOnce(new Error('Network error')) // isCollection ASK fails
+        .mockResolvedValueOnce({ boolean: false }) // isConcept ASK
+
+      const input = wrapper.find('.ae-input')
+      await input.setValue('http://example.org/collection/1')
+
+      const goBtn = wrapper.find('.goto-btn')
+      await goBtn.trigger('click')
+      await flushPromises()
+      await nextTick()
+
+      // Should show warning (isCollection returns false on error)
+      expect(wrapper.find('.p-message-warn').exists()).toBe(true)
+    })
+  })
 })

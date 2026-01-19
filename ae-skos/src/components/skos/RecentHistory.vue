@@ -109,8 +109,14 @@ function handleDeleteConfirm() {
         <div class="history-item">
           <span
             class="material-symbols-outlined item-icon"
-            :class="slotProps.option.type === 'scheme' ? 'icon-folder' : (slotProps.option.hasNarrower ? 'icon-label' : 'icon-leaf')"
-          >{{ slotProps.option.type === 'scheme' ? 'folder' : (slotProps.option.hasNarrower ? 'label' : 'circle') }}</span>
+            :class="slotProps.option.type === 'scheme' ? 'icon-folder'
+              : slotProps.option.type === 'collection' ? 'icon-collection'
+              : (slotProps.option.hasNarrower ? 'icon-label' : 'icon-leaf')"
+          >{{
+            slotProps.option.type === 'scheme' ? 'folder'
+              : slotProps.option.type === 'collection' ? 'collections_bookmark'
+              : (slotProps.option.hasNarrower ? 'label' : 'circle')
+          }}</span>
           <div class="item-content">
             <span class="item-label">
               {{ slotProps.option.notation && slotProps.option.label

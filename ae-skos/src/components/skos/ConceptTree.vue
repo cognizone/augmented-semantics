@@ -13,7 +13,7 @@
  */
 import { ref, watch, computed, onMounted, onUnmounted } from 'vue'
 import { useConceptStore, useEndpointStore, useSchemeStore, useLanguageStore } from '../../stores'
-import { logger, eventBus } from '../../services'
+import { logger, eventBus, executeSparql, withPrefixes } from '../../services'
 import type { EventSubscription } from '../../services'
 import {
   useDelayedLoading,
@@ -23,8 +23,9 @@ import {
   useTreePagination,
   useTreeNavigation,
   useTreeSelection,
+  useCollections,
 } from '../../composables'
-import type { ConceptNode } from '../../types'
+import type { ConceptNode, CollectionNode } from '../../types'
 import Tree from 'primevue/tree'
 import type { TreeNode } from 'primevue/treenode'
 import Message from 'primevue/message'
@@ -33,6 +34,7 @@ import ProgressSpinner from 'primevue/progressspinner'
 // Define emitted events
 const emit = defineEmits<{
   selectConcept: [uri: string]
+  selectCollection: [uri: string]
 }>()
 
 const conceptStore = useConceptStore()
@@ -41,6 +43,15 @@ const schemeStore = useSchemeStore()
 const languageStore = useLanguageStore()
 const { shouldShowLangTag } = useLabelResolver()
 const { showIndicator: showDeprecationIndicator } = useDeprecation()
+
+// Collections composable
+const {
+  collections,
+  loadCollectionsForScheme,
+  reset: resetCollections,
+  shouldShowLangTag: shouldShowCollectionLangTag,
+} = useCollections()
+
 
 // Delayed loading - show spinner only after 300ms to prevent flicker
 const showTreeLoading = useDelayedLoading(computed(() => conceptStore.loadingTree))
@@ -79,23 +90,35 @@ const {
 const {
   selectedKey,
   expandedKeys,
-  onNodeExpand,
+  onNodeExpand: onConceptNodeExpand,
   onNodeCollapse,
 } = useTreeSelection({
   loadChildren,
   findNode,
 })
 
+/**
+ * Handle node expand - delegates to concept expand handler
+ * Collections are leaf nodes (members shown in details panel)
+ */
+function onNodeExpand(node: TreeNode) {
+  onConceptNodeExpand(node)
+}
+
 // Convert our ConceptNode[] to PrimeVue tree format
-// If a scheme is selected, show it as the root with top concepts as children
+// If a scheme is selected, show it as the root with collections and top concepts as children
+// Collections appear first, then concepts (but concepts load first for performance)
 const treeNodes = computed((): TreeNode[] => {
   const topNodes = conceptStore.topConcepts.map(node => convertToTreeNode(node))
+  const collectionNodes = collections.value.map(col => convertCollectionToTreeNode(col))
 
-  // If a scheme is selected, wrap top concepts under the scheme as root
-  // Always show the scheme node, even if it has no concepts
+  // If a scheme is selected, wrap collections + top concepts under the scheme as root
+  // Collections come first in display order, then concepts
   const scheme = schemeStore.selected
   if (scheme) {
-    return [{
+    const schemeChildren = [...collectionNodes, ...topNodes]
+
+    const schemeNode: TreeNode = {
       key: scheme.uri,
       label: scheme.label || scheme.uri.split('/').pop() || scheme.uri,
       data: {
@@ -106,13 +129,40 @@ const treeNodes = computed((): TreeNode[] => {
         lang: scheme.labelLang,
         deprecated: scheme.deprecated,
       },
-      leaf: topNodes.length === 0,
-      children: topNodes,
-    }]
+      leaf: schemeChildren.length === 0,
+      children: schemeChildren,
+    }
+
+    return [schemeNode]
   }
 
   return topNodes
 })
+
+/**
+ * Convert a CollectionNode to PrimeVue TreeNode format
+ * Collections are leaf nodes - members are shown in the details panel
+ */
+function convertCollectionToTreeNode(col: CollectionNode): TreeNode {
+  const label = col.label || col.uri.split('/').pop() || col.uri
+  const displayLabel = col.notation && col.label
+    ? `${col.notation} - ${label}`
+    : col.notation || label
+
+  return {
+    key: col.uri,
+    label: displayLabel,
+    data: {
+      uri: col.uri,
+      isCollection: true,
+      label: col.label,
+      notation: col.notation,
+      showLangTag: col.labelLang ? shouldShowCollectionLangTag(col.labelLang) : false,
+      lang: col.labelLang,
+    },
+    leaf: true,  // Collections are leaf nodes (members shown in details panel)
+  }
+}
 
 function convertToTreeNode(node: ConceptNode): TreeNode {
   // Display notation + label if both exist
@@ -133,11 +183,88 @@ function convertToTreeNode(node: ConceptNode): TreeNode {
   }
 }
 
+/**
+ * Handle node click - handles selection for all node types
+ * The @click.stop prevents PrimeVue's default selection, so we must handle it here
+ */
+function onNodeClick(node: TreeNode) {
+  const uri = node.data?.uri || node.key
+  if (!uri) return
+
+  if (node.data?.isCollection) {
+    // Collection selection
+    conceptStore.addToHistory({
+      uri,
+      label: node.data.label || uri,
+      lang: node.data.lang,
+      notation: node.data.notation,
+      endpointUrl: endpointStore.current?.url,
+      schemeUri: schemeStore.selectedUri || undefined,
+      type: 'collection',
+    })
+    emit('selectCollection', uri)
+  } else if (node.data?.isScheme) {
+    // Scheme selection - view scheme details
+    conceptStore.selectConcept(null)
+    schemeStore.viewScheme(String(uri))
+    conceptStore.addToHistory({
+      uri: String(uri),
+      label: node.data.label || String(uri),
+      lang: node.data.lang,
+      endpointUrl: endpointStore.current?.url,
+      type: 'scheme',
+    })
+  } else {
+    // Concept selection
+    emit('selectConcept', String(uri))
+  }
+}
+
+// Warning message for invalid URI
+const gotoWarning = ref<string | null>(null)
+
+// Check if a URI is a skos:Collection
+async function isCollection(uri: string): Promise<boolean> {
+  const endpoint = endpointStore.current
+  if (!endpoint) return false
+
+  const query = withPrefixes(`
+    ASK { <${uri}> a skos:Collection }
+  `)
+
+  try {
+    const results = await executeSparql(endpoint, query, { retries: 0 })
+    return results.boolean === true
+  } catch {
+    return false
+  }
+}
+
+// Check if a URI is a skos:Concept
+async function isConcept(uri: string): Promise<boolean> {
+  const endpoint = endpointStore.current
+  if (!endpoint) return false
+
+  const query = withPrefixes(`
+    ASK { <${uri}> a skos:Concept }
+  `)
+
+  try {
+    const results = await executeSparql(endpoint, query, { retries: 0 })
+    return results.boolean === true
+  } catch {
+    return false
+  }
+}
+
 // Go to URI directly
-function goToUri() {
+async function goToUri() {
   // Sanitize: trim whitespace and remove accidental < > from turtle/sparql copies
   const uri = gotoUri.value.trim().replace(/^<|>$/g, '')
   if (uri) {
+    // Clear any previous warning
+    gotoWarning.value = null
+
     // Check if this URI is a known scheme
     const scheme = schemeStore.schemes.find(s => s.uri === uri)
     if (scheme) {
@@ -154,11 +281,24 @@ function goToUri() {
         endpointUrl: endpointStore.current?.url,
         type: 'scheme',
       })
-    } else {
-      // Treat as a concept - emit to parent for unified handling
+      gotoUri.value = ''
+    } else if (await isCollection(uri)) {
+      // It's a collection - emit to parent for collection handling
+      emit('selectCollection', uri)
+      gotoUri.value = ''
+    } else if (await isConcept(uri)) {
+      // It's a concept - emit to parent for unified handling
       emit('selectConcept', uri)
+      gotoUri.value = ''
+    } else {
+      // URI not found as scheme, collection, or concept
+      gotoWarning.value = 'URI not found as a scheme, collection, or concept'
+      logger.warn('ConceptTree', 'Invalid goto URI', { uri })
+      // Auto-clear warning after 3 seconds
+      setTimeout(() => {
+        gotoWarning.value = null
+      }, 3000)
     }
-    gotoUri.value = ''
   }
 }
 
@@ -204,7 +344,13 @@ watch(
     const [oldScheme, oldEndpoint] = oldValue || [null, undefined]
     if (newEndpoint && (newScheme !== oldScheme || newEndpoint !== oldEndpoint)) {
       conceptStore.reset()
+      resetCollections()
       loadTopConcepts()
+
+      // Load collections for the selected scheme (async, doesn't block tree)
+      if (newScheme && !schemeStore.isOrphanSchemeSelected) {
+        loadCollectionsForScheme(newScheme)
+      }
     }
   },
   { immediate: true }
@@ -218,9 +364,27 @@ watch(
       // Clear cached children so they reload with new language labels
       conceptStore.clearAllChildren()
       loadTopConcepts()
+
+      // Reload collections with new language
+      if (!schemeStore.isOrphanSchemeSelected) {
+        loadCollectionsForScheme(schemeStore.selected.uri)
+      }
     }
   },
   { deep: true }
+)
+
+// Watch for collections loading to handle pending collection reveal (cross-scheme navigation)
+watch(
+  () => collections.value.length,
+  async (len) => {
+    if (len > 0 && conceptStore.pendingRevealCollectionUri) {
+      const uri = conceptStore.pendingRevealCollectionUri
+      logger.debug('ConceptTree', 'Collections loaded, revealing pending collection', { uri })
+      conceptStore.clearPendingRevealCollection()
+      await conceptStore.selectCollectionWithEvent(uri)
+    }
+  }
 )
 
 // Event subscriptions for cleanup
@@ -242,6 +406,17 @@ onMounted(() => {
 
       // Tree is ready - reveal immediately
       await revealConceptIfNeeded(uri)
+    })
+  )
+
+  // When a collection is selected, it's at root level - no expansion needed
+  // The selectedKey computed handles highlighting via selectedCollectionUri
+  eventSubscriptions.push(
+    eventBus.on('collection:selected', async (uri) => {
+      if (!uri) return
+      logger.debug('ConceptTree', 'Collection selected', { uri })
+      // Collections are at root level, no expansion needed
+      // Tree highlighting handled by selectedKey computed
     })
   )
 
@@ -285,6 +460,7 @@ watch(
           placeholder="Go to URI..."
           class="ae-input"
           @keyup.enter="goToUri"
+          @input="gotoWarning = null"
         />
         <button
           class="goto-btn"
@@ -295,6 +471,9 @@ watch(
           <span class="material-symbols-outlined icon-sm">arrow_forward</span>
         </button>
       </div>
+      <Message v-if="gotoWarning" severity="warn" :closable="false" class="goto-warning">
+        {{ gotoWarning }}
+      </Message>
     </div>
 
     <!-- Error message -->
@@ -486,9 +665,18 @@ watch(
         @node-collapse="onNodeCollapse"
       >
         <template #default="slotProps">
-          <div class="tree-node" :class="{ 'scheme-node': slotProps.node.data?.isScheme, 'deprecated': slotProps.node.data?.deprecated && showDeprecationIndicator }">
+          <div
+            class="tree-node"
+            :class="{
+              'scheme-node': slotProps.node.data?.isScheme,
+              'collection-node': slotProps.node.data?.isCollection,
+              'deprecated': slotProps.node.data?.deprecated && showDeprecationIndicator
+            }"
+            @click.stop="onNodeClick(slotProps.node)"
+          >
             <!-- Icon based on node type -->
             <span v-if="slotProps.node.data?.isScheme" class="material-symbols-outlined node-icon icon-folder">folder</span>
+            <span v-else-if="slotProps.node.data?.isCollection" class="material-symbols-outlined node-icon icon-collection">collections_bookmark</span>
             <span v-else-if="slotProps.node.data?.hasNarrower" class="material-symbols-outlined node-icon icon-label">label</span>
             <span v-else class="material-symbols-outlined node-icon icon-leaf">circle</span>
             <span class="node-label">
@@ -574,6 +762,11 @@ watch(
 .goto-btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+}
+
+.goto-warning {
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
 }
 
 .loading-container {
@@ -672,6 +865,14 @@ watch(
 
 .tree-node.scheme-node {
   font-weight: 600;
+}
+
+.tree-node.collection-node {
+  font-weight: 500;
+}
+
+.icon-collection {
+  color: var(--ae-icon-collection, #8b5cf6);
 }
 
 .node-icon {

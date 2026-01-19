@@ -28,6 +28,7 @@ export const useConceptStore = defineStore('concept', () => {
 
   // State - Selection
   const selectedUri = ref<string | null>(null)
+  const selectedCollectionUri = ref<string | null>(null)
   const details = ref<ConceptDetails | null>(null)
   const breadcrumb = ref<ConceptRef[]>([])
 
@@ -58,6 +59,7 @@ export const useConceptStore = defineStore('concept', () => {
 
   // State - Event coordination
   const pendingRevealUri = ref<string | null>(null)
+  const pendingRevealCollectionUri = ref<string | null>(null)
 
   // Getters
   const hasSelection = computed(() => selectedUri.value !== null)
@@ -111,6 +113,10 @@ export const useConceptStore = defineStore('concept', () => {
   // Actions - Selection
   function selectConcept(uri: string | null) {
     selectedUri.value = uri
+    if (uri) {
+      // Clear collection selection when selecting a concept
+      selectedCollectionUri.value = null
+    }
   }
 
   /**
@@ -123,6 +129,48 @@ export const useConceptStore = defineStore('concept', () => {
     }
     selectedUri.value = uri
     await eventBus.emit('concept:selected', uri)
+  }
+
+  /**
+   * Select a collection (and clear concept selection).
+   */
+  function selectCollection(uri: string | null) {
+    selectedCollectionUri.value = uri
+    if (uri) {
+      // Clear concept selection when selecting a collection
+      selectedUri.value = null
+    }
+  }
+
+  /**
+   * Select collection with event coordination.
+   * Emits collection:selecting then collection:selected for other components to react.
+   */
+  async function selectCollectionWithEvent(uri: string | null) {
+    if (uri) {
+      await eventBus.emit('collection:selecting', uri)
+    }
+    selectedCollectionUri.value = uri
+    if (uri) {
+      // Clear concept selection when selecting a collection
+      selectedUri.value = null
+    }
+    await eventBus.emit('collection:selected', uri)
+  }
+
+  /**
+   * Request reveal of a collection in the tree.
+   * Called when collection is selected while tree is still loading.
+   */
+  function requestRevealCollection(uri: string) {
+    pendingRevealCollectionUri.value = uri
+  }
+
+  /**
+   * Clear pending collection reveal request.
+   */
+  function clearPendingRevealCollection() {
+    pendingRevealCollectionUri.value = null
   }
 
   /**
@@ -245,6 +293,7 @@ export const useConceptStore = defineStore('concept', () => {
     topConcepts.value = []
     expanded.value = new Set()
     selectedUri.value = null
+    selectedCollectionUri.value = null
     details.value = null
     breadcrumb.value = []
     searchQuery.value = ''
@@ -277,6 +326,7 @@ export const useConceptStore = defineStore('concept', () => {
     topConcepts,
     expanded,
     selectedUri,
+    selectedCollectionUri,
     details,
     breadcrumb,
     searchQuery,
@@ -287,6 +337,7 @@ export const useConceptStore = defineStore('concept', () => {
     loadingDetails,
     loadingSearch,
     pendingRevealUri,
+    pendingRevealCollectionUri,
     // Getters
     hasSelection,
     isExpanded,
@@ -300,7 +351,11 @@ export const useConceptStore = defineStore('concept', () => {
     updateNodeChildren,
     selectConcept,
     selectConceptWithEvent,
+    selectCollection,
+    selectCollectionWithEvent,
     requestReveal,
+    requestRevealCollection,
+    clearPendingRevealCollection,
     markConceptRevealed,
     clearPendingReveal,
     setDetails,

@@ -141,3 +141,9 @@ export const SCHEME_EXCLUDED_PREDICATES = [
   'dct:publisher', 'dct:rights', 'dct:license', 'cc:license',
   'owl:versionInfo',
 ]
+
+/** Predicates excluded for collection details (in addition to base) */
+export const COLLECTION_EXCLUDED_PREDICATES = [
+  'skos:member',  // Members shown in dedicated section
+  'skos:inScheme',
+]

@@ -38,6 +38,10 @@ export function useTreeSelection(options: UseTreeSelectionOptions) {
       if (schemeStore.viewingSchemeUri) {
         return { [schemeStore.viewingSchemeUri]: true }
       }
+      // Show collection as selected when selected
+      if (conceptStore.selectedCollectionUri) {
+        return { [conceptStore.selectedCollectionUri]: true }
+      }
       if (conceptStore.selectedUri) {
         return { [conceptStore.selectedUri]: true }
       }

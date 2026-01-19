@@ -45,7 +45,7 @@ export function useSchemeData() {
           skos:definition, skos:scopeNote, skos:historyNote,
           skos:changeNote, skos:editorialNote, skos:note, skos:example,
           rdfs:label, rdfs:comment, rdfs:seeAlso,
-          dct:title, dct:description, dct:creator, dct:created, dct:modified,
+          dc:title, dct:title, dct:description, dct:creator, dct:created, dct:modified,
           dct:issued, dct:publisher, dct:rights, dct:license, cc:license,
           owl:deprecated, owl:versionInfo
         ))

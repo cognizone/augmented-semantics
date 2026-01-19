@@ -130,8 +130,65 @@ export function useConceptSelection() {
     uiStore.setSidebarTab('browse')
   }
 
+  /**
+   * Select a collection, handling cross-scheme navigation properly.
+   *
+   * @param collectionUri - The collection URI to select
+   * @param schemeUri - Optional scheme URI (required for cross-scheme navigation)
+   * @param endpointUrl - Optional endpoint URL (for history navigation)
+   */
+  async function selectCollectionWithScheme(
+    collectionUri: string,
+    schemeUri?: string | null,
+    endpointUrl?: string
+  ): Promise<void> {
+    if (!collectionUri) {
+      conceptStore.selectCollection(null)
+      return
+    }
+
+    logger.info('useConceptSelection', 'Selecting collection', {
+      collection: collectionUri,
+      scheme: schemeUri,
+      endpoint: endpointUrl
+    })
+
+    // 1. Switch endpoint if needed
+    if (endpointUrl && endpointUrl !== endpointStore.current?.url) {
+      const endpoint = endpointStore.endpoints.find(e => e.url === endpointUrl)
+      if (endpoint) {
+        endpointStore.selectEndpoint(endpoint.id)
+        await nextTick()
+      }
+    }
+
+    // 2. Switch scheme if needed (BEFORE selecting collection)
+    if (schemeUri && schemeUri !== schemeStore.selectedUri) {
+      // Validate scheme exists in available schemes
+      const validScheme = schemeStore.schemes.some(s => s.uri === schemeUri)
+      if (validScheme) {
+        logger.info('useConceptSelection', 'Switching scheme before collection selection', {
+          from: schemeStore.selectedUri,
+          to: schemeUri
+        })
+        // Set pending reveal so tree knows to reveal after loading
+        conceptStore.requestRevealCollection(collectionUri)
+        schemeStore.selectScheme(schemeUri)
+        await nextTick()
+      }
+    }
+
+    // 3. Clear scheme viewing and select collection
+    schemeStore.viewScheme(null)
+    await conceptStore.selectCollectionWithEvent(collectionUri)
+
+    // 4. Switch to browse tab
+    uiStore.setSidebarTab('browse')
+  }
+
   return {
     findSchemeForConcept,
-    selectConceptWithScheme
+    selectConceptWithScheme,
+    selectCollectionWithScheme
   }
 }

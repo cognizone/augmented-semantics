@@ -239,6 +239,9 @@ export function useTreePagination() {
             ?concept dct:title ?label .
             BIND("title" AS ?labelType)
           } UNION {
+            ?concept dc:title ?label .
+            BIND("dcTitle" AS ?labelType)
+          } UNION {
             ?concept rdfs:label ?label .
             BIND("rdfsLabel" AS ?labelType)
           }

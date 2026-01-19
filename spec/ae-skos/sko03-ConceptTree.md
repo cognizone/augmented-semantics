@@ -700,18 +700,23 @@ const schemeLabel = selectSchemeLabel({
 
 ### Direct URI Lookup (Go to URI)
 
-Input field to navigate directly to a concept or scheme by URI.
+Input field to navigate directly to a concept, collection, or scheme by URI.
 
 **Behavior:**
-The input accepts both concept and scheme URIs:
+The input accepts scheme, collection, and concept URIs:
 
 | URI Type | Action |
 |----------|--------|
 | Scheme URI | Selects scheme in dropdown, loads tree, shows scheme details |
+| Collection URI | Selects collection, shows collection details |
 | Concept URI | Selects concept, loads details, reveals in tree |
+| Invalid URI | Shows warning message (auto-dismisses after 3 seconds) |
 
-**Detection:**
-The component checks if the entered URI matches a known scheme URI from `schemeStore.schemes`. If matched, it's treated as a scheme; otherwise as a concept.
+**Detection Order:**
+1. Check if URI matches a known scheme URI from `schemeStore.schemes`
+2. Query endpoint: `ASK { <URI> a skos:Collection }`
+3. Query endpoint: `ASK { <URI> a skos:Concept }`
+4. If none match, display warning
 
 **URI Sanitization:**
 Input is sanitized before processing:
@@ -721,6 +726,8 @@ Input is sanitized before processing:
 ```typescript
 const uri = gotoUri.value.trim().replace(/^<|>$/g, '')
 ```
+
+See also: [Go to URI - Collection Detection](#go-to-uri---collection-detection)
 
 ### View Modes
 
@@ -971,6 +978,235 @@ See [com03-ErrorHandling](../common/com03-ErrorHandling.md) for details.
 │   [Retry]                      │
 └────────────────────────────────┘
 ```
+
+## SKOS Collections
+
+SKOS Collections (`skos:Collection`) group concepts without implying hierarchical relationships. They appear at the root level of the tree alongside top concepts.
+
+### Collection Loading
+
+Collections are loaded when a scheme is selected. Only collections with members belonging to the current scheme are shown.
+
+**Implementation:** `useCollections.ts` composable
+
+**Query:**
+```sparql
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX skosxl: <http://www.w3.org/2008/05/skos-xl#>
+PREFIX dct: <http://purl.org/dc/terms/>
+PREFIX dc: <http://purl.org/dc/elements/1.1/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+SELECT DISTINCT ?collection ?label ?labelLang ?labelType ?notation WHERE {
+  ?collection a skos:Collection .
+  ?collection skos:member ?concept .
+
+  # Concept belongs to scheme via various paths
+  {
+    ?concept skos:inScheme <SCHEME_URI> .
+  } UNION {
+    ?concept skos:topConceptOf <SCHEME_URI> .
+  } UNION {
+    <SCHEME_URI> skos:hasTopConcept ?concept .
+  } UNION {
+    ?concept skos:broader+ ?top .
+    { ?top skos:topConceptOf <SCHEME_URI> } UNION { <SCHEME_URI> skos:hasTopConcept ?top }
+  }
+
+  # Label resolution with priority tracking
+  OPTIONAL {
+    {
+      ?collection skos:prefLabel ?label .
+      BIND("prefLabel" AS ?labelType)
+    } UNION {
+      ?collection skosxl:prefLabel/skosxl:literalForm ?label .
+      BIND("xlPrefLabel" AS ?labelType)
+    } UNION {
+      ?collection dct:title ?label .
+      BIND("title" AS ?labelType)
+    } UNION {
+      ?collection dc:title ?label .
+      BIND("dcTitle" AS ?labelType)
+    } UNION {
+      ?collection rdfs:label ?label .
+      BIND("rdfsLabel" AS ?labelType)
+    }
+    BIND(LANG(?label) AS ?labelLang)
+  }
+
+  OPTIONAL { ?collection skos:notation ?notation }
+}
+ORDER BY ?collection
+```
+
+### Collection Display in Tree
+
+Collections appear at the root level with a distinct icon:
+
+```
+┌────────────────────────────────┐
+│ 🔍 [Go to URI...]              │
+├────────────────────────────────┤
+│ 📚 Subject Categories          │  ← Collection
+│ 📚 Geographic Groups           │  ← Collection
+│ ▶ Agriculture                  │  ← Top concept
+│ ▶ Economics                    │  ← Top concept
+└────────────────────────────────┘
+```
+
+**Icon:** `collections_bookmark` (Material Symbol)
+
+### Collection Selection
+
+When a collection is clicked:
+1. Concept selection is cleared
+2. Collection URI stored in `conceptStore.selectedCollectionUri`
+3. CollectionDetails component renders in right panel
+4. Breadcrumb updates to show collection
+
+**Events:**
+- `collection:selecting` - Before selection
+- `collection:selected` - After selection
+
+### Collection Details
+
+**Implementation:** `useCollectionData.ts` composable
+
+Loads collection properties and members via SPARQL queries.
+
+**Properties Query:**
+```sparql
+SELECT ?p ?o ?lang ?labelType WHERE {
+  {
+    <COLLECTION_URI> ?p ?o .
+    FILTER(?p IN (skos:prefLabel, skos:altLabel, skos:notation,
+                  skos:definition, skos:scopeNote, skos:note))
+  }
+  UNION { <COLLECTION_URI> skosxl:prefLabel/skosxl:literalForm ?o . BIND(skosxl:prefLabel AS ?p) }
+  UNION { <COLLECTION_URI> skosxl:altLabel/skosxl:literalForm ?o . BIND(skosxl:altLabel AS ?p) }
+  UNION { <COLLECTION_URI> dct:title ?o . BIND(dct:title AS ?p) }
+  UNION { <COLLECTION_URI> dc:title ?o . BIND(dc:title AS ?p) }
+  UNION { <COLLECTION_URI> rdfs:label ?o . BIND(rdfs:label AS ?p) }
+  BIND(LANG(?o) AS ?lang)
+}
+```
+
+**Members Query:**
+```sparql
+SELECT DISTINCT ?member ?label ?labelLang ?labelType ?notation WHERE {
+  <COLLECTION_URI> skos:member ?member .
+
+  OPTIONAL {
+    { ?member skos:prefLabel ?label . BIND("prefLabel" AS ?labelType) }
+    UNION { ?member skosxl:prefLabel/skosxl:literalForm ?label . BIND("xlPrefLabel" AS ?labelType) }
+    UNION { ?member dct:title ?label . BIND("title" AS ?labelType) }
+    UNION { ?member dc:title ?label . BIND("dcTitle" AS ?labelType) }
+    UNION { ?member rdfs:label ?label . BIND("rdfsLabel" AS ?labelType) }
+    BIND(LANG(?label) AS ?labelLang)
+  }
+  OPTIONAL { ?member skos:notation ?notation }
+}
+ORDER BY ?member
+LIMIT 500
+```
+
+### Collection Breadcrumb
+
+When a collection is selected, the breadcrumb shows only the collection (scheme is visible in dropdown):
+
+```
+┌──────────────────────────────────────────────────────────┐
+│ [Scheme ▼] > 📚 Subject Categories                       │
+└──────────────────────────────────────────────────────────┘
+```
+
+**Implementation:** `loadCollectionBreadcrumb()` in ConceptBreadcrumb.vue
+
+The breadcrumb fetches collection labels via SPARQL query (same pattern as concept breadcrumb) rather than relying on cached collections state. This ensures correct label display regardless of component initialization order.
+
+**Query:**
+```sparql
+SELECT ?label ?labelLang ?labelType ?notation
+WHERE {
+  OPTIONAL { <COLLECTION_URI> skos:notation ?notation }
+  OPTIONAL {
+    { <COLLECTION_URI> skos:prefLabel ?label . BIND("prefLabel" AS ?labelType) }
+    UNION { <COLLECTION_URI> skosxl:prefLabel/skosxl:literalForm ?label . BIND("xlPrefLabel" AS ?labelType) }
+    UNION { <COLLECTION_URI> dct:title ?label . BIND("title" AS ?labelType) }
+    UNION { <COLLECTION_URI> dc:title ?label . BIND("dcTitle" AS ?labelType) }
+    UNION { <COLLECTION_URI> rdfs:label ?label . BIND("rdfsLabel" AS ?labelType) }
+    BIND(LANG(?label) AS ?labelLang)
+  }
+}
+```
+
+### Go to URI - Collection Detection
+
+The "Go to URI" input detects whether a URI is a collection before treating it as a concept.
+
+**Detection Order:**
+1. Check if URI matches a known scheme → navigate to scheme
+2. Query if URI is `skos:Collection` → navigate to collection
+3. Query if URI is `skos:Concept` → navigate to concept
+4. Show warning if none match
+
+**Collection Detection Query:**
+```sparql
+ASK { <URI> a skos:Collection }
+```
+
+**Concept Detection Query:**
+```sparql
+ASK { <URI> a skos:Concept }
+```
+
+**Invalid URI Handling:**
+- Warning message displayed below input
+- Auto-dismisses after 3 seconds
+- Clears when user starts typing
+
+### Label Resolution for Collections
+
+Collections use the same label priority as concepts and schemes:
+
+1. `skos:prefLabel`
+2. `skosxl:prefLabel/skosxl:literalForm`
+3. `dct:title` (Dublin Core Terms)
+4. `dc:title` (Dublin Core Elements)
+5. `rdfs:label`
+
+**Note:** Both `dct:title` and `dc:title` are supported as different endpoints use different Dublin Core namespaces.
+
+### Data Model
+
+```typescript
+interface CollectionNode {
+  uri: string
+  label?: string
+  labelLang?: string
+  notation?: string
+  memberCount?: number
+}
+
+interface CollectionDetails {
+  uri: string
+  prefLabels: LabelValue[]
+  altLabels: LabelValue[]
+  definitions: LabelValue[]
+  scopeNotes: LabelValue[]
+  notes: LabelValue[]
+  notations: NotationValue[]
+  memberCount?: number
+  otherProperties: OtherProperty[]
+}
+```
+
+### Events
+
+| Event | Payload | Description |
+|-------|---------|-------------|
+| `collection:selecting` | `string` | Before collection selection |
+| `collection:selected` | `string` | Collection URI selected |
 
 ## Related Specs
 

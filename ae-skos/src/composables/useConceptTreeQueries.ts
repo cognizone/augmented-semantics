@@ -11,7 +11,7 @@ import { useDeprecation } from './useDeprecation'
 
 /**
  * Shared label resolution clause used by both queries.
- * Priority: prefLabel > xlPrefLabel > dct:title > rdfs:label
+ * Priority: prefLabel > xlPrefLabel > dct:title > dc:title > rdfs:label
  */
 function buildLabelClause(): string {
   return `
@@ -26,6 +26,9 @@ function buildLabelClause(): string {
         } UNION {
           ?concept dct:title ?label .
           BIND("title" AS ?labelType)
+        } UNION {
+          ?concept dc:title ?label .
+          BIND("dcTitle" AS ?labelType)
         } UNION {
           ?concept rdfs:label ?label .
           BIND("rdfsLabel" AS ?labelType)

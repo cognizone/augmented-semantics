@@ -30,20 +30,20 @@ export function useXLLabels() {
     const endpoint = endpointStore.current
     if (!endpoint) return
 
+    // Use property path syntax for better compatibility with different endpoints
     const query = withPrefixes(`
-      SELECT ?xlLabel ?labelType ?literalForm ?literalLang
+      SELECT ?literalForm ?literalLang ?labelType
       WHERE {
         {
-          <${uri}> skosxl:prefLabel ?xlLabel .
+          <${uri}> skosxl:prefLabel/skosxl:literalForm ?literalForm .
           BIND("prefLabel" AS ?labelType)
         } UNION {
-          <${uri}> skosxl:altLabel ?xlLabel .
+          <${uri}> skosxl:altLabel/skosxl:literalForm ?literalForm .
           BIND("altLabel" AS ?labelType)
         } UNION {
-          <${uri}> skosxl:hiddenLabel ?xlLabel .
+          <${uri}> skosxl:hiddenLabel/skosxl:literalForm ?literalForm .
           BIND("hiddenLabel" AS ?labelType)
         }
-        ?xlLabel skosxl:literalForm ?literalForm .
         BIND(LANG(?literalForm) AS ?literalLang)
       }
     `)
@@ -51,23 +51,23 @@ export function useXLLabels() {
     try {
       const results = await executeSparql(endpoint, query, { retries: 0 })
 
-      // Track seen URIs to deduplicate
-      const seenXLUris = new Set<string>()
+      // Track seen labels to deduplicate (by type + value + lang)
+      const seenLabels = new Set<string>()
 
       for (const binding of results.results.bindings) {
-        const xlUri = binding.xlLabel?.value
         const labelType = binding.labelType?.value
         const literalForm = binding.literalForm?.value
         const literalLang = binding.literalLang?.value
 
-        if (!xlUri || !literalForm) continue
+        if (!literalForm) continue
 
-        // Deduplicate by XL label URI
-        if (seenXLUris.has(xlUri)) continue
-        seenXLUris.add(xlUri)
+        // Deduplicate by type + value + lang combination
+        const key = `${labelType}:${literalForm}:${literalLang || ''}`
+        if (seenLabels.has(key)) continue
+        seenLabels.add(key)
 
         const xlLabel = {
-          uri: xlUri,
+          uri: '', // Not available with property path syntax
           literalForm: {
             value: literalForm,
             lang: literalLang || undefined,

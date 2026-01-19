@@ -26,6 +26,7 @@ export interface ConceptRef {
   notation?: string
   lang?: string
   deprecated?: boolean
+  type?: 'concept' | 'scheme' | 'collection'
 }
 
 // Tree node with expansion state
@@ -190,6 +191,34 @@ export interface HistoryEntry {
   accessedAt: string
   endpointUrl?: string
   schemeUri?: string
-  type?: 'concept' | 'scheme'
+  type?: 'concept' | 'scheme' | 'collection'
   hasNarrower?: boolean
+}
+
+/**
+ * SKOS Collection node for tree display
+ * Collections group concepts without implying hierarchical relationships.
+ */
+export interface CollectionNode {
+  uri: string
+  label?: string
+  labelLang?: string
+  notation?: string
+  memberCount?: number
+}
+
+/**
+ * SKOS Collection details
+ */
+export interface CollectionDetails {
+  uri: string
+  prefLabels: LabelValue[]
+  altLabels: LabelValue[]
+  definitions: LabelValue[]
+  scopeNotes: LabelValue[]
+  notes: LabelValue[]
+  notations: NotationValue[]
+  memberCount?: number
+  // Other properties (non-SKOS predicates)
+  otherProperties: OtherProperty[]
 }

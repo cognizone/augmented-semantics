@@ -15,6 +15,7 @@ import { URL_PARAMS } from '../router'
 import ConceptTree from '../components/skos/ConceptTree.vue'
 import ConceptDetails from '../components/skos/ConceptDetails.vue'
 import SchemeDetails from '../components/skos/SchemeDetails.vue'
+import CollectionDetails from '../components/skos/CollectionDetails.vue'
 import SearchBox from '../components/skos/SearchBox.vue'
 import RecentHistory from '../components/skos/RecentHistory.vue'
 import Splitter from 'primevue/splitter'
@@ -32,7 +33,7 @@ const conceptStore = useConceptStore()
 const schemeStore = useSchemeStore()
 const languageStore = useLanguageStore()
 const endpointStore = useEndpointStore()
-const { selectConceptWithScheme } = useConceptSelection()
+const { selectConceptWithScheme, selectCollectionWithScheme } = useConceptSelection()
 
 // Sidebar tab with computed getter/setter for v-model binding
 const sidebarTab = computed({
@@ -42,13 +43,22 @@ const sidebarTab = computed({
 
 // Handle concept selection from any component (unified approach)
 async function selectConcept(uri: string) {
+  // Store automatically clears collection selection when selecting a concept
   await selectConceptWithScheme(uri)
 }
 
+// Handle collection selection
+function selectCollection(uri: string) {
+  // Store automatically clears concept selection, also clear scheme view
+  schemeStore.viewScheme(null)
+  conceptStore.selectCollectionWithEvent(uri)
+}
+
 // Handle history selection - may need to switch endpoint/scheme
-async function selectFromHistory(entry: { uri: string; endpointUrl?: string; schemeUri?: string; type?: 'concept' | 'scheme' }) {
+async function selectFromHistory(entry: { uri: string; endpointUrl?: string; schemeUri?: string; type?: 'concept' | 'scheme' | 'collection' }) {
   // Handle scheme entries specially (not a concept selection)
   if (entry.type === 'scheme') {
+    conceptStore.selectCollection(null)
     schemeStore.selectScheme(entry.uri)
     conceptStore.selectConcept(null)
     schemeStore.viewScheme(entry.uri)
@@ -56,7 +66,14 @@ async function selectFromHistory(entry: { uri: string; endpointUrl?: string; sch
     return
   }
 
+  // Handle collection entries (with cross-scheme navigation support)
+  if (entry.type === 'collection') {
+    await selectCollectionWithScheme(entry.uri, entry.schemeUri, entry.endpointUrl)
+    return
+  }
+
   // Use unified selection for concepts (handles endpoint/scheme switching)
+  // Store automatically clears collection selection
   await selectConceptWithScheme(entry.uri, entry.schemeUri, entry.endpointUrl)
 }
 
@@ -220,7 +237,7 @@ onMounted(() => {
           </TabList>
           <TabPanels>
             <TabPanel value="browse">
-              <ConceptTree @select-concept="selectConcept" />
+              <ConceptTree @select-concept="selectConcept" @select-collection="selectCollection" />
             </TabPanel>
             <TabPanel value="search">
               <SearchBox @select-concept="selectConcept" />
@@ -232,10 +249,15 @@ onMounted(() => {
         </Tabs>
       </SplitterPanel>
 
-      <!-- Right Panel: Scheme or Concept Details -->
+      <!-- Right Panel: Scheme, Collection, or Concept Details -->
       <SplitterPanel :size="70" :minSize="40" class="right-panel">
         <SchemeDetails
           v-if="schemeStore.viewingSchemeUri"
+        />
+        <CollectionDetails
+          v-else-if="conceptStore.selectedCollectionUri"
+          :collection-uri="conceptStore.selectedCollectionUri"
+          @select-concept="selectConcept"
         />
         <ConceptDetails
           v-else

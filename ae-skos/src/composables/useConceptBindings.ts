@@ -81,7 +81,7 @@ export function useConceptBindings() {
     // Convert to ConceptNode[] with best label selection
     const concepts: ConceptNode[] = Array.from(conceptMap.entries()).map(([uri, data]) => {
       // Pick best label: prefLabel > xlPrefLabel > title > rdfsLabel, with language priority
-      const labelPriority = ['prefLabel', 'xlPrefLabel', 'title', 'rdfsLabel']
+      const labelPriority = ['prefLabel', 'xlPrefLabel', 'title', 'dcTitle', 'rdfsLabel']
       let bestLabel: string | undefined
       let bestLabelLang: string | undefined
 
