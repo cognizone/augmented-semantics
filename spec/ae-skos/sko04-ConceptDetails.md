@@ -137,6 +137,16 @@ The concept title in the header uses the following priority:
 
 The SKOS-XL prefLabel (`skosxl:prefLabel/skosxl:literalForm`) is used as fallback when regular `skos:prefLabel` is not available.
 
+### Label Display
+
+Concept labels follow the unified label priority defined in [sko01-LanguageSelector.md](./sko01-LanguageSelector.md#label-priority).
+
+The main panel displays label properties in separate sections showing the exact predicate origin:
+- **Preferred Label** (`skos:prefLabel`)
+- **Title (dct:title)** - Dublin Core Terms
+- **Title (dc:title)** - Dublin Core Elements
+- **Label (rdfs:label)** - RDFS generic label
+
 ### Deprecation Badge
 
 Deprecated concepts display a warning badge in the header:

@@ -18,37 +18,52 @@ When displaying a label, the system tries languages in this order:
 3. **Labels without language tag**
 4. **First available label**
 
+### Label Priority
+
+The canonical label priority is defined in `/src/constants/labels.ts`:
+
+| Priority | Predicate | Type | Description |
+|----------|-----------|------|-------------|
+| 1 | `skos:prefLabel` | `prefLabel` | Primary SKOS preferred label |
+| 2 | `skosxl:prefLabel` | `xlPrefLabel` | SKOS-XL extended preferred label |
+| 3 | `dct:title` | `dctTitle` | Dublin Core Terms title (preferred over dc:title) |
+| 4 | `dc:title` | `dcTitle` | Dublin Core Elements title (legacy) |
+| 5 | `rdfs:label` | `rdfsLabel` | RDFS generic label (fallback) |
+
+**Why dct:title preferred over dc:title:** Dublin Core Terms has better-defined semantics and is the recommended namespace.
+
 ### Label Property Priority by Resource Type
 
 Different resource types have different property fallback orders:
 
-**Concepts** (`selectConceptLabel`):
+**Concepts, Collections, Schemes** (unified priority):
 1. `skos:prefLabel`
 2. `skosxl:prefLabel` (SKOS-XL)
-3. `rdfs:label`
-
-**Schemes** (`selectSchemeLabel`):
-1. `skos:prefLabel`
-2. `skosxl:prefLabel` (SKOS-XL)
-3. `dct:title`
-4. `rdfs:label`
+3. `dct:title` (Dublin Core Terms)
+4. `dc:title` (Dublin Core Elements)
+5. `rdfs:label`
 
 ```typescript
-// For concepts - no dct:title in fallback chain
-const conceptLabel = selectConceptLabel({
-  prefLabels: concept.prefLabels,
-  prefLabelsXL: concept.prefLabelsXL,
-  rdfsLabels: concept.rdfsLabels,
-})
-
-// For schemes - includes dct:title
+// Using selectSchemeLabel with separate dc/dct fields
 const schemeLabel = selectSchemeLabel({
   prefLabels: scheme.prefLabels,
   prefLabelsXL: scheme.prefLabelsXL,
-  titles: scheme.title,
-  rdfsLabels: scheme.rdfsLabels,
+  dctTitles: scheme.dctTitle,
+  dcTitles: scheme.dcTitle,
+  rdfsLabels: scheme.labels,
 })
+
+// Using selectLabelByPriority for typed labels from SPARQL
+const bestLabel = selectLabelByPriority(labels) // Uses LABEL_PRIORITY constant
 ```
+
+### Main Panel Property Display
+
+The main panel displays title properties separately to show exact predicate origin:
+
+- **Title (dct:title)** - Dublin Core Terms title values
+- **Title (dc:title)** - Dublin Core Elements title values
+- **Label (rdfs:label)** - RDFS label values
 
 ### Language Selection Within Property
 
@@ -77,6 +92,49 @@ function selectLabel(labels: LabelValue[]): LabelValue | null {
   return labels[0]
 }
 ```
+
+### Label Display Consistency
+
+Labels are displayed consistently across all UI locations (breadcrumb, tree, main panel) for all resource types.
+
+#### Consistency Matrix
+
+| Type | Breadcrumb | Tree | Main Panel | Status |
+|------|------------|------|------------|--------|
+| **Scheme** | ✅ Full chain | ✅ (uses store) | ✅ Full chain | ✅ Consistent |
+| **Collection** | ✅ Full chain | ✅ Full chain | ✅ Full chain | ✅ Consistent |
+| **Concept** | ✅ Full chain | ✅ Full chain | ✅ Full chain | ✅ Consistent |
+
+All locations use the same:
+- Label predicates (`prefLabel`, `xlPrefLabel`, `dctTitle`, `dcTitle`, `rdfsLabel`)
+- Priority order (defined in `LABEL_PRIORITY` constant)
+- Language selection logic
+
+#### Label Resolution by Component
+
+**Breadcrumb** (`ConceptBreadcrumb.vue`):
+- SPARQL queries include all label predicates with BIND for labelType
+- Uses `selectBestLabelByLanguage()` local function
+- Fallback: `label || uri.split('/').pop() || uri`
+
+**Tree** (`ConceptTree.vue` + composables):
+- Uses `buildLabelUnionClause()` from constants
+- Uses `LABEL_PRIORITY` constant for selection
+- Display format: `notation - label` or `notation || label || uri.split('/').pop()`
+
+**Main Panel** (detail components):
+- Stores labels separately by type (`dctTitle[]`, `dcTitle[]`, etc.)
+- Uses `selectSchemeLabel()` / `selectLabelWithXL()` from useLabelResolver
+- Display format: Separate sections for each label type
+
+#### Implementation Files Reference
+
+| File | Purpose |
+|------|---------|
+| `/src/constants/labels.ts` | `LABEL_PRIORITY`, `LABEL_TYPES`, `LABEL_PREDICATES`, `buildLabelUnionClause()` |
+| `/src/composables/useLabelResolver.ts` | `selectSchemeLabel()`, `selectLabelByPriority()`, `selectLabel()` |
+| `/src/composables/useConceptBindings.ts` | Tree label processing |
+| `/src/components/skos/ConceptBreadcrumb.vue` | Breadcrumb label resolution |
 
 ## Global Settings
 

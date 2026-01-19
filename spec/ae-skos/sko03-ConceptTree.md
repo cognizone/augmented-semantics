@@ -619,32 +619,11 @@ async function loadOrphanConcepts() {
 }
 ```
 
-## Label Resolution (Consistent Across All Components)
+## Label Resolution
 
-All components (Tree, Breadcrumb, Details, Search) MUST use the centralized label resolution functions from `useLabelResolver`.
+Tree labels follow the unified label priority and display consistency defined in [sko01-LanguageSelector.md](./sko01-LanguageSelector.md#label-display-consistency).
 
-### Property Priority by Resource Type
-
-**Concepts** (`selectConceptLabel`):
-1. `skos:prefLabel` - primary SKOS label
-2. `skosxl:prefLabel/skosxl:literalForm` - SKOS-XL extended label
-3. `rdfs:label` - generic fallback
-
-**Schemes** (`selectSchemeLabel`):
-1. `skos:prefLabel` - primary SKOS label
-2. `skosxl:prefLabel/skosxl:literalForm` - SKOS-XL extended label
-3. `dct:title` - common for schemes
-4. `rdfs:label` - generic fallback
-
-### Language Priority (for each property)
-1. Preferred language (user selected)
-2. Fallback language (user configured)
-3. No language tag (untagged literals)
-4. Any available language
-
-### Display Format
-
-When displaying concept labels, use the format `notation - label` when both exist:
+**Display format**: `notation - label` or `notation || label || uri.split('/').pop()`
 
 | Has Notation | Has Label | Display |
 |--------------|-----------|---------|
@@ -652,51 +631,6 @@ When displaying concept labels, use the format `notation - label` when both exis
 | Yes | No | `123` |
 | No | Yes | `Albania` |
 | No | No | URI fragment |
-
-This format MUST be consistent across:
-- **Concept tree nodes** (both top concepts and children)
-- **Main concept title** (ConceptDetails header)
-- **Breadcrumb segments**
-- **Narrower/broader/related concept chips**
-- **Search results**
-
-### Implementation
-
-```typescript
-function getDisplayLabel(notation?: string, label?: string, uri?: string): string {
-  const fallbackLabel = label || uri?.split('/').pop() || uri || 'Unknown'
-
-  if (notation && label) {
-    return `${notation} - ${label}`
-  }
-  return notation || fallbackLabel
-}
-```
-
-### Label Selection Functions
-
-Use the centralized functions from `useLabelResolver`:
-
-```typescript
-import { useLabelResolver } from '@/composables'
-
-const { selectConceptLabel, selectSchemeLabel } = useLabelResolver()
-
-// For concepts
-const conceptLabel = selectConceptLabel({
-  prefLabels: details.prefLabels,
-  prefLabelsXL: details.prefLabelsXL,
-  rdfsLabels: details.rdfsLabels,
-})
-
-// For schemes
-const schemeLabel = selectSchemeLabel({
-  prefLabels: details.prefLabels,
-  prefLabelsXL: details.prefLabelsXL,
-  titles: details.title,
-  rdfsLabels: details.rdfsLabels,
-})
-```
 
 ### Direct URI Lookup (Go to URI)
 
