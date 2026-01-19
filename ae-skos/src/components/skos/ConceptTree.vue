@@ -47,7 +47,9 @@ const { showIndicator: showDeprecationIndicator } = useDeprecation()
 // Collections composable
 const {
   collections,
+  topLevelCollections,
   loadCollectionsForScheme,
+  loadChildCollections,
   reset: resetCollections,
   shouldShowLangTag: shouldShowCollectionLangTag,
 } = useCollections()
@@ -97,20 +99,42 @@ const {
   findNode,
 })
 
+// Track loading state for collection expansion
+const loadingCollectionChildren = ref<Set<string>>(new Set())
+
 /**
- * Handle node expand - delegates to concept expand handler
- * Collections are leaf nodes (members shown in details panel)
+ * Handle node expand - handles both concepts and collections with child collections
+ * Collections with child collections lazy-load their nested collections
+ * Concept members are always shown in the details panel, not in the tree
  */
-function onNodeExpand(node: TreeNode) {
-  onConceptNodeExpand(node)
+async function onNodeExpand(node: TreeNode) {
+  if (node.data?.isCollection && node.data?.hasChildCollections) {
+    // Load child collections for this collection
+    if (!node.children?.length) {  // Only load if not already loaded
+      const uri = node.data.uri as string
+      loadingCollectionChildren.value.add(uri)
+      try {
+        const children = await loadChildCollections(uri)
+        node.children = children.map(col => convertCollectionToTreeNode(col))
+      } catch (e) {
+        logger.error('ConceptTree', 'Failed to load child collections', { uri, error: e })
+      } finally {
+        loadingCollectionChildren.value.delete(uri)
+      }
+    }
+  } else {
+    // Existing concept expand logic
+    onConceptNodeExpand(node)
+  }
 }
 
 // Convert our ConceptNode[] to PrimeVue tree format
 // If a scheme is selected, show it as the root with collections and top concepts as children
 // Collections appear first, then concepts (but concepts load first for performance)
+// Only top-level collections appear at root level; nested collections load on expand
 const treeNodes = computed((): TreeNode[] => {
   const topNodes = conceptStore.topConcepts.map(node => convertToTreeNode(node))
-  const collectionNodes = collections.value.map(col => convertCollectionToTreeNode(col))
+  const collectionNodes = topLevelCollections.value.map(col => convertCollectionToTreeNode(col))
 
   // If a scheme is selected, wrap collections + top concepts under the scheme as root
   // Collections come first in display order, then concepts
@@ -141,7 +165,8 @@ const treeNodes = computed((): TreeNode[] => {
 
 /**
  * Convert a CollectionNode to PrimeVue TreeNode format
- * Collections are leaf nodes - members are shown in the details panel
+ * Collections with child collections are expandable; others are leaf nodes
+ * Concept members are always shown in the details panel, not in the tree
  */
 function convertCollectionToTreeNode(col: CollectionNode): TreeNode {
   const label = col.label || col.uri.split('/').pop() || col.uri
@@ -159,8 +184,10 @@ function convertCollectionToTreeNode(col: CollectionNode): TreeNode {
       notation: col.notation,
       showLangTag: col.labelLang ? shouldShowCollectionLangTag(col.labelLang) : false,
       lang: col.labelLang,
+      hasChildCollections: col.hasChildCollections,
     },
-    leaf: true,  // Collections are leaf nodes (members shown in details panel)
+    leaf: !col.hasChildCollections,  // Expandable if has child collections
+    children: col.hasChildCollections ? [] : undefined,  // Placeholder for lazy load
   }
 }
 
@@ -687,7 +714,7 @@ watch(
               <span v-if="slotProps.node.data?.deprecated && showDeprecationIndicator" class="deprecated-badge">deprecated</span>
             </span>
             <ProgressSpinner
-              v-if="loadingChildren.has(slotProps.node.key)"
+              v-if="loadingChildren.has(slotProps.node.key) || loadingCollectionChildren.has(slotProps.node.key)"
               style="width: 16px; height: 16px"
             />
           </div>

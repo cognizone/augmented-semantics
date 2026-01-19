@@ -213,6 +213,9 @@ export interface CollectionNode {
   labelLang?: string
   notation?: string
   memberCount?: number
+  // Nesting support
+  hasChildCollections?: boolean  // True = expandable (has nested collections)
+  isNested?: boolean             // True = has parent collection (hide from root)
 }
 
 /**

@@ -6,11 +6,11 @@
  *
  * @see /spec/ae-skos/sko03-ConceptTree.md
  */
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useEndpointStore, useLanguageStore } from '../stores'
 import { executeSparql, logger } from '../services'
 import { useLabelResolver } from './useLabelResolver'
-import { buildCollectionsQuery, getCollectionQueryCapabilities } from './useCollectionQueries'
+import { buildCollectionsQuery, buildChildCollectionsQuery, getCollectionQueryCapabilities } from './useCollectionQueries'
 import type { CollectionNode } from '../types'
 
 export function useCollections() {
@@ -33,6 +33,8 @@ export function useCollections() {
       uri: string
       labels: { value: string; lang: string; type: string }[]
       notation?: string
+      isNested?: boolean
+      hasChildCollections?: boolean
     }>()
 
     for (const binding of bindings) {
@@ -63,6 +65,14 @@ export function useCollections() {
       if (!entry.notation && binding.notation?.value) {
         entry.notation = binding.notation.value
       }
+
+      // Handle nesting flags (boolean values come as 'true'/'false' strings)
+      if (binding.hasParentCollection?.value === 'true') {
+        entry.isNested = true
+      }
+      if (binding.hasChildCollections?.value === 'true') {
+        entry.hasChildCollections = true
+      }
     }
 
     // Convert to CollectionNode array with priority-based label selection
@@ -77,6 +87,8 @@ export function useCollections() {
         label: selected?.value,
         labelLang: selected?.lang || undefined,
         notation: entry.notation,
+        isNested: entry.isNested,
+        hasChildCollections: entry.hasChildCollections,
       })
     }
 
@@ -145,6 +157,39 @@ export function useCollections() {
   }
 
   /**
+   * Top-level collections (not nested inside another collection).
+   * These are shown at the root level under the scheme.
+   */
+  const topLevelCollections = computed(() =>
+    collections.value.filter(c => !c.isNested)
+  )
+
+  /**
+   * Load child collections for a parent collection.
+   * Used for lazy-loading nested collections on expand.
+   */
+  async function loadChildCollections(parentUri: string): Promise<CollectionNode[]> {
+    const endpoint = endpointStore.current
+    if (!endpoint) return []
+
+    const query = buildChildCollectionsQuery(parentUri)
+    logger.debug('Collections', 'Loading child collections', { parentUri, query })
+
+    try {
+      const results = await executeSparql(endpoint, query, { retries: 1 })
+      const children = processBindings(results.results.bindings as Array<Record<string, { value: string; 'xml:lang'?: string }>>)
+      logger.info('Collections', `Loaded ${children.length} child collections for ${parentUri}`)
+      return children
+    } catch (e: unknown) {
+      const errMsg = e && typeof e === 'object' && 'message' in e
+        ? (e as { message: string }).message
+        : 'Unknown error'
+      logger.error('Collections', 'Failed to load child collections', { parentUri, error: e })
+      throw new Error(`Failed to load child collections: ${errMsg}`)
+    }
+  }
+
+  /**
    * Clear collections state.
    */
   function reset() {
@@ -156,10 +201,12 @@ export function useCollections() {
   return {
     // State
     collections,
+    topLevelCollections,
     loading,
     error,
     // Actions
     loadCollectionsForScheme,
+    loadChildCollections,
     reset,
     // Utilities
     shouldShowLangTag,

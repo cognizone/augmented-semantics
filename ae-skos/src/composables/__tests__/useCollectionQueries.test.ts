@@ -7,6 +7,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   buildCollectionsQuery,
+  buildChildCollectionsQuery,
   getCollectionQueryCapabilities,
 } from '../useCollectionQueries'
 import type { SPARQLEndpoint } from '../../types'
@@ -362,6 +363,92 @@ describe('useCollectionQueries', () => {
       expect(result.branches).toContain('topConceptOf')
       expect(result.branches).toContain('hasTopConcept')
       expect(result.branches).toContain('broaderTransitive')
+    })
+  })
+
+  describe('nested collection detection in buildCollectionsQuery', () => {
+    it('includes hasParentCollection binding', () => {
+      const endpoint = mockEndpoint({ hasInScheme: true })
+
+      const query = buildCollectionsQuery(endpoint, testScheme)
+      expect(query).not.toBeNull()
+      expect(query).toContain('?hasParentCollection')
+      expect(query).toContain('AS ?hasParentCollection')
+    })
+
+    it('includes hasChildCollections binding', () => {
+      const endpoint = mockEndpoint({ hasInScheme: true })
+
+      const query = buildCollectionsQuery(endpoint, testScheme)
+      expect(query).not.toBeNull()
+      expect(query).toContain('?hasChildCollections')
+      expect(query).toContain('AS ?hasChildCollections')
+    })
+
+    it('uses EXISTS pattern for hasParentCollection detection', () => {
+      const endpoint = mockEndpoint({ hasInScheme: true })
+
+      const query = buildCollectionsQuery(endpoint, testScheme)
+      expect(query).not.toBeNull()
+      expect(query).toContain('BIND(EXISTS {')
+      expect(query).toContain('?parentCol a skos:Collection')
+      expect(query).toContain('?parentCol skos:member ?collection')
+    })
+
+    it('uses EXISTS pattern for hasChildCollections detection', () => {
+      const endpoint = mockEndpoint({ hasInScheme: true })
+
+      const query = buildCollectionsQuery(endpoint, testScheme)
+      expect(query).not.toBeNull()
+      expect(query).toContain('?collection skos:member ?childCol')
+      expect(query).toContain('?childCol a skos:Collection')
+    })
+  })
+
+  describe('buildChildCollectionsQuery', () => {
+    const testParentUri = 'http://example.org/collection/parent'
+
+    it('generates valid SPARQL query', () => {
+      const query = buildChildCollectionsQuery(testParentUri)
+      expect(query).toContain('SELECT DISTINCT ?collection')
+      expect(query).toContain('WHERE {')
+      expect(query).toContain(`<${testParentUri}> skos:member ?collection`)
+      expect(query).toContain('?collection a skos:Collection')
+    })
+
+    it('includes hasChildCollections for recursive expandability', () => {
+      const query = buildChildCollectionsQuery(testParentUri)
+      expect(query).toContain('?hasChildCollections')
+      expect(query).toContain('AS ?hasChildCollections')
+      expect(query).toContain('BIND(EXISTS {')
+    })
+
+    it('does not include hasParentCollection (not needed for children)', () => {
+      const query = buildChildCollectionsQuery(testParentUri)
+      expect(query).not.toContain('?hasParentCollection')
+    })
+
+    it('includes label resolution patterns', () => {
+      const query = buildChildCollectionsQuery(testParentUri)
+      expect(query).toContain('skos:prefLabel')
+      expect(query).toContain('skosxl:prefLabel')
+      expect(query).toContain('dct:title')
+      expect(query).toContain('rdfs:label')
+    })
+
+    it('includes notation pattern', () => {
+      const query = buildChildCollectionsQuery(testParentUri)
+      expect(query).toContain('skos:notation')
+    })
+
+    it('includes PREFIX declarations', () => {
+      const query = buildChildCollectionsQuery(testParentUri)
+      expect(query).toContain('PREFIX skos:')
+    })
+
+    it('orders by collection', () => {
+      const query = buildChildCollectionsQuery(testParentUri)
+      expect(query).toContain('ORDER BY ?collection')
     })
   })
 })

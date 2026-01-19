@@ -915,7 +915,7 @@ See [com03-ErrorHandling](../common/com03-ErrorHandling.md) for details.
 
 ## SKOS Collections
 
-SKOS Collections (`skos:Collection`) group concepts without implying hierarchical relationships. They appear at the root level of the tree alongside top concepts.
+SKOS Collections (`skos:Collection`) group concepts without implying hierarchical relationships. Collections support hierarchical nesting: top-level collections appear at the scheme root, while nested collections (contained by another collection via `skos:member`) appear under their parent collection and load on-demand when expanded.
 
 ### Collection Loading
 
@@ -973,16 +973,90 @@ SELECT DISTINCT ?collection ?label ?labelLang ?labelType ?notation WHERE {
 ORDER BY ?collection
 ```
 
+### Nested Collections
+
+Collections can contain other collections via `skos:member`. The tree displays this hierarchy with lazy loading.
+
+**Display Rules:**
+- **Top-level collections**: Collections not contained by any other collection appear at the scheme root
+- **Nested collections**: Collections that are members of another collection appear under their parent
+- **Expandable**: Collections with child collections show an expand arrow
+- **Lazy loading**: Child collections load on-demand when parent is expanded
+- **Concept members**: Clicking any collection shows its concept members in the details panel (not in the tree)
+
+**Tree Structure:**
+```
+┌────────────────────────────────────────┐
+│ ▼ 🗂 UNESCO Thesaurus                   │
+│   ├─ ▼ 📚 Domains (expandable)          │
+│   │     ├─ 📚 Social Sciences           │  ← Nested collection
+│   │     └─ 📚 Natural Sciences          │  ← Nested collection
+│   ├─ 📚 Microthesauri (leaf)            │
+│   ├─ ▶ Agriculture                     │
+│   └─ ▶ Economics                       │
+└────────────────────────────────────────┘
+```
+
+**Nesting Detection:**
+The main collections query includes nesting detection via `EXISTS` patterns:
+
+```sparql
+# Added to SELECT clause
+?hasParentCollection ?hasChildCollections
+
+# Added to WHERE clause
+BIND(EXISTS {
+  ?parentCol a skos:Collection .
+  ?parentCol skos:member ?collection .
+} AS ?hasParentCollection)
+
+BIND(EXISTS {
+  ?collection skos:member ?childCol .
+  ?childCol a skos:Collection .
+} AS ?hasChildCollections)
+```
+
+**Child Collections Query:**
+When a collection with children is expanded, child collections are loaded:
+
+```sparql
+SELECT DISTINCT ?collection ?label ?labelLang ?labelType ?notation
+       ?hasChildCollections WHERE {
+  <PARENT_URI> skos:member ?collection .
+  ?collection a skos:Collection .
+
+  BIND(EXISTS {
+    ?collection skos:member ?childCol .
+    ?childCol a skos:Collection .
+  } AS ?hasChildCollections)
+
+  # Label resolution (same pattern as main query)
+  OPTIONAL {
+    { ?collection skos:prefLabel ?label . BIND("prefLabel" AS ?labelType) }
+    UNION { ?collection skosxl:prefLabel/skosxl:literalForm ?label . BIND("xlPrefLabel" AS ?labelType) }
+    UNION { ?collection dct:title ?label . BIND("dctTitle" AS ?labelType) }
+    UNION { ?collection dc:title ?label . BIND("dcTitle" AS ?labelType) }
+    UNION { ?collection rdfs:label ?label . BIND("rdfsLabel" AS ?labelType) }
+    BIND(LANG(?label) AS ?labelLang)
+  }
+  OPTIONAL { ?collection skos:notation ?notation }
+}
+ORDER BY ?collection
+```
+
+**Implementation:** `useCollections.ts` composable with `loadChildCollections()` function
+
 ### Collection Display in Tree
 
-Collections appear at the root level with a distinct icon:
+Top-level collections appear at the root level with a distinct icon. Collections with child collections are expandable:
 
 ```
 ┌────────────────────────────────┐
 │ 🔍 [Go to URI...]              │
 ├────────────────────────────────┤
-│ 📚 Subject Categories          │  ← Collection
-│ 📚 Geographic Groups           │  ← Collection
+│ ▼ 📚 Subject Categories        │  ← Expandable collection
+│     └─ 📚 Geographic Groups    │  ← Nested collection
+│ 📚 Alphabetical Index          │  ← Leaf collection
 │ ▶ Agriculture                  │  ← Top concept
 │ ▶ Economics                    │  ← Top concept
 └────────────────────────────────┘
@@ -1120,6 +1194,8 @@ interface CollectionNode {
   labelLang?: string
   notation?: string
   memberCount?: number
+  hasChildCollections?: boolean  // True = expandable (has nested collections)
+  isNested?: boolean             // True = has parent collection (hide from root)
 }
 
 interface CollectionDetails {

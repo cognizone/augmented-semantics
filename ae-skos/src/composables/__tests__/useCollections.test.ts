@@ -362,4 +362,134 @@ describe('useCollections', () => {
       expect(executeSparql).toHaveBeenCalled()
     })
   })
+
+  describe('nested collections support', () => {
+    it('sets isNested when hasParentCollection is true', async () => {
+      ;(executeSparql as Mock).mockResolvedValueOnce({
+        results: {
+          bindings: [
+            {
+              collection: { value: 'http://example.org/collection/1' },
+              label: { value: 'Nested Collection' },
+              labelLang: { value: 'en' },
+              labelType: { value: 'prefLabel' },
+              hasParentCollection: { value: 'true' },
+              hasChildCollections: { value: 'false' },
+            },
+          ],
+        },
+      })
+
+      const { loadCollectionsForScheme, collections } = useCollections()
+      await loadCollectionsForScheme('http://example.org/scheme')
+
+      expect(collections.value).toHaveLength(1)
+      expect(collections.value[0].isNested).toBe(true)
+    })
+
+    it('sets hasChildCollections when hasChildCollections is true', async () => {
+      ;(executeSparql as Mock).mockResolvedValueOnce({
+        results: {
+          bindings: [
+            {
+              collection: { value: 'http://example.org/collection/1' },
+              label: { value: 'Parent Collection' },
+              labelLang: { value: 'en' },
+              labelType: { value: 'prefLabel' },
+              hasParentCollection: { value: 'false' },
+              hasChildCollections: { value: 'true' },
+            },
+          ],
+        },
+      })
+
+      const { loadCollectionsForScheme, collections } = useCollections()
+      await loadCollectionsForScheme('http://example.org/scheme')
+
+      expect(collections.value).toHaveLength(1)
+      expect(collections.value[0].hasChildCollections).toBe(true)
+    })
+
+    it('topLevelCollections excludes nested collections', async () => {
+      ;(executeSparql as Mock).mockResolvedValueOnce({
+        results: {
+          bindings: [
+            {
+              collection: { value: 'http://example.org/collection/top' },
+              label: { value: 'Top Level' },
+              labelLang: { value: 'en' },
+              labelType: { value: 'prefLabel' },
+              hasParentCollection: { value: 'false' },
+              hasChildCollections: { value: 'true' },
+            },
+            {
+              collection: { value: 'http://example.org/collection/nested' },
+              label: { value: 'Nested' },
+              labelLang: { value: 'en' },
+              labelType: { value: 'prefLabel' },
+              hasParentCollection: { value: 'true' },
+              hasChildCollections: { value: 'false' },
+            },
+          ],
+        },
+      })
+
+      const { loadCollectionsForScheme, collections, topLevelCollections } = useCollections()
+      await loadCollectionsForScheme('http://example.org/scheme')
+
+      expect(collections.value).toHaveLength(2)
+      expect(topLevelCollections.value).toHaveLength(1)
+      expect(topLevelCollections.value[0].uri).toBe('http://example.org/collection/top')
+    })
+
+    it('loadChildCollections returns child collections', async () => {
+      // First call for loadCollectionsForScheme (needed to set up the endpoint)
+      ;(executeSparql as Mock).mockResolvedValueOnce({
+        results: { bindings: [] },
+      })
+
+      // Second call for loadChildCollections
+      ;(executeSparql as Mock).mockResolvedValueOnce({
+        results: {
+          bindings: [
+            {
+              collection: { value: 'http://example.org/collection/child1' },
+              label: { value: 'Child 1' },
+              labelLang: { value: 'en' },
+              labelType: { value: 'prefLabel' },
+              hasChildCollections: { value: 'false' },
+            },
+            {
+              collection: { value: 'http://example.org/collection/child2' },
+              label: { value: 'Child 2' },
+              labelLang: { value: 'en' },
+              labelType: { value: 'prefLabel' },
+              hasChildCollections: { value: 'true' },
+            },
+          ],
+        },
+      })
+
+      const { loadCollectionsForScheme, loadChildCollections } = useCollections()
+      await loadCollectionsForScheme('http://example.org/scheme')
+
+      const children = await loadChildCollections('http://example.org/collection/parent')
+
+      expect(children).toHaveLength(2)
+      expect(children[0].label).toBe('Child 1')
+      expect(children[0].hasChildCollections).toBeUndefined()
+      expect(children[1].label).toBe('Child 2')
+      expect(children[1].hasChildCollections).toBe(true)
+    })
+
+    it('loadChildCollections returns empty array when no endpoint', async () => {
+      const endpointStore = useEndpointStore()
+      endpointStore.selectEndpoint(null as unknown as string)
+
+      const { loadChildCollections } = useCollections()
+      const children = await loadChildCollections('http://example.org/collection/parent')
+
+      expect(children).toEqual([])
+    })
+  })
 })

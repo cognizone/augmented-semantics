@@ -118,12 +118,73 @@ export function buildCollectionsQuery(
   const unionPattern = membershipBranches.join('\n        UNION\n        ')
 
   return withPrefixes(`
-    SELECT DISTINCT ?collection ?label ?labelLang ?labelType ?notation WHERE {
+    SELECT DISTINCT ?collection ?label ?labelLang ?labelType ?notation
+           ?hasParentCollection ?hasChildCollections WHERE {
       ?collection a skos:Collection .
       ?collection skos:member ?concept .
 
       # Concept belongs to scheme via capability-detected paths
       ${unionPattern}
+
+      # Detect if nested (has parent collection)
+      BIND(EXISTS {
+        ?parentCol a skos:Collection .
+        ?parentCol skos:member ?collection .
+      } AS ?hasParentCollection)
+
+      # Detect if has children (has child collections)
+      BIND(EXISTS {
+        ?collection skos:member ?childCol .
+        ?childCol a skos:Collection .
+      } AS ?hasChildCollections)
+
+      # Label resolution with priority tracking
+      OPTIONAL {
+        {
+          ?collection skos:prefLabel ?label .
+          BIND("prefLabel" AS ?labelType)
+        } UNION {
+          ?collection skosxl:prefLabel/skosxl:literalForm ?label .
+          BIND("xlPrefLabel" AS ?labelType)
+        } UNION {
+          ?collection dct:title ?label .
+          BIND("dctTitle" AS ?labelType)
+        } UNION {
+          ?collection dc:title ?label .
+          BIND("dcTitle" AS ?labelType)
+        } UNION {
+          ?collection rdfs:label ?label .
+          BIND("rdfsLabel" AS ?labelType)
+        }
+        BIND(LANG(?label) AS ?labelLang)
+      }
+
+      # Notation
+      OPTIONAL { ?collection skos:notation ?notation }
+    }
+    ORDER BY ?collection
+  `)
+}
+
+/**
+ * Build SPARQL query for loading child collections of a parent collection.
+ * Used for lazy-loading nested collections on expand.
+ *
+ * @param parentUri - URI of the parent collection
+ * @returns SPARQL query string
+ */
+export function buildChildCollectionsQuery(parentUri: string): string {
+  return withPrefixes(`
+    SELECT DISTINCT ?collection ?label ?labelLang ?labelType ?notation
+           ?hasChildCollections WHERE {
+      <${parentUri}> skos:member ?collection .
+      ?collection a skos:Collection .
+
+      # Detect if has children (for recursive expandability)
+      BIND(EXISTS {
+        ?collection skos:member ?childCol .
+        ?childCol a skos:Collection .
+      } AS ?hasChildCollections)
 
       # Label resolution with priority tracking
       OPTIONAL {
