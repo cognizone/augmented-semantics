@@ -31,12 +31,29 @@ describe('useCollections', () => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
 
-    // Set up default endpoint
+    // Set up default endpoint with analysis data
     const endpointStore = useEndpointStore()
     const endpoint = endpointStore.addEndpoint({
       name: 'Test Endpoint',
       url: 'https://example.org/sparql',
     })
+    // Add analysis with relationships so capability-aware queries work
+    endpoint.analysis = {
+      hasSkosContent: true,
+      supportsNamedGraphs: false,
+      skosGraphCount: 0,
+      languages: [],
+      analyzedAt: new Date().toISOString(),
+      relationships: {
+        hasInScheme: true,
+        hasTopConceptOf: true,
+        hasHasTopConcept: true,
+        hasBroader: true,
+        hasNarrower: true,
+        hasBroaderTransitive: true,
+        hasNarrowerTransitive: true,
+      },
+    }
     endpointStore.selectEndpoint(endpoint.id)
 
     // Default mock implementation
@@ -275,6 +292,74 @@ describe('useCollections', () => {
       reset()
 
       expect(collections.value).toEqual([])
+    })
+  })
+
+  describe('capability-aware query building', () => {
+    it('skips loading when endpoint has no analysis', async () => {
+      const endpointStore = useEndpointStore()
+      const endpoint = endpointStore.current!
+      // Remove analysis
+      delete (endpoint as Record<string, unknown>).analysis
+
+      const { loadCollectionsForScheme, collections } = useCollections()
+      await loadCollectionsForScheme('http://example.org/scheme')
+
+      expect(executeSparql).not.toHaveBeenCalled()
+      expect(collections.value).toEqual([])
+    })
+
+    it('skips loading when endpoint has no relationships', async () => {
+      const endpointStore = useEndpointStore()
+      const endpoint = endpointStore.current!
+      endpoint.analysis = {
+        hasSkosContent: true,
+        supportsNamedGraphs: false,
+        skosGraphCount: 0,
+        languages: [],
+        analyzedAt: new Date().toISOString(),
+        relationships: {
+          hasInScheme: false,
+          hasTopConceptOf: false,
+          hasHasTopConcept: false,
+          hasBroader: false,
+          hasNarrower: false,
+          hasBroaderTransitive: false,
+          hasNarrowerTransitive: false,
+        },
+      }
+
+      const { loadCollectionsForScheme, collections } = useCollections()
+      await loadCollectionsForScheme('http://example.org/scheme')
+
+      expect(executeSparql).not.toHaveBeenCalled()
+      expect(collections.value).toEqual([])
+    })
+
+    it('executes query when at least one capability exists', async () => {
+      const endpointStore = useEndpointStore()
+      const endpoint = endpointStore.current!
+      endpoint.analysis = {
+        hasSkosContent: true,
+        supportsNamedGraphs: false,
+        skosGraphCount: 0,
+        languages: [],
+        analyzedAt: new Date().toISOString(),
+        relationships: {
+          hasInScheme: true, // Only this one capability
+          hasTopConceptOf: false,
+          hasHasTopConcept: false,
+          hasBroader: false,
+          hasNarrower: false,
+          hasBroaderTransitive: false,
+          hasNarrowerTransitive: false,
+        },
+      }
+
+      const { loadCollectionsForScheme } = useCollections()
+      await loadCollectionsForScheme('http://example.org/scheme')
+
+      expect(executeSparql).toHaveBeenCalled()
     })
   })
 })

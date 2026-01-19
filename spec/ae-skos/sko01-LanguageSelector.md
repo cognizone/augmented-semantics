@@ -36,24 +36,36 @@ The canonical label priority is defined in `/src/constants/labels.ts`:
 
 Different resource types have different property fallback orders:
 
-**Concepts, Collections, Schemes** (unified priority):
+**Schemes and Collections** (unified priority):
 1. `skos:prefLabel`
 2. `skosxl:prefLabel` (SKOS-XL)
 3. `dct:title` (Dublin Core Terms)
 4. `dc:title` (Dublin Core Elements)
 5. `rdfs:label`
 
+**Concepts** (excludes title properties since concepts rarely have titles):
+1. `skos:prefLabel`
+2. `skosxl:prefLabel` (SKOS-XL)
+3. `rdfs:label`
+
 ```typescript
-// Using selectSchemeLabel with separate dc/dct fields
+// Using selectSchemeLabel or selectCollectionLabel with separate dc/dct fields
 const schemeLabel = selectSchemeLabel({
   prefLabels: scheme.prefLabels,
   prefLabelsXL: scheme.prefLabelsXL,
-  dctTitles: scheme.dctTitle,
-  dcTitles: scheme.dcTitle,
-  rdfsLabels: scheme.labels,
+  dctTitles: scheme.dctTitles,
+  dcTitles: scheme.dcTitles,
+  rdfsLabels: scheme.rdfsLabels,
 })
 
-// Using selectLabelByPriority for typed labels from SPARQL
+const collectionLabel = selectCollectionLabel({
+  prefLabels: collection.prefLabels,
+  dctTitles: collection.dctTitles,
+  dcTitles: collection.dcTitles,
+  rdfsLabels: collection.rdfsLabels,
+})
+
+// Using selectLabelByPriority for typed labels from SPARQL queries
 const bestLabel = selectLabelByPriority(labels) // Uses LABEL_PRIORITY constant
 ```
 
@@ -112,29 +124,47 @@ All locations use the same:
 
 #### Label Resolution by Component
 
+All components use the **centralized label resolution** in `useLabelResolver.ts`:
+
 **Breadcrumb** (`ConceptBreadcrumb.vue`):
 - SPARQL queries include all label predicates with BIND for labelType
-- Uses `selectBestLabelByLanguage()` local function
-- Fallback: `label || uri.split('/').pop() || uri`
+- Uses `selectLabelByPriority()` from useLabelResolver
+- Fallback: `getUriFragment(uri)` or full URI
 
 **Tree** (`ConceptTree.vue` + composables):
-- Uses `buildLabelUnionClause()` from constants
-- Uses `LABEL_PRIORITY` constant for selection
-- Display format: `notation - label` or `notation || label || uri.split('/').pop()`
+- Uses `buildLabelUnionClause()` from constants for SPARQL
+- Uses `selectLabelByPriority()` from useLabelResolver
+- Display format: `notation - label` or `notation || label || getUriFragment(uri)`
 
 **Main Panel** (detail components):
-- Stores labels separately by type (`dctTitle[]`, `dcTitle[]`, etc.)
-- Uses `selectSchemeLabel()` / `selectLabelWithXL()` from useLabelResolver
+- Stores labels separately by type (`dctTitles[]`, `dcTitles[]`, etc.)
+- Uses type-specific selectors from useLabelResolver:
+  - `selectSchemeLabel()` for schemes
+  - `selectCollectionLabel()` for collections
+  - `selectLabelWithXL()` for concepts
 - Display format: Separate sections for each label type
+
+#### Centralized Label Resolution Functions
+
+| Function | Use Case | Priority |
+|----------|----------|----------|
+| `selectLabel()` | Base language selection | User pref > Endpoint > No-lang > First |
+| `selectLabelWithXL()` | With XL fallback | Regular labels first, then XL |
+| `selectConceptLabel()` | Concept headers | prefLabel > xlPrefLabel > rdfsLabel |
+| `selectSchemeLabel()` | Scheme headers | prefLabel > xlPrefLabel > dctTitle > dcTitle > rdfsLabel |
+| `selectCollectionLabel()` | Collection headers | prefLabel > xlPrefLabel > dctTitle > dcTitle > rdfsLabel |
+| `selectLabelByPriority()` | SPARQL typed labels | Full LABEL_PRIORITY order |
 
 #### Implementation Files Reference
 
 | File | Purpose |
 |------|---------|
 | `/src/constants/labels.ts` | `LABEL_PRIORITY`, `LABEL_TYPES`, `LABEL_PREDICATES`, `buildLabelUnionClause()` |
-| `/src/composables/useLabelResolver.ts` | `selectSchemeLabel()`, `selectLabelByPriority()`, `selectLabel()` |
+| `/src/composables/useLabelResolver.ts` | All label selection functions (centralized) |
 | `/src/composables/useConceptBindings.ts` | Tree label processing |
-| `/src/components/skos/ConceptBreadcrumb.vue` | Breadcrumb label resolution |
+| `/src/composables/useConceptData.ts` | Related labels resolution |
+| `/src/composables/useCollections.ts` | Collection list labels |
+| `/src/components/skos/ConceptBreadcrumb.vue` | Breadcrumb display |
 
 ## Global Settings
 

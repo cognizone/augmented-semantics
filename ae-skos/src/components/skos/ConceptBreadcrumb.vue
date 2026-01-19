@@ -11,7 +11,6 @@ import { ref, watch, computed } from 'vue'
 import { useConceptStore, useEndpointStore, useLanguageStore, useSchemeStore, useSettingsStore, useUIStore, ORPHAN_SCHEME_URI } from '../../stores'
 import { executeSparql, withPrefixes, logger } from '../../services'
 import { useLabelResolver } from '../../composables'
-import { LABEL_PRIORITY } from '../../constants'
 import type { ConceptRef, ConceptScheme } from '../../types'
 import Breadcrumb from 'primevue/breadcrumb'
 import Select from 'primevue/select'
@@ -27,7 +26,7 @@ const languageStore = useLanguageStore()
 const schemeStore = useSchemeStore()
 const settingsStore = useSettingsStore()
 const uiStore = useUIStore()
-const { shouldShowLangTag } = useLabelResolver()
+const { shouldShowLangTag, selectLabelByPriority } = useLabelResolver()
 
 // Local state
 const loading = ref(false)
@@ -131,31 +130,6 @@ function goHome() {
   }
 }
 
-// Helper to select best label based on language priorities
-function selectBestLabelByLanguage(
-  labels: { value: string; lang: string; type: string }[]
-): { value: string; lang: string } | undefined {
-  if (!labels.length) return undefined
-
-  // 1. Try preferred language
-  const preferred = labels.find(l => l.lang === languageStore.preferred)
-  if (preferred) return preferred
-
-  // 2. Try endpoint's language priorities in order
-  const priorities = endpointStore.current?.languagePriorities || []
-  for (const lang of priorities) {
-    const match = labels.find(l => l.lang === lang)
-    if (match) return match
-  }
-
-  // 3. Try labels without language tag
-  const noLang = labels.find(l => !l.lang || l.lang === '')
-  if (noLang) return noLang
-
-  // 4. Return first available
-  return labels[0]
-}
-
 // Load schemes from endpoint (uses schemeUris whitelist from analysis)
 async function loadSchemes() {
   const endpoint = endpointStore.current
@@ -252,23 +226,14 @@ async function loadSchemes() {
 
     // Convert to ConceptScheme[] with best label selection (includes all whitelist URIs)
     const uniqueSchemes: ConceptScheme[] = Array.from(schemeMap.entries()).map(([uri, data]) => {
-      const labelPriority = LABEL_PRIORITY
-      let bestLabel: string | undefined
-      let bestLabelLang: string | undefined
-
-      for (const labelType of labelPriority) {
-        const labelsOfType = data.labels.filter(l => l.type === labelType)
-        if (!labelsOfType.length) continue
-
-        const selected = selectBestLabelByLanguage(labelsOfType)
-        if (selected) {
-          bestLabel = selected.value
-          bestLabelLang = selected.lang || undefined
-          break
-        }
+      // Use centralized resolver for label selection
+      const selected = selectLabelByPriority(data.labels)
+      return {
+        uri,
+        label: selected?.value,
+        labelLang: selected?.lang || undefined,
+        deprecated: data.deprecated || undefined
       }
-
-      return { uri, label: bestLabel, labelLang: bestLabelLang, deprecated: data.deprecated || undefined }
     })
 
     logger.info('ConceptBreadcrumb', `Loaded ${uniqueSchemes.length} schemes`)
@@ -455,22 +420,10 @@ async function loadBreadcrumb(uri: string) {
         }
       }
 
-      // Pick best label using LABEL_PRIORITY constant
-      const labelPriority = LABEL_PRIORITY
-      let bestLabel: string | undefined
-      let bestLabelLang: string | undefined
-
-      for (const labelType of labelPriority) {
-        const labelsOfType = labels.filter(l => l.type === labelType)
-        if (!labelsOfType.length) continue
-
-        const selected = selectBestLabelByLanguage(labelsOfType)
-        if (selected) {
-          bestLabel = selected.value
-          bestLabelLang = selected.lang || undefined
-          break
-        }
-      }
+      // Pick best label using centralized resolver
+      const selected = selectLabelByPriority(labels)
+      const bestLabel = selected?.value
+      const bestLabelLang = selected?.lang || undefined
 
       // For the selected concept (first item), include hasNarrower info
       const item: ConceptRef = {
@@ -521,11 +474,11 @@ async function loadBreadcrumb(uri: string) {
       const labels = results.results.bindings.map(b => ({
         value: b.label?.value || '',
         lang: b.labelLang?.value || '',
-        type: 'fallback'  // Dummy type for selectBestLabelByLanguage compatibility
+        type: 'prefLabel'  // Use prefLabel type for unified handling
       })).filter(l => l.value)
 
-      // Pick best label using shared language priority logic
-      const selected = selectBestLabelByLanguage(labels)
+      // Pick best label using centralized resolver
+      const selected = selectLabelByPriority(labels)
       const bestLabel = selected?.value
 
       conceptStore.setBreadcrumb([{ uri, label: bestLabel }])
@@ -610,22 +563,10 @@ async function loadCollectionBreadcrumb(collectionUri: string) {
       }
     }
 
-    // Pick best label using LABEL_PRIORITY constant
-    const labelPriority = LABEL_PRIORITY
-    let bestLabel: string | undefined
-    let bestLabelLang: string | undefined
-
-    for (const labelType of labelPriority) {
-      const labelsOfType = labels.filter(l => l.type === labelType)
-      if (!labelsOfType.length) continue
-
-      const selected = selectBestLabelByLanguage(labelsOfType)
-      if (selected) {
-        bestLabel = selected.value
-        bestLabelLang = selected.lang || undefined
-        break
-      }
-    }
+    // Pick best label using centralized resolver
+    const selected = selectLabelByPriority(labels)
+    const bestLabel = selected?.value
+    const bestLabelLang = selected?.lang || undefined
 
     // Build breadcrumb with just the collection
     const path: ConceptRef[] = [

@@ -26,7 +26,7 @@ const emit = defineEmits<{
   selectConcept: [uri: string]
 }>()
 
-const { selectLabel, sortLabels, shouldShowLangTag } = useLabelResolver()
+const { selectCollectionLabel, sortLabels, shouldShowLangTag } = useLabelResolver()
 const { details, members, loading, loadingMembers, error, resolvedPredicates, loadDetails, reset } = useCollectionData()
 const { exportAsTurtle } = useResourceExport()
 
@@ -41,10 +41,15 @@ const exportMenuItems = computed(() => [
 // Delayed loading - show spinner only after 300ms to prevent flicker
 const showLoading = useDelayedLoading(loading)
 
-// Get preferred label
+// Get preferred label using full priority (prefLabel > dctTitle > dcTitle > rdfsLabel)
 const preferredLabelObj = computed(() => {
   if (!details.value) return null
-  return selectLabel(details.value.prefLabels)
+  return selectCollectionLabel({
+    prefLabels: details.value.prefLabels,
+    dctTitles: details.value.dctTitles,
+    dcTitles: details.value.dcTitles,
+    rdfsLabels: details.value.rdfsLabels,
+  })
 })
 
 const preferredLabel = computed(() => preferredLabelObj.value?.value || null)

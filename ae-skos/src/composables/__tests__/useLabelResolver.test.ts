@@ -440,4 +440,188 @@ describe('useLabelResolver', () => {
       expect(result?.value).toBe('DCT Title')
     })
   })
+
+  describe('selectCollectionLabel', () => {
+    it('selects prefLabel over dctTitle and rdfsLabel', () => {
+      const languageStore = useLanguageStore()
+      languageStore.setPreferred('en')
+
+      const { selectCollectionLabel } = useLabelResolver()
+      const result = selectCollectionLabel({
+        prefLabels: [{ value: 'prefLabel value', lang: 'en' }],
+        dctTitles: [{ value: 'dctTitle value', lang: 'en' }],
+        rdfsLabels: [{ value: 'rdfs value', lang: 'en' }],
+      })
+
+      expect(result?.value).toBe('prefLabel value')
+    })
+
+    it('falls back to xlPrefLabel when no prefLabel', () => {
+      const languageStore = useLanguageStore()
+      languageStore.setPreferred('en')
+
+      const { selectCollectionLabel } = useLabelResolver()
+      const result = selectCollectionLabel({
+        prefLabels: [],
+        prefLabelsXL: [{
+          uri: 'http://example.org/xl',
+          literalForm: { value: 'xl value', lang: 'en' }
+        }],
+        rdfsLabels: [{ value: 'rdfs value', lang: 'en' }],
+      })
+
+      expect(result?.value).toBe('xl value')
+    })
+
+    it('falls back to dctTitle when no prefLabel', () => {
+      const languageStore = useLanguageStore()
+      languageStore.setPreferred('en')
+
+      const { selectCollectionLabel } = useLabelResolver()
+      const result = selectCollectionLabel({
+        prefLabels: [],
+        dctTitles: [{ value: 'dctTitle value', lang: 'en' }],
+        rdfsLabels: [{ value: 'rdfs value', lang: 'en' }],
+      })
+
+      expect(result?.value).toBe('dctTitle value')
+    })
+
+    it('falls back to dcTitle when no prefLabel or dctTitle', () => {
+      const languageStore = useLanguageStore()
+      languageStore.setPreferred('en')
+
+      const { selectCollectionLabel } = useLabelResolver()
+      const result = selectCollectionLabel({
+        prefLabels: [],
+        dctTitles: [],
+        dcTitles: [{ value: 'dcTitle value', lang: 'en' }],
+        rdfsLabels: [{ value: 'rdfs value', lang: 'en' }],
+      })
+
+      expect(result?.value).toBe('dcTitle value')
+    })
+
+    it('falls back to rdfsLabel when no prefLabel or titles', () => {
+      const languageStore = useLanguageStore()
+      languageStore.setPreferred('en')
+
+      const { selectCollectionLabel } = useLabelResolver()
+      const result = selectCollectionLabel({
+        prefLabels: [],
+        dctTitles: [],
+        dcTitles: [],
+        rdfsLabels: [{ value: 'rdfs value', lang: 'en' }],
+      })
+
+      expect(result?.value).toBe('rdfs value')
+    })
+
+    it('returns null when no labels available', () => {
+      const { selectCollectionLabel } = useLabelResolver()
+      const result = selectCollectionLabel({})
+
+      expect(result).toBeNull()
+    })
+
+    it('has same priority as selectSchemeLabel', () => {
+      const languageStore = useLanguageStore()
+      languageStore.setPreferred('en')
+
+      const { selectCollectionLabel, selectSchemeLabel } = useLabelResolver()
+
+      // Both should pick dctTitle when no prefLabel
+      const labels = {
+        prefLabels: [],
+        dctTitles: [{ value: 'DCT Title', lang: 'en' }],
+        dcTitles: [{ value: 'DC Title', lang: 'en' }],
+        rdfsLabels: [{ value: 'RDFS Label', lang: 'en' }],
+      }
+
+      const collectionResult = selectCollectionLabel(labels)
+      const schemeResult = selectSchemeLabel(labels)
+
+      expect(collectionResult?.value).toBe(schemeResult?.value)
+    })
+  })
+
+  describe('selectLabelByPriority', () => {
+    it('selects prefLabel over other types', () => {
+      const languageStore = useLanguageStore()
+      languageStore.setPreferred('en')
+
+      const { selectLabelByPriority } = useLabelResolver()
+      const labels = [
+        { value: 'RDFS Label', lang: 'en', type: 'rdfsLabel' },
+        { value: 'Pref Label', lang: 'en', type: 'prefLabel' },
+        { value: 'DCT Title', lang: 'en', type: 'dctTitle' },
+      ]
+
+      const result = selectLabelByPriority(labels)
+      expect(result?.value).toBe('Pref Label')
+    })
+
+    it('respects LABEL_PRIORITY order', () => {
+      const languageStore = useLanguageStore()
+      languageStore.setPreferred('en')
+
+      const { selectLabelByPriority } = useLabelResolver()
+      const labels = [
+        { value: 'RDFS Label', lang: 'en', type: 'rdfsLabel' },
+        { value: 'DCT Title', lang: 'en', type: 'dctTitle' },
+        { value: 'DC Title', lang: 'en', type: 'dcTitle' },
+      ]
+
+      const result = selectLabelByPriority(labels)
+      expect(result?.value).toBe('DCT Title') // dctTitle before dcTitle
+    })
+
+    it('respects language preference within type', () => {
+      const languageStore = useLanguageStore()
+      languageStore.setPreferred('fr')
+
+      const { selectLabelByPriority } = useLabelResolver()
+      const labels = [
+        { value: 'English', lang: 'en', type: 'prefLabel' },
+        { value: 'French', lang: 'fr', type: 'prefLabel' },
+      ]
+
+      const result = selectLabelByPriority(labels)
+      expect(result?.value).toBe('French')
+      expect(result?.lang).toBe('fr')
+    })
+
+    it('falls back to first available when no priority match', () => {
+      const languageStore = useLanguageStore()
+      languageStore.setPreferred('en')
+
+      const { selectLabelByPriority } = useLabelResolver()
+      const labels = [
+        { value: 'Unknown Type', lang: 'en', type: 'unknownType' },
+      ]
+
+      const result = selectLabelByPriority(labels)
+      expect(result?.value).toBe('Unknown Type')
+    })
+
+    it('returns undefined for empty array', () => {
+      const { selectLabelByPriority } = useLabelResolver()
+      const result = selectLabelByPriority([])
+      expect(result).toBeUndefined()
+    })
+
+    it('handles xlPrefLabel type', () => {
+      const languageStore = useLanguageStore()
+      languageStore.setPreferred('en')
+
+      const { selectLabelByPriority } = useLabelResolver()
+      const labels = [
+        { value: 'RDFS Label', lang: 'en', type: 'rdfsLabel' },
+        { value: 'XL Pref Label', lang: 'en', type: 'xlPrefLabel' },
+      ]
+
+      const result = selectLabelByPriority(labels)
+      expect(result?.value).toBe('XL Pref Label') // xlPrefLabel before rdfsLabel
+    })
+  })
 })

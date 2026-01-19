@@ -141,7 +141,7 @@ export function formatDatatype(datatype: string): string {
  * @returns The formatted display label
  */
 export function getRefLabel(ref: ConceptRef): string {
-  const label = ref.label || ref.uri.split('/').pop() || ref.uri
+  const label = ref.label || getUriFragment(ref.uri) || ref.uri
   if (ref.notation && ref.label) {
     return `${ref.notation} - ${label}`
   }

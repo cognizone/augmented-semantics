@@ -129,6 +129,43 @@ export function useLabelResolver() {
   }
 
   /**
+   * Select best label for a collection.
+   * Priority: prefLabel > xlPrefLabel > dctTitle > dcTitle > rdfsLabel
+   * (Same priority as schemes since collections can also have title properties)
+   */
+  function selectCollectionLabel(labels: {
+    prefLabels?: LabelValue[]
+    prefLabelsXL?: XLLabel[]
+    dctTitles?: LabelValue[]
+    dcTitles?: LabelValue[]
+    rdfsLabels?: LabelValue[]
+  }): LabelValue | null {
+    // 1. Try prefLabel (with XL fallback)
+    const prefLabel = selectLabelWithXL(labels.prefLabels || [], labels.prefLabelsXL || [])
+    if (prefLabel) return prefLabel
+
+    // 2. Try dct:title (Dublin Core Terms - preferred)
+    if (labels.dctTitles?.length) {
+      const dctTitle = selectLabel(labels.dctTitles)
+      if (dctTitle) return dctTitle
+    }
+
+    // 3. Try dc:title (Dublin Core Elements - legacy)
+    if (labels.dcTitles?.length) {
+      const dcTitle = selectLabel(labels.dcTitles)
+      if (dcTitle) return dcTitle
+    }
+
+    // 4. Try rdfsLabel
+    if (labels.rdfsLabels?.length) {
+      const rdfsLabel = selectLabel(labels.rdfsLabels)
+      if (rdfsLabel) return rdfsLabel
+    }
+
+    return null
+  }
+
+  /**
    * Sort and deduplicate labels:
    * 1. Deduplicate by value+lang combination
    * 2. xsd:string (no language tag) first
@@ -225,6 +262,7 @@ export function useLabelResolver() {
     selectLabelWithXL,
     selectConceptLabel,
     selectSchemeLabel,
+    selectCollectionLabel,
     selectLabelByPriority,
     sortLabels,
     shouldShowLangTag,

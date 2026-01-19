@@ -7,54 +7,28 @@
  * @see /spec/ae-skos/sko04-ConceptDetails.md
  */
 import { ref, type Ref } from 'vue'
-import { useEndpointStore, useLanguageStore, useSchemeStore, useConceptStore } from '../stores'
+import { useEndpointStore, useSchemeStore, useConceptStore } from '../stores'
 import { executeSparql, withPrefixes, logger, resolveUris, formatQualifiedName } from '../services'
 import { useDeprecation } from './useDeprecation'
 import { useXLLabels } from './useXLLabels'
 import { useOtherProperties, CONCEPT_EXCLUDED_PREDICATES } from './useOtherProperties'
-import { LABEL_PREDICATES, LABEL_PRIORITY } from '../constants'
+import { useLabelResolver } from './useLabelResolver'
+import { LABEL_PREDICATES } from '../constants'
 import type { ConceptDetails } from '../types'
 
 export function useConceptData() {
   const endpointStore = useEndpointStore()
-  const languageStore = useLanguageStore()
   const schemeStore = useSchemeStore()
   const { isDeprecatedFromProperties } = useDeprecation()
   const { loadXLLabels } = useXLLabels()
   const { loadOtherProperties } = useOtherProperties()
+  const { selectLabelByPriority } = useLabelResolver()
 
   // State
   const details: Ref<ConceptDetails | null> = ref(null)
   const loading = ref(false)
   const error: Ref<string | null> = ref(null)
   const resolvedPredicates: Ref<Map<string, { prefix: string; localName: string }>> = ref(new Map())
-
-  /**
-   * Select best label from an array based on language priorities
-   */
-  function selectBestLabelByLanguage(
-    labels: { value: string; lang: string; type: string }[]
-  ): { value: string; lang: string } | undefined {
-    if (!labels.length) return undefined
-
-    // 1. Try preferred language
-    const preferred = labels.find(l => l.lang === languageStore.preferred)
-    if (preferred) return preferred
-
-    // 2. Try endpoint's language priorities in order
-    const priorities = endpointStore.current?.languagePriorities || []
-    for (const lang of priorities) {
-      const match = labels.find(l => l.lang === lang)
-      if (match) return match
-    }
-
-    // 3. Try labels without language tag
-    const noLang = labels.find(l => !l.lang || l.lang === '')
-    if (noLang) return noLang
-
-    // 4. Return first available
-    return labels[0]
-  }
 
   /**
    * Load collections that contain this concept (inverse of skos:member)
@@ -108,7 +82,7 @@ export function useConceptData() {
 
     const uris = allRefs.map(r => `<${r.uri}>`).join(' ')
 
-    /// Fetch notation, prefLabel (incl. XL), altLabel, hiddenLabel, dct:title (for schemes), and hasNarrower
+    /// Fetch notation, prefLabel (incl. XL), altLabel, hiddenLabel, dc/dct:title (for schemes), and hasNarrower
     const query = withPrefixes(`
       SELECT ?concept ?notation ?label ?labelLang ?labelType ?hasNarrower
       WHERE {
@@ -130,6 +104,9 @@ export function useConceptData() {
           } UNION {
             ?concept dct:title ?label .
             BIND("dctTitle" AS ?labelType)
+          } UNION {
+            ?concept dc:title ?label .
+            BIND("dcTitle" AS ?labelType)
           } UNION {
             ?concept rdfs:label ?label .
             BIND("rdfsLabel" AS ?labelType)
@@ -186,25 +163,11 @@ export function useConceptData() {
 
         ref.notation = data.notation
 
-        // Pick best label using canonical LABEL_PRIORITY
-        let bestLabel: string | undefined
-        let bestLang: string | undefined
-
-        for (const labelType of LABEL_PRIORITY) {
-          const labelsOfType = data.labels.filter(l => l.type === labelType)
-          if (!labelsOfType.length) continue
-
-          const selected = selectBestLabelByLanguage(labelsOfType)
-          if (selected) {
-            bestLabel = selected.value
-            bestLang = selected.lang || undefined
-            break
-          }
-        }
-
-        if (bestLabel) {
-          ref.label = bestLabel
-          ref.lang = bestLang
+        // Pick best label using centralized resolver (uses LABEL_PRIORITY internally)
+        const selected = selectLabelByPriority(data.labels)
+        if (selected) {
+          ref.label = selected.value
+          ref.lang = selected.lang || undefined
         }
 
         // Set hasNarrower for concept icons (only for concept refs, not schemes/collections)
