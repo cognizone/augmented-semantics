@@ -294,7 +294,8 @@ export function useConceptData() {
           skos:notation, skos:broader, skos:narrower, skos:related,
           skos:inScheme, skos:exactMatch, skos:closeMatch,
           skos:broadMatch, skos:narrowMatch, skos:relatedMatch,
-          dc:identifier, dct:created, dct:modified, dct:status, rdfs:seeAlso
+          dc:identifier, dct:created, dct:modified, dct:status, rdfs:seeAlso,
+          rdfs:comment, dct:description
         ))
       }
     `)
@@ -310,6 +311,8 @@ export function useConceptData() {
         dctTitles: [],
         dcTitles: [],
         rdfsLabels: [],
+        comments: [],
+        description: [],
         definitions: [],
         scopeNotes: [],
         historyNotes: [],
@@ -362,6 +365,12 @@ export function useConceptData() {
         } else if (prop === LABEL_PREDICATES.dcTitle.uri) {
           // dc:title (Dublin Core Elements)
           conceptDetails.dcTitles.push({ value: val, lang })
+        } else if (prop.endsWith('comment')) {
+          // rdfs:comment
+          conceptDetails.comments.push({ value: val, lang })
+        } else if (prop.endsWith('description')) {
+          // dct:description
+          conceptDetails.description.push({ value: val, lang })
         } else if (prop.endsWith('altLabel')) {
           conceptDetails.altLabels.push({ value: val, lang })
         } else if (prop.endsWith('hiddenLabel')) {

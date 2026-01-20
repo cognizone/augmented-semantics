@@ -107,6 +107,21 @@ export function useCollectionData() {
         }`)
     }
 
+    // Documentation properties (always included)
+    labelBranches.push(`{
+          <${collectionUri}> rdfs:comment ?o .
+          BIND(rdfs:comment AS ?p)
+          BIND(LANG(?o) AS ?lang)
+          BIND("comment" AS ?labelType)
+        }`)
+
+    labelBranches.push(`{
+          <${collectionUri}> dct:description ?o .
+          BIND(dct:description AS ?p)
+          BIND(LANG(?o) AS ?lang)
+          BIND("description" AS ?labelType)
+        }`)
+
     return withPrefixes(`
       SELECT ?p ?o ?lang ?labelType WHERE {
         ${labelBranches.join('\n        UNION\n        ')}
@@ -163,6 +178,8 @@ export function useCollectionData() {
     const dctTitles: LabelValue[] = []
     const dcTitles: LabelValue[] = []
     const rdfsLabels: LabelValue[] = []
+    const comments: LabelValue[] = []
+    const description: LabelValue[] = []
     const notations: NotationValue[] = []
     const definitions: LabelValue[] = []
     const scopeNotes: LabelValue[] = []
@@ -192,6 +209,10 @@ export function useCollectionData() {
         dcTitles.push({ value, lang })
       } else if (labelType === 'rdfsLabel') {
         rdfsLabels.push({ value, lang })
+      } else if (labelType === 'comment') {
+        comments.push({ value, lang })
+      } else if (labelType === 'description') {
+        description.push({ value, lang })
       } else if (labelType === 'altLabel' || labelType === 'xlAltLabel') {
         altLabels.push({ value, lang })
       } else if (labelType === 'hiddenLabel' || labelType === 'xlHiddenLabel') {
@@ -223,6 +244,8 @@ export function useCollectionData() {
       dctTitles,
       dcTitles,
       rdfsLabels,
+      comments,
+      description,
       definitions,
       scopeNotes,
       historyNotes,

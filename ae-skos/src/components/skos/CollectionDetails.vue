@@ -89,6 +89,8 @@ const sortedRdfsLabels = computed(() =>
 )
 
 // Sorted documentation notes
+const sortedComments = computed(() => sortLabels(details.value?.comments ?? []))
+const sortedDescription = computed(() => sortLabels(details.value?.description ?? []))
 const sortedHistoryNotes = computed(() => sortLabels(details.value?.historyNotes ?? []))
 const sortedChangeNotes = computed(() => sortLabels(details.value?.changeNotes ?? []))
 const sortedEditorialNotes = computed(() => sortLabels(details.value?.editorialNotes ?? []))
@@ -136,6 +138,8 @@ const hasLabels = computed(() =>
 // Documentation config
 const documentationConfig = computed(() => [
   { label: 'Definition', values: sortLabels(details.value?.definitions ?? []) },
+  { label: 'Comment', values: sortedComments.value },
+  { label: 'Description', values: sortedDescription.value },
   { label: 'Scope Note', values: sortLabels(details.value?.scopeNotes ?? []) },
   { label: 'History Note', values: sortedHistoryNotes.value },
   { label: 'Change Note', values: sortedChangeNotes.value },

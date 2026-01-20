@@ -130,6 +130,7 @@ export const CONCEPT_EXCLUDED_PREDICATES = [
   'skos:inScheme', 'skos:exactMatch', 'skos:closeMatch',
   'skos:broadMatch', 'skos:narrowMatch', 'skos:relatedMatch',
   'dc:identifier', 'dct:created', 'dct:modified', 'dct:status', 'rdfs:seeAlso',
+  'rdfs:comment', 'dct:description',  // Documentation properties shown in dedicated section
 ]
 
 /** Predicates excluded for scheme details (in addition to base) */
@@ -146,4 +147,5 @@ export const SCHEME_EXCLUDED_PREDICATES = [
 export const COLLECTION_EXCLUDED_PREDICATES = [
   'skos:member',  // Members shown in dedicated section
   'skos:inScheme',
+  'rdfs:comment', 'dct:description',  // Documentation properties shown in dedicated section
 ]

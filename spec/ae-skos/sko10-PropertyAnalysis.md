@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-Analysis of all properties across the three detail types reveals **significant inconsistencies** in property support. ConceptDetails is the most complete with 32 properties, SchemeDetails has 33 (with 1 unused), and CollectionDetails has only 16.
+Analysis of all properties across the three detail types reveals **some inconsistencies** in property support. ConceptDetails has 34 properties, SchemeDetails has 33 (with 1 unused), and CollectionDetails has 18. Documentation properties (`rdfs:comment`, `dct:description`) are now consistent across all three types.
 
 ---
 
@@ -63,8 +63,8 @@ Analysis of all properties across the three detail types reveals **significant i
 
 | Property | Predicate | Concept | Scheme | Collection | Notes |
 |----------|-----------|:-------:|:------:|:----------:|-------|
-| comments | `rdfs:comment` | ❌ | ✅ | ❌ | **GAP: Only Scheme has it** |
-| description | `dct:description` | ❌ | ✅ | ❌ | **GAP: Only Scheme has it** |
+| comments | `rdfs:comment` | ✅ | ✅ | ✅ | All consistent |
+| description | `dct:description` | ✅ | ✅ | ✅ | All consistent |
 
 ### 6. Metadata Properties
 
@@ -114,22 +114,19 @@ Analysis of all properties across the three detail types reveals **significant i
 
 ## Gap Summary
 
-### Gaps in CollectionDetails (Missing 7 properties)
+### Gaps in CollectionDetails (Missing 5 properties)
 
 | Property | Predicate | Priority | Rationale |
 |----------|-----------|----------|-----------|
 | deprecated | owl:deprecated | HIGH | Real-world data may have deprecated collections |
-| comments | rdfs:comment | MEDIUM | Could exist in some endpoints |
 | created | dct:created | MEDIUM | Metadata completeness |
 | modified | dct:modified | MEDIUM | Metadata completeness |
 | seeAlso | rdfs:seeAlso | LOW | Rarely used for collections |
 
-### Gaps in ConceptDetails (Missing 7 properties from Scheme)
+### Gaps in ConceptDetails (Missing 5 properties from Scheme)
 
 | Property | Predicate | Priority | Rationale |
 |----------|-----------|----------|-----------|
-| comments | rdfs:comment | MEDIUM | Some endpoints use rdfs:comment |
-| description | dct:description | MEDIUM | Alternative to skos:definition |
 | creator | dct:creator | LOW | Usually scheme-level metadata |
 | publisher | dct:publisher | LOW | Usually scheme-level metadata |
 | issued | dct:issued | LOW | Usually scheme-level metadata |
@@ -153,12 +150,19 @@ Analysis of all properties across the three detail types reveals **significant i
 
 ### MEDIUM Priority (Consider Adding)
 
-2. **Add `comments` (rdfs:comment) to ConceptDetails** - Used by some endpoints
-3. **Add `description` (dct:description) to ConceptDetails** - Alternative documentation
-4. **Add `created`/`modified` to CollectionDetails** - Metadata completeness
-5. **Add `identifier` to SchemeDetails** - Useful for scheme identification
+2. **Add `created`/`modified` to CollectionDetails** - Metadata completeness
+3. **Add `identifier` to SchemeDetails** - Useful for scheme identification
 
 ### LOW Priority (Skip Unless Requested)
 
-6. Publishing metadata for Concepts (creator, publisher, etc.) - Typically scheme-level
-7. Status for Schemes - Rarely used
+4. Publishing metadata for Concepts (creator, publisher, etc.) - Typically scheme-level
+5. Status for Schemes - Rarely used
+
+---
+
+## Completed Improvements
+
+The following gaps have been addressed:
+
+- ✅ **`comments` (rdfs:comment) added to ConceptDetails and CollectionDetails** - Now consistent with SchemeDetails
+- ✅ **`description` (dct:description) added to ConceptDetails and CollectionDetails** - Now consistent with SchemeDetails

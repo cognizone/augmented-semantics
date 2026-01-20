@@ -166,6 +166,43 @@ describe('useConceptData', () => {
       expect(details.value?.dcTitles[0].value).toBe('DC Elements Title')
     })
 
+    it('handles rdfs:comment', async () => {
+      ;(executeSparql as Mock).mockResolvedValueOnce({
+        results: {
+          bindings: [
+            { property: { value: 'http://www.w3.org/2000/01/rdf-schema#comment' }, value: { value: 'A comment about this concept', 'xml:lang': 'en' } },
+            { property: { value: 'http://www.w3.org/2000/01/rdf-schema#comment' }, value: { value: 'Un commentaire', 'xml:lang': 'fr' } },
+          ],
+        },
+      })
+
+      const { loadDetails, details } = useConceptData()
+      await loadDetails('http://example.org/concept/1')
+
+      expect(details.value?.comments).toHaveLength(2)
+      expect(details.value?.comments[0].value).toBe('A comment about this concept')
+      expect(details.value?.comments[0].lang).toBe('en')
+      expect(details.value?.comments[1].value).toBe('Un commentaire')
+      expect(details.value?.comments[1].lang).toBe('fr')
+    })
+
+    it('handles dct:description', async () => {
+      ;(executeSparql as Mock).mockResolvedValueOnce({
+        results: {
+          bindings: [
+            { property: { value: 'http://purl.org/dc/terms/description' }, value: { value: 'A detailed description', 'xml:lang': 'en' } },
+          ],
+        },
+      })
+
+      const { loadDetails, details } = useConceptData()
+      await loadDetails('http://example.org/concept/1')
+
+      expect(details.value?.description).toHaveLength(1)
+      expect(details.value?.description[0].value).toBe('A detailed description')
+      expect(details.value?.description[0].lang).toBe('en')
+    })
+
     it('handles broader, narrower, related relations', async () => {
       ;(executeSparql as Mock).mockResolvedValueOnce({
         results: {

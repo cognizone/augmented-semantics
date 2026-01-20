@@ -301,6 +301,58 @@ describe('useCollectionData', () => {
       expect(details.value?.altLabels.some((l) => l.value === 'Alternative Label')).toBe(true)
     })
 
+    it('handles rdfs:comment', async () => {
+      ;(executeSparql as Mock).mockResolvedValueOnce({
+        results: {
+          bindings: [
+            {
+              p: { value: 'http://www.w3.org/2000/01/rdf-schema#comment' },
+              o: { value: 'A comment about this collection' },
+              lang: { value: 'en' },
+              labelType: { value: 'comment' },
+            },
+            {
+              p: { value: 'http://www.w3.org/2000/01/rdf-schema#comment' },
+              o: { value: 'Un commentaire' },
+              lang: { value: 'fr' },
+              labelType: { value: 'comment' },
+            },
+          ],
+        },
+      })
+
+      const { loadDetails, details } = useCollectionData()
+      await loadDetails('http://example.org/collection/1')
+
+      expect(details.value?.comments).toHaveLength(2)
+      expect(details.value?.comments[0].value).toBe('A comment about this collection')
+      expect(details.value?.comments[0].lang).toBe('en')
+      expect(details.value?.comments[1].value).toBe('Un commentaire')
+      expect(details.value?.comments[1].lang).toBe('fr')
+    })
+
+    it('handles dct:description', async () => {
+      ;(executeSparql as Mock).mockResolvedValueOnce({
+        results: {
+          bindings: [
+            {
+              p: { value: 'http://purl.org/dc/terms/description' },
+              o: { value: 'A detailed description of the collection' },
+              lang: { value: 'en' },
+              labelType: { value: 'description' },
+            },
+          ],
+        },
+      })
+
+      const { loadDetails, details } = useCollectionData()
+      await loadDetails('http://example.org/collection/1')
+
+      expect(details.value?.description).toHaveLength(1)
+      expect(details.value?.description[0].value).toBe('A detailed description of the collection')
+      expect(details.value?.description[0].lang).toBe('en')
+    })
+
     it('sets error on query failure', async () => {
       ;(executeSparql as Mock).mockRejectedValueOnce(new Error('Network error'))
 

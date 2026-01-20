@@ -6,7 +6,7 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
-import { useOtherProperties, CONCEPT_EXCLUDED_PREDICATES, SCHEME_EXCLUDED_PREDICATES } from '../useOtherProperties'
+import { useOtherProperties, CONCEPT_EXCLUDED_PREDICATES, SCHEME_EXCLUDED_PREDICATES, COLLECTION_EXCLUDED_PREDICATES } from '../useOtherProperties'
 import { useEndpointStore } from '../../stores'
 
 // Mock logger
@@ -199,10 +199,27 @@ describe('useOtherProperties', () => {
       expect(CONCEPT_EXCLUDED_PREDICATES).toContain('skos:inScheme')
     })
 
+    it('exports CONCEPT_EXCLUDED_PREDICATES with documentation properties', () => {
+      // rdfs:comment and dct:description are displayed in the documentation section
+      expect(CONCEPT_EXCLUDED_PREDICATES).toContain('rdfs:comment')
+      expect(CONCEPT_EXCLUDED_PREDICATES).toContain('dct:description')
+    })
+
     it('exports SCHEME_EXCLUDED_PREDICATES', () => {
       expect(SCHEME_EXCLUDED_PREDICATES).toContain('skos:hasTopConcept')
       expect(SCHEME_EXCLUDED_PREDICATES).toContain('dct:title')
       expect(SCHEME_EXCLUDED_PREDICATES).toContain('owl:versionInfo')
+    })
+
+    it('exports COLLECTION_EXCLUDED_PREDICATES', () => {
+      expect(COLLECTION_EXCLUDED_PREDICATES).toContain('skos:member')
+      expect(COLLECTION_EXCLUDED_PREDICATES).toContain('skos:inScheme')
+    })
+
+    it('exports COLLECTION_EXCLUDED_PREDICATES with documentation properties', () => {
+      // rdfs:comment and dct:description are displayed in the documentation section
+      expect(COLLECTION_EXCLUDED_PREDICATES).toContain('rdfs:comment')
+      expect(COLLECTION_EXCLUDED_PREDICATES).toContain('dct:description')
     })
   })
 })

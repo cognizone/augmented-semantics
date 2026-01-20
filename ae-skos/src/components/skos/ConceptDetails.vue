@@ -109,6 +109,8 @@ const sortedHiddenLabels = getSorted('hiddenLabels')
 const sortedDctTitles = getSorted('dctTitles')
 const sortedDcTitles = getSorted('dcTitles')
 const sortedRdfsLabels = getSorted('rdfsLabels')
+const sortedComments = getSorted('comments')
+const sortedDescription = getSorted('description')
 const sortedDefinitions = getSorted('definitions')
 const sortedScopeNotes = getSorted('scopeNotes')
 const sortedHistoryNotes = getSorted('historyNotes')
@@ -160,6 +162,8 @@ const hasLabels = computed(() =>
 // Documentation config for DocumentationSection
 const documentationConfig = computed(() => [
   { label: 'Definition', values: sortedDefinitions.value },
+  { label: 'Comment', values: sortedComments.value },
+  { label: 'Description', values: sortedDescription.value },
   { label: 'Scope Note', values: sortedScopeNotes.value },
   { label: 'History Note', values: sortedHistoryNotes.value },
   { label: 'Change Note', values: sortedChangeNotes.value },

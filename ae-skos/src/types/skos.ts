@@ -49,6 +49,9 @@ export interface ConceptDetails {
   dctTitles: LabelValue[]     // dct:title (Dublin Core Terms)
   dcTitles: LabelValue[]      // dc:title (Dublin Core Elements)
   rdfsLabels: LabelValue[]    // rdfs:label
+  // Documentation properties
+  comments: LabelValue[]      // rdfs:comment
+  description: LabelValue[]   // dct:description
   definitions: LabelValue[]
   scopeNotes: LabelValue[]
   historyNotes: LabelValue[]
@@ -230,6 +233,9 @@ export interface CollectionDetails {
   dctTitles: LabelValue[]     // dct:title (Dublin Core Terms)
   dcTitles: LabelValue[]      // dc:title (Dublin Core Elements)
   rdfsLabels: LabelValue[]    // rdfs:label
+  // Documentation properties
+  comments: LabelValue[]      // rdfs:comment
+  description: LabelValue[]   // dct:description
   definitions: LabelValue[]
   scopeNotes: LabelValue[]
   historyNotes: LabelValue[]
