@@ -143,59 +143,21 @@ export const ORPHAN_SCHEME_URI = '~orphans~'
 
 ### Orphan Detection Strategy Setting
 
-Three strategies for detecting orphan concepts, selectable in app settings. The strategy affects performance and compatibility with different SPARQL endpoints.
+Setting to control orphan detection algorithm. Affects performance and compatibility.
 
 **Implementation:** `stores/settings.ts` with localStorage persistence (`ae-skos-orphan-strategy`)
 
 **Strategies:**
 
-| Strategy | Method | Performance | Compatibility | When to Use |
-|----------|--------|-------------|---------------|-------------|
-| `auto` (default) | Fast first, fallback to slow | Best balance | Universal | Recommended for most users |
-| `fast` | Single FILTER NOT EXISTS query | Fastest (single query) | Modern endpoints only | When endpoint supports complex queries |
-| `slow` | Multiple exclusion queries + client-side subtraction | Slower (12+ queries) | All endpoints | When fast method fails or times out |
+| Strategy | Description |
+|----------|-------------|
+| `auto` (default) | Try fast method first, fallback to slow on failure |
+| `fast` | Single FILTER NOT EXISTS query (modern endpoints only) |
+| `slow` | Multiple exclusion queries + client-side subtraction (all endpoints) |
 
-**Auto Strategy Behavior:**
-1. Attempts fast method first
-2. If fast method fails (error or timeout):
-   - Logs warning with error details
-   - Falls back to slow method automatically
-   - User sees seamless experience
-3. No manual intervention needed
+**UI:** Radio button group in app settings panel. Default: `auto` (recommended)
 
-**Fast Method Requirements:**
-- Endpoint must support `FILTER NOT EXISTS` with UNION branches
-- Query complexity depends on endpoint capabilities:
-  - Minimum: `hasInScheme` OR `hasTopConceptOf` OR `hasTopConceptOf`
-  - Optimal: All relationship types detected
-- Good SPARQL query optimizer (for performance)
-
-**Slow Method Characteristics:**
-- Always works (no special endpoint requirements)
-- Runs 1 query to fetch all concepts
-- Runs 2-12 exclusion queries (based on endpoint capabilities)
-- Performs client-side set subtraction
-- Shows per-query progress metrics
-
-**Performance Comparison Example:**
-
-| Endpoint | Total Concepts | Fast Method | Slow Method | Speedup |
-|----------|----------------|-------------|-------------|---------|
-| UNESCO Thesaurus | 8,000 | 1.2s (1 query) | 15.4s (13 queries) | 12.8× faster |
-| AGROVOC | 40,000 | 4.7s (1 query) | 78.2s (13 queries) | 16.6× faster |
-| EuroVoc | 7,000 | 0.9s (1 query) | 12.1s (13 queries) | 13.4× faster |
-
-**UI Integration:**
-- Setting located in app settings panel
-- Radio button group with three options
-- Help text explains each strategy
-- Default: `auto` (recommended)
-
-**Implementation Files:**
-- `stores/settings.ts` - Strategy state and persistence
-- `composables/useTreePagination.ts` - Strategy selection logic
-- `composables/useOrphanConcepts.ts` - Detection implementations
-- `composables/useOrphanQueries.ts` - Query builders
+See [sko03-ConceptTree.md](./sko03-ConceptTree.md#orphan-detection-methods) for algorithm details, query patterns, and performance comparison.
 
 ### Show Orphans Selector Setting
 
