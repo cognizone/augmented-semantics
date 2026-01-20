@@ -239,6 +239,47 @@ describe('useCollectionData', () => {
       expect(details.value?.notes[0].value).toBe('A note')
     })
 
+    it('handles historyNote, changeNote, editorialNote, and example', async () => {
+      ;(executeSparql as Mock).mockResolvedValueOnce({
+        results: {
+          bindings: [
+            {
+              p: { value: 'http://www.w3.org/2004/02/skos/core#historyNote' },
+              o: { value: 'History note text' },
+              lang: { value: 'en' },
+            },
+            {
+              p: { value: 'http://www.w3.org/2004/02/skos/core#changeNote' },
+              o: { value: 'Change note text' },
+              lang: { value: 'en' },
+            },
+            {
+              p: { value: 'http://www.w3.org/2004/02/skos/core#editorialNote' },
+              o: { value: 'Editorial note text' },
+              lang: { value: 'en' },
+            },
+            {
+              p: { value: 'http://www.w3.org/2004/02/skos/core#example' },
+              o: { value: 'Example text' },
+              lang: { value: 'en' },
+            },
+          ],
+        },
+      })
+
+      const { loadDetails, details } = useCollectionData()
+      await loadDetails('http://example.org/collection/1')
+
+      expect(details.value?.historyNotes).toHaveLength(1)
+      expect(details.value?.historyNotes[0].value).toBe('History note text')
+      expect(details.value?.changeNotes).toHaveLength(1)
+      expect(details.value?.changeNotes[0].value).toBe('Change note text')
+      expect(details.value?.editorialNotes).toHaveLength(1)
+      expect(details.value?.editorialNotes[0].value).toBe('Editorial note text')
+      expect(details.value?.examples).toHaveLength(1)
+      expect(details.value?.examples[0].value).toBe('Example text')
+    })
+
     it('handles altLabels', async () => {
       ;(executeSparql as Mock).mockResolvedValueOnce({
         results: {
