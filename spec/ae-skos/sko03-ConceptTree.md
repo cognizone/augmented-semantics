@@ -1348,7 +1348,6 @@ interface CollectionNode {
   label?: string
   labelLang?: string
   notation?: string
-  memberCount?: number
   hasChildCollections?: boolean  // True = expandable (has nested collections)
   isNested?: boolean             // True = has parent collection (hide from root)
 }
@@ -1361,7 +1360,6 @@ interface CollectionDetails {
   scopeNotes: LabelValue[]
   notes: LabelValue[]
   notations: NotationValue[]
-  memberCount?: number
   otherProperties: OtherProperty[]
 }
 ```

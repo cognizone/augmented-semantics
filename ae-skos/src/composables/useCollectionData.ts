@@ -400,11 +400,6 @@ export function useCollectionData() {
         metadataResults.results.bindings as Array<Record<string, { value: string; 'xml:lang'?: string }>>
       )
 
-      // Update member count in details immediately (before labels)
-      if (details.value) {
-        details.value.memberCount = members.value.length
-      }
-
       logger.info('CollectionData', `Loaded ${members.value.length} member metadata`)
 
       // Step 2: Progressive label loading

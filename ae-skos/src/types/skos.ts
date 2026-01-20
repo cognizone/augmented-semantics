@@ -213,7 +213,6 @@ export interface CollectionNode {
   label?: string
   labelLang?: string
   notation?: string
-  memberCount?: number
   // Nesting support
   hasChildCollections?: boolean  // True = expandable (has nested collections)
   isNested?: boolean             // True = has parent collection (hide from root)
@@ -239,7 +238,6 @@ export interface CollectionDetails {
   notes: LabelValue[]
   examples: LabelValue[]
   notations: NotationValue[]
-  memberCount?: number
   // SKOS-XL extended labels (6/12 real endpoints use xlPrefLabel for collections)
   prefLabelsXL: XLLabel[]
   altLabelsXL: XLLabel[]

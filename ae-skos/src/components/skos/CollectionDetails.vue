@@ -293,7 +293,7 @@ watch(
           <h3 class="section-title">
             <span class="material-symbols-outlined section-icon">list</span>
             Members
-            <span v-if="details.memberCount" class="member-count">({{ details.memberCount }})</span>
+            <span v-if="members.length" class="member-count">({{ members.length }})</span>
           </h3>
 
           <div v-if="loadingMembers" class="loading-members">

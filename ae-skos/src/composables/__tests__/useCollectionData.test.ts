@@ -675,41 +675,6 @@ describe('useCollectionData', () => {
       expect(nestedCollection?.inCurrentScheme).toBeUndefined()
       expect(nestedCollection?.displayScheme).toBeUndefined()
     })
-
-    it('updates memberCount in details after loading members', async () => {
-      ;(executeSparql as Mock)
-        .mockResolvedValueOnce({ results: { bindings: [] } }) // details
-        .mockResolvedValueOnce({
-          results: {
-            bindings: [
-              {
-                member: { value: 'http://example.org/concept/1' },
-                label: { value: 'Concept One' },
-                labelLang: { value: 'en' },
-                labelType: { value: 'prefLabel' },
-              },
-              {
-                member: { value: 'http://example.org/concept/2' },
-                label: { value: 'Concept Two' },
-                labelLang: { value: 'en' },
-                labelType: { value: 'prefLabel' },
-              },
-            ],
-          },
-        })
-
-      const { loadDetails, details, loadingMembers } = useCollectionData()
-      await loadDetails('http://example.org/collection/1')
-
-      await vi.waitFor(
-        () => {
-          expect(loadingMembers.value).toBe(false)
-        },
-        { timeout: 1000 }
-      )
-
-      expect(details.value?.memberCount).toBe(2)
-    })
   })
 
   describe('reset', () => {
