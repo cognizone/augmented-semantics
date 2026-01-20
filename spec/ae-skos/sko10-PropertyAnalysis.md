@@ -109,8 +109,6 @@ Analysis of all properties across the three detail types reveals **significant i
 | Property | Predicate | Concept | Scheme | Collection | Notes |
 |----------|-----------|:-------:|:------:|:----------:|-------|
 | otherProperties | (all other predicates) | ✅ | ✅ | ✅ | All consistent |
-| topConceptCount | (derived) | N/A | ⚠️ | N/A | **UNUSED: Defined but never loaded/displayed** |
-| memberCount | (derived) | N/A | N/A | ✅ | Collection-only |
 
 ---
 
@@ -145,12 +143,6 @@ Analysis of all properties across the three detail types reveals **significant i
 | status | dct:status | LOW | Rarely used for schemes |
 | identifier | dc:identifier | MEDIUM | Could be useful for scheme identification |
 
-### Unused Property
-
-| Type | Property | Status |
-|------|----------|--------|
-| SchemeDetails | topConceptCount | **DEAD CODE** - defined but never loaded or displayed |
-
 ---
 
 ## Recommendations
@@ -158,16 +150,15 @@ Analysis of all properties across the three detail types reveals **significant i
 ### HIGH Priority (Should Fix)
 
 1. **Add `deprecated` to CollectionDetails** - Important for data quality indication
-2. **Remove unused `topConceptCount`** from SchemeDetails - Dead code cleanup
 
 ### MEDIUM Priority (Consider Adding)
 
-3. **Add `comments` (rdfs:comment) to ConceptDetails** - Used by some endpoints
-4. **Add `description` (dct:description) to ConceptDetails** - Alternative documentation
-5. **Add `created`/`modified` to CollectionDetails** - Metadata completeness
-6. **Add `identifier` to SchemeDetails** - Useful for scheme identification
+2. **Add `comments` (rdfs:comment) to ConceptDetails** - Used by some endpoints
+3. **Add `description` (dct:description) to ConceptDetails** - Alternative documentation
+4. **Add `created`/`modified` to CollectionDetails** - Metadata completeness
+5. **Add `identifier` to SchemeDetails** - Useful for scheme identification
 
 ### LOW Priority (Skip Unless Requested)
 
-7. Publishing metadata for Concepts (creator, publisher, etc.) - Typically scheme-level
-8. Status for Schemes - Rarely used
+6. Publishing metadata for Concepts (creator, publisher, etc.) - Typically scheme-level
+7. Status for Schemes - Rarely used

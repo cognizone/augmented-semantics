@@ -466,7 +466,6 @@ interface SchemeDetails {
   modified?: string
   // Other properties
   otherProperties: OtherProperty[]
-  topConceptCount?: number
 }
 
 interface NotationValue {

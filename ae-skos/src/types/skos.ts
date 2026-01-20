@@ -117,7 +117,6 @@ export interface SchemeDetails {
   hiddenLabelsXL: XLLabel[]
   // Other properties (non-SKOS predicates)
   otherProperties: OtherProperty[]
-  topConceptCount?: number
 }
 
 export interface OtherProperty {
