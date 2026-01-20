@@ -545,6 +545,7 @@ See [com03-ErrorHandling](../common/com03-ErrorHandling.md) for details.
 - [com03-ErrorHandling](../common/com03-ErrorHandling.md) - Error/loading states
 - [com05-SPARQLPatterns](../common/com05-SPARQLPatterns.md) - Query patterns
 - [sko03-ConceptTree](./sko03-ConceptTree.md) - Top concepts filtered by selected scheme
+- [sko10-PropertyAnalysis](./sko10-PropertyAnalysis.md) - Property comparison across Concept, Scheme, and Collection details
 
 ## Dependencies
 

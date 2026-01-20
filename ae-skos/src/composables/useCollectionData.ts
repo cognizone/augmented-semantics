@@ -11,6 +11,7 @@ import { executeSparql, withPrefixes, logger, resolveUris } from '../services'
 import { useLabelResolver } from './useLabelResolver'
 import { useOtherProperties, COLLECTION_EXCLUDED_PREDICATES } from './useOtherProperties'
 import { useProgressiveLabelLoader } from './useProgressiveLabelLoader'
+import { useXLLabels } from './useXLLabels'
 import type { CollectionDetails, LabelValue, NotationValue, ConceptRef, LabelPredicateCapabilities } from '../types'
 
 export function useCollectionData() {
@@ -18,6 +19,7 @@ export function useCollectionData() {
   const schemeStore = useSchemeStore()
   const { sortLabels } = useLabelResolver()
   const { loadOtherProperties } = useOtherProperties()
+  const { loadXLLabels } = useXLLabels()
 
   // State
   const details = ref<CollectionDetails | null>(null)
@@ -43,12 +45,17 @@ export function useCollectionData() {
           FILTER(
             ?p = skos:prefLabel ||
             ?p = skos:altLabel ||
+            ?p = skos:hiddenLabel ||
             ?p = skos:notation ||
             ?p = skos:definition ||
             ?p = skos:scopeNote ||
-            ?p = skos:note
+            ?p = skos:historyNote ||
+            ?p = skos:changeNote ||
+            ?p = skos:editorialNote ||
+            ?p = skos:note ||
+            ?p = skos:example
           )
-          BIND(IF(?p = skos:prefLabel, "prefLabel", IF(?p = skos:altLabel, "altLabel", "")) AS ?labelType)
+          BIND(IF(?p = skos:prefLabel, "prefLabel", IF(?p = skos:altLabel, "altLabel", IF(?p = skos:hiddenLabel, "hiddenLabel", ""))) AS ?labelType)
         }`)
 
     // Add capability-aware label predicates
@@ -64,6 +71,12 @@ export function useCollectionData() {
           BIND(skosxl:altLabel AS ?p)
           BIND(LANG(?o) AS ?lang)
           BIND("xlAltLabel" AS ?labelType)
+        }`)
+      labelBranches.push(`{
+          <${collectionUri}> skosxl:hiddenLabel/skosxl:literalForm ?o .
+          BIND(skosxl:hiddenLabel AS ?p)
+          BIND(LANG(?o) AS ?lang)
+          BIND("xlHiddenLabel" AS ?labelType)
         }`)
     }
 
@@ -137,6 +150,7 @@ export function useCollectionData() {
   /**
    * Process detail bindings into CollectionDetails
    * Stores title types separately: dctTitles, dcTitles, rdfsLabels
+   * XL labels are loaded separately via loadXLLabels for proper URI tracking
    */
   function processDetailsBindings(
     uri: string,
@@ -145,13 +159,18 @@ export function useCollectionData() {
     // Group labels by type for separate storage
     const prefLabels: LabelValue[] = []
     const altLabels: LabelValue[] = []
+    const hiddenLabels: LabelValue[] = []
     const dctTitles: LabelValue[] = []
     const dcTitles: LabelValue[] = []
     const rdfsLabels: LabelValue[] = []
     const notations: NotationValue[] = []
     const definitions: LabelValue[] = []
     const scopeNotes: LabelValue[] = []
+    const historyNotes: LabelValue[] = []
+    const changeNotes: LabelValue[] = []
+    const editorialNotes: LabelValue[] = []
     const notes: LabelValue[] = []
+    const examples: LabelValue[] = []
 
     for (const b of bindings) {
       const predicate = b.p?.value
@@ -163,6 +182,8 @@ export function useCollectionData() {
       if (!predicate || !value) continue
 
       // Handle labels with type tracking - store each type separately
+      // Note: XL labels (xlPrefLabel, xlAltLabel) are just merged into regular labels here
+      // since they're from the property path query. Full XL label resources loaded separately.
       if (labelType === 'prefLabel' || labelType === 'xlPrefLabel') {
         prefLabels.push({ value, lang })
       } else if (labelType === 'dctTitle') {
@@ -173,12 +194,22 @@ export function useCollectionData() {
         rdfsLabels.push({ value, lang })
       } else if (labelType === 'altLabel' || labelType === 'xlAltLabel') {
         altLabels.push({ value, lang })
+      } else if (labelType === 'hiddenLabel' || labelType === 'xlHiddenLabel') {
+        hiddenLabels.push({ value, lang })
       } else if (predicate.endsWith('notation')) {
         notations.push({ value, datatype })
       } else if (predicate.endsWith('definition')) {
         definitions.push({ value, lang })
       } else if (predicate.endsWith('scopeNote')) {
         scopeNotes.push({ value, lang })
+      } else if (predicate.endsWith('historyNote')) {
+        historyNotes.push({ value, lang })
+      } else if (predicate.endsWith('changeNote')) {
+        changeNotes.push({ value, lang })
+      } else if (predicate.endsWith('editorialNote')) {
+        editorialNotes.push({ value, lang })
+      } else if (predicate.endsWith('example')) {
+        examples.push({ value, lang })
       } else if (predicate.endsWith('note')) {
         notes.push({ value, lang })
       }
@@ -188,13 +219,22 @@ export function useCollectionData() {
       uri,
       prefLabels,
       altLabels,
+      hiddenLabels,
       dctTitles,
       dcTitles,
       rdfsLabels,
       definitions,
       scopeNotes,
+      historyNotes,
+      changeNotes,
+      editorialNotes,
       notes,
+      examples,
       notations,
+      // XL labels initialized empty - loaded separately via loadXLLabels
+      prefLabelsXL: [],
+      altLabelsXL: [],
+      hiddenLabelsXL: [],
       otherProperties: [],
     }
   }
@@ -304,6 +344,9 @@ export function useCollectionData() {
       )
 
       logger.info('CollectionData', 'Loaded collection properties')
+
+      // Load SKOS-XL labels (6/12 real endpoints use xlPrefLabel for collections)
+      await loadXLLabels(collectionUri, collectionDetails, { source: 'useCollectionData' })
 
       // Load other (non-SKOS) properties
       await loadOtherProperties(collectionUri, collectionDetails, {

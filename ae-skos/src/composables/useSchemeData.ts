@@ -61,7 +61,7 @@ export function useSchemeData() {
         prefLabels: [],
         altLabels: [],
         hiddenLabels: [],
-        labels: [],
+        rdfsLabels: [],
         notations: [],
         definitions: [],
         scopeNotes: [],
@@ -71,8 +71,8 @@ export function useSchemeData() {
         notes: [],
         examples: [],
         comments: [],
-        dctTitle: [],
-        dcTitle: [],
+        dctTitles: [],
+        dcTitles: [],
         description: [],
         creator: [],
         publisher: [],
@@ -114,10 +114,10 @@ export function useSchemeData() {
           schemeDetails.examples.push({ value: val, lang })
         } else if (prop === LABEL_PREDICATES.dctTitle.uri) {
           // dct:title (Dublin Core Terms - preferred)
-          schemeDetails.dctTitle.push({ value: val, lang })
+          schemeDetails.dctTitles.push({ value: val, lang })
         } else if (prop === LABEL_PREDICATES.dcTitle.uri) {
           // dc:title (Dublin Core Elements - legacy)
-          schemeDetails.dcTitle.push({ value: val, lang })
+          schemeDetails.dcTitles.push({ value: val, lang })
         } else if (prop.endsWith('description')) {
           schemeDetails.description.push({ value: val, lang })
         } else if (prop.endsWith('creator')) {
@@ -148,7 +148,7 @@ export function useSchemeData() {
           }
         } else if (prop === LABEL_PREDICATES.rdfsLabel.uri) {
           // rdfs:label
-          schemeDetails.labels.push({ value: val, lang })
+          schemeDetails.rdfsLabels.push({ value: val, lang })
         } else if (prop.endsWith('#comment')) {
           // rdfs:comment
           schemeDetails.comments.push({ value: val, lang })

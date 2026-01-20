@@ -1379,6 +1379,7 @@ interface CollectionDetails {
 - [com03-ErrorHandling](../common/com03-ErrorHandling.md) - Error/loading states
 - [com05-SPARQLPatterns](../common/com05-SPARQLPatterns.md) - Query patterns
 - [sko02-SchemeSelector](./sko02-SchemeSelector.md) - Scheme selection triggers tree reload
+- [sko10-PropertyAnalysis](./sko10-PropertyAnalysis.md) - Property comparison across Concept, Scheme, and Collection details
 
 ## Dependencies
 

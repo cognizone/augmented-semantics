@@ -54,6 +54,7 @@ These common specifications apply to all components:
 | sko05 | SearchBox | [sko05-SearchBox](./sko05-SearchBox.md) | Search and autocomplete |
 | sko06 | Utilities | [sko06-Utilities](./sko06-Utilities.md) | Copy, raw view, history |
 | sko08 | DeveloperTools | [sko08-DeveloperTools](./sko08-DeveloperTools.md) | Debug logging and development settings |
+| sko10 | PropertyAnalysis | [sko10-PropertyAnalysis](./sko10-PropertyAnalysis.md) | Property comparison across detail types |
 
 ## Technology
 

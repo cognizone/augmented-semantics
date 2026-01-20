@@ -48,9 +48,9 @@ const preferredLabelObj = computed(() => {
   return selectSchemeLabel({
     prefLabels: details.value.prefLabels,
     prefLabelsXL: details.value.prefLabelsXL,
-    dctTitles: details.value.dctTitle,
-    dcTitles: details.value.dcTitle,
-    rdfsLabels: details.value.labels,
+    dctTitles: details.value.dctTitles,
+    dcTitles: details.value.dcTitles,
+    rdfsLabels: details.value.rdfsLabels,
   })
 })
 
@@ -69,7 +69,7 @@ const getSorted = (field: keyof NonNullable<typeof details.value>) =>
 const sortedPrefLabels = getSorted('prefLabels')
 const sortedAltLabels = getSorted('altLabels')
 const sortedHiddenLabels = getSorted('hiddenLabels')
-const sortedLabels = getSorted('labels')
+const sortedRdfsLabels = getSorted('rdfsLabels')
 const sortedDefinitions = getSorted('definitions')
 const sortedDescriptions = getSorted('description')
 const sortedComments = getSorted('comments')
@@ -79,8 +79,8 @@ const sortedChangeNotes = getSorted('changeNotes')
 const sortedEditorialNotes = getSorted('editorialNotes')
 const sortedNotes = getSorted('notes')
 const sortedExamples = getSorted('examples')
-const sortedDctTitles = getSorted('dctTitle')
-const sortedDcTitles = getSorted('dcTitle')
+const sortedDctTitles = getSorted('dctTitles')
+const sortedDcTitles = getSorted('dcTitles')
 
 // Sorted other properties
 const sortedOtherProperties = computed(() => {
@@ -94,7 +94,7 @@ const sortedOtherProperties = computed(() => {
   })
 })
 
-// Label config for LabelsSection
+// Label config for LabelsSection (SKOS labels only - rdfs:label has its own section)
 const labelConfig = computed(() => {
   if (!details.value) return []
   const config = []
@@ -124,12 +124,6 @@ const labelConfig = computed(() => {
       xlLabels: details.value.hiddenLabelsXL ?? [],
       regularLabels: details.value.hiddenLabels ?? [],
       isHidden: true
-    })
-  }
-  if (details.value.labels?.length) {
-    config.push({
-      label: 'Label',
-      values: sortedLabels.value,
     })
   }
   return config
@@ -173,8 +167,8 @@ function exportAsJson() {
     altLabels: details.value.altLabels,
     definitions: details.value.definitions,
     scopeNotes: details.value.scopeNotes,
-    dctTitle: details.value.dctTitle,
-    dcTitle: details.value.dcTitle,
+    dctTitles: details.value.dctTitles,
+    dcTitles: details.value.dcTitles,
     description: details.value.description,
     creator: details.value.creator,
     created: details.value.created,
@@ -209,7 +203,7 @@ watch(
           prefLabels: [{ value: 'Orphan Concepts' }],
           altLabels: [],
           hiddenLabels: [],
-          labels: [],
+          rdfsLabels: [],
           notations: [],
           definitions: [{ value: 'Concepts not linked to any concept scheme.' }],
           scopeNotes: [],
@@ -219,8 +213,8 @@ watch(
           notes: [],
           examples: [],
           comments: [],
-          dctTitle: [],
-          dcTitle: [],
+          dctTitles: [],
+          dcTitles: [],
           description: [],
           creator: [],
           publisher: [],
@@ -298,6 +292,22 @@ watch(
               <p v-for="(title, i) in sortedDcTitles" :key="i" class="doc-value">
                 <span v-if="title.lang" class="lang-tag lang-tag-first">{{ title.lang }}</span>
                 <span class="doc-text">{{ title.value }}</span>
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- RDFS Label (rdfs:label) - separate section for consistency with Concept/Collection -->
+        <section v-if="sortedRdfsLabels.length" class="details-section">
+          <h3 class="section-title">
+            <span class="material-symbols-outlined section-icon">label</span>
+            Label (rdfs:label)
+          </h3>
+          <div class="property-row">
+            <div class="doc-values">
+              <p v-for="(lbl, i) in sortedRdfsLabels" :key="i" class="doc-value">
+                <span v-if="lbl.lang && shouldShowLangTag(lbl.lang)" class="lang-tag lang-tag-first">{{ lbl.lang }}</span>
+                <span class="doc-text">{{ lbl.value }}</span>
               </p>
             </div>
           </div>

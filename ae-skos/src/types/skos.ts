@@ -88,7 +88,7 @@ export interface SchemeDetails {
   prefLabels: LabelValue[]
   altLabels: LabelValue[]
   hiddenLabels: LabelValue[]
-  labels: LabelValue[]        // rdfs:label
+  rdfsLabels: LabelValue[]    // rdfs:label (consistent naming with Concept/Collection)
   notations: NotationValue[]  // skos:notation
   definitions: LabelValue[]
   scopeNotes: LabelValue[]
@@ -98,8 +98,8 @@ export interface SchemeDetails {
   notes: LabelValue[]
   examples: LabelValue[]
   comments: LabelValue[]      // rdfs:comment
-  dctTitle: LabelValue[]      // dct:title (Dublin Core Terms)
-  dcTitle: LabelValue[]       // dc:title (Dublin Core Elements)
+  dctTitles: LabelValue[]     // dct:title (Dublin Core Terms, plural for consistency)
+  dcTitles: LabelValue[]      // dc:title (Dublin Core Elements, plural for consistency)
   description: LabelValue[]
   creator: string[]
   created?: string
@@ -227,15 +227,24 @@ export interface CollectionDetails {
   uri: string
   prefLabels: LabelValue[]
   altLabels: LabelValue[]
+  hiddenLabels: LabelValue[]  // skos:hiddenLabel
   // Title/label properties (stored separately by predicate)
   dctTitles: LabelValue[]     // dct:title (Dublin Core Terms)
   dcTitles: LabelValue[]      // dc:title (Dublin Core Elements)
   rdfsLabels: LabelValue[]    // rdfs:label
   definitions: LabelValue[]
   scopeNotes: LabelValue[]
+  historyNotes: LabelValue[]
+  changeNotes: LabelValue[]
+  editorialNotes: LabelValue[]
   notes: LabelValue[]
+  examples: LabelValue[]
   notations: NotationValue[]
   memberCount?: number
+  // SKOS-XL extended labels (6/12 real endpoints use xlPrefLabel for collections)
+  prefLabelsXL: XLLabel[]
+  altLabelsXL: XLLabel[]
+  hiddenLabelsXL: XLLabel[]
   // Other properties (non-SKOS predicates)
   otherProperties: OtherProperty[]
 }

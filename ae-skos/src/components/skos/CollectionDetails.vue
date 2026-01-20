@@ -45,11 +45,12 @@ const exportMenuItems = computed(() => [
 // Delayed loading - show spinner only after 300ms to prevent flicker
 const showLoading = useDelayedLoading(loading)
 
-// Get preferred label using full priority (prefLabel > dctTitle > dcTitle > rdfsLabel)
+// Get preferred label using full priority (prefLabel/XL > dctTitle > dcTitle > rdfsLabel)
 const preferredLabelObj = computed(() => {
   if (!details.value) return null
   return selectCollectionLabel({
     prefLabels: details.value.prefLabels,
+    prefLabelsXL: details.value.prefLabelsXL,
     dctTitles: details.value.dctTitles,
     dcTitles: details.value.dcTitles,
     rdfsLabels: details.value.rdfsLabels,
@@ -87,20 +88,42 @@ const sortedRdfsLabels = computed(() =>
   details.value?.rdfsLabels ? sortLabels(details.value.rdfsLabels) : []
 )
 
-// Label config for LabelsSection
+// Sorted documentation notes
+const sortedHistoryNotes = computed(() => sortLabels(details.value?.historyNotes ?? []))
+const sortedChangeNotes = computed(() => sortLabels(details.value?.changeNotes ?? []))
+const sortedEditorialNotes = computed(() => sortLabels(details.value?.editorialNotes ?? []))
+const sortedExamples = computed(() => sortLabels(details.value?.examples ?? []))
+
+// Label config for LabelsSection (SKOS labels with XL support)
 const labelConfig = computed(() => {
   if (!details.value) return []
   const config = []
-  if (details.value.prefLabels.length) {
+  if (details.value.prefLabels.length || details.value.prefLabelsXL.length) {
     config.push({
       label: 'Preferred',
       values: sortLabels(details.value.prefLabels),
+      hasXL: (details.value.prefLabelsXL?.length ?? 0) > 0,
+      xlLabels: details.value.prefLabelsXL ?? [],
+      regularLabels: details.value.prefLabels ?? []
     })
   }
-  if (details.value.altLabels.length) {
+  if (details.value.altLabels.length || details.value.altLabelsXL.length) {
     config.push({
       label: 'Alternative',
       values: sortLabels(details.value.altLabels),
+      hasXL: (details.value.altLabelsXL?.length ?? 0) > 0,
+      xlLabels: details.value.altLabelsXL ?? [],
+      regularLabels: details.value.altLabels ?? []
+    })
+  }
+  if (details.value.hiddenLabels.length || details.value.hiddenLabelsXL.length) {
+    config.push({
+      label: 'Hidden',
+      values: sortLabels(details.value.hiddenLabels),
+      hasXL: (details.value.hiddenLabelsXL?.length ?? 0) > 0,
+      xlLabels: details.value.hiddenLabelsXL ?? [],
+      regularLabels: details.value.hiddenLabels ?? [],
+      isHidden: true
     })
   }
   return config
@@ -114,7 +137,11 @@ const hasLabels = computed(() =>
 const documentationConfig = computed(() => [
   { label: 'Definition', values: sortLabels(details.value?.definitions ?? []) },
   { label: 'Scope Note', values: sortLabels(details.value?.scopeNotes ?? []) },
+  { label: 'History Note', values: sortedHistoryNotes.value },
+  { label: 'Change Note', values: sortedChangeNotes.value },
+  { label: 'Editorial Note', values: sortedEditorialNotes.value },
   { label: 'Note', values: sortLabels(details.value?.notes ?? []) },
+  { label: 'Example', values: sortedExamples.value, class: 'example' },
 ].filter(d => d.values.length > 0))
 
 // Sorted other properties (alphabetically by qualified name)

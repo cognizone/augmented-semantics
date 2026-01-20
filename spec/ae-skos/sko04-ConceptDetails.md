@@ -425,6 +425,7 @@ Skeleton layout matching content structure.
 - [com03-ErrorHandling](../common/com03-ErrorHandling.md) - Error/loading states
 - [com04-URLRouting](../common/com04-URLRouting.md) - Deep linking to concepts
 - [com05-SPARQLPatterns](../common/com05-SPARQLPatterns.md) - Query patterns
+- [sko10-PropertyAnalysis](./sko10-PropertyAnalysis.md) - Property comparison across Concept, Scheme, and Collection details
 
 ## Dependencies
 
