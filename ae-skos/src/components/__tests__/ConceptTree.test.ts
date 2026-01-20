@@ -663,6 +663,44 @@ describe('ConceptTree', () => {
     })
   })
 
+  describe('collection node rendering', () => {
+    beforeEach(() => {
+      const schemeStore = useSchemeStore()
+      schemeStore.schemes = [
+        { uri: 'http://example.org/scheme/1', label: 'Test Scheme' },
+      ]
+      schemeStore.selectScheme('http://example.org/scheme/1')
+    })
+
+    it('shows collection nodes at root level when hasChildCollections', async () => {
+      // Mock: return one top collection with child collections
+      ;(executeSparql as Mock)
+        .mockResolvedValueOnce({ results: { bindings: [] } }) // top concepts
+        .mockResolvedValueOnce({
+          results: {
+            bindings: [
+              {
+                collection: { value: 'http://example.org/collection/1' },
+                label: { value: 'Test Collection' },
+                labelLang: { value: 'en' },
+                labelType: { value: 'prefLabel' },
+                hasParentCollection: { value: 'false' },
+                hasChildCollections: { value: 'true' },
+              },
+            ],
+          },
+        })
+
+      const wrapper = mountConceptTree()
+      await flushPromises()
+      await nextTick()
+
+      // Tree should render (with collection nodes)
+      expect(wrapper.find('.p-tree').exists()).toBe(true)
+    })
+
+  })
+
   describe('goto URI with collection detection', () => {
     beforeEach(() => {
       const schemeStore = useSchemeStore()

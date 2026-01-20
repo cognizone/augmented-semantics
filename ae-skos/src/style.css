@@ -130,6 +130,18 @@
   vertical-align: middle;
 }
 
+/* Scheme badge - indicates cross-scheme navigation */
+.scheme-badge {
+  font-size: 0.65rem;
+  font-family: var(--ae-font-mono);
+  color: var(--ae-text-secondary);
+  background: var(--ae-bg-hover);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  margin-left: 0.35rem;
+  vertical-align: middle;
+}
+
 /* Keep original amber in dark mode */
 :root.dark .deprecated-badge {
   color: var(--ae-status-warning);

@@ -41,9 +41,15 @@ const sidebarTab = computed({
   set: (value: 'browse' | 'search' | 'recent') => uiStore.setSidebarTab(value),
 })
 
-// Handle concept selection from any component (unified approach)
-async function selectConcept(uri: string) {
-  // Store automatically clears collection selection when selecting a concept
+// Handle concept selection from tree or details panel - stay in current scheme
+function selectConceptInScheme(uri: string) {
+  schemeStore.viewScheme(null)
+  conceptStore.selectConceptWithEvent(uri)
+  uiStore.setSidebarTab('browse')
+}
+
+// Handle concept selection from search - allow cross-scheme navigation
+async function selectConceptFromSearch(uri: string) {
   await selectConceptWithScheme(uri)
 }
 
@@ -237,10 +243,10 @@ onMounted(() => {
           </TabList>
           <TabPanels>
             <TabPanel value="browse">
-              <ConceptTree @select-concept="selectConcept" @select-collection="selectCollection" />
+              <ConceptTree @select-concept="selectConceptInScheme" @select-collection="selectCollection" />
             </TabPanel>
             <TabPanel value="search">
-              <SearchBox @select-concept="selectConcept" />
+              <SearchBox @select-concept="selectConceptFromSearch" />
             </TabPanel>
             <TabPanel value="recent">
               <RecentHistory @select-concept="selectFromHistory" />
@@ -257,11 +263,12 @@ onMounted(() => {
         <CollectionDetails
           v-else-if="conceptStore.selectedCollectionUri"
           :collection-uri="conceptStore.selectedCollectionUri"
-          @select-concept="selectConcept"
+          @select-concept="selectConceptInScheme"
+          @select-collection="selectCollection"
         />
         <ConceptDetails
           v-else
-          @select-concept="selectConcept"
+          @select-concept="selectConceptInScheme"
         />
       </SplitterPanel>
     </Splitter>

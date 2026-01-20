@@ -6,9 +6,11 @@
  * - LABEL_PRIORITY: Priority order for display label selection
  * - LABEL_PREDICATES: URI and prefixed form for each label type
  * - buildLabelUnionClause: SPARQL helper for label queries
+ * - buildCapabilityAwareLabelUnionClause: Optimized SPARQL helper using detected capabilities
  *
  * @see /spec/ae-skos/sko01-LanguageSelector.md
  */
+import type { LabelPredicateCapabilities } from '../types'
 
 /**
  * Label type identifiers used throughout the application.
@@ -200,4 +202,159 @@ export function isPreferredLabelType(type: string): boolean {
  */
 export function getLabelPredicate(type: string): typeof LABEL_PREDICATES[LabelPredicateKey] | undefined {
   return LABEL_PREDICATES[type as LabelPredicateKey]
+}
+
+/**
+ * Build a capability-aware SPARQL UNION clause for fetching labels.
+ * Only includes predicates that are known to exist in the endpoint.
+ *
+ * @param subjectVar - The SPARQL variable for the subject (e.g., '?concept', '<uri>')
+ * @param capabilities - Detected label predicate capabilities for the resource type
+ * @param labelVar - The variable name for the label (default: '?label')
+ * @param langVar - The variable name for the language (default: '?labelLang')
+ * @param typeVar - The variable name for the label type (default: '?labelType')
+ * @returns SPARQL UNION clause string (without OPTIONAL wrapper)
+ */
+export function buildCapabilityAwareLabelUnionClause(
+  subjectVar: string,
+  capabilities?: LabelPredicateCapabilities,
+  labelVar = '?label',
+  langVar = '?labelLang',
+  typeVar = '?labelType'
+): string {
+  // If no capabilities detected, fall back to all predicates (backward compatible)
+  if (!capabilities || Object.keys(capabilities).length === 0) {
+    return buildLabelUnionClause(subjectVar, labelVar, langVar, typeVar)
+  }
+
+  // Build UNION only for predicates where capability is true
+  const unions: { pattern: string; type: string }[] = []
+
+  if (capabilities.prefLabel) {
+    unions.push({
+      pattern: `${subjectVar} skos:prefLabel ${labelVar} .`,
+      type: LABEL_TYPES.PREF_LABEL,
+    })
+  }
+
+  if (capabilities.xlPrefLabel) {
+    unions.push({
+      pattern: `${subjectVar} skosxl:prefLabel/skosxl:literalForm ${labelVar} .`,
+      type: LABEL_TYPES.XL_PREF_LABEL,
+    })
+  }
+
+  if (capabilities.dctTitle) {
+    unions.push({
+      pattern: `${subjectVar} dct:title ${labelVar} .`,
+      type: LABEL_TYPES.DCT_TITLE,
+    })
+  }
+
+  if (capabilities.dcTitle) {
+    unions.push({
+      pattern: `${subjectVar} dc:title ${labelVar} .`,
+      type: LABEL_TYPES.DC_TITLE,
+    })
+  }
+
+  if (capabilities.rdfsLabel) {
+    unions.push({
+      pattern: `${subjectVar} rdfs:label ${labelVar} .`,
+      type: LABEL_TYPES.RDFS_LABEL,
+    })
+  }
+
+  // If somehow no predicates are enabled, fall back to all
+  if (unions.length === 0) {
+    return buildLabelUnionClause(subjectVar, labelVar, langVar, typeVar)
+  }
+
+  const clauses = unions.map(
+    ({ pattern, type }) => `{
+          ${pattern}
+          BIND("${type}" AS ${typeVar})
+        }`
+  )
+
+  return `${clauses.join(' UNION ')}
+        BIND(LANG(${labelVar}) AS ${langVar})`
+}
+
+/**
+ * Build capability-aware optional SPARQL clause for fetching labels.
+ * Wraps buildCapabilityAwareLabelUnionClause in OPTIONAL { }.
+ *
+ * @param subjectVar - The SPARQL variable for the subject
+ * @param capabilities - Detected label predicate capabilities for the resource type
+ * @param labelVar - The variable name for the label (default: '?label')
+ * @param langVar - The variable name for the language (default: '?labelLang')
+ * @param typeVar - The variable name for the label type (default: '?labelType')
+ * @returns SPARQL OPTIONAL clause string
+ */
+export function buildCapabilityAwareOptionalLabelClause(
+  subjectVar: string,
+  capabilities?: LabelPredicateCapabilities,
+  labelVar = '?label',
+  langVar = '?labelLang',
+  typeVar = '?labelType'
+): string {
+  return `OPTIONAL {
+        ${buildCapabilityAwareLabelUnionClause(subjectVar, capabilities, labelVar, langVar, typeVar)}
+      }`
+}
+
+/**
+ * Merge multiple label predicate capabilities into one.
+ * Returns a capability where a predicate is true if ANY input has it true.
+ * Useful when a query targets multiple resource types (e.g., collection members
+ * can be both concepts and collections).
+ *
+ * @param capabilities - Array of capabilities to merge
+ * @returns Merged capabilities
+ */
+export function mergeCapabilities(
+  ...capabilities: (LabelPredicateCapabilities | undefined)[]
+): LabelPredicateCapabilities {
+  const result: LabelPredicateCapabilities = {}
+
+  for (const cap of capabilities) {
+    if (!cap) continue
+    if (cap.prefLabel) result.prefLabel = true
+    if (cap.xlPrefLabel) result.xlPrefLabel = true
+    if (cap.dctTitle) result.dctTitle = true
+    if (cap.dcTitle) result.dcTitle = true
+    if (cap.rdfsLabel) result.rdfsLabel = true
+  }
+
+  return result
+}
+
+/**
+ * Build a capability-aware SPARQL UNION clause for fetching labels in a single language.
+ * Used by progressive label loading to fetch labels efficiently by language priority.
+ *
+ * @param subjectVar - The SPARQL variable for the subject (e.g., '?concept', '<uri>')
+ * @param language - The specific language to filter for
+ * @param capabilities - Detected label predicate capabilities for the resource type
+ * @param labelVar - The variable name for the label (default: '?label')
+ * @param langVar - The variable name for the language (default: '?labelLang')
+ * @param typeVar - The variable name for the label type (default: '?labelType')
+ * @returns SPARQL UNION clause string with language filter (without OPTIONAL wrapper)
+ */
+export function buildSingleLanguageLabelClause(
+  subjectVar: string,
+  language: string,
+  capabilities?: LabelPredicateCapabilities,
+  labelVar = '?label',
+  langVar = '?labelLang',
+  typeVar = '?labelType'
+): string {
+  const baseClause = buildCapabilityAwareLabelUnionClause(
+    subjectVar, capabilities, labelVar, langVar, typeVar
+  )
+
+  // Filter: exact language match OR no language tag (xsd:string fallback)
+  return `${baseClause}
+        FILTER(${langVar} = "${language}" || ${langVar} = "")`
 }

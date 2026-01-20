@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
+import { flushPromises } from '@vue/test-utils'
 import { useConceptData } from '../useConceptData'
 import { useEndpointStore, useLanguageStore } from '../../stores'
 
@@ -368,59 +369,97 @@ describe('useConceptData', () => {
   })
 
   describe('loadRelatedLabels', () => {
-    it('loads labels for related concepts', async () => {
-      // 1. Main query returns concept with broader
-      ;(executeSparql as Mock).mockResolvedValueOnce({
-        results: {
-          bindings: [
-            { property: { value: 'http://www.w3.org/2004/02/skos/core#broader' }, value: { value: 'http://example.org/broader/1' } },
-          ],
-        },
+    // With progressive label loading, queries run in parallel.
+    // We use mockImplementation to return results based on query content.
+
+    function setupMockForRelatedLabelsTest(options: {
+      relations: Array<{ property: string; value: string }>
+      metadata: Array<{ uri: string; notation?: string; hasNarrower?: boolean }>
+      labels: Array<{ uri: string; value: string; lang: string; type: string }>
+    }) {
+      ;(executeSparql as Mock).mockImplementation(async (_endpoint, query: string) => {
+        // Main concept properties query
+        if (query.includes('?property ?value') && query.includes('FILTER (?property IN')) {
+          return {
+            results: {
+              bindings: options.relations.map(r => ({
+                property: { value: r.property },
+                value: { value: r.value },
+              })),
+            },
+          }
+        }
+        // Collections query
+        if (query.includes('skos:member') && query.includes('?collection')) {
+          return { results: { bindings: [] } }
+        }
+        // Metadata query (has ?notation, ?hasNarrower but no ?label)
+        if (query.includes('?notation') && query.includes('?hasNarrower') && !query.includes('?label')) {
+          return {
+            results: {
+              bindings: options.metadata.map(m => ({
+                concept: { value: m.uri },
+                ...(m.notation && { notation: { value: m.notation } }),
+                ...(m.hasNarrower !== undefined && { hasNarrower: { value: m.hasNarrower ? 'true' : 'false' } }),
+              })),
+            },
+          }
+        }
+        // Label query (has ?label in SELECT)
+        if (query.includes('?label') && query.includes('VALUES ?concept')) {
+          return {
+            results: {
+              bindings: options.labels.map(l => ({
+                concept: { value: l.uri },
+                label: { value: l.value },
+                labelLang: { value: l.lang },
+                labelType: { value: l.type },
+              })),
+            },
+          }
+        }
+        // Default empty response
+        return { results: { bindings: [] } }
       })
-      // 2. Collections query
-      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
-      // 3. Related labels query returns labels for related concepts
-      ;(executeSparql as Mock).mockResolvedValueOnce({
-        results: {
-          bindings: [
-            { concept: { value: 'http://example.org/broader/1' }, notation: { value: 'B1' }, label: { value: 'Broader Concept' }, labelLang: { value: 'en' }, labelType: { value: 'prefLabel' }, hasNarrower: { value: 'true' } },
-          ],
-        },
+    }
+
+    it('loads labels for related concepts', async () => {
+      setupMockForRelatedLabelsTest({
+        relations: [{ property: 'http://www.w3.org/2004/02/skos/core#broader', value: 'http://example.org/broader/1' }],
+        metadata: [{ uri: 'http://example.org/broader/1', notation: 'B1', hasNarrower: true }],
+        labels: [{ uri: 'http://example.org/broader/1', value: 'Broader Concept', lang: 'en', type: 'prefLabel' }],
       })
 
       const { loadDetails, details } = useConceptData()
       await loadDetails('http://example.org/concept/1')
+      await flushPromises()
 
       expect(details.value?.broader[0].label).toBe('Broader Concept')
       expect(details.value?.broader[0].notation).toBe('B1')
     })
 
     it('extracts hasNarrower from query results', async () => {
-      // 1. Main query returns concept with broader and narrower
-      ;(executeSparql as Mock).mockResolvedValueOnce({
-        results: {
-          bindings: [
-            { property: { value: 'http://www.w3.org/2004/02/skos/core#broader' }, value: { value: 'http://example.org/broader/1' } },
-            { property: { value: 'http://www.w3.org/2004/02/skos/core#narrower' }, value: { value: 'http://example.org/narrower/1' } },
-            { property: { value: 'http://www.w3.org/2004/02/skos/core#narrower' }, value: { value: 'http://example.org/narrower/2' } },
-          ],
-        },
-      })
-      // 2. Collections query
-      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
-      // 3. Related labels query - one with children, one without
-      ;(executeSparql as Mock).mockResolvedValueOnce({
-        results: {
-          bindings: [
-            { concept: { value: 'http://example.org/broader/1' }, label: { value: 'Broader' }, labelLang: { value: 'en' }, labelType: { value: 'prefLabel' }, hasNarrower: { value: 'true' } },
-            { concept: { value: 'http://example.org/narrower/1' }, label: { value: 'Narrower With Children' }, labelLang: { value: 'en' }, labelType: { value: 'prefLabel' }, hasNarrower: { value: 'true' } },
-            { concept: { value: 'http://example.org/narrower/2' }, label: { value: 'Narrower Leaf' }, labelLang: { value: 'en' }, labelType: { value: 'prefLabel' }, hasNarrower: { value: 'false' } },
-          ],
-        },
+      setupMockForRelatedLabelsTest({
+        relations: [
+          { property: 'http://www.w3.org/2004/02/skos/core#broader', value: 'http://example.org/broader/1' },
+          { property: 'http://www.w3.org/2004/02/skos/core#narrower', value: 'http://example.org/narrower/1' },
+          { property: 'http://www.w3.org/2004/02/skos/core#narrower', value: 'http://example.org/narrower/2' },
+        ],
+        metadata: [
+          { uri: 'http://example.org/broader/1', hasNarrower: true },
+          { uri: 'http://example.org/narrower/1', hasNarrower: true },
+          { uri: 'http://example.org/narrower/2', hasNarrower: false },
+        ],
+        labels: [
+          { uri: 'http://example.org/broader/1', value: 'Broader', lang: 'en', type: 'prefLabel' },
+          { uri: 'http://example.org/narrower/1', value: 'Narrower With Children', lang: 'en', type: 'prefLabel' },
+          { uri: 'http://example.org/narrower/2', value: 'Narrower Leaf', lang: 'en', type: 'prefLabel' },
+        ],
       })
 
       const { loadDetails, details } = useConceptData()
       await loadDetails('http://example.org/concept/1')
+      await flushPromises()
 
       // Broader should have hasNarrower = true
       expect(details.value?.broader[0].hasNarrower).toBe(true)
@@ -434,29 +473,89 @@ describe('useConceptData', () => {
       expect(narrowerLeaf?.hasNarrower).toBeUndefined()
     })
 
-    it('applies label type priority', async () => {
-      // 1. Main query
-      ;(executeSparql as Mock).mockResolvedValueOnce({
-        results: {
-          bindings: [
-            { property: { value: 'http://www.w3.org/2004/02/skos/core#broader' }, value: { value: 'http://example.org/broader/1' } },
-          ],
-        },
+    it('extracts cross-scheme indicators (inCurrentScheme, displayScheme)', async () => {
+      ;(executeSparql as Mock).mockImplementation(async (_endpoint, query: string) => {
+        // Main concept properties query
+        if (query.includes('?property ?value') && query.includes('FILTER (?property IN')) {
+          return {
+            results: {
+              bindings: [
+                { property: { value: 'http://www.w3.org/2004/02/skos/core#broader' }, value: { value: 'http://example.org/same-scheme/1' } },
+                { property: { value: 'http://www.w3.org/2004/02/skos/core#broader' }, value: { value: 'http://external.org/other-scheme/1' } },
+              ],
+            },
+          }
+        }
+        // Collections query
+        if (query.includes('skos:member') && query.includes('?collection')) {
+          return { results: { bindings: [] } }
+        }
+        // Metadata query with cross-scheme fields
+        if (query.includes('?inCurrentScheme') && query.includes('?displayScheme')) {
+          return {
+            results: {
+              bindings: [
+                {
+                  concept: { value: 'http://example.org/same-scheme/1' },
+                  inCurrentScheme: { value: 'true' },
+                  displayScheme: { value: 'http://example.org/scheme/1' },
+                },
+                {
+                  concept: { value: 'http://external.org/other-scheme/1' },
+                  inCurrentScheme: { value: 'false' },
+                  displayScheme: { value: 'http://external.org/scheme/other' },
+                },
+              ],
+            },
+          }
+        }
+        // Label query
+        if (query.includes('?label') && query.includes('VALUES ?concept')) {
+          return {
+            results: {
+              bindings: [
+                { concept: { value: 'http://example.org/same-scheme/1' }, label: { value: 'Same Scheme' }, labelLang: { value: 'en' }, labelType: { value: 'prefLabel' } },
+                { concept: { value: 'http://external.org/other-scheme/1' }, label: { value: 'Other Scheme' }, labelLang: { value: 'en' }, labelType: { value: 'prefLabel' } },
+              ],
+            },
+          }
+        }
+        return { results: { bindings: [] } }
       })
-      // 2. Collections query
-      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
-      // 3. Related labels query - Multiple label types for the same concept
-      ;(executeSparql as Mock).mockResolvedValueOnce({
-        results: {
-          bindings: [
-            { concept: { value: 'http://example.org/broader/1' }, label: { value: 'Alt Label' }, labelLang: { value: 'en' }, labelType: { value: 'altLabel' } },
-            { concept: { value: 'http://example.org/broader/1' }, label: { value: 'Pref Label' }, labelLang: { value: 'en' }, labelType: { value: 'prefLabel' } },
-          ],
-        },
+
+      // Set up a scheme for cross-scheme detection
+      const { useSchemeStore } = await import('../../stores')
+      const schemeStore = useSchemeStore()
+      schemeStore.schemes = [{ uri: 'http://example.org/scheme/1', label: 'Test Scheme' }]
+      schemeStore.selectScheme('http://example.org/scheme/1')
+
+      const { loadDetails, details } = useConceptData()
+      await loadDetails('http://example.org/concept/1')
+      await flushPromises()
+
+      // Same-scheme concept
+      const sameScheme = details.value?.broader.find(b => b.uri === 'http://example.org/same-scheme/1')
+      expect(sameScheme?.inCurrentScheme).toBe(true)
+
+      // Cross-scheme concept
+      const otherScheme = details.value?.broader.find(b => b.uri === 'http://external.org/other-scheme/1')
+      expect(otherScheme?.inCurrentScheme).toBe(false)
+      expect(otherScheme?.displayScheme).toBe('http://external.org/scheme/other')
+    })
+
+    it('applies label type priority', async () => {
+      setupMockForRelatedLabelsTest({
+        relations: [{ property: 'http://www.w3.org/2004/02/skos/core#broader', value: 'http://example.org/broader/1' }],
+        metadata: [{ uri: 'http://example.org/broader/1' }],
+        labels: [
+          { uri: 'http://example.org/broader/1', value: 'Alt Label', lang: 'en', type: 'altLabel' },
+          { uri: 'http://example.org/broader/1', value: 'Pref Label', lang: 'en', type: 'prefLabel' },
+        ],
       })
 
       const { loadDetails, details } = useConceptData()
       await loadDetails('http://example.org/concept/1')
+      await flushPromises()
 
       // Should select prefLabel over altLabel
       expect(details.value?.broader[0].label).toBe('Pref Label')
@@ -466,28 +565,18 @@ describe('useConceptData', () => {
       const languageStore = useLanguageStore()
       languageStore.setPreferred('fr')
 
-      // 1. Main query
-      ;(executeSparql as Mock).mockResolvedValueOnce({
-        results: {
-          bindings: [
-            { property: { value: 'http://www.w3.org/2004/02/skos/core#broader' }, value: { value: 'http://example.org/broader/1' } },
-          ],
-        },
-      })
-      // 2. Collections query
-      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
-      // 3. Related labels query
-      ;(executeSparql as Mock).mockResolvedValueOnce({
-        results: {
-          bindings: [
-            { concept: { value: 'http://example.org/broader/1' }, label: { value: 'English Label' }, labelLang: { value: 'en' }, labelType: { value: 'prefLabel' } },
-            { concept: { value: 'http://example.org/broader/1' }, label: { value: 'French Label' }, labelLang: { value: 'fr' }, labelType: { value: 'prefLabel' } },
-          ],
-        },
+      setupMockForRelatedLabelsTest({
+        relations: [{ property: 'http://www.w3.org/2004/02/skos/core#broader', value: 'http://example.org/broader/1' }],
+        metadata: [{ uri: 'http://example.org/broader/1' }],
+        labels: [
+          { uri: 'http://example.org/broader/1', value: 'English Label', lang: 'en', type: 'prefLabel' },
+          { uri: 'http://example.org/broader/1', value: 'French Label', lang: 'fr', type: 'prefLabel' },
+        ],
       })
 
       const { loadDetails, details } = useConceptData()
       await loadDetails('http://example.org/concept/1')
+      await flushPromises()
 
       expect(details.value?.broader[0].label).toBe('French Label')
     })
@@ -702,33 +791,66 @@ describe('useConceptData', () => {
   })
 
   describe('selectBestLabelByLanguage (via loadRelatedLabels)', () => {
+    // With progressive label loading, queries run in parallel.
+    // We use mockImplementation to return results based on query content.
+
+    function setupMockForLabelTest(labels: Array<{ value: string; lang: string; type: string }>) {
+      ;(executeSparql as Mock).mockImplementation(async (_endpoint, query: string) => {
+        // Main concept properties query
+        if (query.includes('?property ?value') && query.includes('FILTER (?property IN')) {
+          return {
+            results: {
+              bindings: [
+                { property: { value: 'http://www.w3.org/2004/02/skos/core#broader' }, value: { value: 'http://example.org/broader/1' } },
+              ],
+            },
+          }
+        }
+        // Collections query
+        if (query.includes('skos:member') && query.includes('?collection')) {
+          return { results: { bindings: [] } }
+        }
+        // Metadata query (no labels - checks for notation, hasNarrower)
+        if (query.includes('?notation') && query.includes('?hasNarrower') && !query.includes('?label')) {
+          return {
+            results: {
+              bindings: [
+                { concept: { value: 'http://example.org/broader/1' } },
+              ],
+            },
+          }
+        }
+        // Label query (has ?label in SELECT)
+        if (query.includes('?label') && query.includes('VALUES ?concept')) {
+          return {
+            results: {
+              bindings: labels.map(l => ({
+                concept: { value: 'http://example.org/broader/1' },
+                label: { value: l.value },
+                labelLang: { value: l.lang },
+                labelType: { value: l.type },
+              })),
+            },
+          }
+        }
+        // Default empty response
+        return { results: { bindings: [] } }
+      })
+    }
+
     it('returns preferred language match', async () => {
       const languageStore = useLanguageStore()
       languageStore.setPreferred('de')
 
-      // 1. Main query
-      ;(executeSparql as Mock).mockResolvedValueOnce({
-        results: {
-          bindings: [
-            { property: { value: 'http://www.w3.org/2004/02/skos/core#broader' }, value: { value: 'http://example.org/broader/1' } },
-          ],
-        },
-      })
-      // 2. Collections query
-      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
-      // 3. Related labels query
-      ;(executeSparql as Mock).mockResolvedValueOnce({
-        results: {
-          bindings: [
-            { concept: { value: 'http://example.org/broader/1' }, label: { value: 'English' }, labelLang: { value: 'en' }, labelType: { value: 'prefLabel' } },
-            { concept: { value: 'http://example.org/broader/1' }, label: { value: 'German' }, labelLang: { value: 'de' }, labelType: { value: 'prefLabel' } },
-            { concept: { value: 'http://example.org/broader/1' }, label: { value: 'French' }, labelLang: { value: 'fr' }, labelType: { value: 'prefLabel' } },
-          ],
-        },
-      })
+      setupMockForLabelTest([
+        { value: 'English', lang: 'en', type: 'prefLabel' },
+        { value: 'German', lang: 'de', type: 'prefLabel' },
+        { value: 'French', lang: 'fr', type: 'prefLabel' },
+      ])
 
       const { loadDetails, details } = useConceptData()
       await loadDetails('http://example.org/concept/1')
+      await flushPromises() // Wait for async label loading
 
       expect(details.value?.broader[0].label).toBe('German')
     })
@@ -742,28 +864,14 @@ describe('useConceptData', () => {
         languagePriorities: ['fr', 'en'], // French is first priority
       })
 
-      // 1. Main query
-      ;(executeSparql as Mock).mockResolvedValueOnce({
-        results: {
-          bindings: [
-            { property: { value: 'http://www.w3.org/2004/02/skos/core#broader' }, value: { value: 'http://example.org/broader/1' } },
-          ],
-        },
-      })
-      // 2. Collections query
-      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
-      // 3. Related labels query
-      ;(executeSparql as Mock).mockResolvedValueOnce({
-        results: {
-          bindings: [
-            { concept: { value: 'http://example.org/broader/1' }, label: { value: 'English' }, labelLang: { value: 'en' }, labelType: { value: 'prefLabel' } },
-            { concept: { value: 'http://example.org/broader/1' }, label: { value: 'French' }, labelLang: { value: 'fr' }, labelType: { value: 'prefLabel' } },
-          ],
-        },
-      })
+      setupMockForLabelTest([
+        { value: 'English', lang: 'en', type: 'prefLabel' },
+        { value: 'French', lang: 'fr', type: 'prefLabel' },
+      ])
 
       const { loadDetails, details } = useConceptData()
       await loadDetails('http://example.org/concept/1')
+      await flushPromises() // Wait for async label loading
 
       expect(details.value?.broader[0].label).toBe('French')
     })
@@ -777,28 +885,14 @@ describe('useConceptData', () => {
         languagePriorities: ['it'], // Not available
       })
 
-      // 1. Main query
-      ;(executeSparql as Mock).mockResolvedValueOnce({
-        results: {
-          bindings: [
-            { property: { value: 'http://www.w3.org/2004/02/skos/core#broader' }, value: { value: 'http://example.org/broader/1' } },
-          ],
-        },
-      })
-      // 2. Collections query
-      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
-      // 3. Related labels query
-      ;(executeSparql as Mock).mockResolvedValueOnce({
-        results: {
-          bindings: [
-            { concept: { value: 'http://example.org/broader/1' }, label: { value: 'No Lang Label' }, labelLang: { value: '' }, labelType: { value: 'prefLabel' } },
-            { concept: { value: 'http://example.org/broader/1' }, label: { value: 'Japanese' }, labelLang: { value: 'ja' }, labelType: { value: 'prefLabel' } },
-          ],
-        },
-      })
+      setupMockForLabelTest([
+        { value: 'No Lang Label', lang: '', type: 'prefLabel' },
+        { value: 'Japanese', lang: 'ja', type: 'prefLabel' },
+      ])
 
       const { loadDetails, details } = useConceptData()
       await loadDetails('http://example.org/concept/1')
+      await flushPromises() // Wait for async label loading
 
       expect(details.value?.broader[0].label).toBe('No Lang Label')
     })
@@ -812,28 +906,14 @@ describe('useConceptData', () => {
         languagePriorities: [],
       })
 
-      // 1. Main query
-      ;(executeSparql as Mock).mockResolvedValueOnce({
-        results: {
-          bindings: [
-            { property: { value: 'http://www.w3.org/2004/02/skos/core#broader' }, value: { value: 'http://example.org/broader/1' } },
-          ],
-        },
-      })
-      // 2. Collections query
-      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
-      // 3. Related labels query
-      ;(executeSparql as Mock).mockResolvedValueOnce({
-        results: {
-          bindings: [
-            { concept: { value: 'http://example.org/broader/1' }, label: { value: 'First Label' }, labelLang: { value: 'ja' }, labelType: { value: 'prefLabel' } },
-            { concept: { value: 'http://example.org/broader/1' }, label: { value: 'Second Label' }, labelLang: { value: 'zh' }, labelType: { value: 'prefLabel' } },
-          ],
-        },
-      })
+      setupMockForLabelTest([
+        { value: 'First Label', lang: 'ja', type: 'prefLabel' },
+        { value: 'Second Label', lang: 'zh', type: 'prefLabel' },
+      ])
 
       const { loadDetails, details } = useConceptData()
       await loadDetails('http://example.org/concept/1')
+      await flushPromises() // Wait for async label loading
 
       expect(details.value?.broader[0].label).toBe('First Label')
     })

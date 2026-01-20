@@ -10,8 +10,10 @@
  * @see /spec/ae-skos/sko03-ConceptTree.md
  */
 import { watch, computed } from 'vue'
+import { useSchemeStore } from '../../stores'
 import { useDelayedLoading, useLabelResolver, useCollectionData, useResourceExport, useElapsedTime } from '../../composables'
 import { getRefLabel } from '../../utils/displayUtils'
+import type { ConceptRef } from '../../types'
 import DetailsStates from '../common/DetailsStates.vue'
 import DetailsHeader from '../common/DetailsHeader.vue'
 import LabelsSection from '../common/LabelsSection.vue'
@@ -24,8 +26,10 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   selectConcept: [uri: string]
+  selectCollection: [uri: string]
 }>()
 
+const schemeStore = useSchemeStore()
 const { selectCollectionLabel, sortLabels, shouldShowLangTag } = useLabelResolver()
 const { details, members, loading, loadingMembers, error, resolvedPredicates, loadDetails, reset } = useCollectionData()
 const { exportAsTurtle } = useResourceExport()
@@ -129,8 +133,34 @@ function clearError() {
   error.value = null
 }
 
-function navigateToMember(ref: { uri: string }) {
-  emit('selectConcept', ref.uri)
+function navigateToMember(member: { uri: string; type?: string }) {
+  if (member.type === 'collection') {
+    emit('selectCollection', member.uri)
+  } else {
+    emit('selectConcept', member.uri)
+  }
+}
+
+/**
+ * Check if a concept ref belongs to a different scheme than the current selection
+ * Uses inCurrentScheme boolean from EXISTS check - concept is external if NOT in current scheme
+ */
+function isExternalScheme(ref: ConceptRef): boolean {
+  // Skip if no scheme selected (no badges shown)
+  if (!schemeStore.selectedUri) return false
+  // Schemes and collections don't show external indicator
+  if (ref.type === 'scheme' || ref.type === 'collection') return false
+  // External if inCurrentScheme is explicitly false (undefined means we didn't check)
+  return ref.inCurrentScheme === false
+}
+
+/**
+ * Extract short name from scheme URI for display
+ * e.g., "http://www.yso.fi/onto/afo/" → "afo"
+ */
+function getSchemeShortName(schemeUri: string): string {
+  const match = schemeUri.match(/\/([^/]+)\/?$/)
+  return match ? match[1] : schemeUri
 }
 
 // Watch for collection URI changes
@@ -250,11 +280,17 @@ watch(
               class="member-item"
               @click="navigateToMember(member)"
             >
-              <span class="material-symbols-outlined member-icon" :class="member.hasNarrower ? 'icon-label' : 'icon-leaf'">{{ member.hasNarrower ? 'label' : 'circle' }}</span>
+              <span class="material-symbols-outlined member-icon"
+                    :class="member.type === 'collection' ? 'icon-collection' : (member.hasNarrower ? 'icon-label' : 'icon-leaf')">
+                {{ member.type === 'collection' ? 'collections_bookmark' : (member.hasNarrower ? 'label' : 'circle') }}
+              </span>
               <span class="member-label">
                 {{ getRefLabel(member) }}
                 <span v-if="member.lang && shouldShowLangTag(member.lang)" class="lang-tag">
                   {{ member.lang }}
+                </span>
+                <span v-if="isExternalScheme(member)" class="scheme-badge" :title="member.displayScheme">
+                  {{ getSchemeShortName(member.displayScheme!) }}
                 </span>
               </span>
             </div>

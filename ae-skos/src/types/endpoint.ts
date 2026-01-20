@@ -33,6 +33,30 @@ export interface DetectedLanguage {
   count: number
 }
 
+/**
+ * Label predicate capabilities for a specific resource type.
+ * Indicates which label predicates exist in the endpoint for that type.
+ */
+export interface LabelPredicateCapabilities {
+  prefLabel?: boolean
+  xlPrefLabel?: boolean
+  dctTitle?: boolean
+  dcTitle?: boolean
+  rdfsLabel?: boolean
+}
+
+/**
+ * Label predicates available per resource type.
+ * Different resource types may use different label predicates.
+ */
+export interface LabelPredicatesByResourceType {
+  concept?: LabelPredicateCapabilities
+  scheme?: LabelPredicateCapabilities
+  collection?: LabelPredicateCapabilities
+}
+
+export type SkosResourceType = 'concept' | 'scheme' | 'collection'
+
 export interface EndpointAnalysis {
   // SKOS content (first check)
   hasSkosContent: boolean              // Has ConceptScheme or Concept
@@ -65,6 +89,9 @@ export interface EndpointAnalysis {
     hasBroaderTransitive: boolean
     hasNarrowerTransitive: boolean
   }
+
+  // Label predicates per resource type (detected during analysis)
+  labelPredicates?: LabelPredicatesByResourceType
 }
 
 export type EndpointStatus = 'disconnected' | 'connecting' | 'connected' | 'error'

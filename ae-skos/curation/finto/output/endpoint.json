@@ -115,15 +115,15 @@
     "languages": [
       {
         "lang": "fi",
-        "count": 1452319
+        "count": 1452343
       },
       {
         "lang": "sv",
-        "count": 958768
+        "count": 958770
       },
       {
         "lang": "en",
-        "count": 958178
+        "count": 958203
       },
       {
         "lang": "se",
@@ -246,7 +246,7 @@
         "count": 4
       }
     ],
-    "totalConcepts": 891878,
+    "totalConcepts": 891902,
     "relationships": {
       "hasInScheme": true,
       "hasTopConceptOf": true,
@@ -256,7 +256,24 @@
       "hasBroaderTransitive": false,
       "hasNarrowerTransitive": false
     },
-    "analyzedAt": "2026-01-17T18:50:41.492Z"
+    "labelPredicates": {
+      "concept": {
+        "prefLabel": true,
+        "xlPrefLabel": true,
+        "rdfsLabel": true
+      },
+      "scheme": {
+        "prefLabel": true,
+        "dctTitle": true,
+        "dcTitle": true,
+        "rdfsLabel": true
+      },
+      "collection": {
+        "prefLabel": true,
+        "rdfsLabel": true
+      }
+    },
+    "analyzedAt": "2026-01-20T09:31:06.079Z"
   },
   "suggestedLanguagePriorities": [
     "en",

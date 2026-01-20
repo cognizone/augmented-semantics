@@ -172,7 +172,7 @@ export function useCollections() {
     const endpoint = endpointStore.current
     if (!endpoint) return []
 
-    const query = buildChildCollectionsQuery(parentUri)
+    const query = buildChildCollectionsQuery(parentUri, endpoint)
     logger.debug('Collections', 'Loading child collections', { parentUri, query })
 
     try {

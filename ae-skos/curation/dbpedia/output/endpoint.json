@@ -24,7 +24,13 @@
       "hasBroaderTransitive": false,
       "hasNarrowerTransitive": false
     },
-    "analyzedAt": "2026-01-17T18:48:33.176Z"
+    "labelPredicates": {
+      "concept": {
+        "prefLabel": true,
+        "rdfsLabel": true
+      }
+    },
+    "analyzedAt": "2026-01-20T09:28:01.164Z"
   },
   "suggestedLanguagePriorities": [
     "en"

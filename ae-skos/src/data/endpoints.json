@@ -417,7 +417,26 @@
         "hasBroaderTransitive": true,
         "hasNarrowerTransitive": true
       },
-      "analyzedAt": "2026-01-17T18:42:26.793Z"
+      "labelPredicates": {
+        "concept": {
+          "prefLabel": true,
+          "xlPrefLabel": true,
+          "rdfsLabel": true
+        },
+        "scheme": {
+          "prefLabel": true,
+          "xlPrefLabel": true,
+          "dctTitle": true,
+          "dcTitle": true,
+          "rdfsLabel": true
+        },
+        "collection": {
+          "prefLabel": true,
+          "xlPrefLabel": true,
+          "rdfsLabel": true
+        }
+      },
+      "analyzedAt": "2026-01-20T09:15:15.866Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -697,7 +716,21 @@
         "hasBroaderTransitive": false,
         "hasNarrowerTransitive": false
       },
-      "analyzedAt": "2026-01-17T18:43:25.970Z"
+      "labelPredicates": {
+        "concept": {
+          "prefLabel": true,
+          "xlPrefLabel": true
+        },
+        "scheme": {
+          "prefLabel": true,
+          "xlPrefLabel": true
+        },
+        "collection": {
+          "prefLabel": true,
+          "xlPrefLabel": true
+        }
+      },
+      "analyzedAt": "2026-01-20T09:22:07.160Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -977,7 +1010,18 @@
         "hasBroaderTransitive": false,
         "hasNarrowerTransitive": false
       },
-      "analyzedAt": "2026-01-17T18:44:55.736Z"
+      "labelPredicates": {
+        "concept": {
+          "prefLabel": true
+        },
+        "scheme": {
+          "prefLabel": true
+        },
+        "collection": {
+          "prefLabel": true
+        }
+      },
+      "analyzedAt": "2026-01-20T09:23:26.106Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -1082,7 +1126,18 @@
         "hasBroaderTransitive": false,
         "hasNarrowerTransitive": false
       },
-      "analyzedAt": "2026-01-17T18:44:57.891Z"
+      "labelPredicates": {
+        "concept": {
+          "prefLabel": true,
+          "xlPrefLabel": true,
+          "dctTitle": true
+        },
+        "scheme": {
+          "xlPrefLabel": true,
+          "dctTitle": true
+        }
+      },
+      "analyzedAt": "2026-01-20T09:23:29.456Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -1496,7 +1551,19 @@
         "hasBroaderTransitive": false,
         "hasNarrowerTransitive": false
       },
-      "analyzedAt": "2026-01-17T13:50:01.759Z"
+      "labelPredicates": {
+        "concept": {
+          "prefLabel": true,
+          "xlPrefLabel": true
+        },
+        "scheme": {
+          "prefLabel": true,
+          "xlPrefLabel": true,
+          "dctTitle": true,
+          "rdfsLabel": true
+        }
+      },
+      "analyzedAt": "2026-01-20T09:38:22.422Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -1611,7 +1678,13 @@
         "hasBroaderTransitive": false,
         "hasNarrowerTransitive": false
       },
-      "analyzedAt": "2026-01-17T18:48:33.176Z"
+      "labelPredicates": {
+        "concept": {
+          "prefLabel": true,
+          "rdfsLabel": true
+        }
+      },
+      "analyzedAt": "2026-01-20T09:28:01.164Z"
     },
     "suggestedLanguagePriorities": [
       "en"
@@ -1922,7 +1995,22 @@
         "hasBroaderTransitive": false,
         "hasNarrowerTransitive": false
       },
-      "analyzedAt": "2026-01-17T18:48:36.512Z"
+      "labelPredicates": {
+        "concept": {
+          "prefLabel": true,
+          "dctTitle": true,
+          "rdfsLabel": true
+        },
+        "scheme": {
+          "prefLabel": true,
+          "dctTitle": true,
+          "rdfsLabel": true
+        },
+        "collection": {
+          "prefLabel": true
+        }
+      },
+      "analyzedAt": "2026-01-20T09:28:04.156Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -2396,7 +2484,25 @@
         "hasBroaderTransitive": false,
         "hasNarrowerTransitive": false
       },
-      "analyzedAt": "2026-01-17T18:50:01.624Z"
+      "labelPredicates": {
+        "concept": {
+          "prefLabel": true,
+          "xlPrefLabel": true,
+          "dctTitle": true,
+          "rdfsLabel": true
+        },
+        "scheme": {
+          "prefLabel": true,
+          "xlPrefLabel": true,
+          "dctTitle": true,
+          "rdfsLabel": true
+        },
+        "collection": {
+          "prefLabel": true,
+          "xlPrefLabel": true
+        }
+      },
+      "analyzedAt": "2026-01-20T09:29:41.058Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -2535,7 +2641,7 @@
         },
         {
           "lang": "de",
-          "count": 32720
+          "count": 32723
         },
         {
           "lang": "fr",
@@ -2550,7 +2656,7 @@
           "count": 1307
         }
       ],
-      "totalConcepts": 49075,
+      "totalConcepts": 49078,
       "relationships": {
         "hasInScheme": true,
         "hasTopConceptOf": true,
@@ -2560,7 +2666,20 @@
         "hasBroaderTransitive": true,
         "hasNarrowerTransitive": false
       },
-      "analyzedAt": "2026-01-17T18:50:05.090Z"
+      "labelPredicates": {
+        "concept": {
+          "prefLabel": true
+        },
+        "scheme": {
+          "prefLabel": true,
+          "dctTitle": true,
+          "rdfsLabel": true
+        },
+        "collection": {
+          "prefLabel": true
+        }
+      },
+      "analyzedAt": "2026-01-20T09:35:00.679Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -2687,15 +2806,15 @@
       "languages": [
         {
           "lang": "fi",
-          "count": 1452319
+          "count": 1452343
         },
         {
           "lang": "sv",
-          "count": 958768
+          "count": 958770
         },
         {
           "lang": "en",
-          "count": 958178
+          "count": 958203
         },
         {
           "lang": "se",
@@ -2818,7 +2937,7 @@
           "count": 4
         }
       ],
-      "totalConcepts": 891878,
+      "totalConcepts": 891902,
       "relationships": {
         "hasInScheme": true,
         "hasTopConceptOf": true,
@@ -2828,7 +2947,24 @@
         "hasBroaderTransitive": false,
         "hasNarrowerTransitive": false
       },
-      "analyzedAt": "2026-01-17T18:50:41.492Z"
+      "labelPredicates": {
+        "concept": {
+          "prefLabel": true,
+          "xlPrefLabel": true,
+          "rdfsLabel": true
+        },
+        "scheme": {
+          "prefLabel": true,
+          "dctTitle": true,
+          "dcTitle": true,
+          "rdfsLabel": true
+        },
+        "collection": {
+          "prefLabel": true,
+          "rdfsLabel": true
+        }
+      },
+      "analyzedAt": "2026-01-20T09:31:06.079Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -3099,7 +3235,22 @@
         "hasBroaderTransitive": true,
         "hasNarrowerTransitive": false
       },
-      "analyzedAt": "2026-01-17T18:53:53.606Z"
+      "labelPredicates": {
+        "concept": {
+          "prefLabel": true,
+          "xlPrefLabel": true,
+          "rdfsLabel": true
+        },
+        "scheme": {
+          "rdfsLabel": true
+        },
+        "collection": {
+          "prefLabel": true,
+          "xlPrefLabel": true,
+          "rdfsLabel": true
+        }
+      },
+      "analyzedAt": "2026-01-20T09:34:30.674Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -3407,7 +3558,20 @@
         "hasBroaderTransitive": false,
         "hasNarrowerTransitive": false
       },
-      "analyzedAt": "2026-01-17T18:54:09.886Z"
+      "labelPredicates": {
+        "concept": {
+          "prefLabel": true
+        },
+        "scheme": {
+          "prefLabel": true,
+          "dctTitle": true,
+          "rdfsLabel": true
+        },
+        "collection": {
+          "prefLabel": true
+        }
+      },
+      "analyzedAt": "2026-01-20T09:34:51.934Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -3696,7 +3860,23 @@
         "hasBroaderTransitive": true,
         "hasNarrowerTransitive": true
       },
-      "analyzedAt": "2026-01-17T18:54:17.748Z"
+      "labelPredicates": {
+        "concept": {
+          "prefLabel": true,
+          "rdfsLabel": true
+        },
+        "scheme": {
+          "prefLabel": true,
+          "dctTitle": true,
+          "dcTitle": true,
+          "rdfsLabel": true
+        },
+        "collection": {
+          "prefLabel": true,
+          "rdfsLabel": true
+        }
+      },
+      "analyzedAt": "2026-01-20T09:34:55.265Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -3743,7 +3923,7 @@
       "languages": [
         {
           "lang": "en",
-          "count": 361793
+          "count": 361885
         },
         {
           "lang": "fr",
@@ -3766,7 +3946,7 @@
           "count": 2
         }
       ],
-      "totalConcepts": 361803,
+      "totalConcepts": 361895,
       "relationships": {
         "hasInScheme": true,
         "hasTopConceptOf": true,
@@ -3776,7 +3956,20 @@
         "hasBroaderTransitive": false,
         "hasNarrowerTransitive": false
       },
-      "analyzedAt": "2026-01-17T18:54:30.446Z"
+      "labelPredicates": {
+        "concept": {
+          "prefLabel": true
+        },
+        "scheme": {
+          "prefLabel": true,
+          "dctTitle": true
+        },
+        "collection": {
+          "prefLabel": true,
+          "dctTitle": true
+        }
+      },
+      "analyzedAt": "2026-01-20T09:35:08.482Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -3820,7 +4013,18 @@
         "hasBroaderTransitive": false,
         "hasNarrowerTransitive": false
       },
-      "analyzedAt": "2026-01-17T18:54:32.467Z"
+      "labelPredicates": {
+        "concept": {
+          "prefLabel": true,
+          "rdfsLabel": true
+        },
+        "scheme": {
+          "prefLabel": true,
+          "dctTitle": true,
+          "rdfsLabel": true
+        }
+      },
+      "analyzedAt": "2026-01-20T09:35:10.268Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -3872,7 +4076,19 @@
         "hasBroaderTransitive": false,
         "hasNarrowerTransitive": false
       },
-      "analyzedAt": "2026-01-17T18:54:35.290Z"
+      "labelPredicates": {
+        "concept": {
+          "prefLabel": true
+        },
+        "scheme": {
+          "prefLabel": true,
+          "dctTitle": true
+        },
+        "collection": {
+          "prefLabel": true
+        }
+      },
+      "analyzedAt": "2026-01-20T09:45:23.163Z"
     },
     "suggestedLanguagePriorities": [
       "en",

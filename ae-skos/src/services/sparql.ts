@@ -9,7 +9,7 @@
  *
  * @see /spec/common/com05-SPARQLPatterns.md
  */
-import type { SPARQLEndpoint, AppError, ErrorCode } from '../types'
+import type { SPARQLEndpoint, AppError, ErrorCode, LabelPredicateCapabilities, LabelPredicatesByResourceType } from '../types'
 import { logger } from './logger'
 
 // SPARQL result types
@@ -577,6 +577,63 @@ export async function detectLanguages(
 }
 
 /**
+ * Detect which label predicates exist for each resource type (Concept, ConceptScheme, Collection).
+ * Uses EXISTS queries to efficiently check predicate availability.
+ */
+export async function detectLabelPredicates(
+  endpoint: SPARQLEndpoint
+): Promise<LabelPredicatesByResourceType> {
+  const resourceTypes = [
+    { key: 'concept', type: 'skos:Concept' },
+    { key: 'scheme', type: 'skos:ConceptScheme' },
+    { key: 'collection', type: 'skos:Collection' },
+  ] as const
+
+  const result: LabelPredicatesByResourceType = {}
+
+  for (const { key, type } of resourceTypes) {
+    const query = withPrefixes(`
+      SELECT
+        (EXISTS { ?r a ${type} . ?r skos:prefLabel ?x } AS ?hasPrefLabel)
+        (EXISTS { ?r a ${type} . ?r skosxl:prefLabel/skosxl:literalForm ?x } AS ?hasXlPrefLabel)
+        (EXISTS { ?r a ${type} . ?r dct:title ?x } AS ?hasDctTitle)
+        (EXISTS { ?r a ${type} . ?r dc:title ?x } AS ?hasDcTitle)
+        (EXISTS { ?r a ${type} . ?r rdfs:label ?x } AS ?hasRdfsLabel)
+      WHERE {}
+    `)
+
+    try {
+      const results = await executeSparql(endpoint, query, { retries: 1 })
+      const binding = results.results.bindings[0]
+
+      if (binding) {
+        const parseExists = (value?: string): boolean => {
+          if (!value) return false
+          return value === 'true' || value === '1'
+        }
+
+        const capabilities: LabelPredicateCapabilities = {}
+
+        if (parseExists(binding.hasPrefLabel?.value)) capabilities.prefLabel = true
+        if (parseExists(binding.hasXlPrefLabel?.value)) capabilities.xlPrefLabel = true
+        if (parseExists(binding.hasDctTitle?.value)) capabilities.dctTitle = true
+        if (parseExists(binding.hasDcTitle?.value)) capabilities.dcTitle = true
+        if (parseExists(binding.hasRdfsLabel?.value)) capabilities.rdfsLabel = true
+
+        // Only add if at least one predicate exists
+        if (Object.keys(capabilities).length > 0) {
+          result[key] = capabilities
+        }
+      }
+    } catch (e) {
+      logger.warn('sparql', `Failed to detect label predicates for ${key}`, { error: e })
+    }
+  }
+
+  return result
+}
+
+/**
  * Run full endpoint analysis
  */
 export async function analyzeEndpoint(
@@ -600,6 +657,7 @@ export async function analyzeEndpoint(
   schemeUris?: string[]
   schemeCount?: number
   schemesLimited?: boolean
+  labelPredicates?: LabelPredicatesByResourceType
 }> {
   // Step 1: Detect named graphs support
   const graphResult = await detectGraphs(endpoint)
@@ -682,6 +740,9 @@ export async function analyzeEndpoint(
   // Step 6: Detect concept schemes
   const schemeResult = await detectConceptSchemes(endpoint)
 
+  // Step 7: Detect label predicates per resource type
+  const labelPredicates = await detectLabelPredicates(endpoint)
+
   return {
     supportsNamedGraphs: graphResult.supportsNamedGraphs,
     skosGraphCount,
@@ -693,6 +754,7 @@ export async function analyzeEndpoint(
     schemeUris: schemeResult.schemeUris,
     schemeCount: schemeResult.schemeCount,
     schemesLimited: schemeResult.schemesLimited,
+    labelPredicates: Object.keys(labelPredicates).length > 0 ? labelPredicates : undefined,
   }
 }
 

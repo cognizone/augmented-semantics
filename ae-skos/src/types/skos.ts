@@ -27,7 +27,9 @@ export interface ConceptRef {
   lang?: string
   deprecated?: boolean
   type?: 'concept' | 'scheme' | 'collection'
-  hasNarrower?: boolean  // For icon display (leaf vs label)
+  hasNarrower?: boolean      // For icon display (leaf vs label)
+  inCurrentScheme?: boolean  // True if in currently selected scheme (for cross-scheme indicators)
+  displayScheme?: string     // One scheme URI for badge display (when external)
 }
 
 // Tree node with expansion state

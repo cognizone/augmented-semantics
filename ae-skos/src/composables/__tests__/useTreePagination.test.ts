@@ -52,6 +52,8 @@ vi.mock('../useConceptBindings', () => ({
 vi.mock('../useConceptTreeQueries', () => ({
   useConceptTreeQueries: () => ({
     buildTopConceptsQuery: vi.fn(() => 'SELECT ?concept WHERE { }'),
+    buildExplicitTopConceptsQuery: vi.fn(() => 'SELECT ?concept WHERE { EXPLICIT }'),
+    buildFallbackTopConceptsQuery: vi.fn(() => 'SELECT ?concept WHERE { FALLBACK }'),
     buildChildrenQuery: vi.fn(() => 'SELECT ?concept WHERE { }'),
   }),
 }))
@@ -600,6 +602,117 @@ describe('useTreePagination', () => {
       expect(childrenPagination.value.size).toBe(0)
       expect(loadingChildren.value.size).toBe(0)
       expect(error.value).toBeNull()
+    })
+  })
+
+  describe('sequential merge (first page)', () => {
+    it('calls both explicit and fallback queries for first page', async () => {
+      const schemeStore = useSchemeStore()
+      const conceptStore = useConceptStore()
+
+      schemeStore.setSchemes([{ uri: 'http://ex.org/scheme', label: 'Test Scheme' }])
+      schemeStore.selectScheme('http://ex.org/scheme')
+
+      // Mock explicit query to return some results
+      ;(executeSparql as Mock)
+        .mockResolvedValueOnce({
+          results: {
+            bindings: [{ concept: { value: 'http://ex.org/c1' } }],
+          },
+        })
+        // Mock fallback query to return same results (no new)
+        .mockResolvedValueOnce({
+          results: {
+            bindings: [{ concept: { value: 'http://ex.org/c1' } }],
+          },
+        })
+
+      const { loadTopConcepts } = useTreePagination()
+      await loadTopConcepts()
+
+      // Both queries should be called
+      expect(executeSparql).toHaveBeenCalledTimes(2)
+    })
+
+    it('merges unique concepts from fallback query', async () => {
+      const schemeStore = useSchemeStore()
+      const conceptStore = useConceptStore()
+
+      schemeStore.setSchemes([{ uri: 'http://ex.org/scheme', label: 'Test Scheme' }])
+      schemeStore.selectScheme('http://ex.org/scheme')
+
+      // Mock explicit query returns c1
+      ;(executeSparql as Mock)
+        .mockResolvedValueOnce({
+          results: {
+            bindings: [{ concept: { value: 'http://ex.org/c1' } }],
+          },
+        })
+        // Mock fallback query returns c1 (duplicate) and c2 (new)
+        .mockResolvedValueOnce({
+          results: {
+            bindings: [
+              { concept: { value: 'http://ex.org/c1' } },
+              { concept: { value: 'http://ex.org/c2' } },
+            ],
+          },
+        })
+
+      const { loadTopConcepts } = useTreePagination()
+      await loadTopConcepts()
+
+      // Should have 2 unique concepts (c1 from explicit, c2 from fallback)
+      expect(conceptStore.topConcepts).toHaveLength(2)
+      expect(conceptStore.topConcepts.map(c => c.uri)).toContain('http://ex.org/c1')
+      expect(conceptStore.topConcepts.map(c => c.uri)).toContain('http://ex.org/c2')
+    })
+
+    it('uses fallback only when explicit returns empty', async () => {
+      const schemeStore = useSchemeStore()
+      const conceptStore = useConceptStore()
+
+      schemeStore.setSchemes([{ uri: 'http://ex.org/scheme', label: 'Test Scheme' }])
+      schemeStore.selectScheme('http://ex.org/scheme')
+
+      // Mock explicit query returns empty
+      ;(executeSparql as Mock)
+        .mockResolvedValueOnce({
+          results: { bindings: [] },
+        })
+        // Mock fallback query returns concepts
+        .mockResolvedValueOnce({
+          results: {
+            bindings: [
+              { concept: { value: 'http://ex.org/c1' } },
+              { concept: { value: 'http://ex.org/c2' } },
+            ],
+          },
+        })
+
+      const { loadTopConcepts } = useTreePagination()
+      await loadTopConcepts()
+
+      // Should have concepts from fallback
+      expect(conceptStore.topConcepts).toHaveLength(2)
+    })
+
+    it('handles both queries returning empty', async () => {
+      const schemeStore = useSchemeStore()
+      const conceptStore = useConceptStore()
+
+      schemeStore.setSchemes([{ uri: 'http://ex.org/scheme', label: 'Test Scheme' }])
+      schemeStore.selectScheme('http://ex.org/scheme')
+
+      // Both queries return empty
+      ;(executeSparql as Mock)
+        .mockResolvedValueOnce({ results: { bindings: [] } })
+        .mockResolvedValueOnce({ results: { bindings: [] } })
+
+      const { loadTopConcepts, hasMoreTopConcepts } = useTreePagination()
+      await loadTopConcepts()
+
+      expect(conceptStore.topConcepts).toHaveLength(0)
+      expect(hasMoreTopConcepts.value).toBe(false)
     })
   })
 })

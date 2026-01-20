@@ -35,7 +35,7 @@
     "languages": [
       {
         "lang": "en",
-        "count": 361793
+        "count": 361885
       },
       {
         "lang": "fr",
@@ -58,7 +58,7 @@
         "count": 2
       }
     ],
-    "totalConcepts": 361803,
+    "totalConcepts": 361895,
     "relationships": {
       "hasInScheme": true,
       "hasTopConceptOf": true,
@@ -68,7 +68,20 @@
       "hasBroaderTransitive": false,
       "hasNarrowerTransitive": false
     },
-    "analyzedAt": "2026-01-17T18:54:30.446Z"
+    "labelPredicates": {
+      "concept": {
+        "prefLabel": true
+      },
+      "scheme": {
+        "prefLabel": true,
+        "dctTitle": true
+      },
+      "collection": {
+        "prefLabel": true,
+        "dctTitle": true
+      }
+    },
+    "analyzedAt": "2026-01-20T09:35:08.482Z"
   },
   "suggestedLanguagePriorities": [
     "en",

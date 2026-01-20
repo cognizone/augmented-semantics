@@ -120,4 +120,26 @@ describe('useConceptNavigation', () => {
       windowOpenSpy.mockRestore()
     })
   })
+
+  describe('navigateToCollection', () => {
+    it('selects collection URI in concept store', () => {
+      const conceptStore = useConceptStore()
+      const selectCollectionSpy = vi.spyOn(conceptStore, 'selectCollection')
+
+      const { navigateToCollection } = useConceptNavigation(emit)
+      navigateToCollection({ uri: 'http://example.org/collection/1', label: 'Collection' })
+
+      expect(selectCollectionSpy).toHaveBeenCalledWith('http://example.org/collection/1')
+    })
+
+    it('works with collection without label', () => {
+      const conceptStore = useConceptStore()
+      const selectCollectionSpy = vi.spyOn(conceptStore, 'selectCollection')
+
+      const { navigateToCollection } = useConceptNavigation(emit)
+      navigateToCollection({ uri: 'http://example.org/collection/2' })
+
+      expect(selectCollectionSpy).toHaveBeenCalledWith('http://example.org/collection/2')
+    })
+  })
 })

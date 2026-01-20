@@ -231,7 +231,22 @@
       "hasBroaderTransitive": true,
       "hasNarrowerTransitive": false
     },
-    "analyzedAt": "2026-01-17T18:53:53.606Z"
+    "labelPredicates": {
+      "concept": {
+        "prefLabel": true,
+        "xlPrefLabel": true,
+        "rdfsLabel": true
+      },
+      "scheme": {
+        "rdfsLabel": true
+      },
+      "collection": {
+        "prefLabel": true,
+        "xlPrefLabel": true,
+        "rdfsLabel": true
+      }
+    },
+    "analyzedAt": "2026-01-20T09:34:30.674Z"
   },
   "suggestedLanguagePriorities": [
     "en",

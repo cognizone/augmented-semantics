@@ -18,7 +18,8 @@
  * @see /spec/ae-skos/sko04-ConceptDetails.md
  */
 import { ref, watch, computed } from 'vue'
-import { useConceptStore, useSettingsStore } from '../../stores'
+import { useConceptStore, useSettingsStore, useSchemeStore } from '../../stores'
+import type { ConceptRef } from '../../types'
 import { isValidURI } from '../../services'
 import { useDelayedLoading, useLabelResolver, useConceptData, useConceptNavigation, useResourceExport, useDeprecation, useElapsedTime } from '../../composables'
 import { getRefLabel, getUriFragment, formatDatatype, formatTemporalValue } from '../../utils/displayUtils'
@@ -35,6 +36,7 @@ const emit = defineEmits<{
 
 const conceptStore = useConceptStore()
 const settingsStore = useSettingsStore()
+const schemeStore = useSchemeStore()
 const { selectLabelWithXL, sortLabels, shouldShowLangTag } = useLabelResolver()
 const { details, loading, error, resolvedPredicates, loadDetails } = useConceptData()
 const { navigateTo, handleSchemeClick, isLocalScheme, navigateToCollection } = useConceptNavigation(emit)
@@ -200,6 +202,95 @@ function clearError() {
   error.value = null
 }
 
+/**
+ * Check if a concept ref belongs to a different scheme than the current selection
+ * Uses inCurrentScheme boolean from EXISTS check - concept is external if NOT in current scheme
+ */
+function isExternalScheme(ref: ConceptRef): boolean {
+  // Skip if no scheme selected (no badges shown)
+  if (!schemeStore.selectedUri) return false
+  // Schemes and collections don't show external indicator
+  if (ref.type === 'scheme' || ref.type === 'collection') return false
+  // External if inCurrentScheme is explicitly false (undefined means we didn't check)
+  return ref.inCurrentScheme === false
+}
+
+/**
+ * Extract short name from scheme URI for display
+ * e.g., "http://www.yso.fi/onto/afo/" → "afo"
+ */
+function getSchemeShortName(schemeUri: string): string {
+  const match = schemeUri.match(/\/([^/]+)\/?$/)
+  return match ? match[1] : schemeUri
+}
+
+/**
+ * Group for displaying refs organized by scheme
+ */
+interface RefGroup {
+  schemeUri: string | null  // null = current scheme (default group)
+  schemeLabel: string       // short name for header display
+  refs: ConceptRef[]
+}
+
+/**
+ * Group refs by scheme: current scheme first, then external schemes
+ * Items within each group are already sorted by the composable
+ */
+function groupRefsByScheme(refs: ConceptRef[]): RefGroup[] {
+  if (!refs.length) return []
+
+  // Separate current scheme from external
+  const currentSchemeRefs: ConceptRef[] = []
+  const externalByScheme = new Map<string, ConceptRef[]>()
+
+  for (const ref of refs) {
+    if (ref.inCurrentScheme !== false) {
+      // Current scheme or unknown (treat as current)
+      currentSchemeRefs.push(ref)
+    } else if (ref.displayScheme) {
+      // External with known scheme
+      const existing = externalByScheme.get(ref.displayScheme)
+      if (existing) {
+        existing.push(ref)
+      } else {
+        externalByScheme.set(ref.displayScheme, [ref])
+      }
+    } else {
+      // External but no scheme info - treat as current
+      currentSchemeRefs.push(ref)
+    }
+  }
+
+  const groups: RefGroup[] = []
+
+  // Current scheme group (no header needed)
+  if (currentSchemeRefs.length) {
+    groups.push({
+      schemeUri: null,
+      schemeLabel: '',
+      refs: currentSchemeRefs
+    })
+  }
+
+  // External scheme groups (sorted by scheme URI for consistent order)
+  const sortedSchemes = [...externalByScheme.keys()].sort()
+  for (const schemeUri of sortedSchemes) {
+    groups.push({
+      schemeUri,
+      schemeLabel: getSchemeShortName(schemeUri),
+      refs: externalByScheme.get(schemeUri)!
+    })
+  }
+
+  return groups
+}
+
+// Grouped refs for hierarchy and relations
+// Note: narrower concepts are always same-scheme by SKOS semantics, so no grouping needed
+const groupedBroader = computed(() => details.value ? groupRefsByScheme(details.value.broader) : [])
+const groupedRelated = computed(() => details.value ? groupRefsByScheme(details.value.related) : [])
+
 // Watch for selected concept changes
 watch(
   () => conceptStore.selectedUri,
@@ -316,30 +407,38 @@ watch(
 
           <div v-if="details.broader.length" class="property-row">
             <label>Broader</label>
-            <div class="concept-chips">
-              <span
-                v-for="ref in details.broader"
-                :key="ref.uri"
-                class="concept-chip clickable"
-                @click="navigateTo(ref)"
-              >
-                <span class="material-symbols-outlined chip-icon" :class="ref.hasNarrower ? 'icon-label' : 'icon-leaf'">{{ ref.hasNarrower ? 'label' : 'circle' }}</span>
-                {{ getRefLabel(ref) }}<span v-if="ref.lang && shouldShowLangTag(ref.lang)" class="lang-tag">{{ ref.lang }}</span>
-              </span>
+            <div class="grouped-refs">
+              <div v-for="group in groupedBroader" :key="group.schemeUri || 'current'" class="ref-group">
+                <span v-if="group.schemeUri" class="group-label" :title="group.schemeUri">{{ group.schemeLabel }}:</span>
+                <div class="concept-chips">
+                  <span
+                    v-for="ref in group.refs"
+                    :key="ref.uri"
+                    :class="['concept-chip', 'clickable', { deprecated: ref.deprecated && showDeprecationIndicator }]"
+                    @click="navigateTo(ref)"
+                  >
+                    <span class="material-symbols-outlined chip-icon" :class="ref.hasNarrower ? 'icon-label' : 'icon-leaf'">{{ ref.hasNarrower ? 'label' : 'circle' }}</span>
+                    {{ getRefLabel(ref) }}<span v-if="ref.lang && shouldShowLangTag(ref.lang)" class="lang-tag">{{ ref.lang }}</span>
+                    <span v-if="ref.deprecated && showDeprecationIndicator" class="deprecated-badge">deprecated</span>
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
 
+          <!-- Narrower concepts - rendered directly without scheme grouping (always same-scheme by SKOS semantics) -->
           <div v-if="details.narrower.length" class="property-row">
             <label>Narrower</label>
             <div class="concept-chips">
               <span
                 v-for="ref in details.narrower"
                 :key="ref.uri"
-                class="concept-chip clickable"
+                :class="['concept-chip', 'clickable', { deprecated: ref.deprecated && showDeprecationIndicator }]"
                 @click="navigateTo(ref)"
               >
                 <span class="material-symbols-outlined chip-icon" :class="ref.hasNarrower ? 'icon-label' : 'icon-leaf'">{{ ref.hasNarrower ? 'label' : 'circle' }}</span>
                 {{ getRefLabel(ref) }}<span v-if="ref.lang && shouldShowLangTag(ref.lang)" class="lang-tag">{{ ref.lang }}</span>
+                <span v-if="ref.deprecated && showDeprecationIndicator" class="deprecated-badge">deprecated</span>
               </span>
             </div>
           </div>
@@ -354,16 +453,22 @@ watch(
 
           <div class="property-row">
             <label>Related</label>
-            <div class="concept-chips">
-              <span
-                v-for="ref in details.related"
-                :key="ref.uri"
-                class="concept-chip clickable"
-                @click="navigateTo(ref)"
-              >
-                <span class="material-symbols-outlined chip-icon" :class="ref.hasNarrower ? 'icon-label' : 'icon-leaf'">{{ ref.hasNarrower ? 'label' : 'circle' }}</span>
-                {{ getRefLabel(ref) }}<span v-if="ref.lang && shouldShowLangTag(ref.lang)" class="lang-tag">{{ ref.lang }}</span>
-              </span>
+            <div class="grouped-refs">
+              <div v-for="group in groupedRelated" :key="group.schemeUri || 'current'" class="ref-group">
+                <span v-if="group.schemeUri" class="group-label" :title="group.schemeUri">{{ group.schemeLabel }}:</span>
+                <div class="concept-chips">
+                  <span
+                    v-for="ref in group.refs"
+                    :key="ref.uri"
+                    :class="['concept-chip', 'clickable', { deprecated: ref.deprecated && showDeprecationIndicator }]"
+                    @click="navigateTo(ref)"
+                  >
+                    <span class="material-symbols-outlined chip-icon" :class="ref.hasNarrower ? 'icon-label' : 'icon-leaf'">{{ ref.hasNarrower ? 'label' : 'circle' }}</span>
+                    {{ getRefLabel(ref) }}<span v-if="ref.lang && shouldShowLangTag(ref.lang)" class="lang-tag">{{ ref.lang }}</span>
+                    <span v-if="ref.deprecated && showDeprecationIndicator" class="deprecated-badge">deprecated</span>
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -401,11 +506,13 @@ watch(
               <span
                 v-for="ref in details.collections"
                 :key="ref.uri"
-                class="concept-chip clickable"
+                :class="['concept-chip', 'clickable', { deprecated: ref.deprecated && showDeprecationIndicator }]"
                 @click="navigateToCollection(ref)"
               >
                 <span class="material-symbols-outlined chip-icon icon-collection">collections_bookmark</span>
                 {{ getRefLabel(ref) }}<span v-if="ref.lang && shouldShowLangTag(ref.lang)" class="lang-tag">{{ ref.lang }}</span>
+                <span v-if="isExternalScheme(ref)" class="scheme-badge" :title="ref.displayScheme">{{ getSchemeShortName(ref.displayScheme!) }}</span>
+                <span v-if="ref.deprecated && showDeprecationIndicator" class="deprecated-badge">deprecated</span>
               </span>
             </div>
           </div>
@@ -423,11 +530,12 @@ watch(
               <span
                 v-for="ref in details.inScheme"
                 :key="ref.uri"
-                :class="['concept-chip', { clickable: isLocalScheme(ref.uri) }]"
+                :class="['concept-chip', { clickable: isLocalScheme(ref.uri), deprecated: ref.deprecated && showDeprecationIndicator }]"
                 @click="handleSchemeClick(ref)"
               >
                 <span class="material-symbols-outlined chip-icon icon-folder">folder</span>
                 {{ getRefLabel(ref) }}<span v-if="ref.lang && shouldShowLangTag(ref.lang)" class="lang-tag">{{ ref.lang }}</span>
+                <span v-if="ref.deprecated && showDeprecationIndicator" class="deprecated-badge">deprecated</span>
               </span>
             </div>
           </div>
@@ -549,6 +657,29 @@ watch(
   border: 1px solid var(--ae-border-color);
 }
 
+.grouped-refs {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.ref-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.group-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--ae-text-secondary);
+  background: var(--ae-bg-hover);
+  padding: 0.375rem 0.5rem;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
 .concept-chips {
   display: flex;
   flex-wrap: wrap;
@@ -572,6 +703,10 @@ watch(
 .concept-chip.clickable:hover {
   background: var(--ae-bg-hover);
   color: var(--ae-accent);
+}
+
+.concept-chip.deprecated {
+  opacity: 0.6;
 }
 
 .chip-icon {

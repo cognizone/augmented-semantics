@@ -2,12 +2,13 @@
  * Collection Query Builders
  *
  * Builds conditional SPARQL queries for collection loading based on
- * endpoint capabilities (relationships).
+ * endpoint capabilities (relationships and label predicates).
  *
  * @see /spec/ae-skos/sko03-ConceptTree.md
  */
 import type { SPARQLEndpoint } from '../types'
 import { withPrefixes } from '../services'
+import { buildCapabilityAwareLabelUnionClause } from '../constants'
 
 /**
  * Get capabilities for collection queries.
@@ -117,6 +118,10 @@ export function buildCollectionsQuery(
   // Build UNION pattern
   const unionPattern = membershipBranches.join('\n        UNION\n        ')
 
+  // Get collection label capabilities
+  const collectionCapabilities = endpoint.analysis?.labelPredicates?.collection
+  const labelClause = buildCapabilityAwareLabelUnionClause('?collection', collectionCapabilities)
+
   return withPrefixes(`
     SELECT DISTINCT ?collection ?label ?labelLang ?labelType ?notation
            ?hasParentCollection ?hasChildCollections WHERE {
@@ -138,25 +143,9 @@ export function buildCollectionsQuery(
         ?childCol a skos:Collection .
       } AS ?hasChildCollections)
 
-      # Label resolution with priority tracking
+      # Label resolution with priority tracking (capability-aware)
       OPTIONAL {
-        {
-          ?collection skos:prefLabel ?label .
-          BIND("prefLabel" AS ?labelType)
-        } UNION {
-          ?collection skosxl:prefLabel/skosxl:literalForm ?label .
-          BIND("xlPrefLabel" AS ?labelType)
-        } UNION {
-          ?collection dct:title ?label .
-          BIND("dctTitle" AS ?labelType)
-        } UNION {
-          ?collection dc:title ?label .
-          BIND("dcTitle" AS ?labelType)
-        } UNION {
-          ?collection rdfs:label ?label .
-          BIND("rdfsLabel" AS ?labelType)
-        }
-        BIND(LANG(?label) AS ?labelLang)
+        ${labelClause}
       }
 
       # Notation
@@ -171,9 +160,14 @@ export function buildCollectionsQuery(
  * Used for lazy-loading nested collections on expand.
  *
  * @param parentUri - URI of the parent collection
+ * @param endpoint - Optional endpoint to get label capabilities from
  * @returns SPARQL query string
  */
-export function buildChildCollectionsQuery(parentUri: string): string {
+export function buildChildCollectionsQuery(parentUri: string, endpoint?: SPARQLEndpoint): string {
+  // Get collection label capabilities
+  const collectionCapabilities = endpoint?.analysis?.labelPredicates?.collection
+  const labelClause = buildCapabilityAwareLabelUnionClause('?collection', collectionCapabilities)
+
   return withPrefixes(`
     SELECT DISTINCT ?collection ?label ?labelLang ?labelType ?notation
            ?hasChildCollections WHERE {
@@ -186,25 +180,9 @@ export function buildChildCollectionsQuery(parentUri: string): string {
         ?childCol a skos:Collection .
       } AS ?hasChildCollections)
 
-      # Label resolution with priority tracking
+      # Label resolution with priority tracking (capability-aware)
       OPTIONAL {
-        {
-          ?collection skos:prefLabel ?label .
-          BIND("prefLabel" AS ?labelType)
-        } UNION {
-          ?collection skosxl:prefLabel/skosxl:literalForm ?label .
-          BIND("xlPrefLabel" AS ?labelType)
-        } UNION {
-          ?collection dct:title ?label .
-          BIND("dctTitle" AS ?labelType)
-        } UNION {
-          ?collection dc:title ?label .
-          BIND("dcTitle" AS ?labelType)
-        } UNION {
-          ?collection rdfs:label ?label .
-          BIND("rdfsLabel" AS ?labelType)
-        }
-        BIND(LANG(?label) AS ?labelLang)
+        ${labelClause}
       }
 
       # Notation

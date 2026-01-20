@@ -223,7 +223,21 @@
       "hasBroaderTransitive": false,
       "hasNarrowerTransitive": false
     },
-    "analyzedAt": "2026-01-17T18:43:25.970Z"
+    "labelPredicates": {
+      "concept": {
+        "prefLabel": true,
+        "xlPrefLabel": true
+      },
+      "scheme": {
+        "prefLabel": true,
+        "xlPrefLabel": true
+      },
+      "collection": {
+        "prefLabel": true,
+        "xlPrefLabel": true
+      }
+    },
+    "analyzedAt": "2026-01-20T09:22:07.160Z"
   },
   "suggestedLanguagePriorities": [
     "en",

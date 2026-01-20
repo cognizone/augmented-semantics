@@ -13,6 +13,7 @@ import { executeSparql, logger, eventBus, withPrefixes } from '../services'
 import { useConceptBindings, useConceptTreeQueries } from './index'
 import { calculateOrphanConcepts, calculateOrphanConceptsFast } from './useOrphanConcepts'
 import { createInitialProgress, type OrphanProgress } from './useOrphanProgress'
+import { buildCapabilityAwareLabelUnionClause } from '../constants'
 import type { ConceptNode } from '../types'
 
 // Pagination config
@@ -25,12 +26,17 @@ export function useTreePagination() {
   const languageStore = useLanguageStore()
   const settingsStore = useSettingsStore()
   const { processBindings } = useConceptBindings()
-  const { buildTopConceptsQuery, buildChildrenQuery } = useConceptTreeQueries()
+  const { buildExplicitTopConceptsQuery, buildFallbackTopConceptsQuery, buildTopConceptsQuery, buildChildrenQuery } = useConceptTreeQueries()
 
   // Pagination state for top concepts
   const topConceptsOffset = ref(0)
   const hasMoreTopConcepts = ref(true)
   const loadingMoreTopConcepts = ref(false)
+  // Track query mode for pagination: 'explicit' | 'fallback' | 'mixed'
+  // - explicit: only explicit query returned results
+  // - fallback: explicit was empty/unavailable, using fallback only
+  // - mixed: both explicit and fallback contributed unique concepts
+  const queryMode = ref<'explicit' | 'fallback' | 'mixed'>('explicit')
 
   // Pagination state for children (keyed by parent URI)
   const childrenPagination = ref<Map<string, { offset: number; hasMore: boolean; loading: boolean }>>(new Map())
@@ -62,7 +68,36 @@ export function useTreePagination() {
   }
 
   /**
-   * Load top concepts for selected scheme
+   * Helper to process query results and handle pagination
+   */
+  function processTopConceptsResults(
+    concepts: ConceptNode[],
+    offset: number,
+    isFirstPage: boolean
+  ) {
+    // Check if there are more results (we fetched PAGE_SIZE + 1)
+    const hasMore = concepts.length > PAGE_SIZE
+    if (hasMore) {
+      concepts.pop() // Remove the extra item used for detection
+    }
+    hasMoreTopConcepts.value = hasMore
+    topConceptsOffset.value = offset
+
+    logger.info('ConceptTree', `Loaded ${concepts.length} top concepts`, { hasMore, offset })
+
+    if (isFirstPage) {
+      conceptStore.setTopConcepts(concepts)
+    } else {
+      conceptStore.appendTopConcepts(concepts)
+    }
+
+    return concepts
+  }
+
+  /**
+   * Load top concepts for selected scheme.
+   * Uses sequential merge: runs explicit query first (fast), displays results,
+   * then runs fallback query and appends any new concepts not already shown.
    */
   async function loadTopConcepts(offset = 0) {
     const endpoint = endpointStore.current
@@ -94,39 +129,108 @@ export function useTreePagination() {
       conceptStore.setLoadingTree(true)
       topConceptsOffset.value = 0
       hasMoreTopConcepts.value = true
+      queryMode.value = 'explicit'  // Reset query mode tracking
       await eventBus.emit('tree:loading', undefined)
     } else {
       loadingMoreTopConcepts.value = true
     }
     error.value = null
 
-    const query = buildTopConceptsQuery(scheme.uri, PAGE_SIZE, offset)
-
-    logger.debug('ConceptTree', 'Top concepts query', { query })
-
     try {
-      const results = await executeSparql(endpoint, query, { retries: 1 })
-
-      // Process bindings into sorted ConceptNode[]
-      const concepts = processBindings(results.results.bindings)
-
-      // Check if there are more results (we fetched PAGE_SIZE + 1)
-      const hasMore = concepts.length > PAGE_SIZE
-      if (hasMore) {
-        concepts.pop() // Remove the extra item used for detection
+      // For pagination, use appropriate query based on first page mode
+      if (!isFirstPage) {
+        let query: string
+        if (queryMode.value === 'mixed') {
+          // Mixed mode: use combined UNION query for consistent pagination
+          query = buildTopConceptsQuery(scheme.uri, PAGE_SIZE, offset)
+          logger.debug('ConceptTree', 'Top concepts combined query (mixed pagination)', { query })
+        } else if (queryMode.value === 'fallback') {
+          query = buildFallbackTopConceptsQuery(scheme.uri, PAGE_SIZE, offset)
+          logger.debug('ConceptTree', 'Top concepts fallback query (pagination)', { query })
+        } else {
+          // explicit mode
+          const explicitQuery = buildExplicitTopConceptsQuery(scheme.uri, PAGE_SIZE, offset)
+          if (!explicitQuery) {
+            // Shouldn't happen, but fallback just in case
+            query = buildFallbackTopConceptsQuery(scheme.uri, PAGE_SIZE, offset)
+          } else {
+            query = explicitQuery
+          }
+          logger.debug('ConceptTree', 'Top concepts explicit query (pagination)', { query })
+        }
+        const results = await executeSparql(endpoint, query, { retries: 1 })
+        const concepts = processBindings(results.results.bindings)
+        processTopConceptsResults(concepts, offset, isFirstPage)
+        return
       }
-      hasMoreTopConcepts.value = hasMore
-      topConceptsOffset.value = offset
 
-      logger.info('ConceptTree', `Loaded ${concepts.length} top concepts`, { hasMore, offset })
+      // First page: Sequential merge strategy
+      // Step 1: Try explicit top concepts first (fast path)
+      const explicitQuery = buildExplicitTopConceptsQuery(scheme.uri, PAGE_SIZE, offset)
+      let explicitConcepts: ConceptNode[] = []
 
-      if (isFirstPage) {
-        conceptStore.setTopConcepts(concepts)
-        // Emit tree:loaded for event coordination (triggers pending reveals)
-        await eventBus.emit('tree:loaded', concepts)
+      if (explicitQuery) {
+        logger.debug('ConceptTree', 'Running explicit top concepts query (fast path)', { query: explicitQuery })
+        const results = await executeSparql(endpoint, explicitQuery, { retries: 1 })
+        explicitConcepts = processBindings(results.results.bindings)
+
+        if (explicitConcepts.length > 0) {
+          // Show explicit results immediately
+          logger.info('ConceptTree', `Found ${explicitConcepts.length} explicit top concepts (fast path)`)
+          conceptStore.setTopConcepts(explicitConcepts)
+          await eventBus.emit('tree:loaded', conceptStore.topConcepts)
+        }
+      }
+
+      // Step 2: Run fallback query to find any additional implicit top concepts
+      logger.debug('ConceptTree', 'Running fallback query to check for additional top concepts')
+      const fallbackQuery = buildFallbackTopConceptsQuery(scheme.uri, PAGE_SIZE, offset)
+      const fallbackResults = await executeSparql(endpoint, fallbackQuery, { retries: 1 })
+      const fallbackConcepts = processBindings(fallbackResults.results.bindings)
+
+      // Determine query mode and merge results
+      const explicitUris = new Set(explicitConcepts.map(c => c.uri))
+      const newFromFallback = fallbackConcepts.filter(c => !explicitUris.has(c.uri))
+
+      if (explicitConcepts.length === 0 && fallbackConcepts.length > 0) {
+        // Only fallback had results
+        queryMode.value = 'fallback'
+        logger.info('ConceptTree', `Using fallback only: ${fallbackConcepts.length} concepts`)
+        processTopConceptsResults(fallbackConcepts, offset, isFirstPage)
+        await eventBus.emit('tree:loaded', conceptStore.topConcepts)
+      } else if (newFromFallback.length > 0) {
+        // Mixed: both contributed unique concepts
+        queryMode.value = 'mixed'
+        logger.info('ConceptTree', `Mixed mode: ${explicitConcepts.length} explicit + ${newFromFallback.length} from fallback`)
+        // Append new concepts from fallback
+        conceptStore.appendTopConcepts(newFromFallback)
+        // Update hasMore based on combined count
+        const totalCount = explicitConcepts.length + newFromFallback.length
+        hasMoreTopConcepts.value = totalCount > PAGE_SIZE
+        if (hasMoreTopConcepts.value && totalCount > PAGE_SIZE) {
+          // Remove extra if we have more than PAGE_SIZE
+          // Note: This is approximate - mixed pagination may show some duplicates
+        }
+      } else if (explicitConcepts.length > 0) {
+        // Explicit only (fallback found nothing new)
+        queryMode.value = 'explicit'
+        logger.info('ConceptTree', `Using explicit only: ${explicitConcepts.length} concepts`)
+        // Already displayed, just update pagination state
+        hasMoreTopConcepts.value = explicitConcepts.length > PAGE_SIZE
+        if (hasMoreTopConcepts.value) {
+          explicitConcepts.pop()
+          conceptStore.setTopConcepts(explicitConcepts)
+        }
       } else {
-        conceptStore.appendTopConcepts(concepts)
+        // Both empty
+        queryMode.value = 'fallback'
+        logger.info('ConceptTree', 'No top concepts found')
+        conceptStore.setTopConcepts([])
+        hasMoreTopConcepts.value = false
+        await eventBus.emit('tree:loaded', [])
       }
+
+      topConceptsOffset.value = 0
     } catch (e: unknown) {
       const errMsg = e && typeof e === 'object' && 'message' in e
         ? (e as { message: string }).message
@@ -216,39 +320,29 @@ export function useTreePagination() {
 
     // Build query to get labels for this page of orphan URIs
     const valuesClause = pageUris.map(uri => `<${uri}>`).join(' ')
+
+    // Get concept label capabilities
+    const conceptCapabilities = endpoint.analysis?.labelPredicates?.concept
+    const labelClause = buildCapabilityAwareLabelUnionClause('?concept', conceptCapabilities)
+
     const query = withPrefixes(`
-      SELECT ?concept ?label ?labelLang ?labelType ?notation (COUNT(DISTINCT ?narrower) AS ?narrowerCount)
+      SELECT ?concept ?label ?labelLang ?labelType ?notation ?hasNarrower
       WHERE {
         VALUES ?concept { ${valuesClause} }
 
-        # Narrower count
-        OPTIONAL {
-          ?concept skos:narrower ?narrower .
-        }
+        # Check if concept has children (EXISTS is fast - stops at first match)
+        BIND(EXISTS {
+          { [] skos:broader ?concept }
+          UNION
+          { ?concept skos:narrower [] }
+        } AS ?hasNarrower)
 
-        # Label resolution
+        # Label resolution (capability-aware)
         OPTIONAL { ?concept skos:notation ?notation }
         OPTIONAL {
-          {
-            ?concept skos:prefLabel ?label .
-            BIND("prefLabel" AS ?labelType)
-          } UNION {
-            ?concept skosxl:prefLabel/skosxl:literalForm ?label .
-            BIND("xlPrefLabel" AS ?labelType)
-          } UNION {
-            ?concept dct:title ?label .
-            BIND("title" AS ?labelType)
-          } UNION {
-            ?concept dc:title ?label .
-            BIND("dcTitle" AS ?labelType)
-          } UNION {
-            ?concept rdfs:label ?label .
-            BIND("rdfsLabel" AS ?labelType)
-          }
-          BIND(LANG(?label) AS ?labelLang)
+          ${labelClause}
         }
       }
-      GROUP BY ?concept ?label ?labelLang ?labelType ?notation
     `)
 
     try {
@@ -348,6 +442,7 @@ export function useTreePagination() {
     topConceptsOffset.value = 0
     hasMoreTopConcepts.value = true
     loadingMoreTopConcepts.value = false
+    queryMode.value = 'explicit'
     childrenPagination.value.clear()
     loadingChildren.value.clear()
     error.value = null

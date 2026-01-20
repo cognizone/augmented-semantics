@@ -48,7 +48,18 @@
       "hasBroaderTransitive": false,
       "hasNarrowerTransitive": false
     },
-    "analyzedAt": "2026-01-17T18:44:57.891Z"
+    "labelPredicates": {
+      "concept": {
+        "prefLabel": true,
+        "xlPrefLabel": true,
+        "dctTitle": true
+      },
+      "scheme": {
+        "xlPrefLabel": true,
+        "dctTitle": true
+      }
+    },
+    "analyzedAt": "2026-01-20T09:23:29.456Z"
   },
   "suggestedLanguagePriorities": [
     "en",

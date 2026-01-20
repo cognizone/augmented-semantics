@@ -18,6 +18,8 @@ import {
   executeSparql,
   type EndpointAnalysis,
   type DetectedLanguage,
+  type LabelPredicateCapabilities,
+  type LabelPredicatesByResourceType,
 } from '../_shared/analyze'
 
 const curationDir = import.meta.dirname
@@ -206,6 +208,63 @@ async function detectRelationshipsInGraphs(graphUris: string[]): Promise<Endpoin
   }
 }
 
+async function detectLabelPredicatesInGraphs(graphUris: string[]): Promise<LabelPredicatesByResourceType> {
+  const valuesClause = graphUris.map(uri => `<${uri}>`).join(' ')
+
+  const resourceTypes = [
+    { key: 'concept', type: 'skos:Concept' },
+    { key: 'scheme', type: 'skos:ConceptScheme' },
+    { key: 'collection', type: 'skos:Collection' },
+  ] as const
+
+  const result: LabelPredicatesByResourceType = {}
+
+  for (const { key, type } of resourceTypes) {
+    const query = `
+      PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+      PREFIX skosxl: <http://www.w3.org/2008/05/skos-xl#>
+      PREFIX dct: <http://purl.org/dc/terms/>
+      PREFIX dc: <http://purl.org/dc/elements/1.1/>
+      PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+      SELECT
+        (EXISTS { VALUES ?g { ${valuesClause} } GRAPH ?g { ?r a ${type} . ?r skos:prefLabel ?x } } AS ?hasPrefLabel)
+        (EXISTS { VALUES ?g { ${valuesClause} } GRAPH ?g { ?r a ${type} . ?r skosxl:prefLabel/skosxl:literalForm ?x } } AS ?hasXlPrefLabel)
+        (EXISTS { VALUES ?g { ${valuesClause} } GRAPH ?g { ?r a ${type} . ?r dct:title ?x } } AS ?hasDctTitle)
+        (EXISTS { VALUES ?g { ${valuesClause} } GRAPH ?g { ?r a ${type} . ?r dc:title ?x } } AS ?hasDcTitle)
+        (EXISTS { VALUES ?g { ${valuesClause} } GRAPH ?g { ?r a ${type} . ?r rdfs:label ?x } } AS ?hasRdfsLabel)
+      WHERE {}
+    `
+
+    try {
+      const results = await executeSparql(ENDPOINT, query)
+      const binding = results.results.bindings[0]
+
+      if (binding) {
+        const parseExists = (value?: string): boolean => {
+          if (!value) return false
+          return value === 'true' || value === '1'
+        }
+
+        const capabilities: LabelPredicateCapabilities = {}
+
+        if (parseExists(binding.hasPrefLabel?.value)) capabilities.prefLabel = true
+        if (parseExists(binding.hasXlPrefLabel?.value)) capabilities.xlPrefLabel = true
+        if (parseExists(binding.hasDctTitle?.value)) capabilities.dctTitle = true
+        if (parseExists(binding.hasDcTitle?.value)) capabilities.dcTitle = true
+        if (parseExists(binding.hasRdfsLabel?.value)) capabilities.rdfsLabel = true
+
+        if (Object.keys(capabilities).length > 0) {
+          result[key] = capabilities
+        }
+      }
+    } catch {
+      // Query failed for this resource type - skip it
+    }
+  }
+
+  return result
+}
+
 // =============================================================================
 // Main
 // =============================================================================
@@ -278,36 +337,42 @@ async function main() {
     process.exit(1)
   }
 
-  // Standard 7-step analysis
-  // 1/7 SKOS content - we know it's yes
-  logStep(1, 7, 'SKOS content', 'yes', 0)
+  // Standard 8-step analysis
+  // 1/8 SKOS content - we know it's yes
+  logStep(1, 8, 'SKOS content', 'yes', 0)
 
-  // 2/7 Named graphs - we know it's yes
-  logStep(2, 7, 'Named graphs', 'yes', 0)
+  // 2/8 Named graphs - we know it's yes
+  logStep(2, 8, 'Named graphs', 'yes', 0)
 
-  // 3/7 SKOS graphs - already discovered
-  logStep(3, 7, 'SKOS graphs', String(validGraphs.length), 0)
+  // 3/8 SKOS graphs - already discovered
+  logStep(3, 8, 'SKOS graphs', String(validGraphs.length), 0)
 
-  // 4/7 Concept schemes
+  // 4/8 Concept schemes
   start = Date.now()
   const schemeUris = await detectSchemesInGraphs(validGraphs)
-  logStep(4, 7, 'Concept schemes', String(schemeUris.length), Date.now() - start)
+  logStep(4, 8, 'Concept schemes', String(schemeUris.length), Date.now() - start)
 
-  // 5/7 Concepts
+  // 5/8 Concepts
   start = Date.now()
   const totalConcepts = await countConceptsInGraphs(validGraphs)
-  logStep(5, 7, 'Concepts', totalConcepts.toLocaleString(), Date.now() - start)
+  logStep(5, 8, 'Concepts', totalConcepts.toLocaleString(), Date.now() - start)
 
-  // 6/7 Relationships
+  // 6/8 Relationships
   start = Date.now()
   const relationships = await detectRelationshipsInGraphs(validGraphs)
   const relCount = Object.values(relationships).filter(Boolean).length
-  logStep(6, 7, 'Relationships', `${relCount}/7`, Date.now() - start)
+  logStep(6, 8, 'Relationships', `${relCount}/7`, Date.now() - start)
 
-  // 7/7 Languages
+  // 7/8 Label predicates
+  start = Date.now()
+  const labelPredicates = await detectLabelPredicatesInGraphs(validGraphs)
+  const labelCount = Object.values(labelPredicates).reduce((sum, caps) => sum + Object.keys(caps || {}).length, 0)
+  logStep(7, 8, 'Label predicates', String(labelCount), Date.now() - start)
+
+  // 8/8 Languages
   start = Date.now()
   const languages = await detectLanguagesInGraphs(validGraphs)
-  logStep(7, 7, 'Languages', String(languages.length), Date.now() - start)
+  logStep(8, 8, 'Languages', String(languages.length), Date.now() - start)
 
   const totalDuration = Date.now() - overallStart
   console.log('')
@@ -324,6 +389,7 @@ async function main() {
     languages,
     totalConcepts,
     relationships,
+    labelPredicates: Object.keys(labelPredicates).length > 0 ? labelPredicates : undefined,
     analyzedAt: new Date().toISOString(),
   }
 

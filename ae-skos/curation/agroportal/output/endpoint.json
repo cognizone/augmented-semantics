@@ -416,7 +416,26 @@
       "hasBroaderTransitive": true,
       "hasNarrowerTransitive": true
     },
-    "analyzedAt": "2026-01-17T18:42:26.793Z"
+    "labelPredicates": {
+      "concept": {
+        "prefLabel": true,
+        "xlPrefLabel": true,
+        "rdfsLabel": true
+      },
+      "scheme": {
+        "prefLabel": true,
+        "xlPrefLabel": true,
+        "dctTitle": true,
+        "dcTitle": true,
+        "rdfsLabel": true
+      },
+      "collection": {
+        "prefLabel": true,
+        "xlPrefLabel": true,
+        "rdfsLabel": true
+      }
+    },
+    "analyzedAt": "2026-01-20T09:15:15.866Z"
   },
   "suggestedLanguagePriorities": [
     "en",

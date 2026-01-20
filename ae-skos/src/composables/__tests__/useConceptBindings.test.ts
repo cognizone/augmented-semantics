@@ -170,17 +170,17 @@ describe('useConceptBindings', () => {
       expect(result[0]?.notation).toBe('5')
     })
 
-    it('detects hasNarrower from narrowerCount', () => {
+    it('detects hasNarrower from boolean binding', () => {
       const { processBindings } = useConceptBindings()
 
       const bindings: ConceptBinding[] = [
         createBinding({
           concept: { type: 'uri', value: 'http://ex.org/c1' },
-          narrowerCount: { type: 'literal', value: '5' },
+          hasNarrower: { type: 'literal', value: 'true' },
         }),
         createBinding({
           concept: { type: 'uri', value: 'http://ex.org/c2' },
-          narrowerCount: { type: 'literal', value: '0' },
+          hasNarrower: { type: 'literal', value: 'false' },
         }),
       ]
 

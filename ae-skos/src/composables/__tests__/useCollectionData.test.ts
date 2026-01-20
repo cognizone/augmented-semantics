@@ -491,6 +491,150 @@ describe('useCollectionData', () => {
       expect(leafMember?.hasNarrower).toBeUndefined()
     })
 
+    it('detects nested collections (isCollection sets type)', async () => {
+      ;(executeSparql as Mock)
+        .mockResolvedValueOnce({ results: { bindings: [] } }) // details
+        .mockResolvedValueOnce({
+          results: {
+            bindings: [
+              {
+                member: { value: 'http://example.org/concept/1' },
+                isCollection: { value: 'false' },
+              },
+              {
+                member: { value: 'http://example.org/collection/nested' },
+                isCollection: { value: 'true' },
+              },
+            ],
+          },
+        })
+
+      const { loadDetails, members, loadingMembers } = useCollectionData()
+      await loadDetails('http://example.org/collection/1')
+
+      await vi.waitFor(
+        () => {
+          expect(loadingMembers.value).toBe(false)
+        },
+        { timeout: 1000 }
+      )
+
+      const conceptMember = members.value.find((m) => m.uri === 'http://example.org/concept/1')
+      const collectionMember = members.value.find((m) => m.uri === 'http://example.org/collection/nested')
+
+      expect(conceptMember?.type).toBe('concept')
+      expect(collectionMember?.type).toBe('collection')
+    })
+
+    it('extracts inCurrentScheme boolean for cross-scheme indicator', async () => {
+      // Set up a scheme for cross-scheme detection
+      const { useSchemeStore } = await import('../../stores')
+      const schemeStore = useSchemeStore()
+      schemeStore.schemes = [{ uri: 'http://example.org/scheme/1', label: 'Test Scheme' }]
+      schemeStore.selectScheme('http://example.org/scheme/1')
+
+      ;(executeSparql as Mock)
+        .mockResolvedValueOnce({ results: { bindings: [] } }) // details
+        .mockResolvedValueOnce({
+          results: {
+            bindings: [
+              {
+                member: { value: 'http://example.org/concept/same-scheme' },
+                inCurrentScheme: { value: 'true' },
+              },
+              {
+                member: { value: 'http://external.org/concept/other-scheme' },
+                inCurrentScheme: { value: 'false' },
+              },
+            ],
+          },
+        })
+
+      const { loadDetails, members, loadingMembers } = useCollectionData()
+      await loadDetails('http://example.org/collection/1')
+
+      await vi.waitFor(
+        () => {
+          expect(loadingMembers.value).toBe(false)
+        },
+        { timeout: 1000 }
+      )
+
+      const sameScheme = members.value.find((m) => m.uri === 'http://example.org/concept/same-scheme')
+      const otherScheme = members.value.find((m) => m.uri === 'http://external.org/concept/other-scheme')
+
+      expect(sameScheme?.inCurrentScheme).toBe(true)
+      expect(otherScheme?.inCurrentScheme).toBe(false)
+    })
+
+    it('extracts displayScheme (first value found)', async () => {
+      ;(executeSparql as Mock)
+        .mockResolvedValueOnce({ results: { bindings: [] } }) // details
+        .mockResolvedValueOnce({
+          results: {
+            bindings: [
+              // First binding has displayScheme
+              {
+                member: { value: 'http://example.org/concept/1' },
+                displayScheme: { value: 'http://example.org/scheme/first' },
+              },
+              // Second binding for same member has different displayScheme (should be ignored)
+              {
+                member: { value: 'http://example.org/concept/1' },
+                displayScheme: { value: 'http://example.org/scheme/second' },
+              },
+            ],
+          },
+        })
+
+      const { loadDetails, members, loadingMembers } = useCollectionData()
+      await loadDetails('http://example.org/collection/1')
+
+      await vi.waitFor(
+        () => {
+          expect(loadingMembers.value).toBe(false)
+        },
+        { timeout: 1000 }
+      )
+
+      // Should use first displayScheme value found
+      expect(members.value[0].displayScheme).toBe('http://example.org/scheme/first')
+    })
+
+    it('does not set cross-scheme fields on collection members', async () => {
+      ;(executeSparql as Mock)
+        .mockResolvedValueOnce({ results: { bindings: [] } }) // details
+        .mockResolvedValueOnce({
+          results: {
+            bindings: [
+              {
+                member: { value: 'http://example.org/nested-collection' },
+                isCollection: { value: 'true' },
+                inCurrentScheme: { value: 'false' },
+                displayScheme: { value: 'http://example.org/scheme/1' },
+              },
+            ],
+          },
+        })
+
+      const { loadDetails, members, loadingMembers } = useCollectionData()
+      await loadDetails('http://example.org/collection/1')
+
+      await vi.waitFor(
+        () => {
+          expect(loadingMembers.value).toBe(false)
+        },
+        { timeout: 1000 }
+      )
+
+      const nestedCollection = members.value.find((m) => m.uri === 'http://example.org/nested-collection')
+
+      // Collection members should not have cross-scheme fields
+      expect(nestedCollection?.type).toBe('collection')
+      expect(nestedCollection?.inCurrentScheme).toBeUndefined()
+      expect(nestedCollection?.displayScheme).toBeUndefined()
+    })
+
     it('updates memberCount in details after loading members', async () => {
       ;(executeSparql as Mock)
         .mockResolvedValueOnce({ results: { bindings: [] } }) // details

@@ -16,6 +16,26 @@ export interface DetectedLanguage {
   count: number
 }
 
+/**
+ * Label predicate capabilities for a specific resource type.
+ */
+export interface LabelPredicateCapabilities {
+  prefLabel?: boolean
+  xlPrefLabel?: boolean
+  dctTitle?: boolean
+  dcTitle?: boolean
+  rdfsLabel?: boolean
+}
+
+/**
+ * Label predicates available per resource type.
+ */
+export interface LabelPredicatesByResourceType {
+  concept?: LabelPredicateCapabilities
+  scheme?: LabelPredicateCapabilities
+  collection?: LabelPredicateCapabilities
+}
+
 export interface EndpointAnalysis {
   hasSkosContent: boolean
   supportsNamedGraphs: boolean | null
@@ -34,6 +54,7 @@ export interface EndpointAnalysis {
     hasBroaderTransitive: boolean
     hasNarrowerTransitive: boolean
   }
+  labelPredicates?: LabelPredicatesByResourceType
   analyzedAt: string
 }
 
@@ -116,49 +137,63 @@ function parseSparqlXml(xml: string): any {
   return { results: { bindings } }
 }
 
-export async function executeSparql(url: string, query: string): Promise<any> {
+export async function executeSparql(url: string, query: string, retries = 2): Promise<any> {
   // Trim query - some endpoints (e.g., Getty) return empty results with leading whitespace
   const trimmedQuery = query.trim()
 
-  // Try POST first
-  let response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      'Accept': 'application/sparql-results+json, application/sparql-results+xml;q=0.9',
-    },
-    // format=json helps endpoints like Getty that ignore Accept header
-    body: `query=${encodeURIComponent(trimmedQuery)}&format=json`,
-  })
+  let lastError: Error | null = null
 
-  let contentType = response.headers.get('Content-Type') || ''
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      // Try POST first
+      let response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Accept': 'application/sparql-results+json, application/sparql-results+xml;q=0.9',
+        },
+        // format=json helps endpoints like Getty that ignore Accept header
+        body: `query=${encodeURIComponent(trimmedQuery)}&format=json`,
+      })
 
-  // Some endpoints return HTML form on POST (e.g., UNESCO) - try GET instead
-  const needsGet = !response.ok || contentType.includes('text/html')
-  if (needsGet) {
-    const getUrl = `${url}?query=${encodeURIComponent(trimmedQuery)}&format=json`
-    response = await fetch(getUrl, {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/sparql-results+json, application/sparql-results+xml;q=0.9',
-      },
-    })
-    contentType = response.headers.get('Content-Type') || ''
+      let contentType = response.headers.get('Content-Type') || ''
+
+      // Some endpoints return HTML form on POST (e.g., UNESCO) - try GET instead
+      const needsGet = !response.ok || contentType.includes('text/html')
+      if (needsGet) {
+        const getUrl = `${url}?query=${encodeURIComponent(trimmedQuery)}&format=json`
+        response = await fetch(getUrl, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/sparql-results+json, application/sparql-results+xml;q=0.9',
+          },
+        })
+        contentType = response.headers.get('Content-Type') || ''
+      }
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      }
+
+      const text = await response.text()
+
+      // Handle XML responses (some endpoints like Getty only return XML)
+      if (contentType.includes('xml') || text.trimStart().startsWith('<?xml') || text.trimStart().startsWith('<sparql')) {
+        return parseSparqlXml(text)
+      }
+
+      // Handle JSON responses
+      return JSON.parse(text)
+    } catch (e) {
+      lastError = e instanceof Error ? e : new Error(String(e))
+      if (attempt < retries) {
+        // Wait before retry (100ms, 200ms, ...)
+        await new Promise(resolve => setTimeout(resolve, 100 * (attempt + 1)))
+      }
+    }
   }
 
-  if (!response.ok) {
-    throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-  }
-
-  const text = await response.text()
-
-  // Handle XML responses (some endpoints like Getty only return XML)
-  if (contentType.includes('xml') || text.trimStart().startsWith('<?xml') || text.trimStart().startsWith('<sparql')) {
-    return parseSparqlXml(text)
-  }
-
-  // Handle JSON responses
-  return JSON.parse(text)
+  throw lastError
 }
 
 // =============================================================================
@@ -369,6 +404,66 @@ function isValidLanguageCode(lang: string): boolean {
   return /^[a-z]{2,3}$/.test(lang)
 }
 
+/**
+ * Detect which label predicates exist for each resource type (Concept, ConceptScheme, Collection).
+ * Uses EXISTS queries to efficiently check predicate availability.
+ */
+export async function detectLabelPredicates(url: string): Promise<LabelPredicatesByResourceType> {
+  const resourceTypes = [
+    { key: 'concept', type: 'skos:Concept' },
+    { key: 'scheme', type: 'skos:ConceptScheme' },
+    { key: 'collection', type: 'skos:Collection' },
+  ] as const
+
+  const result: LabelPredicatesByResourceType = {}
+
+  for (const { key, type } of resourceTypes) {
+    const query = `
+      PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+      PREFIX skosxl: <http://www.w3.org/2008/05/skos-xl#>
+      PREFIX dct: <http://purl.org/dc/terms/>
+      PREFIX dc: <http://purl.org/dc/elements/1.1/>
+      PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+      SELECT
+        (EXISTS { ?r a ${type} . ?r skos:prefLabel ?x } AS ?hasPrefLabel)
+        (EXISTS { ?r a ${type} . ?r skosxl:prefLabel/skosxl:literalForm ?x } AS ?hasXlPrefLabel)
+        (EXISTS { ?r a ${type} . ?r dct:title ?x } AS ?hasDctTitle)
+        (EXISTS { ?r a ${type} . ?r dc:title ?x } AS ?hasDcTitle)
+        (EXISTS { ?r a ${type} . ?r rdfs:label ?x } AS ?hasRdfsLabel)
+      WHERE {}
+    `
+
+    try {
+      const results = await executeSparql(url, query)
+      const binding = results.results.bindings[0]
+
+      if (binding) {
+        const parseExists = (value?: string): boolean => {
+          if (!value) return false
+          return value === 'true' || value === '1'
+        }
+
+        const capabilities: LabelPredicateCapabilities = {}
+
+        if (parseExists(binding.hasPrefLabel?.value)) capabilities.prefLabel = true
+        if (parseExists(binding.hasXlPrefLabel?.value)) capabilities.xlPrefLabel = true
+        if (parseExists(binding.hasDctTitle?.value)) capabilities.dctTitle = true
+        if (parseExists(binding.hasDcTitle?.value)) capabilities.dcTitle = true
+        if (parseExists(binding.hasRdfsLabel?.value)) capabilities.rdfsLabel = true
+
+        // Only add if at least one predicate exists
+        if (Object.keys(capabilities).length > 0) {
+          result[key] = capabilities
+        }
+      }
+    } catch {
+      // Query failed for this resource type - skip it
+    }
+  }
+
+  return result
+}
+
 // =============================================================================
 // Public API
 // =============================================================================
@@ -390,7 +485,7 @@ export async function analyzeEndpointWithSteps(
   url: string,
   onStep?: StepCallback
 ): Promise<EndpointAnalysis | null> {
-  const totalSteps = 7
+  const totalSteps = 8
   let currentStep = 0
 
   const runStep = async <T>(name: string, fn: () => Promise<T>, formatResult: (r: T) => string, errorResult = 'error'): Promise<T | null> => {
@@ -470,7 +565,17 @@ export async function analyzeEndpointWithSteps(
     r => `${Object.values(r).filter(Boolean).length}/7`
   )
 
-  // Step 7: Languages
+  // Step 7: Label predicates (capability detection, like relationships)
+  const labelPredicates = await runStep(
+    'Label predicates',
+    () => detectLabelPredicates(url),
+    r => {
+      const count = Object.values(r).reduce((sum, caps) => sum + Object.keys(caps || {}).length, 0)
+      return `${count}`
+    }
+  )
+
+  // Step 8: Languages
   const languagesResult = await runStep(
     'Languages',
     () => detectLanguages(url, skosGraphUris),
@@ -492,6 +597,7 @@ export async function analyzeEndpointWithSteps(
     languages,
     totalConcepts,
     relationships,
+    labelPredicates: labelPredicates ?? undefined,
     analyzedAt: new Date().toISOString(),
   }
 }

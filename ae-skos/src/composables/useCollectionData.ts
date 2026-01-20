@@ -6,16 +6,17 @@
  * @see /spec/ae-skos/sko03-ConceptTree.md
  */
 import { ref, type Ref } from 'vue'
-import { useEndpointStore } from '../stores'
+import { useEndpointStore, useSchemeStore } from '../stores'
 import { executeSparql, withPrefixes, logger, resolveUris } from '../services'
 import { useLabelResolver } from './useLabelResolver'
 import { useOtherProperties, COLLECTION_EXCLUDED_PREDICATES } from './useOtherProperties'
-import { LABEL_PRIORITY } from '../constants'
-import type { CollectionDetails, LabelValue, NotationValue, ConceptRef } from '../types'
+import { useProgressiveLabelLoader } from './useProgressiveLabelLoader'
+import type { CollectionDetails, LabelValue, NotationValue, ConceptRef, LabelPredicateCapabilities } from '../types'
 
 export function useCollectionData() {
   const endpointStore = useEndpointStore()
-  const { selectLabel, sortLabels } = useLabelResolver()
+  const schemeStore = useSchemeStore()
+  const { sortLabels } = useLabelResolver()
   const { loadOtherProperties } = useOtherProperties()
 
   // State
@@ -29,11 +30,14 @@ export function useCollectionData() {
   /**
    * Build query to load collection properties
    * Supports SKOS-XL labels, dct:title, and rdfs:label for broader compatibility
+   * Uses capability-aware label detection when available
    */
-  function buildDetailsQuery(collectionUri: string): string {
-    return withPrefixes(`
-      SELECT ?p ?o ?lang ?labelType WHERE {
-        {
+  function buildDetailsQuery(collectionUri: string, capabilities?: LabelPredicateCapabilities): string {
+    // Build label UNION branches based on capabilities
+    const labelBranches: string[] = []
+
+    // Always include SKOS core properties (not in capabilities detection)
+    labelBranches.push(`{
           <${collectionUri}> ?p ?o .
           BIND(LANG(?o) AS ?lang)
           FILTER(
@@ -45,75 +49,82 @@ export function useCollectionData() {
             ?p = skos:note
           )
           BIND(IF(?p = skos:prefLabel, "prefLabel", IF(?p = skos:altLabel, "altLabel", "")) AS ?labelType)
-        }
-        UNION
-        {
+        }`)
+
+    // Add capability-aware label predicates
+    if (!capabilities || Object.keys(capabilities).length === 0 || capabilities.xlPrefLabel) {
+      labelBranches.push(`{
           <${collectionUri}> skosxl:prefLabel/skosxl:literalForm ?o .
           BIND(skosxl:prefLabel AS ?p)
           BIND(LANG(?o) AS ?lang)
           BIND("xlPrefLabel" AS ?labelType)
-        }
-        UNION
-        {
+        }`)
+      labelBranches.push(`{
           <${collectionUri}> skosxl:altLabel/skosxl:literalForm ?o .
           BIND(skosxl:altLabel AS ?p)
           BIND(LANG(?o) AS ?lang)
           BIND("xlAltLabel" AS ?labelType)
-        }
-        UNION
-        {
+        }`)
+    }
+
+    if (!capabilities || Object.keys(capabilities).length === 0 || capabilities.dctTitle) {
+      labelBranches.push(`{
           <${collectionUri}> dct:title ?o .
           BIND(dct:title AS ?p)
           BIND(LANG(?o) AS ?lang)
           BIND("dctTitle" AS ?labelType)
-        }
-        UNION
-        {
+        }`)
+    }
+
+    if (!capabilities || Object.keys(capabilities).length === 0 || capabilities.dcTitle) {
+      labelBranches.push(`{
           <${collectionUri}> dc:title ?o .
           BIND(dc:title AS ?p)
           BIND(LANG(?o) AS ?lang)
           BIND("dcTitle" AS ?labelType)
-        }
-        UNION
-        {
+        }`)
+    }
+
+    if (!capabilities || Object.keys(capabilities).length === 0 || capabilities.rdfsLabel) {
+      labelBranches.push(`{
           <${collectionUri}> rdfs:label ?o .
           BIND(rdfs:label AS ?p)
           BIND(LANG(?o) AS ?lang)
           BIND("rdfsLabel" AS ?labelType)
-        }
+        }`)
+    }
+
+    return withPrefixes(`
+      SELECT ?p ?o ?lang ?labelType WHERE {
+        ${labelBranches.join('\n        UNION\n        ')}
       }
     `)
   }
 
   /**
-   * Build query to load collection members
-   * Supports SKOS-XL labels, dct:title, dc:title, and rdfs:label for broader compatibility
-   * Also fetches hasNarrower for icon display (leaf vs label)
+   * Build query to load collection members metadata (no labels).
+   * Labels are loaded progressively after this query.
+   *
+   * Fetches hasNarrower for icon display (leaf vs label) and cross-scheme indicator fields.
+   * Uses EXISTS for inCurrentScheme, simple OPTIONAL for displayScheme (client takes first value).
    */
-  function buildMembersQuery(collectionUri: string): string {
+  function buildMembersMetadataQuery(
+    collectionUri: string,
+    currentSchemeUri: string | null
+  ): string {
     return withPrefixes(`
-      SELECT DISTINCT ?member ?label ?labelLang ?labelType ?notation ?hasNarrower WHERE {
+      SELECT DISTINCT ?member ?notation ?hasNarrower ?isCollection ?inCurrentScheme ?displayScheme WHERE {
         <${collectionUri}> skos:member ?member .
 
-        OPTIONAL {
-          {
-            ?member skos:prefLabel ?label .
-            BIND("prefLabel" AS ?labelType)
-          } UNION {
-            ?member skosxl:prefLabel/skosxl:literalForm ?label .
-            BIND("xlPrefLabel" AS ?labelType)
-          } UNION {
-            ?member dct:title ?label .
-            BIND("dctTitle" AS ?labelType)
-          } UNION {
-            ?member dc:title ?label .
-            BIND("dcTitle" AS ?labelType)
-          } UNION {
-            ?member rdfs:label ?label .
-            BIND("rdfsLabel" AS ?labelType)
-          }
-          BIND(LANG(?label) AS ?labelLang)
-        }
+        # Detect if member is a collection
+        BIND(EXISTS { ?member a skos:Collection } AS ?isCollection)
+
+        ${currentSchemeUri ? `# Boolean: is member in current scheme?
+        BIND(EXISTS { ?member skos:inScheme <${currentSchemeUri}> } AS ?inCurrentScheme)` : ''}
+
+        # Get a scheme for badge display (client takes first value found)
+        OPTIONAL { ?member skos:inScheme ?displayScheme }
+
         OPTIONAL { ?member skos:notation ?notation }
         OPTIONAL { ?member skos:narrower ?narrowerChild }
         BIND(BOUND(?narrowerChild) AS ?hasNarrower)
@@ -121,22 +132,6 @@ export function useCollectionData() {
       ORDER BY ?member
       LIMIT 500
     `)
-  }
-
-  /**
-   * Helper: select all labels of the highest-priority type that has labels
-   */
-  function selectLabelsByPriority(
-    labels: { value: string; lang?: string; type: string }[],
-    priority: readonly string[] = LABEL_PRIORITY
-  ): LabelValue[] {
-    for (const type of priority) {
-      const ofType = labels.filter(l => l.type === type)
-      if (ofType.length > 0) {
-        return ofType.map(l => ({ value: l.value, lang: l.lang }))
-      }
-    }
-    return []
   }
 
   /**
@@ -205,19 +200,21 @@ export function useCollectionData() {
   }
 
   /**
-   * Process member bindings into ConceptRef array
-   * Uses priority-based label selection: prefLabel > xlPrefLabel > title > rdfsLabel
-   * Also tracks hasNarrower for icon display
+   * Process member metadata bindings into ConceptRef array (without labels).
+   * Labels are loaded progressively after this processing.
+   * Also tracks hasNarrower for icon display and cross-scheme indicator fields.
    */
-  function processMemberBindings(
+  function processMemberMetadataBindings(
     bindings: Array<Record<string, { value: string; 'xml:lang'?: string }>>
   ): ConceptRef[] {
-    // Group by member URI to handle multiple labels with type tracking
+    // Group by member URI to handle multiple bindings per member
     const memberMap = new Map<string, {
       uri: string
-      labels: { value: string; lang?: string; type: string }[]
       notation?: string
       hasNarrower?: boolean
+      isCollection?: boolean
+      inCurrentScheme?: boolean
+      displayScheme?: string
     }>()
 
     for (const b of bindings) {
@@ -225,20 +222,10 @@ export function useCollectionData() {
       if (!uri) continue
 
       if (!memberMap.has(uri)) {
-        memberMap.set(uri, {
-          uri,
-          labels: [],
-          notation: b.notation?.value,
-        })
+        memberMap.set(uri, { uri })
       }
 
       const entry = memberMap.get(uri)!
-
-      if (b.label?.value) {
-        const lang = b.labelLang?.value || b.label['xml:lang'] || undefined
-        const type = b.labelType?.value || 'prefLabel'
-        entry.labels.push({ value: b.label.value, lang, type })
-      }
 
       if (!entry.notation && b.notation?.value) {
         entry.notation = b.notation.value
@@ -248,37 +235,46 @@ export function useCollectionData() {
       if (b.hasNarrower?.value === 'true') {
         entry.hasNarrower = true
       }
+
+      // Track isCollection
+      if (b.isCollection?.value === 'true') {
+        entry.isCollection = true
+      }
+
+      // Track inCurrentScheme (boolean from EXISTS check)
+      if (b.inCurrentScheme?.value !== undefined && entry.inCurrentScheme === undefined) {
+        entry.inCurrentScheme = b.inCurrentScheme.value === 'true'
+      }
+
+      // Track displayScheme (use first one found)
+      if (b.displayScheme?.value && !entry.displayScheme) {
+        entry.displayScheme = b.displayScheme.value
+      }
     }
 
-    // Convert with priority-based label selection
+    // Convert to ConceptRef array (labels will be loaded progressively)
     const result: ConceptRef[] = []
 
     for (const entry of memberMap.values()) {
-      let bestLabel: LabelValue | undefined
+      const ref: ConceptRef = {
+        uri: entry.uri,
+        notation: entry.notation,
+        hasNarrower: entry.hasNarrower,
+        type: entry.isCollection ? 'collection' : 'concept',
+      }
 
-      for (const type of LABEL_PRIORITY) {
-        const labelsOfType = entry.labels.filter(l => l.type === type)
-        if (labelsOfType.length > 0) {
-          bestLabel = selectLabel(labelsOfType.map(l => ({ value: l.value, lang: l.lang })))
-          break
+      // Set cross-scheme indicator fields (only for concepts, not collections)
+      if (!entry.isCollection) {
+        if (entry.inCurrentScheme !== undefined) {
+          ref.inCurrentScheme = entry.inCurrentScheme
+        }
+        if (entry.displayScheme) {
+          ref.displayScheme = entry.displayScheme
         }
       }
 
-      result.push({
-        uri: entry.uri,
-        label: bestLabel?.value,
-        notation: entry.notation,
-        lang: bestLabel?.lang,
-        hasNarrower: entry.hasNarrower,
-      })
+      result.push(ref)
     }
-
-    // Sort by label
-    result.sort((a, b) => {
-      const labelA = a.label || a.uri
-      const labelB = b.label || b.uri
-      return labelA.localeCompare(labelB)
-    })
 
     return result
   }
@@ -296,8 +292,11 @@ export function useCollectionData() {
     logger.info('CollectionData', 'Loading collection details', { uri: collectionUri })
 
     try {
+      // Get collection label capabilities
+      const collectionCapabilities = endpoint.analysis?.labelPredicates?.collection
+
       // Load properties
-      const propsQuery = buildDetailsQuery(collectionUri)
+      const propsQuery = buildDetailsQuery(collectionUri, collectionCapabilities)
       const propsResults = await executeSparql(endpoint, propsQuery, { retries: 1 })
       const collectionDetails = processDetailsBindings(
         collectionUri,
@@ -338,7 +337,9 @@ export function useCollectionData() {
   }
 
   /**
-   * Load collection members (separate from main details)
+   * Load collection members (separate from main details).
+   * Uses progressive label loading for better performance with endpoints
+   * that have many languages.
    */
   async function loadMembers(collectionUri: string) {
     const endpoint = endpointStore.current
@@ -347,18 +348,70 @@ export function useCollectionData() {
     loadingMembers.value = true
 
     try {
-      const query = buildMembersQuery(collectionUri)
-      const results = await executeSparql(endpoint, query, { retries: 1 })
-      members.value = processMemberBindings(
-        results.results.bindings as Array<Record<string, { value: string; 'xml:lang'?: string }>>
+      const currentSchemeUri = schemeStore.selectedUri
+
+      // Step 1: Load member metadata (without labels)
+      const metadataQuery = buildMembersMetadataQuery(collectionUri, currentSchemeUri)
+      const metadataResults = await executeSparql(endpoint, metadataQuery, { retries: 1 })
+      members.value = processMemberMetadataBindings(
+        metadataResults.results.bindings as Array<Record<string, { value: string; 'xml:lang'?: string }>>
       )
 
-      // Update member count in details
+      // Update member count in details immediately (before labels)
       if (details.value) {
         details.value.memberCount = members.value.length
       }
 
-      logger.info('CollectionData', `Loaded ${members.value.length} members`)
+      logger.info('CollectionData', `Loaded ${members.value.length} member metadata`)
+
+      // Step 2: Progressive label loading
+      // Members can be concepts OR collections - we need to handle both types
+      const conceptMembers = members.value.filter(m => m.type === 'concept')
+      const collectionMembers = members.value.filter(m => m.type === 'collection')
+
+      const { loadLabelsProgressively } = useProgressiveLabelLoader()
+
+      // Load labels for concepts and collections in parallel
+      await Promise.all([
+        conceptMembers.length > 0 ? loadLabelsProgressively(
+          conceptMembers.map(m => m.uri),
+          'concept',
+          (resolved) => {
+            // Update members with resolved labels
+            for (const member of members.value) {
+              const label = resolved.get(member.uri)
+              if (label) {
+                member.label = label.value
+                member.lang = label.lang
+              }
+            }
+          }
+        ) : Promise.resolve(),
+
+        collectionMembers.length > 0 ? loadLabelsProgressively(
+          collectionMembers.map(m => m.uri),
+          'collection',
+          (resolved) => {
+            // Update members with resolved labels
+            for (const member of members.value) {
+              const label = resolved.get(member.uri)
+              if (label) {
+                member.label = label.value
+                member.lang = label.lang
+              }
+            }
+          }
+        ) : Promise.resolve(),
+      ])
+
+      // Sort members by label after labels are loaded
+      members.value.sort((a, b) => {
+        const labelA = a.label || a.uri
+        const labelB = b.label || b.uri
+        return labelA.localeCompare(labelB)
+      })
+
+      logger.info('CollectionData', `Labels loaded for ${members.value.length} members`)
     } catch (e) {
       logger.error('CollectionData', 'Failed to load collection members', { error: e })
       members.value = []
