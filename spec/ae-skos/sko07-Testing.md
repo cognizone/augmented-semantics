@@ -1,14 +1,42 @@
 # Testing Strategy
 
-Comprehensive testing plan for AE SKOS browser.
+Testing infrastructure and guidelines for AE SKOS browser.
 
 ## Current State
 
-**No testing infrastructure exists:**
-- No test files (`.test.ts` or `.spec.ts`)
-- No Vitest/Jest configuration
-- No testing dependencies installed
-- Total codebase: ~6,400 lines of TypeScript/Vue
+**Testing infrastructure is in place:**
+- **47 test files** in `src/composables/__tests__/` and `src/components/__tests__/`
+- **~1,150 test cases** covering composables, stores, and components
+- **Vitest** configured (`vitest.config.ts`)
+- **Vue Test Utils** for component testing
+
+**Test locations:**
+```
+ae-skos/src/
+├── composables/__tests__/     # Composable unit tests
+│   ├── useCollectionData.test.ts
+│   ├── useCollections.test.ts
+│   ├── useConceptBindings.test.ts
+│   ├── useConceptData.test.ts
+│   ├── useConceptNavigation.test.ts
+│   ├── useLabelResolver.test.ts
+│   ├── useOrphanConcepts.test.ts
+│   ├── useOrphanQueries.test.ts
+│   ├── useOtherProperties.test.ts
+│   ├── useXLLabels.test.ts
+│   └── ...
+├── components/__tests__/      # Component tests
+│   ├── SchemeDetails.test.ts
+│   └── ...
+└── stores/__tests__/          # Store tests (if any)
+```
+
+**Run tests:**
+```bash
+cd ae-skos
+npm test              # Watch mode
+npm test -- --run     # Single run
+```
 
 ---
 
@@ -207,49 +235,33 @@ describe('URL State Sync', () => {
 
 ---
 
-## Recommended Test Stack
+## Test Stack
 
-| Package | Purpose |
-|---------|---------|
-| `vitest` | Fast test runner, Vue 3 native |
-| `@vue/test-utils` | Vue component mounting |
-| `@testing-library/vue` | User-centric component testing |
-| `msw` (optional) | Mock Service Worker for SPARQL mocking |
+| Package | Purpose | Status |
+|---------|---------|--------|
+| `vitest` | Fast test runner, Vue 3 native | ✅ Installed |
+| `@vue/test-utils` | Vue component mounting | ✅ Installed |
+| `@testing-library/vue` | User-centric component testing | ✅ Installed |
+| `@vitest/coverage-v8` | Code coverage | ✅ Installed |
 
-### Setup Files Needed
+### Configuration
 
-```
-ae-skos/
-├── vitest.config.ts              # Vitest configuration
-├── src/
-│   ├── test-utils/
-│   │   ├── setup.ts              # Test setup (mocks, globals)
-│   │   ├── mocks.ts              # Mock factories
-│   │   └── sparql-fixtures.ts    # SPARQL response fixtures
-│   ├── services/__tests__/
-│   │   ├── sparql.test.ts
-│   │   └── security.test.ts
-│   ├── stores/__tests__/
-│   │   ├── concept.test.ts
-│   │   ├── endpoint.test.ts
-│   │   └── ...
-│   └── components/__tests__/
-│       ├── ConceptTree.test.ts
-│       ├── ConceptDetails.test.ts
-│       └── ...
-```
+- `vitest.config.ts` - Test runner configuration
+- Tests use `vi.mock()` for mocking services and composables
+- SPARQL responses mocked via `executeSparql` mock
 
 ---
 
-## Estimated Test Count
+## Test Coverage
 
-| Category | Count |
-|----------|-------|
-| Service unit tests | ~85 |
-| Store unit tests | ~60 |
-| Component tests | ~70 |
-| Integration tests | ~40 |
-| **Total** | **~255** |
+| Category | Files | Tests (approx) |
+|----------|-------|----------------|
+| Composable tests | 40+ | ~1,000 |
+| Component tests | 5+ | ~100 |
+| Store tests | TBD | TBD |
+| **Total** | **47** | **~1,150** |
+
+Run coverage report: `npm run test:coverage`
 
 ---
 
