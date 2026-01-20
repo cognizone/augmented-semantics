@@ -6,7 +6,7 @@ Component for searching SKOS concepts.
 
 ### Basic Search
 
-Text search across concept labels.
+Text search across concept labels. Search targets `skos:Concept` resources only (not schemes or collections).
 
 **Query:**
 ```sparql
