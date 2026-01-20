@@ -46,8 +46,8 @@ export function useSchemeData() {
           skos:definition, skos:scopeNote, skos:historyNote,
           skos:changeNote, skos:editorialNote, skos:note, skos:example,
           rdfs:label, rdfs:comment, rdfs:seeAlso,
-          dc:title, dct:title, dct:description, dct:creator, dct:created, dct:modified,
-          dct:issued, dct:publisher, dct:rights, dct:license, cc:license,
+          dc:title, dc:identifier, dct:title, dct:description, dct:creator, dct:created, dct:modified,
+          dct:issued, dct:status, dct:publisher, dct:rights, dct:license, cc:license,
           owl:deprecated, owl:versionInfo
         ))
       }
@@ -75,6 +75,7 @@ export function useSchemeData() {
         dcTitles: [],
         description: [],
         creator: [],
+        identifier: [],
         publisher: [],
         rights: [],
         license: [],
@@ -165,6 +166,17 @@ export function useSchemeData() {
         } else if (prop.endsWith('versionInfo')) {
           // owl:versionInfo
           schemeDetails.versionInfo = val
+        } else if (prop.endsWith('identifier')) {
+          // dc:identifier
+          if (!schemeDetails.identifier.includes(val)) {
+            schemeDetails.identifier.push(val)
+          }
+        } else if (prop.endsWith('status')) {
+          // dct:status
+          if (!schemeDetails.status) {
+            // Extract fragment if it's a URI
+            schemeDetails.status = val.includes('/') ? val.split('/').pop() || val : val
+          }
         } else if (prop.endsWith('#seeAlso')) {
           // rdfs:seeAlso
           if (!schemeDetails.seeAlso.includes(val)) {

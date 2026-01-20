@@ -71,11 +71,18 @@ export interface ConceptDetails {
   relatedMatch: string[]
   // Collections (inverse of skos:member)
   collections: ConceptRef[]   // Collections this concept belongs to
-  // Metadata (Dublin Core / RDFS)
+  // Metadata (Dublin Core / RDFS / OWL)
   identifier: string[]        // dc:identifier
   created?: string            // dct:created
   modified?: string           // dct:modified
+  issued?: string             // dct:issued
+  versionInfo?: string        // owl:versionInfo
   status?: string             // dct:status
+  creator: string[]           // dct:creator
+  publisher: string[]         // dct:publisher
+  rights: string[]            // dct:rights
+  license: string[]           // dct:license
+  ccLicense: string[]         // cc:license
   seeAlso: string[]           // rdfs:seeAlso
   // SKOS-XL extended labels
   prefLabelsXL: XLLabel[]
@@ -109,6 +116,8 @@ export interface SchemeDetails {
   modified?: string
   issued?: string             // dct:issued
   versionInfo?: string        // owl:versionInfo
+  status?: string             // dct:status
+  identifier: string[]        // dc:identifier
   publisher: string[]
   rights: string[]
   license: string[]
@@ -226,6 +235,7 @@ export interface CollectionNode {
  */
 export interface CollectionDetails {
   uri: string
+  deprecated?: boolean        // owl:deprecated
   prefLabels: LabelValue[]
   altLabels: LabelValue[]
   hiddenLabels: LabelValue[]  // skos:hiddenLabel
@@ -244,6 +254,19 @@ export interface CollectionDetails {
   notes: LabelValue[]
   examples: LabelValue[]
   notations: NotationValue[]
+  // Metadata (Dublin Core / RDFS / OWL)
+  identifier: string[]        // dc:identifier
+  created?: string            // dct:created
+  modified?: string           // dct:modified
+  issued?: string             // dct:issued
+  versionInfo?: string        // owl:versionInfo
+  status?: string             // dct:status
+  creator: string[]           // dct:creator
+  publisher: string[]         // dct:publisher
+  rights: string[]            // dct:rights
+  license: string[]           // dct:license
+  ccLicense: string[]         // cc:license
+  seeAlso: string[]           // rdfs:seeAlso
   // SKOS-XL extended labels (6/12 real endpoints use xlPrefLabel for collections)
   prefLabelsXL: XLLabel[]
   altLabelsXL: XLLabel[]

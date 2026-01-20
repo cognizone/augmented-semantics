@@ -186,9 +186,26 @@ const hasMetadata = computed(() =>
   (details.value?.identifier?.length ?? 0) > 0 ||
   details.value?.created ||
   details.value?.modified ||
+  details.value?.issued ||
+  details.value?.versionInfo ||
   details.value?.status ||
+  (details.value?.creator?.length ?? 0) > 0 ||
+  (details.value?.publisher?.length ?? 0) > 0 ||
+  (details.value?.rights?.length ?? 0) > 0 ||
+  (details.value?.license?.length ?? 0) > 0 ||
+  (details.value?.ccLicense?.length ?? 0) > 0 ||
   (details.value?.seeAlso?.length ?? 0) > 0
 )
+
+// Metadata links config (for properties that can be URIs)
+const metadataLinksConfig = computed(() => [
+  { label: 'Creator', values: details.value?.creator || [] },
+  { label: 'Publisher', values: details.value?.publisher || [] },
+  { label: 'See Also', values: details.value?.seeAlso || [] },
+  { label: 'Rights', values: details.value?.rights || [] },
+  { label: 'License', values: details.value?.license || [] },
+  { label: 'License (CC)', values: details.value?.ccLicense || [] },
+].filter(m => m.values.length > 0))
 
 // Sorted other properties (alphabetically by qualified name)
 const sortedOtherProperties = computed(() => {
@@ -225,7 +242,7 @@ function isExternalScheme(ref: ConceptRef): boolean {
  */
 function getSchemeShortName(schemeUri: string): string {
   const match = schemeUri.match(/\/([^/]+)\/?$/)
-  return match ? match[1] : schemeUri
+  return match?.[1] ?? schemeUri
 }
 
 /**
@@ -552,6 +569,19 @@ watch(
             Metadata
           </h3>
 
+          <div v-for="meta in metadataLinksConfig" :key="meta.label" class="property-row">
+            <label>{{ meta.label }}</label>
+            <div class="metadata-values">
+              <template v-for="(val, i) in meta.values" :key="i">
+                <a v-if="isValidURI(val)" :href="val" target="_blank" class="metadata-link">
+                  {{ getUriFragment(val) }}
+                  <span class="material-symbols-outlined link-icon">open_in_new</span>
+                </a>
+                <span v-else class="metadata-value">{{ val }}</span>
+              </template>
+            </div>
+          </div>
+
           <div v-if="details.identifier?.length" class="property-row">
             <label>Identifier</label>
             <div class="metadata-values">
@@ -564,16 +594,17 @@ watch(
             <span class="metadata-value">{{ details.status }}</span>
           </div>
 
-          <div v-if="details.seeAlso?.length" class="property-row">
-            <label>See Also</label>
-            <div class="metadata-values">
-              <template v-for="(uri, i) in details.seeAlso" :key="i">
-                <a :href="uri" target="_blank" class="metadata-link">
-                  {{ getUriFragment(uri) }}
-                  <span class="material-symbols-outlined link-icon">open_in_new</span>
-                </a>
-              </template>
-            </div>
+          <div v-if="details.versionInfo" class="property-row">
+            <label>Version</label>
+            <span class="metadata-value">{{ details.versionInfo }}</span>
+          </div>
+
+          <div v-if="details.issued" class="property-row">
+            <label>Issued</label>
+            <span class="metadata-value">
+              {{ formatTemporalValue(details.issued, 'xsd:date') }}
+              <span class="datatype-tag">xsd:date</span>
+            </span>
           </div>
 
           <div v-if="details.created" class="property-row">
@@ -760,5 +791,23 @@ watch(
 
 .doc-value .doc-text {
   grid-column: 2;
+}
+
+.metadata-values {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.metadata-value {
+  font-size: 0.875rem;
+}
+
+.metadata-link {
+  font-size: 0.875rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: var(--ae-accent);
 }
 </style>

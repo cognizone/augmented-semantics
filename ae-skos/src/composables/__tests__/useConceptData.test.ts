@@ -301,6 +301,134 @@ describe('useConceptData', () => {
       expect(details.value?.examples).toHaveLength(1)
     })
 
+    it('handles dct:issued', async () => {
+      ;(executeSparql as Mock).mockResolvedValueOnce({
+        results: {
+          bindings: [
+            { property: { value: 'http://purl.org/dc/terms/issued' }, value: { value: '2024-01-15' } },
+          ],
+        },
+      })
+
+      const { loadDetails, details } = useConceptData()
+      await loadDetails('http://example.org/concept/1')
+
+      expect(details.value?.issued).toBe('2024-01-15')
+    })
+
+    it('handles owl:versionInfo', async () => {
+      ;(executeSparql as Mock).mockResolvedValueOnce({
+        results: {
+          bindings: [
+            { property: { value: 'http://www.w3.org/2002/07/owl#versionInfo' }, value: { value: '1.2.3' } },
+          ],
+        },
+      })
+
+      const { loadDetails, details } = useConceptData()
+      await loadDetails('http://example.org/concept/1')
+
+      expect(details.value?.versionInfo).toBe('1.2.3')
+    })
+
+    it('handles dct:creator as URI', async () => {
+      ;(executeSparql as Mock).mockResolvedValueOnce({
+        results: {
+          bindings: [
+            { property: { value: 'http://purl.org/dc/terms/creator' }, value: { value: 'http://example.org/person/1', type: 'uri' } },
+            { property: { value: 'http://purl.org/dc/terms/creator' }, value: { value: 'http://example.org/person/2', type: 'uri' } },
+          ],
+        },
+      })
+
+      const { loadDetails, details } = useConceptData()
+      await loadDetails('http://example.org/concept/1')
+
+      expect(details.value?.creator).toHaveLength(2)
+      expect(details.value?.creator).toContain('http://example.org/person/1')
+      expect(details.value?.creator).toContain('http://example.org/person/2')
+    })
+
+    it('deduplicates dct:creator', async () => {
+      ;(executeSparql as Mock).mockResolvedValueOnce({
+        results: {
+          bindings: [
+            { property: { value: 'http://purl.org/dc/terms/creator' }, value: { value: 'http://example.org/person/1', type: 'uri' } },
+            { property: { value: 'http://purl.org/dc/terms/creator' }, value: { value: 'http://example.org/person/1', type: 'uri' } },
+          ],
+        },
+      })
+
+      const { loadDetails, details } = useConceptData()
+      await loadDetails('http://example.org/concept/1')
+
+      expect(details.value?.creator).toHaveLength(1)
+    })
+
+    it('handles dct:publisher as URI', async () => {
+      ;(executeSparql as Mock).mockResolvedValueOnce({
+        results: {
+          bindings: [
+            { property: { value: 'http://purl.org/dc/terms/publisher' }, value: { value: 'http://example.org/org/1', type: 'uri' } },
+          ],
+        },
+      })
+
+      const { loadDetails, details } = useConceptData()
+      await loadDetails('http://example.org/concept/1')
+
+      expect(details.value?.publisher).toHaveLength(1)
+      expect(details.value?.publisher).toContain('http://example.org/org/1')
+    })
+
+    it('handles dct:rights as URI', async () => {
+      ;(executeSparql as Mock).mockResolvedValueOnce({
+        results: {
+          bindings: [
+            { property: { value: 'http://purl.org/dc/terms/rights' }, value: { value: 'http://example.org/rights/1', type: 'uri' } },
+          ],
+        },
+      })
+
+      const { loadDetails, details } = useConceptData()
+      await loadDetails('http://example.org/concept/1')
+
+      expect(details.value?.rights).toHaveLength(1)
+      expect(details.value?.rights).toContain('http://example.org/rights/1')
+    })
+
+    it('handles dct:license as URI', async () => {
+      ;(executeSparql as Mock).mockResolvedValueOnce({
+        results: {
+          bindings: [
+            { property: { value: 'http://purl.org/dc/terms/license' }, value: { value: 'http://creativecommons.org/licenses/by/4.0/', type: 'uri' } },
+          ],
+        },
+      })
+
+      const { loadDetails, details } = useConceptData()
+      await loadDetails('http://example.org/concept/1')
+
+      expect(details.value?.license).toHaveLength(1)
+      expect(details.value?.license).toContain('http://creativecommons.org/licenses/by/4.0/')
+    })
+
+    it('handles cc:license as URI', async () => {
+      ;(executeSparql as Mock).mockResolvedValueOnce({
+        results: {
+          bindings: [
+            { property: { value: 'http://creativecommons.org/ns#license' }, value: { value: 'http://creativecommons.org/publicdomain/zero/1.0/', type: 'uri' } },
+          ],
+        },
+      })
+
+      const { loadDetails, details } = useConceptData()
+      await loadDetails('http://example.org/concept/1')
+
+      expect(details.value?.ccLicense).toHaveLength(1)
+      expect(details.value?.ccLicense).toContain('http://creativecommons.org/publicdomain/zero/1.0/')
+    })
+
     it('sets error on query failure', async () => {
       ;(executeSparql as Mock).mockRejectedValueOnce(new Error('Network error'))
 

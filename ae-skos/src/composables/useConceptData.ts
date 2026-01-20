@@ -294,7 +294,9 @@ export function useConceptData() {
           skos:notation, skos:broader, skos:narrower, skos:related,
           skos:inScheme, skos:exactMatch, skos:closeMatch,
           skos:broadMatch, skos:narrowMatch, skos:relatedMatch,
-          dc:identifier, dct:created, dct:modified, dct:status, rdfs:seeAlso,
+          dc:identifier, dct:created, dct:modified, dct:issued, dct:status,
+          dct:creator, dct:publisher, dct:rights, dct:license, cc:license,
+          owl:versionInfo, rdfs:seeAlso,
           rdfs:comment, dct:description
         ))
       }
@@ -332,6 +334,11 @@ export function useConceptData() {
         relatedMatch: [],
         collections: [],
         identifier: [],
+        creator: [],
+        publisher: [],
+        rights: [],
+        license: [],
+        ccLicense: [],
         seeAlso: [],
         prefLabelsXL: [],
         altLabelsXL: [],
@@ -446,6 +453,36 @@ export function useConceptData() {
           if (!conceptDetails.status) {
             // Extract fragment if it's a URI
             conceptDetails.status = val.includes('/') ? val.split('/').pop() || val : val
+          }
+        } else if (prop.endsWith('issued')) {
+          if (!conceptDetails.issued) {
+            conceptDetails.issued = val
+          }
+        } else if (prop.endsWith('versionInfo')) {
+          if (!conceptDetails.versionInfo) {
+            conceptDetails.versionInfo = val
+          }
+        } else if (prop.endsWith('creator')) {
+          if (!conceptDetails.creator.includes(val)) {
+            conceptDetails.creator.push(val)
+          }
+        } else if (prop.endsWith('publisher')) {
+          if (!conceptDetails.publisher.includes(val)) {
+            conceptDetails.publisher.push(val)
+          }
+        } else if (prop.endsWith('rights')) {
+          if (!conceptDetails.rights.includes(val)) {
+            conceptDetails.rights.push(val)
+          }
+        } else if (prop.endsWith('ns#license')) {
+          // cc:license (Creative Commons)
+          if (!conceptDetails.ccLicense.includes(val)) {
+            conceptDetails.ccLicense.push(val)
+          }
+        } else if (prop.endsWith('license')) {
+          // dct:license (Dublin Core)
+          if (!conceptDetails.license.includes(val)) {
+            conceptDetails.license.push(val)
           }
         } else if (prop.endsWith('seeAlso')) {
           if (!conceptDetails.seeAlso.includes(val)) {

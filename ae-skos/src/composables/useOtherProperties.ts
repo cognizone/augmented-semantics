@@ -129,7 +129,9 @@ export const CONCEPT_EXCLUDED_PREDICATES = [
   'skos:broader', 'skos:narrower', 'skos:related',
   'skos:inScheme', 'skos:exactMatch', 'skos:closeMatch',
   'skos:broadMatch', 'skos:narrowMatch', 'skos:relatedMatch',
-  'dc:identifier', 'dct:created', 'dct:modified', 'dct:status', 'rdfs:seeAlso',
+  'dc:identifier', 'dct:created', 'dct:modified', 'dct:issued', 'dct:status',
+  'dct:creator', 'dct:publisher', 'dct:rights', 'dct:license', 'cc:license',
+  'owl:versionInfo', 'owl:deprecated', 'rdfs:seeAlso',
   'rdfs:comment', 'dct:description',  // Documentation properties shown in dedicated section
 ]
 
@@ -137,15 +139,19 @@ export const CONCEPT_EXCLUDED_PREDICATES = [
 export const SCHEME_EXCLUDED_PREDICATES = [
   'skos:hasTopConcept',
   'rdfs:label', 'rdfs:comment', 'rdfs:seeAlso',
-  'dct:title', 'dct:description',
+  'dc:title', 'dc:identifier', 'dct:title', 'dct:description', 'dct:status',
   'dct:creator', 'dct:created', 'dct:modified', 'dct:issued',
   'dct:publisher', 'dct:rights', 'dct:license', 'cc:license',
-  'owl:versionInfo',
+  'owl:deprecated', 'owl:versionInfo',
 ]
 
 /** Predicates excluded for collection details (in addition to base) */
 export const COLLECTION_EXCLUDED_PREDICATES = [
   'skos:member',  // Members shown in dedicated section
   'skos:inScheme',
-  'rdfs:comment', 'dct:description',  // Documentation properties shown in dedicated section
+  'rdfs:label', 'rdfs:comment', 'rdfs:seeAlso',
+  'dc:title', 'dc:identifier', 'dct:title', 'dct:description', 'dct:status',
+  'dct:creator', 'dct:created', 'dct:modified', 'dct:issued',
+  'dct:publisher', 'dct:rights', 'dct:license', 'cc:license',
+  'owl:deprecated', 'owl:versionInfo',
 ]

@@ -29,6 +29,7 @@ export interface SPARQLResults {
   results: {
     bindings: SPARQLBinding[]
   }
+  boolean?: boolean  // For ASK queries
 }
 
 // Request configuration
@@ -300,7 +301,7 @@ export async function detectGraphs(
   try {
     const results = await executeSparql(endpoint, query, { retries: 1 })
     // ASK queries return { boolean: true/false }
-    const hasGraphs = (results as unknown as { boolean: boolean }).boolean === true
+    const hasGraphs = results.boolean === true
 
     return { supportsNamedGraphs: hasGraphs }
   } catch {

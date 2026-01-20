@@ -323,6 +323,78 @@ describe('useSchemeData', () => {
       expect(details.value?.seeAlso).toContain('http://example.org/related2')
     })
 
+    it('handles dc:identifier', async () => {
+      ;(executeSparql as Mock).mockResolvedValueOnce({
+        results: {
+          bindings: [
+            { property: { value: 'http://purl.org/dc/elements/1.1/identifier' }, value: { value: 'scheme-123' } },
+            { property: { value: 'http://purl.org/dc/elements/1.1/identifier' }, value: { value: 'scheme-456' } },
+          ],
+        },
+      })
+      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
+      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
+
+      const { loadDetails, details } = useSchemeData()
+      await loadDetails('http://example.org/scheme/1')
+
+      expect(details.value?.identifier).toHaveLength(2)
+      expect(details.value?.identifier).toContain('scheme-123')
+      expect(details.value?.identifier).toContain('scheme-456')
+    })
+
+    it('deduplicates dc:identifier', async () => {
+      ;(executeSparql as Mock).mockResolvedValueOnce({
+        results: {
+          bindings: [
+            { property: { value: 'http://purl.org/dc/elements/1.1/identifier' }, value: { value: 'scheme-123' } },
+            { property: { value: 'http://purl.org/dc/elements/1.1/identifier' }, value: { value: 'scheme-123' } },
+          ],
+        },
+      })
+      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
+      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
+
+      const { loadDetails, details } = useSchemeData()
+      await loadDetails('http://example.org/scheme/1')
+
+      expect(details.value?.identifier).toHaveLength(1)
+    })
+
+    it('handles dct:status as URI (extracts fragment)', async () => {
+      ;(executeSparql as Mock).mockResolvedValueOnce({
+        results: {
+          bindings: [
+            { property: { value: 'http://purl.org/dc/terms/status' }, value: { value: 'http://purl.org/adms/status/Completed' } },
+          ],
+        },
+      })
+      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
+      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
+
+      const { loadDetails, details } = useSchemeData()
+      await loadDetails('http://example.org/scheme/1')
+
+      expect(details.value?.status).toBe('Completed')
+    })
+
+    it('handles dct:status as literal', async () => {
+      ;(executeSparql as Mock).mockResolvedValueOnce({
+        results: {
+          bindings: [
+            { property: { value: 'http://purl.org/dc/terms/status' }, value: { value: 'draft' } },
+          ],
+        },
+      })
+      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
+      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
+
+      const { loadDetails, details } = useSchemeData()
+      await loadDetails('http://example.org/scheme/1')
+
+      expect(details.value?.status).toBe('draft')
+    })
+
     it('deduplicates rdfs:seeAlso', async () => {
       ;(executeSparql as Mock).mockResolvedValueOnce({
         results: {

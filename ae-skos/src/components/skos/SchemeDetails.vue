@@ -216,6 +216,7 @@ watch(
           dctTitles: [],
           dcTitles: [],
           description: [],
+          identifier: [],
           creator: [],
           publisher: [],
           rights: [],
@@ -328,7 +329,7 @@ watch(
         <DocumentationSection :items="documentationConfig" />
 
         <!-- Metadata Section (scheme-specific) -->
-        <section v-if="metadataLinksConfig.length || details.versionInfo || details.created || details.modified || details.issued" class="details-section">
+        <section v-if="metadataLinksConfig.length || details.identifier?.length || details.status || details.versionInfo || details.created || details.modified || details.issued" class="details-section">
           <h3 class="section-title">
             <span class="material-symbols-outlined section-icon">info</span>
             Metadata
@@ -345,6 +346,18 @@ watch(
                 <span v-else class="metadata-value">{{ val }}</span>
               </template>
             </div>
+          </div>
+
+          <div v-if="details.identifier?.length" class="property-row">
+            <label>Identifier</label>
+            <div class="metadata-values">
+              <span v-for="(id, i) in details.identifier" :key="i" class="metadata-value">{{ id }}</span>
+            </div>
+          </div>
+
+          <div v-if="details.status" class="property-row">
+            <label>Status</label>
+            <span class="metadata-value">{{ details.status }}</span>
           </div>
 
           <div v-if="details.versionInfo" class="property-row">

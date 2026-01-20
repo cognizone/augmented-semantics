@@ -353,6 +353,315 @@ describe('useCollectionData', () => {
       expect(details.value?.description[0].lang).toBe('en')
     })
 
+    it('handles owl:deprecated', async () => {
+      ;(executeSparql as Mock).mockResolvedValueOnce({
+        results: {
+          bindings: [
+            {
+              p: { value: 'http://www.w3.org/2002/07/owl#deprecated' },
+              o: { value: 'true' },
+              labelType: { value: 'deprecated' },
+            },
+          ],
+        },
+      })
+
+      const { loadDetails, details } = useCollectionData()
+      await loadDetails('http://example.org/collection/1')
+
+      expect(details.value?.deprecated).toBe(true)
+    })
+
+    it('handles dct:created', async () => {
+      ;(executeSparql as Mock).mockResolvedValueOnce({
+        results: {
+          bindings: [
+            {
+              p: { value: 'http://purl.org/dc/terms/created' },
+              o: { value: '2023-01-15' },
+              labelType: { value: 'created' },
+            },
+          ],
+        },
+      })
+
+      const { loadDetails, details } = useCollectionData()
+      await loadDetails('http://example.org/collection/1')
+
+      expect(details.value?.created).toBe('2023-01-15')
+    })
+
+    it('handles dct:modified', async () => {
+      ;(executeSparql as Mock).mockResolvedValueOnce({
+        results: {
+          bindings: [
+            {
+              p: { value: 'http://purl.org/dc/terms/modified' },
+              o: { value: '2024-06-20' },
+              labelType: { value: 'modified' },
+            },
+          ],
+        },
+      })
+
+      const { loadDetails, details } = useCollectionData()
+      await loadDetails('http://example.org/collection/1')
+
+      expect(details.value?.modified).toBe('2024-06-20')
+    })
+
+    it('handles dct:issued', async () => {
+      ;(executeSparql as Mock).mockResolvedValueOnce({
+        results: {
+          bindings: [
+            {
+              p: { value: 'http://purl.org/dc/terms/issued' },
+              o: { value: '2024-01-01' },
+              labelType: { value: 'issued' },
+            },
+          ],
+        },
+      })
+
+      const { loadDetails, details } = useCollectionData()
+      await loadDetails('http://example.org/collection/1')
+
+      expect(details.value?.issued).toBe('2024-01-01')
+    })
+
+    it('handles owl:versionInfo', async () => {
+      ;(executeSparql as Mock).mockResolvedValueOnce({
+        results: {
+          bindings: [
+            {
+              p: { value: 'http://www.w3.org/2002/07/owl#versionInfo' },
+              o: { value: '2.0.1' },
+              labelType: { value: 'versionInfo' },
+            },
+          ],
+        },
+      })
+
+      const { loadDetails, details } = useCollectionData()
+      await loadDetails('http://example.org/collection/1')
+
+      expect(details.value?.versionInfo).toBe('2.0.1')
+    })
+
+    it('handles dct:status as URI (extracts fragment)', async () => {
+      ;(executeSparql as Mock).mockResolvedValueOnce({
+        results: {
+          bindings: [
+            {
+              p: { value: 'http://purl.org/dc/terms/status' },
+              o: { value: 'http://purl.org/adms/status/Active', type: 'uri' },
+              labelType: { value: 'status' },
+            },
+          ],
+        },
+      })
+
+      const { loadDetails, details } = useCollectionData()
+      await loadDetails('http://example.org/collection/1')
+
+      expect(details.value?.status).toBe('Active')
+    })
+
+    it('handles dct:status as literal', async () => {
+      ;(executeSparql as Mock).mockResolvedValueOnce({
+        results: {
+          bindings: [
+            {
+              p: { value: 'http://purl.org/dc/terms/status' },
+              o: { value: 'Published' },
+              labelType: { value: 'status' },
+            },
+          ],
+        },
+      })
+
+      const { loadDetails, details } = useCollectionData()
+      await loadDetails('http://example.org/collection/1')
+
+      expect(details.value?.status).toBe('Published')
+    })
+
+    it('handles dc:identifier', async () => {
+      ;(executeSparql as Mock).mockResolvedValueOnce({
+        results: {
+          bindings: [
+            {
+              p: { value: 'http://purl.org/dc/elements/1.1/identifier' },
+              o: { value: 'COLL-001' },
+              labelType: { value: 'identifier' },
+            },
+            {
+              p: { value: 'http://purl.org/dc/elements/1.1/identifier' },
+              o: { value: 'COLL-001-A' },
+              labelType: { value: 'identifier' },
+            },
+          ],
+        },
+      })
+
+      const { loadDetails, details } = useCollectionData()
+      await loadDetails('http://example.org/collection/1')
+
+      expect(details.value?.identifier).toHaveLength(2)
+      expect(details.value?.identifier).toContain('COLL-001')
+      expect(details.value?.identifier).toContain('COLL-001-A')
+    })
+
+    it('deduplicates dc:identifier', async () => {
+      ;(executeSparql as Mock).mockResolvedValueOnce({
+        results: {
+          bindings: [
+            {
+              p: { value: 'http://purl.org/dc/elements/1.1/identifier' },
+              o: { value: 'COLL-001' },
+              labelType: { value: 'identifier' },
+            },
+            {
+              p: { value: 'http://purl.org/dc/elements/1.1/identifier' },
+              o: { value: 'COLL-001' },
+              labelType: { value: 'identifier' },
+            },
+          ],
+        },
+      })
+
+      const { loadDetails, details } = useCollectionData()
+      await loadDetails('http://example.org/collection/1')
+
+      expect(details.value?.identifier).toHaveLength(1)
+    })
+
+    it('handles dct:creator', async () => {
+      ;(executeSparql as Mock).mockResolvedValueOnce({
+        results: {
+          bindings: [
+            {
+              p: { value: 'http://purl.org/dc/terms/creator' },
+              o: { value: 'http://example.org/person/1', type: 'uri' },
+              labelType: { value: 'creator' },
+            },
+          ],
+        },
+      })
+
+      const { loadDetails, details } = useCollectionData()
+      await loadDetails('http://example.org/collection/1')
+
+      expect(details.value?.creator).toHaveLength(1)
+      expect(details.value?.creator).toContain('http://example.org/person/1')
+    })
+
+    it('handles dct:publisher', async () => {
+      ;(executeSparql as Mock).mockResolvedValueOnce({
+        results: {
+          bindings: [
+            {
+              p: { value: 'http://purl.org/dc/terms/publisher' },
+              o: { value: 'http://example.org/org/1', type: 'uri' },
+              labelType: { value: 'publisher' },
+            },
+          ],
+        },
+      })
+
+      const { loadDetails, details } = useCollectionData()
+      await loadDetails('http://example.org/collection/1')
+
+      expect(details.value?.publisher).toHaveLength(1)
+      expect(details.value?.publisher).toContain('http://example.org/org/1')
+    })
+
+    it('handles dct:rights', async () => {
+      ;(executeSparql as Mock).mockResolvedValueOnce({
+        results: {
+          bindings: [
+            {
+              p: { value: 'http://purl.org/dc/terms/rights' },
+              o: { value: 'http://example.org/rights/1', type: 'uri' },
+              labelType: { value: 'rights' },
+            },
+          ],
+        },
+      })
+
+      const { loadDetails, details } = useCollectionData()
+      await loadDetails('http://example.org/collection/1')
+
+      expect(details.value?.rights).toHaveLength(1)
+      expect(details.value?.rights).toContain('http://example.org/rights/1')
+    })
+
+    it('handles dct:license', async () => {
+      ;(executeSparql as Mock).mockResolvedValueOnce({
+        results: {
+          bindings: [
+            {
+              p: { value: 'http://purl.org/dc/terms/license' },
+              o: { value: 'http://creativecommons.org/licenses/by/4.0/', type: 'uri' },
+              labelType: { value: 'license' },
+            },
+          ],
+        },
+      })
+
+      const { loadDetails, details } = useCollectionData()
+      await loadDetails('http://example.org/collection/1')
+
+      expect(details.value?.license).toHaveLength(1)
+      expect(details.value?.license).toContain('http://creativecommons.org/licenses/by/4.0/')
+    })
+
+    it('handles cc:license', async () => {
+      ;(executeSparql as Mock).mockResolvedValueOnce({
+        results: {
+          bindings: [
+            {
+              p: { value: 'http://creativecommons.org/ns#license' },
+              o: { value: 'http://creativecommons.org/publicdomain/zero/1.0/', type: 'uri' },
+              labelType: { value: 'ccLicense' },
+            },
+          ],
+        },
+      })
+
+      const { loadDetails, details } = useCollectionData()
+      await loadDetails('http://example.org/collection/1')
+
+      expect(details.value?.ccLicense).toHaveLength(1)
+      expect(details.value?.ccLicense).toContain('http://creativecommons.org/publicdomain/zero/1.0/')
+    })
+
+    it('handles rdfs:seeAlso', async () => {
+      ;(executeSparql as Mock).mockResolvedValueOnce({
+        results: {
+          bindings: [
+            {
+              p: { value: 'http://www.w3.org/2000/01/rdf-schema#seeAlso' },
+              o: { value: 'http://example.org/related/1', type: 'uri' },
+              labelType: { value: 'seeAlso' },
+            },
+            {
+              p: { value: 'http://www.w3.org/2000/01/rdf-schema#seeAlso' },
+              o: { value: 'http://example.org/related/2', type: 'uri' },
+              labelType: { value: 'seeAlso' },
+            },
+          ],
+        },
+      })
+
+      const { loadDetails, details } = useCollectionData()
+      await loadDetails('http://example.org/collection/1')
+
+      expect(details.value?.seeAlso).toHaveLength(2)
+      expect(details.value?.seeAlso).toContain('http://example.org/related/1')
+      expect(details.value?.seeAlso).toContain('http://example.org/related/2')
+    })
+
     it('sets error on query failure', async () => {
       ;(executeSparql as Mock).mockRejectedValueOnce(new Error('Network error'))
 

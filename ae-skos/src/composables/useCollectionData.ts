@@ -122,6 +122,85 @@ export function useCollectionData() {
           BIND("description" AS ?labelType)
         }`)
 
+    // Metadata predicates (always included)
+    labelBranches.push(`{
+          <${collectionUri}> owl:deprecated ?o .
+          BIND(owl:deprecated AS ?p)
+          BIND("deprecated" AS ?labelType)
+        }`)
+
+    labelBranches.push(`{
+          <${collectionUri}> dct:created ?o .
+          BIND(dct:created AS ?p)
+          BIND("created" AS ?labelType)
+        }`)
+
+    labelBranches.push(`{
+          <${collectionUri}> dct:modified ?o .
+          BIND(dct:modified AS ?p)
+          BIND("modified" AS ?labelType)
+        }`)
+
+    labelBranches.push(`{
+          <${collectionUri}> dct:issued ?o .
+          BIND(dct:issued AS ?p)
+          BIND("issued" AS ?labelType)
+        }`)
+
+    labelBranches.push(`{
+          <${collectionUri}> owl:versionInfo ?o .
+          BIND(owl:versionInfo AS ?p)
+          BIND("versionInfo" AS ?labelType)
+        }`)
+
+    labelBranches.push(`{
+          <${collectionUri}> dct:status ?o .
+          BIND(dct:status AS ?p)
+          BIND("status" AS ?labelType)
+        }`)
+
+    labelBranches.push(`{
+          <${collectionUri}> dc:identifier ?o .
+          BIND(dc:identifier AS ?p)
+          BIND("identifier" AS ?labelType)
+        }`)
+
+    labelBranches.push(`{
+          <${collectionUri}> dct:creator ?o .
+          BIND(dct:creator AS ?p)
+          BIND("creator" AS ?labelType)
+        }`)
+
+    labelBranches.push(`{
+          <${collectionUri}> dct:publisher ?o .
+          BIND(dct:publisher AS ?p)
+          BIND("publisher" AS ?labelType)
+        }`)
+
+    labelBranches.push(`{
+          <${collectionUri}> dct:rights ?o .
+          BIND(dct:rights AS ?p)
+          BIND("rights" AS ?labelType)
+        }`)
+
+    labelBranches.push(`{
+          <${collectionUri}> dct:license ?o .
+          BIND(dct:license AS ?p)
+          BIND("license" AS ?labelType)
+        }`)
+
+    labelBranches.push(`{
+          <${collectionUri}> cc:license ?o .
+          BIND(cc:license AS ?p)
+          BIND("ccLicense" AS ?labelType)
+        }`)
+
+    labelBranches.push(`{
+          <${collectionUri}> rdfs:seeAlso ?o .
+          BIND(rdfs:seeAlso AS ?p)
+          BIND("seeAlso" AS ?labelType)
+        }`)
+
     return withPrefixes(`
       SELECT ?p ?o ?lang ?labelType WHERE {
         ${labelBranches.join('\n        UNION\n        ')}
@@ -188,6 +267,20 @@ export function useCollectionData() {
     const editorialNotes: LabelValue[] = []
     const notes: LabelValue[] = []
     const examples: LabelValue[] = []
+    // Metadata fields
+    let deprecated: boolean | undefined
+    let created: string | undefined
+    let modified: string | undefined
+    let issued: string | undefined
+    let versionInfo: string | undefined
+    let status: string | undefined
+    const identifier: string[] = []
+    const creator: string[] = []
+    const publisher: string[] = []
+    const rights: string[] = []
+    const license: string[] = []
+    const ccLicense: string[] = []
+    const seeAlso: string[] = []
 
     for (const b of bindings) {
       const predicate = b.p?.value
@@ -233,11 +326,41 @@ export function useCollectionData() {
         examples.push({ value, lang })
       } else if (predicate.endsWith('note')) {
         notes.push({ value, lang })
+      } else if (labelType === 'deprecated') {
+        deprecated = value === 'true' || value === '1'
+      } else if (labelType === 'created') {
+        if (!created) created = value
+      } else if (labelType === 'modified') {
+        if (!modified) modified = value
+      } else if (labelType === 'issued') {
+        if (!issued) issued = value
+      } else if (labelType === 'versionInfo') {
+        if (!versionInfo) versionInfo = value
+      } else if (labelType === 'status') {
+        if (!status) {
+          // Extract fragment if it's a URI
+          status = value.includes('/') ? value.split('/').pop() || value : value
+        }
+      } else if (labelType === 'identifier') {
+        if (!identifier.includes(value)) identifier.push(value)
+      } else if (labelType === 'creator') {
+        if (!creator.includes(value)) creator.push(value)
+      } else if (labelType === 'publisher') {
+        if (!publisher.includes(value)) publisher.push(value)
+      } else if (labelType === 'rights') {
+        if (!rights.includes(value)) rights.push(value)
+      } else if (labelType === 'license') {
+        if (!license.includes(value)) license.push(value)
+      } else if (labelType === 'ccLicense') {
+        if (!ccLicense.includes(value)) ccLicense.push(value)
+      } else if (labelType === 'seeAlso') {
+        if (!seeAlso.includes(value)) seeAlso.push(value)
       }
     }
 
     return {
       uri,
+      deprecated,
       prefLabels,
       altLabels,
       hiddenLabels,
@@ -254,6 +377,19 @@ export function useCollectionData() {
       notes,
       examples,
       notations,
+      // Metadata
+      identifier,
+      created,
+      modified,
+      issued,
+      versionInfo,
+      status,
+      creator,
+      publisher,
+      rights,
+      license,
+      ccLicense,
+      seeAlso,
       // XL labels initialized empty - loaded separately via loadXLLabels
       prefLabelsXL: [],
       altLabelsXL: [],

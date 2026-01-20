@@ -11,8 +11,9 @@
  */
 import { watch, computed } from 'vue'
 import { useSchemeStore } from '../../stores'
-import { useDelayedLoading, useLabelResolver, useCollectionData, useResourceExport, useElapsedTime } from '../../composables'
-import { getRefLabel } from '../../utils/displayUtils'
+import { isValidURI } from '../../services'
+import { useDelayedLoading, useLabelResolver, useCollectionData, useResourceExport, useElapsedTime, useDeprecation } from '../../composables'
+import { getRefLabel, getUriFragment, formatTemporalValue } from '../../utils/displayUtils'
 import type { ConceptRef } from '../../types'
 import DetailsStates from '../common/DetailsStates.vue'
 import DetailsHeader from '../common/DetailsHeader.vue'
@@ -33,6 +34,7 @@ const schemeStore = useSchemeStore()
 const { selectCollectionLabel, sortLabels, shouldShowLangTag } = useLabelResolver()
 const { details, members, loading, loadingMembers, error, resolvedPredicates, loadDetails, reset } = useCollectionData()
 const { exportAsTurtle } = useResourceExport()
+const { showIndicator: showDeprecationIndicator } = useDeprecation()
 
 // Track elapsed time when loading
 const loadingElapsed = useElapsedTime(loading)
@@ -148,6 +150,32 @@ const documentationConfig = computed(() => [
   { label: 'Example', values: sortedExamples.value, class: 'example' },
 ].filter(d => d.values.length > 0))
 
+// Has any metadata to show
+const hasMetadata = computed(() =>
+  (details.value?.identifier?.length ?? 0) > 0 ||
+  details.value?.created ||
+  details.value?.modified ||
+  details.value?.issued ||
+  details.value?.versionInfo ||
+  details.value?.status ||
+  (details.value?.creator?.length ?? 0) > 0 ||
+  (details.value?.publisher?.length ?? 0) > 0 ||
+  (details.value?.rights?.length ?? 0) > 0 ||
+  (details.value?.license?.length ?? 0) > 0 ||
+  (details.value?.ccLicense?.length ?? 0) > 0 ||
+  (details.value?.seeAlso?.length ?? 0) > 0
+)
+
+// Metadata links config (for properties that can be URIs)
+const metadataLinksConfig = computed(() => [
+  { label: 'Creator', values: details.value?.creator || [] },
+  { label: 'Publisher', values: details.value?.publisher || [] },
+  { label: 'See Also', values: details.value?.seeAlso || [] },
+  { label: 'Rights', values: details.value?.rights || [] },
+  { label: 'License', values: details.value?.license || [] },
+  { label: 'License (CC)', values: details.value?.ccLicense || [] },
+].filter(m => m.values.length > 0))
+
 // Sorted other properties (alphabetically by qualified name)
 const sortedOtherProperties = computed(() => {
   if (!details.value) return []
@@ -191,7 +219,7 @@ function isExternalScheme(ref: ConceptRef): boolean {
  */
 function getSchemeShortName(schemeUri: string): string {
   const match = schemeUri.match(/\/([^/]+)\/?$/)
-  return match ? match[1] : schemeUri
+  return match?.[1] ?? schemeUri
 }
 
 // Watch for collection URI changes
@@ -231,6 +259,8 @@ watch(
           :uri="details.uri"
           :lang-tag="displayLang || undefined"
           :show-lang-tag="showHeaderLangTag"
+          :deprecated="details.deprecated && showDeprecationIndicator"
+          deprecated-tooltip="This collection is deprecated"
           :export-menu-items="exportMenuItems"
         />
 
@@ -325,6 +355,68 @@ watch(
                 </span>
               </span>
             </div>
+          </div>
+        </section>
+
+        <!-- Metadata Section -->
+        <section v-if="hasMetadata" class="details-section">
+          <h3 class="section-title">
+            <span class="material-symbols-outlined section-icon">info</span>
+            Metadata
+          </h3>
+
+          <div v-for="meta in metadataLinksConfig" :key="meta.label" class="property-row">
+            <label>{{ meta.label }}</label>
+            <div class="metadata-values">
+              <template v-for="(val, i) in meta.values" :key="i">
+                <a v-if="isValidURI(val)" :href="val" target="_blank" class="metadata-link">
+                  {{ getUriFragment(val) }}
+                  <span class="material-symbols-outlined link-icon">open_in_new</span>
+                </a>
+                <span v-else class="metadata-value">{{ val }}</span>
+              </template>
+            </div>
+          </div>
+
+          <div v-if="details.identifier?.length" class="property-row">
+            <label>Identifier</label>
+            <div class="metadata-values">
+              <span v-for="(id, i) in details.identifier" :key="i" class="metadata-value">{{ id }}</span>
+            </div>
+          </div>
+
+          <div v-if="details.status" class="property-row">
+            <label>Status</label>
+            <span class="metadata-value">{{ details.status }}</span>
+          </div>
+
+          <div v-if="details.versionInfo" class="property-row">
+            <label>Version</label>
+            <span class="metadata-value">{{ details.versionInfo }}</span>
+          </div>
+
+          <div v-if="details.issued" class="property-row">
+            <label>Issued</label>
+            <span class="metadata-value">
+              {{ formatTemporalValue(details.issued, 'xsd:date') }}
+              <span class="datatype-tag">xsd:date</span>
+            </span>
+          </div>
+
+          <div v-if="details.created" class="property-row">
+            <label>Created</label>
+            <span class="metadata-value">
+              {{ formatTemporalValue(details.created, 'xsd:date') }}
+              <span class="datatype-tag">xsd:date</span>
+            </span>
+          </div>
+
+          <div v-if="details.modified" class="property-row">
+            <label>Modified</label>
+            <span class="metadata-value">
+              {{ formatTemporalValue(details.modified, 'xsd:date') }}
+              <span class="datatype-tag">xsd:date</span>
+            </span>
           </div>
         </section>
 
@@ -460,5 +552,27 @@ watch(
 
 .doc-value .doc-text {
   grid-column: 2;
+}
+
+.metadata-values {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.metadata-value {
+  font-size: 0.875rem;
+}
+
+.metadata-link {
+  font-size: 0.875rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: var(--ae-accent);
+}
+
+.link-icon {
+  font-size: 14px;
 }
 </style>
