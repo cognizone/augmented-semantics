@@ -11,46 +11,97 @@ Display root concepts within selected scheme. Top concepts are identified via:
 1. **Explicit marking**: `skos:topConceptOf` or scheme's `skos:hasTopConcept`
 2. **Fallback**: Concepts with no hierarchical parent (neither `skos:broader` nor inverse `skos:narrower`)
 
-**Query:**
+#### Progressive Loading Strategy
 
-Uses a subquery to paginate by distinct concepts (not by label rows, since concepts can have many label language/type variations):
+For performance, top concepts are loaded using a two-phase sequential approach:
 
+1. **Explicit query (fast)**: Query concepts with `topConceptOf`/`hasTopConcept`
+   - Returns in < 500ms for well-formed vocabularies
+   - No type check needed (these predicates imply skos:Concept)
+
+2. **Fallback query (slower)**: If explicit returns empty, query concepts with no broader
+   - Scans all concepts in scheme, may take several seconds
+   - Type check included (inScheme can link to non-concepts)
+
+3. **Merge**: On first page, both queries run sequentially and results are merged (deduplicated)
+
+This avoids the UNION penalty where SPARQL engines evaluate both branches even when the first finds results.
+
+**Query Mode Tracking**: For pagination, the system tracks which mode was used:
+- `explicit`: Only explicit query returned results
+- `fallback`: Explicit was empty, using fallback
+- `mixed`: Both contributed unique concepts (uses combined UNION for pagination)
+
+**Queries:**
+
+Uses subqueries to paginate by distinct concepts (not by label rows, since concepts can have many label language/type variations).
+
+**Explicit Query (fast path):**
 ```sparql
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 PREFIX skosxl: <http://www.w3.org/2008/05/skos-xl#>
 PREFIX dct: <http://purl.org/dc/terms/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 
-SELECT ?concept ?label ?labelLang ?labelType ?notation ?narrowerCount
+SELECT ?concept ?label ?labelLang ?labelType ?notation ?hasNarrower
 WHERE {
   {
-    # Subquery to get paginated distinct concepts with narrower count
-    SELECT DISTINCT ?concept (COUNT(DISTINCT ?narrower) AS ?narrowerCount)
+    SELECT DISTINCT ?concept ?hasNarrower
     WHERE {
-      {
-        # Explicit top concept via topConceptOf or hasTopConcept
-        ?concept a skos:Concept .
-        ?concept skos:inScheme <SCHEME_URI> .
-        { ?concept skos:topConceptOf <SCHEME_URI> }
-        UNION
-        { <SCHEME_URI> skos:hasTopConcept ?concept }
-      }
+      # No type check - topConceptOf/hasTopConcept imply skos:Concept
+      { ?concept skos:topConceptOf <SCHEME_URI> }
       UNION
-      {
-        # Fallback: concepts with no broader relationship (neither direction)
-        ?concept a skos:Concept .
-        ?concept skos:inScheme <SCHEME_URI> .
-        FILTER NOT EXISTS { ?concept skos:broader ?broader }
-        FILTER NOT EXISTS { ?parent skos:narrower ?concept }
-      }
-      # Count children via broader or narrower (supports both directions)
-      OPTIONAL {
-        { ?narrower skos:broader ?concept }
+      { <SCHEME_URI> skos:hasTopConcept ?concept }
+
+      # EXISTS is fast - stops at first match (vs COUNT scans all)
+      BIND(EXISTS {
+        { [] skos:broader ?concept }
         UNION
-        { ?concept skos:narrower ?narrower }
-      }
+        { ?concept skos:narrower [] }
+      } AS ?hasNarrower)
     }
-    GROUP BY ?concept
+    ORDER BY ?concept
+    LIMIT 201
+    OFFSET 0
+  }
+  # Get labels and notations for the paginated concepts
+  OPTIONAL { ?concept skos:notation ?notation }
+  OPTIONAL {
+    { ?concept skos:prefLabel ?label . BIND("prefLabel" AS ?labelType) }
+    UNION
+    { ?concept skosxl:prefLabel/skosxl:literalForm ?label . BIND("xlPrefLabel" AS ?labelType) }
+    UNION
+    { ?concept dct:title ?label . BIND("title" AS ?labelType) }
+    UNION
+    { ?concept rdfs:label ?label . BIND("rdfsLabel" AS ?labelType) }
+    BIND(LANG(?label) AS ?labelLang)
+  }
+}
+```
+
+**Fallback Query (slow path):**
+```sparql
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX skosxl: <http://www.w3.org/2008/05/skos-xl#>
+PREFIX dct: <http://purl.org/dc/terms/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+SELECT ?concept ?label ?labelLang ?labelType ?notation ?hasNarrower
+WHERE {
+  {
+    SELECT DISTINCT ?concept ?hasNarrower
+    WHERE {
+      ?concept a skos:Concept .  # Type check needed for inScheme
+      ?concept skos:inScheme <SCHEME_URI> .
+      FILTER NOT EXISTS { ?concept skos:broader ?broader }
+      FILTER NOT EXISTS { ?parent skos:narrower ?concept }
+
+      BIND(EXISTS {
+        { [] skos:broader ?concept }
+        UNION
+        { ?concept skos:narrower [] }
+      } AS ?hasNarrower)
+    }
     ORDER BY ?concept
     LIMIT 201
     OFFSET 0
@@ -86,24 +137,23 @@ PREFIX skosxl: <http://www.w3.org/2008/05/skos-xl#>
 PREFIX dct: <http://purl.org/dc/terms/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 
-SELECT ?concept ?label ?labelLang ?labelType ?notation ?narrowerCount
+SELECT ?concept ?label ?labelLang ?labelType ?notation ?hasNarrower
 WHERE {
   {
-    # Subquery to get paginated distinct children with narrower count
-    SELECT DISTINCT ?concept (COUNT(DISTINCT ?narrower) AS ?narrowerCount)
+    SELECT DISTINCT ?concept ?hasNarrower
     WHERE {
-      # Find children via broader or narrower (supports both directions)
+      # No type check - broader/narrower imply skos:Concept
       { ?concept skos:broader <PARENT_URI> }
       UNION
       { <PARENT_URI> skos:narrower ?concept }
-      # Count grandchildren via broader or narrower
-      OPTIONAL {
-        { ?narrower skos:broader ?concept }
+
+      # EXISTS is fast - stops at first match (vs COUNT scans all)
+      BIND(EXISTS {
+        { [] skos:broader ?concept }
         UNION
-        { ?concept skos:narrower ?narrower }
-      }
+        { ?concept skos:narrower [] }
+      } AS ?hasNarrower)
     }
-    GROUP BY ?concept
     ORDER BY ?concept
     LIMIT 201
     OFFSET 0
@@ -122,6 +172,29 @@ WHERE {
   }
 }
 ```
+
+### Performance Optimizations
+
+#### EXISTS vs COUNT for hasNarrower
+
+Use `EXISTS` instead of `COUNT(DISTINCT ?narrower)` to detect children:
+
+| Approach | Behavior | Performance |
+|----------|----------|-------------|
+| `COUNT(...)` | Scans ALL narrower relationships | Slow for concepts with many children |
+| `EXISTS {...}` | Stops at first match | Fast - short-circuit evaluation |
+
+The tree only needs to know IF there are children (show expand arrow), not HOW MANY.
+
+#### Type Check Optimization
+
+| Query Type | Type Check | Reason |
+|------------|------------|--------|
+| Explicit top concepts | ❌ Removed | `topConceptOf`/`hasTopConcept` imply Concept |
+| Children | ❌ Removed | `broader`/`narrower` imply Concept |
+| Fallback (inScheme) | ✅ Kept | `inScheme` can link to non-concepts |
+
+Removing the type check can provide 40x speedup on some endpoints.
 
 ### Broader Concepts
 

@@ -206,6 +206,20 @@ ORDER BY ?label
 LIMIT 100
 ```
 
+**Detecting children efficiently (for expand arrow):**
+
+Use `EXISTS` instead of `COUNT` - stops at first match:
+
+```sparql
+# Fast - short-circuit evaluation
+BIND(EXISTS { [] skos:broader ?concept } AS ?hasNarrower)
+
+# Slow - scans all children
+# (COUNT(DISTINCT ?narrower) AS ?narrowerCount)
+```
+
+See [sko03-ConceptTree](../ae-skos/sko03-ConceptTree.md#performance-optimizations) for detailed performance notes.
+
 ### Get Narrower Concepts
 
 ```sparql
@@ -220,6 +234,8 @@ WHERE {
 }
 ORDER BY ?label
 ```
+
+**Note:** Same `EXISTS` pattern applies for detecting grandchildren (expand arrow).
 
 ### Search Concepts
 
