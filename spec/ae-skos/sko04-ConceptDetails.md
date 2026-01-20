@@ -103,16 +103,48 @@ WHERE {
 
 When loading related concepts (broader, narrower, related), the system enriches each `ConceptRef` with:
 
-- **label**: Best matching label based on language priority
+- **label**: Best matching label based on language priority (see [Label Constants API](./sko01-LanguageSelector.md#label-constants-api))
 - **notation**: SKOS notation if available
-- **hasNarrower**: Boolean indicating if the concept has children (for icon display)
+- **hasNarrower**: Boolean indicating if the concept has children (for dynamic icon display)
 
-The `hasNarrower` flag is determined by checking if `skos:narrower` relationships exist:
+#### hasNarrower Detection
+
+The `hasNarrower` flag is determined using an `EXISTS` pattern that checks both relationship directions:
 
 ```sparql
-OPTIONAL { ?concept skos:narrower ?narrowerChild }
-BIND(BOUND(?narrowerChild) AS ?hasNarrower)
+BIND(EXISTS {
+  { [] skos:broader ?concept }
+  UNION
+  { ?concept skos:narrower [] }
+} AS ?hasNarrower)
 ```
+
+**Pattern Notes:**
+- **EXISTS vs COUNT**: EXISTS stops at first match (fast), while COUNT scans all relationships (slow). The tree only needs to know IF children exist, not HOW MANY.
+- **Both directions**: Checks both `?child skos:broader ?concept` and `?concept skos:narrower ?child` since vocabularies may use either or both patterns.
+- **Anonymous nodes**: Uses `[]` for the child concept since we don't need to bind it.
+
+#### When Enrichment Happens
+
+Enrichment occurs during `loadLabelsForRefs()` in `useConceptData.ts`:
+
+1. **Concept selected**: User clicks a concept in tree or breadcrumb
+2. **Relations loaded**: Query returns related concept URIs (broader, narrower, related)
+3. **Enrichment query**: Single query fetches labels, notations, and hasNarrower for all refs
+4. **UI update**: ConceptDetails component updates chips with enriched data
+
+```typescript
+// Simplified flow
+const relatedUris = [...broaderUris, ...narrowerUris, ...relatedUris]
+const enriched = await loadLabelsForRefs(relatedUris, 'concept')
+// enriched: Map<uri, { label, notation, hasNarrower }>
+```
+
+#### Performance Considerations
+
+- **Batch queries**: All related concept enrichment happens in a single SPARQL query
+- **Capability-aware labels**: Uses `buildCapabilityAwareLabelUnionClause()` to query only detected predicates
+- **Progressive loading**: For large relation sets (>10 concepts), uses progressive label loading by language priority
 
 ### Relation Chip Icons
 

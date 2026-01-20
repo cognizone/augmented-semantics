@@ -159,12 +159,156 @@ All components use the **centralized label resolution** in `useLabelResolver.ts`
 
 | File | Purpose |
 |------|---------|
-| `/src/constants/labels.ts` | `LABEL_PRIORITY`, `LABEL_TYPES`, `LABEL_PREDICATES`, `buildLabelUnionClause()` |
+| `/src/constants/labels.ts` | `LABEL_PRIORITY`, `LABEL_TYPES`, `LABEL_PREDICATES`, query builders |
 | `/src/composables/useLabelResolver.ts` | All label selection functions (centralized) |
+| `/src/composables/useProgressiveLabelLoader.ts` | Progressive label loading by language priority |
 | `/src/composables/useConceptBindings.ts` | Tree label processing |
 | `/src/composables/useConceptData.ts` | Related labels resolution |
 | `/src/composables/useCollections.ts` | Collection list labels |
+| `/src/composables/useCollectionQueries.ts` | Capability-aware collection query building |
 | `/src/components/skos/ConceptBreadcrumb.vue` | Breadcrumb display |
+
+## Label Constants API
+
+The `/src/constants/labels.ts` module provides canonical definitions for label handling:
+
+### Constants
+
+| Export | Purpose |
+|--------|---------|
+| `LABEL_TYPES` | Type identifiers for labels (`prefLabel`, `xlPrefLabel`, etc.) |
+| `LABEL_PRIORITY` | Priority order for display label selection |
+| `ALT_LABEL_PRIORITY` | Priority order for alternative labels |
+| `LABEL_PREDICATES` | URI and prefixed form for each label type |
+
+### Query Builder Functions
+
+| Function | Purpose |
+|----------|---------|
+| `buildLabelUnionClause()` | SPARQL UNION clause for all label predicates |
+| `buildOptionalLabelClause()` | Wraps union clause in OPTIONAL |
+| `buildCapabilityAwareLabelUnionClause()` | UNION clause using only detected predicates |
+| `buildCapabilityAwareOptionalLabelClause()` | Capability-aware version with OPTIONAL |
+| `buildSingleLanguageLabelClause()` | UNION clause filtered to a single language |
+| `mergeCapabilities()` | Merge multiple `LabelPredicateCapabilities` |
+
+### Capability-Aware Query Building
+
+When endpoint analysis detects which label predicates exist, queries can be optimized to include only relevant predicates:
+
+```typescript
+// Before (queries all 5 predicates even if only 2 exist)
+const clause = buildLabelUnionClause('?concept')
+
+// After (queries only detected predicates)
+const capabilities = endpoint.analysis?.labelPredicates?.concept
+const clause = buildCapabilityAwareLabelUnionClause('?concept', capabilities)
+```
+
+**Benefits:**
+- Smaller SPARQL queries (fewer UNION branches)
+- Faster execution (no pointless pattern matching)
+- Graceful fallback (uses all predicates if no capabilities detected)
+
+### Label Predicate Capabilities
+
+The `LabelPredicateCapabilities` type tracks which predicates exist per resource type:
+
+```typescript
+interface LabelPredicateCapabilities {
+  prefLabel?: boolean
+  xlPrefLabel?: boolean
+  dctTitle?: boolean
+  dcTitle?: boolean
+  rdfsLabel?: boolean
+}
+```
+
+Capabilities are stored in endpoint analysis:
+- `endpoint.analysis.labelPredicates.concept` - Concept label predicates
+- `endpoint.analysis.labelPredicates.scheme` - Scheme label predicates
+- `endpoint.analysis.labelPredicates.collection` - Collection label predicates
+
+### Merging Capabilities
+
+When querying resources that can be multiple types (e.g., collection members can be concepts or collections), merge capabilities:
+
+```typescript
+const conceptCaps = endpoint.analysis?.labelPredicates?.concept
+const collectionCaps = endpoint.analysis?.labelPredicates?.collection
+const mergedCaps = mergeCapabilities(conceptCaps, collectionCaps)
+
+// Query will include predicates from EITHER type
+const clause = buildCapabilityAwareLabelUnionClause('?member', mergedCaps)
+```
+
+## Progressive Label Loading
+
+For large result sets, labels are loaded progressively by language priority to minimize latency.
+
+### Strategy
+
+The `useProgressiveLabelLoader` composable implements a progressive loading algorithm:
+
+1. **Query preferred language first** - Get labels in user's preferred language
+2. **Remove resolved concepts** - Track which concepts now have labels
+3. **Query next priority language** - For remaining concepts without labels
+4. **Threshold check** - When remaining count ≤ threshold, do full query
+5. **Final pass** - Query all predicates for any still-unresolved concepts
+
+### Configuration
+
+```typescript
+interface ProgressiveLabelConfig {
+  threshold?: number           // Switch to full query below this count (default: 5)
+  maxLanguageIterations?: number  // Max languages to try (default: 5)
+  signal?: AbortSignal         // For cancellation support
+}
+```
+
+### Example Flow
+
+For 100 concepts with user preference `en` and endpoint priorities `[fr, de, es]`:
+
+```
+Iteration 1: Query "en" labels → 72 resolved, 28 remaining
+Iteration 2: Query "fr" labels → 15 resolved, 13 remaining
+Iteration 3: Query "de" labels → 6 resolved, 7 remaining
+Iteration 4: Query "es" labels → 3 resolved, 4 remaining
+(4 ≤ threshold 5) → Switch to full query
+Final: Full query for 4 concepts → 3 resolved, 1 unresolved (no label)
+```
+
+### Callback-Based Resolution
+
+Labels are reported incrementally via callback as they resolve:
+
+```typescript
+const { loadLabelsProgressively } = useProgressiveLabelLoader()
+
+await loadLabelsProgressively(
+  conceptUris,
+  'concept',  // resourceType
+  (resolved: Map<string, LabelValue>) => {
+    // Update UI with resolved labels
+    for (const [uri, label] of resolved) {
+      updateConceptLabel(uri, label)
+    }
+  },
+  { threshold: 5, maxLanguageIterations: 5 }
+)
+```
+
+### When to Use
+
+Use progressive loading when:
+- Loading labels for many concepts (>10)
+- Network latency is noticeable
+- Most concepts have labels in preferred/priority languages
+
+Stick to full queries when:
+- Loading labels for few concepts (≤5)
+- Labels are needed atomically (all-or-nothing)
 
 ## Global Settings
 

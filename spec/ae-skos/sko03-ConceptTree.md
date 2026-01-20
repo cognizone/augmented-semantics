@@ -1119,6 +1119,88 @@ ORDER BY ?collection
 
 **Implementation:** `useCollections.ts` composable with `loadChildCollections()` function
 
+#### Top-Level Collection Filtering
+
+The `topLevelCollections` computed property filters nested collections from the root level:
+
+```typescript
+// In useCollections.ts
+const topLevelCollections = computed(() =>
+  collections.value.filter(c => !c.isNested)
+)
+```
+
+**Filtering Logic:**
+- Collections with `hasParentCollection = true` are marked as `isNested = true`
+- Only collections where `isNested = false` appear at the tree root
+- Nested collections appear under their parent when the parent is expanded
+
+#### Lazy Loading Mechanism
+
+Child collections load on-demand when a parent collection is expanded:
+
+```typescript
+async function loadChildCollections(parentUri: string): Promise<CollectionNode[]>
+```
+
+**Parameters:**
+- `parentUri` - URI of the parent collection to load children for
+
+**Returns:**
+- Array of `CollectionNode` objects representing child collections
+
+**Loading Flow:**
+```
+User clicks expand arrow on collection
+         ↓
+ConceptTree: onCollectionExpand(collectionUri)
+         ↓
+Check if children already cached
+         ↓
+    Cached? ──Yes──> Use cached children
+         │
+         No
+         ↓
+loadChildCollections(collectionUri)
+         ↓
+Execute child collections query
+         ↓
+Process results into CollectionNode[]
+         ↓
+Cache in expandedCollectionChildren map
+         ↓
+Update tree with children
+```
+
+#### Collection Expansion State
+
+Expansion state is tracked using two mechanisms:
+
+```typescript
+// Track which collections are expanded (PrimeVue Tree)
+const expandedKeys = ref<Record<string, boolean>>({})
+
+// Cache loaded child collections
+const expandedCollectionChildren = ref<Map<string, CollectionNode[]>>(new Map())
+```
+
+**State Management:**
+- `expandedKeys` controls visual expand/collapse state in the tree component
+- `expandedCollectionChildren` caches loaded children to avoid re-fetching
+- When scheme changes, both are cleared to avoid stale data
+
+**Capability-Aware Queries:**
+
+Collection queries use capability-aware label resolution:
+
+```typescript
+// In useCollectionQueries.ts
+const collectionCapabilities = endpoint.analysis?.labelPredicates?.collection
+const labelClause = buildCapabilityAwareLabelUnionClause('?collection', collectionCapabilities)
+```
+
+This ensures queries only include label predicates that exist for collections in the current endpoint.
+
 ### Collection Display in Tree
 
 Top-level collections appear at the root level with a distinct icon. Collections with child collections are expandable:
