@@ -48,17 +48,19 @@ These common specifications apply to all components:
 |---|-----------|------|-------------|
 | com01 | EndpointManager | [com01-EndpointManager](../common/com01-EndpointManager.md) | SPARQL endpoint connection and management |
 | sko01 | LanguageSelector | [sko01-LanguageSelector](./sko01-LanguageSelector.md) | Language detection and selection |
-| sko02 | SchemeSelector | [sko02-SchemeSelector](./sko02-SchemeSelector.md) | Scheme listing and selection |
-| sko03 | ConceptTree | [sko03-ConceptTree](./sko03-ConceptTree.md) | Hierarchical browsing and breadcrumbs |
-| sko04 | ConceptDetails | [sko04-ConceptDetails](./sko04-ConceptDetails.md) | Property display for selected concept |
+| sko02 | SchemeSelector | [sko02-SchemeSelector](./sko02-SchemeSelector.md) | Scheme listing, selection, and scheme details |
+| sko03 | ConceptTree | [sko03-ConceptTree](./sko03-ConceptTree.md) | Hierarchical browsing, collections, and breadcrumbs |
+| sko04 | ConceptDetails | [sko04-ConceptDetails](./sko04-ConceptDetails.md) | Property display for concepts and collections |
 | sko05 | SearchBox | [sko05-SearchBox](./sko05-SearchBox.md) | Search and autocomplete |
 | sko06 | Utilities | [sko06-Utilities](./sko06-Utilities.md) | Copy, raw view, history |
+| sko07 | Testing | [sko07-Testing](./sko07-Testing.md) | Testing strategy and infrastructure |
 | sko08 | DeveloperTools | [sko08-DeveloperTools](./sko08-DeveloperTools.md) | Debug logging and development settings |
+| sko09 | CurationWorkflow | [sko09-CurationWorkflow](./sko09-CurationWorkflow.md) | Endpoint curation and configuration |
 | sko10 | PropertyAnalysis | [sko10-PropertyAnalysis](./sko10-PropertyAnalysis.md) | Property comparison across detail types |
 
 ## Technology
 
-- **Frontend**: Modern reactive framework (Vue.js, React, or Svelte)
+- **Frontend**: Vue 3 + Composition API, TypeScript, Pinia, PrimeVue
 - **Storage**: localStorage for preferences and history
 - **Connection**: Direct SPARQL via Fetch API (requires CORS-enabled endpoint)
 
