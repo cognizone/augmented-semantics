@@ -36,6 +36,30 @@ vi.mock('../useOtherProperties', () => ({
   COLLECTION_EXCLUDED_PREDICATES: [],
 }))
 
+// Mock useXLLabels - allows tests to populate XL labels via mockXLLabelsData
+let mockXLLabelsData: {
+  prefLabelsXL?: Array<{ uri: string; literalForm: { value: string; lang?: string } }>
+  altLabelsXL?: Array<{ uri: string; literalForm: { value: string; lang?: string } }>
+  hiddenLabelsXL?: Array<{ uri: string; literalForm: { value: string; lang?: string } }>
+} = {}
+
+vi.mock('../useXLLabels', () => ({
+  useXLLabels: () => ({
+    loadXLLabels: vi.fn((uri: string, target: { prefLabelsXL: unknown[]; altLabelsXL: unknown[]; hiddenLabelsXL: unknown[] }) => {
+      if (mockXLLabelsData.prefLabelsXL) {
+        target.prefLabelsXL.push(...mockXLLabelsData.prefLabelsXL)
+      }
+      if (mockXLLabelsData.altLabelsXL) {
+        target.altLabelsXL.push(...mockXLLabelsData.altLabelsXL)
+      }
+      if (mockXLLabelsData.hiddenLabelsXL) {
+        target.hiddenLabelsXL.push(...mockXLLabelsData.hiddenLabelsXL)
+      }
+      return Promise.resolve()
+    }),
+  }),
+}))
+
 // Mock useLabelResolver
 vi.mock('../useLabelResolver', () => ({
   useLabelResolver: () => ({
@@ -55,6 +79,9 @@ describe('useCollectionData', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
+
+    // Reset XL labels mock data
+    mockXLLabelsData = {}
 
     // Set up default endpoint
     const endpointStore = useEndpointStore()
@@ -299,6 +326,100 @@ describe('useCollectionData', () => {
 
       expect(details.value?.altLabels.length).toBeGreaterThanOrEqual(1)
       expect(details.value?.altLabels.some((l) => l.value === 'Alternative Label')).toBe(true)
+    })
+
+    it('handles hiddenLabels', async () => {
+      ;(executeSparql as Mock).mockResolvedValueOnce({
+        results: {
+          bindings: [
+            {
+              p: { value: 'http://www.w3.org/2004/02/skos/core#hiddenLabel' },
+              o: { value: 'Hidden Label' },
+              lang: { value: 'en' },
+              labelType: { value: 'hiddenLabel' },
+            },
+            {
+              p: { value: 'http://www.w3.org/2004/02/skos/core#hiddenLabel' },
+              o: { value: 'Étiquette cachée' },
+              lang: { value: 'fr' },
+              labelType: { value: 'hiddenLabel' },
+            },
+          ],
+        },
+      })
+
+      const { loadDetails, details } = useCollectionData()
+      await loadDetails('http://example.org/collection/1')
+
+      expect(details.value?.hiddenLabels).toHaveLength(2)
+      expect(details.value?.hiddenLabels[0].value).toBe('Hidden Label')
+      expect(details.value?.hiddenLabels[0].lang).toBe('en')
+      expect(details.value?.hiddenLabels[1].value).toBe('Étiquette cachée')
+      expect(details.value?.hiddenLabels[1].lang).toBe('fr')
+    })
+
+    it('handles prefLabelsXL via loadXLLabels', async () => {
+      // Set up mock XL labels data
+      mockXLLabelsData = {
+        prefLabelsXL: [
+          { uri: 'http://example.org/xl/pref1', literalForm: { value: 'XL Pref Label', lang: 'en' } },
+          { uri: 'http://example.org/xl/pref2', literalForm: { value: 'XL Étiquette préférée', lang: 'fr' } },
+        ],
+      }
+
+      ;(executeSparql as Mock).mockResolvedValueOnce({
+        results: { bindings: [] },
+      })
+
+      const { loadDetails, details } = useCollectionData()
+      await loadDetails('http://example.org/collection/1')
+
+      expect(details.value?.prefLabelsXL).toHaveLength(2)
+      expect(details.value?.prefLabelsXL[0].literalForm.value).toBe('XL Pref Label')
+      expect(details.value?.prefLabelsXL[0].literalForm.lang).toBe('en')
+      expect(details.value?.prefLabelsXL[1].literalForm.value).toBe('XL Étiquette préférée')
+      expect(details.value?.prefLabelsXL[1].literalForm.lang).toBe('fr')
+    })
+
+    it('handles altLabelsXL via loadXLLabels', async () => {
+      mockXLLabelsData = {
+        altLabelsXL: [
+          { uri: 'http://example.org/xl/alt1', literalForm: { value: 'XL Alt Label', lang: 'en' } },
+        ],
+      }
+
+      ;(executeSparql as Mock).mockResolvedValueOnce({
+        results: { bindings: [] },
+      })
+
+      const { loadDetails, details } = useCollectionData()
+      await loadDetails('http://example.org/collection/1')
+
+      expect(details.value?.altLabelsXL).toHaveLength(1)
+      expect(details.value?.altLabelsXL[0].literalForm.value).toBe('XL Alt Label')
+      expect(details.value?.altLabelsXL[0].literalForm.lang).toBe('en')
+    })
+
+    it('handles hiddenLabelsXL via loadXLLabels', async () => {
+      mockXLLabelsData = {
+        hiddenLabelsXL: [
+          { uri: 'http://example.org/xl/hidden1', literalForm: { value: 'XL Hidden Label', lang: 'en' } },
+          { uri: 'http://example.org/xl/hidden2', literalForm: { value: 'XL Étiquette cachée', lang: 'fr' } },
+        ],
+      }
+
+      ;(executeSparql as Mock).mockResolvedValueOnce({
+        results: { bindings: [] },
+      })
+
+      const { loadDetails, details } = useCollectionData()
+      await loadDetails('http://example.org/collection/1')
+
+      expect(details.value?.hiddenLabelsXL).toHaveLength(2)
+      expect(details.value?.hiddenLabelsXL[0].literalForm.value).toBe('XL Hidden Label')
+      expect(details.value?.hiddenLabelsXL[0].literalForm.lang).toBe('en')
+      expect(details.value?.hiddenLabelsXL[1].literalForm.value).toBe('XL Étiquette cachée')
+      expect(details.value?.hiddenLabelsXL[1].literalForm.lang).toBe('fr')
     })
 
     it('handles rdfs:comment', async () => {

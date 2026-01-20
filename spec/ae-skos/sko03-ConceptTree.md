@@ -1238,21 +1238,53 @@ When a collection is clicked:
 Loads collection properties and members via SPARQL queries.
 
 **Properties Query:**
+
+Loads all collection properties including SKOS core labels, SKOS-XL extended labels, documentation properties, and metadata.
+
 ```sparql
 SELECT ?p ?o ?lang ?labelType WHERE {
+  # SKOS core properties
   {
     <COLLECTION_URI> ?p ?o .
-    FILTER(?p IN (skos:prefLabel, skos:altLabel, skos:notation,
-                  skos:definition, skos:scopeNote, skos:note))
+    BIND(LANG(?o) AS ?lang)
+    FILTER(?p IN (
+      skos:prefLabel, skos:altLabel, skos:hiddenLabel, skos:notation,
+      skos:definition, skos:scopeNote, skos:historyNote, skos:changeNote,
+      skos:editorialNote, skos:note, skos:example
+    ))
+    BIND(IF(?p = skos:prefLabel, "prefLabel",
+         IF(?p = skos:altLabel, "altLabel",
+         IF(?p = skos:hiddenLabel, "hiddenLabel", ""))) AS ?labelType)
   }
-  UNION { <COLLECTION_URI> skosxl:prefLabel/skosxl:literalForm ?o . BIND(skosxl:prefLabel AS ?p) }
-  UNION { <COLLECTION_URI> skosxl:altLabel/skosxl:literalForm ?o . BIND(skosxl:altLabel AS ?p) }
-  UNION { <COLLECTION_URI> dct:title ?o . BIND(dct:title AS ?p) }
-  UNION { <COLLECTION_URI> dc:title ?o . BIND(dc:title AS ?p) }
-  UNION { <COLLECTION_URI> rdfs:label ?o . BIND(rdfs:label AS ?p) }
-  BIND(LANG(?o) AS ?lang)
+  # SKOS-XL extended labels
+  UNION { <COLLECTION_URI> skosxl:prefLabel/skosxl:literalForm ?o . BIND(skosxl:prefLabel AS ?p) BIND("xlPrefLabel" AS ?labelType) BIND(LANG(?o) AS ?lang) }
+  UNION { <COLLECTION_URI> skosxl:altLabel/skosxl:literalForm ?o . BIND(skosxl:altLabel AS ?p) BIND("xlAltLabel" AS ?labelType) BIND(LANG(?o) AS ?lang) }
+  UNION { <COLLECTION_URI> skosxl:hiddenLabel/skosxl:literalForm ?o . BIND(skosxl:hiddenLabel AS ?p) BIND("xlHiddenLabel" AS ?labelType) BIND(LANG(?o) AS ?lang) }
+  # Dublin Core / RDFS labels
+  UNION { <COLLECTION_URI> dct:title ?o . BIND(dct:title AS ?p) BIND("dctTitle" AS ?labelType) BIND(LANG(?o) AS ?lang) }
+  UNION { <COLLECTION_URI> dc:title ?o . BIND(dc:title AS ?p) BIND("dcTitle" AS ?labelType) BIND(LANG(?o) AS ?lang) }
+  UNION { <COLLECTION_URI> rdfs:label ?o . BIND(rdfs:label AS ?p) BIND("rdfsLabel" AS ?labelType) BIND(LANG(?o) AS ?lang) }
+  # Documentation properties
+  UNION { <COLLECTION_URI> rdfs:comment ?o . BIND(rdfs:comment AS ?p) BIND("comment" AS ?labelType) BIND(LANG(?o) AS ?lang) }
+  UNION { <COLLECTION_URI> dct:description ?o . BIND(dct:description AS ?p) BIND("description" AS ?labelType) BIND(LANG(?o) AS ?lang) }
+  # Metadata properties (owl, dct, dc, cc)
+  UNION { <COLLECTION_URI> owl:deprecated ?o . BIND(owl:deprecated AS ?p) BIND("deprecated" AS ?labelType) }
+  UNION { <COLLECTION_URI> dct:created ?o . BIND(dct:created AS ?p) BIND("created" AS ?labelType) }
+  UNION { <COLLECTION_URI> dct:modified ?o . BIND(dct:modified AS ?p) BIND("modified" AS ?labelType) }
+  UNION { <COLLECTION_URI> dct:issued ?o . BIND(dct:issued AS ?p) BIND("issued" AS ?labelType) }
+  UNION { <COLLECTION_URI> owl:versionInfo ?o . BIND(owl:versionInfo AS ?p) BIND("versionInfo" AS ?labelType) }
+  UNION { <COLLECTION_URI> dct:status ?o . BIND(dct:status AS ?p) BIND("status" AS ?labelType) }
+  UNION { <COLLECTION_URI> dc:identifier ?o . BIND(dc:identifier AS ?p) BIND("identifier" AS ?labelType) }
+  UNION { <COLLECTION_URI> dct:creator ?o . BIND(dct:creator AS ?p) BIND("creator" AS ?labelType) }
+  UNION { <COLLECTION_URI> dct:publisher ?o . BIND(dct:publisher AS ?p) BIND("publisher" AS ?labelType) }
+  UNION { <COLLECTION_URI> dct:rights ?o . BIND(dct:rights AS ?p) BIND("rights" AS ?labelType) }
+  UNION { <COLLECTION_URI> dct:license ?o . BIND(dct:license AS ?p) BIND("license" AS ?labelType) }
+  UNION { <COLLECTION_URI> cc:license ?o . BIND(cc:license AS ?p) BIND("ccLicense" AS ?labelType) }
+  UNION { <COLLECTION_URI> rdfs:seeAlso ?o . BIND(rdfs:seeAlso AS ?p) BIND("seeAlso" AS ?labelType) }
 }
 ```
+
+**Note:** XL label values from this query are merged into the regular label arrays. Full XL label resources (with URIs) are loaded separately via `loadXLLabels()`.
 
 **Members Query:**
 ```sparql
@@ -1354,12 +1386,43 @@ interface CollectionNode {
 
 interface CollectionDetails {
   uri: string
+  deprecated?: boolean           // owl:deprecated
   prefLabels: LabelValue[]
   altLabels: LabelValue[]
+  hiddenLabels: LabelValue[]     // skos:hiddenLabel
+  // Title/label properties (stored separately by predicate)
+  dctTitles: LabelValue[]        // dct:title (Dublin Core Terms)
+  dcTitles: LabelValue[]         // dc:title (Dublin Core Elements)
+  rdfsLabels: LabelValue[]       // rdfs:label
+  // Documentation properties
+  comments: LabelValue[]         // rdfs:comment
+  description: LabelValue[]      // dct:description
   definitions: LabelValue[]
   scopeNotes: LabelValue[]
+  historyNotes: LabelValue[]
+  changeNotes: LabelValue[]
+  editorialNotes: LabelValue[]
   notes: LabelValue[]
+  examples: LabelValue[]
   notations: NotationValue[]
+  // Metadata (Dublin Core / RDFS / OWL)
+  identifier: string[]           // dc:identifier
+  created?: string               // dct:created
+  modified?: string              // dct:modified
+  issued?: string                // dct:issued
+  versionInfo?: string           // owl:versionInfo
+  status?: string                // dct:status
+  creator: string[]              // dct:creator
+  publisher: string[]            // dct:publisher
+  rights: string[]               // dct:rights
+  license: string[]              // dct:license
+  ccLicense: string[]            // cc:license
+  seeAlso: string[]              // rdfs:seeAlso
+  // SKOS-XL extended labels
+  prefLabelsXL: XLLabel[]
+  altLabelsXL: XLLabel[]
+  hiddenLabelsXL: XLLabel[]
+  // Other properties (non-SKOS predicates)
   otherProperties: OtherProperty[]
 }
 ```
