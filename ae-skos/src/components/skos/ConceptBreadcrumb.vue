@@ -602,6 +602,7 @@ watch(
     } else if (collectionUri) {
       loadCollectionBreadcrumb(collectionUri)
     } else {
+      breadcrumbRequestId++  // Invalidate any in-flight requests
       conceptStore.setBreadcrumb([])
     }
   },
