@@ -133,6 +133,7 @@ export const CONCEPT_EXCLUDED_PREDICATES = [
   'dct:creator', 'dct:publisher', 'dct:rights', 'dct:license', 'cc:license',
   'owl:versionInfo', 'owl:deprecated', 'rdfs:seeAlso',
   'rdfs:comment', 'dct:description',  // Documentation properties shown in dedicated section
+  'rdfs:label', 'dct:title', 'dc:title',  // Alternative labels shown in labels section
 ]
 
 /** Predicates excluded for scheme details (in addition to base) */
