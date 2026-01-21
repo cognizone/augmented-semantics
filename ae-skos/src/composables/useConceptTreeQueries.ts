@@ -54,23 +54,24 @@ export function useConceptTreeQueries() {
     }
 
     return withPrefixes(`
-    SELECT ?concept ?label ?labelLang ?labelType ?notation ?hasNarrower ${deprecationSelectVars}
+    SELECT ?concept ?label ?labelLang ?labelType ?notation ?narrowerCount ${deprecationSelectVars}
     WHERE {
       {
         # Subquery to get paginated distinct concepts
-        SELECT DISTINCT ?concept ?hasNarrower ${deprecationSelectVars}
+        SELECT DISTINCT ?concept (COUNT(DISTINCT ?narrower) AS ?narrowerCount) ${deprecationSelectVars}
         WHERE {
           # Explicit top concept via topConceptOf or hasTopConcept
           # Note: No type check needed - these predicates imply skos:Concept
           ${branches.join('\n          UNION\n          ')}
-          # Check if concept has children (EXISTS is fast - stops at first match)
-          BIND(EXISTS {
-            { [] skos:broader ?concept }
+          # Check if concept has children
+          OPTIONAL {
+            { ?narrower skos:broader ?concept }
             UNION
-            { ?concept skos:narrower [] }
-          } AS ?hasNarrower)
+            { ?concept skos:narrower ?narrower }
+          }
           ${deprecationClauses}
         }
+        GROUP BY ?concept ${deprecationSelectVars.trim() ? deprecationSelectVars : ''}
         ORDER BY ?concept
         LIMIT ${pageSize + 1}
         OFFSET ${offset}
@@ -90,25 +91,26 @@ export function useConceptTreeQueries() {
     const deprecationClauses = getDeprecationSparqlClauses('?concept')
 
     return withPrefixes(`
-    SELECT ?concept ?label ?labelLang ?labelType ?notation ?hasNarrower ${deprecationSelectVars}
+    SELECT ?concept ?label ?labelLang ?labelType ?notation ?narrowerCount ${deprecationSelectVars}
     WHERE {
       {
         # Subquery to get paginated distinct concepts
-        SELECT DISTINCT ?concept ?hasNarrower ${deprecationSelectVars}
+        SELECT DISTINCT ?concept (COUNT(DISTINCT ?narrower) AS ?narrowerCount) ${deprecationSelectVars}
         WHERE {
           # Fallback: concepts with no broader relationship (neither direction)
           ?concept a skos:Concept .
           ?concept skos:inScheme <${schemeUri}> .
           FILTER NOT EXISTS { ?concept skos:broader ?broader }
           FILTER NOT EXISTS { ?parent skos:narrower ?concept }
-          # Check if concept has children (EXISTS is fast - stops at first match)
-          BIND(EXISTS {
-            { [] skos:broader ?concept }
+          # Check if concept has children
+          OPTIONAL {
+            { ?narrower skos:broader ?concept }
             UNION
-            { ?concept skos:narrower [] }
-          } AS ?hasNarrower)
+            { ?concept skos:narrower ?narrower }
+          }
           ${deprecationClauses}
         }
+        GROUP BY ?concept ${deprecationSelectVars.trim() ? deprecationSelectVars : ''}
         ORDER BY ?concept
         LIMIT ${pageSize + 1}
         OFFSET ${offset}
@@ -128,11 +130,11 @@ export function useConceptTreeQueries() {
     const deprecationClauses = getDeprecationSparqlClauses('?concept')
 
     return withPrefixes(`
-    SELECT ?concept ?label ?labelLang ?labelType ?notation ?hasNarrower ${deprecationSelectVars}
+    SELECT ?concept ?label ?labelLang ?labelType ?notation ?narrowerCount ${deprecationSelectVars}
     WHERE {
       {
         # Subquery to get paginated distinct concepts
-        SELECT DISTINCT ?concept ?hasNarrower ${deprecationSelectVars}
+        SELECT DISTINCT ?concept (COUNT(DISTINCT ?narrower) AS ?narrowerCount) ${deprecationSelectVars}
         WHERE {
           {
             # Explicit top concept via topConceptOf or hasTopConcept (no inScheme required)
@@ -149,14 +151,15 @@ export function useConceptTreeQueries() {
             FILTER NOT EXISTS { ?concept skos:broader ?broader }
             FILTER NOT EXISTS { ?parent skos:narrower ?concept }
           }
-          # Check if concept has children (EXISTS is fast - stops at first match)
-          BIND(EXISTS {
-            { [] skos:broader ?concept }
+          # Check if concept has children
+          OPTIONAL {
+            { ?narrower skos:broader ?concept }
             UNION
-            { ?concept skos:narrower [] }
-          } AS ?hasNarrower)
+            { ?concept skos:narrower ?narrower }
+          }
           ${deprecationClauses}
         }
+        GROUP BY ?concept ${deprecationSelectVars.trim() ? deprecationSelectVars : ''}
         ORDER BY ?concept
         LIMIT ${pageSize + 1}
         OFFSET ${offset}
@@ -176,25 +179,26 @@ export function useConceptTreeQueries() {
     const deprecationClauses = getDeprecationSparqlClauses('?concept')
 
     return withPrefixes(`
-    SELECT ?concept ?label ?labelLang ?labelType ?notation ?hasNarrower ${deprecationSelectVars}
+    SELECT ?concept ?label ?labelLang ?labelType ?notation ?narrowerCount ${deprecationSelectVars}
     WHERE {
       {
         # Subquery to get paginated distinct children
-        SELECT DISTINCT ?concept ?hasNarrower ${deprecationSelectVars}
+        SELECT DISTINCT ?concept (COUNT(DISTINCT ?narrower) AS ?narrowerCount) ${deprecationSelectVars}
         WHERE {
           # Find children via broader or narrower (inverse)
           # Note: No type check needed - these predicates imply skos:Concept
           { ?concept skos:broader <${parentUri}> }
           UNION
           { <${parentUri}> skos:narrower ?concept }
-          # Check if concept has children (EXISTS is fast - stops at first match)
-          BIND(EXISTS {
-            { [] skos:broader ?concept }
+          # Check if concept has children
+          OPTIONAL {
+            { ?narrower skos:broader ?concept }
             UNION
-            { ?concept skos:narrower [] }
-          } AS ?hasNarrower)
+            { ?concept skos:narrower ?narrower }
+          }
           ${deprecationClauses}
         }
+        GROUP BY ?concept ${deprecationSelectVars.trim() ? deprecationSelectVars : ''}
         ORDER BY ?concept
         LIMIT ${pageSize + 1}
         OFFSET ${offset}

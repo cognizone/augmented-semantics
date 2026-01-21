@@ -28,7 +28,7 @@ export type ConceptBinding = SPARQLBinding & {
   labelLang?: SPARQLBinding[string]
   labelType?: SPARQLBinding[string]
   notation?: SPARQLBinding[string]
-  hasNarrower?: SPARQLBinding[string]
+  narrowerCount?: SPARQLBinding[string]
 }
 
 export function useConceptBindings() {
@@ -58,7 +58,7 @@ export function useConceptBindings() {
         conceptMap.set(uri, {
           labels: [],
           notations: [],
-          hasNarrower: b.hasNarrower?.value === 'true',
+          hasNarrower: parseInt(b.narrowerCount?.value || '0', 10) > 0,
           deprecated: isDeprecatedFromBinding(b),
         })
       }
