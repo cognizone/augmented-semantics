@@ -2,17 +2,22 @@
 
 Browser-based SKOS vocabulary browser and explorer. Connect to any SPARQL endpoint and browse SKOS concept schemes directly in your browser.
 
-![AE SKOS Screenshot](docs/images/skos-browser-demo.png)
+<img src="docs/images/skos-browser-demo.png" width="700" alt="AE SKOS Screenshot">
 
 ## Features
 
-- **Direct SPARQL Connection** - No backend required, connects directly to SPARQL endpoints via Fetch API
-- **Hierarchical Browsing** - Navigate concept hierarchies with an expandable tree view
-- **Multi-language Support** - Automatic language detection with configurable priorities per endpoint
-- **Full-text Search** - Search across labels with autocomplete suggestions
-- **Concept Details** - View all properties, relations, and documentation for concepts
-- **Endpoint Analysis** - Automatic detection of named graphs, duplicates, and available languages
-- **Persistent Settings** - Endpoints and preferences saved to localStorage
+- **Direct SPARQL Connection** - No backend required, connects directly to endpoints via Fetch API
+- **Hierarchical Tree Browsing** - Navigate concept hierarchies with breadcrumb navigation
+- **SKOS Collections** - Full support for nested collection hierarchies
+- **Multi-language Support** - Automatic detection with configurable per-endpoint priorities
+- **Advanced Search** - Autocomplete with regex, prefix match, and label scope options
+- **Orphan Detection** - Find concepts not associated with any scheme
+- **Concept Details** - View all properties, relations, and documentation
+- **Deprecation Indicators** - Visual badges for deprecated concepts (OWL, EuroVoc)
+- **Recent History** - Track and revisit recently viewed concepts across endpoints
+- **Raw Data Views** - Inspect SPARQL queries and export RDF (Turtle, JSON-LD, etc.)
+- **Dark Mode** - Toggle between light and dark themes
+- **Desktop App** - Native builds for macOS, Windows, Linux via Tauri ([Download](https://github.com/cognizone/augmented-semantics/releases))
 
 ## Prerequisites
 
