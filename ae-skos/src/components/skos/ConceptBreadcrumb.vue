@@ -8,7 +8,7 @@
  * @see /spec/ae-skos/sko03-ConceptTree.md
  */
 import { ref, watch, computed } from 'vue'
-import { useConceptStore, useEndpointStore, useLanguageStore, useSchemeStore, useSettingsStore, useUIStore, ORPHAN_SCHEME_URI } from '../../stores'
+import { useConceptStore, useEndpointStore, useLanguageStore, useSchemeStore, useSettingsStore, useUIStore, ORPHAN_SCHEME_URI, ORPHAN_SCHEME } from '../../stores'
 import { executeSparql, withPrefixes, logger } from '../../services'
 import { useLabelResolver } from '../../composables'
 import type { ConceptRef, ConceptScheme } from '../../types'
@@ -49,7 +49,7 @@ const allSchemeOptions = computed(() => {
 
   // Add orphan option if enabled in settings
   if (settingsStore.showOrphansSelector) {
-    options.push({ label: 'Orphan Concepts', value: ORPHAN_SCHEME_URI, isOrphan: true, isPinned: true })
+    options.push({ label: ORPHAN_SCHEME.label || 'Orphans', value: ORPHAN_SCHEME_URI, isOrphan: true, isPinned: true })
   }
 
   schemeStore.sortedSchemes.forEach(scheme => {

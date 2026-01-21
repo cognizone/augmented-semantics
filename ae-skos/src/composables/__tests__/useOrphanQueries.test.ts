@@ -10,6 +10,7 @@ import {
   buildSingleOrphanQuery,
   buildOrphanExclusionQueries,
   buildAllConceptsQuery,
+  buildOrphanCollectionsQuery,
 } from '../useOrphanQueries'
 import type { SPARQLEndpoint } from '../../types'
 
@@ -395,6 +396,155 @@ describe('useOrphanQueries', () => {
     it('includes PREFIX declarations', () => {
       const query = buildAllConceptsQuery(100, 0)
 
+      expect(query).toContain('PREFIX skos:')
+    })
+  })
+
+  describe('buildOrphanCollectionsQuery', () => {
+    it('returns null if endpoint has no analysis', () => {
+      const endpoint: SPARQLEndpoint = {
+        id: 'test',
+        name: 'Test',
+        url: 'http://example.org/sparql',
+        createdAt: new Date().toISOString(),
+        accessCount: 0,
+      } as SPARQLEndpoint
+
+      const query = buildOrphanCollectionsQuery(endpoint, 100, 0)
+      expect(query).toBeNull()
+    })
+
+    it('returns null if endpoint has no relationships', () => {
+      const endpoint: SPARQLEndpoint = {
+        id: 'test',
+        name: 'Test',
+        url: 'http://example.org/sparql',
+        analysis: {
+          hasSkosContent: true,
+          supportsNamedGraphs: false,
+          skosGraphCount: 0,
+          languages: [],
+          analyzedAt: new Date().toISOString(),
+        },
+        createdAt: new Date().toISOString(),
+        accessCount: 0,
+      } as SPARQLEndpoint
+
+      const query = buildOrphanCollectionsQuery(endpoint, 100, 0)
+      expect(query).toBeNull()
+    })
+
+    it('returns null if all relationship capabilities are false', () => {
+      const endpoint = mockEndpoint({})
+
+      const query = buildOrphanCollectionsQuery(endpoint, 100, 0)
+      expect(query).toBeNull()
+    })
+
+    it('queries for skos:Collection with FILTER NOT EXISTS', () => {
+      const endpoint = mockEndpoint({ hasInScheme: true })
+
+      const query = buildOrphanCollectionsQuery(endpoint, 100, 0)
+      expect(query).not.toBeNull()
+      expect(query).toContain('?collection a skos:Collection .')
+      expect(query).toContain('FILTER NOT EXISTS {')
+      expect(query).toContain('?collection skos:member ?concept .')
+    })
+
+    it('includes inScheme branch if hasInScheme is true', () => {
+      const endpoint = mockEndpoint({ hasInScheme: true })
+
+      const query = buildOrphanCollectionsQuery(endpoint, 100, 0)
+      expect(query).not.toBeNull()
+      expect(query).toContain('{ ?concept skos:inScheme ?scheme . }')
+    })
+
+    it('includes topConceptOf branch if hasTopConceptOf is true', () => {
+      const endpoint = mockEndpoint({ hasTopConceptOf: true })
+
+      const query = buildOrphanCollectionsQuery(endpoint, 100, 0)
+      expect(query).not.toBeNull()
+      expect(query).toContain('{ ?concept skos:topConceptOf ?scheme . }')
+    })
+
+    it('includes hasTopConcept branch if hasHasTopConcept is true', () => {
+      const endpoint = mockEndpoint({ hasHasTopConcept: true })
+
+      const query = buildOrphanCollectionsQuery(endpoint, 100, 0)
+      expect(query).not.toBeNull()
+      expect(query).toContain('{ ?scheme skos:hasTopConcept ?concept . }')
+    })
+
+    it('includes broaderTransitive branch with topConceptOf', () => {
+      const endpoint = mockEndpoint({
+        hasTopConceptOf: true,
+        hasBroaderTransitive: true,
+      })
+
+      const query = buildOrphanCollectionsQuery(endpoint, 100, 0)
+      expect(query).not.toBeNull()
+      expect(query).toContain('?concept skos:broaderTransitive ?top')
+      expect(query).toContain('?top skos:topConceptOf ?scheme')
+    })
+
+    it('includes broaderTransitive branch with hasTopConcept', () => {
+      const endpoint = mockEndpoint({
+        hasHasTopConcept: true,
+        hasBroaderTransitive: true,
+      })
+
+      const query = buildOrphanCollectionsQuery(endpoint, 100, 0)
+      expect(query).not.toBeNull()
+      expect(query).toContain('?concept skos:broaderTransitive ?top')
+      expect(query).toContain('?scheme skos:hasTopConcept ?top')
+    })
+
+    it('uses broader+ property path when hasBroader but not hasBroaderTransitive', () => {
+      const endpoint = mockEndpoint({
+        hasTopConceptOf: true,
+        hasBroader: true,
+      })
+
+      const query = buildOrphanCollectionsQuery(endpoint, 100, 0)
+      expect(query).not.toBeNull()
+      expect(query).toContain('?concept skos:broader+ ?top')
+      expect(query).toContain('?top skos:topConceptOf ?scheme')
+    })
+
+    it('combines multiple branches with UNION', () => {
+      const endpoint = mockEndpoint({
+        hasInScheme: true,
+        hasTopConceptOf: true,
+        hasHasTopConcept: true,
+      })
+
+      const query = buildOrphanCollectionsQuery(endpoint, 100, 0)
+      expect(query).not.toBeNull()
+      expect(query).toContain('UNION')
+    })
+
+    it('respects pagination with LIMIT and OFFSET', () => {
+      const endpoint = mockEndpoint({ hasInScheme: true })
+
+      const query = buildOrphanCollectionsQuery(endpoint, 5000, 10000)
+      expect(query).not.toBeNull()
+      expect(query).toContain('LIMIT 5000')
+      expect(query).toContain('OFFSET 10000')
+    })
+
+    it('orders results by collection URI', () => {
+      const endpoint = mockEndpoint({ hasInScheme: true })
+
+      const query = buildOrphanCollectionsQuery(endpoint, 100, 0)
+      expect(query).not.toBeNull()
+      expect(query).toContain('ORDER BY ?collection')
+    })
+
+    it('includes PREFIX declarations', () => {
+      const endpoint = mockEndpoint({ hasInScheme: true })
+
+      const query = buildOrphanCollectionsQuery(endpoint, 100, 0)
+      expect(query).not.toBeNull()
       expect(query).toContain('PREFIX skos:')
     })
   })

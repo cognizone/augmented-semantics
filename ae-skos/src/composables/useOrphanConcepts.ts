@@ -8,7 +8,7 @@
  */
 import type { SPARQLEndpoint } from '../types'
 import { executeSparql } from '../services'
-import { buildAllConceptsQuery, buildOrphanExclusionQueries, buildSingleOrphanQuery } from './useOrphanQueries'
+import { buildAllConceptsQuery, buildOrphanExclusionQueries, buildSingleOrphanQuery, buildOrphanCollectionsQuery } from './useOrphanQueries'
 import { logger } from '../services'
 import type { ProgressCallback, QueryResult } from './useOrphanProgress'
 
@@ -368,6 +368,79 @@ export async function calculateOrphanConceptsFast(
     skippedQueries: [],
     currentQueryName: null,
   })
+
+  return orphanUris.sort()
+}
+
+/**
+ * Calculate orphan collections using a FILTER NOT EXISTS query.
+ * An orphan collection is one where NONE of its members have a path to any scheme.
+ *
+ * @param endpoint - SPARQL endpoint with analysis
+ * @param onProgress - Optional progress callback for collection detection
+ * @returns Array of orphan collection URIs
+ * @throws Error if query cannot be built (missing capabilities)
+ *
+ * @see /spec/ae-skos/sko08-OrphanDetection.md
+ */
+export async function calculateOrphanCollections(
+  endpoint: SPARQLEndpoint,
+  onProgress?: (phase: 'running' | 'complete', found: number) => void
+): Promise<string[]> {
+  logger.info('OrphanCollections', 'Starting orphan collection detection')
+
+  // Validate query can be built
+  const testQuery = buildOrphanCollectionsQuery(endpoint, 1, 0)
+  if (!testQuery) {
+    logger.warn('OrphanCollections', 'Cannot build orphan collection query: endpoint analysis missing or no relationships available')
+    return []
+  }
+
+  const orphanUris: string[] = []
+  let offset = 0
+  let hasMore = true
+
+  onProgress?.('running', 0)
+
+  const startTime = Date.now()
+
+  // Paginated execution
+  while (hasMore) {
+    const query = buildOrphanCollectionsQuery(endpoint, PAGE_SIZE + 1, offset)
+    if (!query) {
+      throw new Error('Failed to build orphan collection query')
+    }
+
+    const results = await executeSparql(endpoint, query)
+    const uris = results.results.bindings
+      .map(b => b.collection?.value)
+      .filter(Boolean) as string[]
+
+    // +1 detection pattern
+    hasMore = uris.length > PAGE_SIZE
+    if (hasMore) {
+      uris.pop()
+    }
+
+    orphanUris.push(...uris)
+    offset += PAGE_SIZE
+
+    onProgress?.('running', orphanUris.length)
+
+    logger.debug('OrphanCollections', `Fetched ${orphanUris.length} orphan collections so far`, {
+      batchSize: uris.length,
+      hasMore,
+    })
+  }
+
+  const duration = Date.now() - startTime
+
+  logger.info('OrphanCollections', `Orphan collection detection complete: ${orphanUris.length} orphan collections found`, {
+    collectionCount: orphanUris.length,
+    duration: `${(duration / 1000).toFixed(1)}s`,
+  })
+
+  onProgress?.('complete', orphanUris.length)
 
   return orphanUris.sort()
 }

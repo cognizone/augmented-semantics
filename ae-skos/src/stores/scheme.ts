@@ -14,13 +14,13 @@ import { logger } from '../services'
 
 const STORAGE_KEY = 'ae-skos-scheme'
 
-/** Special URI for orphan concepts (not linked to any scheme) */
+/** Special URI for orphan concepts and collections (not linked to any scheme) */
 export const ORPHAN_SCHEME_URI = '~orphans~'
 
-/** Pseudo-scheme for orphan concepts */
+/** Pseudo-scheme for orphan concepts and collections */
 export const ORPHAN_SCHEME: ConceptScheme = {
   uri: ORPHAN_SCHEME_URI,
-  label: 'Orphan Concepts',
+  label: 'Orphan Concepts & Collections',
 }
 
 export const useSchemeStore = defineStore('scheme', () => {

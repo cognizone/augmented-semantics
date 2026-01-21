@@ -326,9 +326,125 @@ Controls visibility of the "Orphan Concepts" option in the scheme dropdown.
 
 See [sko02-SchemeSelector](./sko02-SchemeSelector.md#show-orphans-selector-setting) for UI details.
 
+## Orphan Collection Detection
+
+Detection of SKOS Collections where none of the members have a path to any scheme.
+
+**Implementation:** `calculateOrphanCollections()` in `useOrphanConcepts.ts`
+
+### Definition
+
+An **orphan collection** is a `skos:Collection` where **none** of its `skos:member` concepts have a hierarchical path to any `skos:ConceptScheme`. This means:
+- The collection exists with members
+- None of those members have `skos:inScheme`, `skos:topConceptOf`, or transitive broader relationships to scheme top concepts
+
+### Query Pattern
+
+```sparql
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+
+SELECT DISTINCT ?collection
+WHERE {
+  ?collection a skos:Collection .
+
+  # Orphan = no member has a path to any scheme
+  FILTER NOT EXISTS {
+    ?collection skos:member ?concept .
+    # UNION branches built dynamically based on endpoint capabilities
+    { ?concept skos:inScheme ?scheme . }
+    UNION
+    { ?concept skos:topConceptOf ?scheme . }
+    UNION
+    { ?scheme skos:hasTopConcept ?concept . }
+    UNION
+    { ?concept skos:broaderTransitive ?top . ?top skos:topConceptOf ?scheme . }
+    # ... additional branches for broader paths
+  }
+}
+ORDER BY ?collection
+LIMIT 5000
+OFFSET 0
+```
+
+**Capability-Aware Query Building:**
+- Uses same membership UNION pattern as collection filtering, but inverted with `FILTER NOT EXISTS`
+- Includes only branches for relationships detected in endpoint analysis
+- Minimum requirement: at least 1 relationship type
+- Query complexity scales with available relationships
+
+### Detection Flow
+
+Orphan collection detection runs **after** orphan concept detection completes:
+
+```
+User selects "Orphan Concepts" pseudo-scheme
+         |
+Run orphan concept detection
+         |
+    Complete? --Yes--> Run orphan collection detection
+         |                    |
+         No (error)           |
+         |                    v
+    Show error        Add orphan collections to tree
+                      (shown first, before concepts)
+```
+
+### Progress Reporting
+
+Uses simplified progress callback:
+
+```typescript
+type CollectionProgressCallback = (
+  phase: 'running' | 'complete',
+  found: number
+) => void
+```
+
+| Phase | Description | UI Display |
+|-------|-------------|-----------|
+| `running` | Detecting orphan collections | "Detecting collections... (N found)" |
+| `complete` | Detection finished | Collections added to tree |
+
+### Display in Tree
+
+Orphan collections appear **before** orphan concepts in the tree:
+
+```
+┌─────────────────────────────────────┐
+│ Orphan Concepts                     │
+├─────────────────────────────────────┤
+│ 📁 Orphan Collection 1    (folder)  │
+│ 📁 Orphan Collection 2    (folder)  │
+│ ──────────────────────────────      │
+│ 🏷️ Orphan Concept A        (leaf)   │
+│ 🏷️ Orphan Concept B        (leaf)   │
+│ 🏷️ Orphan Concept C        (leaf)   │
+└─────────────────────────────────────┘
+```
+
+- Collections use folder icon (`folder`)
+- Concepts use label icon (`label`)
+- Collections are expandable to show their members
+- Both are sorted alphabetically within their groups
+
+### Error Handling
+
+- Returns empty array (not error) when query cannot be built
+- Logs warning when capabilities insufficient
+- Detection failure doesn't block orphan concept display
+- Graceful degradation: shows only orphan concepts if collection detection fails
+
+### Performance
+
+Orphan collection detection is typically fast:
+- Uses single FILTER NOT EXISTS query
+- Collections are usually far fewer than concepts
+- Pagination at PAGE_SIZE=5000 (same as concepts)
+
 ## Related Specs
 
 - [sko02-SchemeSelector](./sko02-SchemeSelector.md) - Orphan pseudo-scheme in dropdown
 - [sko04-ConceptTree](./sko04-ConceptTree.md) - Tree display of orphan concepts
+- [sko05-Collections](./sko05-Collections.md) - SKOS Collections support
 - [com02-StateManagement](../common/com02-StateManagement.md) - State architecture
 - [com05-SPARQLPatterns](../common/com05-SPARQLPatterns.md) - Query patterns

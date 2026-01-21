@@ -350,7 +350,7 @@ watch(
                 <span v-if="member.lang && shouldShowLangTag(member.lang)" class="lang-tag">
                   {{ member.lang }}
                 </span>
-                <span v-if="isExternalScheme(member)" class="scheme-badge" :title="member.displayScheme">
+                <span v-if="isExternalScheme(member) && member.displayScheme" class="scheme-badge" :title="member.displayScheme">
                   {{ getSchemeShortName(member.displayScheme!) }}
                 </span>
               </span>

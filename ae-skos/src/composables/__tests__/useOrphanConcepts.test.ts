@@ -6,7 +6,7 @@
  * @see /spec/ae-skos/sko03-ConceptTree.md
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { calculateOrphanConcepts, calculateOrphanConceptsFast } from '../useOrphanConcepts'
+import { calculateOrphanConcepts, calculateOrphanConceptsFast, calculateOrphanCollections } from '../useOrphanConcepts'
 import type { SPARQLEndpoint } from '../../types'
 import type { ProgressState } from '../useOrphanProgress'
 
@@ -55,6 +55,12 @@ vi.mock('../useOrphanQueries', () => ({
 
     return `SELECT ?concept WHERE { ?concept a skos:Concept . FILTER NOT EXISTS { ... } } LIMIT ${pageSize} OFFSET ${offset}`
   }),
+  buildOrphanCollectionsQuery: vi.fn((endpoint: SPARQLEndpoint, pageSize: number, offset: number) => {
+    const rel = endpoint.analysis?.relationships
+    if (!rel || (!rel.hasInScheme && !rel.hasTopConceptOf)) return null
+
+    return `SELECT ?collection WHERE { ?collection a skos:Collection . FILTER NOT EXISTS { ... } } LIMIT ${pageSize} OFFSET ${offset}`
+  }),
 }))
 
 import { executeSparql } from '../../services'
@@ -88,11 +94,20 @@ function mockEndpoint(relationships: Partial<Record<string, boolean>>, totalConc
   } as SPARQLEndpoint
 }
 
-// Helper to create SPARQL result bindings
+// Helper to create SPARQL result bindings for concepts
 function createBindings(uris: string[]) {
   return {
     results: {
       bindings: uris.map(uri => ({ concept: { value: uri } })),
+    },
+  }
+}
+
+// Helper to create SPARQL result bindings for collections
+function createCollectionBindings(uris: string[]) {
+  return {
+    results: {
+      bindings: uris.map(uri => ({ collection: { value: uri } })),
     },
   }
 }
@@ -525,6 +540,180 @@ describe('useOrphanConcepts', () => {
       // Second exclusion query should be skipped
       expect(mockExecuteSparql).toHaveBeenCalledTimes(2)
       expect(result).toEqual([])
+    })
+  })
+
+  describe('calculateOrphanCollections', () => {
+    describe('error handling', () => {
+      it('returns empty array when endpoint has no analysis', async () => {
+        const endpoint: SPARQLEndpoint = {
+          id: 'test',
+          name: 'Test',
+          url: 'http://example.org/sparql',
+          createdAt: new Date().toISOString(),
+          accessCount: 0,
+        } as SPARQLEndpoint
+
+        const result = await calculateOrphanCollections(endpoint)
+
+        expect(result).toEqual([])
+      })
+
+      it('returns empty array when query cannot be built (no relationships)', async () => {
+        const endpoint = mockEndpoint({})
+
+        const result = await calculateOrphanCollections(endpoint)
+
+        expect(result).toEqual([])
+      })
+    })
+
+    describe('query execution & pagination', () => {
+      it('paginates through results using PAGE_SIZE', async () => {
+        const endpoint = mockEndpoint({ hasInScheme: true })
+        const mockExecuteSparql = executeSparql as ReturnType<typeof vi.fn>
+
+        // Create array with 5001 items (triggers pagination)
+        const page1Uris = Array.from({ length: 5001 }, (_, i) =>
+          `http://example.org/collection${i}`
+        )
+        const page2Uris = [
+          'http://example.org/collection5001',
+          'http://example.org/collection5002',
+        ]
+
+        mockExecuteSparql
+          .mockResolvedValueOnce(createCollectionBindings(page1Uris)) // First page (5001 items)
+          .mockResolvedValueOnce(createCollectionBindings(page2Uris)) // Second page
+
+        const result = await calculateOrphanCollections(endpoint)
+
+        expect(result).toHaveLength(5002) // 5000 from page 1 + 2 from page 2
+        expect(mockExecuteSparql).toHaveBeenCalledTimes(2)
+      })
+
+      it('uses +1 detection pattern for hasMore', async () => {
+        const endpoint = mockEndpoint({ hasInScheme: true })
+        const mockExecuteSparql = executeSparql as ReturnType<typeof vi.fn>
+
+        // Exactly 5001 items means we hit PAGE_SIZE + 1
+        const page1Uris = Array.from({ length: 5001 }, (_, i) =>
+          `http://example.org/collection${i}`
+        )
+
+        mockExecuteSparql
+          .mockResolvedValueOnce(createCollectionBindings(page1Uris))
+          .mockResolvedValueOnce(createCollectionBindings([])) // Empty second page
+
+        const result = await calculateOrphanCollections(endpoint)
+
+        expect(result).toHaveLength(5000) // +1 item was removed
+        expect(mockExecuteSparql).toHaveBeenCalledTimes(2)
+      })
+
+      it('sorts results alphabetically', async () => {
+        const endpoint = mockEndpoint({ hasInScheme: true })
+        const mockExecuteSparql = executeSparql as ReturnType<typeof vi.fn>
+
+        mockExecuteSparql.mockResolvedValueOnce(createCollectionBindings([
+          'http://example.org/collection3',
+          'http://example.org/collection1',
+          'http://example.org/collection2',
+        ]))
+
+        const result = await calculateOrphanCollections(endpoint)
+
+        expect(result).toEqual([
+          'http://example.org/collection1',
+          'http://example.org/collection2',
+          'http://example.org/collection3',
+        ])
+      })
+    })
+
+    describe('progress callback', () => {
+      it('reports running phase with count updates', async () => {
+        const endpoint = mockEndpoint({ hasInScheme: true })
+        const mockExecuteSparql = executeSparql as ReturnType<typeof vi.fn>
+        const progressUpdates: { phase: 'running' | 'complete'; found: number }[] = []
+
+        mockExecuteSparql.mockResolvedValueOnce(createCollectionBindings([
+          'http://example.org/collection1',
+          'http://example.org/collection2',
+        ]))
+
+        await calculateOrphanCollections(endpoint, (phase, found) => {
+          progressUpdates.push({ phase, found })
+        })
+
+        expect(progressUpdates.some(p => p.phase === 'running')).toBe(true)
+      })
+
+      it('reports complete phase with final count', async () => {
+        const endpoint = mockEndpoint({ hasInScheme: true })
+        const mockExecuteSparql = executeSparql as ReturnType<typeof vi.fn>
+        let completeProgress: { phase: 'running' | 'complete'; found: number } | null = null
+
+        mockExecuteSparql.mockResolvedValueOnce(createCollectionBindings([
+          'http://example.org/collection1',
+        ]))
+
+        await calculateOrphanCollections(endpoint, (phase, found) => {
+          if (phase === 'complete') {
+            completeProgress = { phase, found }
+          }
+        })
+
+        expect(completeProgress).not.toBeNull()
+        expect(completeProgress?.phase).toBe('complete')
+        expect(completeProgress?.found).toBe(1)
+      })
+    })
+
+    describe('integration', () => {
+      it('returns empty array when no orphan collections found', async () => {
+        const endpoint = mockEndpoint({ hasInScheme: true })
+        const mockExecuteSparql = executeSparql as ReturnType<typeof vi.fn>
+
+        mockExecuteSparql.mockResolvedValueOnce(createCollectionBindings([]))
+
+        const result = await calculateOrphanCollections(endpoint)
+
+        expect(result).toEqual([])
+      })
+
+      it('returns correct URIs for orphan collections', async () => {
+        const endpoint = mockEndpoint({ hasInScheme: true })
+        const mockExecuteSparql = executeSparql as ReturnType<typeof vi.fn>
+
+        mockExecuteSparql.mockResolvedValueOnce(createCollectionBindings([
+          'http://example.org/collection1',
+          'http://example.org/collection2',
+          'http://example.org/collection3',
+        ]))
+
+        const result = await calculateOrphanCollections(endpoint)
+
+        expect(result).toHaveLength(3)
+        expect(result).toContain('http://example.org/collection1')
+        expect(result).toContain('http://example.org/collection2')
+        expect(result).toContain('http://example.org/collection3')
+      })
+
+      it('handles single page of results', async () => {
+        const endpoint = mockEndpoint({ hasInScheme: true })
+        const mockExecuteSparql = executeSparql as ReturnType<typeof vi.fn>
+
+        mockExecuteSparql.mockResolvedValueOnce(createCollectionBindings([
+          'http://example.org/collection1',
+          'http://example.org/collection2',
+        ]))
+
+        const result = await calculateOrphanCollections(endpoint)
+
+        expect(result).toHaveLength(2)
+        expect(mockExecuteSparql).toHaveBeenCalledTimes(1)
+      })
     })
   })
 })

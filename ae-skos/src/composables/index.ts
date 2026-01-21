@@ -17,8 +17,8 @@ export { useEndpointTest } from './useEndpointTest'
 export { useLanguagePriorities } from './useLanguagePriorities'
 export { useLabelResolver } from './useLabelResolver'
 export { useProgressiveLabelLoader } from './useProgressiveLabelLoader'
-export { calculateOrphanConcepts, calculateOrphanConceptsFast } from './useOrphanConcepts'
-export { buildOrphanExclusionQueries, buildAllConceptsQuery, buildSingleOrphanQuery } from './useOrphanQueries'
+export { calculateOrphanConcepts, calculateOrphanConceptsFast, calculateOrphanCollections } from './useOrphanConcepts'
+export { buildOrphanExclusionQueries, buildAllConceptsQuery, buildSingleOrphanQuery, buildOrphanCollectionsQuery } from './useOrphanQueries'
 export {
   createInitialProgress,
   type OrphanProgress,

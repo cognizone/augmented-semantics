@@ -343,3 +343,97 @@ export function buildAllConceptsQuery(pageSize: number, offset: number): string 
     OFFSET ${offset}
   `)
 }
+
+/**
+ * Build a single FILTER NOT EXISTS query for orphan collection detection.
+ * An orphan collection is a collection where NONE of its members have a
+ * hierarchical path to any scheme (via inScheme, topConceptOf, broaderTransitive, etc.)
+ *
+ * Uses the same membership UNION pattern as buildCollectionsQuery but inverted
+ * with FILTER NOT EXISTS.
+ *
+ * @param endpoint - SPARQL endpoint with relationship analysis
+ * @param pageSize - Number of results per page
+ * @param offset - Pagination offset
+ * @returns SPARQL query string, or null if capabilities are missing
+ *
+ * @see /spec/ae-skos/sko08-OrphanDetection.md
+ */
+export function buildOrphanCollectionsQuery(
+  endpoint: SPARQLEndpoint,
+  pageSize: number,
+  offset: number
+): string | null {
+  const rel = endpoint.analysis?.relationships
+
+  if (!rel) {
+    return null
+  }
+
+  // Build membership UNION branches based on endpoint capabilities
+  // (same pattern as buildCollectionsQuery)
+  const membershipBranches: string[] = []
+
+  // Branch 1: inScheme
+  if (rel.hasInScheme) {
+    membershipBranches.push('{ ?concept skos:inScheme ?scheme . }')
+  }
+
+  // Branch 2: topConceptOf
+  if (rel.hasTopConceptOf) {
+    membershipBranches.push('{ ?concept skos:topConceptOf ?scheme . }')
+  }
+
+  // Branch 3: hasTopConcept
+  if (rel.hasHasTopConcept) {
+    membershipBranches.push('{ ?scheme skos:hasTopConcept ?concept . }')
+  }
+
+  // Hierarchical branches - need top concept capability
+  const hasTopCapability = rel.hasTopConceptOf || rel.hasHasTopConcept
+
+  if (hasTopCapability) {
+    // Prefer broaderTransitive over broader+ property path (faster)
+    if (rel.hasBroaderTransitive) {
+      // For each top concept relation type, add the transitive path
+      if (rel.hasTopConceptOf) {
+        membershipBranches.push('{ ?concept skos:broaderTransitive ?top . ?top skos:topConceptOf ?scheme . }')
+      }
+      if (rel.hasHasTopConcept) {
+        membershipBranches.push('{ ?concept skos:broaderTransitive ?top . ?scheme skos:hasTopConcept ?top . }')
+      }
+    } else if (rel.hasBroader) {
+      // Fallback to broader+ property path
+      if (rel.hasTopConceptOf) {
+        membershipBranches.push('{ ?concept skos:broader+ ?top . ?top skos:topConceptOf ?scheme . }')
+      }
+      if (rel.hasHasTopConcept) {
+        membershipBranches.push('{ ?concept skos:broader+ ?top . ?scheme skos:hasTopConcept ?top . }')
+      }
+    }
+  }
+
+  // If no branches, cannot detect orphans
+  if (membershipBranches.length === 0) {
+    return null
+  }
+
+  // Build UNION pattern for membership test
+  const unionPattern = membershipBranches.join('\n          UNION\n          ')
+
+  return withPrefixes(`
+    SELECT DISTINCT ?collection
+    WHERE {
+      ?collection a skos:Collection .
+
+      # Orphan = no member has a path to any scheme
+      FILTER NOT EXISTS {
+        ?collection skos:member ?concept .
+        ${unionPattern}
+      }
+    }
+    ORDER BY ?collection
+    LIMIT ${pageSize}
+    OFFSET ${offset}
+  `)
+}

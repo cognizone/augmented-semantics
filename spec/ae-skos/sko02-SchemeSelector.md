@@ -93,14 +93,15 @@ When >5 schemes are available, a filter input field appears in the dropdown head
 
 ### Orphan Concepts Pseudo-Scheme
 
-A special pseudo-scheme represents concepts not associated with any ConceptScheme. Fully implemented with multiple detection strategies.
+A special pseudo-scheme represents concepts and collections not associated with any ConceptScheme. Fully implemented with multiple detection strategies.
 
 **URI:** `~orphans~` (constant)
 
 **Purpose:**
 - Helps identify concepts that lack proper scheme relationships
+- Detects collections where no members have paths to any scheme
 - Useful for data quality checking
-- Provides navigation to orphaned concepts
+- Provides navigation to orphaned concepts and collections
 - Supports multiple detection methods based on endpoint capabilities
 
 **Data Model:**
@@ -124,10 +125,14 @@ export const ORPHAN_SCHEME_URI = '~orphans~'
 
 **Behavior when selected:**
 - Tree loads orphan concepts with progress tracking
+- After concept detection, orphan collections are detected
+- Collections appear first in tree, then concepts (both sorted alphabetically)
 - Breadcrumb shows "Orphan Concepts" instead of raw URI
 - Search scope includes only orphan concepts
 - Details view not available (pseudo-scheme has no properties)
 - Detection strategy selected automatically or by user setting
+
+See [sko08-OrphanDetection](./sko08-OrphanDetection.md#orphan-collection-detection) for collection detection details.
 
 **UI Example:**
 ```

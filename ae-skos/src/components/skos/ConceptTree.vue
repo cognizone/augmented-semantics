@@ -107,8 +107,13 @@ const loadingCollectionChildren = ref<Set<string>>(new Set())
  * Collections with child collections lazy-load their nested collections
  * Concept members are always shown in the details panel, not in the tree
  */
+/** Check if a tree node represents a collection */
+function isCollectionNode(node: TreeNode): boolean {
+  return node.data?.isCollection || node.data?.type === 'collection'
+}
+
 async function onNodeExpand(node: TreeNode) {
-  if (node.data?.isCollection && node.data?.hasChildCollections) {
+  if (isCollectionNode(node) && node.data?.hasChildCollections) {
     // Load child collections for this collection
     if (!node.children?.length) {  // Only load if not already loaded
       const uri = node.data.uri as string
@@ -132,13 +137,20 @@ async function onNodeExpand(node: TreeNode) {
 // If a scheme is selected, show it as the root with collections and top concepts as children
 // Collections appear first, then concepts (but concepts load first for performance)
 // Only top-level collections appear at root level; nested collections load on expand
+// Exception: orphan "scheme" displays items directly at root (no fake scheme wrapper)
 const treeNodes = computed((): TreeNode[] => {
   const topNodes = conceptStore.topConcepts.map(node => convertToTreeNode(node))
   const collectionNodes = topLevelCollections.value.map(col => convertCollectionToTreeNode(col))
 
-  // If a scheme is selected, wrap collections + top concepts under the scheme as root
-  // Collections come first in display order, then concepts
   const scheme = schemeStore.selected
+
+  // Orphan scheme: display items directly at root level (no wrapper)
+  if (schemeStore.isOrphanSchemeSelected) {
+    return topNodes // orphan collections are already in topConcepts with type: 'collection'
+  }
+
+  // Regular scheme: wrap collections + top concepts under the scheme as root
+  // Collections come first in display order, then concepts
   if (scheme) {
     const schemeChildren = [...collectionNodes, ...topNodes]
 
@@ -218,7 +230,7 @@ function onNodeClick(node: TreeNode) {
   const uri = node.data?.uri || node.key
   if (!uri) return
 
-  if (node.data?.isCollection) {
+  if (isCollectionNode(node)) {
     // Collection selection
     conceptStore.addToHistory({
       uri,
@@ -345,12 +357,13 @@ function getPhaseLabel(phase: string, currentQueryName: string | null): string {
   const isSingleQuery = currentQueryName === 'single-query-orphan-detection'
 
   switch (phase) {
-    case 'fetching-all': return 'Phase 1/3: Fetching Concepts'
+    case 'fetching-all': return 'Phase 1/4: Fetching Concepts'
     case 'running-exclusions':
       return isSingleQuery
-        ? 'Executing Single Query'
-        : 'Phase 2/3: Running Exclusion Queries'
-    case 'calculating': return 'Phase 3/3: Calculating Orphans'
+        ? 'Detecting Orphan Concepts'
+        : 'Phase 2/4: Running Exclusion Queries'
+    case 'calculating': return 'Phase 3/4: Calculating Orphans'
+    case 'detecting-collections': return 'Phase 4/4: Detecting Orphan Collections'
     case 'complete': return 'Complete'
     default: return 'Loading...'
   }
@@ -614,6 +627,21 @@ watch(
           <div v-else-if="orphanProgress.phase === 'calculating'" class="progress-detail">
             Performing final calculation...
           </div>
+
+          <!-- Phase 4: Detecting collections -->
+          <div v-else-if="orphanProgress.phase === 'detecting-collections'" class="progress-detail">
+            <div class="progress-counts">
+              <span class="count-label">Orphan concepts:</span>
+              <span class="count-value">{{ orphanProgress.remainingCandidates.toLocaleString() }}</span>
+            </div>
+            <div class="progress-counts">
+              <span class="count-label">Orphan collections:</span>
+              <span class="count-value">{{ orphanProgress.orphanCollections.toLocaleString() }} found...</span>
+            </div>
+            <div class="progress-current">
+              Scanning for collections with no members in any scheme...
+            </div>
+          </div>
         </div>
       </template>
     </div>
@@ -634,7 +662,7 @@ watch(
         <details>
           <summary class="summary-header">
             <span class="material-symbols-outlined summary-icon">info</span>
-            <span>Orphan Calculation: {{ orphanProgress.remainingCandidates.toLocaleString() }} orphans found from {{ orphanProgress.totalConcepts.toLocaleString() }} concepts</span>
+            <span>Orphan Detection: {{ (orphanProgress.remainingCandidates + orphanProgress.orphanCollections).toLocaleString() }} orphans found</span>
           </summary>
           <div class="summary-content">
             <div class="summary-stats">
@@ -643,12 +671,12 @@ watch(
                 <span class="stat-value">{{ orphanProgress.totalConcepts.toLocaleString() }}</span>
               </div>
               <div class="stat-item">
-                <span class="stat-label">Excluded:</span>
-                <span class="stat-value">{{ (orphanProgress.totalConcepts - orphanProgress.remainingCandidates).toLocaleString() }}</span>
+                <span class="stat-label">Orphan Concepts:</span>
+                <span class="stat-value">{{ orphanProgress.remainingCandidates.toLocaleString() }}</span>
               </div>
               <div class="stat-item">
-                <span class="stat-label">Orphans:</span>
-                <span class="stat-value">{{ orphanProgress.remainingCandidates.toLocaleString() }}</span>
+                <span class="stat-label">Orphan Collections:</span>
+                <span class="stat-value">{{ orphanProgress.orphanCollections.toLocaleString() }}</span>
               </div>
             </div>
 
@@ -696,14 +724,14 @@ watch(
             class="tree-node"
             :class="{
               'scheme-node': slotProps.node.data?.isScheme,
-              'collection-node': slotProps.node.data?.isCollection,
+              'collection-node': isCollectionNode(slotProps.node),
               'deprecated': slotProps.node.data?.deprecated && showDeprecationIndicator
             }"
             @click.stop="onNodeClick(slotProps.node)"
           >
             <!-- Icon based on node type -->
             <span v-if="slotProps.node.data?.isScheme" class="material-symbols-outlined node-icon icon-folder">folder</span>
-            <span v-else-if="slotProps.node.data?.isCollection" class="material-symbols-outlined node-icon icon-collection">collections_bookmark</span>
+            <span v-else-if="isCollectionNode(slotProps.node)" class="material-symbols-outlined node-icon icon-collection">collections_bookmark</span>
             <span v-else-if="slotProps.node.data?.hasNarrower" class="material-symbols-outlined node-icon icon-label">label</span>
             <span v-else class="material-symbols-outlined node-icon icon-leaf">circle</span>
             <span class="node-label">
