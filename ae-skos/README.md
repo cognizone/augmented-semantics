@@ -2,6 +2,8 @@
 
 Browser-based SKOS vocabulary browser and explorer. Connect to any SPARQL endpoint and browse SKOS concept schemes directly in your browser.
 
+![AE SKOS Screenshot](docs/images/skos-browser-demo.png)
+
 ## Features
 
 - **Direct SPARQL Connection** - No backend required, connects directly to SPARQL endpoints via Fetch API
