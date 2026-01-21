@@ -157,7 +157,7 @@ Setting to control orphan detection algorithm. Affects performance and compatibi
 
 **UI:** Radio button group in app settings panel. Default: `auto` (recommended)
 
-See [sko03-ConceptTree.md](./sko03-ConceptTree.md#orphan-detection-methods) for algorithm details, query patterns, and performance comparison.
+See [sko08-OrphanDetection](./sko08-OrphanDetection.md) for algorithm details, query patterns, and performance comparison.
 
 ### Show Orphans Selector Setting
 
@@ -505,8 +505,8 @@ See [com03-ErrorHandling](../common/com03-ErrorHandling.md) for details.
 - [com02-StateManagement](../common/com02-StateManagement.md) - State architecture
 - [com03-ErrorHandling](../common/com03-ErrorHandling.md) - Error/loading states
 - [com05-SPARQLPatterns](../common/com05-SPARQLPatterns.md) - Query patterns
-- [sko03-ConceptTree](./sko03-ConceptTree.md) - Top concepts filtered by selected scheme
-- [sko10-PropertyAnalysis](./sko10-PropertyAnalysis.md) - Property comparison across Concept, Scheme, and Collection details
+- [sko04-ConceptTree](./sko04-ConceptTree.md) - Top concepts filtered by selected scheme
+- [sko13-PropertyAnalysis](./sko13-PropertyAnalysis.md) - Property comparison across Concept, Scheme, and Collection details
 
 ## Dependencies
 

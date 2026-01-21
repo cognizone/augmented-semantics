@@ -1,4 +1,4 @@
-# sko09: Curation Workflow
+# sko12: Curation Workflow
 
 Separate workflow for managing curated SPARQL endpoints outside the main application.
 

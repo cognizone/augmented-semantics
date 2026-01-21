@@ -32,12 +32,17 @@ Browser-only tools that connect directly to SPARQL endpoints via HTTP. No backen
     - `sko00-overview.md` - Overview and architecture
     - `sko01-LanguageSelector.md` - Language detection/selection
     - `sko02-SchemeSelector.md` - Scheme selection
-    - `sko03-ConceptTree.md` - Hierarchical browsing
-    - `sko04-ConceptDetails.md` - Concept property display
-    - `sko05-SearchBox.md` - Search and autocomplete
-    - `sko06-Utilities.md` - Copy, raw view, history
-    - `sko07-Testing.md` - Testing strategy and patterns
-    - `sko08-DeveloperTools.md` - Developer tools and debugging
+    - `sko03-Settings.md` - Centralized application settings
+    - `sko04-ConceptTree.md` - Hierarchical browsing
+    - `sko05-Collections.md` - SKOS Collections support
+    - `sko06-ConceptDetails.md` - Concept property display
+    - `sko07-SearchBox.md` - Search and autocomplete
+    - `sko08-OrphanDetection.md` - Orphan concept detection
+    - `sko09-Utilities.md` - Copy, raw view, history
+    - `sko10-Testing.md` - Testing strategy and patterns
+    - `sko11-DeveloperTools.md` - Developer tools and debugging
+    - `sko12-CurationWorkflow.md` - Endpoint curation
+    - `sko13-PropertyAnalysis.md` - Property comparison
   - `/spec/ae-rdf/` - AE RDF specifications
   - `/spec/ae-owl/` - AE OWL specifications
   - `/spec/ae-shacl/` - AE SHACL specifications

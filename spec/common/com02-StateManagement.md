@@ -123,8 +123,8 @@ Two types for concept references serve different purposes:
 
 | Type | Use Case | Defined In |
 |------|----------|------------|
-| `ConceptRef` | Simple reference (breadcrumb, relations, search results) | com02, sko04 |
-| `ConceptNode` | Tree node with expansion state | sko03 |
+| `ConceptRef` | Simple reference (breadcrumb, relations, search results) | com02, sko06 |
+| `ConceptNode` | Tree node with expansion state | sko04 |
 
 - **ConceptRef**: Minimal data for display and navigation (uri + label)
 - **ConceptNode**: Extends ConceptRef with tree state (hasNarrower, children, expanded)

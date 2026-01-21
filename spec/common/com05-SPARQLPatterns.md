@@ -218,7 +218,7 @@ BIND(EXISTS { [] skos:broader ?concept } AS ?hasNarrower)
 # (COUNT(DISTINCT ?narrower) AS ?narrowerCount)
 ```
 
-See [sko03-ConceptTree](../ae-skos/sko03-ConceptTree.md#performance-optimizations) for detailed performance notes.
+See [sko04-ConceptTree](../ae-skos/sko04-ConceptTree.md#performance-optimizations) for detailed performance notes.
 
 ### Get Narrower Concepts
 
