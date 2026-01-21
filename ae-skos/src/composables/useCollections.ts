@@ -22,6 +22,7 @@ export function useCollections() {
   const collections = ref<CollectionNode[]>([])
   const loading = ref(false)
   const error = ref<string | null>(null)
+  const currentSchemeUri = ref<string | null>(null)
 
   /**
    * Process query bindings into CollectionNode array.
@@ -110,6 +111,9 @@ export function useCollections() {
     const endpoint = endpointStore.current
     if (!endpoint) return
 
+    // Track current scheme for child collection queries
+    currentSchemeUri.value = schemeUri
+
     // Check capabilities before attempting query
     const { branches, canQuery } = getCollectionQueryCapabilities(endpoint)
 
@@ -167,13 +171,25 @@ export function useCollections() {
   /**
    * Load child collections for a parent collection.
    * Used for lazy-loading nested collections on expand.
+   * Filters to only include child collections with members in the current scheme.
    */
   async function loadChildCollections(parentUri: string): Promise<CollectionNode[]> {
     const endpoint = endpointStore.current
     if (!endpoint) return []
 
-    const query = buildChildCollectionsQuery(parentUri, endpoint)
-    logger.debug('Collections', 'Loading child collections', { parentUri, query })
+    const schemeUri = currentSchemeUri.value
+    if (!schemeUri) {
+      logger.warn('Collections', 'No current scheme set, cannot load child collections')
+      return []
+    }
+
+    const query = buildChildCollectionsQuery(parentUri, schemeUri, endpoint)
+    if (!query) {
+      logger.info('Collections', 'No query generated for child collections - missing capabilities')
+      return []
+    }
+
+    logger.debug('Collections', 'Loading child collections', { parentUri, schemeUri, query })
 
     try {
       const results = await executeSparql(endpoint, query, { retries: 1 })
@@ -196,6 +212,7 @@ export function useCollections() {
     collections.value = []
     loading.value = false
     error.value = null
+    currentSchemeUri.value = null
   }
 
   return {

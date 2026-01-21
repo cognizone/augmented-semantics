@@ -92,6 +92,7 @@ Analysis of all properties across the three detail types reveals **consistent pr
 | narrower | `skos:narrower` | ✅ | N/A | N/A | Concept-only |
 | related | `skos:related` | ✅ | N/A | N/A | Concept-only |
 | inScheme | `skos:inScheme` | ✅ | N/A | N/A | Concept-only |
+| members | `skos:member` | N/A | N/A | ✅ | Collection-only |
 | collections | `skos:member` (inverse) | ✅ | N/A | N/A | Concept-only |
 
 ### 8. Mappings (SKOS)

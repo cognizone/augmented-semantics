@@ -226,8 +226,8 @@ export function useCollectionData() {
         # Detect if member is a collection
         BIND(EXISTS { ?member a skos:Collection } AS ?isCollection)
 
-        ${currentSchemeUri ? `# Boolean: is member in current scheme?
-        BIND(EXISTS { ?member skos:inScheme <${currentSchemeUri}> } AS ?inCurrentScheme)` : ''}
+        ${currentSchemeUri ? `# Boolean: is member in current scheme? (check both inScheme and topConceptOf)
+        BIND(EXISTS { { ?member skos:inScheme <${currentSchemeUri}> } UNION { ?member skos:topConceptOf <${currentSchemeUri}> } } AS ?inCurrentScheme)` : ''}
 
         # Get a scheme for badge display (client takes first value found)
         OPTIONAL { ?member skos:inScheme ?displayScheme }

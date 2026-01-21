@@ -408,28 +408,96 @@ describe('useCollectionQueries', () => {
   describe('buildChildCollectionsQuery', () => {
     const testParentUri = 'http://example.org/collection/parent'
 
-    it('generates valid SPARQL query', () => {
-      const query = buildChildCollectionsQuery(testParentUri)
+    it('returns null if endpoint has no analysis', () => {
+      const endpoint: SPARQLEndpoint = {
+        id: 'test',
+        name: 'Test',
+        url: 'http://example.org/sparql',
+        createdAt: new Date().toISOString(),
+        accessCount: 0,
+      } as SPARQLEndpoint
+
+      const query = buildChildCollectionsQuery(testParentUri, testScheme, endpoint)
+      expect(query).toBeNull()
+    })
+
+    it('returns null if all relationship capabilities are false', () => {
+      const endpoint = mockEndpoint({})
+
+      const query = buildChildCollectionsQuery(testParentUri, testScheme, endpoint)
+      expect(query).toBeNull()
+    })
+
+    it('generates valid SPARQL query with scheme filtering', () => {
+      const endpoint = mockEndpoint({ hasInScheme: true })
+
+      const query = buildChildCollectionsQuery(testParentUri, testScheme, endpoint)
+      expect(query).not.toBeNull()
       expect(query).toContain('SELECT DISTINCT ?collection')
       expect(query).toContain('WHERE {')
       expect(query).toContain(`<${testParentUri}> skos:member ?collection`)
       expect(query).toContain('?collection a skos:Collection')
     })
 
+    it('filters child collections by scheme membership', () => {
+      const endpoint = mockEndpoint({ hasInScheme: true })
+
+      const query = buildChildCollectionsQuery(testParentUri, testScheme, endpoint)
+      expect(query).not.toBeNull()
+      expect(query).toContain('?collection skos:member ?member')
+      expect(query).toContain(`?member skos:inScheme <${testScheme}>`)
+    })
+
+    it('includes topConceptOf branch for scheme filtering when available', () => {
+      const endpoint = mockEndpoint({ hasTopConceptOf: true })
+
+      const query = buildChildCollectionsQuery(testParentUri, testScheme, endpoint)
+      expect(query).not.toBeNull()
+      expect(query).toContain(`?member skos:topConceptOf <${testScheme}>`)
+    })
+
+    it('includes hasTopConcept branch for scheme filtering when available', () => {
+      const endpoint = mockEndpoint({ hasHasTopConcept: true })
+
+      const query = buildChildCollectionsQuery(testParentUri, testScheme, endpoint)
+      expect(query).not.toBeNull()
+      expect(query).toContain(`<${testScheme}> skos:hasTopConcept ?member`)
+    })
+
+    it('includes hierarchical branches for scheme filtering', () => {
+      const endpoint = mockEndpoint({
+        hasTopConceptOf: true,
+        hasBroaderTransitive: true,
+      })
+
+      const query = buildChildCollectionsQuery(testParentUri, testScheme, endpoint)
+      expect(query).not.toBeNull()
+      expect(query).toContain('?member skos:broaderTransitive ?top')
+    })
+
     it('includes hasChildCollections for recursive expandability', () => {
-      const query = buildChildCollectionsQuery(testParentUri)
+      const endpoint = mockEndpoint({ hasInScheme: true })
+
+      const query = buildChildCollectionsQuery(testParentUri, testScheme, endpoint)
+      expect(query).not.toBeNull()
       expect(query).toContain('?hasChildCollections')
       expect(query).toContain('AS ?hasChildCollections')
       expect(query).toContain('BIND(EXISTS {')
     })
 
     it('does not include hasParentCollection (not needed for children)', () => {
-      const query = buildChildCollectionsQuery(testParentUri)
+      const endpoint = mockEndpoint({ hasInScheme: true })
+
+      const query = buildChildCollectionsQuery(testParentUri, testScheme, endpoint)
+      expect(query).not.toBeNull()
       expect(query).not.toContain('?hasParentCollection')
     })
 
     it('includes label resolution patterns', () => {
-      const query = buildChildCollectionsQuery(testParentUri)
+      const endpoint = mockEndpoint({ hasInScheme: true })
+
+      const query = buildChildCollectionsQuery(testParentUri, testScheme, endpoint)
+      expect(query).not.toBeNull()
       expect(query).toContain('skos:prefLabel')
       expect(query).toContain('skosxl:prefLabel')
       expect(query).toContain('dct:title')
@@ -437,17 +505,26 @@ describe('useCollectionQueries', () => {
     })
 
     it('includes notation pattern', () => {
-      const query = buildChildCollectionsQuery(testParentUri)
+      const endpoint = mockEndpoint({ hasInScheme: true })
+
+      const query = buildChildCollectionsQuery(testParentUri, testScheme, endpoint)
+      expect(query).not.toBeNull()
       expect(query).toContain('skos:notation')
     })
 
     it('includes PREFIX declarations', () => {
-      const query = buildChildCollectionsQuery(testParentUri)
+      const endpoint = mockEndpoint({ hasInScheme: true })
+
+      const query = buildChildCollectionsQuery(testParentUri, testScheme, endpoint)
+      expect(query).not.toBeNull()
       expect(query).toContain('PREFIX skos:')
     })
 
     it('orders by collection', () => {
-      const query = buildChildCollectionsQuery(testParentUri)
+      const endpoint = mockEndpoint({ hasInScheme: true })
+
+      const query = buildChildCollectionsQuery(testParentUri, testScheme, endpoint)
+      expect(query).not.toBeNull()
       expect(query).toContain('ORDER BY ?collection')
     })
   })

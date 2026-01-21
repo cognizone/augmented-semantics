@@ -88,25 +88,21 @@ export function buildCollectionsQuery(
   }
 
   // Hierarchical branches - need top concept capability
+  // Note: Nested UNIONs cause issues on some SPARQL engines, so we flatten into separate branches
   const hasTopCapability = rel.hasTopConceptOf || rel.hasHasTopConcept
 
   if (hasTopCapability) {
-    // Build inner top concept branches
-    const topBranches: string[] = []
-    if (rel.hasTopConceptOf) {
-      topBranches.push(`{ ?top skos:topConceptOf <${schemeUri}> . }`)
-    }
-    if (rel.hasHasTopConcept) {
-      topBranches.push(`{ <${schemeUri}> skos:hasTopConcept ?top . }`)
-    }
-    const topPattern = topBranches.join(' UNION ')
-
     // Prefer broaderTransitive over broader+ property path (faster)
-    if (rel.hasBroaderTransitive) {
-      membershipBranches.push(`{ ?concept skos:broaderTransitive ?top . ${topPattern} }`)
-    } else if (rel.hasBroader) {
-      // Fallback to broader+ property path (slower)
-      membershipBranches.push(`{ ?concept skos:broader+ ?top . ${topPattern} }`)
+    const broaderPredicate = rel.hasBroaderTransitive ? 'skos:broaderTransitive' : (rel.hasBroader ? 'skos:broader+' : null)
+
+    if (broaderPredicate) {
+      // Add separate branch for each top concept pattern to avoid nested UNION issues
+      if (rel.hasTopConceptOf) {
+        membershipBranches.push(`{ ?concept ${broaderPredicate} ?top . ?top skos:topConceptOf <${schemeUri}> . }`)
+      }
+      if (rel.hasHasTopConcept) {
+        membershipBranches.push(`{ ?concept ${broaderPredicate} ?top . <${schemeUri}> skos:hasTopConcept ?top . }`)
+      }
     }
   }
 
@@ -158,14 +154,60 @@ export function buildCollectionsQuery(
 /**
  * Build SPARQL query for loading child collections of a parent collection.
  * Used for lazy-loading nested collections on expand.
+ * Filters to only include child collections with members in the current scheme.
  *
  * @param parentUri - URI of the parent collection
- * @param endpoint - Optional endpoint to get label capabilities from
- * @returns SPARQL query string
+ * @param schemeUri - URI of the current scheme (for filtering)
+ * @param endpoint - Endpoint to get capabilities from
+ * @returns SPARQL query string, or null if capabilities are missing
  */
-export function buildChildCollectionsQuery(parentUri: string, endpoint?: SPARQLEndpoint): string {
+export function buildChildCollectionsQuery(
+  parentUri: string,
+  schemeUri: string,
+  endpoint: SPARQLEndpoint
+): string | null {
+  const rel = endpoint.analysis?.relationships
+
+  if (!rel) {
+    return null
+  }
+
+  // Build membership UNION branches based on endpoint capabilities
+  const membershipBranches: string[] = []
+
+  if (rel.hasInScheme) {
+    membershipBranches.push(`{ ?member skos:inScheme <${schemeUri}> . }`)
+  }
+  if (rel.hasTopConceptOf) {
+    membershipBranches.push(`{ ?member skos:topConceptOf <${schemeUri}> . }`)
+  }
+  if (rel.hasHasTopConcept) {
+    membershipBranches.push(`{ <${schemeUri}> skos:hasTopConcept ?member . }`)
+  }
+
+  // Hierarchical branches - flatten to avoid nested UNION issues
+  const hasTopCapability = rel.hasTopConceptOf || rel.hasHasTopConcept
+  if (hasTopCapability) {
+    const broaderPredicate = rel.hasBroaderTransitive ? 'skos:broaderTransitive' : (rel.hasBroader ? 'skos:broader+' : null)
+
+    if (broaderPredicate) {
+      if (rel.hasTopConceptOf) {
+        membershipBranches.push(`{ ?member ${broaderPredicate} ?top . ?top skos:topConceptOf <${schemeUri}> . }`)
+      }
+      if (rel.hasHasTopConcept) {
+        membershipBranches.push(`{ ?member ${broaderPredicate} ?top . <${schemeUri}> skos:hasTopConcept ?top . }`)
+      }
+    }
+  }
+
+  if (membershipBranches.length === 0) {
+    return null
+  }
+
+  const unionPattern = membershipBranches.join('\n        UNION\n        ')
+
   // Get collection label capabilities
-  const collectionCapabilities = endpoint?.analysis?.labelPredicates?.collection
+  const collectionCapabilities = endpoint.analysis?.labelPredicates?.collection
   const labelClause = buildCapabilityAwareLabelUnionClause('?collection', collectionCapabilities)
 
   return withPrefixes(`
@@ -173,6 +215,10 @@ export function buildChildCollectionsQuery(parentUri: string, endpoint?: SPARQLE
            ?hasChildCollections WHERE {
       <${parentUri}> skos:member ?collection .
       ?collection a skos:Collection .
+
+      # Child collection must have members in current scheme
+      ?collection skos:member ?member .
+      ${unionPattern}
 
       # Detect if has children (for recursive expandability)
       BIND(EXISTS {
