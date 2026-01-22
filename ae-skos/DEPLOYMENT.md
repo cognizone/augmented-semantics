@@ -430,13 +430,13 @@ The repository includes a GitHub Actions workflow for automated deployment to Gi
 ### How It Works
 
 The workflow (`.github/workflows/deploy-skos.yml`):
-1. Builds with `BASE_URL=/augmented-semantics/skos/`
+1. Builds with `BASE_URL=/augmented-semantics/`
 2. Copies `index.html` to `404.html` for SPA routing
 3. Deploys to GitHub Pages
 
 ### URL
 
-After deployment: `https://cognizone.github.io/augmented-semantics/skos/`
+After deployment: `https://cognizone.github.io/augmented-semantics/`
 
 ### Customizing for Forks
 
@@ -445,7 +445,7 @@ If you fork this repository, update the workflow's `BASE_URL`:
 ```yaml
 - run: pnpm --filter ae-skos build
   env:
-    BASE_URL: /your-repo-name/skos/
+    BASE_URL: /your-repo-name/
 ```
 
 ## Troubleshooting

@@ -32,7 +32,7 @@ jobs:
       - run: pnpm install
       - run: pnpm --filter ae-skos build
         env:
-          BASE_URL: /augmented-semantics/skos/
+          BASE_URL: /augmented-semantics/
       - run: cp ae-skos/dist/index.html ae-skos/dist/404.html
 
       - uses: actions/upload-pages-artifact@v3
