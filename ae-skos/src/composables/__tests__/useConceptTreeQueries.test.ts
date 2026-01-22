@@ -14,15 +14,15 @@ describe('useConceptTreeQueries', () => {
     setActivePinia(createPinia())
   })
 
-  describe('buildExplicitTopConceptsQuery', () => {
+  describe('buildExplicitTopConceptsMetadataQuery', () => {
     it('returns null when endpoint has no explicit top concept capabilities', () => {
       const endpointStore = useEndpointStore()
       const endpoint = endpointStore.addEndpoint({ name: 'Test', url: 'http://example.org/sparql' })
       endpoint.analysis = { relationships: { hasTopConceptOf: false, hasHasTopConcept: false } }
       endpointStore.selectEndpoint(endpoint.id)
 
-      const { buildExplicitTopConceptsQuery } = useConceptTreeQueries()
-      const query = buildExplicitTopConceptsQuery('http://example.org/scheme', 200, 0)
+      const { buildExplicitTopConceptsMetadataQuery } = useConceptTreeQueries()
+      const query = buildExplicitTopConceptsMetadataQuery('http://example.org/scheme', 200, 0)
 
       expect(query).toBeNull()
     })
@@ -33,8 +33,8 @@ describe('useConceptTreeQueries', () => {
       endpoint.analysis = { relationships: { hasTopConceptOf: true, hasHasTopConcept: false } }
       endpointStore.selectEndpoint(endpoint.id)
 
-      const { buildExplicitTopConceptsQuery } = useConceptTreeQueries()
-      const query = buildExplicitTopConceptsQuery('http://example.org/scheme', 200, 0)
+      const { buildExplicitTopConceptsMetadataQuery } = useConceptTreeQueries()
+      const query = buildExplicitTopConceptsMetadataQuery('http://example.org/scheme', 200, 0)
 
       expect(query).not.toBeNull()
       expect(query).toContain('skos:topConceptOf')
@@ -47,8 +47,8 @@ describe('useConceptTreeQueries', () => {
       endpoint.analysis = { relationships: { hasTopConceptOf: false, hasHasTopConcept: true } }
       endpointStore.selectEndpoint(endpoint.id)
 
-      const { buildExplicitTopConceptsQuery } = useConceptTreeQueries()
-      const query = buildExplicitTopConceptsQuery('http://example.org/scheme', 200, 0)
+      const { buildExplicitTopConceptsMetadataQuery } = useConceptTreeQueries()
+      const query = buildExplicitTopConceptsMetadataQuery('http://example.org/scheme', 200, 0)
 
       expect(query).not.toBeNull()
       expect(query).toContain('skos:hasTopConcept')
@@ -61,8 +61,8 @@ describe('useConceptTreeQueries', () => {
       endpoint.analysis = { relationships: { hasTopConceptOf: true, hasHasTopConcept: true } }
       endpointStore.selectEndpoint(endpoint.id)
 
-      const { buildExplicitTopConceptsQuery } = useConceptTreeQueries()
-      const query = buildExplicitTopConceptsQuery('http://example.org/scheme', 200, 0)
+      const { buildExplicitTopConceptsMetadataQuery } = useConceptTreeQueries()
+      const query = buildExplicitTopConceptsMetadataQuery('http://example.org/scheme', 200, 0)
 
       expect(query).not.toBeNull()
       expect(query).toContain('skos:topConceptOf')
@@ -76,8 +76,8 @@ describe('useConceptTreeQueries', () => {
       endpoint.analysis = { relationships: { hasTopConceptOf: true, hasHasTopConcept: true } }
       endpointStore.selectEndpoint(endpoint.id)
 
-      const { buildExplicitTopConceptsQuery } = useConceptTreeQueries()
-      const query = buildExplicitTopConceptsQuery('http://example.org/scheme', 200, 0)
+      const { buildExplicitTopConceptsMetadataQuery } = useConceptTreeQueries()
+      const query = buildExplicitTopConceptsMetadataQuery('http://example.org/scheme', 200, 0)
 
       expect(query).not.toContain('?concept a skos:Concept')
     })
@@ -88,8 +88,8 @@ describe('useConceptTreeQueries', () => {
       endpoint.analysis = { relationships: { hasTopConceptOf: true, hasHasTopConcept: false } }
       endpointStore.selectEndpoint(endpoint.id)
 
-      const { buildExplicitTopConceptsQuery } = useConceptTreeQueries()
-      const query = buildExplicitTopConceptsQuery('http://example.org/scheme', 200, 0)
+      const { buildExplicitTopConceptsMetadataQuery } = useConceptTreeQueries()
+      const query = buildExplicitTopConceptsMetadataQuery('http://example.org/scheme', 200, 0)
 
       expect(query).toContain('EXISTS')
       expect(query).toContain('?hasNarrower')
@@ -102,40 +102,44 @@ describe('useConceptTreeQueries', () => {
       endpoint.analysis = { relationships: { hasTopConceptOf: true, hasHasTopConcept: false } }
       endpointStore.selectEndpoint(endpoint.id)
 
-      const { buildExplicitTopConceptsQuery } = useConceptTreeQueries()
-      const query = buildExplicitTopConceptsQuery('http://example.org/scheme', 100, 50)
+      const { buildExplicitTopConceptsMetadataQuery } = useConceptTreeQueries()
+      const query = buildExplicitTopConceptsMetadataQuery('http://example.org/scheme', 100, 50)
 
       expect(query).toContain('LIMIT 101')
       expect(query).toContain('OFFSET 50')
     })
   })
 
-  describe('buildFallbackTopConceptsQuery', () => {
+  describe('buildInSchemeOnlyTopConceptsMetadataQuery', () => {
     it('uses inScheme pattern', () => {
-      const { buildFallbackTopConceptsQuery } = useConceptTreeQueries()
-      const query = buildFallbackTopConceptsQuery('http://example.org/scheme', 200, 0)
+      const { buildInSchemeOnlyTopConceptsMetadataQuery } = useConceptTreeQueries()
+      const query = buildInSchemeOnlyTopConceptsMetadataQuery('http://example.org/scheme', 200, 0)
 
       expect(query).toContain('skos:inScheme')
     })
 
-    it('includes FILTER NOT EXISTS for broader', () => {
-      const { buildFallbackTopConceptsQuery } = useConceptTreeQueries()
-      const query = buildFallbackTopConceptsQuery('http://example.org/scheme', 200, 0)
+    it('includes placement exclusion filters', () => {
+      const { buildInSchemeOnlyTopConceptsMetadataQuery } = useConceptTreeQueries()
+      const query = buildInSchemeOnlyTopConceptsMetadataQuery('http://example.org/scheme', 200, 0)
 
-      expect(query).toContain('FILTER NOT EXISTS { ?concept skos:broader ?broader }')
-      expect(query).toContain('FILTER NOT EXISTS { ?parent skos:narrower ?concept }')
+      expect(query).toContain('FILTER NOT EXISTS { ?concept skos:broader ?x }')
+      expect(query).toContain('FILTER NOT EXISTS { ?x skos:narrower ?concept }')
+      expect(query).toContain('FILTER NOT EXISTS { ?concept skos:broaderTransitive ?x }')
+      expect(query).toContain('FILTER NOT EXISTS { ?concept skos:narrowerTransitive ?x }')
+      expect(query).toContain('FILTER NOT EXISTS { ?concept skos:topConceptOf ?x }')
+      expect(query).toContain('FILTER NOT EXISTS { ?x skos:hasTopConcept ?concept }')
     })
 
     it('includes type check (needed for inScheme pattern)', () => {
-      const { buildFallbackTopConceptsQuery } = useConceptTreeQueries()
-      const query = buildFallbackTopConceptsQuery('http://example.org/scheme', 200, 0)
+      const { buildInSchemeOnlyTopConceptsMetadataQuery } = useConceptTreeQueries()
+      const query = buildInSchemeOnlyTopConceptsMetadataQuery('http://example.org/scheme', 200, 0)
 
       expect(query).toContain('?concept a skos:Concept')
     })
 
     it('uses EXISTS for hasNarrower check', () => {
-      const { buildFallbackTopConceptsQuery } = useConceptTreeQueries()
-      const query = buildFallbackTopConceptsQuery('http://example.org/scheme', 200, 0)
+      const { buildInSchemeOnlyTopConceptsMetadataQuery } = useConceptTreeQueries()
+      const query = buildInSchemeOnlyTopConceptsMetadataQuery('http://example.org/scheme', 200, 0)
 
       expect(query).toContain('EXISTS')
       expect(query).toContain('?hasNarrower')
@@ -143,169 +147,144 @@ describe('useConceptTreeQueries', () => {
     })
 
     it('includes pagination parameters', () => {
-      const { buildFallbackTopConceptsQuery } = useConceptTreeQueries()
-      const query = buildFallbackTopConceptsQuery('http://example.org/scheme', 100, 50)
+      const { buildInSchemeOnlyTopConceptsMetadataQuery } = useConceptTreeQueries()
+      const query = buildInSchemeOnlyTopConceptsMetadataQuery('http://example.org/scheme', 100, 50)
 
       expect(query).toContain('LIMIT 101')
       expect(query).toContain('OFFSET 50')
     })
   })
 
-  describe('buildTopConceptsQuery', () => {
+  describe('buildTopConceptsMetadataQuery', () => {
     it('includes scheme URI in query', () => {
-      const { buildTopConceptsQuery } = useConceptTreeQueries()
+      const { buildTopConceptsMetadataQuery } = useConceptTreeQueries()
       const schemeUri = 'http://example.org/scheme/1'
 
-      const query = buildTopConceptsQuery(schemeUri, 200, 0)
+      const query = buildTopConceptsMetadataQuery(schemeUri, 200, 0)
 
       expect(query).toContain(`<${schemeUri}>`)
     })
 
     it('includes pagination parameters', () => {
-      const { buildTopConceptsQuery } = useConceptTreeQueries()
+      const { buildTopConceptsMetadataQuery } = useConceptTreeQueries()
 
-      const query = buildTopConceptsQuery('http://example.org/scheme', 100, 50)
+      const query = buildTopConceptsMetadataQuery('http://example.org/scheme', 100, 50)
 
       expect(query).toContain('LIMIT 101') // pageSize + 1
       expect(query).toContain('OFFSET 50')
     })
 
-    it('includes label resolution patterns', () => {
-      const { buildTopConceptsQuery } = useConceptTreeQueries()
-
-      const query = buildTopConceptsQuery('http://example.org/scheme', 200, 0)
-
-      expect(query).toContain('skos:prefLabel')
-      expect(query).toContain('skosxl:prefLabel')
-      expect(query).toContain('dct:title')
-      expect(query).toContain('rdfs:label')
-    })
-
     it('includes notation', () => {
-      const { buildTopConceptsQuery } = useConceptTreeQueries()
+      const { buildTopConceptsMetadataQuery } = useConceptTreeQueries()
 
-      const query = buildTopConceptsQuery('http://example.org/scheme', 200, 0)
+      const query = buildTopConceptsMetadataQuery('http://example.org/scheme', 200, 0)
 
       expect(query).toContain('skos:notation')
     })
 
     it('includes top concept patterns', () => {
-      const { buildTopConceptsQuery } = useConceptTreeQueries()
+      const { buildTopConceptsMetadataQuery } = useConceptTreeQueries()
 
-      const query = buildTopConceptsQuery('http://example.org/scheme', 200, 0)
+      const query = buildTopConceptsMetadataQuery('http://example.org/scheme', 200, 0)
 
       expect(query).toContain('skos:topConceptOf')
       expect(query).toContain('skos:hasTopConcept')
     })
 
-    it('includes fallback for concepts with no broader', () => {
-      const { buildTopConceptsQuery } = useConceptTreeQueries()
+    it('includes in-scheme-only placement filters', () => {
+      const { buildTopConceptsMetadataQuery } = useConceptTreeQueries()
 
-      const query = buildTopConceptsQuery('http://example.org/scheme', 200, 0)
+      const query = buildTopConceptsMetadataQuery('http://example.org/scheme', 200, 0)
 
-      expect(query).toContain('FILTER NOT EXISTS { ?concept skos:broader ?broader }')
+      expect(query).toContain('FILTER NOT EXISTS { ?concept skos:broader ?x }')
+      expect(query).toContain('FILTER NOT EXISTS { ?x skos:narrower ?concept }')
+      expect(query).toContain('FILTER NOT EXISTS { ?concept skos:broaderTransitive ?x }')
+      expect(query).toContain('FILTER NOT EXISTS { ?concept skos:narrowerTransitive ?x }')
+      expect(query).toContain('FILTER NOT EXISTS { ?concept skos:topConceptOf ?x }')
+      expect(query).toContain('FILTER NOT EXISTS { ?x skos:hasTopConcept ?concept }')
     })
 
     it('includes hasNarrower EXISTS check', () => {
-      const { buildTopConceptsQuery } = useConceptTreeQueries()
+      const { buildTopConceptsMetadataQuery } = useConceptTreeQueries()
 
-      const query = buildTopConceptsQuery('http://example.org/scheme', 200, 0)
+      const query = buildTopConceptsMetadataQuery('http://example.org/scheme', 200, 0)
 
       expect(query).toContain('EXISTS')
       expect(query).toContain('?hasNarrower')
     })
 
     it('includes SKOS prefixes', () => {
-      const { buildTopConceptsQuery } = useConceptTreeQueries()
+      const { buildTopConceptsMetadataQuery } = useConceptTreeQueries()
 
-      const query = buildTopConceptsQuery('http://example.org/scheme', 200, 0)
+      const query = buildTopConceptsMetadataQuery('http://example.org/scheme', 200, 0)
 
       expect(query).toContain('PREFIX skos:')
     })
   })
 
-  describe('buildChildrenQuery', () => {
+  describe('buildChildrenMetadataQuery', () => {
     it('includes parent URI in query', () => {
-      const { buildChildrenQuery } = useConceptTreeQueries()
+      const { buildChildrenMetadataQuery } = useConceptTreeQueries()
       const parentUri = 'http://example.org/concept/1'
 
-      const query = buildChildrenQuery(parentUri, 200, 0)
+      const query = buildChildrenMetadataQuery(parentUri, 200, 0)
 
       expect(query).toContain(`<${parentUri}>`)
     })
 
     it('includes pagination parameters', () => {
-      const { buildChildrenQuery } = useConceptTreeQueries()
+      const { buildChildrenMetadataQuery } = useConceptTreeQueries()
 
-      const query = buildChildrenQuery('http://example.org/concept', 100, 50)
+      const query = buildChildrenMetadataQuery('http://example.org/concept', 100, 50)
 
       expect(query).toContain('LIMIT 101') // pageSize + 1
       expect(query).toContain('OFFSET 50')
     })
 
-    it('includes label resolution patterns', () => {
-      const { buildChildrenQuery } = useConceptTreeQueries()
+    it('includes notation', () => {
+      const { buildChildrenMetadataQuery } = useConceptTreeQueries()
 
-      const query = buildChildrenQuery('http://example.org/concept', 200, 0)
+      const query = buildChildrenMetadataQuery('http://example.org/concept', 200, 0)
 
-      expect(query).toContain('skos:prefLabel')
-      expect(query).toContain('skosxl:prefLabel')
-      expect(query).toContain('dct:title')
-      expect(query).toContain('rdfs:label')
+      expect(query).toContain('skos:notation')
     })
 
     it('includes broader/narrower patterns', () => {
-      const { buildChildrenQuery } = useConceptTreeQueries()
+      const { buildChildrenMetadataQuery } = useConceptTreeQueries()
       const parentUri = 'http://example.org/concept/1'
 
-      const query = buildChildrenQuery(parentUri, 200, 0)
+      const query = buildChildrenMetadataQuery(parentUri, 200, 0)
 
       expect(query).toContain('skos:broader')
       expect(query).toContain('skos:narrower')
     })
 
     it('includes hasNarrower EXISTS check', () => {
-      const { buildChildrenQuery } = useConceptTreeQueries()
+      const { buildChildrenMetadataQuery } = useConceptTreeQueries()
 
-      const query = buildChildrenQuery('http://example.org/concept', 200, 0)
+      const query = buildChildrenMetadataQuery('http://example.org/concept', 200, 0)
 
       expect(query).toContain('EXISTS')
       expect(query).toContain('?hasNarrower')
     })
 
     it('includes SKOS prefixes', () => {
-      const { buildChildrenQuery } = useConceptTreeQueries()
+      const { buildChildrenMetadataQuery } = useConceptTreeQueries()
 
-      const query = buildChildrenQuery('http://example.org/concept', 200, 0)
+      const query = buildChildrenMetadataQuery('http://example.org/concept', 200, 0)
 
       expect(query).toContain('PREFIX skos:')
     })
   })
 
   describe('shared query structure', () => {
-    it('both queries have same label resolution structure', () => {
-      const { buildTopConceptsQuery, buildChildrenQuery } = useConceptTreeQueries()
+    it('both queries select the expected variables', () => {
+      const { buildTopConceptsMetadataQuery, buildChildrenMetadataQuery } = useConceptTreeQueries()
 
-      const topQuery = buildTopConceptsQuery('http://example.org/scheme', 200, 0)
-      const childQuery = buildChildrenQuery('http://example.org/concept', 200, 0)
+      const topQuery = buildTopConceptsMetadataQuery('http://example.org/scheme', 200, 0)
+      const childQuery = buildChildrenMetadataQuery('http://example.org/concept', 200, 0)
 
-      // Both should have identical label type binding patterns
-      const labelPattern = 'BIND("prefLabel" AS ?labelType)'
-      expect(topQuery).toContain(labelPattern)
-      expect(childQuery).toContain(labelPattern)
-
-      const xlPattern = 'BIND("xlPrefLabel" AS ?labelType)'
-      expect(topQuery).toContain(xlPattern)
-      expect(childQuery).toContain(xlPattern)
-    })
-
-    it('both queries select same variables', () => {
-      const { buildTopConceptsQuery, buildChildrenQuery } = useConceptTreeQueries()
-
-      const topQuery = buildTopConceptsQuery('http://example.org/scheme', 200, 0)
-      const childQuery = buildChildrenQuery('http://example.org/concept', 200, 0)
-
-      const expectedVars = ['?concept', '?label', '?labelLang', '?labelType', '?notation', '?hasNarrower']
+      const expectedVars = ['?concept', '?notation', '?hasNarrower']
       for (const v of expectedVars) {
         expect(topQuery).toContain(v)
         expect(childQuery).toContain(v)

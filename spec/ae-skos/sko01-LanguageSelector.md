@@ -132,8 +132,10 @@ All components use the **centralized label resolution** in `useLabelResolver.ts`
 - Fallback: `getUriFragment(uri)` or full URI
 
 **Tree** (`ConceptTree.vue` + composables):
-- Uses `buildLabelUnionClause()` from constants for SPARQL
-- Uses `selectLabelByPriority()` from useLabelResolver
+- Metadata queries return nodes without labels
+- `loadLabelsForNodes()` in useTreePagination enriches nodes with labels
+- Uses `buildCapabilityAwareLabelUnionClause()` for capability-aware queries
+- Uses `selectLabelByPriority()` from useLabelResolver for label selection
 - Display format: `notation - label` or `notation || label || getUriFragment(uri)`
 
 **Main Panel** (detail components):
@@ -162,7 +164,8 @@ All components use the **centralized label resolution** in `useLabelResolver.ts`
 | `/src/constants/labels.ts` | `LABEL_PRIORITY`, `LABEL_TYPES`, `LABEL_PREDICATES`, query builders |
 | `/src/composables/useLabelResolver.ts` | All label selection functions (centralized) |
 | `/src/composables/useProgressiveLabelLoader.ts` | Progressive label loading by language priority |
-| `/src/composables/useConceptBindings.ts` | Tree label processing |
+| `/src/composables/useTreePagination.ts` | Tree label loading via `loadLabelsForNodes()` |
+| `/src/composables/useConceptTreeQueries.ts` | Metadata query builders (no labels) |
 | `/src/composables/useConceptData.ts` | Related labels resolution |
 | `/src/composables/useCollections.ts` | Collection list labels |
 | `/src/composables/useCollectionQueries.ts` | Capability-aware collection query building |

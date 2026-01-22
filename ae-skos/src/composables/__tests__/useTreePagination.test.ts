@@ -33,28 +33,13 @@ vi.mock('../../services/sparql', () => ({
   withPrefixes: vi.fn((q) => q),
 }))
 
-// Mock useConceptBindings
-vi.mock('../useConceptBindings', () => ({
-  useConceptBindings: () => ({
-    processBindings: vi.fn((bindings) => {
-      // Simple mock: convert bindings to ConceptNode[]
-      return bindings.map((b: { concept?: { value: string } }) => ({
-        uri: b.concept?.value || '',
-        label: 'Test',
-        hasNarrower: false,
-        expanded: false,
-      }))
-    }),
-  }),
-}))
-
 // Mock useConceptTreeQueries
 vi.mock('../useConceptTreeQueries', () => ({
   useConceptTreeQueries: () => ({
-    buildTopConceptsQuery: vi.fn(() => 'SELECT ?concept WHERE { }'),
-    buildExplicitTopConceptsQuery: vi.fn(() => 'SELECT ?concept WHERE { EXPLICIT }'),
-    buildFallbackTopConceptsQuery: vi.fn(() => 'SELECT ?concept WHERE { FALLBACK }'),
-    buildChildrenQuery: vi.fn(() => 'SELECT ?concept WHERE { }'),
+    buildTopConceptsMetadataQuery: vi.fn(() => 'SELECT ?concept WHERE { }'),
+    buildExplicitTopConceptsMetadataQuery: vi.fn(() => 'SELECT ?concept WHERE { EXPLICIT }'),
+    buildInSchemeOnlyTopConceptsMetadataQuery: vi.fn(() => 'SELECT ?concept WHERE { INSCHEME }'),
+    buildChildrenMetadataQuery: vi.fn(() => 'SELECT ?concept WHERE { }'),
   }),
 }))
 
@@ -606,9 +591,8 @@ describe('useTreePagination', () => {
   })
 
   describe('sequential merge (first page)', () => {
-    it('calls both explicit and fallback queries for first page', async () => {
+    it('calls explicit + in-scheme-only metadata queries and label queries', async () => {
       const schemeStore = useSchemeStore()
-      const conceptStore = useConceptStore()
 
       schemeStore.setSchemes([{ uri: 'http://ex.org/scheme', label: 'Test Scheme' }])
       schemeStore.selectScheme('http://ex.org/scheme')
@@ -620,21 +604,29 @@ describe('useTreePagination', () => {
             bindings: [{ concept: { value: 'http://ex.org/c1' } }],
           },
         })
-        // Mock fallback query to return same results (no new)
+        // Mock explicit label query (no labels)
+        .mockResolvedValueOnce({
+          results: { bindings: [] },
+        })
+        // Mock in-scheme-only query to return same results (no new)
         .mockResolvedValueOnce({
           results: {
             bindings: [{ concept: { value: 'http://ex.org/c1' } }],
           },
         })
+        // Mock in-scheme-only label query (no labels)
+        .mockResolvedValueOnce({
+          results: { bindings: [] },
+        })
 
       const { loadTopConcepts } = useTreePagination()
       await loadTopConcepts()
 
-      // Both queries should be called
-      expect(executeSparql).toHaveBeenCalledTimes(2)
+      // Both metadata queries + label queries should be called
+      expect(executeSparql).toHaveBeenCalledTimes(4)
     })
 
-    it('merges unique concepts from fallback query', async () => {
+    it('merges unique concepts from in-scheme-only query', async () => {
       const schemeStore = useSchemeStore()
       const conceptStore = useConceptStore()
 
@@ -648,26 +640,34 @@ describe('useTreePagination', () => {
             bindings: [{ concept: { value: 'http://ex.org/c1' } }],
           },
         })
-        // Mock fallback query returns c1 (duplicate) and c2 (new)
+        // Mock explicit label query (no labels)
+        .mockResolvedValueOnce({
+          results: { bindings: [] },
+        })
+        // Mock in-scheme-only query returns c1 (duplicate) and c2 (new)
         .mockResolvedValueOnce({
           results: {
             bindings: [
-              { concept: { value: 'http://ex.org/c1' } },
               { concept: { value: 'http://ex.org/c2' } },
+              { concept: { value: 'http://ex.org/c1' } },
             ],
           },
+        })
+        // Mock in-scheme-only label query (no labels)
+        .mockResolvedValueOnce({
+          results: { bindings: [] },
         })
 
       const { loadTopConcepts } = useTreePagination()
       await loadTopConcepts()
 
-      // Should have 2 unique concepts (c1 from explicit, c2 from fallback)
+      // Should have 2 unique concepts (c1 from explicit, c2 from in-scheme-only)
       expect(conceptStore.topConcepts).toHaveLength(2)
       expect(conceptStore.topConcepts.map(c => c.uri)).toContain('http://ex.org/c1')
       expect(conceptStore.topConcepts.map(c => c.uri)).toContain('http://ex.org/c2')
     })
 
-    it('uses fallback only when explicit returns empty', async () => {
+    it('uses in-scheme-only when explicit returns empty', async () => {
       const schemeStore = useSchemeStore()
       const conceptStore = useConceptStore()
 
@@ -679,7 +679,7 @@ describe('useTreePagination', () => {
         .mockResolvedValueOnce({
           results: { bindings: [] },
         })
-        // Mock fallback query returns concepts
+        // Mock in-scheme-only query returns concepts
         .mockResolvedValueOnce({
           results: {
             bindings: [
@@ -688,11 +688,15 @@ describe('useTreePagination', () => {
             ],
           },
         })
+        // Mock in-scheme-only label query (no labels)
+        .mockResolvedValueOnce({
+          results: { bindings: [] },
+        })
 
       const { loadTopConcepts } = useTreePagination()
       await loadTopConcepts()
 
-      // Should have concepts from fallback
+      // Should have concepts from in-scheme-only
       expect(conceptStore.topConcepts).toHaveLength(2)
     })
 

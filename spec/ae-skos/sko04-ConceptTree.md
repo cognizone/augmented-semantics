@@ -9,7 +9,19 @@ Component for hierarchical browsing of SKOS concepts.
 Display root concepts within selected scheme. Top concepts are identified via:
 
 1. **Explicit marking**: `skos:topConceptOf` or scheme's `skos:hasTopConcept`
-2. **Fallback**: Concepts with no hierarchical parent (neither `skos:broader` nor inverse `skos:narrower`)
+2. **In-scheme-only**: Concepts with `skos:inScheme` but no hierarchical relationships
+
+#### Two-Step Query Architecture
+
+Tree queries use a two-step loading approach for better performance and maintainability:
+
+1. **Step 1 - Metadata query**: Fetch concept URIs, notation, and hasNarrower flag (no labels)
+2. **Step 2 - Label loading**: Separate `loadLabelsForNodes()` call fetches labels using capability-aware queries
+
+This separation allows:
+- Faster initial metadata queries (no label UNION overhead)
+- Consistent label resolution using `selectLabelByPriority()` from useLabelResolver
+- Better caching and deduplication of label fetches
 
 #### Progressive Loading Strategy
 
@@ -19,9 +31,10 @@ For performance, top concepts are loaded using a two-phase sequential approach:
    - Returns in < 500ms for well-formed vocabularies
    - No type check needed (these predicates imply skos:Concept)
 
-2. **Fallback query (slower)**: If explicit returns empty, query concepts with no broader
+2. **In-scheme-only query (slower)**: Query concepts with `skos:inScheme` but no hierarchical relationships
    - Scans all concepts in scheme, may take several seconds
    - Type check included (inScheme can link to non-concepts)
+   - Excludes concepts with ANY hierarchical relationship (broader, narrower, topConceptOf, etc.)
 
 3. **Merge**: On first page, both queries run sequentially and results are merged (deduplicated)
 
@@ -29,149 +42,152 @@ This avoids the UNION penalty where SPARQL engines evaluate both branches even w
 
 **Query Mode Tracking**: For pagination, the system tracks which mode was used:
 - `explicit`: Only explicit query returned results
-- `fallback`: Explicit was empty, using fallback
+- `inscheme`: Explicit was empty/unavailable, using in-scheme-only
 - `mixed`: Both contributed unique concepts (uses combined UNION for pagination)
 
 **Queries:**
 
-Uses subqueries to paginate by distinct concepts (not by label rows, since concepts can have many label language/type variations).
+Uses subqueries to paginate by distinct concepts. Labels are fetched separately via `loadLabelsForNodes()`.
 
-**Explicit Query (fast path):**
+**Explicit Metadata Query (fast path):**
 ```sparql
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-PREFIX skosxl: <http://www.w3.org/2008/05/skos-xl#>
-PREFIX dct: <http://purl.org/dc/terms/>
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 
-SELECT ?concept ?label ?labelLang ?labelType ?notation ?hasNarrower
+SELECT ?concept ?notation ?hasNarrower
 WHERE {
   {
-    SELECT DISTINCT ?concept ?hasNarrower
+    SELECT DISTINCT ?concept
     WHERE {
       # No type check - topConceptOf/hasTopConcept imply skos:Concept
       { ?concept skos:topConceptOf <SCHEME_URI> }
       UNION
       { <SCHEME_URI> skos:hasTopConcept ?concept }
-
-      # EXISTS is fast - stops at first match (vs COUNT scans all)
-      BIND(EXISTS {
-        { [] skos:broader ?concept }
-        UNION
-        { ?concept skos:narrower [] }
-      } AS ?hasNarrower)
     }
     ORDER BY ?concept
     LIMIT 201
     OFFSET 0
   }
-  # Get labels and notations for the paginated concepts
   OPTIONAL { ?concept skos:notation ?notation }
-  OPTIONAL {
-    { ?concept skos:prefLabel ?label . BIND("prefLabel" AS ?labelType) }
+  # EXISTS is fast - stops at first match (vs COUNT scans all)
+  BIND(EXISTS {
+    { [] skos:broader ?concept }
     UNION
-    { ?concept skosxl:prefLabel/skosxl:literalForm ?label . BIND("xlPrefLabel" AS ?labelType) }
-    UNION
-    { ?concept dct:title ?label . BIND("title" AS ?labelType) }
-    UNION
-    { ?concept rdfs:label ?label . BIND("rdfsLabel" AS ?labelType) }
-    BIND(LANG(?label) AS ?labelLang)
-  }
+    { ?concept skos:narrower [] }
+  } AS ?hasNarrower)
 }
 ```
 
-**Fallback Query (slow path):**
+**Note:** Labels are NOT included in metadata queries. After processing results, `loadLabelsForNodes()` is called to fetch labels using capability-aware queries.
+
+**In-Scheme-Only Metadata Query (slow path):**
+
+This query finds concepts that have `skos:inScheme` but no hierarchical relationships. It excludes concepts with ANY placement predicates:
+
 ```sparql
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-PREFIX skosxl: <http://www.w3.org/2008/05/skos-xl#>
-PREFIX dct: <http://purl.org/dc/terms/>
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 
-SELECT ?concept ?label ?labelLang ?labelType ?notation ?hasNarrower
+SELECT ?concept ?notation ?hasNarrower
 WHERE {
   {
-    SELECT DISTINCT ?concept ?hasNarrower
+    SELECT DISTINCT ?concept
     WHERE {
       ?concept a skos:Concept .  # Type check needed for inScheme
       ?concept skos:inScheme <SCHEME_URI> .
-      FILTER NOT EXISTS { ?concept skos:broader ?broader }
-      FILTER NOT EXISTS { ?parent skos:narrower ?concept }
-
-      BIND(EXISTS {
-        { [] skos:broader ?concept }
-        UNION
-        { ?concept skos:narrower [] }
-      } AS ?hasNarrower)
+      # Exclude concepts with ANY hierarchical relationship
+      FILTER NOT EXISTS { ?concept skos:broader ?x }
+      FILTER NOT EXISTS { ?x skos:narrower ?concept }
+      FILTER NOT EXISTS { ?concept skos:broaderTransitive ?x }
+      FILTER NOT EXISTS { ?concept skos:narrowerTransitive ?x }
+      FILTER NOT EXISTS { ?concept skos:topConceptOf ?x }
+      FILTER NOT EXISTS { ?x skos:hasTopConcept ?concept }
     }
     ORDER BY ?concept
     LIMIT 201
     OFFSET 0
   }
-  # Get labels and notations for the paginated concepts
   OPTIONAL { ?concept skos:notation ?notation }
-  OPTIONAL {
-    { ?concept skos:prefLabel ?label . BIND("prefLabel" AS ?labelType) }
+  BIND(EXISTS {
+    { [] skos:broader ?concept }
     UNION
-    { ?concept skosxl:prefLabel/skosxl:literalForm ?label . BIND("xlPrefLabel" AS ?labelType) }
-    UNION
-    { ?concept dct:title ?label . BIND("title" AS ?labelType) }
-    UNION
-    { ?concept rdfs:label ?label . BIND("rdfsLabel" AS ?labelType) }
-    BIND(LANG(?label) AS ?labelLang)
-  }
+    { ?concept skos:narrower [] }
+  } AS ?hasNarrower)
 }
 ```
 
-**Note:** Label selection happens in code using priority-based resolution (see Label Resolution section below).
+**Note:** Labels are fetched separately via `loadLabelsForNodes()` using capability-aware queries.
 
 ### Hierarchical Expansion
 
 Load narrower concepts on demand when user expands a node. Supports both `skos:broader` and `skos:narrower` relationships.
 
-**Query:**
+**Children Metadata Query:**
 
-Uses a subquery to paginate by distinct concepts:
+Uses a subquery to paginate by distinct concepts. Labels are fetched separately via `loadLabelsForNodes()`.
 
+```sparql
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+
+SELECT ?concept ?notation ?hasNarrower
+WHERE {
+  {
+    SELECT DISTINCT ?concept
+    WHERE {
+      # No type check - broader/narrower imply skos:Concept
+      { ?concept skos:broader <PARENT_URI> }
+      UNION
+      { <PARENT_URI> skos:narrower ?concept }
+    }
+    ORDER BY ?concept
+    LIMIT 201
+    OFFSET 0
+  }
+  OPTIONAL { ?concept skos:notation ?notation }
+  # EXISTS is fast - stops at first match (vs COUNT scans all)
+  BIND(EXISTS {
+    { [] skos:broader ?concept }
+    UNION
+    { ?concept skos:narrower [] }
+  } AS ?hasNarrower)
+}
+```
+
+### Label Loading
+
+After metadata queries return `ConceptNode[]` without labels, `loadLabelsForNodes()` enriches them with labels:
+
+**Process:**
+1. Build a `VALUES` clause from the concept URIs
+2. Use `buildCapabilityAwareLabelUnionClause()` to query only detected label predicates
+3. Apply `selectLabelByPriority()` from useLabelResolver to pick the best label
+
+**Label Query:**
 ```sparql
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 PREFIX skosxl: <http://www.w3.org/2008/05/skos-xl#>
 PREFIX dct: <http://purl.org/dc/terms/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 
-SELECT ?concept ?label ?labelLang ?labelType ?notation ?hasNarrower
+SELECT ?concept ?label ?labelLang ?labelType
 WHERE {
-  {
-    SELECT DISTINCT ?concept ?hasNarrower
-    WHERE {
-      # No type check - broader/narrower imply skos:Concept
-      { ?concept skos:broader <PARENT_URI> }
-      UNION
-      { <PARENT_URI> skos:narrower ?concept }
-
-      # EXISTS is fast - stops at first match (vs COUNT scans all)
-      BIND(EXISTS {
-        { [] skos:broader ?concept }
-        UNION
-        { ?concept skos:narrower [] }
-      } AS ?hasNarrower)
-    }
-    ORDER BY ?concept
-    LIMIT 201
-    OFFSET 0
-  }
-  # Get labels and notations for the paginated concepts
-  OPTIONAL { ?concept skos:notation ?notation }
+  VALUES ?concept { <URI1> <URI2> <URI3> ... }
   OPTIONAL {
+    # Capability-aware: includes only predicates detected during endpoint analysis
     { ?concept skos:prefLabel ?label . BIND("prefLabel" AS ?labelType) }
     UNION
     { ?concept skosxl:prefLabel/skosxl:literalForm ?label . BIND("xlPrefLabel" AS ?labelType) }
-    UNION
-    { ?concept dct:title ?label . BIND("title" AS ?labelType) }
     UNION
     { ?concept rdfs:label ?label . BIND("rdfsLabel" AS ?labelType) }
     BIND(LANG(?label) AS ?labelLang)
   }
 }
 ```
+
+**Label Selection:**
+The `selectLabelByPriority()` function applies language and type priority:
+1. Filter by preferred language
+2. Apply endpoint language priorities as fallback
+3. Select by label type priority (prefLabel > xlPrefLabel > rdfsLabel for concepts)
+4. Fall back to first available label
 
 ### Performance Optimizations
 

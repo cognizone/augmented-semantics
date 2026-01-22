@@ -10,10 +10,12 @@
 import { ref } from 'vue'
 import { useConceptStore, useEndpointStore, useSchemeStore, useLanguageStore, useSettingsStore, ORPHAN_SCHEME_URI } from '../stores'
 import { executeSparql, logger, eventBus, withPrefixes } from '../services'
-import { useConceptBindings, useConceptTreeQueries } from './index'
+import { useConceptTreeQueries, useLabelResolver } from './index'
 import { calculateOrphanConcepts, calculateOrphanConceptsFast, calculateOrphanCollections } from './useOrphanConcepts'
 import { createInitialProgress, type OrphanProgress } from './useOrphanProgress'
 import { buildCapabilityAwareLabelUnionClause } from '../constants'
+import { useDeprecation } from './useDeprecation'
+import { pickBestNotation, compareNodes } from '../utils/concept-tree'
 import type { ConceptNode } from '../types'
 
 // Pagination config
@@ -25,18 +27,24 @@ export function useTreePagination() {
   const schemeStore = useSchemeStore()
   const languageStore = useLanguageStore()
   const settingsStore = useSettingsStore()
-  const { processBindings } = useConceptBindings()
-  const { buildExplicitTopConceptsQuery, buildFallbackTopConceptsQuery, buildTopConceptsQuery, buildChildrenQuery } = useConceptTreeQueries()
+  const { isDeprecatedFromBinding } = useDeprecation()
+  const { selectLabelByPriority } = useLabelResolver()
+  const {
+    buildExplicitTopConceptsMetadataQuery,
+    buildInSchemeOnlyTopConceptsMetadataQuery,
+    buildTopConceptsMetadataQuery,
+    buildChildrenMetadataQuery,
+  } = useConceptTreeQueries()
 
   // Pagination state for top concepts
   const topConceptsOffset = ref(0)
   const hasMoreTopConcepts = ref(true)
   const loadingMoreTopConcepts = ref(false)
-  // Track query mode for pagination: 'explicit' | 'fallback' | 'mixed'
+  // Track query mode for pagination: 'explicit' | 'inscheme' | 'mixed'
   // - explicit: only explicit query returned results
-  // - fallback: explicit was empty/unavailable, using fallback only
-  // - mixed: both explicit and fallback contributed unique concepts
-  const queryMode = ref<'explicit' | 'fallback' | 'mixed'>('explicit')
+  // - inscheme: explicit was empty/unavailable, using in-scheme-only only
+  // - mixed: both explicit and in-scheme-only contributed unique concepts
+  const queryMode = ref<'explicit' | 'inscheme' | 'mixed'>('explicit')
 
   // Pagination state for children (keyed by parent URI)
   const childrenPagination = ref<Map<string, { offset: number; hasMore: boolean; loading: boolean }>>(new Map())
@@ -98,9 +106,185 @@ export function useTreePagination() {
   }
 
   /**
+   * Process metadata bindings into ConceptNode[] (no labels).
+   * Groups by concept URI, aggregates notations, and parses hasNarrower/deprecated flags.
+   */
+  function processMetadataBindings(
+    bindings: Array<Record<string, { value: string; type: string }>>
+  ): ConceptNode[] {
+    const conceptMap = new Map<string, {
+      notations: string[]
+      hasNarrower: boolean
+      deprecated: boolean
+    }>()
+
+    for (const b of bindings) {
+      const uri = b.concept?.value
+      if (!uri) continue
+
+      if (!conceptMap.has(uri)) {
+        conceptMap.set(uri, {
+          notations: [],
+          hasNarrower: false,
+          deprecated: isDeprecatedFromBinding(b),
+        })
+      }
+
+      const entry = conceptMap.get(uri)!
+
+      if (b.notation?.value && !entry.notations.includes(b.notation.value)) {
+        entry.notations.push(b.notation.value)
+      }
+
+      const hasNarrowerVal = b.hasNarrower?.value
+      if (hasNarrowerVal === 'true' || hasNarrowerVal === '1') {
+        entry.hasNarrower = true
+      }
+
+      if (!entry.deprecated) {
+        entry.deprecated = isDeprecatedFromBinding(b)
+      }
+    }
+
+    return Array.from(conceptMap.entries()).map(([uri, data]) => ({
+      uri,
+      label: undefined,
+      lang: undefined,
+      notation: pickBestNotation(data.notations),
+      hasNarrower: data.hasNarrower,
+      expanded: false,
+      deprecated: data.deprecated,
+    }))
+  }
+
+  /**
+   * Process bindings that already include labels.
+   * Uses centralized label priority and language selection.
+   */
+  function processLabelBindings(
+    bindings: Array<Record<string, { value: string; type: string; 'xml:lang'?: string }>>
+  ): ConceptNode[] {
+    const conceptMap = new Map<string, {
+      labels: { value: string; lang: string; type: string }[]
+      notations: string[]
+      hasNarrower: boolean
+      deprecated: boolean
+    }>()
+
+    for (const b of bindings) {
+      const uri = b.concept?.value
+      if (!uri) continue
+
+      if (!conceptMap.has(uri)) {
+        conceptMap.set(uri, {
+          labels: [],
+          notations: [],
+          hasNarrower: false,
+          deprecated: isDeprecatedFromBinding(b),
+        })
+      }
+
+      const entry = conceptMap.get(uri)!
+
+      if (b.notation?.value && !entry.notations.includes(b.notation.value)) {
+        entry.notations.push(b.notation.value)
+      }
+
+      const hasNarrowerVal = b.hasNarrower?.value
+      if (hasNarrowerVal === 'true' || hasNarrowerVal === '1') {
+        entry.hasNarrower = true
+      }
+
+      if (!entry.deprecated) {
+        entry.deprecated = isDeprecatedFromBinding(b)
+      }
+
+      if (b.label?.value) {
+        entry.labels.push({
+          value: b.label.value,
+          lang: b.labelLang?.value || b.label?.['xml:lang'] || '',
+          type: b.labelType?.value || 'prefLabel',
+        })
+      }
+    }
+
+    const nodes: ConceptNode[] = []
+
+    for (const [uri, data] of conceptMap.entries()) {
+      const selected = selectLabelByPriority(data.labels)
+      nodes.push({
+        uri,
+        label: selected?.value,
+        lang: selected?.lang || undefined,
+        notation: pickBestNotation(data.notations),
+        hasNarrower: data.hasNarrower,
+        expanded: false,
+        deprecated: data.deprecated,
+      })
+    }
+
+    nodes.sort(compareNodes)
+    return nodes
+  }
+
+  /**
+   * Load labels for the given nodes and apply language/priority selection.
+   */
+  async function loadLabelsForNodes(nodes: ConceptNode[]): Promise<void> {
+    const endpoint = endpointStore.current
+    if (!endpoint || nodes.length === 0) return
+
+    const capabilities = endpoint.analysis?.labelPredicates?.concept
+    const valuesClause = nodes.map(n => `<${n.uri}>`).join(' ')
+    const labelClause = buildCapabilityAwareLabelUnionClause('?concept', capabilities)
+
+    const query = withPrefixes(`
+      SELECT ?concept ?label ?labelLang ?labelType
+      WHERE {
+        VALUES ?concept { ${valuesClause} }
+        OPTIONAL {
+          ${labelClause}
+        }
+      }
+    `)
+
+    try {
+      const results = await executeSparql(endpoint, query, { retries: 0 })
+      const labelsByUri = new Map<string, { value: string; lang: string; type: string }[]>()
+
+      for (const b of results.results.bindings) {
+        const uri = b.concept?.value
+        const labelValue = b.label?.value
+        if (!uri || !labelValue) continue
+
+        if (!labelsByUri.has(uri)) {
+          labelsByUri.set(uri, [])
+        }
+
+        labelsByUri.get(uri)!.push({
+          value: labelValue,
+          lang: b.labelLang?.value || b.label?.['xml:lang'] || '',
+          type: b.labelType?.value || 'prefLabel',
+        })
+      }
+
+      for (const node of nodes) {
+        const labels = labelsByUri.get(node.uri) || []
+        const selected = selectLabelByPriority(labels)
+        if (selected) {
+          node.label = selected.value
+          node.lang = selected.lang || undefined
+        }
+      }
+    } catch (e) {
+      logger.warn('ConceptTree', 'Failed to load labels for nodes', { error: e })
+    }
+  }
+
+  /**
    * Load top concepts for selected scheme.
    * Uses sequential merge: runs explicit query first (fast), displays results,
-   * then runs fallback query and appends any new concepts not already shown.
+   * then runs in-scheme-only query and appends any new concepts not already shown.
    */
   async function loadTopConcepts(offset = 0) {
     const endpoint = endpointStore.current
@@ -140,42 +324,46 @@ export function useTreePagination() {
     error.value = null
 
     try {
-      // For pagination, use appropriate query based on first page mode
+      // For pagination, use appropriate metadata query based on first page mode
       if (!isFirstPage) {
         let query: string
         if (queryMode.value === 'mixed') {
-          // Mixed mode: use combined UNION query for consistent pagination
-          query = buildTopConceptsQuery(scheme.uri, PAGE_SIZE, offset)
-          logger.debug('ConceptTree', 'Top concepts combined query (mixed pagination)', { query })
-        } else if (queryMode.value === 'fallback') {
-          query = buildFallbackTopConceptsQuery(scheme.uri, PAGE_SIZE, offset)
-          logger.debug('ConceptTree', 'Top concepts fallback query (pagination)', { query })
+          // Mixed mode: use combined query for consistent pagination
+          query = buildTopConceptsMetadataQuery(scheme.uri, PAGE_SIZE, offset)
+          logger.debug('ConceptTree', 'Top concepts combined metadata query (mixed pagination)', { query })
+        } else if (queryMode.value === 'inscheme') {
+          query = buildInSchemeOnlyTopConceptsMetadataQuery(scheme.uri, PAGE_SIZE, offset)
+          logger.debug('ConceptTree', 'Top concepts in-scheme-only metadata query (pagination)', { query })
         } else {
           // explicit mode
-          const explicitQuery = buildExplicitTopConceptsQuery(scheme.uri, PAGE_SIZE, offset)
+          const explicitQuery = buildExplicitTopConceptsMetadataQuery(scheme.uri, PAGE_SIZE, offset)
           if (!explicitQuery) {
             // Shouldn't happen, but fallback just in case
-            query = buildFallbackTopConceptsQuery(scheme.uri, PAGE_SIZE, offset)
+            query = buildInSchemeOnlyTopConceptsMetadataQuery(scheme.uri, PAGE_SIZE, offset)
           } else {
             query = explicitQuery
           }
-          logger.debug('ConceptTree', 'Top concepts explicit query (pagination)', { query })
+          logger.debug('ConceptTree', 'Top concepts explicit metadata query (pagination)', { query })
         }
         const results = await executeSparql(endpoint, query, { retries: 1 })
-        const concepts = processBindings(results.results.bindings)
+        const concepts = processMetadataBindings(results.results.bindings)
+        await loadLabelsForNodes(concepts)
+        concepts.sort(compareNodes)
         processTopConceptsResults(concepts, offset, isFirstPage)
         return
       }
 
       // First page: Sequential merge strategy
       // Step 1: Try explicit top concepts first (fast path)
-      const explicitQuery = buildExplicitTopConceptsQuery(scheme.uri, PAGE_SIZE, offset)
+      const explicitQuery = buildExplicitTopConceptsMetadataQuery(scheme.uri, PAGE_SIZE, offset)
       let explicitConcepts: ConceptNode[] = []
 
       if (explicitQuery) {
-        logger.debug('ConceptTree', 'Running explicit top concepts query (fast path)', { query: explicitQuery })
+        logger.debug('ConceptTree', 'Running explicit top concepts metadata query (fast path)', { query: explicitQuery })
         const results = await executeSparql(endpoint, explicitQuery, { retries: 1 })
-        explicitConcepts = processBindings(results.results.bindings)
+        explicitConcepts = processMetadataBindings(results.results.bindings)
+        await loadLabelsForNodes(explicitConcepts)
+        explicitConcepts.sort(compareNodes)
 
         if (explicitConcepts.length > 0) {
           // Show explicit results immediately
@@ -185,37 +373,39 @@ export function useTreePagination() {
         }
       }
 
-      // Step 2: Run fallback query to find any additional implicit top concepts
-      logger.debug('ConceptTree', 'Running fallback query to check for additional top concepts')
-      const fallbackQuery = buildFallbackTopConceptsQuery(scheme.uri, PAGE_SIZE, offset)
-      const fallbackResults = await executeSparql(endpoint, fallbackQuery, { retries: 1 })
-      const fallbackConcepts = processBindings(fallbackResults.results.bindings)
+      // Step 2: Run in-scheme-only query to find unplaced concepts
+      logger.debug('ConceptTree', 'Running in-scheme-only query to check for unplaced concepts')
+      const inschemeQuery = buildInSchemeOnlyTopConceptsMetadataQuery(scheme.uri, PAGE_SIZE, offset)
+      const inschemeResults = await executeSparql(endpoint, inschemeQuery, { retries: 1 })
+      const inschemeConcepts = processMetadataBindings(inschemeResults.results.bindings)
+      await loadLabelsForNodes(inschemeConcepts)
+      inschemeConcepts.sort(compareNodes)
 
       // Determine query mode and merge results
       const explicitUris = new Set(explicitConcepts.map(c => c.uri))
-      const newFromFallback = fallbackConcepts.filter(c => !explicitUris.has(c.uri))
+      const newFromInScheme = inschemeConcepts.filter(c => !explicitUris.has(c.uri))
 
-      if (explicitConcepts.length === 0 && fallbackConcepts.length > 0) {
-        // Only fallback had results
-        queryMode.value = 'fallback'
-        logger.info('ConceptTree', `Using fallback only: ${fallbackConcepts.length} concepts`)
-        processTopConceptsResults(fallbackConcepts, offset, isFirstPage)
+      if (explicitConcepts.length === 0 && inschemeConcepts.length > 0) {
+        // Only in-scheme-only had results
+        queryMode.value = 'inscheme'
+        logger.info('ConceptTree', `Using in-scheme-only: ${inschemeConcepts.length} concepts`)
+        processTopConceptsResults(inschemeConcepts, offset, isFirstPage)
         await eventBus.emit('tree:loaded', conceptStore.topConcepts)
-      } else if (newFromFallback.length > 0) {
+      } else if (newFromInScheme.length > 0) {
         // Mixed: both contributed unique concepts
         queryMode.value = 'mixed'
-        logger.info('ConceptTree', `Mixed mode: ${explicitConcepts.length} explicit + ${newFromFallback.length} from fallback`)
-        // Append new concepts from fallback
-        conceptStore.appendTopConcepts(newFromFallback)
+        logger.info('ConceptTree', `Mixed mode: ${explicitConcepts.length} explicit + ${newFromInScheme.length} in-scheme-only`)
+        // Append new concepts from in-scheme-only
+        conceptStore.appendTopConcepts(newFromInScheme)
         // Update hasMore based on combined count
-        const totalCount = explicitConcepts.length + newFromFallback.length
+        const totalCount = explicitConcepts.length + newFromInScheme.length
         hasMoreTopConcepts.value = totalCount > PAGE_SIZE
         if (hasMoreTopConcepts.value && totalCount > PAGE_SIZE) {
           // Remove extra if we have more than PAGE_SIZE
           // Note: This is approximate - mixed pagination may show some duplicates
         }
       } else if (explicitConcepts.length > 0) {
-        // Explicit only (fallback found nothing new)
+        // Explicit only (in-scheme-only found nothing new)
         queryMode.value = 'explicit'
         logger.info('ConceptTree', `Using explicit only: ${explicitConcepts.length} concepts`)
         // Already displayed, just update pagination state
@@ -226,7 +416,7 @@ export function useTreePagination() {
         }
       } else {
         // Both empty
-        queryMode.value = 'fallback'
+        queryMode.value = 'inscheme'
         logger.info('ConceptTree', 'No top concepts found')
         conceptStore.setTopConcepts([])
         hasMoreTopConcepts.value = false
@@ -424,7 +614,7 @@ export function useTreePagination() {
 
       try {
         const conceptResults = await executeSparql(endpoint, conceptQuery)
-        const concepts = processBindings(conceptResults.results.bindings)
+        const concepts = processLabelBindings(conceptResults.results.bindings)
         results.push(...concepts)
       } catch (e) {
         logger.error('TreePagination', 'Failed to load orphan concept labels', { error: e })
@@ -451,7 +641,12 @@ export function useTreePagination() {
    */
   function processCollectionBindings(bindings: Array<Record<string, { value: string; type: string; 'xml:lang'?: string }>>): ConceptNode[] {
     // Group by collection URI to handle multiple label rows
-    const collectionMap = new Map<string, ConceptNode>()
+    const collectionMap = new Map<string, {
+      uri: string
+      labels: { value: string; lang: string; type: string }[]
+      notation?: string
+      hasNarrower: boolean
+    }>()
 
     for (const binding of bindings) {
       const uri = binding.collection?.value
@@ -460,29 +655,39 @@ export function useTreePagination() {
       if (!collectionMap.has(uri)) {
         collectionMap.set(uri, {
           uri,
-          label: undefined,
-          lang: undefined,
+          labels: [],
           notation: binding.notation?.value,
           hasNarrower: binding.hasChildCollections?.value === 'true',
-          type: 'collection',
-          expanded: false,
         })
       }
 
-      const node = collectionMap.get(uri)!
+      const entry = collectionMap.get(uri)!
 
-      // Process label with priority (same as concept bindings)
-      const labelLang = binding.labelLang?.value || binding.label?.['xml:lang']
-      const labelValue = binding.label?.value
+      if (!entry.notation && binding.notation?.value) {
+        entry.notation = binding.notation.value
+      }
 
-      if (labelValue && !node.label) {
-        // First label wins (queries should be ordered by priority)
-        node.label = labelValue
-        node.lang = labelLang
+      if (binding.label?.value) {
+        entry.labels.push({
+          value: binding.label.value,
+          lang: binding.labelLang?.value || binding.label?.['xml:lang'] || '',
+          type: binding.labelType?.value || 'prefLabel',
+        })
       }
     }
 
-    return Array.from(collectionMap.values())
+    return Array.from(collectionMap.values()).map(entry => {
+      const selected = selectLabelByPriority(entry.labels)
+      return {
+        uri: entry.uri,
+        label: selected?.value,
+        lang: selected?.lang || undefined,
+        notation: entry.notation,
+        hasNarrower: entry.hasNarrower,
+        type: 'collection',
+        expanded: false,
+      }
+    })
   }
 
   /**
@@ -517,13 +722,15 @@ export function useTreePagination() {
 
     logger.debug('ConceptTree', 'Loading children', { parent: uri, offset, pageSize: PAGE_SIZE })
 
-    const query = buildChildrenQuery(uri, PAGE_SIZE, offset)
+    const query = buildChildrenMetadataQuery(uri, PAGE_SIZE, offset)
 
     try {
       const results = await executeSparql(endpoint, query, { retries: 1 })
 
-      // Process bindings into sorted ConceptNode[]
-      const children = processBindings(results.results.bindings)
+      // Process metadata bindings, then enrich with labels
+      const children = processMetadataBindings(results.results.bindings)
+      await loadLabelsForNodes(children)
+      children.sort(compareNodes)
 
       // Check if there are more results
       const hasMore = children.length > PAGE_SIZE
