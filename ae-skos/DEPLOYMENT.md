@@ -47,6 +47,31 @@ pnpm build
 
 This creates a `dist/` folder containing all static files.
 
+## Build Configuration
+
+### Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `BASE_URL` | `/` | Base path for the application (affects asset URLs and routing) |
+
+**Examples:**
+
+```bash
+# Local development / root deployment
+pnpm build
+
+# Subpath deployment (e.g., GitHub Pages)
+BASE_URL=/my-app/ pnpm build
+
+# Custom domain subpath
+BASE_URL=/tools/skos/ pnpm build
+```
+
+The `BASE_URL` must:
+- Start and end with `/`
+- Match the path where the app will be served
+
 ## Deployment
 
 Copy the contents of the `dist/` folder to your web server's document root.
@@ -391,6 +416,36 @@ Access-Control-Allow-Headers: Content-Type
 Or for public endpoints:
 ```
 Access-Control-Allow-Origin: *
+```
+
+## GitHub Pages Deployment
+
+The repository includes a GitHub Actions workflow for automated deployment to GitHub Pages.
+
+### Setup
+
+1. Go to repo **Settings** → **Pages**
+2. Under "Build and deployment", select **GitHub Actions** as source
+
+### How It Works
+
+The workflow (`.github/workflows/deploy-skos.yml`):
+1. Builds with `BASE_URL=/augmented-semantics/skos/`
+2. Copies `index.html` to `404.html` for SPA routing
+3. Deploys to GitHub Pages
+
+### URL
+
+After deployment: `https://cognizone.github.io/augmented-semantics/skos/`
+
+### Customizing for Forks
+
+If you fork this repository, update the workflow's `BASE_URL`:
+
+```yaml
+- run: pnpm --filter ae-skos build
+  env:
+    BASE_URL: /your-repo-name/skos/
 ```
 
 ## Troubleshooting

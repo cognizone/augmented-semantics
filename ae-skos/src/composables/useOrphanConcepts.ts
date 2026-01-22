@@ -41,6 +41,8 @@ async function fetchAllConcepts(
     completedQueries: [],
     skippedQueries: [],
     currentQueryName: null,
+    orphanCollections: 0,
+    collectionsPhase: 'idle',
   })
 
   while (hasMore) {
@@ -66,6 +68,8 @@ async function fetchAllConcepts(
       completedQueries: [],
       skippedQueries: [],
       currentQueryName: null,
+      orphanCollections: 0,
+      collectionsPhase: 'idle',
     })
 
     logger.debug('OrphanConcepts', `Fetched ${allConcepts.size} / ${totalCount} concepts`, {
@@ -85,6 +89,8 @@ async function fetchAllConcepts(
     completedQueries: [],
     skippedQueries: [],
     currentQueryName: null,
+    orphanCollections: 0,
+    collectionsPhase: 'idle',
   })
 
   return allConcepts
@@ -151,6 +157,8 @@ export async function calculateOrphanConcepts(
     completedQueries: [],
     skippedQueries: [],
     currentQueryName: null,
+    orphanCollections: 0,
+    collectionsPhase: 'idle',
   })
 
   for (const { name, query: _ } of exclusionQueryBuilders) {
@@ -174,6 +182,8 @@ export async function calculateOrphanConcepts(
       completedQueries: [...completedQueries],
       skippedQueries: [...skippedQueries],
       currentQueryName: name,
+      orphanCollections: 0,
+      collectionsPhase: 'idle',
     })
 
     // Create a query builder function that matches the signature
@@ -221,6 +231,8 @@ export async function calculateOrphanConcepts(
       completedQueries: [...completedQueries],
       skippedQueries: [...skippedQueries],
       currentQueryName: null,
+      orphanCollections: 0,
+      collectionsPhase: 'idle',
     })
   }
 
@@ -233,6 +245,8 @@ export async function calculateOrphanConcepts(
     completedQueries: [...completedQueries],
     skippedQueries: [...skippedQueries],
     currentQueryName: null,
+    orphanCollections: 0,
+    collectionsPhase: 'idle',
   })
 
   const orphanUris: string[] = []
@@ -257,6 +271,8 @@ export async function calculateOrphanConcepts(
     completedQueries: [...completedQueries],
     skippedQueries: [...skippedQueries],
     currentQueryName: null,
+    orphanCollections: 0,
+    collectionsPhase: 'idle',
   })
 
   return orphanUris.sort()
@@ -302,6 +318,8 @@ export async function calculateOrphanConceptsFast(
     completedQueries: [],
     skippedQueries: [],
     currentQueryName: 'single-query-orphan-detection',
+    orphanCollections: 0,
+    collectionsPhase: 'idle',
   })
 
   const startTime = Date.now()
@@ -336,6 +354,8 @@ export async function calculateOrphanConceptsFast(
       completedQueries: [],
       skippedQueries: [],
       currentQueryName: 'single-query-orphan-detection',
+      orphanCollections: 0,
+      collectionsPhase: 'idle',
     })
 
     logger.debug('OrphanConcepts', `Fetched ${orphanUris.length} orphans so far`, {
@@ -367,6 +387,8 @@ export async function calculateOrphanConceptsFast(
     }],
     skippedQueries: [],
     currentQueryName: null,
+    orphanCollections: 0,
+    collectionsPhase: 'idle',
   })
 
   return orphanUris.sort()
