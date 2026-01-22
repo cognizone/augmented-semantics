@@ -78,15 +78,15 @@
     "languages": [
       {
         "lang": "it",
-        "count": 33758
+        "count": 33760
       },
       {
         "lang": "de",
-        "count": 32723
+        "count": 32725
       },
       {
         "lang": "fr",
-        "count": 32476
+        "count": 32478
       },
       {
         "lang": "en",
@@ -97,7 +97,7 @@
         "count": 1307
       }
     ],
-    "totalConcepts": 49078,
+    "totalConcepts": 49080,
     "relationships": {
       "hasInScheme": true,
       "hasTopConceptOf": true,
@@ -120,7 +120,7 @@
         "prefLabel": true
       }
     },
-    "analyzedAt": "2026-01-20T09:35:00.679Z"
+    "analyzedAt": "2026-01-22T16:10:31.025Z"
   },
   "suggestedLanguagePriorities": [
     "en",

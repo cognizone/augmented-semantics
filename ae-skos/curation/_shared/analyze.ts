@@ -405,6 +405,35 @@ function isValidLanguageCode(lang: string): boolean {
 }
 
 /**
+ * Detect languages using sampling approach for large datasets.
+ * Used as fallback when full language detection times out.
+ */
+async function detectLanguagesSampled(url: string, sampleSize = 100000): Promise<DetectedLanguage[]> {
+  const query = `
+    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+    SELECT ?lang (COUNT(*) AS ?count)
+    WHERE {
+      {
+        SELECT ?concept WHERE { ?concept a skos:Concept } LIMIT ${sampleSize}
+      }
+      ?concept skos:prefLabel ?label .
+      BIND(LANG(?label) AS ?lang)
+      FILTER(?lang != "")
+    }
+    GROUP BY ?lang
+    ORDER BY DESC(?count)
+  `
+
+  const results = await executeSparql(url, query)
+  return results.results.bindings
+    .map((b: any) => ({
+      lang: b.lang?.value || '',
+      count: parseInt(b.count?.value || '0', 10),
+    }))
+    .filter((item: DetectedLanguage) => item.lang.length > 0)
+}
+
+/**
  * Detect which label predicates exist for each resource type (Concept, ConceptScheme, Collection).
  * Uses EXISTS queries to efficiently check predicate availability.
  */
@@ -684,6 +713,25 @@ export async function curate(dir: string): Promise<void> {
     process.exit(1)
   }
 
+  // If languages are empty (timeout), use sampling approach
+  let languagesFailed = false
+  if (!analysis.languages || analysis.languages.length === 0) {
+    console.log('')
+    console.log(`  ${dim('→')} Language detection via sampling...`)
+    const start = Date.now()
+
+    try {
+      const sampledLanguages = await detectLanguagesSampled(config.url)
+      analysis.languages = sampledLanguages
+        .filter(l => isValidLanguageCode(l.lang))
+        .slice(0, 50)
+      console.log(`    ${cyan(`${analysis.languages.length} languages`)}  ${dim(formatDuration(Date.now() - start))}`)
+    } catch {
+      console.log(`    ${dim('error')}`)
+      languagesFailed = true
+    }
+  }
+
   const suggestedLanguagePriorities = generateLanguagePriorities(analysis.languages || [])
 
   writeOutput(dir, {
@@ -693,5 +741,10 @@ export async function curate(dir: string): Promise<void> {
   })
 
   console.log('')
-  console.log(`  ${green('✓')} ${bold('Complete')}  ${dim(formatDuration(Date.now() - startTime))}`)
+  if (languagesFailed) {
+    const yellow = (s: string) => `\x1b[33m${s}\x1b[0m`
+    console.log(`  ${yellow('⚠')} ${bold('Complete')} ${dim('(no languages detected)')}  ${dim(formatDuration(Date.now() - startTime))}`)
+  } else {
+    console.log(`  ${green('✓')} ${bold('Complete')}  ${dim(formatDuration(Date.now() - startTime))}`)
+  }
 }

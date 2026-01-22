@@ -74,6 +74,9 @@ function validateEndpoint(data: unknown, filename: string): ValidationResult {
       if (!('hasSkosContent' in analysis)) {
         warnings.push('Field "analysis.hasSkosContent" is missing')
       }
+      if (!('labelPredicates' in analysis)) {
+        warnings.push('Field "analysis.labelPredicates" is missing (label capability detection)')
+      }
     }
   }
 

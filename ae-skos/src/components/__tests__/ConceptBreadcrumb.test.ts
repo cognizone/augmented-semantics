@@ -564,15 +564,15 @@ describe('ConceptBreadcrumb', () => {
       expect(conceptStore.breadcrumb).toHaveLength(0)
     })
 
-    it('label priority is prefLabel > xlPrefLabel > title > dcTitle > rdfsLabel', () => {
+    it('label priority is prefLabel > xlPrefLabel > rdfsLabel for concepts', () => {
       // This tests the label priority logic conceptually
       // The actual implementation is tested via the composable tests
-      const labelPriority = ['prefLabel', 'xlPrefLabel', 'title', 'dcTitle', 'rdfsLabel']
+      const labelPriority = ['prefLabel', 'xlPrefLabel', 'rdfsLabel']
 
-      // Verify dcTitle comes before rdfsLabel
-      expect(labelPriority.indexOf('dcTitle')).toBeLessThan(labelPriority.indexOf('rdfsLabel'))
       // Verify prefLabel comes first
       expect(labelPriority.indexOf('prefLabel')).toBe(0)
+      // Verify rdfsLabel comes last
+      expect(labelPriority.indexOf('rdfsLabel')).toBe(labelPriority.length - 1)
     })
   })
 

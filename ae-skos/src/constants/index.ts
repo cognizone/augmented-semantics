@@ -7,6 +7,7 @@
 export {
   LABEL_TYPES,
   LABEL_PRIORITY,
+  CONCEPT_LABEL_PRIORITY,
   ALT_LABEL_PRIORITY,
   LABEL_PREDICATES,
   buildLabelUnionClause,
@@ -19,5 +20,8 @@ export {
   getLabelPredicate,
   type LabelType,
   type LabelPriorityType,
+  type ConceptLabelPriorityType,
   type LabelPredicateKey,
 } from './labels'
+
+export { NS, PRED, TYPE, type PredicateKey, type PredicateUri, type TypeUri } from './predicates'

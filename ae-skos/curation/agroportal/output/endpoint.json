@@ -5,7 +5,7 @@
   "analysis": {
     "hasSkosContent": true,
     "supportsNamedGraphs": true,
-    "skosGraphCount": 64,
+    "skosGraphCount": 65,
     "schemeUris": [
       "https://opendata.inrae.fr/ppd-res/pea#terres_inovia_scale_pea",
       "http://data4c-plus.net/admin/thesaurus/index",
@@ -199,23 +199,22 @@
       "http://w3id.org/glosis/model/codelists/saltContentValueCode",
       "http://w3id.org/glosis/model/codelists/saltCoverValueCode",
       "http://w3id.org/glosis/model/codelists/saltThicknessValueCode",
-      "http://w3id.org/glosis/model/codelists/sandPropertyCode",
-      "http://w3id.org/glosis/model/codelists/sandyTextureValueCode"
+      "http://w3id.org/glosis/model/codelists/sandPropertyCode"
     ],
-    "schemeCount": 194,
+    "schemeCount": 193,
     "schemesLimited": true,
     "languages": [
       {
         "lang": "en",
-        "count": 1165430
+        "count": 1165742
       },
       {
         "lang": "es",
-        "count": 756273
+        "count": 756606
       },
       {
         "lang": "fr",
-        "count": 490125
+        "count": 490453
       },
       {
         "lang": "tr",
@@ -223,7 +222,7 @@
       },
       {
         "lang": "de",
-        "count": 239780
+        "count": 240024
       },
       {
         "lang": "it",
@@ -406,7 +405,7 @@
         "count": 5247
       }
     ],
-    "totalConcepts": 1022483,
+    "totalConcepts": 1022595,
     "relationships": {
       "hasInScheme": true,
       "hasTopConceptOf": true,
@@ -435,7 +434,7 @@
         "rdfsLabel": true
       }
     },
-    "analyzedAt": "2026-01-20T09:15:15.866Z"
+    "analyzedAt": "2026-01-22T15:55:14.765Z"
   },
   "suggestedLanguagePriorities": [
     "en",

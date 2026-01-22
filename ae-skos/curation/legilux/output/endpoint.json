@@ -82,7 +82,7 @@
     "languages": [
       {
         "lang": "fr",
-        "count": 5517
+        "count": 5519
       },
       {
         "lang": "en",
@@ -241,7 +241,7 @@
         "count": 52
       }
     ],
-    "totalConcepts": 13882,
+    "totalConcepts": 13884,
     "relationships": {
       "hasInScheme": true,
       "hasTopConceptOf": true,
@@ -264,7 +264,7 @@
         "prefLabel": true
       }
     },
-    "analyzedAt": "2026-01-20T09:34:51.934Z"
+    "analyzedAt": "2026-01-22T16:21:39.985Z"
   },
   "suggestedLanguagePriorities": [
     "en",

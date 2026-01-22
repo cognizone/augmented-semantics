@@ -9,244 +9,312 @@
     "schemeUris": [
       "http://www.yso.fi/onto/oma/",
       "http://www.yso.fi/onto/yso/",
+      "http://www.yso.fi/onto/gtk/",
+      "http://www.yso.fi/onto/juho/",
+      "http://www.yso.fi/onto/jupo/",
+      "http://www.yso.fi/onto/kauno/",
+      "http://www.yso.fi/onto/keko/",
+      "http://www.yso.fi/onto/tao/",
+      "http://www.yso.fi/onto/tsr/",
+      "http://www.yso.fi/onto/valo/",
+      "http://www.yso.fi/onto/muso/",
+      "http://www.yso.fi/onto/oiko/",
+      "http://www.yso.fi/onto/koko/",
+      "http://www.yso.fi/onto/tero/",
       "http://www.yso.fi/onto/allars/",
       "http://www.yso.fi/onto/ysa/",
-      "http://www.yso.fi/onto/oma/deprecatedconceptscheme",
+      "http://lexvo.org/id/",
       "http://www.yso.fi/onto/afo/",
+      "http://www.yso.fi/onto/kito/",
+      "http://www.yso.fi/onto/kto/",
+      "http://www.yso.fi/onto/mero/",
+      "http://www.yso.fi/onto/soto/",
+      "http://www.yso.fi/onto/kulo/",
+      "http://www.yso.fi/onto/puho/",
+      "http://paikkatiedot.fi/def/1001000/",
+      "http://www.yso.fi/onto/gtk/deprecatedconceptscheme",
+      "http://www.yso.fi/onto/oiko/deprecatedconceptscheme",
+      "http://www.yso.fi/onto/yso/deprecatedconceptscheme",
+      "http://www.yso.fi/onto/tsr/deprecatedconceptscheme",
+      "http://www.yso.fi/onto/valo/deprecatedconceptscheme",
+      "http://www.yso.fi/onto/juho/deprecatedconceptscheme",
+      "http://www.yso.fi/onto/kauno/deprecatedconceptscheme",
+      "http://www.yso.fi/onto/tao/deprecatedconceptscheme",
+      "http://www.yso.fi/onto/oma/deprecatedconceptscheme",
+      "http://www.yso.fi/onto/jupo/deprecatedconceptscheme",
+      "http://www.yso.fi/onto/mero/deprecatedconceptscheme",
+      "http://paikkatiedot.fi/def/1001000/deprecatedconceptscheme",
+      "http://www.yso.fi/onto/muso/deprecatedconceptscheme",
+      "http://urn.fi/URN:NBN:fi:au:finaf:",
+      "http://urn.fi/URN:NBN:fi:au:cn:",
+      "http://urn.fi/URN:NBN:fi:au:mts:",
+      "http://www.yso.fi/onto/yso/places",
       "http://www.yso.fi/onto/afo/aggregateconceptscheme",
+      "http://www.yso.fi/onto/gtk/aggregateconceptscheme",
+      "http://www.yso.fi/onto/juho/aggregateconceptscheme",
+      "http://www.yso.fi/onto/kauno/aggregateconceptscheme",
+      "http://www.yso.fi/onto/keko/aggregateconceptscheme",
+      "http://www.yso.fi/onto/kito/aggregateconceptscheme",
+      "http://www.yso.fi/onto/kto/aggregateconceptscheme",
+      "http://www.yso.fi/onto/kulo/aggregateconceptscheme",
+      "http://www.yso.fi/onto/tao/aggregateconceptscheme",
+      "http://www.yso.fi/onto/mero/aggregateconceptscheme",
+      "http://www.yso.fi/onto/muso/aggregateconceptscheme",
+      "http://www.yso.fi/onto/oiko/aggregateconceptscheme",
+      "http://www.yso.fi/onto/puho/aggregateconceptscheme",
+      "http://www.yso.fi/onto/soto/aggregateconceptscheme",
+      "http://www.yso.fi/onto/tero/aggregateconceptscheme",
+      "http://www.yso.fi/onto/yso/aggregateconceptscheme",
+      "http://www.yso.fi/onto/tsr/aggregateconceptscheme",
+      "http://www.yso.fi/onto/valo/aggregateconceptscheme",
+      "http://www.yso.fi/onto/keko/deprecatedconceptscheme",
       "http://www.yso.fi/onto/afo/deprecatedconceptscheme",
+      "http://www.yso.fi/onto/puho/deprecatedconceptscheme",
+      "http://www.yso.fi/onto/soto/deprecatedconceptscheme",
+      "http://www.yso.fi/onto/tero/deprecatedconceptscheme",
+      "http://urn.fi/URN:NBN:fi:au:kaunokki:",
       "http://avoindata.fi/onto/contentType",
       "http://avoindata.fi/onto/topic",
       "http://www.yso.fi/onto/kasvimofologia/conceptscheme",
-      "http://urn.fi/URN:NBN:fi:au:cn:",
       "http://www.yso.fi/onto/collationtest1/",
       "http://iow.csc.fi/skos/eos#sanasto",
-      "http://urn.fi/URN:NBN:fi:au:finaf:",
-      "http://www.yso.fi/onto/gtk/",
-      "http://www.yso.fi/onto/gtk/aggregateconceptscheme",
-      "http://www.yso.fi/onto/gtk/deprecatedconceptscheme",
+      "http://www.yso.fi/onto/yso/aika",
+      "http://urn.fi/URN:NBN:fi:au:slm:",
+      "http://urn.fi/URN:NBN:fi:au:ykl:",
       "http://urn.fi/URN:NBN:fi:au:gfdc:",
       "http://urn.fi/URN:NBN:fi:au:gfdc:G",
       "http://www.yso.fi/onto/hero/",
       "http://urn.fi/URN:NBN:fi:au:hklj:",
       "http://iconclass.org/rdf/2011/09/",
       "http://cv.iptc.org/newscodes/scene/",
-      "http://cv.iptc.org/newscodes/subjectcode/",
       "http://cv.iptc.org/newscodes/",
+      "http://cv.iptc.org/newscodes/subjectcode/",
       "http://jhsmeta.fi/skos/",
-      "http://www.yso.fi/onto/juho/",
-      "http://www.yso.fi/onto/juho/deprecatedconceptscheme",
-      "http://www.yso.fi/onto/juho/aggregateconceptscheme",
-      "http://www.yso.fi/onto/jupo/",
-      "http://www.yso.fi/onto/jupo/deprecatedconceptscheme",
-      "http://www.yso.fi/onto/kassu/conceptscheme",
-      "http://www.yso.fi/onto/kauno/",
-      "http://www.yso.fi/onto/kauno/deprecatedconceptscheme",
-      "http://www.yso.fi/onto/kauno/aggregateconceptscheme",
-      "http://urn.fi/URN:NBN:fi:au:kaunokki:",
-      "http://www.yso.fi/onto/keko/",
-      "http://www.yso.fi/onto/keko/deprecatedconceptscheme",
-      "http://www.yso.fi/onto/keko/aggregateconceptscheme",
-      "http://www.yso.fi/onto/kito/",
-      "http://www.yso.fi/onto/kito/aggregateconceptscheme",
-      "http://urn.fi/URN:NBN:fi:au:kkaa:",
-      "http://www.yso.fi/onto/koko/",
-      "http://www.yso.fi/onto/koko/deprecatedconceptscheme",
-      "http://www.yso.fi/onto/kto/",
-      "http://www.yso.fi/onto/mero/",
-      "http://www.yso.fi/onto/soto/",
-      "http://www.yso.fi/onto/tao/",
-      "http://www.yso.fi/onto/tero/",
-      "http://www.yso.fi/onto/tsr/",
-      "http://www.yso.fi/onto/valo/",
-      "http://www.yso.fi/onto/kto/aggregateconceptscheme",
-      "http://www.yso.fi/onto/kulo/",
-      "http://www.yso.fi/onto/kulo/aggregateconceptscheme",
       "http://tun.fi/MR.1",
-      "http://urn.fi/URN:NBN:fi:au:lapponica:",
-      "http://lexvo.org/id/",
-      "http://www.yso.fi/onto/mero/deprecatedconceptscheme",
-      "http://www.yso.fi/onto/tao/deprecatedconceptscheme",
-      "http://www.yso.fi/onto/tao/aggregateconceptscheme",
-      "http://www.yso.fi/onto/mero/aggregateconceptscheme",
+      "http://www.yso.fi/onto/kassu/conceptscheme",
+      "http://urn.fi/URN:NBN:fi:au:kkaa:",
+      "http://www.yso.fi/onto/koko/deprecatedconceptscheme",
       "http://www.yso.fi/onto/mesh/",
-      "http://urn.fi/URN:NBN:fi:au:mts:",
+      "http://urn.fi/URN:NBN:fi:au:lapponica:",
       "http://www.yso.fi/onto/musa/",
       "http://www.yso.fi/onto/musa/deprecatedconceptscheme",
-      "http://www.yso.fi/onto/muso/",
-      "http://www.yso.fi/onto/muso/aggregateconceptscheme",
-      "http://www.yso.fi/onto/muso/deprecatedconceptscheme",
-      "http://www.yso.fi/onto/oiko/",
-      "http://www.yso.fi/onto/oiko/deprecatedconceptscheme",
-      "http://www.yso.fi/onto/oiko/aggregateconceptscheme",
       "http://www.yso.fi/onto/okm-tieteenala/conceptscheme",
       "http://www.yso.fi/onto/paikat/conceptscheme",
       "http://www.yso.fi/onto/ponduskategorier/conceptscheme",
-      "http://paikkatiedot.fi/def/1001000/",
-      "http://paikkatiedot.fi/def/1001000/deprecatedconceptscheme",
-      "http://www.yso.fi/onto/puho/",
-      "http://www.yso.fi/onto/puho/aggregateconceptscheme",
-      "http://www.yso.fi/onto/puho/deprecatedconceptscheme",
       "http://paikannimet.fi/meta/sapo#latest",
       "http://urn.fi/urn:nbn:fi:au:seko:",
       "http://urn.fi/urn:nbn:fi:au:seko",
       "http://www.yso.fi/onto/skns/",
-      "http://urn.fi/URN:NBN:fi:au:slm:",
-      "http://www.yso.fi/onto/soto/aggregateconceptscheme",
-      "http://www.yso.fi/onto/soto/deprecatedconceptscheme",
-      "http://www.yso.fi/onto/tero/deprecatedconceptscheme",
-      "http://www.yso.fi/onto/tero/aggregateconceptscheme",
-      "http://www.yso.fi/onto/yso/aggregateconceptscheme",
-      "http://www.yso.fi/onto/yso/deprecatedconceptscheme",
-      "http://www.yso.fi/onto/tsr/deprecatedconceptscheme",
-      "http://www.yso.fi/onto/tsr/aggregateconceptscheme",
       "http://urn.fi/URN:NBN:fi:au:tt:",
       "http://urn.fi/URN:NBN:fi:au:ucum:",
       "http://udcdata.info/udc-schema",
-      "http://www.yso.fi/onto/valo/aggregateconceptscheme",
-      "http://www.yso.fi/onto/valo/deprecatedconceptscheme",
-      "http://urn.fi/URN:NBN:fi:au:ykl:",
-      "http://www.yso.fi/onto/yse/",
-      "http://www.yso.fi/onto/yso/aika",
-      "http://www.yso.fi/onto/yso/places"
+      "http://www.yso.fi/onto/yse/"
     ],
     "schemeCount": 102,
     "schemesLimited": false,
     "languages": [
       {
         "lang": "fi",
-        "count": 1452343
+        "count": 1677816
       },
       {
         "lang": "sv",
-        "count": 958770
+        "count": 1224588
       },
       {
         "lang": "en",
-        "count": 958203
+        "count": 1190215
       },
       {
         "lang": "se",
-        "count": 261600
+        "count": 283574
       },
       {
         "lang": "de",
-        "count": 51933
-      },
-      {
-        "lang": "fr",
-        "count": 45129
-      },
-      {
-        "lang": "it",
-        "count": 42175
+        "count": 4387
       },
       {
         "lang": "et",
-        "count": 4396
+        "count": 3297
       },
       {
-        "lang": "la",
-        "count": 2846
+        "lang": "fr",
+        "count": 1902
+      },
+      {
+        "lang": "pms",
+        "count": 1702
       },
       {
         "lang": "ru",
-        "count": 2721
-      },
-      {
-        "lang": "nl",
-        "count": 2577
-      },
-      {
-        "lang": "es",
-        "count": 2533
-      },
-      {
-        "lang": "ca",
-        "count": 2366
-      },
-      {
-        "lang": "pt",
-        "count": 2160
-      },
-      {
-        "lang": "pl",
-        "count": 2060
-      },
-      {
-        "lang": "uk",
-        "count": 2039
-      },
-      {
-        "lang": "hu",
-        "count": 2010
-      },
-      {
-        "lang": "da",
-        "count": 1928
-      },
-      {
-        "lang": "cs",
-        "count": 1851
-      },
-      {
-        "lang": "nb",
-        "count": 1838
-      },
-      {
-        "lang": "lv",
-        "count": 1625
-      },
-      {
-        "lang": "ro",
-        "count": 1619
-      },
-      {
-        "lang": "sk",
-        "count": 1554
-      },
-      {
-        "lang": "lt",
-        "count": 1509
+        "count": 1482
       },
       {
         "lang": "hr",
-        "count": 1484
+        "count": 1441
       },
       {
-        "lang": "el",
-        "count": 1440
+        "lang": "br",
+        "count": 1155
       },
       {
-        "lang": "be",
-        "count": 1421
+        "lang": "es",
+        "count": 1129
       },
       {
-        "lang": "sr",
-        "count": 1412
+        "lang": "pl",
+        "count": 1057
       },
       {
-        "lang": "sl",
-        "count": 1227
+        "lang": "pt",
+        "count": 985
+      },
+      {
+        "lang": "it",
+        "count": 881
+      },
+      {
+        "lang": "mk",
+        "count": 858
+      },
+      {
+        "lang": "th",
+        "count": 857
+      },
+      {
+        "lang": "nl",
+        "count": 856
+      },
+      {
+        "lang": "ja",
+        "count": 787
+      },
+      {
+        "lang": "ca",
+        "count": 739
+      },
+      {
+        "lang": "ko",
+        "count": 736
+      },
+      {
+        "lang": "lt",
+        "count": 715
+      },
+      {
+        "lang": "uk",
+        "count": 707
+      },
+      {
+        "lang": "tr",
+        "count": 694
+      },
+      {
+        "lang": "id",
+        "count": 669
+      },
+      {
+        "lang": "cs",
+        "count": 650
+      },
+      {
+        "lang": "hu",
+        "count": 648
+      },
+      {
+        "lang": "no",
+        "count": 633
+      },
+      {
+        "lang": "ar",
+        "count": 623
+      },
+      {
+        "lang": "vi",
+        "count": 619
+      },
+      {
+        "lang": "he",
+        "count": 616
+      },
+      {
+        "lang": "sk",
+        "count": 610
+      },
+      {
+        "lang": "da",
+        "count": 608
+      },
+      {
+        "lang": "fa",
+        "count": 605
+      },
+      {
+        "lang": "ro",
+        "count": 603
       },
       {
         "lang": "bg",
-        "count": 1224
+        "count": 601
       },
       {
-        "lang": "sq",
-        "count": 990
+        "lang": "el",
+        "count": 593
       },
       {
-        "lang": "cn",
-        "count": 229
+        "lang": "nn",
+        "count": 580
       },
       {
-        "lang": "sc",
-        "count": 4
+        "lang": "lv",
+        "count": 577
+      },
+      {
+        "lang": "ta",
+        "count": 575
+      },
+      {
+        "lang": "eo",
+        "count": 560
+      },
+      {
+        "lang": "lo",
+        "count": 558
+      },
+      {
+        "lang": "sr",
+        "count": 558
+      },
+      {
+        "lang": "is",
+        "count": 556
+      },
+      {
+        "lang": "cmn",
+        "count": 555
+      },
+      {
+        "lang": "nb",
+        "count": 555
+      },
+      {
+        "lang": "az",
+        "count": 530
+      },
+      {
+        "lang": "hi",
+        "count": 529
+      },
+      {
+        "lang": "bn",
+        "count": 512
+      },
+      {
+        "lang": "sl",
+        "count": 511
       }
     ],
-    "totalConcepts": 891902,
+    "totalConcepts": 891932,
     "relationships": {
       "hasInScheme": true,
       "hasTopConceptOf": true,
@@ -273,7 +341,7 @@
         "rdfsLabel": true
       }
     },
-    "analyzedAt": "2026-01-20T09:31:06.079Z"
+    "analyzedAt": "2026-01-22T16:12:09.198Z"
   },
   "suggestedLanguagePriorities": [
     "en",
@@ -281,33 +349,50 @@
     "sv",
     "se",
     "de",
-    "fr",
-    "it",
     "et",
-    "la",
+    "fr",
+    "pms",
     "ru",
-    "nl",
-    "es",
-    "ca",
-    "pt",
-    "pl",
-    "uk",
-    "hu",
-    "da",
-    "cs",
-    "nb",
-    "lv",
-    "ro",
-    "sk",
-    "lt",
     "hr",
-    "el",
-    "be",
-    "sr",
-    "sl",
+    "br",
+    "es",
+    "pl",
+    "pt",
+    "it",
+    "mk",
+    "th",
+    "nl",
+    "ja",
+    "ca",
+    "ko",
+    "lt",
+    "uk",
+    "tr",
+    "id",
+    "cs",
+    "hu",
+    "no",
+    "ar",
+    "vi",
+    "he",
+    "sk",
+    "da",
+    "fa",
+    "ro",
     "bg",
-    "sq",
-    "cn",
-    "sc"
+    "el",
+    "nn",
+    "lv",
+    "ta",
+    "eo",
+    "lo",
+    "sr",
+    "is",
+    "cmn",
+    "nb",
+    "az",
+    "hi",
+    "bn",
+    "sl"
   ]
 }

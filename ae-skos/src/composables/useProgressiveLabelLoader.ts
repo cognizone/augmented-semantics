@@ -16,6 +16,8 @@ import { executeSparql, withPrefixes, logger } from '../services'
 import {
   buildSingleLanguageLabelClause,
   buildCapabilityAwareLabelUnionClause,
+  LABEL_PRIORITY,
+  CONCEPT_LABEL_PRIORITY,
 } from '../constants'
 import type { LabelPredicateCapabilities, SkosResourceType, LabelValue } from '../types'
 
@@ -167,7 +169,9 @@ export function useProgressiveLabelLoader() {
 
     // Select best label per concept using label type priority, then language priority
     const result: LabelResult = new Map()
-    const LABEL_TYPE_PRIORITY = ['prefLabel', 'xlPrefLabel', 'dctTitle', 'dcTitle', 'rdfsLabel']
+    const LABEL_TYPE_PRIORITY = resourceType === 'concept'
+      ? CONCEPT_LABEL_PRIORITY
+      : LABEL_PRIORITY
     const preferredLang = languageStore.preferred
     const langPriorities = endpointStore.current?.languagePriorities || []
 

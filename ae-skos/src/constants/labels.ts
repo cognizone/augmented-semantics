@@ -50,6 +50,17 @@ export const LABEL_PRIORITY = [
 export type LabelPriorityType = typeof LABEL_PRIORITY[number]
 
 /**
+ * Concept label priority (concepts rarely use title properties).
+ */
+export const CONCEPT_LABEL_PRIORITY = [
+  'prefLabel',
+  'xlPrefLabel',
+  'rdfsLabel',
+] as const
+
+export type ConceptLabelPriorityType = typeof CONCEPT_LABEL_PRIORITY[number]
+
+/**
  * Alternative label priority for altLabel/xlAltLabel selection.
  */
 export const ALT_LABEL_PRIORITY = [

@@ -12,6 +12,7 @@ import { useLabelResolver } from './useLabelResolver'
 import { useOtherProperties, COLLECTION_EXCLUDED_PREDICATES } from './useOtherProperties'
 import { useProgressiveLabelLoader } from './useProgressiveLabelLoader'
 import { useXLLabels } from './useXLLabels'
+import { PRED } from '../constants'
 import type { CollectionDetails, LabelValue, NotationValue, ConceptRef, LabelPredicateCapabilities } from '../types'
 
 export function useCollectionData() {
@@ -310,21 +311,21 @@ export function useCollectionData() {
         altLabels.push({ value, lang })
       } else if (labelType === 'hiddenLabel' || labelType === 'xlHiddenLabel') {
         hiddenLabels.push({ value, lang })
-      } else if (predicate.endsWith('notation')) {
+      } else if (predicate === PRED.notation) {
         notations.push({ value, datatype })
-      } else if (predicate.endsWith('definition')) {
+      } else if (predicate === PRED.definition) {
         definitions.push({ value, lang })
-      } else if (predicate.endsWith('scopeNote')) {
+      } else if (predicate === PRED.scopeNote) {
         scopeNotes.push({ value, lang })
-      } else if (predicate.endsWith('historyNote')) {
+      } else if (predicate === PRED.historyNote) {
         historyNotes.push({ value, lang })
-      } else if (predicate.endsWith('changeNote')) {
+      } else if (predicate === PRED.changeNote) {
         changeNotes.push({ value, lang })
-      } else if (predicate.endsWith('editorialNote')) {
+      } else if (predicate === PRED.editorialNote) {
         editorialNotes.push({ value, lang })
-      } else if (predicate.endsWith('example')) {
+      } else if (predicate === PRED.example) {
         examples.push({ value, lang })
-      } else if (predicate.endsWith('note')) {
+      } else if (predicate === PRED.note) {
         notes.push({ value, lang })
       } else if (labelType === 'deprecated') {
         deprecated = value === 'true' || value === '1'

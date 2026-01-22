@@ -11,10 +11,10 @@
     "languages": [
       {
         "lang": "en",
-        "count": 2565313
+        "count": 2610635
       }
     ],
-    "totalConcepts": 2509422,
+    "totalConcepts": 2554767,
     "relationships": {
       "hasInScheme": false,
       "hasTopConceptOf": false,
@@ -30,7 +30,7 @@
         "rdfsLabel": true
       }
     },
-    "analyzedAt": "2026-01-20T09:28:01.164Z"
+    "analyzedAt": "2026-01-22T16:08:33.056Z"
   },
   "suggestedLanguagePriorities": [
     "en"

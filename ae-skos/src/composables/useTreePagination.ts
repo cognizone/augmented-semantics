@@ -13,7 +13,7 @@ import { executeSparql, logger, eventBus, withPrefixes } from '../services'
 import { useConceptTreeQueries, useLabelResolver } from './index'
 import { calculateOrphanConcepts, calculateOrphanConceptsFast, calculateOrphanCollections } from './useOrphanConcepts'
 import { createInitialProgress, type OrphanProgress } from './useOrphanProgress'
-import { buildCapabilityAwareLabelUnionClause } from '../constants'
+import { buildCapabilityAwareLabelUnionClause, CONCEPT_LABEL_PRIORITY } from '../constants'
 import { useDeprecation } from './useDeprecation'
 import { pickBestNotation, compareNodes } from '../utils/concept-tree'
 import type { ConceptNode } from '../types'
@@ -211,7 +211,7 @@ export function useTreePagination() {
     const nodes: ConceptNode[] = []
 
     for (const [uri, data] of conceptMap.entries()) {
-      const selected = selectLabelByPriority(data.labels)
+      const selected = selectLabelByPriority(data.labels, CONCEPT_LABEL_PRIORITY)
       nodes.push({
         uri,
         label: selected?.value,
@@ -270,7 +270,7 @@ export function useTreePagination() {
 
       for (const node of nodes) {
         const labels = labelsByUri.get(node.uri) || []
-        const selected = selectLabelByPriority(labels)
+        const selected = selectLabelByPriority(labels, CONCEPT_LABEL_PRIORITY)
         if (selected) {
           node.label = selected.value
           node.lang = selected.lang || undefined

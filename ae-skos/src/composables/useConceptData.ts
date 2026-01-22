@@ -13,7 +13,8 @@ import { useDeprecation } from './useDeprecation'
 import { useXLLabels } from './useXLLabels'
 import { useOtherProperties, CONCEPT_EXCLUDED_PREDICATES } from './useOtherProperties'
 import { useProgressiveLabelLoader } from './useProgressiveLabelLoader'
-import { LABEL_PREDICATES } from '../constants'
+import { TYPE } from '../constants'
+import { CONCEPT_PROPERTY_MAP, processPropertyBindings, type SparqlBinding } from '../utils/propertyProcessor'
 import type { ConceptDetails, ConceptRef, SkosResourceType } from '../types'
 
 export function useConceptData() {
@@ -346,153 +347,15 @@ export function useConceptData() {
         otherProperties: [],
       }
 
-      // Collect rdf:type values to detect ConceptScheme
-      const types: string[] = []
-
-      // Process results
-      for (const binding of results.results.bindings) {
-        const prop = binding.property?.value || ''
-        const val = binding.value?.value || ''
-        const lang = binding.value?.['xml:lang']
-
-        // Collect types for later checking
-        if (prop === 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type') {
-          types.push(val)
-          continue
-        }
-
-        if (prop.endsWith('prefLabel')) {
-          conceptDetails.prefLabels.push({ value: val, lang })
-        } else if (prop === LABEL_PREDICATES.rdfsLabel.uri) {
-          // rdfs:label - stored separately for display
-          conceptDetails.rdfsLabels.push({ value: val, lang })
-        } else if (prop === LABEL_PREDICATES.dctTitle.uri) {
-          // dct:title (Dublin Core Terms)
-          conceptDetails.dctTitles.push({ value: val, lang })
-        } else if (prop === LABEL_PREDICATES.dcTitle.uri) {
-          // dc:title (Dublin Core Elements)
-          conceptDetails.dcTitles.push({ value: val, lang })
-        } else if (prop.endsWith('comment')) {
-          // rdfs:comment
-          conceptDetails.comments.push({ value: val, lang })
-        } else if (prop.endsWith('description')) {
-          // dct:description
-          conceptDetails.description.push({ value: val, lang })
-        } else if (prop.endsWith('altLabel')) {
-          conceptDetails.altLabels.push({ value: val, lang })
-        } else if (prop.endsWith('hiddenLabel')) {
-          conceptDetails.hiddenLabels.push({ value: val, lang })
-        } else if (prop.endsWith('definition')) {
-          conceptDetails.definitions.push({ value: val, lang })
-        } else if (prop.endsWith('scopeNote')) {
-          conceptDetails.scopeNotes.push({ value: val, lang })
-        } else if (prop.endsWith('historyNote')) {
-          conceptDetails.historyNotes.push({ value: val, lang })
-        } else if (prop.endsWith('changeNote')) {
-          conceptDetails.changeNotes.push({ value: val, lang })
-        } else if (prop.endsWith('editorialNote')) {
-          conceptDetails.editorialNotes.push({ value: val, lang })
-        } else if (prop.endsWith('#note')) {
-          conceptDetails.notes.push({ value: val, lang })
-        } else if (prop.endsWith('example')) {
-          conceptDetails.examples.push({ value: val, lang })
-        } else if (prop.endsWith('notation')) {
-          const datatype = binding.value?.datatype
-          if (!conceptDetails.notations.some(n => n.value === val)) {
-            conceptDetails.notations.push({ value: val, datatype })
-          }
-        } else if (prop.endsWith('broader')) {
-          if (!conceptDetails.broader.some(r => r.uri === val)) {
-            conceptDetails.broader.push({ uri: val })
-          }
-        } else if (prop.endsWith('narrower')) {
-          if (!conceptDetails.narrower.some(r => r.uri === val)) {
-            conceptDetails.narrower.push({ uri: val })
-          }
-        } else if (prop.endsWith('related')) {
-          if (!conceptDetails.related.some(r => r.uri === val)) {
-            conceptDetails.related.push({ uri: val })
-          }
-        } else if (prop.endsWith('inScheme')) {
-          if (!conceptDetails.inScheme.some(r => r.uri === val)) {
-            conceptDetails.inScheme.push({ uri: val })
-          }
-        } else if (prop.endsWith('exactMatch')) {
-          if (!conceptDetails.exactMatch.includes(val)) {
-            conceptDetails.exactMatch.push(val)
-          }
-        } else if (prop.endsWith('closeMatch')) {
-          if (!conceptDetails.closeMatch.includes(val)) {
-            conceptDetails.closeMatch.push(val)
-          }
-        } else if (prop.endsWith('broadMatch')) {
-          if (!conceptDetails.broadMatch.includes(val)) {
-            conceptDetails.broadMatch.push(val)
-          }
-        } else if (prop.endsWith('narrowMatch')) {
-          if (!conceptDetails.narrowMatch.includes(val)) {
-            conceptDetails.narrowMatch.push(val)
-          }
-        } else if (prop.endsWith('relatedMatch')) {
-          if (!conceptDetails.relatedMatch.includes(val)) {
-            conceptDetails.relatedMatch.push(val)
-          }
-        } else if (prop.endsWith('identifier')) {
-          if (!conceptDetails.identifier.includes(val)) {
-            conceptDetails.identifier.push(val)
-          }
-        } else if (prop.endsWith('created')) {
-          if (!conceptDetails.created) {
-            conceptDetails.created = val
-          }
-        } else if (prop.endsWith('modified')) {
-          if (!conceptDetails.modified) {
-            conceptDetails.modified = val
-          }
-        } else if (prop.endsWith('status')) {
-          if (!conceptDetails.status) {
-            // Extract fragment if it's a URI
-            conceptDetails.status = val.includes('/') ? val.split('/').pop() || val : val
-          }
-        } else if (prop.endsWith('issued')) {
-          if (!conceptDetails.issued) {
-            conceptDetails.issued = val
-          }
-        } else if (prop.endsWith('versionInfo')) {
-          if (!conceptDetails.versionInfo) {
-            conceptDetails.versionInfo = val
-          }
-        } else if (prop.endsWith('creator')) {
-          if (!conceptDetails.creator.includes(val)) {
-            conceptDetails.creator.push(val)
-          }
-        } else if (prop.endsWith('publisher')) {
-          if (!conceptDetails.publisher.includes(val)) {
-            conceptDetails.publisher.push(val)
-          }
-        } else if (prop.endsWith('rights')) {
-          if (!conceptDetails.rights.includes(val)) {
-            conceptDetails.rights.push(val)
-          }
-        } else if (prop.endsWith('ns#license')) {
-          // cc:license (Creative Commons)
-          if (!conceptDetails.ccLicense.includes(val)) {
-            conceptDetails.ccLicense.push(val)
-          }
-        } else if (prop.endsWith('license')) {
-          // dct:license (Dublin Core)
-          if (!conceptDetails.license.includes(val)) {
-            conceptDetails.license.push(val)
-          }
-        } else if (prop.endsWith('seeAlso')) {
-          if (!conceptDetails.seeAlso.includes(val)) {
-            conceptDetails.seeAlso.push(val)
-          }
-        }
-      }
+      // Process bindings using declarative property mapping
+      const types = processPropertyBindings(
+        results.results.bindings as SparqlBinding[],
+        conceptDetails,
+        CONCEPT_PROPERTY_MAP
+      )
 
       // Check if this is actually a ConceptScheme - redirect to scheme viewing if so
-      if (types.includes('http://www.w3.org/2004/02/skos/core#ConceptScheme')) {
+      if (types.includes(TYPE.ConceptScheme)) {
         logger.info('useConceptData', 'URI is a ConceptScheme, redirecting to scheme view', { uri })
         loading.value = false
         const conceptStore = useConceptStore()

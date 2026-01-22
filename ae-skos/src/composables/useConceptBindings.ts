@@ -14,7 +14,7 @@
 import { useLabelResolver } from './useLabelResolver'
 import { useDeprecation } from './useDeprecation'
 import { pickBestNotation, compareNodes } from '../utils/concept-tree'
-import { LABEL_PRIORITY } from '../constants'
+import { CONCEPT_LABEL_PRIORITY } from '../constants'
 import type { ConceptNode } from '../types'
 import type { SPARQLBinding } from '../services/sparql'
 
@@ -82,7 +82,7 @@ export function useConceptBindings() {
     // Convert to ConceptNode[] with best label selection
     const concepts: ConceptNode[] = Array.from(conceptMap.entries()).map(([uri, data]) => {
       // Pick best label using LABEL_PRIORITY constant
-      const labelPriority = LABEL_PRIORITY
+      const labelPriority = CONCEPT_LABEL_PRIORITY
       let bestLabel: string | undefined
       let bestLabelLang: string | undefined
 

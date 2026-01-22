@@ -74,11 +74,33 @@ The curation script generates `output/endpoint.json`:
       "hasBroaderTransitive": false,
       "hasNarrowerTransitive": false
     },
+    "labelPredicates": {
+      "concept": {
+        "prefLabel": true,
+        "xlPrefLabel": true,
+        "rdfsLabel": true
+      },
+      "scheme": {
+        "prefLabel": true,
+        "dctTitle": true,
+        "dcTitle": true,
+        "rdfsLabel": true
+      },
+      "collection": {
+        "prefLabel": true,
+        "dctTitle": true,
+        "rdfsLabel": true
+      }
+    },
     "analyzedAt": "2026-01-15T21:04:59.537Z"
   },
   "suggestedLanguagePriorities": ["en", "es", ...]
 }
 ```
+
+Label predicate detection records which label properties exist per resource type.
+This data is used in the app to build capability-aware label queries
+(including `dct:title` and `dc:title` when present).
 
 ## Curation Scripts
 

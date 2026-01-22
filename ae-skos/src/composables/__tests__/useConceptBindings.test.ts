@@ -82,7 +82,7 @@ describe('useConceptBindings', () => {
       expect(result.map(c => c.uri)).toContain('http://ex.org/c2')
     })
 
-    it('picks best label by type priority (prefLabel > xlPrefLabel > title > dcTitle > rdfsLabel)', () => {
+    it('picks best label by type priority (prefLabel > xlPrefLabel > rdfsLabel)', () => {
       const { processBindings } = useConceptBindings()
 
       const bindings: ConceptBinding[] = [
@@ -105,7 +105,7 @@ describe('useConceptBindings', () => {
       expect(result[0]?.label).toBe('Pref Label')
     })
 
-    it('picks dcTitle when no prefLabel/xlPrefLabel/title exists', () => {
+    it('ignores title properties for concepts when rdfsLabel exists', () => {
       const { processBindings } = useConceptBindings()
 
       const bindings: ConceptBinding[] = [
@@ -125,7 +125,7 @@ describe('useConceptBindings', () => {
 
       const result = processBindings(bindings)
 
-      expect(result[0]?.label).toBe('DC Title')
+      expect(result[0]?.label).toBe('RDFS Label')
     })
 
     it('picks xlPrefLabel when no prefLabel exists', () => {

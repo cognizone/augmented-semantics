@@ -11,7 +11,7 @@ import { useEndpointStore } from '../stores'
 import { executeSparql, withPrefixes, logger, resolveUris } from '../services'
 import { useXLLabels } from './useXLLabels'
 import { useOtherProperties, SCHEME_EXCLUDED_PREDICATES } from './useOtherProperties'
-import { LABEL_PREDICATES } from '../constants'
+import { SCHEME_PROPERTY_MAP, processPropertyBindings, type SparqlBinding } from '../utils/propertyProcessor'
 import type { SchemeDetails } from '../types'
 
 export function useSchemeData() {
@@ -87,103 +87,12 @@ export function useSchemeData() {
         otherProperties: [],
       }
 
-      // Process results
-      for (const binding of results.results.bindings) {
-        const prop = binding.property?.value || ''
-        const val = binding.value?.value || ''
-        const lang = binding.value?.['xml:lang']
-
-        if (prop.endsWith('prefLabel')) {
-          schemeDetails.prefLabels.push({ value: val, lang })
-        } else if (prop.endsWith('altLabel')) {
-          schemeDetails.altLabels.push({ value: val, lang })
-        } else if (prop.endsWith('hiddenLabel')) {
-          schemeDetails.hiddenLabels.push({ value: val, lang })
-        } else if (prop.endsWith('definition')) {
-          schemeDetails.definitions.push({ value: val, lang })
-        } else if (prop.endsWith('scopeNote')) {
-          schemeDetails.scopeNotes.push({ value: val, lang })
-        } else if (prop.endsWith('historyNote')) {
-          schemeDetails.historyNotes.push({ value: val, lang })
-        } else if (prop.endsWith('changeNote')) {
-          schemeDetails.changeNotes.push({ value: val, lang })
-        } else if (prop.endsWith('editorialNote')) {
-          schemeDetails.editorialNotes.push({ value: val, lang })
-        } else if (prop.endsWith('#note')) {
-          schemeDetails.notes.push({ value: val, lang })
-        } else if (prop.endsWith('example')) {
-          schemeDetails.examples.push({ value: val, lang })
-        } else if (prop === LABEL_PREDICATES.dctTitle.uri) {
-          // dct:title (Dublin Core Terms - preferred)
-          schemeDetails.dctTitles.push({ value: val, lang })
-        } else if (prop === LABEL_PREDICATES.dcTitle.uri) {
-          // dc:title (Dublin Core Elements - legacy)
-          schemeDetails.dcTitles.push({ value: val, lang })
-        } else if (prop.endsWith('description')) {
-          schemeDetails.description.push({ value: val, lang })
-        } else if (prop.endsWith('creator')) {
-          if (!schemeDetails.creator.includes(val)) {
-            schemeDetails.creator.push(val)
-          }
-        } else if (prop.endsWith('created')) {
-          schemeDetails.created = val
-        } else if (prop.endsWith('modified')) {
-          schemeDetails.modified = val
-        } else if (prop.endsWith('publisher')) {
-          if (!schemeDetails.publisher.includes(val)) {
-            schemeDetails.publisher.push(val)
-          }
-        } else if (prop.endsWith('rights')) {
-          if (!schemeDetails.rights.includes(val)) {
-            schemeDetails.rights.push(val)
-          }
-        } else if (prop.endsWith('ns#license')) {
-          // cc:license (Creative Commons)
-          if (!schemeDetails.ccLicense.includes(val)) {
-            schemeDetails.ccLicense.push(val)
-          }
-        } else if (prop.endsWith('license')) {
-          // dct:license (Dublin Core)
-          if (!schemeDetails.license.includes(val)) {
-            schemeDetails.license.push(val)
-          }
-        } else if (prop === LABEL_PREDICATES.rdfsLabel.uri) {
-          // rdfs:label
-          schemeDetails.rdfsLabels.push({ value: val, lang })
-        } else if (prop.endsWith('#comment')) {
-          // rdfs:comment
-          schemeDetails.comments.push({ value: val, lang })
-        } else if (prop.endsWith('notation')) {
-          // skos:notation
-          const datatype = binding.value?.datatype
-          schemeDetails.notations.push({ value: val, datatype })
-        } else if (prop.endsWith('issued')) {
-          // dct:issued
-          schemeDetails.issued = val
-        } else if (prop.endsWith('#deprecated')) {
-          // owl:deprecated
-          schemeDetails.deprecated = val === 'true' || val === '1'
-        } else if (prop.endsWith('versionInfo')) {
-          // owl:versionInfo
-          schemeDetails.versionInfo = val
-        } else if (prop.endsWith('identifier')) {
-          // dc:identifier
-          if (!schemeDetails.identifier.includes(val)) {
-            schemeDetails.identifier.push(val)
-          }
-        } else if (prop.endsWith('status')) {
-          // dct:status
-          if (!schemeDetails.status) {
-            // Extract fragment if it's a URI
-            schemeDetails.status = val.includes('/') ? val.split('/').pop() || val : val
-          }
-        } else if (prop.endsWith('#seeAlso')) {
-          // rdfs:seeAlso
-          if (!schemeDetails.seeAlso.includes(val)) {
-            schemeDetails.seeAlso.push(val)
-          }
-        }
-      }
+      // Process bindings using declarative property mapping
+      processPropertyBindings(
+        results.results.bindings as SparqlBinding[],
+        schemeDetails,
+        SCHEME_PROPERTY_MAP
+      )
 
       // Load SKOS-XL labels
       await loadXLLabels(uri, schemeDetails, { source: 'useSchemeData' })

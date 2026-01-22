@@ -11,6 +11,7 @@ import { ref, watch, computed } from 'vue'
 import { useConceptStore, useEndpointStore, useLanguageStore, useSchemeStore, useSettingsStore, useUIStore, ORPHAN_SCHEME_URI, ORPHAN_SCHEME } from '../../stores'
 import { executeSparql, withPrefixes, logger } from '../../services'
 import { useLabelResolver } from '../../composables'
+import { CONCEPT_LABEL_PRIORITY } from '../../constants'
 import type { ConceptRef, ConceptScheme } from '../../types'
 import Breadcrumb from 'primevue/breadcrumb'
 import Select from 'primevue/select'
@@ -421,7 +422,7 @@ async function loadBreadcrumb(uri: string) {
       }
 
       // Pick best label using centralized resolver
-      const selected = selectLabelByPriority(labels)
+      const selected = selectLabelByPriority(labels, CONCEPT_LABEL_PRIORITY)
       const bestLabel = selected?.value
       const bestLabelLang = selected?.lang || undefined
 
@@ -478,7 +479,7 @@ async function loadBreadcrumb(uri: string) {
       })).filter(l => l.value)
 
       // Pick best label using centralized resolver
-      const selected = selectLabelByPriority(labels)
+      const selected = selectLabelByPriority(labels, CONCEPT_LABEL_PRIORITY)
       const bestLabel = selected?.value
 
       conceptStore.setBreadcrumb([{ uri, label: bestLabel }])
@@ -513,7 +514,7 @@ async function loadCollectionBreadcrumb(collectionUri: string) {
   loading.value = true
 
   try {
-    // Query for collection labels using same priority as concepts
+    // Query for collection labels using collection priority
     const query = withPrefixes(`
       SELECT ?label ?labelLang ?labelType ?notation
       WHERE {

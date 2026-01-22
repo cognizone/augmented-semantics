@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   LABEL_TYPES,
   LABEL_PRIORITY,
+  CONCEPT_LABEL_PRIORITY,
   ALT_LABEL_PRIORITY,
   LABEL_PREDICATES,
   buildLabelUnionClause,
@@ -48,6 +49,16 @@ describe('LABEL_PRIORITY', () => {
       'xlPrefLabel',
       'dctTitle',
       'dcTitle',
+      'rdfsLabel',
+    ])
+  })
+})
+
+describe('CONCEPT_LABEL_PRIORITY', () => {
+  it('contains concept-only label types in expected order', () => {
+    expect(CONCEPT_LABEL_PRIORITY).toEqual([
+      'prefLabel',
+      'xlPrefLabel',
       'rdfsLabel',
     ])
   })
