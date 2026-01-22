@@ -41,10 +41,9 @@ const sidebarTab = computed({
   set: (value: 'browse' | 'search' | 'recent') => uiStore.setSidebarTab(value),
 })
 
-// Handle concept selection from tree or details panel - stay in current scheme
-function selectConceptInScheme(uri: string) {
-  schemeStore.viewScheme(null)
-  conceptStore.selectConceptWithEvent(uri)
+// Handle concept selection from tree or details panel - allows cross-scheme navigation
+async function selectConceptInScheme(uri: string) {
+  await selectConceptWithScheme(uri)
   uiStore.setSidebarTab('browse')
 }
 
