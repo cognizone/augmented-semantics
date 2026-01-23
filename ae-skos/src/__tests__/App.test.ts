@@ -70,7 +70,7 @@ describe('App', () => {
           Button: { template: '<button><slot /></button>', props: ['label', 'severity', 'text', 'outlined'] },
           Select: { template: '<select></select>', props: ['modelValue', 'options', 'optionLabel', 'optionValue', 'placeholder', 'disabled'] },
           Checkbox: { template: '<input type="checkbox" />', props: ['modelValue', 'binary'] },
-          EndpointManager: { template: '<div class="endpoint-manager"></div>', props: ['visible'] },
+          EndpointManager: { template: '<div v-if="visible" class="endpoint-manager"></div>', props: ['visible'] },
           ErrorBoundary: { template: '<div class="error-boundary"><slot /></div>' },
           ConceptBreadcrumb: { template: '<div class="concept-breadcrumb"></div>' },
           RouterView: { template: '<div class="router-view"></div>' },
@@ -170,6 +170,16 @@ describe('App', () => {
     it('does not show error banner when no error', () => {
       const wrapper = mountApp()
       expect(wrapper.find('.config-error-banner').exists()).toBe(false)
+    })
+  })
+
+  describe('auto-open endpoint manager', () => {
+    it('does not auto-open endpoint manager when endpoints exist', () => {
+      // beforeEach already adds an endpoint
+      const wrapper = mountApp()
+      // EndpointManager stub renders with class when visible
+      // Since endpoints exist, it should not auto-open
+      expect(wrapper.find('.endpoint-manager').exists()).toBe(false)
     })
   })
 })

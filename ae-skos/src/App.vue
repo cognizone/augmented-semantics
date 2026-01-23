@@ -165,6 +165,11 @@ function handleKeydown(event: KeyboardEvent) {
 onMounted(() => {
   uiStore.initResponsive()
   window.addEventListener('keydown', handleKeydown)
+
+  // Auto-open endpoint manager if no endpoints configured (not in config mode)
+  if (!endpointStore.configMode && endpointStore.endpoints.length === 0) {
+    showEndpointManager.value = true
+  }
 })
 
 onUnmounted(() => {

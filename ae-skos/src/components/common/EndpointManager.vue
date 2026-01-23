@@ -139,6 +139,17 @@ function handleAddSuggestedEndpoint(suggested: SuggestedEndpoint) {
   }
 }
 
+function handleAddAllSuggestedEndpoints() {
+  for (const suggested of endpointStore.availableSuggestedEndpoints) {
+    endpointStore.addSuggestedEndpoint(suggested)
+  }
+  // Select the first added endpoint
+  if (endpointStore.endpoints.length > 0) {
+    endpointStore.selectEndpoint(endpointStore.endpoints[0].id)
+    endpointStore.setStatus('connected')
+  }
+}
+
 // Developer Mode: Download JSON
 function handleDownloadJson(endpoint: SPARQLEndpoint) {
   const exportData = {
@@ -191,14 +202,28 @@ function formatUIDate(dateStr?: string) {
     <div class="endpoint-manager-content">
       <!-- Suggested Endpoints -->
       <div v-if="endpointStore.availableSuggestedEndpoints.length > 0" class="suggested-section">
-        <button class="suggested-header" @click="toggleSuggestedCollapsed">
-          <span class="material-symbols-outlined">verified</span>
-          <span class="suggested-header-text">Suggested Endpoints</span>
-          <span class="suggested-count">{{ endpointStore.availableSuggestedEndpoints.length }}</span>
-          <span class="material-symbols-outlined chevron" :class="{ 'chevron-collapsed': suggestedCollapsed }">
-            expand_more
-          </span>
-        </button>
+        <div class="suggested-header-row">
+          <button class="suggested-header" @click="toggleSuggestedCollapsed">
+            <span class="material-symbols-outlined">verified</span>
+            <span class="suggested-header-text">Suggested Endpoints</span>
+            <span class="suggested-count">{{ endpointStore.availableSuggestedEndpoints.length }}</span>
+            <span class="material-symbols-outlined chevron" :class="{ 'chevron-collapsed': suggestedCollapsed }">
+              expand_more
+            </span>
+          </button>
+          <Button
+            label="Import All"
+            size="small"
+            severity="secondary"
+            outlined
+            class="import-all-btn"
+            @click="handleAddAllSuggestedEndpoints"
+          >
+            <template #icon>
+              <span class="material-symbols-outlined btn-icon-small">playlist_add</span>
+            </template>
+          </Button>
+        </div>
         <div v-show="!suggestedCollapsed" class="suggested-list">
           <div
             v-for="suggested in endpointStore.availableSuggestedEndpoints"
@@ -368,6 +393,18 @@ function formatUIDate(dateStr?: string) {
   border: 1px solid var(--ae-border-color);
   border-radius: 0.375rem;
   padding: 1rem;
+}
+
+.suggested-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.import-all-btn {
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .suggested-header {

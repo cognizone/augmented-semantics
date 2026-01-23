@@ -208,6 +208,33 @@ describe('EndpointManager', () => {
         expect(endpointStore.currentId).toBe(endpointStore.endpoints[0]?.id)
       }
     })
+
+    it('adds all suggested endpoints when Import All clicked', async () => {
+      const endpointStore = useEndpointStore()
+
+      if (endpointStore.availableSuggestedEndpoints.length === 0) {
+        // Skip test if no suggested endpoints available
+        return
+      }
+
+      const suggestedCount = endpointStore.availableSuggestedEndpoints.length
+      const wrapper = mountEndpointManager()
+      await nextTick()
+
+      // Find and click the Import All button
+      const importAllBtn = wrapper.find('.import-all-btn')
+      if (importAllBtn.exists()) {
+        await importAllBtn.trigger('click')
+        await nextTick()
+
+        // Should have added all suggested endpoints
+        expect(endpointStore.endpoints.length).toBe(suggestedCount)
+        // First endpoint should be selected
+        expect(endpointStore.currentId).toBe(endpointStore.endpoints[0]?.id)
+        // No more suggested endpoints should be available (all added)
+        expect(endpointStore.availableSuggestedEndpoints.length).toBe(0)
+      }
+    })
   })
 
   describe('add endpoint wizard', () => {

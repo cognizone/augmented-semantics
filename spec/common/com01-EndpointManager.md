@@ -1070,6 +1070,16 @@ Value: JSON array of SPARQLEndpoint objects
 - Disconnected/error (red)
 - Testing (yellow/spinner)
 
+## First Launch Experience
+
+When the app loads with no saved endpoints (and not in config mode), the Endpoint Manager dialog automatically opens to guide new users through setup.
+
+**Conditions for auto-open:**
+- NOT in config mode (external config manages endpoints)
+- No endpoints saved (empty array)
+
+**Implementation:** `App.vue` checks these conditions in `onMounted()` and sets `showEndpointManager.value = true`.
+
 ## Suggested Endpoints
 
 Pre-configured endpoints with pre-calculated analysis results, optimized for new users and common SKOS vocabularies.
@@ -1211,6 +1221,18 @@ function addSuggestedEndpoint(suggested: SuggestedEndpoint): void {
 ```
 
 **UI Integration:**
+
+The suggested endpoints section appears in the EndpointManager dialog with:
+- Collapsible header with endpoint count badge
+- Individual "Add" buttons for each suggested endpoint
+- **"Import All" button** to add all suggested endpoints at once
+
+**Import All Button:**
+- Located in the suggested endpoints header row (next to the count badge)
+- Adds all available suggested endpoints in a single action
+- Auto-selects the first added endpoint and sets status to "connected"
+- Uses `playlist_add` icon to indicate bulk action
+
 In EndpointWizard Step 1, show suggested endpoints as quick-add buttons:
 
 ```
