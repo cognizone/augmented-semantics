@@ -17,6 +17,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { ConceptNode, ConceptRef, ConceptDetails, SearchResult, SearchSettings, HistoryEntry } from '../types'
 import { eventBus, logger } from '../services'
+import { createInitialProgress, type OrphanProgress } from '../composables/useOrphanProgress'
 
 const HISTORY_STORAGE_KEY = 'ae-skos-history'
 const MAX_HISTORY = 50
@@ -56,6 +57,9 @@ export const useConceptStore = defineStore('concept', () => {
 
   // State - UI triggers
   const shouldScrollToTop = ref(false)
+
+  // State - Orphan detection progress
+  const orphanProgress = ref<OrphanProgress>(createInitialProgress())
 
   // State - Event coordination
   const pendingRevealUri = ref<string | null>(null)
@@ -336,6 +340,7 @@ export const useConceptStore = defineStore('concept', () => {
     loadingTree,
     loadingDetails,
     loadingSearch,
+    orphanProgress,
     pendingRevealUri,
     pendingRevealCollectionUri,
     // Getters

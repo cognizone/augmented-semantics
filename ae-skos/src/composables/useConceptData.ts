@@ -104,8 +104,11 @@ export function useConceptData() {
         OPTIONAL { ?concept skos:notation ?notation }
         ${includeSchemeCheck ? `BIND(EXISTS { ?concept skos:inScheme <${currentSchemeUri}> } AS ?inCurrentScheme)` : ''}
         ${includeSchemeCheck ? 'OPTIONAL { ?concept skos:inScheme ?displayScheme }' : ''}
-        OPTIONAL { ?concept skos:narrower ?narrowerChild }
-        BIND(BOUND(?narrowerChild) AS ?hasNarrower)
+        BIND(EXISTS {
+          { ?narrowerChild skos:broader ?concept }
+          UNION
+          { ?concept skos:narrower ?narrowerChild }
+        } AS ?hasNarrower)
         ${deprecationOptionalClauses}
       }
     `)

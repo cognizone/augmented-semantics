@@ -73,7 +73,6 @@ const {
   loadingMoreTopConcepts,
   loadingChildren,
   error,
-  orphanProgress,
   loadTopConcepts,
   loadMoreTopConcepts,
   loadChildren,
@@ -120,7 +119,15 @@ async function onNodeExpand(node: TreeNode) {
       loadingCollectionChildren.value.add(uri)
       try {
         const children = await loadChildCollections(uri)
-        node.children = children.map(col => convertCollectionToTreeNode(col))
+        if (children.length > 0) {
+          node.children = children.map(col => convertCollectionToTreeNode(col))
+        } else {
+          node.children = undefined
+          node.leaf = true
+          if (node.data) {
+            node.data.hasChildCollections = false
+          }
+        }
       } catch (e) {
         logger.error('ConceptTree', 'Failed to load child collections', { uri, error: e })
       } finally {
@@ -351,31 +358,6 @@ function onTreeScroll(event: Event) {
   }
 }
 
-// Orphan progress helpers
-function getPhaseLabel(phase: string, currentQueryName: string | null): string {
-  // Detect if using single-query approach
-  const isSingleQuery = currentQueryName === 'single-query-orphan-detection'
-
-  switch (phase) {
-    case 'fetching-all': return 'Phase 1/4: Fetching Concepts'
-    case 'running-exclusions':
-      return isSingleQuery
-        ? 'Detecting Orphan Concepts'
-        : 'Phase 2/4: Running Exclusion Queries'
-    case 'calculating': return 'Phase 3/4: Calculating Orphans'
-    case 'detecting-collections': return 'Phase 4/4: Detecting Orphan Collections'
-    case 'complete': return 'Complete'
-    default: return 'Loading...'
-  }
-}
-
-function formatQueryName(name: string): string {
-  return name
-    .split('-')
-    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(' → ')
-}
-
 // Watch for scheme/endpoint changes
 // Use selectedUri directly so we react immediately when scheme changes (e.g., from history)
 watch(
@@ -530,119 +512,8 @@ watch(
         <span>Loading concepts...{{ treeLoadingElapsed.show.value ? ` (${treeLoadingElapsed.elapsed.value}s)` : '' }}</span>
       </template>
 
-      <!-- Detailed orphan progress -->
       <template v-else>
-        <div class="orphan-progress">
-          <div class="progress-header">
-            <span class="progress-phase">{{ getPhaseLabel(orphanProgress.phase, orphanProgress.currentQueryName) }}</span>
-            <span v-if="treeLoadingElapsed.show.value" class="progress-time">({{ treeLoadingElapsed.elapsed.value }}s)</span>
-          </div>
-
-          <!-- Phase 1: Fetching all concepts -->
-          <div v-if="orphanProgress.phase === 'fetching-all'" class="progress-detail">
-            <div v-if="orphanProgress.totalConcepts > 0" class="progress-counts">
-              <span class="count-label">Fetching:</span>
-              <span class="count-value">
-                {{ orphanProgress.fetchedConcepts.toLocaleString() }} / {{ orphanProgress.totalConcepts.toLocaleString() }} concepts
-                ({{ Math.round((orphanProgress.fetchedConcepts / orphanProgress.totalConcepts) * 100) }}%)
-              </span>
-            </div>
-            <div v-else class="progress-counts">
-              <span class="count-label">Fetching all SKOS concepts...</span>
-            </div>
-
-            <!-- Progress bar -->
-            <div v-if="orphanProgress.totalConcepts > 0 && orphanProgress.fetchedConcepts > 0" class="progress-bar">
-              <div
-                class="progress-bar-fill"
-                :style="{ width: `${(orphanProgress.fetchedConcepts / orphanProgress.totalConcepts) * 100}%` }"
-              ></div>
-            </div>
-          </div>
-
-          <!-- Phase 2: Running exclusions -->
-          <div v-else-if="orphanProgress.phase === 'running-exclusions'" class="progress-detail">
-            <!-- Single-query approach shows different stats -->
-            <template v-if="orphanProgress.currentQueryName === 'single-query-orphan-detection'">
-              <div class="progress-counts">
-                <span class="count-label">All concepts in endpoint:</span>
-                <span class="count-value">{{ orphanProgress.totalConcepts.toLocaleString() }}</span>
-              </div>
-              <div class="progress-counts">
-                <span class="count-label">Orphans found:</span>
-                <span class="count-value">{{ orphanProgress.remainingCandidates.toLocaleString() }}</span>
-              </div>
-              <div class="progress-current">
-                Fetching orphan concepts with optimized single query...
-              </div>
-            </template>
-
-            <!-- Multi-query approach shows elimination stats -->
-            <template v-else>
-              <div class="progress-counts">
-                <span class="count-label">Starting:</span>
-                <span class="count-value">{{ orphanProgress.totalConcepts.toLocaleString() }} concepts</span>
-              </div>
-              <div class="progress-counts">
-                <span class="count-label">Remaining:</span>
-                <span class="count-value">{{ orphanProgress.remainingCandidates.toLocaleString() }} candidates</span>
-              </div>
-
-              <!-- Current query -->
-              <div v-if="orphanProgress.currentQueryName" class="progress-current">
-                Running: {{ formatQueryName(orphanProgress.currentQueryName) }}
-              </div>
-            </template>
-
-            <!-- Completed queries (expandable) -->
-            <details v-if="orphanProgress.completedQueries.length > 0" class="progress-queries">
-              <summary>{{ orphanProgress.completedQueries.length }} queries completed</summary>
-              <ul class="query-list">
-                <li v-for="q in orphanProgress.completedQueries" :key="q.name" class="query-item">
-                  <span class="query-name">{{ formatQueryName(q.name) }}</span>
-                  <span class="query-stats">
-                    <span class="query-excluded">-{{ q.excludedCount.toLocaleString() }}</span>
-                    <span class="query-separator">|</span>
-                    <span class="query-cumulative">{{ q.cumulativeExcluded.toLocaleString() }} removed</span>
-                    <span class="query-separator">|</span>
-                    <span class="query-remaining">{{ q.remainingAfter.toLocaleString() }} left</span>
-                  </span>
-                </li>
-              </ul>
-            </details>
-
-            <!-- Skipped queries (expandable) -->
-            <details v-if="orphanProgress.skippedQueries.length > 0" class="progress-queries">
-              <summary class="skipped-summary">{{ orphanProgress.skippedQueries.length }} queries skipped</summary>
-              <ul class="query-list">
-                <li v-for="name in orphanProgress.skippedQueries" :key="name" class="query-item skipped-item">
-                  <span class="query-name">{{ formatQueryName(name) }}</span>
-                  <span class="query-skipped">skipped</span>
-                </li>
-              </ul>
-            </details>
-          </div>
-
-          <!-- Phase 3: Calculating -->
-          <div v-else-if="orphanProgress.phase === 'calculating'" class="progress-detail">
-            Performing final calculation...
-          </div>
-
-          <!-- Phase 4: Detecting collections -->
-          <div v-else-if="orphanProgress.phase === 'detecting-collections'" class="progress-detail">
-            <div class="progress-counts">
-              <span class="count-label">Orphan concepts:</span>
-              <span class="count-value">{{ orphanProgress.remainingCandidates.toLocaleString() }}</span>
-            </div>
-            <div class="progress-counts">
-              <span class="count-label">Orphan collections:</span>
-              <span class="count-value">{{ orphanProgress.orphanCollections.toLocaleString() }} found...</span>
-            </div>
-            <div class="progress-current">
-              Scanning for collections with no members in any scheme...
-            </div>
-          </div>
-        </div>
+        <span>Loading orphans...{{ treeLoadingElapsed.show.value ? ` (${treeLoadingElapsed.elapsed.value}s)` : '' }}</span>
       </template>
     </div>
 
@@ -657,58 +528,6 @@ watch(
 
     <!-- Tree -->
     <template v-if="!conceptStore.loadingTree && treeNodes.length > 0">
-      <!-- Orphan calculation summary (after loading completes) -->
-      <div v-if="schemeStore.isOrphanSchemeSelected && orphanProgress.phase === 'complete'" class="orphan-summary">
-        <details>
-          <summary class="summary-header">
-            <span class="material-symbols-outlined summary-icon">info</span>
-            <span>Orphan Detection: {{ (orphanProgress.remainingCandidates + orphanProgress.orphanCollections).toLocaleString() }} orphans found</span>
-          </summary>
-          <div class="summary-content">
-            <div class="summary-stats">
-              <div class="stat-item">
-                <span class="stat-label">Total Concepts:</span>
-                <span class="stat-value">{{ orphanProgress.totalConcepts.toLocaleString() }}</span>
-              </div>
-              <div class="stat-item">
-                <span class="stat-label">Orphan Concepts:</span>
-                <span class="stat-value">{{ orphanProgress.remainingCandidates.toLocaleString() }}</span>
-              </div>
-              <div class="stat-item">
-                <span class="stat-label">Orphan Collections:</span>
-                <span class="stat-value">{{ orphanProgress.orphanCollections.toLocaleString() }}</span>
-              </div>
-            </div>
-
-            <div v-if="orphanProgress.completedQueries.length > 0" class="summary-queries">
-              <h4 class="queries-title">Exclusion Queries ({{ orphanProgress.completedQueries.length }})</h4>
-              <ul class="query-list">
-                <li v-for="q in orphanProgress.completedQueries" :key="q.name" class="query-item">
-                  <span class="query-name">{{ formatQueryName(q.name) }}</span>
-                  <span class="query-stats">
-                    <span class="query-excluded">-{{ q.excludedCount.toLocaleString() }}</span>
-                    <span class="query-separator">|</span>
-                    <span class="query-cumulative">{{ q.cumulativeExcluded.toLocaleString() }} removed</span>
-                    <span class="query-separator">|</span>
-                    <span class="query-remaining">{{ q.remainingAfter.toLocaleString() }} left</span>
-                  </span>
-                </li>
-              </ul>
-            </div>
-
-            <div v-if="orphanProgress.skippedQueries.length > 0" class="summary-queries">
-              <h4 class="queries-title">Skipped Queries ({{ orphanProgress.skippedQueries.length }})</h4>
-              <ul class="query-list">
-                <li v-for="name in orphanProgress.skippedQueries" :key="name" class="query-item skipped-item">
-                  <span class="query-name">{{ formatQueryName(name) }}</span>
-                  <span class="query-skipped">skipped (0 candidates)</span>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </details>
-      </div>
-
       <div ref="treeWrapperRef" class="tree-wrapper" @scroll="onTreeScroll">
       <Tree
         v-model:selectionKeys="selectedKey"
@@ -1006,219 +825,6 @@ watch(
   height: 14px;
 }
 
-/* Orphan progress UI */
-.orphan-progress {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  text-align: left;
-  max-width: 400px;
-}
-
-.progress-header {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-weight: 500;
-}
-
-.progress-phase {
-  color: var(--ae-text-primary);
-}
-
-.progress-time {
-  color: var(--ae-text-secondary);
-  font-size: 0.875rem;
-}
-
-.progress-detail {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  font-size: 0.875rem;
-  color: var(--ae-text-secondary);
-}
-
-.progress-counts {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.count-label {
-  min-width: 70px;
-  color: var(--ae-text-secondary);
-}
-
-.count-value {
-  font-weight: 500;
-  color: var(--ae-text-primary);
-}
-
-.progress-current {
-  padding: 0.5rem;
-  background: var(--ae-bg-secondary);
-  border-radius: 4px;
-  font-style: italic;
-}
-
-.progress-queries {
-  margin-top: 0.5rem;
-}
-
-.progress-queries summary {
-  cursor: pointer;
-  padding: 0.25rem 0;
-  color: var(--ae-accent);
-  font-weight: 500;
-  user-select: none;
-}
-
-.progress-queries summary:hover {
-  text-decoration: underline;
-}
-
-.query-list {
-  list-style: none;
-  padding: 0;
-  margin: 0.5rem 0 0 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.query-item {
-  display: flex;
-  justify-content: space-between;
-  padding: 0.25rem 0.5rem;
-  font-size: 0.75rem;
-  background: var(--ae-bg-secondary);
-  border-radius: 3px;
-}
-
-.query-name {
-  color: var(--ae-text-secondary);
-}
-
-.query-stats {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.875rem;
-}
-
-.query-excluded {
-  color: var(--ae-accent);
-  font-weight: 600;
-}
-
-.query-separator {
-  color: var(--ae-text-muted);
-}
-
-.query-cumulative {
-  color: var(--ae-text-secondary);
-  font-weight: 500;
-}
-
-.query-remaining {
-  color: var(--ae-text-muted);
-}
-
-.progress-bar {
-  width: 100%;
-  height: 4px;
-  background: var(--ae-bg-secondary);
-  border-radius: 2px;
-  overflow: hidden;
-  margin-top: 0.5rem;
-}
-
-.progress-bar-fill {
-  height: 100%;
-  background: var(--ae-accent);
-  transition: width 0.3s ease;
-}
-
-.skipped-summary {
-  color: var(--ae-text-secondary) !important;
-  font-style: italic;
-}
-
-.skipped-item {
-  opacity: 0.6;
-}
-
-.query-skipped {
-  color: var(--ae-text-secondary);
-  font-style: italic;
-  font-size: 0.7rem;
-}
-
-/* Orphan summary (after completion) */
-.orphan-summary {
-  margin: 0.75rem;
-  padding: 0.75rem;
-  background: var(--ae-bg-secondary);
-  border: 1px solid var(--ae-border-color);
-  border-radius: 4px;
-}
-
-.summary-header {
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-weight: 500;
-  color: var(--ae-text-primary);
-  user-select: none;
-  padding: 0.25rem 0;
-}
-
-.summary-header:hover {
-  color: var(--ae-accent);
-}
-
-.summary-icon {
-  font-size: 1.25rem;
-  color: var(--ae-accent);
-}
-
-.summary-content {
-  margin-top: 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.summary-stats {
-  display: flex;
-  gap: 1.5rem;
-  flex-wrap: wrap;
-}
-
-.stat-item {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.stat-label {
-  font-size: 0.75rem;
-  color: var(--ae-text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.stat-value {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--ae-text-primary);
-}
-
-.summary-queries {
-  padding-top: 1rem;
-  border-top: 1px solid var(--ae-border-color);
-}
 
 .queries-title {
   margin: 0 0 0.5rem 0;

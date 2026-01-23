@@ -301,8 +301,8 @@ describe('ConceptTree', () => {
 
       const query = (executeSparql as Mock).mock.calls[0][1]
       // Fallback should check both directions
-      expect(query).toContain('FILTER NOT EXISTS { ?concept skos:broader ?broader }')
-      expect(query).toContain('FILTER NOT EXISTS { ?parent skos:narrower ?concept }')
+      expect(query).toContain('FILTER NOT EXISTS { ?concept skos:broader ?x }')
+      expect(query).toContain('FILTER NOT EXISTS { ?x skos:narrower ?concept }')
     })
 
     it('top concepts query counts children via both skos:broader and skos:narrower', async () => {
@@ -312,9 +312,9 @@ describe('ConceptTree', () => {
       await flushPromises()
 
       const query = (executeSparql as Mock).mock.calls[0][1]
-      // Child counting should use UNION for both directions
-      expect(query).toContain('?narrower skos:broader ?concept')
-      expect(query).toContain('?concept skos:narrower ?narrower')
+      // Child counting should use UNION for both directions (with anonymous nodes)
+      expect(query).toContain('[] skos:broader ?concept')
+      expect(query).toContain('?concept skos:narrower []')
     })
   })
 
@@ -357,11 +357,17 @@ describe('ConceptTree', () => {
     })
 
     it('handles concept URI normally when not a known scheme', async () => {
+      // Initial tree load
       ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
 
       const wrapper = mountConceptTree()
       await flushPromises()
       await nextTick()
+
+      // Mock isCollection ASK query (returns false)
+      ;(executeSparql as Mock).mockResolvedValueOnce({ boolean: false })
+      // Mock isConcept ASK query (returns true)
+      ;(executeSparql as Mock).mockResolvedValueOnce({ boolean: true })
 
       // Enter a concept URI (not in schemes list)
       const input = wrapper.find('.ae-input')

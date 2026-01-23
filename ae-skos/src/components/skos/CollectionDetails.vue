@@ -32,7 +32,20 @@ const emit = defineEmits<{
 
 const schemeStore = useSchemeStore()
 const { selectCollectionLabel, sortLabels, shouldShowLangTag } = useLabelResolver()
-const { details, members, loading, loadingMembers, error, resolvedPredicates, loadDetails, reset } = useCollectionData()
+const {
+  details,
+  members,
+  loading,
+  loadingMembers,
+  loadingMemberLabels,
+  hierarchyLoading,
+  schemeLoading,
+  memberCount,
+  error,
+  resolvedPredicates,
+  loadDetails,
+  reset
+} = useCollectionData()
 const { exportAsTurtle } = useResourceExport()
 const { showIndicator: showDeprecationIndicator } = useDeprecation()
 
@@ -65,6 +78,29 @@ const displayLang = computed(() => preferredLabelObj.value?.lang || null)
 
 const showHeaderLangTag = computed(() => {
   return displayLang.value ? shouldShowLangTag(displayLang.value) : false
+})
+
+const currentMemberStep = computed(() => {
+  if (loadingMembers.value) return 1
+  if (loadingMemberLabels.value) return 2
+  if (hierarchyLoading.value) return 3
+  if (schemeLoading.value) return 4
+  return 0
+})
+const showMemberStep = computed(() => currentMemberStep.value > 0)
+const memberStepLabel = computed(() => {
+  switch (currentMemberStep.value) {
+    case 1:
+      return 'Members'
+    case 2:
+      return 'Labels'
+    case 3:
+      return 'Hierarchy icons'
+    case 4:
+      return 'Scheme badges'
+    default:
+      return ''
+  }
 })
 
 // Get display title (notation + label if both exist)
@@ -200,6 +236,7 @@ function navigateToMember(member: { uri: string; type?: string }) {
   }
 }
 
+
 /**
  * Check if a concept ref belongs to a different scheme than the current selection
  * Uses inCurrentScheme boolean from EXISTS check - concept is external if NOT in current scheme
@@ -324,13 +361,18 @@ watch(
 
         <!-- Members Section -->
         <section v-if="members.length || loadingMembers" class="details-section">
-          <h3 class="section-title">
+          <h3 class="section-title section-title-row">
             <span class="material-symbols-outlined section-icon">list</span>
-            Members
-            <span v-if="members.length" class="member-count">({{ members.length }})</span>
+            <span class="section-title-text">
+              Members
+              <span v-if="memberCount !== null" class="member-count">({{ memberCount }})</span>
+            </span>
+            <span v-if="showMemberStep" class="member-step-inline">
+              Step {{ currentMemberStep }}/4: {{ memberStepLabel }}
+            </span>
           </h3>
 
-          <div v-if="loadingMembers" class="loading-members">
+          <div v-if="loadingMembers && !members.length" class="loading-members">
             Loading members...
           </div>
 
@@ -354,6 +396,9 @@ watch(
                   {{ getSchemeShortName(member.displayScheme!) }}
                 </span>
               </span>
+            </div>
+            <div v-if="loadingMemberLabels" class="loading-members">
+              Loading labels...
             </div>
           </div>
         </section>
@@ -493,6 +538,24 @@ watch(
   gap: 0.25rem;
 }
 
+.member-step-inline {
+  margin-left: auto;
+  font-size: 0.7rem;
+  color: var(--ae-text-secondary);
+}
+
+.section-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.section-title-text {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.25rem;
+}
+
 .member-item {
   display: flex;
   align-items: center;
@@ -522,6 +585,7 @@ watch(
   white-space: nowrap;
   font-size: 0.875rem;
 }
+
 
 /* Wrapper class for collection icon in header */
 :deep(.wrapper-collection) {

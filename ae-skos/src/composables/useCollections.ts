@@ -10,7 +10,7 @@ import { ref, computed } from 'vue'
 import { useEndpointStore, useLanguageStore } from '../stores'
 import { executeSparql, logger } from '../services'
 import { useLabelResolver } from './useLabelResolver'
-import { buildCollectionsQuery, buildChildCollectionsQuery, getCollectionQueryCapabilities } from './useCollectionQueries'
+import { buildCollectionsStageQuery, buildChildCollectionsQuery, getCollectionQueryCapabilities, type CollectionQueryStage } from './useCollectionQueries'
 import type { CollectionNode } from '../types'
 
 export function useCollections() {
@@ -23,6 +23,7 @@ export function useCollections() {
   const loading = ref(false)
   const error = ref<string | null>(null)
   const currentSchemeUri = ref<string | null>(null)
+  let activeRequestId = 0
 
   /**
    * Process query bindings into CollectionNode array.
@@ -103,6 +104,138 @@ export function useCollections() {
     return result
   }
 
+  function mergeBindingsIntoMap(
+    bindings: Array<Record<string, { value: string; 'xml:lang'?: string }>>,
+    collectionMap: Map<string, {
+      uri: string
+      labels: { value: string; lang: string; type: string }[]
+      notation?: string
+      isNested?: boolean
+      hasChildCollections?: boolean
+    }>
+  ) {
+    for (const binding of bindings) {
+      const uri = binding.collection?.value
+      if (!uri) continue
+
+      if (!collectionMap.has(uri)) {
+        collectionMap.set(uri, {
+          uri,
+          labels: [],
+          notation: binding.notation?.value,
+        })
+      }
+
+      const entry = collectionMap.get(uri)!
+
+      if (binding.label?.value) {
+        const lang = binding.labelLang?.value || binding.label['xml:lang'] || ''
+        const type = binding.labelType?.value || 'prefLabel'
+        const exists = entry.labels.some(l =>
+          l.value === binding.label.value &&
+          l.lang === lang &&
+          l.type === type
+        )
+        if (!exists) {
+          entry.labels.push({
+            value: binding.label.value,
+            lang: lang || '',
+            type,
+          })
+        }
+      }
+
+      if (!entry.notation && binding.notation?.value) {
+        entry.notation = binding.notation.value
+      }
+
+      if (binding.hasParentCollection?.value === 'true') {
+        entry.isNested = true
+      }
+      if (binding.hasChildCollections?.value === 'true') {
+        entry.hasChildCollections = true
+      }
+    }
+  }
+
+  function materializeCollectionList(
+    collectionMap: Map<string, {
+      uri: string
+      labels: { value: string; lang: string; type: string }[]
+      notation?: string
+      isNested?: boolean
+      hasChildCollections?: boolean
+    }>
+  ): CollectionNode[] {
+    const result: CollectionNode[] = []
+
+    for (const entry of collectionMap.values()) {
+      const selected = selectLabelByPriority(entry.labels)
+
+      result.push({
+        uri: entry.uri,
+        label: selected?.value,
+        labelLang: selected?.lang || undefined,
+        notation: entry.notation,
+        isNested: entry.isNested,
+        hasChildCollections: entry.hasChildCollections,
+      })
+    }
+
+    result.sort((a, b) => {
+      const labelA = a.label || a.uri
+      const labelB = b.label || b.uri
+      return labelA.localeCompare(labelB)
+    })
+
+    return result
+  }
+
+  async function runStageQuery(
+    stage: CollectionQueryStage,
+    endpoint: ReturnType<typeof useEndpointStore>['current']['value'],
+    schemeUri: string,
+    collectionMap: Map<string, {
+      uri: string
+      labels: { value: string; lang: string; type: string }[]
+      notation?: string
+      isNested?: boolean
+      hasChildCollections?: boolean
+    }>,
+    requestId: number
+  ): Promise<void> {
+    if (!endpoint) return
+
+    const query = buildCollectionsStageQuery(endpoint, schemeUri, stage)
+    if (!query) {
+      logger.info('Collections', 'Stage skipped - no query generated', { stage })
+      return
+    }
+
+    logger.debug('Collections', 'Running collection stage query', { stage, schemeUri })
+
+    try {
+      const results = await executeSparql(endpoint, query, { retries: 1 })
+      if (requestId !== activeRequestId) return
+
+      mergeBindingsIntoMap(
+        results.results.bindings as Array<Record<string, { value: string; 'xml:lang'?: string }>>,
+        collectionMap
+      )
+
+      collections.value = materializeCollectionList(collectionMap)
+      logger.info('Collections', `Stage ${stage} loaded (${collections.value.length} total)`)
+    } catch (e: unknown) {
+      const errMsg = e && typeof e === 'object' && 'message' in e
+        ? (e as { message: string }).message
+        : 'Unknown error'
+      logger.error('Collections', `Stage ${stage} failed`, { error: e })
+      if (requestId === activeRequestId) {
+        error.value = `Failed to load collections (${stage}): ${errMsg}`
+      }
+    }
+  }
+
   /**
    * Load collections for the given scheme.
    * Uses capability-aware query building based on endpoint analysis.
@@ -115,7 +248,7 @@ export function useCollections() {
     currentSchemeUri.value = schemeUri
 
     // Check capabilities before attempting query
-    const { branches, canQuery } = getCollectionQueryCapabilities(endpoint)
+    const { stages, canQuery } = getCollectionQueryCapabilities(endpoint)
 
     if (!canQuery) {
       logger.info('Collections', 'Skipping - no relevant capabilities', { scheme: schemeUri })
@@ -129,34 +262,29 @@ export function useCollections() {
     logger.info('Collections', 'Loading collections for scheme', {
       scheme: schemeUri,
       language: languageStore.preferred,
-      branches,
+      stages,
     })
 
-    const query = buildCollectionsQuery(endpoint, schemeUri)
-    if (!query) {
-      logger.info('Collections', 'No query generated - missing capabilities')
-      collections.value = []
-      loading.value = false
-      return
-    }
+    const requestId = ++activeRequestId
+    const collectionMap = new Map<string, {
+      uri: string
+      labels: { value: string; lang: string; type: string }[]
+      notation?: string
+      isNested?: boolean
+      hasChildCollections?: boolean
+    }>()
 
-    logger.debug('Collections', 'Collections query', { query })
+    collections.value = []
 
     try {
-      const results = await executeSparql(endpoint, query, { retries: 1 })
-      const parsed = processBindings(results.results.bindings as Array<Record<string, { value: string; 'xml:lang'?: string }>>)
-
-      logger.info('Collections', `Loaded ${parsed.length} collections`)
-      collections.value = parsed
-    } catch (e: unknown) {
-      const errMsg = e && typeof e === 'object' && 'message' in e
-        ? (e as { message: string }).message
-        : 'Unknown error'
-      logger.error('Collections', 'Failed to load collections', { error: e })
-      error.value = `Failed to load collections: ${errMsg}`
-      collections.value = []
+      for (const stage of stages) {
+        if (requestId !== activeRequestId) return
+        await runStageQuery(stage, endpoint, schemeUri, collectionMap, requestId)
+      }
     } finally {
-      loading.value = false
+      if (requestId === activeRequestId) {
+        loading.value = false
+      }
     }
   }
 

@@ -11,7 +11,7 @@ import { ref, watch, computed } from 'vue'
 import { useConceptStore, useEndpointStore, useLanguageStore, useSchemeStore, useSettingsStore, useUIStore, ORPHAN_SCHEME_URI, ORPHAN_SCHEME } from '../../stores'
 import { executeSparql, withPrefixes, logger } from '../../services'
 import { useLabelResolver } from '../../composables'
-import { CONCEPT_LABEL_PRIORITY } from '../../constants'
+import { buildCapabilityAwareLabelUnionClause, CONCEPT_LABEL_PRIORITY } from '../../constants'
 import type { ConceptRef, ConceptScheme } from '../../types'
 import Breadcrumb from 'primevue/breadcrumb'
 import Select from 'primevue/select'
@@ -135,6 +135,7 @@ function goHome() {
 async function loadSchemes() {
   const endpoint = endpointStore.current
   if (!endpoint) return
+  const schemeCapabilities = endpoint.analysis?.labelPredicates?.scheme
 
   // Get whitelist from endpoint analysis
   const schemeUris = endpoint.analysis?.schemeUris || []
@@ -163,23 +164,7 @@ async function loadSchemes() {
       ?scheme a skos:ConceptScheme .
       OPTIONAL { ?scheme owl:deprecated ?deprecated . }
       OPTIONAL {
-        {
-          ?scheme skos:prefLabel ?label .
-          BIND("prefLabel" AS ?labelType)
-        } UNION {
-          ?scheme skosxl:prefLabel/skosxl:literalForm ?label .
-          BIND("xlPrefLabel" AS ?labelType)
-        } UNION {
-          ?scheme dct:title ?label .
-          BIND("dctTitle" AS ?labelType)
-        } UNION {
-          ?scheme dc:title ?label .
-          BIND("dcTitle" AS ?labelType)
-        } UNION {
-          ?scheme rdfs:label ?label .
-          BIND("rdfsLabel" AS ?labelType)
-        }
-        BIND(LANG(?label) AS ?labelLang)
+        ${buildCapabilityAwareLabelUnionClause('?scheme', schemeCapabilities)}
       }
     }
   `)
@@ -323,6 +308,7 @@ let breadcrumbRequestId = 0
 async function loadBreadcrumb(uri: string) {
   const endpoint = endpointStore.current
   if (!endpoint) return
+  const conceptCapabilities = endpoint.analysis?.labelPredicates?.concept
 
   // Track this request
   const requestId = ++breadcrumbRequestId
@@ -359,23 +345,7 @@ async function loadBreadcrumb(uri: string) {
           }
           ` : ''}
           OPTIONAL {
-            {
-              <${current}> skos:prefLabel ?label .
-              BIND("prefLabel" AS ?labelType)
-            } UNION {
-              <${current}> skosxl:prefLabel/skosxl:literalForm ?label .
-              BIND("xlPrefLabel" AS ?labelType)
-            } UNION {
-              <${current}> dct:title ?label .
-              BIND("dctTitle" AS ?labelType)
-            } UNION {
-              <${current}> dc:title ?label .
-              BIND("dcTitle" AS ?labelType)
-            } UNION {
-              <${current}> rdfs:label ?label .
-              BIND("rdfsLabel" AS ?labelType)
-            }
-            BIND(LANG(?label) AS ?labelLang)
+            ${buildCapabilityAwareLabelUnionClause(`<${current}>`, conceptCapabilities)}
           }
         }
       `)
@@ -453,20 +423,9 @@ async function loadBreadcrumb(uri: string) {
     logger.warn('Breadcrumb', 'Failed to load path, using simple fallback', { error: e })
     // Fallback: just show the current concept with any available label
     const simpleQuery = withPrefixes(`
-      SELECT ?label ?labelLang
+      SELECT ?label ?labelLang ?labelType
       WHERE {
-        {
-          <${uri}> skos:prefLabel ?label .
-        } UNION {
-          <${uri}> skosxl:prefLabel/skosxl:literalForm ?label .
-        } UNION {
-          <${uri}> dct:title ?label .
-        } UNION {
-          <${uri}> dc:title ?label .
-        } UNION {
-          <${uri}> rdfs:label ?label .
-        }
-        BIND(LANG(?label) AS ?labelLang)
+        ${buildCapabilityAwareLabelUnionClause(`<${uri}>`, conceptCapabilities)}
       }
     `)
 
@@ -475,7 +434,7 @@ async function loadBreadcrumb(uri: string) {
       const labels = results.results.bindings.map(b => ({
         value: b.label?.value || '',
         lang: b.labelLang?.value || '',
-        type: 'prefLabel'  // Use prefLabel type for unified handling
+        type: b.labelType?.value || 'prefLabel'
       })).filter(l => l.value)
 
       // Pick best label using centralized resolver
@@ -503,6 +462,7 @@ function navigateTo(uri: string) {
 async function loadCollectionBreadcrumb(collectionUri: string) {
   const endpoint = endpointStore.current
   if (!endpoint) return
+  const collectionCapabilities = endpoint.analysis?.labelPredicates?.collection
 
   const scheme = schemeStore.selected
   if (!scheme) {
@@ -520,23 +480,7 @@ async function loadCollectionBreadcrumb(collectionUri: string) {
       WHERE {
         OPTIONAL { <${collectionUri}> skos:notation ?notation }
         OPTIONAL {
-          {
-            <${collectionUri}> skos:prefLabel ?label .
-            BIND("prefLabel" AS ?labelType)
-          } UNION {
-            <${collectionUri}> skosxl:prefLabel/skosxl:literalForm ?label .
-            BIND("xlPrefLabel" AS ?labelType)
-          } UNION {
-            <${collectionUri}> dct:title ?label .
-            BIND("dctTitle" AS ?labelType)
-          } UNION {
-            <${collectionUri}> dc:title ?label .
-            BIND("dcTitle" AS ?labelType)
-          } UNION {
-            <${collectionUri}> rdfs:label ?label .
-            BIND("rdfsLabel" AS ?labelType)
-          }
-          BIND(LANG(?label) AS ?labelLang)
+          ${buildCapabilityAwareLabelUnionClause(`<${collectionUri}>`, collectionCapabilities)}
         }
       }
     `)

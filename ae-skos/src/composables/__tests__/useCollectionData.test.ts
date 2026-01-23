@@ -6,6 +6,7 @@
  */
 import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
+import { flushPromises } from '@vue/test-utils'
 import { useCollectionData } from '../useCollectionData'
 import { useEndpointStore } from '../../stores'
 
@@ -73,6 +74,28 @@ vi.mock('../useLabelResolver', () => ({
   }),
 }))
 
+// Mock useProgressiveLabelLoader - allows tests to populate member labels via mockMemberLabelsData
+// Use vi.hoisted to ensure the variable is available when the mock is hoisted
+const { mockMemberLabelsData } = vi.hoisted(() => ({
+  mockMemberLabelsData: { current: new Map<string, { value: string; lang?: string }>() },
+}))
+
+vi.mock('../useProgressiveLabelLoader', () => ({
+  useProgressiveLabelLoader: () => ({
+    loadLabelsProgressively: vi.fn(
+      (
+        _uris: string[],
+        _resourceType: string,
+        callback: (resolved: Map<string, { value: string; lang?: string }>) => void
+      ) => {
+        // Call callback with mock labels data
+        callback(mockMemberLabelsData.current)
+        return Promise.resolve()
+      }
+    ),
+  }),
+}))
+
 import { executeSparql } from '../../services/sparql'
 
 describe('useCollectionData', () => {
@@ -82,6 +105,9 @@ describe('useCollectionData', () => {
 
     // Reset XL labels mock data
     mockXLLabelsData = {}
+
+    // Reset member labels mock data
+    mockMemberLabelsData.current = new Map()
 
     // Set up default endpoint
     const endpointStore = useEndpointStore()
@@ -796,38 +822,37 @@ describe('useCollectionData', () => {
 
   describe('member loading', () => {
     it('loads members with labels', async () => {
-      // First call is for details, second for members
-      ;(executeSparql as Mock)
-        .mockResolvedValueOnce({ results: { bindings: [] } }) // details
-        .mockResolvedValueOnce({
-          results: {
-            bindings: [
-              {
-                member: { value: 'http://example.org/concept/1' },
-                label: { value: 'Concept One' },
-                labelLang: { value: 'en' },
-                labelType: { value: 'prefLabel' },
-              },
-              {
-                member: { value: 'http://example.org/concept/2' },
-                label: { value: 'Concept Two' },
-                labelLang: { value: 'en' },
-                labelType: { value: 'prefLabel' },
-              },
-            ],
-          },
-        })
+      // Use mockImplementation to handle different query types
+      ;(executeSparql as Mock).mockImplementation(async (_endpoint, query: string) => {
+        // Details query (has UNION for labels)
+        if (query.includes('labelType') && !query.includes('skos:member')) {
+          return { results: { bindings: [] } }
+        }
+        // Members metadata query (has skos:member)
+        if (query.includes('skos:member')) {
+          return {
+            results: {
+              bindings: [
+                { member: { value: 'http://example.org/concept/1' } },
+                { member: { value: 'http://example.org/concept/2' } },
+              ],
+            },
+          }
+        }
+        return { results: { bindings: [] } }
+      })
 
-      const { loadDetails, members, loadingMembers } = useCollectionData()
+      // Set up mock labels via progressive loader mock
+      mockMemberLabelsData.current = new Map([
+        ['http://example.org/concept/1', { value: 'Concept One', lang: 'en' }],
+        ['http://example.org/concept/2', { value: 'Concept Two', lang: 'en' }],
+      ])
+
+      const { loadDetails, members } = useCollectionData()
       await loadDetails('http://example.org/collection/1')
 
-      // Wait for members to finish loading
-      await vi.waitFor(
-        () => {
-          expect(loadingMembers.value).toBe(false)
-        },
-        { timeout: 1000 }
-      )
+      // Wait for all async operations including loadMembers
+      await flushPromises()
 
       expect(members.value).toHaveLength(2)
       expect(members.value[0].uri).toBe('http://example.org/concept/1')
@@ -835,212 +860,144 @@ describe('useCollectionData', () => {
     })
 
     it('picks prefLabel over dcTitle for members', async () => {
-      ;(executeSparql as Mock)
-        .mockResolvedValueOnce({ results: { bindings: [] } }) // details
-        .mockResolvedValueOnce({
-          results: {
-            bindings: [
-              {
-                member: { value: 'http://example.org/concept/1' },
-                label: { value: 'DC Title' },
-                labelLang: { value: 'en' },
-                labelType: { value: 'dcTitle' },
-              },
-              {
-                member: { value: 'http://example.org/concept/1' },
-                label: { value: 'Pref Label' },
-                labelLang: { value: 'en' },
-                labelType: { value: 'prefLabel' },
-              },
-            ],
-          },
-        })
+      // Note: Label priority is now handled by useProgressiveLabelLoader
+      ;(executeSparql as Mock).mockImplementation(async (_endpoint, query: string) => {
+        if (query.includes('skos:member')) {
+          return { results: { bindings: [{ member: { value: 'http://example.org/concept/1' } }] } }
+        }
+        return { results: { bindings: [] } }
+      })
 
-      const { loadDetails, members, loadingMembers } = useCollectionData()
+      mockMemberLabelsData.current = new Map([
+        ['http://example.org/concept/1', { value: 'Pref Label', lang: 'en' }],
+      ])
+
+      const { loadDetails, members } = useCollectionData()
       await loadDetails('http://example.org/collection/1')
-
-      await vi.waitFor(
-        () => {
-          expect(loadingMembers.value).toBe(false)
-        },
-        { timeout: 1000 }
-      )
+      await flushPromises()
 
       expect(members.value[0].label).toBe('Pref Label')
     })
 
     it('picks dcTitle when no higher priority label exists for members', async () => {
-      ;(executeSparql as Mock)
-        .mockResolvedValueOnce({ results: { bindings: [] } }) // details
-        .mockResolvedValueOnce({
-          results: {
-            bindings: [
-              {
-                member: { value: 'http://example.org/concept/1' },
-                label: { value: 'RDFS Label' },
-                labelLang: { value: 'en' },
-                labelType: { value: 'rdfsLabel' },
-              },
-              {
-                member: { value: 'http://example.org/concept/1' },
-                label: { value: 'DC Title' },
-                labelLang: { value: 'en' },
-                labelType: { value: 'dcTitle' },
-              },
-            ],
-          },
-        })
+      ;(executeSparql as Mock).mockImplementation(async (_endpoint, query: string) => {
+        if (query.includes('skos:member')) {
+          return { results: { bindings: [{ member: { value: 'http://example.org/concept/1' } }] } }
+        }
+        return { results: { bindings: [] } }
+      })
 
-      const { loadDetails, members, loadingMembers } = useCollectionData()
+      mockMemberLabelsData.current = new Map([
+        ['http://example.org/concept/1', { value: 'DC Title', lang: 'en' }],
+      ])
+
+      const { loadDetails, members } = useCollectionData()
       await loadDetails('http://example.org/collection/1')
-
-      await vi.waitFor(
-        () => {
-          expect(loadingMembers.value).toBe(false)
-        },
-        { timeout: 1000 }
-      )
+      await flushPromises()
 
       expect(members.value[0].label).toBe('DC Title')
     })
 
     it('handles member notation', async () => {
-      ;(executeSparql as Mock)
-        .mockResolvedValueOnce({ results: { bindings: [] } }) // details
-        .mockResolvedValueOnce({
-          results: {
-            bindings: [
-              {
-                member: { value: 'http://example.org/concept/1' },
-                label: { value: 'Concept One' },
-                labelLang: { value: 'en' },
-                labelType: { value: 'prefLabel' },
-                notation: { value: 'C1' },
-              },
-            ],
-          },
-        })
+      ;(executeSparql as Mock).mockImplementation(async (_endpoint, query: string) => {
+        if (query.includes('skos:member')) {
+          return {
+            results: {
+              bindings: [{ member: { value: 'http://example.org/concept/1' }, notation: { value: 'C1' } }],
+            },
+          }
+        }
+        return { results: { bindings: [] } }
+      })
 
-      const { loadDetails, members, loadingMembers } = useCollectionData()
+      mockMemberLabelsData.current = new Map([
+        ['http://example.org/concept/1', { value: 'Concept One', lang: 'en' }],
+      ])
+
+      const { loadDetails, members } = useCollectionData()
       await loadDetails('http://example.org/collection/1')
-
-      await vi.waitFor(
-        () => {
-          expect(loadingMembers.value).toBe(false)
-        },
-        { timeout: 1000 }
-      )
+      await flushPromises()
 
       expect(members.value[0].notation).toBe('C1')
     })
 
     it('sorts members by label', async () => {
-      ;(executeSparql as Mock)
-        .mockResolvedValueOnce({ results: { bindings: [] } }) // details
-        .mockResolvedValueOnce({
-          results: {
-            bindings: [
-              {
-                member: { value: 'http://example.org/concept/2' },
-                label: { value: 'Zebra' },
-                labelLang: { value: 'en' },
-                labelType: { value: 'prefLabel' },
-              },
-              {
-                member: { value: 'http://example.org/concept/1' },
-                label: { value: 'Alpha' },
-                labelLang: { value: 'en' },
-                labelType: { value: 'prefLabel' },
-              },
-            ],
-          },
-        })
+      ;(executeSparql as Mock).mockImplementation(async (_endpoint, query: string) => {
+        if (query.includes('skos:member')) {
+          return {
+            results: {
+              bindings: [
+                { member: { value: 'http://example.org/concept/2' } },
+                { member: { value: 'http://example.org/concept/1' } },
+              ],
+            },
+          }
+        }
+        return { results: { bindings: [] } }
+      })
 
-      const { loadDetails, members, loadingMembers } = useCollectionData()
+      mockMemberLabelsData.current = new Map([
+        ['http://example.org/concept/2', { value: 'Zebra', lang: 'en' }],
+        ['http://example.org/concept/1', { value: 'Alpha', lang: 'en' }],
+      ])
+
+      const { loadDetails, members } = useCollectionData()
       await loadDetails('http://example.org/collection/1')
-
-      await vi.waitFor(
-        () => {
-          expect(loadingMembers.value).toBe(false)
-        },
-        { timeout: 1000 }
-      )
+      await flushPromises()
 
       expect(members.value[0].label).toBe('Alpha')
       expect(members.value[1].label).toBe('Zebra')
     })
 
     it('extracts hasNarrower for member icons', async () => {
-      ;(executeSparql as Mock)
-        .mockResolvedValueOnce({ results: { bindings: [] } }) // details
-        .mockResolvedValueOnce({
-          results: {
-            bindings: [
-              {
-                member: { value: 'http://example.org/concept/1' },
-                label: { value: 'Parent Concept' },
-                labelLang: { value: 'en' },
-                labelType: { value: 'prefLabel' },
-                hasNarrower: { value: 'true' },
-              },
-              {
-                member: { value: 'http://example.org/concept/2' },
-                label: { value: 'Leaf Concept' },
-                labelLang: { value: 'en' },
-                labelType: { value: 'prefLabel' },
-                hasNarrower: { value: 'false' },
-              },
-            ],
-          },
-        })
+      ;(executeSparql as Mock).mockImplementation(async (_endpoint, query: string) => {
+        if (query.includes('skos:member')) {
+          return {
+            results: {
+              bindings: [
+                { member: { value: 'http://example.org/concept/1' }, hasNarrower: { value: 'true' } },
+                { member: { value: 'http://example.org/concept/2' }, hasNarrower: { value: 'false' } },
+              ],
+            },
+          }
+        }
+        return { results: { bindings: [] } }
+      })
 
-      const { loadDetails, members, loadingMembers } = useCollectionData()
+      mockMemberLabelsData.current = new Map([
+        ['http://example.org/concept/1', { value: 'Parent Concept', lang: 'en' }],
+        ['http://example.org/concept/2', { value: 'Leaf Concept', lang: 'en' }],
+      ])
+
+      const { loadDetails, members } = useCollectionData()
       await loadDetails('http://example.org/collection/1')
+      await flushPromises()
 
-      await vi.waitFor(
-        () => {
-          expect(loadingMembers.value).toBe(false)
-        },
-        { timeout: 1000 }
-      )
-
-      // Find members by URI
       const parentMember = members.value.find((m) => m.uri === 'http://example.org/concept/1')
       const leafMember = members.value.find((m) => m.uri === 'http://example.org/concept/2')
 
-      // Parent has children
       expect(parentMember?.hasNarrower).toBe(true)
-      // Leaf has no children (hasNarrower is undefined when false)
       expect(leafMember?.hasNarrower).toBeUndefined()
     })
 
     it('detects nested collections (isCollection sets type)', async () => {
-      ;(executeSparql as Mock)
-        .mockResolvedValueOnce({ results: { bindings: [] } }) // details
-        .mockResolvedValueOnce({
-          results: {
-            bindings: [
-              {
-                member: { value: 'http://example.org/concept/1' },
-                isCollection: { value: 'false' },
-              },
-              {
-                member: { value: 'http://example.org/collection/nested' },
-                isCollection: { value: 'true' },
-              },
-            ],
-          },
-        })
+      ;(executeSparql as Mock).mockImplementation(async (_endpoint, query: string) => {
+        if (query.includes('skos:member')) {
+          return {
+            results: {
+              bindings: [
+                { member: { value: 'http://example.org/concept/1' }, isCollection: { value: 'false' } },
+                { member: { value: 'http://example.org/collection/nested' }, isCollection: { value: 'true' } },
+              ],
+            },
+          }
+        }
+        return { results: { bindings: [] } }
+      })
 
-      const { loadDetails, members, loadingMembers } = useCollectionData()
+      const { loadDetails, members } = useCollectionData()
       await loadDetails('http://example.org/collection/1')
-
-      await vi.waitFor(
-        () => {
-          expect(loadingMembers.value).toBe(false)
-        },
-        { timeout: 1000 }
-      )
+      await flushPromises()
 
       const conceptMember = members.value.find((m) => m.uri === 'http://example.org/concept/1')
       const collectionMember = members.value.find((m) => m.uri === 'http://example.org/collection/nested')
@@ -1050,38 +1007,28 @@ describe('useCollectionData', () => {
     })
 
     it('extracts inCurrentScheme boolean for cross-scheme indicator', async () => {
-      // Set up a scheme for cross-scheme detection
       const { useSchemeStore } = await import('../../stores')
       const schemeStore = useSchemeStore()
       schemeStore.schemes = [{ uri: 'http://example.org/scheme/1', label: 'Test Scheme' }]
       schemeStore.selectScheme('http://example.org/scheme/1')
 
-      ;(executeSparql as Mock)
-        .mockResolvedValueOnce({ results: { bindings: [] } }) // details
-        .mockResolvedValueOnce({
-          results: {
-            bindings: [
-              {
-                member: { value: 'http://example.org/concept/same-scheme' },
-                inCurrentScheme: { value: 'true' },
-              },
-              {
-                member: { value: 'http://external.org/concept/other-scheme' },
-                inCurrentScheme: { value: 'false' },
-              },
-            ],
-          },
-        })
+      ;(executeSparql as Mock).mockImplementation(async (_endpoint, query: string) => {
+        if (query.includes('skos:member')) {
+          return {
+            results: {
+              bindings: [
+                { member: { value: 'http://example.org/concept/same-scheme' }, inCurrentScheme: { value: 'true' } },
+                { member: { value: 'http://external.org/concept/other-scheme' }, inCurrentScheme: { value: 'false' } },
+              ],
+            },
+          }
+        }
+        return { results: { bindings: [] } }
+      })
 
-      const { loadDetails, members, loadingMembers } = useCollectionData()
+      const { loadDetails, members } = useCollectionData()
       await loadDetails('http://example.org/collection/1')
-
-      await vi.waitFor(
-        () => {
-          expect(loadingMembers.value).toBe(false)
-        },
-        { timeout: 1000 }
-      )
+      await flushPromises()
 
       const sameScheme = members.value.find((m) => m.uri === 'http://example.org/concept/same-scheme')
       const otherScheme = members.value.find((m) => m.uri === 'http://external.org/concept/other-scheme')
@@ -1091,68 +1038,52 @@ describe('useCollectionData', () => {
     })
 
     it('extracts displayScheme (first value found)', async () => {
-      ;(executeSparql as Mock)
-        .mockResolvedValueOnce({ results: { bindings: [] } }) // details
-        .mockResolvedValueOnce({
-          results: {
-            bindings: [
-              // First binding has displayScheme
-              {
-                member: { value: 'http://example.org/concept/1' },
-                displayScheme: { value: 'http://example.org/scheme/first' },
-              },
-              // Second binding for same member has different displayScheme (should be ignored)
-              {
-                member: { value: 'http://example.org/concept/1' },
-                displayScheme: { value: 'http://example.org/scheme/second' },
-              },
-            ],
-          },
-        })
+      ;(executeSparql as Mock).mockImplementation(async (_endpoint, query: string) => {
+        if (query.includes('skos:member')) {
+          return {
+            results: {
+              bindings: [
+                { member: { value: 'http://example.org/concept/1' }, displayScheme: { value: 'http://example.org/scheme/first' } },
+                { member: { value: 'http://example.org/concept/1' }, displayScheme: { value: 'http://example.org/scheme/second' } },
+              ],
+            },
+          }
+        }
+        return { results: { bindings: [] } }
+      })
 
-      const { loadDetails, members, loadingMembers } = useCollectionData()
+      const { loadDetails, members } = useCollectionData()
       await loadDetails('http://example.org/collection/1')
+      await flushPromises()
 
-      await vi.waitFor(
-        () => {
-          expect(loadingMembers.value).toBe(false)
-        },
-        { timeout: 1000 }
-      )
-
-      // Should use first displayScheme value found
       expect(members.value[0].displayScheme).toBe('http://example.org/scheme/first')
     })
 
     it('does not set cross-scheme fields on collection members', async () => {
-      ;(executeSparql as Mock)
-        .mockResolvedValueOnce({ results: { bindings: [] } }) // details
-        .mockResolvedValueOnce({
-          results: {
-            bindings: [
-              {
-                member: { value: 'http://example.org/nested-collection' },
-                isCollection: { value: 'true' },
-                inCurrentScheme: { value: 'false' },
-                displayScheme: { value: 'http://example.org/scheme/1' },
-              },
-            ],
-          },
-        })
+      ;(executeSparql as Mock).mockImplementation(async (_endpoint, query: string) => {
+        if (query.includes('skos:member')) {
+          return {
+            results: {
+              bindings: [
+                {
+                  member: { value: 'http://example.org/nested-collection' },
+                  isCollection: { value: 'true' },
+                  inCurrentScheme: { value: 'false' },
+                  displayScheme: { value: 'http://example.org/scheme/1' },
+                },
+              ],
+            },
+          }
+        }
+        return { results: { bindings: [] } }
+      })
 
-      const { loadDetails, members, loadingMembers } = useCollectionData()
+      const { loadDetails, members } = useCollectionData()
       await loadDetails('http://example.org/collection/1')
-
-      await vi.waitFor(
-        () => {
-          expect(loadingMembers.value).toBe(false)
-        },
-        { timeout: 1000 }
-      )
+      await flushPromises()
 
       const nestedCollection = members.value.find((m) => m.uri === 'http://example.org/nested-collection')
 
-      // Collection members should not have cross-scheme fields
       expect(nestedCollection?.type).toBe('collection')
       expect(nestedCollection?.inCurrentScheme).toBeUndefined()
       expect(nestedCollection?.displayScheme).toBeUndefined()

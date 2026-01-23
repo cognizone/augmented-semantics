@@ -7,6 +7,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   buildCollectionsQuery,
+  buildCollectionsStageQuery,
   buildChildCollectionsQuery,
   getCollectionQueryCapabilities,
 } from '../useCollectionQueries'
@@ -275,7 +276,7 @@ describe('useCollectionQueries', () => {
 
       const result = getCollectionQueryCapabilities(endpoint)
       expect(result.canQuery).toBe(false)
-      expect(result.branches).toEqual([])
+      expect(result.stages).toEqual([])
     })
 
     it('returns canQuery false if all relationships are false', () => {
@@ -283,34 +284,34 @@ describe('useCollectionQueries', () => {
 
       const result = getCollectionQueryCapabilities(endpoint)
       expect(result.canQuery).toBe(false)
-      expect(result.branches).toEqual([])
+      expect(result.stages).toEqual([])
     })
 
-    it('reports inScheme branch when hasInScheme is true', () => {
+    it('reports inScheme stage when hasInScheme is true', () => {
       const endpoint = mockEndpoint({ hasInScheme: true })
 
       const result = getCollectionQueryCapabilities(endpoint)
       expect(result.canQuery).toBe(true)
-      expect(result.branches).toContain('inScheme')
+      expect(result.stages).toContain('inScheme')
     })
 
-    it('reports topConceptOf branch when hasTopConceptOf is true', () => {
+    it('reports topConcept stage when hasTopConceptOf is true', () => {
       const endpoint = mockEndpoint({ hasTopConceptOf: true })
 
       const result = getCollectionQueryCapabilities(endpoint)
       expect(result.canQuery).toBe(true)
-      expect(result.branches).toContain('topConceptOf')
+      expect(result.stages).toContain('topConcept')
     })
 
-    it('reports hasTopConcept branch when hasHasTopConcept is true', () => {
+    it('reports topConcept stage when hasHasTopConcept is true', () => {
       const endpoint = mockEndpoint({ hasHasTopConcept: true })
 
       const result = getCollectionQueryCapabilities(endpoint)
       expect(result.canQuery).toBe(true)
-      expect(result.branches).toContain('hasTopConcept')
+      expect(result.stages).toContain('topConcept')
     })
 
-    it('reports broaderTransitive branch when available with top capability', () => {
+    it('reports transitive stage when available with top capability', () => {
       const endpoint = mockEndpoint({
         hasTopConceptOf: true,
         hasBroaderTransitive: true,
@@ -318,11 +319,11 @@ describe('useCollectionQueries', () => {
 
       const result = getCollectionQueryCapabilities(endpoint)
       expect(result.canQuery).toBe(true)
-      expect(result.branches).toContain('broaderTransitive')
-      expect(result.branches).not.toContain('broader-path')
+      expect(result.stages).toContain('transitive')
+      expect(result.stages).not.toContain('path')
     })
 
-    it('reports broader-path branch when transitive not available', () => {
+    it('reports path stage when transitive not available', () => {
       const endpoint = mockEndpoint({
         hasTopConceptOf: true,
         hasBroader: true,
@@ -331,11 +332,11 @@ describe('useCollectionQueries', () => {
 
       const result = getCollectionQueryCapabilities(endpoint)
       expect(result.canQuery).toBe(true)
-      expect(result.branches).toContain('broader-path')
-      expect(result.branches).not.toContain('broaderTransitive')
+      expect(result.stages).toContain('path')
+      expect(result.stages).not.toContain('transitive')
     })
 
-    it('does not report hierarchical branches without top capability', () => {
+    it('does not report hierarchical stages without top capability', () => {
       const endpoint = mockEndpoint({
         hasBroaderTransitive: true,
         hasBroader: true,
@@ -345,11 +346,11 @@ describe('useCollectionQueries', () => {
 
       const result = getCollectionQueryCapabilities(endpoint)
       expect(result.canQuery).toBe(false)
-      expect(result.branches).not.toContain('broaderTransitive')
-      expect(result.branches).not.toContain('broader-path')
+      expect(result.stages).not.toContain('transitive')
+      expect(result.stages).not.toContain('path')
     })
 
-    it('reports all relevant branches for complete endpoint', () => {
+    it('reports all relevant stages for complete endpoint', () => {
       const endpoint = mockEndpoint({
         hasInScheme: true,
         hasTopConceptOf: true,
@@ -359,10 +360,47 @@ describe('useCollectionQueries', () => {
 
       const result = getCollectionQueryCapabilities(endpoint)
       expect(result.canQuery).toBe(true)
-      expect(result.branches).toContain('inScheme')
-      expect(result.branches).toContain('topConceptOf')
-      expect(result.branches).toContain('hasTopConcept')
-      expect(result.branches).toContain('broaderTransitive')
+      expect(result.stages).toContain('inScheme')
+      expect(result.stages).toContain('topConcept')
+      expect(result.stages).toContain('transitive')
+    })
+  })
+
+  describe('buildCollectionsStageQuery', () => {
+    it('builds inScheme stage with EXISTS filter', () => {
+      const endpoint = mockEndpoint({ hasInScheme: true })
+      const query = buildCollectionsStageQuery(endpoint, testScheme, 'inScheme')
+      expect(query).not.toBeNull()
+      expect(query).toContain('FILTER EXISTS')
+      expect(query).toContain(`?concept skos:inScheme <${testScheme}>`)
+    })
+
+    it('builds topConcept stage with topConceptOf', () => {
+      const endpoint = mockEndpoint({ hasTopConceptOf: true })
+      const query = buildCollectionsStageQuery(endpoint, testScheme, 'topConcept')
+      expect(query).not.toBeNull()
+      expect(query).toContain(`?concept skos:topConceptOf <${testScheme}>`)
+    })
+
+    it('builds transitive stage with broaderTransitive', () => {
+      const endpoint = mockEndpoint({
+        hasTopConceptOf: true,
+        hasBroaderTransitive: true,
+      })
+      const query = buildCollectionsStageQuery(endpoint, testScheme, 'transitive')
+      expect(query).not.toBeNull()
+      expect(query).toContain('skos:broaderTransitive')
+      expect(query).toContain('?top skos:topConceptOf')
+    })
+
+    it('falls back to path stage when only broader is available', () => {
+      const endpoint = mockEndpoint({
+        hasTopConceptOf: true,
+        hasBroader: true,
+      })
+      const query = buildCollectionsStageQuery(endpoint, testScheme, 'path')
+      expect(query).not.toBeNull()
+      expect(query).toContain('skos:broader+')
     })
   })
 

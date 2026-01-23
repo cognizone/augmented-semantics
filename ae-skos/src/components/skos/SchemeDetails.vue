@@ -8,7 +8,8 @@
  * @see /spec/ae-skos/sko02-SchemeSelector.md
  */
 import { ref, watch, computed } from 'vue'
-import { useSchemeStore, ORPHAN_SCHEME_URI } from '../../stores'
+import { storeToRefs } from 'pinia'
+import { useConceptStore, useSchemeStore, useSettingsStore, ORPHAN_SCHEME_URI } from '../../stores'
 import { isValidURI } from '../../services'
 import { useDelayedLoading, useLabelResolver, useElapsedTime, useResourceExport, useSchemeData, useDeprecation } from '../../composables'
 import { getUriFragment, formatTemporalValue, formatDatatype } from '../../utils/displayUtils'
@@ -21,6 +22,9 @@ import DocumentationSection from '../common/DocumentationSection.vue'
 import OtherPropertiesSection from '../common/OtherPropertiesSection.vue'
 
 const schemeStore = useSchemeStore()
+const conceptStore = useConceptStore()
+const { orphanProgress } = storeToRefs(conceptStore)
+const settingsStore = useSettingsStore()
 const toast = useToast()
 const { selectSchemeLabel, sortLabels, shouldShowLangTag } = useLabelResolver()
 const { exportAsTurtle, downloadFile } = useResourceExport()
@@ -41,6 +45,23 @@ const exportMenuItems = [
 
 // Delayed loading
 const showLoading = useDelayedLoading(loading)
+
+const isOrphanView = computed(() => schemeStore.viewingSchemeUri === ORPHAN_SCHEME_URI)
+const orphanPhase = computed(() => {
+  const phase = orphanProgress.value?.phase ?? 'idle'
+  const hasCounts = (orphanProgress.value?.totalConcepts ?? 0) > 0
+    || (orphanProgress.value?.remainingCandidates ?? 0) > 0
+    || (orphanProgress.value?.orphanCollections ?? 0) > 0
+
+  if (phase === 'idle' && hasCounts) {
+    return 'complete'
+  }
+
+  return phase
+})
+const orphanPhaseLabel = computed(() => getPhaseLabel(orphanPhase.value, orphanProgress.value?.currentQueryName ?? null))
+const orphanTotal = computed(() => (orphanProgress.value?.remainingCandidates ?? 0) + (orphanProgress.value?.orphanCollections ?? 0))
+const orphanStrategyLabel = computed(() => settingsStore.orphanDetectionStrategy || 'auto')
 
 // Preferred label for header
 const preferredLabelObj = computed(() => {
@@ -191,6 +212,32 @@ function clearError() {
   error.value = null
 }
 
+function getPhaseLabel(phase: string | undefined, currentQueryName: string | null): string {
+  const isSingleQuery = currentQueryName === 'single-query-orphan-detection'
+
+  switch (phase) {
+    case 'fetching-all':
+      return 'Phase 1/4: Fetching Concepts'
+    case 'running-exclusions':
+      return isSingleQuery ? 'Detecting Orphan Concepts' : 'Phase 2/4: Running Exclusion Queries'
+    case 'calculating':
+      return 'Phase 3/4: Calculating Orphans'
+    case 'detecting-collections':
+      return 'Phase 4/4: Detecting Orphan Collections'
+    case 'complete':
+      return 'Complete'
+    default:
+      return 'Waiting to start...'
+  }
+}
+
+function formatQueryName(name: string): string {
+  return name
+    .split('-')
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' → ')
+}
+
 // Watch for viewing scheme changes
 watch(
   () => schemeStore.viewingSchemeUri,
@@ -198,36 +245,8 @@ watch(
     if (uri) {
       // Handle orphan pseudo-scheme specially (no SPARQL data to load)
       if (uri === ORPHAN_SCHEME_URI) {
-        details.value = {
-          uri: ORPHAN_SCHEME_URI,
-          prefLabels: [{ value: 'Orphan Concepts' }],
-          altLabels: [],
-          hiddenLabels: [],
-          rdfsLabels: [],
-          notations: [],
-          definitions: [{ value: 'Concepts not linked to any concept scheme.' }],
-          scopeNotes: [],
-          historyNotes: [],
-          changeNotes: [],
-          editorialNotes: [],
-          notes: [],
-          examples: [],
-          comments: [],
-          dctTitles: [],
-          dcTitles: [],
-          description: [],
-          identifier: [],
-          creator: [],
-          publisher: [],
-          rights: [],
-          license: [],
-          ccLicense: [],
-          seeAlso: [],
-          prefLabelsXL: [],
-          altLabelsXL: [],
-          hiddenLabelsXL: [],
-          otherProperties: [],
-        }
+        details.value = null
+        error.value = null
         return
       }
       loadDetails(uri)
@@ -240,9 +259,9 @@ watch(
 <template>
   <div class="scheme-details">
     <DetailsStates
-      :loading="loading"
-      :show-loading="showLoading"
-      :has-data="!!details"
+      :loading="!isOrphanView && loading"
+      :show-loading="!isOrphanView && showLoading"
+      :has-data="isOrphanView || !!details"
       :error="error"
       loading-text="Loading scheme..."
       empty-icon="schema"
@@ -251,8 +270,145 @@ watch(
       :elapsed="loadingElapsed"
       @clear-error="clearError"
     >
+      <div v-if="isOrphanView" class="details-content orphan-details">
+        <div class="orphan-header">
+          <div class="orphan-header-icon">
+            <span class="material-symbols-outlined">link_off</span>
+          </div>
+          <div class="orphan-header-content">
+            <h2 class="orphan-title">Orphan Concepts &amp; Collections</h2>
+            <span class="orphan-subtitle">Not linked to any concept scheme</span>
+          </div>
+        </div>
+
+        <section class="orphan-info">
+          <div class="orphan-info-header">
+            <div class="orphan-info-title">
+              <span class="material-symbols-outlined info-icon">info</span>
+              <span>Orphan Detection</span>
+            </div>
+            <span class="orphan-strategy">Strategy: {{ orphanStrategyLabel }}</span>
+            <span class="orphan-phase">{{ orphanPhaseLabel }}</span>
+          </div>
+
+          <div v-if="orphanPhase === 'fetching-all'" class="orphan-progress-block">
+            <div v-if="orphanProgress.totalConcepts > 0" class="progress-row">
+              <span class="progress-label">Fetching:</span>
+              <span class="progress-value">
+                {{ orphanProgress.fetchedConcepts.toLocaleString() }} / {{ orphanProgress.totalConcepts.toLocaleString() }} concepts
+                ({{ Math.round((orphanProgress.fetchedConcepts / orphanProgress.totalConcepts) * 100) }}%)
+              </span>
+            </div>
+            <div v-else class="progress-row">
+              <span class="progress-label">Fetching all SKOS concepts...</span>
+            </div>
+            <div v-if="orphanProgress.totalConcepts > 0 && orphanProgress.fetchedConcepts > 0" class="progress-bar">
+              <div
+                class="progress-bar-fill"
+                :style="{ width: `${(orphanProgress.fetchedConcepts / orphanProgress.totalConcepts) * 100}%` }"
+              ></div>
+            </div>
+          </div>
+
+          <div v-else-if="orphanPhase === 'running-exclusions'" class="orphan-progress-block">
+            <template v-if="orphanProgress.currentQueryName === 'single-query-orphan-detection'">
+              <div class="progress-row">
+                <span class="progress-label">All concepts in endpoint:</span>
+                <span class="progress-value">{{ orphanProgress.totalConcepts.toLocaleString() }}</span>
+              </div>
+              <div class="progress-row">
+                <span class="progress-label">Orphans found:</span>
+                <span class="progress-value">{{ orphanProgress.remainingCandidates.toLocaleString() }}</span>
+              </div>
+              <div class="progress-note">Fetching orphan concepts with optimized single query...</div>
+            </template>
+
+            <template v-else>
+              <div class="progress-row">
+                <span class="progress-label">Starting:</span>
+                <span class="progress-value">{{ orphanProgress.totalConcepts.toLocaleString() }} concepts</span>
+              </div>
+              <div class="progress-row">
+                <span class="progress-label">Remaining:</span>
+                <span class="progress-value">{{ orphanProgress.remainingCandidates.toLocaleString() }} candidates</span>
+              </div>
+              <div v-if="orphanProgress.currentQueryName" class="progress-note">
+                Running: {{ formatQueryName(orphanProgress.currentQueryName) }}
+              </div>
+            </template>
+          </div>
+
+          <div v-else-if="orphanPhase === 'calculating'" class="orphan-progress-block">
+            <div class="progress-note">Performing final calculation...</div>
+          </div>
+
+          <div v-else-if="orphanPhase === 'detecting-collections'" class="orphan-progress-block">
+            <div class="progress-row">
+              <span class="progress-label">Orphan concepts:</span>
+              <span class="progress-value">{{ orphanProgress.remainingCandidates.toLocaleString() }}</span>
+            </div>
+            <div class="progress-row">
+              <span class="progress-label">Orphan collections:</span>
+              <span class="progress-value">{{ orphanProgress.orphanCollections.toLocaleString() }} found...</span>
+            </div>
+            <div class="progress-note">Scanning for collections with no members in any scheme...</div>
+          </div>
+
+          <div v-else-if="orphanPhase === 'complete'" class="orphan-progress-block">
+            <div class="progress-row">
+              <span class="progress-label">Orphans found:</span>
+              <span class="progress-value">{{ orphanTotal.toLocaleString() }}</span>
+            </div>
+          </div>
+          <div v-else class="orphan-progress-block">
+            <div class="progress-note">Waiting for orphan detection to start...</div>
+          </div>
+
+          <div v-if="orphanProgress.completedQueries.length > 0" class="orphan-queries">
+            <h4 class="queries-title">Exclusion Queries ({{ orphanProgress.completedQueries.length }})</h4>
+            <ul class="query-list">
+              <li v-for="q in orphanProgress.completedQueries" :key="q.name" class="query-item">
+                <span class="query-name">{{ formatQueryName(q.name) }}</span>
+                <span class="query-stats">
+                  <span class="query-excluded">-{{ q.excludedCount.toLocaleString() }}</span>
+                  <span class="query-separator">|</span>
+                  <span class="query-cumulative">{{ q.cumulativeExcluded.toLocaleString() }} removed</span>
+                  <span class="query-separator">|</span>
+                  <span class="query-remaining">{{ q.remainingAfter.toLocaleString() }} left</span>
+                </span>
+              </li>
+            </ul>
+          </div>
+
+          <div v-if="orphanProgress.skippedQueries.length > 0" class="orphan-queries">
+            <h4 class="queries-title">Skipped Queries ({{ orphanProgress.skippedQueries.length }})</h4>
+            <ul class="query-list">
+              <li v-for="name in orphanProgress.skippedQueries" :key="name" class="query-item skipped-item">
+                <span class="query-name">{{ formatQueryName(name) }}</span>
+                <span class="query-skipped">skipped (0 candidates)</span>
+              </li>
+            </ul>
+          </div>
+
+          <div v-if="orphanProgress.totalConcepts > 0" class="orphan-summary">
+            <div class="summary-item">
+              <span class="summary-label">Total Concepts:</span>
+              <span class="summary-value">{{ orphanProgress.totalConcepts.toLocaleString() }}</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">Orphan Concepts:</span>
+              <span class="summary-value">{{ orphanProgress.remainingCandidates.toLocaleString() }}</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">Orphan Collections:</span>
+              <span class="summary-value">{{ orphanProgress.orphanCollections.toLocaleString() }}</span>
+            </div>
+          </div>
+        </section>
+      </div>
+
       <!-- Details content - wrapped in v-if because Vue evaluates slot expressions before child renders -->
-      <div v-if="details" class="details-content">
+      <div v-else-if="details" class="details-content">
         <DetailsHeader
           icon="folder"
           icon-class="icon-folder"
@@ -419,6 +575,180 @@ watch(
   overflow: auto;
   padding: 2rem;
   max-width: 900px;
+}
+
+.orphan-details {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.orphan-header {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.orphan-header-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--ae-icon-leaf) 15%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ae-icon-leaf) 25%, transparent);
+  color: var(--ae-icon-leaf);
+}
+
+.orphan-header-icon .material-symbols-outlined {
+  font-size: 1.75rem;
+}
+
+.orphan-title {
+  margin: 0;
+  font-size: 1.375rem;
+  font-weight: 600;
+  color: var(--ae-text-primary);
+}
+
+.orphan-subtitle {
+  font-size: 0.8125rem;
+  color: var(--ae-text-secondary);
+}
+
+.orphan-info {
+  border: 1px solid var(--ae-border-color);
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  background: var(--ae-bg-elevated);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.orphan-info-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.orphan-info-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  color: var(--ae-text-primary);
+}
+
+.orphan-info-title .info-icon {
+  font-size: 1.1rem;
+  color: var(--ae-accent);
+}
+
+.orphan-strategy,
+.orphan-phase {
+  font-size: 0.75rem;
+  color: var(--ae-text-secondary);
+}
+
+.orphan-progress-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.progress-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  font-size: 0.8125rem;
+  color: var(--ae-text-primary);
+}
+
+.progress-label {
+  color: var(--ae-text-secondary);
+}
+
+.progress-note {
+  font-size: 0.75rem;
+  color: var(--ae-text-secondary);
+}
+
+.progress-bar {
+  height: 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ae-accent) 12%, transparent);
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: var(--ae-accent);
+}
+
+.orphan-queries {
+  border-top: 1px dashed var(--ae-border-color);
+  padding-top: 0.75rem;
+}
+
+.queries-title {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.8125rem;
+  color: var(--ae-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.query-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.query-item {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  color: var(--ae-text-primary);
+}
+
+.query-name {
+  font-weight: 600;
+}
+
+.query-stats,
+.query-skipped {
+  color: var(--ae-text-secondary);
+}
+
+.query-separator {
+  margin: 0 0.2rem;
+}
+
+.orphan-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.5rem;
+  border-top: 1px dashed var(--ae-border-color);
+  padding-top: 0.75rem;
+}
+
+.summary-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8125rem;
+  color: var(--ae-text-primary);
+}
+
+.summary-label {
+  color: var(--ae-text-secondary);
 }
 
 /* Scheme-specific sections */

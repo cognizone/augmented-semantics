@@ -98,7 +98,7 @@ export function useProgressiveLabelLoader() {
 
     try {
       const results = await executeSparql(endpoint, query, { retries: 0, signal })
-      return processLabelResults(results.results.bindings)
+      return processLabelResults(results.results.bindings, resourceType)
     } catch (e) {
       // Log but don't fail - progressive loading is resilient to partial failures
       logger.warn('ProgressiveLabelLoader', `Single-language query failed for "${language}"`, { error: e })
@@ -133,7 +133,7 @@ export function useProgressiveLabelLoader() {
 
     try {
       const results = await executeSparql(endpoint, query, { retries: 0, signal })
-      return processLabelResults(results.results.bindings)
+      return processLabelResults(results.results.bindings, resourceType)
     } catch (e) {
       logger.warn('ProgressiveLabelLoader', 'Full query failed', { error: e })
       return new Map()
@@ -146,7 +146,8 @@ export function useProgressiveLabelLoader() {
    * then language priority within each type.
    */
   function processLabelResults(
-    bindings: Array<Record<string, { value: string; 'xml:lang'?: string }>>
+    bindings: Array<Record<string, { value: string; 'xml:lang'?: string }>>,
+    resourceType: SkosResourceType
   ): LabelResult {
     // Group labels by concept URI
     const conceptLabels = new Map<string, { value: string; lang: string; type: string }[]>()

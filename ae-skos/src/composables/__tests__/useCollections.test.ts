@@ -443,12 +443,18 @@ describe('useCollections', () => {
     })
 
     it('loadChildCollections returns child collections', async () => {
-      // First call for loadCollectionsForScheme (needed to set up the endpoint)
+      // Staged loading makes 3 calls (inScheme, topConcept, transitive stages)
+      ;(executeSparql as Mock).mockResolvedValueOnce({
+        results: { bindings: [] },
+      })
+      ;(executeSparql as Mock).mockResolvedValueOnce({
+        results: { bindings: [] },
+      })
       ;(executeSparql as Mock).mockResolvedValueOnce({
         results: { bindings: [] },
       })
 
-      // Second call for loadChildCollections
+      // Fourth call for loadChildCollections
       ;(executeSparql as Mock).mockResolvedValueOnce({
         results: {
           bindings: [

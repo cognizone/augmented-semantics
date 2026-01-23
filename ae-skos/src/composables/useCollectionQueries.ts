@@ -10,45 +10,266 @@ import type { SPARQLEndpoint } from '../types'
 import { withPrefixes } from '../services'
 import { buildCapabilityAwareLabelUnionClause } from '../constants'
 
+export type CollectionQueryStage = 'inScheme' | 'topConcept' | 'transitive' | 'path'
+
 /**
  * Get capabilities for collection queries.
- * Returns which branches can be used and whether querying is possible.
+ * Returns which stages can be used and whether querying is possible.
  */
 export function getCollectionQueryCapabilities(
   endpoint: SPARQLEndpoint
-): { branches: string[]; canQuery: boolean } {
+): { stages: CollectionQueryStage[]; canQuery: boolean } {
   const rel = endpoint.analysis?.relationships
 
   if (!rel) {
-    return { branches: [], canQuery: false }
+    return { stages: [], canQuery: false }
   }
 
-  const branches: string[] = []
+  const stages: CollectionQueryStage[] = []
 
-  // Direct membership branches
+  // Direct membership stages
   if (rel.hasInScheme) {
-    branches.push('inScheme')
-  }
-  if (rel.hasTopConceptOf) {
-    branches.push('topConceptOf')
-  }
-  if (rel.hasHasTopConcept) {
-    branches.push('hasTopConcept')
+    stages.push('inScheme')
   }
 
-  // Hierarchical branches - prefer transitive over property path
   const hasTopCapability = rel.hasTopConceptOf || rel.hasHasTopConcept
+  if (hasTopCapability) {
+    stages.push('topConcept')
+  }
 
-  if (hasTopCapability && rel.hasBroaderTransitive) {
-    branches.push('broaderTransitive')
-  } else if (hasTopCapability && rel.hasBroader) {
-    branches.push('broader-path')
+  // Hierarchical stage (prefer transitive over property path)
+  const hasTransitive = rel.hasBroaderTransitive || rel.hasNarrowerTransitive
+  const hasPath = rel.hasBroader || rel.hasNarrower
+
+  if (hasTopCapability && hasTransitive) {
+    stages.push('transitive')
+  } else if (hasTopCapability && hasPath) {
+    stages.push('path')
   }
 
   return {
-    branches,
-    canQuery: branches.length > 0,
+    stages,
+    canQuery: stages.length > 0,
   }
+}
+
+function buildTopConceptPatterns(
+  schemeUri: string,
+  rel: NonNullable<SPARQLEndpoint['analysis']>['relationships']
+): string[] {
+  if (!rel) return []
+
+  const patterns: string[] = []
+
+  if (rel.hasTopConceptOf) {
+    patterns.push(`?top skos:topConceptOf <${schemeUri}> .`)
+  }
+  if (rel.hasHasTopConcept) {
+    patterns.push(`<${schemeUri}> skos:hasTopConcept ?top .`)
+  }
+
+  return patterns
+}
+
+function buildMemberSchemeBranches(
+  memberVar: string,
+  schemeUri: string,
+  rel: NonNullable<SPARQLEndpoint['analysis']>['relationships'],
+  options?: { includeHierarchy?: boolean }
+): string[] {
+  if (!rel) return []
+
+  const branches: string[] = []
+
+  if (rel.hasInScheme) {
+    branches.push(`{ ${memberVar} skos:inScheme <${schemeUri}> . }`)
+  }
+  if (rel.hasTopConceptOf) {
+    branches.push(`{ ${memberVar} skos:topConceptOf <${schemeUri}> . }`)
+  }
+  if (rel.hasHasTopConcept) {
+    branches.push(`{ <${schemeUri}> skos:hasTopConcept ${memberVar} . }`)
+  }
+
+  const includeHierarchy = options?.includeHierarchy !== false
+  const topPatterns = includeHierarchy ? buildTopConceptPatterns(schemeUri, rel) : []
+  const hasTopCapability = topPatterns.length > 0
+
+  if (hasTopCapability) {
+    if (rel.hasBroaderTransitive || rel.hasNarrowerTransitive) {
+      if (rel.hasBroaderTransitive) {
+        for (const topPattern of topPatterns) {
+          branches.push(`{ ${memberVar} skos:broaderTransitive ?top . ${topPattern} }`)
+        }
+      }
+      if (rel.hasNarrowerTransitive) {
+        for (const topPattern of topPatterns) {
+          branches.push(`{ ?top skos:narrowerTransitive ${memberVar} . ${topPattern} }`)
+        }
+      }
+    } else if (rel.hasBroader || rel.hasNarrower) {
+      if (rel.hasBroader) {
+        for (const topPattern of topPatterns) {
+          branches.push(`{ ${memberVar} skos:broader+ ?top . ${topPattern} }`)
+        }
+      }
+      if (rel.hasNarrower) {
+        for (const topPattern of topPatterns) {
+          branches.push(`{ ?top skos:narrower+ ${memberVar} . ${topPattern} }`)
+        }
+      }
+    }
+  }
+
+  return branches
+}
+
+function buildStageFilterClause(
+  stage: CollectionQueryStage,
+  endpoint: SPARQLEndpoint,
+  schemeUri: string
+): string | null {
+  const rel = endpoint.analysis?.relationships
+  if (!rel) return null
+
+  if (stage === 'inScheme') {
+    if (!rel.hasInScheme) return null
+    return `FILTER EXISTS {
+      ?collection skos:member ?concept .
+      ?concept skos:inScheme <${schemeUri}> .
+    }`
+  }
+
+  if (stage === 'topConcept') {
+    if (!rel.hasTopConceptOf && !rel.hasHasTopConcept) return null
+    const patterns: string[] = []
+    if (rel.hasTopConceptOf) {
+      patterns.push(`{ ?concept skos:topConceptOf <${schemeUri}> . }`)
+    }
+    if (rel.hasHasTopConcept) {
+      patterns.push(`{ <${schemeUri}> skos:hasTopConcept ?concept . }`)
+    }
+    if (patterns.length === 0) return null
+    const union = patterns.join(' UNION ')
+    return `FILTER EXISTS {
+      ?collection skos:member ?concept .
+      ${union}
+    }`
+  }
+
+  const topPatterns = buildTopConceptPatterns(schemeUri, rel)
+  if (topPatterns.length === 0) return null
+
+  if (stage === 'transitive') {
+    const patterns: string[] = []
+    if (rel.hasBroaderTransitive) {
+      for (const topPattern of topPatterns) {
+        patterns.push(`{
+          ?collection skos:member ?concept .
+          ?concept skos:broaderTransitive ?top .
+          ${topPattern}
+        }`)
+      }
+    }
+    if (rel.hasNarrowerTransitive) {
+      for (const topPattern of topPatterns) {
+        patterns.push(`{
+          ?collection skos:member ?concept .
+          ?top skos:narrowerTransitive ?concept .
+          ${topPattern}
+        }`)
+      }
+    }
+    if (patterns.length === 0) return null
+    const union = patterns.join(' UNION ')
+    return `FILTER EXISTS {
+      ${union}
+    }`
+  }
+
+  if (stage === 'path') {
+    const patterns: string[] = []
+    if (rel.hasBroader) {
+      for (const topPattern of topPatterns) {
+        patterns.push(`{
+          ?collection skos:member ?concept .
+          ?concept skos:broader+ ?top .
+          ${topPattern}
+        }`)
+      }
+    }
+    if (rel.hasNarrower) {
+      for (const topPattern of topPatterns) {
+        patterns.push(`{
+          ?collection skos:member ?concept .
+          ?top skos:narrower+ ?concept .
+          ${topPattern}
+        }`)
+      }
+    }
+    if (patterns.length === 0) return null
+    const union = patterns.join(' UNION ')
+    return `FILTER EXISTS {
+      ${union}
+    }`
+  }
+
+  return null
+}
+
+/**
+ * Build a staged SPARQL query for finding collections in a scheme.
+ * Uses a FILTER EXISTS membership clause for early short-circuiting.
+ */
+export function buildCollectionsStageQuery(
+  endpoint: SPARQLEndpoint,
+  schemeUri: string,
+  stage: CollectionQueryStage
+): string | null {
+  const rel = endpoint.analysis?.relationships
+  if (!rel) return null
+
+  const filterClause = buildStageFilterClause(stage, endpoint, schemeUri)
+  if (!filterClause) return null
+
+  const childMembershipBranches = buildMemberSchemeBranches('?member', schemeUri, rel, { includeHierarchy: true })
+  const childMembershipPattern = childMembershipBranches.length > 0
+    ? childMembershipBranches.join('\n        UNION\n        ')
+    : null
+
+  const collectionCapabilities = endpoint.analysis?.labelPredicates?.collection
+  const labelClause = buildCapabilityAwareLabelUnionClause('?collection', collectionCapabilities)
+
+  return withPrefixes(`
+    SELECT DISTINCT ?collection ?label ?labelLang ?labelType ?notation
+           ?hasParentCollection ?hasChildCollections WHERE {
+      ?collection a skos:Collection .
+      ${filterClause}
+
+      # Detect if nested (has parent collection)
+      BIND(EXISTS {
+        ?parentCol a skos:Collection .
+        ?parentCol skos:member ?collection .
+      } AS ?hasParentCollection)
+
+      # Detect if has children (has child collections)
+      ${childMembershipPattern ? `BIND(EXISTS {
+        ?collection skos:member ?childCol .
+        ?childCol a skos:Collection .
+        ?childCol skos:member ?member .
+        ${childMembershipPattern}
+      } AS ?hasChildCollections)` : 'BIND(false AS ?hasChildCollections)'}
+
+      # Label resolution with priority tracking (capability-aware)
+      OPTIONAL {
+        ${labelClause}
+      }
+
+      # Notation
+      OPTIONAL { ?collection skos:notation ?notation }
+    }
+    ORDER BY ?collection
+  `)
 }
 
 /**
@@ -172,34 +393,7 @@ export function buildChildCollectionsQuery(
     return null
   }
 
-  // Build membership UNION branches based on endpoint capabilities
-  const membershipBranches: string[] = []
-
-  if (rel.hasInScheme) {
-    membershipBranches.push(`{ ?member skos:inScheme <${schemeUri}> . }`)
-  }
-  if (rel.hasTopConceptOf) {
-    membershipBranches.push(`{ ?member skos:topConceptOf <${schemeUri}> . }`)
-  }
-  if (rel.hasHasTopConcept) {
-    membershipBranches.push(`{ <${schemeUri}> skos:hasTopConcept ?member . }`)
-  }
-
-  // Hierarchical branches - flatten to avoid nested UNION issues
-  const hasTopCapability = rel.hasTopConceptOf || rel.hasHasTopConcept
-  if (hasTopCapability) {
-    const broaderPredicate = rel.hasBroaderTransitive ? 'skos:broaderTransitive' : (rel.hasBroader ? 'skos:broader+' : null)
-
-    if (broaderPredicate) {
-      if (rel.hasTopConceptOf) {
-        membershipBranches.push(`{ ?member ${broaderPredicate} ?top . ?top skos:topConceptOf <${schemeUri}> . }`)
-      }
-      if (rel.hasHasTopConcept) {
-        membershipBranches.push(`{ ?member ${broaderPredicate} ?top . <${schemeUri}> skos:hasTopConcept ?top . }`)
-      }
-    }
-  }
-
+  const membershipBranches = buildMemberSchemeBranches('?member', schemeUri, rel, { includeHierarchy: true })
   if (membershipBranches.length === 0) {
     return null
   }

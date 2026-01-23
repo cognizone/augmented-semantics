@@ -13,6 +13,7 @@ import { useOtherProperties, COLLECTION_EXCLUDED_PREDICATES } from './useOtherPr
 import { useProgressiveLabelLoader } from './useProgressiveLabelLoader'
 import { useXLLabels } from './useXLLabels'
 import { PRED } from '../constants'
+import { getUriFragment } from '../utils/displayUtils'
 import type { CollectionDetails, LabelValue, NotationValue, ConceptRef, LabelPredicateCapabilities } from '../types'
 
 export function useCollectionData() {
@@ -27,8 +28,15 @@ export function useCollectionData() {
   const members = ref<ConceptRef[]>([])
   const loading = ref(false)
   const loadingMembers = ref(false)
+  const loadingMemberLabels = ref(false)
+  const membersLoaded = ref(false)
+  const labelsResolvedCount = ref(0)
+  const hierarchyLoading = ref(false)
+  const schemeLoading = ref(false)
+  const memberCount = ref<number | null>(null)
   const error = ref<string | null>(null)
   const resolvedPredicates: Ref<Map<string, { prefix: string; localName: string }>> = ref(new Map())
+  const memberUriSet = new Set<string>()
 
   /**
    * Build query to load collection properties
@@ -210,35 +218,122 @@ export function useCollectionData() {
   }
 
   /**
-   * Build query to load collection members metadata (no labels).
-   * Labels are loaded progressively after this query.
-   *
-   * Fetches hasNarrower for icon display (leaf vs label) and cross-scheme indicator fields.
-   * Uses EXISTS for inCurrentScheme, simple OPTIONAL for displayScheme (client takes first value).
+   * Build query to load concept members (fast, no expensive metadata).
    */
-  function buildMembersMetadataQuery(
-    collectionUri: string,
-    currentSchemeUri: string | null
-  ): string {
+  function buildConceptMembersBaseQuery(collectionUri: string): string {
     return withPrefixes(`
-      SELECT DISTINCT ?member ?notation ?hasNarrower ?isCollection ?inCurrentScheme ?displayScheme WHERE {
+      SELECT DISTINCT ?member ?notation ?isCollection WHERE {
         <${collectionUri}> skos:member ?member .
-
-        # Detect if member is a collection
-        BIND(EXISTS { ?member a skos:Collection } AS ?isCollection)
-
-        ${currentSchemeUri ? `# Boolean: is member in current scheme? (check both inScheme and topConceptOf)
-        BIND(EXISTS { { ?member skos:inScheme <${currentSchemeUri}> } UNION { ?member skos:topConceptOf <${currentSchemeUri}> } } AS ?inCurrentScheme)` : ''}
-
-        # Get a scheme for badge display (client takes first value found)
-        OPTIONAL { ?member skos:inScheme ?displayScheme }
-
+        ?member a skos:Concept .
+        BIND(false AS ?isCollection)
         OPTIONAL { ?member skos:notation ?notation }
-        OPTIONAL { ?member skos:narrower ?narrowerChild }
-        BIND(BOUND(?narrowerChild) AS ?hasNarrower)
       }
       ORDER BY ?member
-      LIMIT 500
+    `)
+  }
+
+  /**
+   * Build query to load collection members (fast, no expensive metadata).
+   */
+  function buildCollectionMembersBaseQuery(collectionUri: string): string {
+    return withPrefixes(`
+      SELECT DISTINCT ?member ?notation ?isCollection WHERE {
+        <${collectionUri}> skos:member ?member .
+        BIND(EXISTS {
+          { ?member a skos:Collection }
+          UNION
+          { ?member skos:member ?child }
+        } AS ?isCollection)
+        FILTER(?isCollection = true)
+        OPTIONAL { ?member skos:notation ?notation }
+      }
+      ORDER BY ?member
+    `)
+  }
+
+  function buildMemberSchemeQuery(
+    memberUris: string[],
+    schemeUri: string,
+    relationships?: NonNullable<NonNullable<ReturnType<typeof useEndpointStore>['current']['value']>['analysis']>['relationships']
+  ): string | null {
+    if (!relationships || memberUris.length === 0) return null
+
+    const patterns: string[] = []
+
+    if (relationships.hasInScheme) {
+      patterns.push(`{ ?member skos:inScheme <${schemeUri}> . }`)
+    }
+    if (relationships.hasTopConceptOf) {
+      patterns.push(`{ ?member skos:topConceptOf <${schemeUri}> . }`)
+    }
+    if (relationships.hasHasTopConcept) {
+      patterns.push(`{ <${schemeUri}> skos:hasTopConcept ?member . }`)
+    }
+
+    const topPatterns: string[] = []
+    if (relationships.hasTopConceptOf) {
+      topPatterns.push(`?top skos:topConceptOf <${schemeUri}> .`)
+    }
+    if (relationships.hasHasTopConcept) {
+      topPatterns.push(`<${schemeUri}> skos:hasTopConcept ?top .`)
+    }
+
+    const hasTransitive = relationships.hasBroaderTransitive || relationships.hasNarrowerTransitive
+    if (topPatterns.length > 0) {
+      if (hasTransitive) {
+        if (relationships.hasBroaderTransitive) {
+          for (const topPattern of topPatterns) {
+            patterns.push(`{ ?member skos:broaderTransitive ?top . ${topPattern} }`)
+          }
+        }
+        if (relationships.hasNarrowerTransitive) {
+          for (const topPattern of topPatterns) {
+            patterns.push(`{ ?top skos:narrowerTransitive ?member . ${topPattern} }`)
+          }
+        }
+      } else {
+        if (relationships.hasBroader) {
+          for (const topPattern of topPatterns) {
+            patterns.push(`{ ?member skos:broader+ ?top . ${topPattern} }`)
+          }
+        }
+        if (relationships.hasNarrower) {
+          for (const topPattern of topPatterns) {
+            patterns.push(`{ ?top skos:narrower+ ?member . ${topPattern} }`)
+          }
+        }
+      }
+    }
+
+    if (patterns.length === 0) return null
+
+    const valuesClause = memberUris.map(uri => `<${uri}>`).join(' ')
+    return withPrefixes(`
+      SELECT ?member ?inCurrentScheme ?displayScheme WHERE {
+        VALUES ?member { ${valuesClause} }
+        BIND(EXISTS {
+          ${patterns.join('\n          UNION\n          ')}
+        } AS ?inCurrentScheme)
+        OPTIONAL {
+          SELECT ?member (SAMPLE(?scheme) AS ?displayScheme)
+          WHERE { ?member skos:inScheme ?scheme }
+          GROUP BY ?member
+        }
+      }
+    `)
+  }
+
+  function buildMemberNarrowerQuery(memberUris: string[]): string {
+    const valuesClause = memberUris.map(uri => `<${uri}>`).join(' ')
+    return withPrefixes(`
+      SELECT ?member ?hasNarrower WHERE {
+        VALUES ?member { ${valuesClause} }
+        BIND(EXISTS {
+          { ?narrowerChild skos:broader ?member }
+          UNION
+          { ?member skos:narrower ?narrowerChild }
+        } AS ?hasNarrower)
+      }
     `)
   }
 
@@ -479,6 +574,29 @@ export function useCollectionData() {
     return result
   }
 
+  function sortMembersStable(entries: ConceptRef[]) {
+    entries.sort((a, b) => {
+      const groupA = a.type === 'collection' ? 0 : 1
+      const groupB = b.type === 'collection' ? 0 : 1
+      if (groupA !== groupB) return groupA - groupB
+
+      const keyA = (a.notation || getUriFragment(a.uri) || a.uri).toLowerCase()
+      const keyB = (b.notation || getUriFragment(b.uri) || b.uri).toLowerCase()
+      return keyA.localeCompare(keyB)
+    })
+  }
+
+  function updateMembersByUri(
+    updates: Map<string, Partial<ConceptRef>>
+  ) {
+    for (const member of members.value) {
+      const update = updates.get(member.uri)
+      if (update) {
+        Object.assign(member, update)
+      }
+    }
+  }
+
   /**
    * Load collection details
    */
@@ -549,23 +667,63 @@ export function useCollectionData() {
     if (!endpoint) return
 
     loadingMembers.value = true
+    membersLoaded.value = false
+    labelsResolvedCount.value = 0
+    hierarchyLoading.value = false
+    schemeLoading.value = false
 
     try {
       const currentSchemeUri = schemeStore.selectedUri
 
-      // Step 1: Load member metadata (without labels)
-      const metadataQuery = buildMembersMetadataQuery(collectionUri, currentSchemeUri)
+      const countQuery = withPrefixes(`
+        SELECT (COUNT(DISTINCT ?member) AS ?count)
+        WHERE { <${collectionUri}> skos:member ?member }
+      `)
+      try {
+        const countResults = await executeSparql(endpoint, countQuery, { retries: 1 })
+        const countValue = countResults.results.bindings[0]?.count?.value
+        memberCount.value = countValue ? parseInt(countValue, 10) : null
+      } catch (e) {
+        logger.warn('CollectionData', 'Failed to load member count', { error: e })
+        memberCount.value = null
+      }
+
+      // Step 1: Load collection members (no paging)
+      const collectionMembersQuery = buildCollectionMembersBaseQuery(collectionUri)
+      const collectionResults = await executeSparql(endpoint, collectionMembersQuery, { retries: 1 })
+      const collectionMemberRefs = processMemberMetadataBindings(
+        collectionResults.results.bindings as Array<Record<string, { value: string; 'xml:lang'?: string }>>
+      )
+
+      // Step 2: Load concept members (fast)
+      const metadataQuery = buildConceptMembersBaseQuery(collectionUri)
       const metadataResults = await executeSparql(endpoint, metadataQuery, { retries: 1 })
-      members.value = processMemberMetadataBindings(
+      const pageMembers = processMemberMetadataBindings(
         metadataResults.results.bindings as Array<Record<string, { value: string; 'xml:lang'?: string }>>
       )
 
-      logger.info('CollectionData', `Loaded ${members.value.length} member metadata`)
+      const combinedMembers = [...collectionMemberRefs, ...pageMembers]
+
+      const newMembers = combinedMembers.filter(member => {
+        if (memberUriSet.has(member.uri)) return false
+        memberUriSet.add(member.uri)
+        return true
+      })
+
+      members.value = newMembers
+
+      sortMembersStable(members.value)
+      membersLoaded.value = true
+
+      logger.info('CollectionData', `Loaded ${pageMembers.length} member metadata`)
 
       // Step 2: Progressive label loading
       // Members can be concepts OR collections - we need to handle both types
-      const conceptMembers = members.value.filter(m => m.type === 'concept')
-      const collectionMembers = members.value.filter(m => m.type === 'collection')
+      const conceptMembers = newMembers.filter(m => m.type === 'concept')
+      const collectionMembers = newMembers.filter(m => m.type === 'collection')
+
+      loadingMembers.value = false
+      loadingMemberLabels.value = true
 
       const { loadLabelsProgressively } = useProgressiveLabelLoader()
 
@@ -575,6 +733,7 @@ export function useCollectionData() {
           conceptMembers.map(m => m.uri),
           'concept',
           (resolved) => {
+            labelsResolvedCount.value = resolved.size
             // Update members with resolved labels
             for (const member of members.value) {
               const label = resolved.get(member.uri)
@@ -590,6 +749,7 @@ export function useCollectionData() {
           collectionMembers.map(m => m.uri),
           'collection',
           (resolved) => {
+            labelsResolvedCount.value = Math.max(labelsResolvedCount.value, resolved.size)
             // Update members with resolved labels
             for (const member of members.value) {
               const label = resolved.get(member.uri)
@@ -601,13 +761,57 @@ export function useCollectionData() {
           }
         ) : Promise.resolve(),
       ])
+      loadingMemberLabels.value = false
 
-      // Sort members by label after labels are loaded
-      members.value.sort((a, b) => {
-        const labelA = a.label || a.uri
-        const labelB = b.label || b.uri
-        return labelA.localeCompare(labelB)
-      })
+      // Step 3: Enrich concepts with hierarchy and scheme info (async, non-blocking)
+      const conceptUris = conceptMembers.map(m => m.uri)
+
+      if (conceptUris.length > 0) {
+        try {
+          hierarchyLoading.value = true
+          const narrowerQuery = buildMemberNarrowerQuery(conceptUris)
+          const narrowerResults = await executeSparql(endpoint, narrowerQuery, { retries: 1 })
+          const updates = new Map<string, Partial<ConceptRef>>()
+          for (const b of narrowerResults.results.bindings) {
+            const uri = b.member?.value
+            if (!uri) continue
+            updates.set(uri, {
+              hasNarrower: b.hasNarrower?.value === 'true',
+            })
+          }
+          updateMembersByUri(updates)
+        } catch (e) {
+          logger.warn('CollectionData', 'Failed to load member hierarchy info', { error: e })
+        } finally {
+          hierarchyLoading.value = false
+        }
+
+        if (currentSchemeUri) {
+          try {
+            schemeLoading.value = true
+            const schemeQuery = buildMemberSchemeQuery(conceptUris, currentSchemeUri, endpoint.analysis?.relationships)
+            if (!schemeQuery) {
+              schemeLoading.value = false
+              return
+            }
+            const schemeResults = await executeSparql(endpoint, schemeQuery, { retries: 1 })
+            const updates = new Map<string, Partial<ConceptRef>>()
+            for (const b of schemeResults.results.bindings) {
+              const uri = b.member?.value
+              if (!uri) continue
+              updates.set(uri, {
+                inCurrentScheme: b.inCurrentScheme?.value === 'true',
+                displayScheme: b.displayScheme?.value || undefined,
+              })
+            }
+            updateMembersByUri(updates)
+          } catch (e) {
+            logger.warn('CollectionData', 'Failed to load member scheme info', { error: e })
+          } finally {
+            schemeLoading.value = false
+          }
+        }
+      }
 
       logger.info('CollectionData', `Labels loaded for ${members.value.length} members`)
     } catch (e) {
@@ -615,6 +819,7 @@ export function useCollectionData() {
       members.value = []
     } finally {
       loadingMembers.value = false
+      loadingMemberLabels.value = false
     }
   }
 
@@ -626,8 +831,14 @@ export function useCollectionData() {
     members.value = []
     loading.value = false
     loadingMembers.value = false
+    memberCount.value = null
+    membersLoaded.value = false
+    labelsResolvedCount.value = 0
+    hierarchyLoading.value = false
+    schemeLoading.value = false
     error.value = null
     resolvedPredicates.value = new Map()
+    memberUriSet.clear()
   }
 
   return {
@@ -636,6 +847,12 @@ export function useCollectionData() {
     members,
     loading,
     loadingMembers,
+    loadingMemberLabels,
+    membersLoaded,
+    labelsResolvedCount,
+    hierarchyLoading,
+    schemeLoading,
+    memberCount,
     error,
     resolvedPredicates,
     // Actions

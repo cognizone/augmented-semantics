@@ -8,15 +8,16 @@
  */
 
 import { ref } from 'vue'
+import { storeToRefs } from 'pinia'
 import { useConceptStore, useEndpointStore, useSchemeStore, useLanguageStore, useSettingsStore, ORPHAN_SCHEME_URI } from '../stores'
 import { executeSparql, logger, eventBus, withPrefixes } from '../services'
 import { useConceptTreeQueries, useLabelResolver } from './index'
 import { calculateOrphanConcepts, calculateOrphanConceptsFast, calculateOrphanCollections } from './useOrphanConcepts'
-import { createInitialProgress, type OrphanProgress } from './useOrphanProgress'
+import { createInitialProgress } from './useOrphanProgress'
 import { buildCapabilityAwareLabelUnionClause, CONCEPT_LABEL_PRIORITY } from '../constants'
 import { useDeprecation } from './useDeprecation'
 import { pickBestNotation, compareNodes } from '../utils/concept-tree'
-import type { ConceptNode } from '../types'
+import type { ConceptNode, SPARQLEndpoint } from '../types'
 
 // Pagination config
 const PAGE_SIZE = 200
@@ -61,8 +62,8 @@ export function useTreePagination() {
   // Orphan collections cache
   const orphanCollectionUris = ref<string[]>([])
 
-  // Orphan progress state
-  const orphanProgress = ref<OrphanProgress>(createInitialProgress())
+  // Orphan progress state (shared via store)
+  const { orphanProgress } = storeToRefs(conceptStore)
 
   /**
    * Find a node by URI in the concept tree
@@ -441,7 +442,7 @@ export function useTreePagination() {
 
   /**
    * Load orphan concepts and collections.
-   * Collections are detected and displayed first, then concepts.
+   * Concepts are displayed immediately, collections are prepended once detected.
    *
    * Flow (first page):
    * 1. Calculate orphan concepts → display immediately
@@ -493,7 +494,17 @@ export function useTreePagination() {
           }
         }
 
-        // Step 2: Calculate orphan collections (after concepts are done)
+        // Step 1b: Display concepts immediately (fast)
+        const conceptPageUris = orphanConceptUris.value.slice(0, PAGE_SIZE)
+        const conceptNodes = await fetchOrphanConceptNodes(endpoint, conceptPageUris)
+        conceptStore.setTopConcepts(conceptNodes)
+        await eventBus.emit('tree:loaded', conceptNodes)
+        topConceptsOffset.value = conceptPageUris.length
+        hasMoreTopConcepts.value = conceptPageUris.length < orphanConceptUris.value.length
+        conceptStore.setLoadingTree(false)
+        loadingMoreTopConcepts.value = false
+
+        // Step 2: Calculate orphan collections (after concepts are shown)
         orphanProgress.value = {
           ...orphanProgress.value,
           phase: 'detecting-collections',
@@ -518,13 +529,20 @@ export function useTreePagination() {
           orphanCollections: orphanCollectionUris.value.length,
         }
 
-        topConceptsOffset.value = 0
-        // Total orphans = collections + concepts
-        const totalOrphans = orphanCollectionUris.value.length + orphanConceptUris.value.length
-        hasMoreTopConcepts.value = totalOrphans > PAGE_SIZE
+        const collectionNodes = await fetchOrphanCollectionNodes(endpoint, orphanCollectionUris.value)
+        if (collectionNodes.length > 0) {
+          const loadedConceptCount = conceptStore.topConcepts.filter(node => node.type !== 'collection').length
+          conceptStore.setTopConcepts([...collectionNodes, ...conceptStore.topConcepts])
+          topConceptsOffset.value = orphanCollectionUris.value.length + loadedConceptCount
+        }
+
+        const loadedConceptCount = conceptStore.topConcepts.filter(node => node.type !== 'collection').length
+        hasMoreTopConcepts.value = loadedConceptCount < orphanConceptUris.value.length
+        return
       } catch (e) {
         logger.error('TreePagination', 'Failed to calculate orphans', { error: e })
         conceptStore.setLoadingTree(false)
+        loadingMoreTopConcepts.value = false
         return
       }
     } else {
@@ -552,73 +570,14 @@ export function useTreePagination() {
 
     const results: ConceptNode[] = []
 
-    // Fetch collection labels
     if (pageCollectionUris.length > 0) {
-      const collectionCapabilities = endpoint.analysis?.labelPredicates?.collection
-      const collectionLabelClause = buildCapabilityAwareLabelUnionClause('?collection', collectionCapabilities)
-
-      const collectionValuesClause = pageCollectionUris.map(uri => `<${uri}>`).join(' ')
-      const collectionQuery = withPrefixes(`
-        SELECT ?collection ?label ?labelLang ?labelType ?notation ?hasChildCollections
-        WHERE {
-          VALUES ?collection { ${collectionValuesClause} }
-
-          # Check if has child collections
-          BIND(EXISTS {
-            ?collection skos:member ?childCol .
-            ?childCol a skos:Collection .
-          } AS ?hasChildCollections)
-
-          # Label resolution (capability-aware)
-          OPTIONAL { ?collection skos:notation ?notation }
-          OPTIONAL {
-            ${collectionLabelClause}
-          }
-        }
-      `)
-
-      try {
-        const collectionResults = await executeSparql(endpoint, collectionQuery)
-        const collections = processCollectionBindings(collectionResults.results.bindings)
-        results.push(...collections)
-      } catch (e) {
-        logger.error('TreePagination', 'Failed to load orphan collection labels', { error: e })
-      }
+      const collections = await fetchOrphanCollectionNodes(endpoint, pageCollectionUris)
+      results.push(...collections)
     }
 
-    // Fetch concept labels
     if (pageConceptUris.length > 0) {
-      const conceptCapabilities = endpoint.analysis?.labelPredicates?.concept
-      const conceptLabelClause = buildCapabilityAwareLabelUnionClause('?concept', conceptCapabilities)
-
-      const conceptValuesClause = pageConceptUris.map(uri => `<${uri}>`).join(' ')
-      const conceptQuery = withPrefixes(`
-        SELECT ?concept ?label ?labelLang ?labelType ?notation ?hasNarrower
-        WHERE {
-          VALUES ?concept { ${conceptValuesClause} }
-
-          # Check if concept has children (EXISTS is fast - stops at first match)
-          BIND(EXISTS {
-            { [] skos:broader ?concept }
-            UNION
-            { ?concept skos:narrower [] }
-          } AS ?hasNarrower)
-
-          # Label resolution (capability-aware)
-          OPTIONAL { ?concept skos:notation ?notation }
-          OPTIONAL {
-            ${conceptLabelClause}
-          }
-        }
-      `)
-
-      try {
-        const conceptResults = await executeSparql(endpoint, conceptQuery)
-        const concepts = processLabelBindings(conceptResults.results.bindings)
-        results.push(...concepts)
-      } catch (e) {
-        logger.error('TreePagination', 'Failed to load orphan concept labels', { error: e })
-      }
+      const concepts = await fetchOrphanConceptNodes(endpoint, pageConceptUris)
+      results.push(...concepts)
     }
 
     if (isFirstPage) {
@@ -688,6 +647,77 @@ export function useTreePagination() {
         expanded: false,
       }
     })
+  }
+
+  async function fetchOrphanCollectionNodes(endpoint: SPARQLEndpoint, collectionUris: string[]): Promise<ConceptNode[]> {
+    if (collectionUris.length === 0) return []
+
+    const collectionCapabilities = endpoint.analysis?.labelPredicates?.collection
+    const collectionLabelClause = buildCapabilityAwareLabelUnionClause('?collection', collectionCapabilities)
+
+    const collectionValuesClause = collectionUris.map(uri => `<${uri}>`).join(' ')
+    const collectionQuery = withPrefixes(`
+      SELECT ?collection ?label ?labelLang ?labelType ?notation ?hasChildCollections
+      WHERE {
+        VALUES ?collection { ${collectionValuesClause} }
+
+        # Check if has child collections
+        BIND(EXISTS {
+          ?collection skos:member ?childCol .
+          ?childCol a skos:Collection .
+        } AS ?hasChildCollections)
+
+        # Label resolution (capability-aware)
+        OPTIONAL { ?collection skos:notation ?notation }
+        OPTIONAL {
+          ${collectionLabelClause}
+        }
+      }
+    `)
+
+    try {
+      const collectionResults = await executeSparql(endpoint, collectionQuery)
+      return processCollectionBindings(collectionResults.results.bindings)
+    } catch (e) {
+      logger.error('TreePagination', 'Failed to load orphan collection labels', { error: e })
+      return []
+    }
+  }
+
+  async function fetchOrphanConceptNodes(endpoint: SPARQLEndpoint, conceptUris: string[]): Promise<ConceptNode[]> {
+    if (conceptUris.length === 0) return []
+
+    const conceptCapabilities = endpoint.analysis?.labelPredicates?.concept
+    const conceptLabelClause = buildCapabilityAwareLabelUnionClause('?concept', conceptCapabilities)
+
+    const conceptValuesClause = conceptUris.map(uri => `<${uri}>`).join(' ')
+    const conceptQuery = withPrefixes(`
+      SELECT ?concept ?label ?labelLang ?labelType ?notation ?hasNarrower
+      WHERE {
+        VALUES ?concept { ${conceptValuesClause} }
+
+        # Check if concept has children (EXISTS is fast - stops at first match)
+        BIND(EXISTS {
+          { [] skos:broader ?concept }
+          UNION
+          { ?concept skos:narrower [] }
+        } AS ?hasNarrower)
+
+        # Label resolution (capability-aware)
+        OPTIONAL { ?concept skos:notation ?notation }
+        OPTIONAL {
+          ${conceptLabelClause}
+        }
+      }
+    `)
+
+    try {
+      const conceptResults = await executeSparql(endpoint, conceptQuery)
+      return processLabelBindings(conceptResults.results.bindings)
+    } catch (e) {
+      logger.error('TreePagination', 'Failed to load orphan concept labels', { error: e })
+      return []
+    }
   }
 
   /**
@@ -782,7 +812,6 @@ export function useTreePagination() {
     childrenPagination,
     loadingChildren,
     error,
-    orphanProgress,
     // Functions
     loadTopConcepts,
     loadMoreTopConcepts,

@@ -128,11 +128,6 @@ describe('ConceptBreadcrumb', () => {
   }
 
   describe('initial rendering', () => {
-    it('renders home button', () => {
-      const wrapper = mountBreadcrumb()
-      expect(wrapper.find('.home-btn').exists()).toBe(true)
-    })
-
     it('renders scheme selector', () => {
       const wrapper = mountBreadcrumb()
       expect(wrapper.find('.scheme-select').exists()).toBe(true)
@@ -248,67 +243,6 @@ describe('ConceptBreadcrumb', () => {
       await nextTick()
 
       expect(schemeStore.viewingSchemeUri).toBe('http://ex.org/scheme/1')
-    })
-  })
-
-  describe('home button', () => {
-    beforeEach(() => {
-      // Setup endpoint with single scheme for auto-select (fresh pinia)
-      setActivePinia(createPinia())
-      setupEndpointWithSchemes(['http://ex.org/scheme/1'])
-
-      // Mock single scheme response
-      ;(executeSparql as Mock).mockResolvedValue({
-        results: {
-          bindings: [
-            { scheme: { value: 'http://ex.org/scheme/1' }, label: { value: 'Test Scheme' }, labelLang: { value: 'en' }, labelType: { value: 'prefLabel' } },
-          ],
-        },
-      })
-    })
-
-    it('clears concept and shows scheme details when clicked', async () => {
-      // Get stores after pinia setup
-      const conceptStore = useConceptStore()
-      const schemeStore = useSchemeStore()
-
-      const wrapper = mountBreadcrumb()
-      await flushPromises()
-
-      // Set concept after scheme is loaded
-      conceptStore.selectConcept('http://ex.org/concept/1')
-      await nextTick()
-
-      await wrapper.find('.home-btn').trigger('click')
-      await nextTick()
-
-      expect(conceptStore.selectedUri).toBeNull()
-      expect(schemeStore.viewingSchemeUri).toBe('http://ex.org/scheme/1')
-    })
-
-    it('scrolls tree to top when clicked', async () => {
-      const conceptStore = useConceptStore()
-
-      const wrapper = mountBreadcrumb()
-      await flushPromises()
-
-      await wrapper.find('.home-btn').trigger('click')
-      await nextTick()
-
-      expect(conceptStore.shouldScrollToTop).toBe(true)
-    })
-
-    it('adds scheme to history when clicked', async () => {
-      const conceptStore = useConceptStore()
-
-      const wrapper = mountBreadcrumb()
-      await flushPromises()
-
-      await wrapper.find('.home-btn').trigger('click')
-      await nextTick()
-
-      expect(conceptStore.history).toHaveLength(1)
-      expect(conceptStore.history[0]?.type).toBe('scheme')
     })
   })
 

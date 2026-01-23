@@ -259,6 +259,7 @@ describe('useConceptData', () => {
     })
 
     it('handles notation with datatype', async () => {
+      // 1. Main query
       ;(executeSparql as Mock).mockResolvedValueOnce({
         results: {
           bindings: [
@@ -266,6 +267,13 @@ describe('useConceptData', () => {
           ],
         },
       })
+      // 2. Collections query
+      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
+      // 3. XL labels query
+      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
+      // 4. Other properties query
+      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
+
       ;(resolveUris as Mock).mockResolvedValue(new Map([
         ['http://www.w3.org/2001/XMLSchema#string', { prefix: 'xsd', localName: 'string' }],
       ]))
@@ -275,7 +283,10 @@ describe('useConceptData', () => {
 
       expect(details.value?.notations).toHaveLength(1)
       expect(details.value?.notations[0].value).toBe('1.2.3')
-      expect(details.value?.notations[0].datatype).toBe('xsd:string')
+      // Wait for async datatype resolution (happens in .then() callback after loadOtherProperties)
+      await vi.waitFor(() => {
+        expect(details.value?.notations[0].datatype).toBe('xsd:string')
+      })
     })
 
     it('handles documentation properties', async () => {
@@ -455,37 +466,58 @@ describe('useConceptData', () => {
 
   describe('loadCollections', () => {
     it('loads collections that contain the concept', async () => {
-      // 1. Main query (empty - no relations)
-      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
-      // 2. Collections query
-      ;(executeSparql as Mock).mockResolvedValueOnce({
-        results: {
-          bindings: [
-            { collection: { value: 'http://example.org/collection/1' } },
-            { collection: { value: 'http://example.org/collection/2' } },
-          ],
-        },
+      // Use mockImplementation to handle progressive label loading queries
+      ;(executeSparql as Mock).mockImplementation(async (_endpoint, query: string) => {
+        // Main concept properties query
+        if (query.includes('?property ?value') && query.includes('FILTER (?property IN')) {
+          return { results: { bindings: [] } }
+        }
+        // Collections query
+        if (query.includes('skos:member') && query.includes('?collection')) {
+          return {
+            results: {
+              bindings: [
+                { collection: { value: 'http://example.org/collection/1' } },
+                { collection: { value: 'http://example.org/collection/2' } },
+              ],
+            },
+          }
+        }
+        // Metadata query (has ?notation, ?hasNarrower but no ?label)
+        if (query.includes('?notation') && query.includes('?hasNarrower') && !query.includes('?label')) {
+          return {
+            results: {
+              bindings: [
+                { concept: { value: 'http://example.org/collection/1' } },
+                { concept: { value: 'http://example.org/collection/2' } },
+              ],
+            },
+          }
+        }
+        // Label query (has ?label in SELECT)
+        if (query.includes('?label') && query.includes('VALUES ?concept')) {
+          return {
+            results: {
+              bindings: [
+                { concept: { value: 'http://example.org/collection/1' }, label: { value: 'Collection One' }, labelLang: { value: 'en' }, labelType: { value: 'prefLabel' } },
+                { concept: { value: 'http://example.org/collection/2' }, label: { value: 'Collection Two' }, labelLang: { value: 'en' }, labelType: { value: 'prefLabel' } },
+              ],
+            },
+          }
+        }
+        // Default empty response (XL labels, other properties, etc.)
+        return { results: { bindings: [] } }
       })
-      // 3. Related labels query (includes collections)
-      ;(executeSparql as Mock).mockResolvedValueOnce({
-        results: {
-          bindings: [
-            { concept: { value: 'http://example.org/collection/1' }, label: { value: 'Collection One' }, labelLang: { value: 'en' }, labelType: { value: 'prefLabel' } },
-            { concept: { value: 'http://example.org/collection/2' }, label: { value: 'Collection Two' }, labelLang: { value: 'en' }, labelType: { value: 'prefLabel' } },
-          ],
-        },
-      })
-      // 4. XL labels query
-      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
-      // 5. Other properties query
-      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
 
       const { loadDetails, details } = useConceptData()
       await loadDetails('http://example.org/concept/1')
 
       expect(details.value?.collections).toHaveLength(2)
       expect(details.value?.collections[0].uri).toBe('http://example.org/collection/1')
-      expect(details.value?.collections[0].label).toBe('Collection One')
+      // Wait for async label loading (labels are loaded progressively)
+      await vi.waitFor(() => {
+        expect(details.value?.collections[0].label).toBe('Collection One')
+      })
       expect(details.value?.collections[0].type).toBe('collection')
     })
 
@@ -769,8 +801,7 @@ describe('useConceptData', () => {
       await loadDetails('http://example.org/concept/1')
 
       expect(details.value?.prefLabelsXL).toHaveLength(1)
-      // Note: uri is always '' because the property path syntax doesn't return the XL label URI
-      expect(details.value?.prefLabelsXL[0].uri).toBe('')
+      expect(details.value?.prefLabelsXL[0].uri).toBe('http://example.org/xl/1')
       expect(details.value?.prefLabelsXL[0].literalForm.value).toBe('XL Pref Label')
       expect(details.value?.altLabelsXL).toHaveLength(1)
     })
@@ -933,7 +964,10 @@ describe('useConceptData', () => {
       const { loadDetails, resolvedPredicates } = useConceptData()
       await loadDetails('http://example.org/concept/1')
 
-      expect(resolvedPredicates.value.get('http://example.org/custom#prop')).toEqual({ prefix: 'ex', localName: 'prop' })
+      // Wait for async URI resolution (happens in .then() callback after loadOtherProperties)
+      await vi.waitFor(() => {
+        expect(resolvedPredicates.value.get('http://example.org/custom#prop')).toEqual({ prefix: 'ex', localName: 'prop' })
+      })
     })
 
     it('continues silently on other properties query failure', async () => {
