@@ -193,6 +193,200 @@ describe('useConceptBindings', () => {
       expect(c2?.hasNarrower).toBe(false)
     })
 
+    describe('hasNarrower COUNT edge cases', () => {
+      it('detects hasNarrower for large counts', () => {
+        const { processBindings } = useConceptBindings()
+
+        const bindings: ConceptBinding[] = [
+          createBinding({
+            concept: { type: 'uri', value: 'http://ex.org/c1' },
+            narrowerCount: { type: 'literal', value: '1000' },
+          }),
+          createBinding({
+            concept: { type: 'uri', value: 'http://ex.org/c2' },
+            narrowerCount: { type: 'literal', value: '999999' },
+          }),
+        ]
+
+        const result = processBindings(bindings)
+
+        expect(result.find(c => c.uri === 'http://ex.org/c1')?.hasNarrower).toBe(true)
+        expect(result.find(c => c.uri === 'http://ex.org/c2')?.hasNarrower).toBe(true)
+      })
+
+      it('detects hasNarrower for count of 1', () => {
+        const { processBindings } = useConceptBindings()
+
+        const bindings: ConceptBinding[] = [
+          createBinding({
+            concept: { type: 'uri', value: 'http://ex.org/c1' },
+            narrowerCount: { type: 'literal', value: '1' },
+          }),
+        ]
+
+        const result = processBindings(bindings)
+
+        expect(result[0]?.hasNarrower).toBe(true)
+      })
+
+      it('returns false for missing narrowerCount', () => {
+        const { processBindings } = useConceptBindings()
+
+        const bindings: ConceptBinding[] = [
+          createBinding({
+            concept: { type: 'uri', value: 'http://ex.org/c1' },
+            // No narrowerCount property
+          }),
+        ]
+
+        const result = processBindings(bindings)
+
+        expect(result[0]?.hasNarrower).toBe(false)
+      })
+
+      it('returns false for empty string narrowerCount', () => {
+        const { processBindings } = useConceptBindings()
+
+        const bindings: ConceptBinding[] = [
+          createBinding({
+            concept: { type: 'uri', value: 'http://ex.org/c1' },
+            narrowerCount: { type: 'literal', value: '' },
+          }),
+        ]
+
+        const result = processBindings(bindings)
+
+        expect(result[0]?.hasNarrower).toBe(false)
+      })
+
+      it('returns false for non-numeric narrowerCount', () => {
+        const { processBindings } = useConceptBindings()
+
+        const bindings: ConceptBinding[] = [
+          createBinding({
+            concept: { type: 'uri', value: 'http://ex.org/c1' },
+            narrowerCount: { type: 'literal', value: 'abc' },
+          }),
+          createBinding({
+            concept: { type: 'uri', value: 'http://ex.org/c2' },
+            narrowerCount: { type: 'literal', value: 'NaN' },
+          }),
+        ]
+
+        const result = processBindings(bindings)
+
+        // parseInt('abc', 10) returns NaN, NaN > 0 is false
+        expect(result.find(c => c.uri === 'http://ex.org/c1')?.hasNarrower).toBe(false)
+        expect(result.find(c => c.uri === 'http://ex.org/c2')?.hasNarrower).toBe(false)
+      })
+
+      it('handles negative narrowerCount (should be false)', () => {
+        const { processBindings } = useConceptBindings()
+
+        const bindings: ConceptBinding[] = [
+          createBinding({
+            concept: { type: 'uri', value: 'http://ex.org/c1' },
+            narrowerCount: { type: 'literal', value: '-1' },
+          }),
+          createBinding({
+            concept: { type: 'uri', value: 'http://ex.org/c2' },
+            narrowerCount: { type: 'literal', value: '-100' },
+          }),
+        ]
+
+        const result = processBindings(bindings)
+
+        expect(result.find(c => c.uri === 'http://ex.org/c1')?.hasNarrower).toBe(false)
+        expect(result.find(c => c.uri === 'http://ex.org/c2')?.hasNarrower).toBe(false)
+      })
+
+      it('handles leading zeros in narrowerCount', () => {
+        const { processBindings } = useConceptBindings()
+
+        const bindings: ConceptBinding[] = [
+          createBinding({
+            concept: { type: 'uri', value: 'http://ex.org/c1' },
+            narrowerCount: { type: 'literal', value: '001' },
+          }),
+          createBinding({
+            concept: { type: 'uri', value: 'http://ex.org/c2' },
+            narrowerCount: { type: 'literal', value: '000' },
+          }),
+        ]
+
+        const result = processBindings(bindings)
+
+        expect(result.find(c => c.uri === 'http://ex.org/c1')?.hasNarrower).toBe(true)
+        expect(result.find(c => c.uri === 'http://ex.org/c2')?.hasNarrower).toBe(false)
+      })
+
+      it('handles decimal narrowerCount (parseInt truncates)', () => {
+        const { processBindings } = useConceptBindings()
+
+        const bindings: ConceptBinding[] = [
+          createBinding({
+            concept: { type: 'uri', value: 'http://ex.org/c1' },
+            narrowerCount: { type: 'literal', value: '1.9' },
+          }),
+          createBinding({
+            concept: { type: 'uri', value: 'http://ex.org/c2' },
+            narrowerCount: { type: 'literal', value: '0.9' },
+          }),
+        ]
+
+        const result = processBindings(bindings)
+
+        // parseInt('1.9', 10) = 1, parseInt('0.9', 10) = 0
+        expect(result.find(c => c.uri === 'http://ex.org/c1')?.hasNarrower).toBe(true)
+        expect(result.find(c => c.uri === 'http://ex.org/c2')?.hasNarrower).toBe(false)
+      })
+
+      it('handles whitespace in narrowerCount', () => {
+        const { processBindings } = useConceptBindings()
+
+        const bindings: ConceptBinding[] = [
+          createBinding({
+            concept: { type: 'uri', value: 'http://ex.org/c1' },
+            narrowerCount: { type: 'literal', value: ' 5 ' },
+          }),
+          createBinding({
+            concept: { type: 'uri', value: 'http://ex.org/c2' },
+            narrowerCount: { type: 'literal', value: '  ' },
+          }),
+        ]
+
+        const result = processBindings(bindings)
+
+        // parseInt(' 5 ', 10) = 5, parseInt('  ', 10) = NaN
+        expect(result.find(c => c.uri === 'http://ex.org/c1')?.hasNarrower).toBe(true)
+        expect(result.find(c => c.uri === 'http://ex.org/c2')?.hasNarrower).toBe(false)
+      })
+
+      it('uses first binding narrowerCount for grouped concepts', () => {
+        const { processBindings } = useConceptBindings()
+
+        // Multiple bindings for same concept with different narrowerCount values
+        // The first binding should set hasNarrower
+        const bindings: ConceptBinding[] = [
+          createBinding({
+            concept: { type: 'uri', value: 'http://ex.org/c1' },
+            narrowerCount: { type: 'literal', value: '5' },
+            label: { type: 'literal', value: 'Label 1' },
+          }),
+          createBinding({
+            concept: { type: 'uri', value: 'http://ex.org/c1' },
+            narrowerCount: { type: 'literal', value: '0' }, // Different value, should be ignored
+            label: { type: 'literal', value: 'Label 2' },
+          }),
+        ]
+
+        const result = processBindings(bindings)
+
+        // hasNarrower is set on first encounter, subsequent bindings don't overwrite
+        expect(result[0]?.hasNarrower).toBe(true)
+      })
+    })
+
     it('detects deprecated status', () => {
       const { processBindings } = useConceptBindings()
 
