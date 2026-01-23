@@ -9,7 +9,7 @@ import { mount, flushPromises } from '@vue/test-utils'
 import { setActivePinia, createPinia } from 'pinia'
 import { nextTick } from 'vue'
 import ConceptBreadcrumb from '../skos/ConceptBreadcrumb.vue'
-import { useConceptStore, useEndpointStore, useSchemeStore, useLanguageStore, useUIStore } from '../../stores'
+import { useConceptStore, useEndpointStore, useSchemeStore, useLanguageStore, useUIStore, useSettingsStore } from '../../stores'
 
 // Mock the logger
 vi.mock('../../services/logger', () => ({
@@ -76,7 +76,7 @@ describe('ConceptBreadcrumb', () => {
         stubs: {
           Select: {
             template: `
-              <div class="p-select" @click="onClick">
+              <div class="p-select scheme-select" @click="onClick">
                 <slot name="value" />
                 <div class="p-select-overlay" v-if="showOverlay">
                   <slot name="header" />
@@ -510,14 +510,31 @@ describe('ConceptBreadcrumb', () => {
     })
   })
 
-  // NOTE: Scheme filter tests removed temporarily due to component stubbing complexity
-  // The filter functionality is working in the actual component
-  describe.skip('scheme filter', () => {
+  describe('scheme filter', () => {
+    // Shared helper to set up 6 test schemes after mounting (for filter-related tests)
+    async function setupSchemesForFilter(wrapper: ReturnType<typeof mountBreadcrumb>) {
+      await flushPromises()
+      const schemeStore = useSchemeStore()
+      schemeStore.setSchemes([
+        { uri: 'http://ex.org/scheme/1', label: 'Scheme 1' },
+        { uri: 'http://ex.org/scheme/2', label: 'Scheme 2' },
+        { uri: 'http://ex.org/scheme/3', label: 'Scheme 3' },
+        { uri: 'http://ex.org/scheme/4', label: 'Scheme 4' },
+        { uri: 'http://ex.org/scheme/5', label: 'Scheme 5' },
+        { uri: 'http://ex.org/scheme/6', label: 'Scheme 6' },
+      ])
+      await nextTick()
+    }
+
     describe('visibility', () => {
       it('shows filter when 6+ schemes available', async () => {
         const schemeStore = useSchemeStore()
 
-        // Create 6 schemes (plus 2 pinned = 8 total options)
+        // Mount first, then set schemes (to avoid watcher overwriting)
+        const wrapper = mountBreadcrumb()
+        await flushPromises()
+
+        // Create 6 schemes (plus 1 pinned = 7 total options > 5)
         schemeStore.setSchemes([
           { uri: 'http://ex.org/scheme/1', label: 'Scheme 1' },
           { uri: 'http://ex.org/scheme/2', label: 'Scheme 2' },
@@ -526,51 +543,52 @@ describe('ConceptBreadcrumb', () => {
           { uri: 'http://ex.org/scheme/5', label: 'Scheme 5' },
           { uri: 'http://ex.org/scheme/6', label: 'Scheme 6' },
         ])
-
-        const wrapper = mountBreadcrumb()
         await nextTick()
 
         // Open the dropdown to show the header
         await wrapper.find('.scheme-select').trigger('click')
         await nextTick()
 
-        // Filter should be visible (allSchemeOptions.length = 8 > 5)
+        // Filter should be visible (allSchemeOptions.length = 7 > 5)
         expect(wrapper.find('.scheme-filter').exists()).toBe(true)
       })
 
       it('hides filter when 5 or fewer schemes available', async () => {
         const schemeStore = useSchemeStore()
 
-        // Create 3 schemes (plus 2 pinned = 5 total options)
+        const wrapper = mountBreadcrumb()
+        await flushPromises()
+
+        // Create 3 schemes (plus 1 pinned = 4 total options <= 5)
         schemeStore.setSchemes([
           { uri: 'http://ex.org/scheme/1', label: 'Scheme 1' },
           { uri: 'http://ex.org/scheme/2', label: 'Scheme 2' },
           { uri: 'http://ex.org/scheme/3', label: 'Scheme 3' },
         ])
-
-        const wrapper = mountBreadcrumb()
         await nextTick()
 
         // Open the dropdown
         await wrapper.find('.scheme-select').trigger('click')
         await nextTick()
 
-        // Filter should be hidden (allSchemeOptions.length = 5 <= 5)
+        // Filter should be hidden (allSchemeOptions.length = 4 <= 5)
         expect(wrapper.find('.scheme-filter').exists()).toBe(false)
       })
 
       it('counts only real schemes plus pinned items', async () => {
         const schemeStore = useSchemeStore()
 
-        // Create exactly 4 schemes (plus 2 pinned = 6 total)
+        const wrapper = mountBreadcrumb()
+        await flushPromises()
+
+        // Create exactly 5 schemes (plus 1 pinned = 6 total > 5)
         schemeStore.setSchemes([
           { uri: 'http://ex.org/scheme/1', label: 'Scheme 1' },
           { uri: 'http://ex.org/scheme/2', label: 'Scheme 2' },
           { uri: 'http://ex.org/scheme/3', label: 'Scheme 3' },
           { uri: 'http://ex.org/scheme/4', label: 'Scheme 4' },
+          { uri: 'http://ex.org/scheme/5', label: 'Scheme 5' },
         ])
-
-        const wrapper = mountBreadcrumb()
         await nextTick()
 
         // Open the dropdown
@@ -583,7 +601,9 @@ describe('ConceptBreadcrumb', () => {
     })
 
     describe('filtering logic', () => {
-      beforeEach(() => {
+      // Helper to set up 6 test schemes after mounting
+      async function setupSchemesAfterMount(wrapper: ReturnType<typeof mountBreadcrumb>) {
+        await flushPromises()
         const schemeStore = useSchemeStore()
         schemeStore.setSchemes([
           { uri: 'http://ex.org/scheme/1', label: 'Albania Thesaurus' },
@@ -593,11 +613,13 @@ describe('ConceptBreadcrumb', () => {
           { uri: 'http://ex.org/scheme/5', label: 'Asian Countries' },
           { uri: 'http://ex.org/scheme/6', label: 'African Nations' },
         ])
-      })
+        await nextTick()
+        return wrapper
+      }
 
       it('filters schemes by label (case-insensitive)', async () => {
         const wrapper = mountBreadcrumb()
-        await nextTick()
+        await setupSchemesAfterMount(wrapper)
 
         // Open the dropdown
         await wrapper.find('.scheme-select').trigger('click')
@@ -619,8 +641,7 @@ describe('ConceptBreadcrumb', () => {
 
       it('always shows "All Schemes" pinned option', async () => {
         const wrapper = mountBreadcrumb()
-        await nextTick()
-
+        await setupSchemesAfterMount(wrapper)
 
         // Open the dropdown
         await wrapper.find('.scheme-select').trigger('click')
@@ -638,9 +659,12 @@ describe('ConceptBreadcrumb', () => {
       })
 
       it('always shows "Orphan Concepts" pinned option', async () => {
-        const wrapper = mountBreadcrumb()
-        await nextTick()
+        // Enable orphans selector in settings
+        const settingsStore = useSettingsStore()
+        settingsStore.showOrphansSelector = true
 
+        const wrapper = mountBreadcrumb()
+        await setupSchemesAfterMount(wrapper)
 
         // Open the dropdown
         await wrapper.find('.scheme-select').trigger('click')
@@ -652,15 +676,14 @@ describe('ConceptBreadcrumb', () => {
         const vm = wrapper.vm as any
         const filtered = vm.schemeOptions
 
-        const orphans = filtered.find((opt: any) => opt.label === 'Orphan Concepts')
+        const orphans = filtered.find((opt: any) => opt.label === 'Orphan Concepts & Collections')
         expect(orphans).toBeDefined()
         expect(orphans?.isPinned).toBe(true)
       })
 
       it('updates options as user types', async () => {
         const wrapper = mountBreadcrumb()
-        await nextTick()
-
+        await setupSchemesAfterMount(wrapper)
 
         // Open the dropdown
         await wrapper.find('.scheme-select').trigger('click')
@@ -690,8 +713,7 @@ describe('ConceptBreadcrumb', () => {
 
       it('shows empty message when no unpinned matches', async () => {
         const wrapper = mountBreadcrumb()
-        await nextTick()
-
+        await setupSchemesAfterMount(wrapper)
 
         // Open the dropdown
         await wrapper.find('.scheme-select').trigger('click')
@@ -710,7 +732,9 @@ describe('ConceptBreadcrumb', () => {
     })
 
     describe('filter UI elements', () => {
-      beforeEach(() => {
+      // Helper to set up 6 test schemes after mounting
+      async function setupSchemesForUI(wrapper: ReturnType<typeof mountBreadcrumb>) {
+        await flushPromises()
         const schemeStore = useSchemeStore()
         schemeStore.setSchemes([
           { uri: 'http://ex.org/scheme/1', label: 'Scheme 1' },
@@ -720,12 +744,12 @@ describe('ConceptBreadcrumb', () => {
           { uri: 'http://ex.org/scheme/5', label: 'Scheme 5' },
           { uri: 'http://ex.org/scheme/6', label: 'Scheme 6' },
         ])
-      })
+        await nextTick()
+      }
 
       it('shows clear button when text entered', async () => {
         const wrapper = mountBreadcrumb()
-        await nextTick()
-
+        await setupSchemesForUI(wrapper)
 
         // Open the dropdown
         await wrapper.find('.scheme-select').trigger('click')
@@ -739,7 +763,7 @@ describe('ConceptBreadcrumb', () => {
 
       it('hides clear button when filter empty', async () => {
         const wrapper = mountBreadcrumb()
-        await nextTick()
+        await setupSchemesForUI(wrapper)
 
         const vm = wrapper.vm as any
         vm.filterValue = ''
@@ -750,8 +774,7 @@ describe('ConceptBreadcrumb', () => {
 
       it('clears filter on × click', async () => {
         const wrapper = mountBreadcrumb()
-        await nextTick()
-
+        await setupSchemesForUI(wrapper)
 
         // Open the dropdown
         await wrapper.find('.scheme-select').trigger('click')
@@ -770,8 +793,7 @@ describe('ConceptBreadcrumb', () => {
 
       it('clears filter on Escape key', async () => {
         const wrapper = mountBreadcrumb()
-        await nextTick()
-
+        await setupSchemesForUI(wrapper)
 
         // Open the dropdown
         await wrapper.find('.scheme-select').trigger('click')
@@ -789,22 +811,9 @@ describe('ConceptBreadcrumb', () => {
     })
 
     describe('keyboard navigation', () => {
-      beforeEach(() => {
-        const schemeStore = useSchemeStore()
-        schemeStore.setSchemes([
-          { uri: 'http://ex.org/scheme/1', label: 'Scheme 1' },
-          { uri: 'http://ex.org/scheme/2', label: 'Scheme 2' },
-          { uri: 'http://ex.org/scheme/3', label: 'Scheme 3' },
-          { uri: 'http://ex.org/scheme/4', label: 'Scheme 4' },
-          { uri: 'http://ex.org/scheme/5', label: 'Scheme 5' },
-          { uri: 'http://ex.org/scheme/6', label: 'Scheme 6' },
-        ])
-      })
-
       it('Escape key clears filter text', async () => {
         const wrapper = mountBreadcrumb()
-        await nextTick()
-
+        await setupSchemesForFilter(wrapper)
 
         // Open the dropdown
         await wrapper.find('.scheme-select').trigger('click')
@@ -823,7 +832,9 @@ describe('ConceptBreadcrumb', () => {
     })
 
     describe('selection behavior', () => {
-      beforeEach(() => {
+      // Helper to set up 6 test schemes after mounting
+      async function setupSchemesForSelection(wrapper: ReturnType<typeof mountBreadcrumb>) {
+        await flushPromises()
         const schemeStore = useSchemeStore()
         schemeStore.setSchemes([
           { uri: 'http://ex.org/scheme/1', label: 'Albania' },
@@ -833,13 +844,12 @@ describe('ConceptBreadcrumb', () => {
           { uri: 'http://ex.org/scheme/5', label: 'America' },
           { uri: 'http://ex.org/scheme/6', label: 'Australia' },
         ])
-      })
+        await nextTick()
+      }
 
       it('can type, filter, and select in one flow', async () => {
         const wrapper = mountBreadcrumb()
-        await nextTick()
-
-        // Type to filter
+        await setupSchemesForSelection(wrapper)
 
         // Open the dropdown
         await wrapper.find('.scheme-select').trigger('click')
@@ -865,7 +875,7 @@ describe('ConceptBreadcrumb', () => {
 
       it('clears filter when scheme is selected via component setter', async () => {
         const wrapper = mountBreadcrumb()
-        await nextTick()
+        await setupSchemesForSelection(wrapper)
 
         // Set filter text
         const vm = wrapper.vm as any
