@@ -7,7 +7,7 @@
  * @see /spec/ae-skos/sko02-SchemeSelector.md
  */
 import type { SPARQLEndpoint } from '../types'
-import { executeSparql } from '../services'
+import { executeSparql, endpointHasCollections } from '../services'
 import { buildAllConceptsQuery, buildOrphanExclusionQueries, buildSingleOrphanQuery, buildOrphanCollectionsQuery } from './useOrphanQueries'
 import { logger } from '../services'
 import type { ProgressCallback, QueryResult } from './useOrphanProgress'
@@ -414,6 +414,12 @@ export async function calculateOrphanCollections(
   onProgress?: (phase: 'running' | 'complete', found: number) => void
 ): Promise<string[]> {
   logger.info('OrphanCollections', 'Starting orphan collection detection')
+
+  if (!endpointHasCollections(endpoint)) {
+    logger.info('OrphanCollections', 'Skipping - endpoint reports no collections')
+    onProgress?.('complete', 0)
+    return []
+  }
 
   // Validate query can be built
   const testQuery = buildOrphanCollectionsQuery(endpoint, 1, 0)

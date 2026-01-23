@@ -8,7 +8,7 @@
  */
 import { ref, computed } from 'vue'
 import { useEndpointStore, useLanguageStore } from '../stores'
-import { executeSparql, logger } from '../services'
+import { executeSparql, logger, endpointHasCollections } from '../services'
 import { useLabelResolver } from './useLabelResolver'
 import { buildCollectionsStageQuery, buildChildCollectionsQuery, getCollectionQueryCapabilities, type CollectionQueryStage } from './useCollectionQueries'
 import type { CollectionNode } from '../types'
@@ -24,7 +24,6 @@ export function useCollections() {
   const error = ref<string | null>(null)
   const currentSchemeUri = ref<string | null>(null)
   let activeRequestId = 0
-
   /**
    * Process query bindings into CollectionNode array.
    * Groups by collection URI and selects best label based on type and language priority.
@@ -247,6 +246,12 @@ export function useCollections() {
     // Track current scheme for child collection queries
     currentSchemeUri.value = schemeUri
 
+    if (!endpointHasCollections(endpoint)) {
+      logger.info('Collections', 'Skipping - endpoint reports no collections', { scheme: schemeUri })
+      collections.value = []
+      return
+    }
+
     // Check capabilities before attempting query
     const { stages, canQuery } = getCollectionQueryCapabilities(endpoint)
 
@@ -308,6 +313,11 @@ export function useCollections() {
     const schemeUri = currentSchemeUri.value
     if (!schemeUri) {
       logger.warn('Collections', 'No current scheme set, cannot load child collections')
+      return []
+    }
+
+    if (!endpointHasCollections(endpoint)) {
+      logger.info('Collections', 'Skipping child collections - endpoint reports no collections', { parentUri })
       return []
     }
 

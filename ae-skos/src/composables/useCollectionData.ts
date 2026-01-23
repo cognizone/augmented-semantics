@@ -7,7 +7,7 @@
  */
 import { ref, type Ref } from 'vue'
 import { useEndpointStore, useSchemeStore } from '../stores'
-import { executeSparql, withPrefixes, logger, resolveUris } from '../services'
+import { executeSparql, withPrefixes, logger, resolveUris, endpointHasCollections } from '../services'
 import { useLabelResolver } from './useLabelResolver'
 import { useOtherProperties, COLLECTION_EXCLUDED_PREDICATES } from './useOtherProperties'
 import { useProgressiveLabelLoader } from './useProgressiveLabelLoader'
@@ -37,7 +37,6 @@ export function useCollectionData() {
   const error = ref<string | null>(null)
   const resolvedPredicates: Ref<Map<string, { prefix: string; localName: string }>> = ref(new Map())
   const memberUriSet = new Set<string>()
-
   /**
    * Build query to load collection properties
    * Supports SKOS-XL labels, dct:title, and rdfs:label for broader compatibility
@@ -604,6 +603,13 @@ export function useCollectionData() {
     const endpoint = endpointStore.current
     if (!endpoint) return
 
+    if (!endpointHasCollections(endpoint)) {
+      logger.info('CollectionData', 'Skipping - endpoint reports no collections', { uri: collectionUri })
+      error.value = 'Endpoint reports no collections'
+      details.value = null
+      return
+    }
+
     loading.value = true
     error.value = null
 
@@ -665,6 +671,18 @@ export function useCollectionData() {
   async function loadMembers(collectionUri: string) {
     const endpoint = endpointStore.current
     if (!endpoint) return
+
+    if (!endpointHasCollections(endpoint)) {
+      logger.info('CollectionData', 'Skipping members - endpoint reports no collections', { uri: collectionUri })
+      members.value = []
+      memberCount.value = 0
+      membersLoaded.value = true
+      loadingMembers.value = false
+      loadingMemberLabels.value = false
+      hierarchyLoading.value = false
+      schemeLoading.value = false
+      return
+    }
 
     loadingMembers.value = true
     membersLoaded.value = false

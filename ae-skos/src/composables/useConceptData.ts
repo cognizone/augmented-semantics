@@ -8,7 +8,7 @@
  */
 import { ref, type Ref } from 'vue'
 import { useEndpointStore, useSchemeStore, useConceptStore } from '../stores'
-import { executeSparql, withPrefixes, logger, resolveUris, formatQualifiedName } from '../services'
+import { executeSparql, withPrefixes, logger, resolveUris, formatQualifiedName, endpointHasCollections } from '../services'
 import { useDeprecation } from './useDeprecation'
 import { useXLLabels } from './useXLLabels'
 import { useOtherProperties, CONCEPT_EXCLUDED_PREDICATES } from './useOtherProperties'
@@ -36,6 +36,11 @@ export function useConceptData() {
   async function loadCollections(uri: string, conceptDetails: ConceptDetails): Promise<void> {
     const endpoint = endpointStore.current
     if (!endpoint) return
+
+    if (!endpointHasCollections(endpoint)) {
+      logger.info('useConceptData', 'Skipping collections - endpoint reports no collections', { uri })
+      return
+    }
 
     const query = withPrefixes(`
       SELECT DISTINCT ?collection

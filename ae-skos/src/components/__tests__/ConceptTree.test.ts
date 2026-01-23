@@ -25,6 +25,7 @@ vi.mock('../../services/logger', () => ({
 vi.mock('../../services/sparql', () => ({
   executeSparql: vi.fn(),
   withPrefixes: vi.fn((q) => q),
+  endpointHasCollections: vi.fn(() => true),
 }))
 
 import { executeSparql } from '../../services/sparql'

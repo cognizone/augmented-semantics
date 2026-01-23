@@ -13,7 +13,7 @@
  */
 import { ref, watch, computed, onMounted, onUnmounted } from 'vue'
 import { useConceptStore, useEndpointStore, useSchemeStore, useLanguageStore } from '../../stores'
-import { logger, eventBus, executeSparql, withPrefixes } from '../../services'
+import { logger, eventBus, executeSparql, withPrefixes, endpointHasCollections } from '../../services'
 import type { EventSubscription } from '../../services'
 import {
   useDelayedLoading,
@@ -273,6 +273,9 @@ const gotoWarning = ref<string | null>(null)
 async function isCollection(uri: string): Promise<boolean> {
   const endpoint = endpointStore.current
   if (!endpoint) return false
+  if (!endpointHasCollections(endpoint)) {
+    return false
+  }
 
   const query = withPrefixes(`
     ASK { <${uri}> a skos:Collection }

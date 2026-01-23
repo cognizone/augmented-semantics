@@ -13,6 +13,7 @@ import { useEndpointStore } from '../../stores'
 vi.mock('../../services/sparql', () => ({
   executeSparql: vi.fn(),
   withPrefixes: vi.fn((q) => q),
+  endpointHasCollections: vi.fn(() => true),
 }))
 
 vi.mock('../../services/logger', () => ({

@@ -61,6 +61,15 @@ PREFIX owl: <http://www.w3.org/2002/07/owl#>
 PREFIX cc: <http://creativecommons.org/ns#>
 `.trim()
 
+export function endpointHasCollections(endpoint?: SPARQLEndpoint | null): boolean {
+  const analysis = endpoint?.analysis
+  if (!analysis) return true
+  const totalCollections = analysis.totalCollections
+  const totalOrdered = analysis.totalOrderedCollections
+  if (totalCollections === undefined && totalOrdered === undefined) return true
+  return (totalCollections ?? 0) > 0 || (totalOrdered ?? 0) > 0
+}
+
 /**
  * Create Authorization header based on endpoint auth config
  */
