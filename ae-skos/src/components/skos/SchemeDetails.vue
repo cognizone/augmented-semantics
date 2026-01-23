@@ -77,7 +77,7 @@ const preferredLabelObj = computed(() => {
   })
 })
 
-const preferredLabel = computed(() => preferredLabelObj.value?.value || details.value?.uri.split('/').pop() || '')
+const preferredLabel = computed(() => preferredLabelObj.value?.value || '…')
 const displayLang = computed(() => preferredLabelObj.value?.lang || null)
 const showHeaderLangTag = computed(() => displayLang.value ? shouldShowLangTag(displayLang.value) : false)
 

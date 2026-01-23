@@ -384,8 +384,22 @@ export function useConceptData() {
         narrower: conceptDetails.narrower.length
       })
 
-      // Render immediately with URI fragments as temporary labels
-      // UI will update progressively as async operations complete
+      const eagerRefLoads: Promise<void>[] = [
+        loadLabelsForRefs(conceptDetails.broader, 'broader', 'concept'),
+        loadLabelsForRefs(conceptDetails.inScheme, 'inScheme', 'scheme'),
+        loadLabelsForRefs(conceptDetails.related, 'related', 'concept'),
+      ]
+
+      if (conceptDetails.narrower.length <= 50) {
+        eagerRefLoads.push(loadLabelsForRefs(conceptDetails.narrower, 'narrower', 'concept', { skipSchemeCheck: true }))
+      }
+
+      await Promise.all([
+        loadXLLabels(uri, conceptDetails, { source: 'useConceptData' }),
+        ...eagerRefLoads,
+      ])
+
+      // Render after fast label loads to avoid flashing on details header/sections
       details.value = conceptDetails
       loading.value = false
 
@@ -400,15 +414,13 @@ export function useConceptData() {
       // Typical sizes: broader (1-3), inScheme (1-2), related (0-10), narrower (1-100+)
       // Pass resource type for capability-aware label loading
       Promise.all([
-        loadLabelsForRefs(reactiveDetails.broader, 'broader', 'concept'),
-        loadLabelsForRefs(reactiveDetails.inScheme, 'inScheme', 'scheme'),
-        loadLabelsForRefs(reactiveDetails.related, 'related', 'concept'),
-        loadLabelsForRefs(reactiveDetails.narrower, 'narrower', 'concept', { skipSchemeCheck: true }),  // largest, loads last; no scheme check since narrower is always same-scheme
+        ...(reactiveDetails.narrower.length > 50
+          ? [loadLabelsForRefs(reactiveDetails.narrower, 'narrower', 'concept', { skipSchemeCheck: true })]
+          : []),
         // Collections are discovered first, then labels loaded
         loadCollections(uri, reactiveDetails).then(() =>
           loadLabelsForRefs(reactiveDetails.collections, 'collections', 'collection')
         ),
-        loadXLLabels(uri, reactiveDetails, { source: 'useConceptData' }),
         loadOtherProperties(uri, reactiveDetails, {
           excludedPredicates: CONCEPT_EXCLUDED_PREDICATES,
           resolveDatatypes: true,

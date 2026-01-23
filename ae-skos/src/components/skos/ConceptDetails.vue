@@ -90,7 +90,7 @@ const displayTitle = computed(() => {
   if (!details.value) return ''
   const label = preferredLabel.value
   const notation = details.value.notations[0]?.value
-  const fallback = label || details.value.uri.split('/').pop() || 'Unnamed Concept'
+  const fallback = label || '…'
   if (!includeNotation.value) {
     return fallback
   }
@@ -101,7 +101,10 @@ const displayTitle = computed(() => {
 })
 
 function formatRefLabel(ref: ConceptRef): string {
-  return getRefLabel(ref, { includeNotation: includeNotation.value })
+  if (ref.label || ref.notation) {
+    return getRefLabel(ref, { includeNotation: includeNotation.value })
+  }
+  return '…'
 }
 
 function shouldShowDatatypeTag(datatype?: string): boolean {
@@ -364,6 +367,7 @@ watch(
   },
   { immediate: true }
 )
+
 </script>
 
 <template>

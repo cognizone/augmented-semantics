@@ -45,3 +45,16 @@ sections that render literal values:
 These rules ensure consistent, datatype-aware rendering across all detail views
 while respecting RDF 1.1 semantics and keeping the UI noise controlled by user
 settings.
+
+## Detail rendering (label loading)
+
+To avoid visual flashing in detail views, labels that are fast to resolve are
+loaded **before** rendering the details panel. Progressive loading is reserved
+only for potentially large or slow sections (e.g., large narrower lists,
+collections, or other heavy queries).
+
+Implementation guideline:
+- Do **not** render detail headers/label sections with URI fragment fallbacks.
+- Await fast label loads (preferred label + small reference lists) before
+  setting `details.value`.
+- Keep progressive loading only for large lists or secondary sections.
