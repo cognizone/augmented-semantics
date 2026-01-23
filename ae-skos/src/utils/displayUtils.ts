@@ -140,8 +140,12 @@ export function formatDatatype(datatype: string): string {
  * @param ref - The concept reference
  * @returns The formatted display label
  */
-export function getRefLabel(ref: ConceptRef): string {
+export function getRefLabel(ref: ConceptRef, options?: { includeNotation?: boolean }): string {
+  const includeNotation = options?.includeNotation !== false
   const label = ref.label || getUriFragment(ref.uri) || ref.uri
+  if (!includeNotation) {
+    return label
+  }
   if (ref.notation && ref.label) {
     return `${ref.notation} - ${label}`
   }

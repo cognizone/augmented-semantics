@@ -51,6 +51,7 @@ export interface AppSettings {
   showDatatypes: boolean              // Show datatype tags on property values
   showLanguageTags: boolean           // Show language tags on labels (when not current)
   showPreferredLanguageTag: boolean   // Show language tag even when matching preferred
+  showNotationInLabels: boolean       // Show notation in labels and use for sorting
 
   // Deprecation settings
   showDeprecationIndicator: boolean   // Show deprecation visual indicators
@@ -71,6 +72,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   showDatatypes: true,
   showLanguageTags: true,
   showPreferredLanguageTag: false,
+  showNotationInLabels: true,
   showDeprecationIndicator: true,
   deprecationRules: DEFAULT_DEPRECATION_RULES,
   showOrphansSelector: true,
@@ -86,6 +88,7 @@ export const useSettingsStore = defineStore('settings', () => {
   const showDatatypes = ref(DEFAULT_SETTINGS.showDatatypes)
   const showLanguageTags = ref(DEFAULT_SETTINGS.showLanguageTags)
   const showPreferredLanguageTag = ref(DEFAULT_SETTINGS.showPreferredLanguageTag)
+  const showNotationInLabels = ref(DEFAULT_SETTINGS.showNotationInLabels)
   const showDeprecationIndicator = ref(DEFAULT_SETTINGS.showDeprecationIndicator)
   const deprecationRules = ref<DeprecationRule[]>([...DEFAULT_DEPRECATION_RULES])
   const showOrphansSelector = ref(DEFAULT_SETTINGS.showOrphansSelector)
@@ -121,6 +124,9 @@ export const useSettingsStore = defineStore('settings', () => {
         }
         if (settings.showPreferredLanguageTag !== undefined) {
           showPreferredLanguageTag.value = settings.showPreferredLanguageTag
+        }
+        if (settings.showNotationInLabels !== undefined) {
+          showNotationInLabels.value = settings.showNotationInLabels
         }
         if (settings.showDeprecationIndicator !== undefined) {
           showDeprecationIndicator.value = settings.showDeprecationIndicator
@@ -158,6 +164,7 @@ export const useSettingsStore = defineStore('settings', () => {
         showDatatypes: showDatatypes.value,
         showLanguageTags: showLanguageTags.value,
         showPreferredLanguageTag: showPreferredLanguageTag.value,
+        showNotationInLabels: showNotationInLabels.value,
         showDeprecationIndicator: showDeprecationIndicator.value,
         deprecationRules: deprecationRules.value,
         showOrphansSelector: showOrphansSelector.value,
@@ -186,6 +193,11 @@ export const useSettingsStore = defineStore('settings', () => {
 
   function setShowLanguageTags(value: boolean) {
     showLanguageTags.value = value
+    saveSettings()
+  }
+
+  function setShowNotationInLabels(value: boolean) {
+    showNotationInLabels.value = value
     saveSettings()
   }
 
@@ -221,6 +233,7 @@ export const useSettingsStore = defineStore('settings', () => {
     showDatatypes.value = DEFAULT_SETTINGS.showDatatypes
     showLanguageTags.value = DEFAULT_SETTINGS.showLanguageTags
     showPreferredLanguageTag.value = DEFAULT_SETTINGS.showPreferredLanguageTag
+    showNotationInLabels.value = DEFAULT_SETTINGS.showNotationInLabels
     showDeprecationIndicator.value = DEFAULT_SETTINGS.showDeprecationIndicator
     deprecationRules.value = [...DEFAULT_DEPRECATION_RULES]
     showOrphansSelector.value = DEFAULT_SETTINGS.showOrphansSelector
@@ -249,6 +262,7 @@ export const useSettingsStore = defineStore('settings', () => {
       showDatatypes.value,
       showLanguageTags.value,
       showPreferredLanguageTag.value,
+      showNotationInLabels.value,
       showDeprecationIndicator.value,
       deprecationRules.value,
       showOrphansSelector.value,
@@ -270,6 +284,7 @@ export const useSettingsStore = defineStore('settings', () => {
     showDatatypes,
     showLanguageTags,
     showPreferredLanguageTag,
+    showNotationInLabels,
     showDeprecationIndicator,
     deprecationRules,
     showOrphansSelector,
@@ -281,6 +296,7 @@ export const useSettingsStore = defineStore('settings', () => {
     setDarkMode,
     setShowDatatypes,
     setShowLanguageTags,
+    setShowNotationInLabels,
     setShowDeprecationIndicator,
     setDeprecationRules,
     setLogLevel,

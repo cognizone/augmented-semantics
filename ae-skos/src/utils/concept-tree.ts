@@ -35,9 +35,14 @@ export function pickBestNotation(notations: string[]): string | undefined {
  * Compare tree nodes for sorting.
  * Priority: notation (numeric if possible) > label (alphabetical)
  */
-export function compareNodes(a: ConceptNode, b: ConceptNode): number {
-  const aNotation = a.notation
-  const bNotation = b.notation
+export function compareNodes(
+  a: ConceptNode,
+  b: ConceptNode,
+  options?: { useNotation?: boolean }
+): number {
+  const useNotation = options?.useNotation !== false
+  const aNotation = useNotation ? a.notation : undefined
+  const bNotation = useNotation ? b.notation : undefined
 
   // If both have notation, try numeric sort
   if (aNotation && bNotation) {

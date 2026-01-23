@@ -12,6 +12,7 @@ import { useConceptStore, useEndpointStore, useLanguageStore, useSchemeStore, us
 import { executeSparql, withPrefixes, logger } from '../../services'
 import { useLabelResolver } from '../../composables'
 import { buildCapabilityAwareLabelUnionClause, CONCEPT_LABEL_PRIORITY } from '../../constants'
+import { getRefLabel } from '../../utils/displayUtils'
 import type { ConceptRef, ConceptScheme } from '../../types'
 import Breadcrumb from 'primevue/breadcrumb'
 import Select from 'primevue/select'
@@ -28,6 +29,11 @@ const schemeStore = useSchemeStore()
 const settingsStore = useSettingsStore()
 const uiStore = useUIStore()
 const { shouldShowLangTag, selectLabelByPriority } = useLabelResolver()
+const includeNotation = computed(() => settingsStore.showNotationInLabels)
+
+function formatBreadcrumbLabel(item: ConceptRef): string {
+  return getRefLabel(item, { includeNotation: includeNotation.value })
+}
 
 // Local state
 const loading = ref(false)
@@ -265,11 +271,7 @@ const breadcrumbItems = computed(() => {
   const items = conceptStore.breadcrumb
 
   return items.map((item, index) => {
-    const label = item.label || item.uri.split('/').pop() || item.uri
-    // Show notation + label if both exist
-    const displayLabel = item.notation && item.label
-      ? `${item.notation} - ${label}`
-      : item.notation || label
+    const displayLabel = formatBreadcrumbLabel(item)
 
     // Determine if this is the last (current) item
     const isLast = index === items.length - 1

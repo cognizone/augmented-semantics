@@ -6,7 +6,7 @@
  * @see /spec/ae-skos/sko03-ConceptTree.md
  */
 import { ref, type Ref } from 'vue'
-import { useEndpointStore, useSchemeStore } from '../stores'
+import { useEndpointStore, useSchemeStore, useSettingsStore } from '../stores'
 import { executeSparql, withPrefixes, logger, resolveUris, endpointHasCollections } from '../services'
 import { useLabelResolver } from './useLabelResolver'
 import { useOtherProperties, COLLECTION_EXCLUDED_PREDICATES } from './useOtherProperties'
@@ -19,6 +19,7 @@ import type { CollectionDetails, LabelValue, NotationValue, ConceptRef, LabelPre
 export function useCollectionData() {
   const endpointStore = useEndpointStore()
   const schemeStore = useSchemeStore()
+  const settingsStore = useSettingsStore()
   const { sortLabels } = useLabelResolver()
   const { loadOtherProperties } = useOtherProperties()
   const { loadXLLabels } = useXLLabels()
@@ -579,8 +580,8 @@ export function useCollectionData() {
       const groupB = b.type === 'collection' ? 0 : 1
       if (groupA !== groupB) return groupA - groupB
 
-      const keyA = (a.notation || getUriFragment(a.uri) || a.uri).toLowerCase()
-      const keyB = (b.notation || getUriFragment(b.uri) || b.uri).toLowerCase()
+      const keyA = (settingsStore.showNotationInLabels ? (a.notation || getUriFragment(a.uri) || a.uri) : (getUriFragment(a.uri) || a.uri)).toLowerCase()
+      const keyB = (settingsStore.showNotationInLabels ? (b.notation || getUriFragment(b.uri) || b.uri) : (getUriFragment(b.uri) || b.uri)).toLowerCase()
       return keyA.localeCompare(keyB)
     })
   }

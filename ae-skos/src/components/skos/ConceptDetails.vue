@@ -81,17 +81,26 @@ const showHeaderLangTag = computed(() => {
   return displayLang.value ? shouldShowLangTag(displayLang.value) : false
 })
 
+const includeNotation = computed(() => settingsStore.showNotationInLabels)
+
 // Get display title (notation + label if both exist)
 const displayTitle = computed(() => {
   if (!details.value) return ''
   const label = preferredLabel.value
   const notation = details.value.notations[0]?.value
-
+  const fallback = label || details.value.uri.split('/').pop() || 'Unnamed Concept'
+  if (!includeNotation.value) {
+    return fallback
+  }
   if (notation && label) {
     return `${notation} - ${label}`
   }
-  return notation || label || 'Unnamed Concept'
+  return notation || fallback
 })
+
+function formatRefLabel(ref: ConceptRef): string {
+  return getRefLabel(ref, { includeNotation: includeNotation.value })
+}
 
 // Icon props based on whether concept has children
 const headerIcon = computed(() => details.value?.narrower?.length ? 'label' : 'circle')
@@ -439,7 +448,7 @@ watch(
                     @click="navigateTo(ref)"
                   >
                     <span class="material-symbols-outlined chip-icon" :class="ref.hasNarrower ? 'icon-label' : 'icon-leaf'">{{ ref.hasNarrower ? 'label' : 'circle' }}</span>
-                    {{ getRefLabel(ref) }}<span v-if="ref.lang && shouldShowLangTag(ref.lang)" class="lang-tag">{{ ref.lang }}</span>
+                    {{ formatRefLabel(ref) }}<span v-if="ref.lang && shouldShowLangTag(ref.lang)" class="lang-tag">{{ ref.lang }}</span>
                     <span v-if="ref.deprecated && showDeprecationIndicator" class="deprecated-badge">deprecated</span>
                   </span>
                 </div>
@@ -458,7 +467,7 @@ watch(
                 @click="navigateTo(ref)"
               >
                 <span class="material-symbols-outlined chip-icon" :class="ref.hasNarrower ? 'icon-label' : 'icon-leaf'">{{ ref.hasNarrower ? 'label' : 'circle' }}</span>
-                {{ getRefLabel(ref) }}<span v-if="ref.lang && shouldShowLangTag(ref.lang)" class="lang-tag">{{ ref.lang }}</span>
+                {{ formatRefLabel(ref) }}<span v-if="ref.lang && shouldShowLangTag(ref.lang)" class="lang-tag">{{ ref.lang }}</span>
                 <span v-if="ref.deprecated && showDeprecationIndicator" class="deprecated-badge">deprecated</span>
               </span>
             </div>
@@ -485,7 +494,7 @@ watch(
                     @click="navigateTo(ref)"
                   >
                     <span class="material-symbols-outlined chip-icon" :class="ref.hasNarrower ? 'icon-label' : 'icon-leaf'">{{ ref.hasNarrower ? 'label' : 'circle' }}</span>
-                    {{ getRefLabel(ref) }}<span v-if="ref.lang && shouldShowLangTag(ref.lang)" class="lang-tag">{{ ref.lang }}</span>
+                    {{ formatRefLabel(ref) }}<span v-if="ref.lang && shouldShowLangTag(ref.lang)" class="lang-tag">{{ ref.lang }}</span>
                     <span v-if="ref.deprecated && showDeprecationIndicator" class="deprecated-badge">deprecated</span>
                   </span>
                 </div>
@@ -531,7 +540,7 @@ watch(
                 @click="navigateToCollection(ref)"
               >
                 <span class="material-symbols-outlined chip-icon icon-collection">collections_bookmark</span>
-                {{ getRefLabel(ref) }}<span v-if="ref.lang && shouldShowLangTag(ref.lang)" class="lang-tag">{{ ref.lang }}</span>
+                {{ formatRefLabel(ref) }}<span v-if="ref.lang && shouldShowLangTag(ref.lang)" class="lang-tag">{{ ref.lang }}</span>
                 <span v-if="isExternalScheme(ref)" class="scheme-badge" :title="ref.displayScheme">{{ getSchemeShortName(ref.displayScheme!) }}</span>
                 <span v-if="ref.deprecated && showDeprecationIndicator" class="deprecated-badge">deprecated</span>
               </span>
@@ -555,7 +564,7 @@ watch(
                 @click="handleSchemeClick(ref)"
               >
                 <span class="material-symbols-outlined chip-icon icon-folder">folder</span>
-                {{ getRefLabel(ref) }}<span v-if="ref.lang && shouldShowLangTag(ref.lang)" class="lang-tag">{{ ref.lang }}</span>
+                {{ formatRefLabel(ref) }}<span v-if="ref.lang && shouldShowLangTag(ref.lang)" class="lang-tag">{{ ref.lang }}</span>
                 <span v-if="ref.deprecated && showDeprecationIndicator" class="deprecated-badge">deprecated</span>
               </span>
             </div>

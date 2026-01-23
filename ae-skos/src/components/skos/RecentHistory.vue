@@ -8,8 +8,9 @@
  * @see /spec/ae-skos/sko06-Utilities.md
  */
 import { ref, computed } from 'vue'
-import { useConceptStore, useEndpointStore, useSchemeStore } from '../../stores'
+import { useConceptStore, useEndpointStore, useSchemeStore, useSettingsStore } from '../../stores'
 import { useLabelResolver } from '../../composables'
+import { getRefLabel } from '../../utils/displayUtils'
 import Listbox from 'primevue/listbox'
 import HistoryDeleteDialog from './HistoryDeleteDialog.vue'
 
@@ -22,7 +23,13 @@ const emit = defineEmits<{
 const conceptStore = useConceptStore()
 const endpointStore = useEndpointStore()
 const schemeStore = useSchemeStore()
+const settingsStore = useSettingsStore()
 const { shouldShowLangTag } = useLabelResolver()
+const includeNotation = computed(() => settingsStore.showNotationInLabels)
+
+function formatHistoryLabel(entry: HistoryEntry): string {
+  return getRefLabel({ uri: entry.uri, label: entry.label, notation: entry.notation }, { includeNotation: includeNotation.value })
+}
 
 // Dialog state
 const showDeleteDialog = ref(false)
@@ -119,9 +126,7 @@ function handleDeleteConfirm() {
           }}</span>
           <div class="item-content">
             <span class="item-label">
-              {{ slotProps.option.notation && slotProps.option.label
-                ? `${slotProps.option.notation} - ${slotProps.option.label}`
-                : slotProps.option.notation || slotProps.option.label }}
+              {{ formatHistoryLabel(slotProps.option) }}
               <span v-if="slotProps.option.lang && shouldShowLangTag(slotProps.option.lang)" class="lang-tag">
                 {{ slotProps.option.lang }}
               </span>

@@ -37,6 +37,9 @@ export function useTreePagination() {
     buildChildrenMetadataQuery,
   } = useConceptTreeQueries()
 
+  const compareNodesWithSettings = (a: ConceptNode, b: ConceptNode) =>
+    compareNodes(a, b, { useNotation: settingsStore.showNotationInLabels })
+
   // Pagination state for top concepts
   const topConceptsOffset = ref(0)
   const hasMoreTopConcepts = ref(true)
@@ -224,7 +227,7 @@ export function useTreePagination() {
       })
     }
 
-    nodes.sort(compareNodes)
+    nodes.sort(compareNodesWithSettings)
     return nodes
   }
 
@@ -349,7 +352,7 @@ export function useTreePagination() {
         const results = await executeSparql(endpoint, query, { retries: 1 })
         const concepts = processMetadataBindings(results.results.bindings)
         await loadLabelsForNodes(concepts)
-        concepts.sort(compareNodes)
+        concepts.sort(compareNodesWithSettings)
         processTopConceptsResults(concepts, offset, isFirstPage)
         return
       }
@@ -364,7 +367,7 @@ export function useTreePagination() {
         const results = await executeSparql(endpoint, explicitQuery, { retries: 1 })
         explicitConcepts = processMetadataBindings(results.results.bindings)
         await loadLabelsForNodes(explicitConcepts)
-        explicitConcepts.sort(compareNodes)
+        explicitConcepts.sort(compareNodesWithSettings)
 
         if (explicitConcepts.length > 0) {
           // Show explicit results immediately
@@ -380,7 +383,7 @@ export function useTreePagination() {
       const inschemeResults = await executeSparql(endpoint, inschemeQuery, { retries: 1 })
       const inschemeConcepts = processMetadataBindings(inschemeResults.results.bindings)
       await loadLabelsForNodes(inschemeConcepts)
-      inschemeConcepts.sort(compareNodes)
+      inschemeConcepts.sort(compareNodesWithSettings)
 
       // Determine query mode and merge results
       const explicitUris = new Set(explicitConcepts.map(c => c.uri))
@@ -761,7 +764,7 @@ export function useTreePagination() {
       // Process metadata bindings, then enrich with labels
       const children = processMetadataBindings(results.results.bindings)
       await loadLabelsForNodes(children)
-      children.sort(compareNodes)
+      children.sort(compareNodesWithSettings)
 
       // Check if there are more results
       const hasMore = children.length > PAGE_SIZE

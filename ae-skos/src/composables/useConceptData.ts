@@ -7,7 +7,7 @@
  * @see /spec/ae-skos/sko04-ConceptDetails.md
  */
 import { ref, type Ref } from 'vue'
-import { useEndpointStore, useSchemeStore, useConceptStore } from '../stores'
+import { useEndpointStore, useSchemeStore, useConceptStore, useSettingsStore } from '../stores'
 import { executeSparql, withPrefixes, logger, resolveUris, formatQualifiedName, endpointHasCollections } from '../services'
 import { useDeprecation } from './useDeprecation'
 import { useXLLabels } from './useXLLabels'
@@ -20,6 +20,7 @@ import type { ConceptDetails, ConceptRef, SkosResourceType } from '../types'
 export function useConceptData() {
   const endpointStore = useEndpointStore()
   const schemeStore = useSchemeStore()
+  const settingsStore = useSettingsStore()
   const { isDeprecatedFromProperties, isDeprecatedFromBinding, getDeprecationSparqlClauses, getDeprecationSelectVars } = useDeprecation()
   const { loadXLLabels } = useXLLabels()
   const { loadOtherProperties } = useOtherProperties()
@@ -222,12 +223,14 @@ export function useConceptData() {
         // No scheme-based grouping since narrower is always same-scheme
         refs.sort((a, b) => {
           // Sort by notation (numeric-aware for codes like p2, p10)
-          if (a.notation && b.notation) {
-            return a.notation.localeCompare(b.notation, undefined, { numeric: true })
+          if (settingsStore.showNotationInLabels) {
+            if (a.notation && b.notation) {
+              return a.notation.localeCompare(b.notation, undefined, { numeric: true })
+            }
+            // Items with notation come before items without
+            if (a.notation && !b.notation) return -1
+            if (!a.notation && b.notation) return 1
           }
-          // Items with notation come before items without
-          if (a.notation && !b.notation) return -1
-          if (!a.notation && b.notation) return 1
 
           // Finally sort by label (fall back to URI fragment for display)
           const aLabel = a.label || a.uri.split(/[#/]/).pop() || a.uri
@@ -253,12 +256,14 @@ export function useConceptData() {
           }
 
           // Sort by notation (numeric-aware for codes like p2, p10)
-          if (a.notation && b.notation) {
-            return a.notation.localeCompare(b.notation, undefined, { numeric: true })
+          if (settingsStore.showNotationInLabels) {
+            if (a.notation && b.notation) {
+              return a.notation.localeCompare(b.notation, undefined, { numeric: true })
+            }
+            // Items with notation come before items without
+            if (a.notation && !b.notation) return -1
+            if (!a.notation && b.notation) return 1
           }
-          // Items with notation come before items without
-          if (a.notation && !b.notation) return -1
-          if (!a.notation && b.notation) return 1
 
           // Finally sort by label (fall back to URI fragment for display)
           const aLabel = a.label || a.uri.split(/[#/]/).pop() || a.uri

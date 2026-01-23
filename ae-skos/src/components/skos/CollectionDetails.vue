@@ -10,7 +10,7 @@
  * @see /spec/ae-skos/sko03-ConceptTree.md
  */
 import { watch, computed } from 'vue'
-import { useSchemeStore } from '../../stores'
+import { useSchemeStore, useSettingsStore } from '../../stores'
 import { isValidURI } from '../../services'
 import { useDelayedLoading, useLabelResolver, useCollectionData, useResourceExport, useElapsedTime, useDeprecation } from '../../composables'
 import { getRefLabel, getUriFragment, formatTemporalValue } from '../../utils/displayUtils'
@@ -31,6 +31,7 @@ const emit = defineEmits<{
 }>()
 
 const schemeStore = useSchemeStore()
+const settingsStore = useSettingsStore()
 const { selectCollectionLabel, sortLabels, shouldShowLangTag } = useLabelResolver()
 const {
   details,
@@ -80,6 +81,8 @@ const showHeaderLangTag = computed(() => {
   return displayLang.value ? shouldShowLangTag(displayLang.value) : false
 })
 
+const includeNotation = computed(() => settingsStore.showNotationInLabels)
+
 const currentMemberStep = computed(() => {
   if (loadingMembers.value) return 1
   if (loadingMemberLabels.value) return 2
@@ -108,12 +111,19 @@ const displayTitle = computed(() => {
   if (!details.value) return ''
   const label = preferredLabel.value
   const notation = details.value.notations[0]?.value
-
+  const fallback = label || details.value.uri.split('/').pop() || 'Unnamed Collection'
+  if (!includeNotation.value) {
+    return fallback
+  }
   if (notation && label) {
     return `${notation} - ${label}`
   }
-  return notation || label || 'Unnamed Collection'
+  return notation || fallback
 })
+
+function formatRefLabel(ref: ConceptRef): string {
+  return getRefLabel(ref, { includeNotation: includeNotation.value })
+}
 
 // Sorted title/label arrays
 const sortedDctTitles = computed(() =>
@@ -388,7 +398,7 @@ watch(
                 {{ member.type === 'collection' ? 'collections_bookmark' : (member.hasNarrower ? 'label' : 'circle') }}
               </span>
               <span class="member-label">
-                {{ getRefLabel(member) }}
+                {{ formatRefLabel(member) }}
                 <span v-if="member.lang && shouldShowLangTag(member.lang)" class="lang-tag">
                   {{ member.lang }}
                 </span>

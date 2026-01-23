@@ -337,6 +337,16 @@ onUnmounted(() => {
 
           <div class="setting-row">
             <label class="checkbox-label">
+              <Checkbox v-model="settingsStore.showNotationInLabels" :binary="true" />
+              <span class="checkbox-text">
+                Show notation in labels
+                <small>Include notation prefixes in labels and sorting</small>
+              </span>
+            </label>
+          </div>
+
+          <div class="setting-row">
+            <label class="checkbox-label">
               <Checkbox v-model="settingsStore.showOrphansSelector" :binary="true" />
               <span class="checkbox-text">
                 Show orphans selector

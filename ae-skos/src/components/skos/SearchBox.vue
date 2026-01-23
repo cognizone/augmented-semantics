@@ -12,9 +12,10 @@
  * @see /spec/ae-skos/sko05-SearchBox.md
  */
 import { ref, watch, computed, nextTick } from 'vue'
-import { useConceptStore, useEndpointStore, useSchemeStore, useLanguageStore, useUIStore } from '../../stores'
+import { useConceptStore, useEndpointStore, useSchemeStore, useLanguageStore, useUIStore, useSettingsStore } from '../../stores'
 import { executeSparql, withPrefixes, logger, escapeSparqlString } from '../../services'
 import { useDelayedLoading, useLabelResolver } from '../../composables'
+import { getRefLabel } from '../../utils/displayUtils'
 import type { SearchResult } from '../../types'
 import Listbox from 'primevue/listbox'
 import Dialog from 'primevue/dialog'
@@ -33,7 +34,13 @@ const endpointStore = useEndpointStore()
 const schemeStore = useSchemeStore()
 const languageStore = useLanguageStore()
 const uiStore = useUIStore()
+const settingsStore = useSettingsStore()
 const { shouldShowLangTag } = useLabelResolver()
+const includeNotation = computed(() => settingsStore.showNotationInLabels)
+
+function formatSearchLabel(result: SearchResult): string {
+  return getRefLabel({ uri: result.uri, label: result.label, notation: result.notation }, { includeNotation: includeNotation.value })
+}
 
 // Local state
 const searchInput = ref('')
@@ -285,9 +292,7 @@ watch(
         <template #option="slotProps">
           <div class="result-item">
             <div class="result-label">
-              {{ slotProps.option.notation && slotProps.option.label
-                ? `${slotProps.option.notation} - ${slotProps.option.label}`
-                : slotProps.option.notation || slotProps.option.label }}
+              {{ formatSearchLabel(slotProps.option) }}
               <span v-if="slotProps.option.lang && shouldShowLangTag(slotProps.option.lang)" class="lang-tag">
                 {{ slotProps.option.lang }}
               </span>

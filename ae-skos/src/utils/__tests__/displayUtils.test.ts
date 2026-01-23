@@ -179,6 +179,11 @@ describe('getRefLabel', () => {
       .toBe('Test Concept')
   })
 
+  it('omits notation when includeNotation is false', () => {
+    expect(getRefLabel({ uri: 'http://example.org/c1', notation: 'C1', label: 'Test Concept' }, { includeNotation: false }))
+      .toBe('Test Concept')
+  })
+
   it('extracts URI fragment when both notation and label are missing', () => {
     expect(getRefLabel({ uri: 'http://example.org/concepts/myFragment' }))
       .toBe('myFragment')

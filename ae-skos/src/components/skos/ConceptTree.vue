@@ -12,7 +12,7 @@
  * @see /spec/ae-skos/sko03-ConceptTree.md
  */
 import { ref, watch, computed, onMounted, onUnmounted } from 'vue'
-import { useConceptStore, useEndpointStore, useSchemeStore, useLanguageStore } from '../../stores'
+import { useConceptStore, useEndpointStore, useSchemeStore, useLanguageStore, useSettingsStore } from '../../stores'
 import { logger, eventBus, executeSparql, withPrefixes, endpointHasCollections } from '../../services'
 import type { EventSubscription } from '../../services'
 import {
@@ -41,6 +41,7 @@ const conceptStore = useConceptStore()
 const endpointStore = useEndpointStore()
 const schemeStore = useSchemeStore()
 const languageStore = useLanguageStore()
+const settingsStore = useSettingsStore()
 const { shouldShowLangTag } = useLabelResolver()
 const { showIndicator: showDeprecationIndicator } = useDeprecation()
 
@@ -189,9 +190,9 @@ const treeNodes = computed((): TreeNode[] => {
  */
 function convertCollectionToTreeNode(col: CollectionNode): TreeNode {
   const label = col.label || col.uri.split('/').pop() || col.uri
-  const displayLabel = col.notation && col.label
-    ? `${col.notation} - ${label}`
-    : col.notation || label
+  const displayLabel = settingsStore.showNotationInLabels
+    ? (col.notation && col.label ? `${col.notation} - ${label}` : col.notation || label)
+    : label
 
   return {
     key: col.uri,
@@ -213,9 +214,9 @@ function convertCollectionToTreeNode(col: CollectionNode): TreeNode {
 function convertToTreeNode(node: ConceptNode): TreeNode {
   // Display notation + label if both exist
   const label = node.label || node.uri.split('/').pop() || node.uri
-  const displayLabel = node.notation && node.label
-    ? `${node.notation} - ${label}`
-    : node.notation || label
+  const displayLabel = settingsStore.showNotationInLabels
+    ? (node.notation && node.label ? `${node.notation} - ${label}` : node.notation || label)
+    : label
 
   return {
     key: node.uri,
