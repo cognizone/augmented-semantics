@@ -205,6 +205,13 @@ describe('useOtherProperties', () => {
       expect(CONCEPT_EXCLUDED_PREDICATES).toContain('dct:description')
     })
 
+    it('exports CONCEPT_EXCLUDED_PREDICATES with label predicates', () => {
+      // rdfs:label, dct:title, and dc:title are displayed in the labels section
+      expect(CONCEPT_EXCLUDED_PREDICATES).toContain('rdfs:label')
+      expect(CONCEPT_EXCLUDED_PREDICATES).toContain('dct:title')
+      expect(CONCEPT_EXCLUDED_PREDICATES).toContain('dc:title')
+    })
+
     it('exports SCHEME_EXCLUDED_PREDICATES', () => {
       expect(SCHEME_EXCLUDED_PREDICATES).toContain('skos:hasTopConcept')
       expect(SCHEME_EXCLUDED_PREDICATES).toContain('dct:title')

@@ -56,6 +56,11 @@ describe('settings store', () => {
       const store = useSettingsStore()
       expect(store.showOrphansSelector).toBe(true)
     })
+
+    it('starts with showNotationInLabels enabled', () => {
+      const store = useSettingsStore()
+      expect(store.showNotationInLabels).toBe(true)
+    })
   })
 
   describe('setDarkMode', () => {
@@ -332,6 +337,67 @@ describe('settings store', () => {
     })
   })
 
+  describe('showNotationInLabels', () => {
+    it('starts with true as default', () => {
+      const store = useSettingsStore()
+      expect(store.showNotationInLabels).toBe(true)
+    })
+
+    it('can be changed via setShowNotationInLabels', () => {
+      const store = useSettingsStore()
+
+      store.setShowNotationInLabels(false)
+      expect(store.showNotationInLabels).toBe(false)
+
+      store.setShowNotationInLabels(true)
+      expect(store.showNotationInLabels).toBe(true)
+    })
+
+    it('persists to localStorage', () => {
+      const store = useSettingsStore()
+
+      store.setShowNotationInLabels(false)
+      expect(localStorage.setItem).toHaveBeenCalled()
+    })
+
+    it('loads from localStorage on init', () => {
+      const storedSettings = { showNotationInLabels: false }
+      vi.mocked(localStorage.getItem).mockReturnValue(JSON.stringify(storedSettings))
+
+      const store = useSettingsStore()
+      expect(store.showNotationInLabels).toBe(false)
+    })
+
+    it('uses default when not in stored settings', () => {
+      const storedSettings = { darkMode: true }
+      vi.mocked(localStorage.getItem).mockReturnValue(JSON.stringify(storedSettings))
+
+      const store = useSettingsStore()
+      expect(store.showNotationInLabels).toBe(true) // default
+    })
+
+    it('resets to true on resetToDefaults', () => {
+      const store = useSettingsStore()
+
+      store.setShowNotationInLabels(false)
+      store.resetToDefaults()
+
+      expect(store.showNotationInLabels).toBe(true)
+    })
+
+    it('is included in saved settings', () => {
+      const store = useSettingsStore()
+
+      store.setShowNotationInLabels(false)
+
+      const calls = vi.mocked(localStorage.setItem).mock.calls
+      const lastCall = calls[calls.length - 1]
+      const savedData = JSON.parse(lastCall[1] as string)
+
+      expect(savedData.showNotationInLabels).toBe(false)
+    })
+  })
+
   describe('resetToDefaults', () => {
     it('resets all settings to defaults', () => {
       const store = useSettingsStore()
@@ -345,6 +411,7 @@ describe('settings store', () => {
       store.showDeprecationIndicator = false
       store.setDeprecationRules([])
       store.showOrphansSelector = false
+      store.showNotationInLabels = false
       store.developerMode = true
 
       // Reset
@@ -359,6 +426,7 @@ describe('settings store', () => {
       expect(store.showDeprecationIndicator).toBe(true)
       expect(store.deprecationRules).toHaveLength(2)
       expect(store.showOrphansSelector).toBe(true)
+      expect(store.showNotationInLabels).toBe(true)
       expect(store.developerMode).toBe(false)
     })
   })
