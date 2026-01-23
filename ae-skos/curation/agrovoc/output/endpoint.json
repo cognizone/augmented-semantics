@@ -14,35 +14,35 @@
     "languages": [
       {
         "lang": "en",
-        "count": 83360
+        "count": 83362
       },
       {
         "lang": "ar",
-        "count": 83358
+        "count": 83360
       },
       {
         "lang": "es",
-        "count": 83358
+        "count": 83360
       },
       {
         "lang": "fr",
-        "count": 83358
+        "count": 83360
       },
       {
         "lang": "ru",
-        "count": 83358
+        "count": 83360
       },
       {
         "lang": "tr",
-        "count": 83082
+        "count": 83084
       },
       {
         "lang": "sw",
-        "count": 82914
+        "count": 82922
       },
       {
         "lang": "zh",
-        "count": 82454
+        "count": 82488
       },
       {
         "lang": "de",
@@ -50,7 +50,7 @@
       },
       {
         "lang": "it",
-        "count": 77594
+        "count": 77596
       },
       {
         "lang": "cs",
@@ -58,7 +58,7 @@
       },
       {
         "lang": "pt",
-        "count": 72126
+        "count": 72128
       },
       {
         "lang": "pl",
@@ -70,7 +70,7 @@
       },
       {
         "lang": "hu",
-        "count": 68436
+        "count": 68438
       },
       {
         "lang": "ro",
@@ -90,11 +90,11 @@
       },
       {
         "lang": "uk",
-        "count": 59088
+        "count": 59090
       },
       {
         "lang": "nb",
-        "count": 55124
+        "count": 55128
       },
       {
         "lang": "sr",
@@ -102,19 +102,19 @@
       },
       {
         "lang": "da",
-        "count": 47472
+        "count": 47478
       },
       {
         "lang": "sv",
-        "count": 47156
+        "count": 47164
       },
       {
         "lang": "nl",
-        "count": 46334
+        "count": 46340
       },
       {
         "lang": "vi",
-        "count": 45726
+        "count": 45728
       },
       {
         "lang": "la",
@@ -122,7 +122,7 @@
       },
       {
         "lang": "be",
-        "count": 42606
+        "count": 43284
       },
       {
         "lang": "hi",
@@ -146,7 +146,7 @@
       },
       {
         "lang": "nn",
-        "count": 2036
+        "count": 2042
       },
       {
         "lang": "ms",
@@ -158,11 +158,11 @@
       },
       {
         "lang": "fi",
-        "count": 1032
+        "count": 1034
       },
       {
         "lang": "et",
-        "count": 834
+        "count": 838
       },
       {
         "lang": "my",
@@ -182,7 +182,7 @@
       },
       {
         "lang": "sl",
-        "count": 252
+        "count": 254
       },
       {
         "lang": "ga",
@@ -213,7 +213,9 @@
         "count": 12
       }
     ],
-    "totalConcepts": 41676,
+    "totalConcepts": 41677,
+    "totalCollections": 3,
+    "totalOrderedCollections": 0,
     "relationships": {
       "hasInScheme": true,
       "hasTopConceptOf": true,
@@ -237,7 +239,7 @@
         "xlPrefLabel": true
       }
     },
-    "analyzedAt": "2026-01-22T16:26:55.285Z"
+    "analyzedAt": "2026-01-23T12:53:37.728Z"
   },
   "suggestedLanguagePriorities": [
     "en",

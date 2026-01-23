@@ -22,6 +22,8 @@
       }
     ],
     "totalConcepts": 7845,
+    "totalCollections": 0,
+    "totalOrderedCollections": 0,
     "relationships": {
       "hasInScheme": true,
       "hasTopConceptOf": true,
@@ -42,7 +44,7 @@
         "rdfsLabel": true
       }
     },
-    "analyzedAt": "2026-01-22T16:22:01.142Z"
+    "analyzedAt": "2026-01-23T13:11:35.900Z"
   },
   "suggestedLanguagePriorities": [
     "en",

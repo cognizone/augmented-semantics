@@ -34,6 +34,8 @@
       }
     ],
     "totalConcepts": 4494,
+    "totalCollections": 95,
+    "totalOrderedCollections": 0,
     "relationships": {
       "hasInScheme": true,
       "hasTopConceptOf": true,
@@ -55,7 +57,7 @@
         "prefLabel": true
       }
     },
-    "analyzedAt": "2026-01-22T16:22:04.398Z"
+    "analyzedAt": "2026-01-23T13:11:39.978Z"
   },
   "suggestedLanguagePriorities": [
     "en",

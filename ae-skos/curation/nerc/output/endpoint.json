@@ -35,7 +35,7 @@
     "languages": [
       {
         "lang": "en",
-        "count": 361893
+        "count": 361907
       },
       {
         "lang": "fr",
@@ -58,7 +58,9 @@
         "count": 2
       }
     ],
-    "totalConcepts": 361903,
+    "totalConcepts": 361917,
+    "totalCollections": 303,
+    "totalOrderedCollections": 0,
     "relationships": {
       "hasInScheme": true,
       "hasTopConceptOf": true,
@@ -81,7 +83,7 @@
         "dctTitle": true
       }
     },
-    "analyzedAt": "2026-01-22T16:21:58.878Z"
+    "analyzedAt": "2026-01-23T13:11:32.418Z"
   },
   "suggestedLanguagePriorities": [
     "en",

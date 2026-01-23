@@ -407,6 +407,8 @@
         }
       ],
       "totalConcepts": 1022595,
+      "totalCollections": 533,
+      "totalOrderedCollections": 0,
       "relationships": {
         "hasInScheme": true,
         "hasTopConceptOf": true,
@@ -435,7 +437,7 @@
           "rdfsLabel": true
         }
       },
-      "analyzedAt": "2026-01-22T15:55:14.765Z"
+      "analyzedAt": "2026-01-23T12:46:55.996Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -506,35 +508,35 @@
       "languages": [
         {
           "lang": "en",
-          "count": 83360
+          "count": 83362
         },
         {
           "lang": "ar",
-          "count": 83358
+          "count": 83360
         },
         {
           "lang": "es",
-          "count": 83358
+          "count": 83360
         },
         {
           "lang": "fr",
-          "count": 83358
+          "count": 83360
         },
         {
           "lang": "ru",
-          "count": 83358
+          "count": 83360
         },
         {
           "lang": "tr",
-          "count": 83082
+          "count": 83084
         },
         {
           "lang": "sw",
-          "count": 82914
+          "count": 82922
         },
         {
           "lang": "zh",
-          "count": 82454
+          "count": 82488
         },
         {
           "lang": "de",
@@ -542,7 +544,7 @@
         },
         {
           "lang": "it",
-          "count": 77594
+          "count": 77596
         },
         {
           "lang": "cs",
@@ -550,7 +552,7 @@
         },
         {
           "lang": "pt",
-          "count": 72126
+          "count": 72128
         },
         {
           "lang": "pl",
@@ -562,7 +564,7 @@
         },
         {
           "lang": "hu",
-          "count": 68436
+          "count": 68438
         },
         {
           "lang": "ro",
@@ -582,11 +584,11 @@
         },
         {
           "lang": "uk",
-          "count": 59088
+          "count": 59090
         },
         {
           "lang": "nb",
-          "count": 55124
+          "count": 55128
         },
         {
           "lang": "sr",
@@ -594,19 +596,19 @@
         },
         {
           "lang": "da",
-          "count": 47472
+          "count": 47478
         },
         {
           "lang": "sv",
-          "count": 47156
+          "count": 47164
         },
         {
           "lang": "nl",
-          "count": 46334
+          "count": 46340
         },
         {
           "lang": "vi",
-          "count": 45726
+          "count": 45728
         },
         {
           "lang": "la",
@@ -614,7 +616,7 @@
         },
         {
           "lang": "be",
-          "count": 42606
+          "count": 43284
         },
         {
           "lang": "hi",
@@ -638,7 +640,7 @@
         },
         {
           "lang": "nn",
-          "count": 2036
+          "count": 2042
         },
         {
           "lang": "ms",
@@ -650,11 +652,11 @@
         },
         {
           "lang": "fi",
-          "count": 1032
+          "count": 1034
         },
         {
           "lang": "et",
-          "count": 834
+          "count": 838
         },
         {
           "lang": "my",
@@ -674,7 +676,7 @@
         },
         {
           "lang": "sl",
-          "count": 252
+          "count": 254
         },
         {
           "lang": "ga",
@@ -705,7 +707,9 @@
           "count": 12
         }
       ],
-      "totalConcepts": 41676,
+      "totalConcepts": 41677,
+      "totalCollections": 3,
+      "totalOrderedCollections": 0,
       "relationships": {
         "hasInScheme": true,
         "hasTopConceptOf": true,
@@ -729,7 +733,7 @@
           "xlPrefLabel": true
         }
       },
-      "analyzedAt": "2026-01-22T16:26:55.285Z"
+      "analyzedAt": "2026-01-23T12:53:37.728Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -1000,6 +1004,8 @@
         }
       ],
       "totalConcepts": 21189438,
+      "totalCollections": 3,
+      "totalOrderedCollections": 0,
       "relationships": {
         "hasInScheme": true,
         "hasTopConceptOf": false,
@@ -1020,7 +1026,7 @@
           "prefLabel": true
         }
       },
-      "analyzedAt": "2026-01-22T16:03:04.599Z"
+      "analyzedAt": "2026-01-23T12:55:13.744Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -1116,6 +1122,8 @@
         }
       ],
       "totalConcepts": 207637,
+      "totalCollections": 0,
+      "totalOrderedCollections": 0,
       "relationships": {
         "hasInScheme": true,
         "hasTopConceptOf": true,
@@ -1136,7 +1144,7 @@
           "dctTitle": true
         }
       },
-      "analyzedAt": "2026-01-22T16:03:07.314Z"
+      "analyzedAt": "2026-01-23T12:55:16.419Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -1541,6 +1549,8 @@
         }
       ],
       "totalConcepts": 26031,
+      "totalCollections": 0,
+      "totalOrderedCollections": 0,
       "relationships": {
         "hasInScheme": true,
         "hasTopConceptOf": true,
@@ -1562,7 +1572,7 @@
           "rdfsLabel": true
         }
       },
-      "analyzedAt": "2026-01-22T16:07:17.114Z"
+      "analyzedAt": "2026-01-23T13:14:34.211Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -1668,6 +1678,8 @@
         }
       ],
       "totalConcepts": 2554767,
+      "totalCollections": 0,
+      "totalOrderedCollections": 0,
       "relationships": {
         "hasInScheme": false,
         "hasTopConceptOf": false,
@@ -1683,7 +1695,7 @@
           "rdfsLabel": true
         }
       },
-      "analyzedAt": "2026-01-22T16:08:33.056Z"
+      "analyzedAt": "2026-01-23T12:58:20.496Z"
     },
     "suggestedLanguagePriorities": [
       "en"
@@ -1985,6 +1997,8 @@
         }
       ],
       "totalConcepts": 3439,
+      "totalCollections": 9,
+      "totalOrderedCollections": 0,
       "relationships": {
         "hasInScheme": true,
         "hasTopConceptOf": true,
@@ -2009,7 +2023,7 @@
           "prefLabel": true
         }
       },
-      "analyzedAt": "2026-01-22T16:08:36.337Z"
+      "analyzedAt": "2026-01-23T12:58:24.134Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -2474,6 +2488,8 @@
         }
       ],
       "totalConcepts": 322630,
+      "totalCollections": 1068,
+      "totalOrderedCollections": 7,
       "relationships": {
         "hasInScheme": true,
         "hasTopConceptOf": true,
@@ -2501,7 +2517,7 @@
           "xlPrefLabel": true
         }
       },
-      "analyzedAt": "2026-01-22T16:10:25.111Z"
+      "analyzedAt": "2026-01-23T13:00:25.079Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -2656,6 +2672,8 @@
         }
       ],
       "totalConcepts": 49080,
+      "totalCollections": 36,
+      "totalOrderedCollections": 0,
       "relationships": {
         "hasInScheme": true,
         "hasTopConceptOf": true,
@@ -2678,7 +2696,7 @@
           "prefLabel": true
         }
       },
-      "analyzedAt": "2026-01-22T16:10:31.025Z"
+      "analyzedAt": "2026-01-23T13:00:30.217Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -2805,11 +2823,11 @@
       "languages": [
         {
           "lang": "fi",
-          "count": 1677816
+          "count": 1677849
         },
         {
           "lang": "sv",
-          "count": 1224588
+          "count": 1224586
         },
         {
           "lang": "en",
@@ -3004,7 +3022,9 @@
           "count": 511
         }
       ],
-      "totalConcepts": 891932,
+      "totalConcepts": 891967,
+      "totalCollections": 1106,
+      "totalOrderedCollections": 0,
       "relationships": {
         "hasInScheme": true,
         "hasTopConceptOf": true,
@@ -3031,7 +3051,7 @@
           "rdfsLabel": true
         }
       },
-      "analyzedAt": "2026-01-22T16:12:09.198Z"
+      "analyzedAt": "2026-01-23T13:01:37.239Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -3310,6 +3330,8 @@
         }
       ],
       "totalConcepts": 3452906,
+      "totalCollections": 2388,
+      "totalOrderedCollections": 597,
       "relationships": {
         "hasInScheme": true,
         "hasTopConceptOf": false,
@@ -3334,7 +3356,7 @@
           "rdfsLabel": true
         }
       },
-      "analyzedAt": "2026-01-22T16:21:23.599Z"
+      "analyzedAt": "2026-01-23T13:10:53.477Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -3633,6 +3655,8 @@
         }
       ],
       "totalConcepts": 13884,
+      "totalCollections": 44,
+      "totalOrderedCollections": 0,
       "relationships": {
         "hasInScheme": true,
         "hasTopConceptOf": true,
@@ -3655,7 +3679,7 @@
           "prefLabel": true
         }
       },
-      "analyzedAt": "2026-01-22T16:21:39.985Z"
+      "analyzedAt": "2026-01-23T13:11:13.292Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -3935,6 +3959,8 @@
         }
       ],
       "totalConcepts": 5430,
+      "totalCollections": 71,
+      "totalOrderedCollections": 0,
       "relationships": {
         "hasInScheme": true,
         "hasTopConceptOf": true,
@@ -3960,7 +3986,7 @@
           "rdfsLabel": true
         }
       },
-      "analyzedAt": "2026-01-22T16:21:44.364Z"
+      "analyzedAt": "2026-01-23T13:11:17.002Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -4007,7 +4033,7 @@
       "languages": [
         {
           "lang": "en",
-          "count": 361893
+          "count": 361907
         },
         {
           "lang": "fr",
@@ -4030,7 +4056,9 @@
           "count": 2
         }
       ],
-      "totalConcepts": 361903,
+      "totalConcepts": 361917,
+      "totalCollections": 303,
+      "totalOrderedCollections": 0,
       "relationships": {
         "hasInScheme": true,
         "hasTopConceptOf": true,
@@ -4053,7 +4081,7 @@
           "dctTitle": true
         }
       },
-      "analyzedAt": "2026-01-22T16:21:58.878Z"
+      "analyzedAt": "2026-01-23T13:11:32.418Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -4088,6 +4116,8 @@
         }
       ],
       "totalConcepts": 7845,
+      "totalCollections": 0,
+      "totalOrderedCollections": 0,
       "relationships": {
         "hasInScheme": true,
         "hasTopConceptOf": true,
@@ -4108,7 +4138,7 @@
           "rdfsLabel": true
         }
       },
-      "analyzedAt": "2026-01-22T16:22:01.142Z"
+      "analyzedAt": "2026-01-23T13:11:35.900Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -4151,6 +4181,8 @@
         }
       ],
       "totalConcepts": 4494,
+      "totalCollections": 95,
+      "totalOrderedCollections": 0,
       "relationships": {
         "hasInScheme": true,
         "hasTopConceptOf": true,
@@ -4172,7 +4204,7 @@
           "prefLabel": true
         }
       },
-      "analyzedAt": "2026-01-22T16:22:04.398Z"
+      "analyzedAt": "2026-01-23T13:11:39.978Z"
     },
     "suggestedLanguagePriorities": [
       "en",

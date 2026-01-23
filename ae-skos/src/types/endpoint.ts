@@ -80,6 +80,8 @@ export interface EndpointAnalysis {
 
   // SKOS statistics
   totalConcepts?: number
+  totalCollections?: number
+  totalOrderedCollections?: number
   relationships?: {
     hasInScheme: boolean
     hasTopConceptOf: boolean

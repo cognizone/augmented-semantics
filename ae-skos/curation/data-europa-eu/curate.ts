@@ -130,6 +130,38 @@ async function countConceptsInGraphs(graphUris: string[]): Promise<number> {
   return parseInt(results.results.bindings[0]?.count?.value || '0', 10)
 }
 
+async function countCollectionsInGraphs(graphUris: string[]): Promise<number> {
+  const valuesClause = graphUris.map(uri => `<${uri}>`).join(' ')
+  const query = `
+    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+    SELECT (COUNT(DISTINCT ?collection) AS ?count)
+    WHERE {
+      VALUES ?g { ${valuesClause} }
+      GRAPH ?g {
+        ?collection a skos:Collection .
+      }
+    }
+  `
+  const results = await executeSparql(ENDPOINT, query)
+  return parseInt(results.results.bindings[0]?.count?.value || '0', 10)
+}
+
+async function countOrderedCollectionsInGraphs(graphUris: string[]): Promise<number> {
+  const valuesClause = graphUris.map(uri => `<${uri}>`).join(' ')
+  const query = `
+    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+    SELECT (COUNT(DISTINCT ?collection) AS ?count)
+    WHERE {
+      VALUES ?g { ${valuesClause} }
+      GRAPH ?g {
+        ?collection a skos:OrderedCollection .
+      }
+    }
+  `
+  const results = await executeSparql(ENDPOINT, query)
+  return parseInt(results.results.bindings[0]?.count?.value || '0', 10)
+}
+
 async function detectSchemesInGraphs(graphUris: string[]): Promise<string[]> {
   const valuesClause = graphUris.map(uri => `<${uri}>`).join(' ')
   const query = `
@@ -271,14 +303,16 @@ async function detectLabelPredicatesInGraphs(graphUris: string[]): Promise<Label
 
 async function main() {
   const overallStart = Date.now()
-  const STEP_NAME_WIDTH = 20
+  const STEP_NAME_WIDTH = 22
   const RESULT_WIDTH = 12
 
   const logStep = (step: number, total: number, name: string, result: string, durationMs: number) => {
+    const stepWidth = `${total}/${total}`.length
+    const stepLabel = `${step}/${total}`.padStart(stepWidth)
     const paddedName = name.padEnd(STEP_NAME_WIDTH)
     const paddedResult = result.padStart(RESULT_WIDTH)
     const duration = formatDuration(durationMs).padStart(6)
-    console.log(`  ${dim(`${step}/${total}`)} ${paddedName}${cyan(paddedResult)}  ${dim(duration)}`)
+    console.log(`  ${dim(stepLabel)} ${paddedName}${cyan(paddedResult)}  ${dim(duration)}`)
   }
 
   console.log('')
@@ -337,42 +371,52 @@ async function main() {
     process.exit(1)
   }
 
-  // Standard 8-step analysis
-  // 1/8 SKOS content - we know it's yes
-  logStep(1, 8, 'SKOS content', 'yes', 0)
+  // Standard 10-step analysis
+  // 1/10 SKOS content - we know it's yes
+  logStep(1, 10, 'SKOS content', 'yes', 0)
 
-  // 2/8 Named graphs - we know it's yes
-  logStep(2, 8, 'Named graphs', 'yes', 0)
+  // 2/10 Named graphs - we know it's yes
+  logStep(2, 10, 'Named graphs', 'yes', 0)
 
-  // 3/8 SKOS graphs - already discovered
-  logStep(3, 8, 'SKOS graphs', String(validGraphs.length), 0)
+  // 3/10 SKOS graphs - already discovered
+  logStep(3, 10, 'SKOS graphs', String(validGraphs.length), 0)
 
-  // 4/8 Concept schemes
+  // 4/10 Concept schemes
   start = Date.now()
   const schemeUris = await detectSchemesInGraphs(validGraphs)
-  logStep(4, 8, 'Concept schemes', String(schemeUris.length), Date.now() - start)
+  logStep(4, 10, 'Concept schemes', String(schemeUris.length), Date.now() - start)
 
-  // 5/8 Concepts
+  // 5/10 Concepts
   start = Date.now()
   const totalConcepts = await countConceptsInGraphs(validGraphs)
-  logStep(5, 8, 'Concepts', totalConcepts.toLocaleString(), Date.now() - start)
+  logStep(5, 10, 'Concepts', totalConcepts.toLocaleString(), Date.now() - start)
 
-  // 6/8 Relationships
+  // 6/10 Collections
+  start = Date.now()
+  const totalCollections = await countCollectionsInGraphs(validGraphs)
+  logStep(6, 10, 'Collections', totalCollections.toLocaleString(), Date.now() - start)
+
+  // 7/10 Ordered collections
+  start = Date.now()
+  const totalOrderedCollections = await countOrderedCollectionsInGraphs(validGraphs)
+  logStep(7, 10, 'Ordered collections', totalOrderedCollections.toLocaleString(), Date.now() - start)
+
+  // 8/10 Relationships
   start = Date.now()
   const relationships = await detectRelationshipsInGraphs(validGraphs)
   const relCount = Object.values(relationships).filter(Boolean).length
-  logStep(6, 8, 'Relationships', `${relCount}/7`, Date.now() - start)
+  logStep(8, 10, 'Relationships', `${relCount}/7`, Date.now() - start)
 
-  // 7/8 Label predicates
+  // 9/10 Label predicates
   start = Date.now()
   const labelPredicates = await detectLabelPredicatesInGraphs(validGraphs)
   const labelCount = Object.values(labelPredicates).reduce((sum, caps) => sum + Object.keys(caps || {}).length, 0)
-  logStep(7, 8, 'Label predicates', String(labelCount), Date.now() - start)
+  logStep(9, 10, 'Label predicates', String(labelCount), Date.now() - start)
 
-  // 8/8 Languages
+  // 10/10 Languages
   start = Date.now()
   const languages = await detectLanguagesInGraphs(validGraphs)
-  logStep(8, 8, 'Languages', String(languages.length), Date.now() - start)
+  logStep(10, 10, 'Languages', String(languages.length), Date.now() - start)
 
   const totalDuration = Date.now() - overallStart
   console.log('')
@@ -388,6 +432,8 @@ async function main() {
     schemesLimited: schemeUris.length > 200,
     languages,
     totalConcepts,
+    totalCollections,
+    totalOrderedCollections,
     relationships,
     labelPredicates: Object.keys(labelPredicates).length > 0 ? labelPredicates : undefined,
     analyzedAt: new Date().toISOString(),

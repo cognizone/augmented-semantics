@@ -115,11 +115,11 @@
     "languages": [
       {
         "lang": "fi",
-        "count": 1677816
+        "count": 1677849
       },
       {
         "lang": "sv",
-        "count": 1224588
+        "count": 1224586
       },
       {
         "lang": "en",
@@ -314,7 +314,9 @@
         "count": 511
       }
     ],
-    "totalConcepts": 891932,
+    "totalConcepts": 891967,
+    "totalCollections": 1106,
+    "totalOrderedCollections": 0,
     "relationships": {
       "hasInScheme": true,
       "hasTopConceptOf": true,
@@ -341,7 +343,7 @@
         "rdfsLabel": true
       }
     },
-    "analyzedAt": "2026-01-22T16:12:09.198Z"
+    "analyzedAt": "2026-01-23T13:01:37.239Z"
   },
   "suggestedLanguagePriorities": [
     "en",

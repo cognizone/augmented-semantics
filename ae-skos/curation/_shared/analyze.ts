@@ -45,6 +45,8 @@ export interface EndpointAnalysis {
   schemesLimited?: boolean
   languages?: DetectedLanguage[]
   totalConcepts?: number
+  totalCollections?: number
+  totalOrderedCollections?: number
   relationships?: {
     hasInScheme: boolean
     hasTopConceptOf: boolean
@@ -260,6 +262,32 @@ export async function countConcepts(url: string): Promise<number> {
   `
 
   // Let errors propagate - runStep will catch and show "error"
+  const results = await executeSparql(url, query)
+  return parseInt(results.results.bindings[0]?.count?.value || '0', 10)
+}
+
+export async function countCollections(url: string): Promise<number> {
+  const query = `
+    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+    SELECT (COUNT(DISTINCT ?collection) AS ?count)
+    WHERE {
+      ?collection a skos:Collection .
+    }
+  `
+
+  const results = await executeSparql(url, query)
+  return parseInt(results.results.bindings[0]?.count?.value || '0', 10)
+}
+
+export async function countOrderedCollections(url: string): Promise<number> {
+  const query = `
+    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+    SELECT (COUNT(DISTINCT ?collection) AS ?count)
+    WHERE {
+      ?collection a skos:OrderedCollection .
+    }
+  `
+
   const results = await executeSparql(url, query)
   return parseInt(results.results.bindings[0]?.count?.value || '0', 10)
 }
@@ -514,7 +542,7 @@ export async function analyzeEndpointWithSteps(
   url: string,
   onStep?: StepCallback
 ): Promise<EndpointAnalysis | null> {
-  const totalSteps = 8
+  const totalSteps = 10
   let currentStep = 0
 
   const runStep = async <T>(name: string, fn: () => Promise<T>, formatResult: (r: T) => string, errorResult = 'error'): Promise<T | null> => {
@@ -587,14 +615,28 @@ export async function analyzeEndpointWithSteps(
     r => r.toLocaleString()
   )
 
-  // Step 6: Relationships
+  // Step 6: Collections
+  const totalCollections = await runStep(
+    'Collections',
+    () => countCollections(url),
+    r => r.toLocaleString()
+  )
+
+  // Step 7: Ordered collections
+  const totalOrderedCollections = await runStep(
+    'Ordered collections',
+    () => countOrderedCollections(url),
+    r => r.toLocaleString()
+  )
+
+  // Step 8: Relationships
   const relationships = await runStep(
     'Relationships',
     () => detectRelationships(url),
     r => `${Object.values(r).filter(Boolean).length}/7`
   )
 
-  // Step 7: Label predicates (capability detection, like relationships)
+  // Step 9: Label predicates (capability detection, like relationships)
   const labelPredicates = await runStep(
     'Label predicates',
     () => detectLabelPredicates(url),
@@ -604,7 +646,7 @@ export async function analyzeEndpointWithSteps(
     }
   )
 
-  // Step 8: Languages
+  // Step 10: Languages
   const languagesResult = await runStep(
     'Languages',
     () => detectLanguages(url, skosGraphUris),
@@ -625,6 +667,8 @@ export async function analyzeEndpointWithSteps(
     schemesLimited: schemeResult?.schemesLimited,
     languages,
     totalConcepts,
+    totalCollections,
+    totalOrderedCollections,
     relationships,
     labelPredicates: labelPredicates ?? undefined,
     analyzedAt: new Date().toISOString(),
@@ -695,14 +739,16 @@ export async function curate(dir: string): Promise<void> {
   console.log(dim(config.url))
   console.log('')
 
-  const STEP_NAME_WIDTH = 16
+  const STEP_NAME_WIDTH = 22
   const RESULT_WIDTH = 12
 
   const onStep: StepCallback = (step, total, name, durationMs, result) => {
+    const stepWidth = `${total}/${total}`.length
+    const stepLabel = `${step}/${total}`.padStart(stepWidth)
     const paddedName = name.padEnd(STEP_NAME_WIDTH)
     const paddedResult = result.padStart(RESULT_WIDTH)
     const duration = formatDuration(durationMs).padStart(6)
-    console.log(`  ${dim(`${step}/${total}`)} ${paddedName}${cyan(paddedResult)}  ${dim(duration)}`)
+    console.log(`  ${dim(stepLabel)} ${paddedName}${cyan(paddedResult)}  ${dim(duration)}`)
   }
 
   const analysis = await analyzeEndpointWithSteps(config.url, onStep)
