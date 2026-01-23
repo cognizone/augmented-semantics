@@ -62,6 +62,7 @@ export function useXLLabels() {
         const xlLabelUri = binding.xlLabel?.value
         const literalForm = binding.literalForm?.value
         const literalLang = binding.literalLang?.value
+        const literalDatatype = binding.literalForm?.datatype
 
         if (!literalForm) continue
 
@@ -75,6 +76,7 @@ export function useXLLabels() {
           literalForm: {
             value: literalForm,
             lang: literalLang || undefined,
+            ...(literalDatatype ? { datatype: literalDatatype } : {}),
           },
         }
 

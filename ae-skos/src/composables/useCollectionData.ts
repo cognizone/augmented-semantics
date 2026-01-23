@@ -365,10 +365,10 @@ export function useCollectionData() {
     const examples: LabelValue[] = []
     // Metadata fields
     let deprecated: boolean | undefined
-    let created: string | undefined
-    let modified: string | undefined
-    let issued: string | undefined
-    let versionInfo: string | undefined
+    let created: { value: string; datatype?: string } | undefined
+    let modified: { value: string; datatype?: string } | undefined
+    let issued: { value: string; datatype?: string } | undefined
+    let versionInfo: { value: string; datatype?: string } | undefined
     let status: string | undefined
     const identifier: string[] = []
     const creator: string[] = []
@@ -377,6 +377,14 @@ export function useCollectionData() {
     const license: string[] = []
     const ccLicense: string[] = []
     const seeAlso: string[] = []
+
+    function pushLabel(target: LabelValue[], value: string, lang?: string, datatype?: string) {
+      if (datatype) {
+        target.push({ value, lang, datatype })
+      } else {
+        target.push({ value, lang })
+      }
+    }
 
     for (const b of bindings) {
       const predicate = b.p?.value
@@ -391,47 +399,47 @@ export function useCollectionData() {
       // Note: XL labels (xlPrefLabel, xlAltLabel) are just merged into regular labels here
       // since they're from the property path query. Full XL label resources loaded separately.
       if (labelType === 'prefLabel' || labelType === 'xlPrefLabel') {
-        prefLabels.push({ value, lang })
+        pushLabel(prefLabels, value, lang, datatype)
       } else if (labelType === 'dctTitle') {
-        dctTitles.push({ value, lang })
+        pushLabel(dctTitles, value, lang, datatype)
       } else if (labelType === 'dcTitle') {
-        dcTitles.push({ value, lang })
+        pushLabel(dcTitles, value, lang, datatype)
       } else if (labelType === 'rdfsLabel') {
-        rdfsLabels.push({ value, lang })
+        pushLabel(rdfsLabels, value, lang, datatype)
       } else if (labelType === 'comment') {
-        comments.push({ value, lang })
+        pushLabel(comments, value, lang, datatype)
       } else if (labelType === 'description') {
-        description.push({ value, lang })
+        pushLabel(description, value, lang, datatype)
       } else if (labelType === 'altLabel' || labelType === 'xlAltLabel') {
-        altLabels.push({ value, lang })
+        pushLabel(altLabels, value, lang, datatype)
       } else if (labelType === 'hiddenLabel' || labelType === 'xlHiddenLabel') {
-        hiddenLabels.push({ value, lang })
+        pushLabel(hiddenLabels, value, lang, datatype)
       } else if (predicate === PRED.notation) {
         notations.push({ value, datatype })
       } else if (predicate === PRED.definition) {
-        definitions.push({ value, lang })
+        pushLabel(definitions, value, lang, datatype)
       } else if (predicate === PRED.scopeNote) {
-        scopeNotes.push({ value, lang })
+        pushLabel(scopeNotes, value, lang, datatype)
       } else if (predicate === PRED.historyNote) {
-        historyNotes.push({ value, lang })
+        pushLabel(historyNotes, value, lang, datatype)
       } else if (predicate === PRED.changeNote) {
-        changeNotes.push({ value, lang })
+        pushLabel(changeNotes, value, lang, datatype)
       } else if (predicate === PRED.editorialNote) {
-        editorialNotes.push({ value, lang })
+        pushLabel(editorialNotes, value, lang, datatype)
       } else if (predicate === PRED.example) {
-        examples.push({ value, lang })
+        pushLabel(examples, value, lang, datatype)
       } else if (predicate === PRED.note) {
-        notes.push({ value, lang })
+        pushLabel(notes, value, lang, datatype)
       } else if (labelType === 'deprecated') {
         deprecated = value === 'true' || value === '1'
       } else if (labelType === 'created') {
-        if (!created) created = value
+        if (!created) created = { value, datatype }
       } else if (labelType === 'modified') {
-        if (!modified) modified = value
+        if (!modified) modified = { value, datatype }
       } else if (labelType === 'issued') {
-        if (!issued) issued = value
+        if (!issued) issued = { value, datatype }
       } else if (labelType === 'versionInfo') {
-        if (!versionInfo) versionInfo = value
+        if (!versionInfo) versionInfo = { value, datatype }
       } else if (labelType === 'status') {
         if (!status) {
           // Extract fragment if it's a URI

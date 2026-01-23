@@ -23,6 +23,7 @@ export type PropertyHandler =
   | { type: 'ref'; target: string }                      // { uri } array, dedupe
   | { type: 'uri'; target: string }                      // string array, dedupe
   | { type: 'single'; target: string }                   // single string value
+  | { type: 'singleLiteral'; target: string }            // { value, datatype } single value
   | { type: 'singleUri'; target: string }                // single string, extract fragment if URI
   | { type: 'boolean'; target: string }                  // boolean from 'true'/'1'
 
@@ -93,10 +94,10 @@ export const CONCEPT_PROPERTY_MAP: PropertyMapping = {
   [PRED.seeAlso]: { type: 'uri', target: 'seeAlso' },
 
   // Metadata (single values)
-  [PRED.dctCreated]: { type: 'single', target: 'created' },
-  [PRED.dctModified]: { type: 'single', target: 'modified' },
-  [PRED.dctIssued]: { type: 'single', target: 'issued' },
-  [PRED.versionInfo]: { type: 'single', target: 'versionInfo' },
+  [PRED.dctCreated]: { type: 'singleLiteral', target: 'created' },
+  [PRED.dctModified]: { type: 'singleLiteral', target: 'modified' },
+  [PRED.dctIssued]: { type: 'singleLiteral', target: 'issued' },
+  [PRED.versionInfo]: { type: 'singleLiteral', target: 'versionInfo' },
   [PRED.dctStatus]: { type: 'singleUri', target: 'status' },
 }
 
@@ -136,10 +137,10 @@ export const SCHEME_PROPERTY_MAP: PropertyMapping = {
   [PRED.seeAlso]: { type: 'uri', target: 'seeAlso' },
 
   // Metadata (single values)
-  [PRED.dctCreated]: { type: 'single', target: 'created' },
-  [PRED.dctModified]: { type: 'single', target: 'modified' },
-  [PRED.dctIssued]: { type: 'single', target: 'issued' },
-  [PRED.versionInfo]: { type: 'single', target: 'versionInfo' },
+  [PRED.dctCreated]: { type: 'singleLiteral', target: 'created' },
+  [PRED.dctModified]: { type: 'singleLiteral', target: 'modified' },
+  [PRED.dctIssued]: { type: 'singleLiteral', target: 'issued' },
+  [PRED.versionInfo]: { type: 'singleLiteral', target: 'versionInfo' },
   [PRED.dctStatus]: { type: 'singleUri', target: 'status' },
   [PRED.deprecated]: { type: 'boolean', target: 'deprecated' },
 }
@@ -191,7 +192,11 @@ export function processPropertyBindings<T extends Record<string, unknown>>(
     switch (handler.type) {
       case 'label':
         if (Array.isArray(targetArray)) {
-          (targetArray as LabelValue[]).push({ value: val, lang })
+          if (datatype) {
+            (targetArray as LabelValue[]).push({ value: val, lang, datatype })
+          } else {
+            (targetArray as LabelValue[]).push({ value: val, lang })
+          }
         }
         break
 
@@ -225,6 +230,12 @@ export function processPropertyBindings<T extends Record<string, unknown>>(
       case 'single':
         if (target[handler.target] === undefined || target[handler.target] === null) {
           (target as Record<string, unknown>)[handler.target] = val
+        }
+        break
+
+      case 'singleLiteral':
+        if (target[handler.target] === undefined || target[handler.target] === null) {
+          (target as Record<string, unknown>)[handler.target] = { value: val, datatype }
         }
         break
 

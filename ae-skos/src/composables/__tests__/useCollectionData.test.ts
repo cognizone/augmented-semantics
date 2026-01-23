@@ -526,7 +526,7 @@ describe('useCollectionData', () => {
           bindings: [
             {
               p: { value: 'http://purl.org/dc/terms/created' },
-              o: { value: '2023-01-15' },
+              o: { value: '2023-01-15', datatype: 'http://www.w3.org/2001/XMLSchema#date' },
               labelType: { value: 'created' },
             },
           ],
@@ -536,7 +536,7 @@ describe('useCollectionData', () => {
       const { loadDetails, details } = useCollectionData()
       await loadDetails('http://example.org/collection/1')
 
-      expect(details.value?.created).toBe('2023-01-15')
+      expect(details.value?.created).toEqual({ value: '2023-01-15', datatype: 'http://www.w3.org/2001/XMLSchema#date' })
     })
 
     it('handles dct:modified', async () => {
@@ -545,7 +545,7 @@ describe('useCollectionData', () => {
           bindings: [
             {
               p: { value: 'http://purl.org/dc/terms/modified' },
-              o: { value: '2024-06-20' },
+              o: { value: '2024-06-20', datatype: 'http://www.w3.org/2001/XMLSchema#dateTime' },
               labelType: { value: 'modified' },
             },
           ],
@@ -555,7 +555,7 @@ describe('useCollectionData', () => {
       const { loadDetails, details } = useCollectionData()
       await loadDetails('http://example.org/collection/1')
 
-      expect(details.value?.modified).toBe('2024-06-20')
+      expect(details.value?.modified).toEqual({ value: '2024-06-20', datatype: 'http://www.w3.org/2001/XMLSchema#dateTime' })
     })
 
     it('handles dct:issued', async () => {
@@ -574,7 +574,7 @@ describe('useCollectionData', () => {
       const { loadDetails, details } = useCollectionData()
       await loadDetails('http://example.org/collection/1')
 
-      expect(details.value?.issued).toBe('2024-01-01')
+      expect(details.value?.issued).toEqual({ value: '2024-01-01', datatype: undefined })
     })
 
     it('handles owl:versionInfo', async () => {
@@ -583,7 +583,7 @@ describe('useCollectionData', () => {
           bindings: [
             {
               p: { value: 'http://www.w3.org/2002/07/owl#versionInfo' },
-              o: { value: '2.0.1' },
+              o: { value: '2.0.1', datatype: 'http://www.w3.org/2001/XMLSchema#string' },
               labelType: { value: 'versionInfo' },
             },
           ],
@@ -593,7 +593,7 @@ describe('useCollectionData', () => {
       const { loadDetails, details } = useCollectionData()
       await loadDetails('http://example.org/collection/1')
 
-      expect(details.value?.versionInfo).toBe('2.0.1')
+      expect(details.value?.versionInfo).toEqual({ value: '2.0.1', datatype: 'http://www.w3.org/2001/XMLSchema#string' })
     })
 
     it('handles dct:status as URI (extracts fragment)', async () => {

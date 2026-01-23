@@ -9,6 +9,8 @@
  */
 import { computed, ref } from 'vue'
 import { useLabelResolver } from '../../composables'
+import { useSettingsStore } from '../../stores'
+import { formatDatatype, isStringDatatype } from '../../utils/displayUtils'
 import { isValidURI } from '../../services'
 import type { XLLabel, LabelValue } from '../../types'
 import Button from 'primevue/button'
@@ -19,11 +21,12 @@ const props = defineProps<{
 }>()
 
 const { sortLabels } = useLabelResolver()
+const settingsStore = useSettingsStore()
 
 // Helper function to create a set of keys from regular labels
 function createRegularKeysSet(regularLabels?: LabelValue[]): Set<string> {
   if (!regularLabels?.length) return new Set()
-  return new Set(regularLabels.map(l => `${l.value}|${l.lang || ''}`))
+  return new Set(regularLabels.map(l => `${l.value}|${l.lang || ''}|${l.datatype || ''}`))
 }
 
 // Filter out XL labels that have the same value+lang as regular labels
@@ -33,7 +36,7 @@ const filteredLabels = computed(() => {
   const regularKeys = createRegularKeysSet(props.regularLabels)
 
   return props.labels.filter(xl => {
-    const key = `${xl.literalForm.value}|${xl.literalForm.lang || ''}`
+    const key = `${xl.literalForm.value}|${xl.literalForm.lang || ''}|${xl.literalForm.datatype || ''}`
     return !regularKeys.has(key)
   })
 })
@@ -48,7 +51,7 @@ const hiddenLabels = computed(() => {
   const regularKeys = createRegularKeysSet(props.regularLabels)
 
   return props.labels.filter(xl => {
-    const key = `${xl.literalForm.value}|${xl.literalForm.lang || ''}`
+    const key = `${xl.literalForm.value}|${xl.literalForm.lang || ''}|${xl.literalForm.datatype || ''}`
     return regularKeys.has(key)
   })
 })
@@ -58,7 +61,7 @@ const showHiddenXL = ref(false)
 
 interface GroupedLabel {
   key: string
-  literalForm: { value: string; lang?: string }
+  literalForm: { value: string; lang?: string; datatype?: string }
   labels: XLLabel[]
 }
 
@@ -67,7 +70,7 @@ function groupLabelsByLiteralForm(labels: XLLabel[]): GroupedLabel[] {
   const groups = new Map<string, GroupedLabel>()
 
   for (const label of labels) {
-    const key = `${label.literalForm.value}|${label.literalForm.lang || ''}`
+    const key = `${label.literalForm.value}|${label.literalForm.lang || ''}|${label.literalForm.datatype || ''}`
     if (!groups.has(key)) {
       groups.set(key, {
         key,
@@ -85,7 +88,7 @@ function groupLabelsByLiteralForm(labels: XLLabel[]): GroupedLabel[] {
 
   // Reorder groups to match sorted order
   return sorted.map(lv => {
-    const key = `${lv.value}|${lv.lang || ''}`
+    const key = `${lv.value}|${lv.lang || ''}|${lv.datatype || ''}`
     return groups.get(key)!
   }).filter(Boolean)
 }
@@ -112,6 +115,23 @@ function toggleGroup(key: string) {
 function isExpanded(key: string): boolean {
   return expandedGroups.value.has(key)
 }
+
+function shouldShowDatatypeTag(datatype?: string): boolean {
+  if (!settingsStore.showDatatypes || !datatype) return false
+  if (!settingsStore.showStringDatatypes && isStringDatatype(datatype)) return false
+  return true
+}
+
+function getDatatypeTag(datatype?: string, lang?: string): string | undefined {
+  if (datatype) return datatype
+  if (lang) return undefined
+  return 'xsd:string'
+}
+
+function getDatatypeLabel(datatype?: string): string {
+  if (!datatype) return ''
+  return formatDatatype(datatype)
+}
 </script>
 
 <template>
@@ -137,6 +157,9 @@ function isExpanded(key: string): boolean {
             {{ group.literalForm.value }}
             <span v-if="group.literalForm.lang" class="lang-tag">
               {{ group.literalForm.lang }}
+            </span>
+            <span v-if="shouldShowDatatypeTag(getDatatypeTag(group.literalForm.datatype, group.literalForm.lang))" class="datatype-tag">
+              {{ getDatatypeLabel(getDatatypeTag(group.literalForm.datatype, group.literalForm.lang)) }}
             </span>
           </span>
           <span v-if="group.labels.length > 1" class="collapse-count" :title="`${group.labels.length} label resources with same value`">
@@ -176,6 +199,9 @@ function isExpanded(key: string): boolean {
               <span class="detail-value">
                 {{ label.literalForm.value }}
                 <span v-if="label.literalForm.lang" class="lang-tag">{{ label.literalForm.lang }}</span>
+                <span v-if="shouldShowDatatypeTag(getDatatypeTag(label.literalForm.datatype, label.literalForm.lang))" class="datatype-tag">
+                  {{ getDatatypeLabel(getDatatypeTag(label.literalForm.datatype, label.literalForm.lang)) }}
+                </span>
               </span>
             </div>
           </div>
@@ -191,6 +217,9 @@ function isExpanded(key: string): boolean {
           {{ group.literalForm.value }}
           <span v-if="group.literalForm.lang" class="lang-tag">
             {{ group.literalForm.lang }}
+          </span>
+          <span v-if="shouldShowDatatypeTag(getDatatypeTag(group.literalForm.datatype, group.literalForm.lang))" class="datatype-tag">
+            {{ getDatatypeLabel(getDatatypeTag(group.literalForm.datatype, group.literalForm.lang)) }}
           </span>
         </span>
         <span v-if="group.labels.length > 1" class="collapse-count" :title="`${group.labels.length} label resources with same value`">

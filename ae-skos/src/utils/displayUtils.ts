@@ -135,6 +135,11 @@ export function formatDatatype(datatype: string): string {
   return datatype
 }
 
+export function isStringDatatype(datatype?: string): boolean {
+  if (!datatype) return false
+  return formatDatatype(datatype) === 'xsd:string'
+}
+
 /**
  * Get display label for a ConceptRef (notation + label if both exist)
  * @param ref - The concept reference

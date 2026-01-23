@@ -9,7 +9,9 @@
  * @see /spec/ae-skos/sko04-ConceptDetails.md
  */
 import { isValidURI } from '../../services'
-import { getPredicateName, getUriFragment, formatPropertyValue, formatDatatype } from '../../utils/displayUtils'
+import { getPredicateName, getUriFragment, formatPropertyValue, formatDatatype, isStringDatatype } from '../../utils/displayUtils'
+import { useSettingsStore } from '../../stores'
+import { computed } from 'vue'
 
 interface PropertyValue {
   value: string
@@ -34,6 +36,22 @@ withDefaults(defineProps<Props>(), {
   title: 'Other Properties',
   icon: 'more_horiz',
 })
+
+const settingsStore = useSettingsStore()
+const showDatatypeTag = computed(() => settingsStore.showDatatypes)
+const showStringDatatype = computed(() => settingsStore.showStringDatatypes)
+
+function shouldShowDatatypeTag(datatype?: string): boolean {
+  if (!showDatatypeTag.value || !datatype) return false
+  if (!showStringDatatype.value && isStringDatatype(datatype)) return false
+  return true
+}
+
+function getDatatypeTag(datatype?: string, lang?: string): string | undefined {
+  if (datatype) return datatype
+  if (lang) return undefined
+  return 'xsd:string'
+}
 </script>
 
 <template>
@@ -66,11 +84,13 @@ withDefaults(defineProps<Props>(), {
             {{ getUriFragment(val.value) }}
             <span class="material-symbols-outlined link-icon">open_in_new</span>
           </a>
-          <span v-else class="other-value">
-            {{ formatPropertyValue(val.value, val.datatype) }}
-            <span v-if="val.lang" class="lang-tag">{{ val.lang }}</span>
-            <span v-else-if="val.datatype" class="datatype-tag">{{ formatDatatype(val.datatype) }}</span>
-          </span>
+            <span v-else class="other-value">
+              {{ formatPropertyValue(val.value, val.datatype) }}
+              <span v-if="val.lang" class="lang-tag">{{ val.lang }}</span>
+              <span v-else-if="shouldShowDatatypeTag(getDatatypeTag(val.datatype, val.lang))" class="datatype-tag">
+                {{ formatDatatype(getDatatypeTag(val.datatype, val.lang)) }}
+              </span>
+            </span>
         </template>
       </div>
     </div>

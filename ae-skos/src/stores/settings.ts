@@ -49,6 +49,7 @@ export interface AppSettings {
   // Display settings
   darkMode: boolean                   // Use dark color scheme
   showDatatypes: boolean              // Show datatype tags on property values
+  showStringDatatypes: boolean        // Show xsd:string datatype tags
   showLanguageTags: boolean           // Show language tags on labels (when not current)
   showPreferredLanguageTag: boolean   // Show language tag even when matching preferred
   showNotationInLabels: boolean       // Show notation in labels and use for sorting
@@ -70,6 +71,7 @@ export interface AppSettings {
 const DEFAULT_SETTINGS: AppSettings = {
   darkMode: false,
   showDatatypes: true,
+  showStringDatatypes: false,
   showLanguageTags: true,
   showPreferredLanguageTag: false,
   showNotationInLabels: true,
@@ -86,6 +88,7 @@ export const useSettingsStore = defineStore('settings', () => {
   // State
   const darkMode = ref(DEFAULT_SETTINGS.darkMode)
   const showDatatypes = ref(DEFAULT_SETTINGS.showDatatypes)
+  const showStringDatatypes = ref(DEFAULT_SETTINGS.showStringDatatypes)
   const showLanguageTags = ref(DEFAULT_SETTINGS.showLanguageTags)
   const showPreferredLanguageTag = ref(DEFAULT_SETTINGS.showPreferredLanguageTag)
   const showNotationInLabels = ref(DEFAULT_SETTINGS.showNotationInLabels)
@@ -118,6 +121,9 @@ export const useSettingsStore = defineStore('settings', () => {
         }
         if (settings.showDatatypes !== undefined) {
           showDatatypes.value = settings.showDatatypes
+        }
+        if (settings.showStringDatatypes !== undefined) {
+          showStringDatatypes.value = settings.showStringDatatypes
         }
         if (settings.showLanguageTags !== undefined) {
           showLanguageTags.value = settings.showLanguageTags
@@ -162,6 +168,7 @@ export const useSettingsStore = defineStore('settings', () => {
       const settings: AppSettings = {
         darkMode: darkMode.value,
         showDatatypes: showDatatypes.value,
+        showStringDatatypes: showStringDatatypes.value,
         showLanguageTags: showLanguageTags.value,
         showPreferredLanguageTag: showPreferredLanguageTag.value,
         showNotationInLabels: showNotationInLabels.value,
@@ -188,6 +195,11 @@ export const useSettingsStore = defineStore('settings', () => {
 
   function setShowDatatypes(value: boolean) {
     showDatatypes.value = value
+    saveSettings()
+  }
+
+  function setShowStringDatatypes(value: boolean) {
+    showStringDatatypes.value = value
     saveSettings()
   }
 
@@ -231,6 +243,7 @@ export const useSettingsStore = defineStore('settings', () => {
     darkMode.value = DEFAULT_SETTINGS.darkMode
     applyDarkMode(DEFAULT_SETTINGS.darkMode)
     showDatatypes.value = DEFAULT_SETTINGS.showDatatypes
+    showStringDatatypes.value = DEFAULT_SETTINGS.showStringDatatypes
     showLanguageTags.value = DEFAULT_SETTINGS.showLanguageTags
     showPreferredLanguageTag.value = DEFAULT_SETTINGS.showPreferredLanguageTag
     showNotationInLabels.value = DEFAULT_SETTINGS.showNotationInLabels
@@ -260,6 +273,7 @@ export const useSettingsStore = defineStore('settings', () => {
   watch(
     () => [
       showDatatypes.value,
+      showStringDatatypes.value,
       showLanguageTags.value,
       showPreferredLanguageTag.value,
       showNotationInLabels.value,
@@ -282,6 +296,7 @@ export const useSettingsStore = defineStore('settings', () => {
     // State
     darkMode,
     showDatatypes,
+    showStringDatatypes,
     showLanguageTags,
     showPreferredLanguageTag,
     showNotationInLabels,
@@ -295,6 +310,7 @@ export const useSettingsStore = defineStore('settings', () => {
     // Actions
     setDarkMode,
     setShowDatatypes,
+    setShowStringDatatypes,
     setShowLanguageTags,
     setShowNotationInLabels,
     setShowDeprecationIndicator,

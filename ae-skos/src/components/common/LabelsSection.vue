@@ -8,6 +8,8 @@
  * @see /spec/ae-skos/sko04-ConceptDetails.md
  */
 import XLLabelsGroup from './XLLabelsGroup.vue'
+import { useSettingsStore } from '../../stores'
+import { formatDatatype, isStringDatatype } from '../../utils/displayUtils'
 import type { XLLabel, LabelValue } from '../../types'
 
 interface LabelConfig {
@@ -29,6 +31,25 @@ withDefaults(defineProps<Props>(), {
   title: 'Labels',
   icon: 'translate',
 })
+
+const settingsStore = useSettingsStore()
+
+function shouldShowDatatypeTag(datatype?: string): boolean {
+  if (!settingsStore.showDatatypes || !datatype) return false
+  if (!settingsStore.showStringDatatypes && isStringDatatype(datatype)) return false
+  return true
+}
+
+function getDatatypeTag(datatype?: string, lang?: string): string | undefined {
+  if (datatype) return datatype
+  if (lang) return undefined
+  return 'xsd:string'
+}
+
+function getDatatypeLabel(datatype?: string): string {
+  if (!datatype) return ''
+  return formatDatatype(datatype)
+}
 </script>
 
 <template>
@@ -49,6 +70,9 @@ withDefaults(defineProps<Props>(), {
         >
           {{ label.value }}
           <span v-if="label.lang" class="lang-tag">{{ label.lang }}</span>
+          <span v-if="shouldShowDatatypeTag(getDatatypeTag(label.datatype, label.lang))" class="datatype-tag">
+            {{ getDatatypeLabel(getDatatypeTag(label.datatype, label.lang)) }}
+          </span>
         </span>
       </div>
       <XLLabelsGroup

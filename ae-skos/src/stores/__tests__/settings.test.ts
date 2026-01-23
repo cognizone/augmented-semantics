@@ -25,6 +25,11 @@ describe('settings store', () => {
       expect(store.showDatatypes).toBe(true)
     })
 
+    it('starts with showStringDatatypes disabled', () => {
+      const store = useSettingsStore()
+      expect(store.showStringDatatypes).toBe(false)
+    })
+
     it('starts with showLanguageTags enabled', () => {
       const store = useSettingsStore()
       expect(store.showLanguageTags).toBe(true)
@@ -119,6 +124,37 @@ describe('settings store', () => {
 
       store.setShowDatatypes(false)
       expect(localStorage.setItem).toHaveBeenCalled()
+    })
+  })
+
+  describe('setShowStringDatatypes', () => {
+    it('updates showStringDatatypes value', () => {
+      const store = useSettingsStore()
+
+      store.setShowStringDatatypes(true)
+      expect(store.showStringDatatypes).toBe(true)
+
+      store.setShowStringDatatypes(false)
+      expect(store.showStringDatatypes).toBe(false)
+    })
+
+    it('persists to localStorage', () => {
+      const store = useSettingsStore()
+
+      store.setShowStringDatatypes(true)
+      expect(localStorage.setItem).toHaveBeenCalled()
+    })
+
+    it('is included in saved settings', () => {
+      const store = useSettingsStore()
+
+      store.setShowStringDatatypes(true)
+
+      const calls = vi.mocked(localStorage.setItem).mock.calls
+      const lastCall = calls[calls.length - 1]
+      const savedData = JSON.parse(lastCall[1] as string)
+
+      expect(savedData.showStringDatatypes).toBe(true)
     })
   })
 
@@ -303,6 +339,7 @@ describe('settings store', () => {
       // Change all settings
       store.setDarkMode(true)
       store.showDatatypes = false
+      store.showStringDatatypes = true
       store.showLanguageTags = false
       store.showPreferredLanguageTag = true
       store.showDeprecationIndicator = false
@@ -316,6 +353,7 @@ describe('settings store', () => {
       // Verify defaults
       expect(store.darkMode).toBe(false)
       expect(store.showDatatypes).toBe(true)
+      expect(store.showStringDatatypes).toBe(false)
       expect(store.showLanguageTags).toBe(true)
       expect(store.showPreferredLanguageTag).toBe(false)
       expect(store.showDeprecationIndicator).toBe(true)
@@ -330,6 +368,7 @@ describe('settings store', () => {
       const storedSettings = {
         darkMode: true,
         showDatatypes: false,
+        showStringDatatypes: true,
         showLanguageTags: false,
         showPreferredLanguageTag: true,
       }
@@ -340,6 +379,7 @@ describe('settings store', () => {
 
       expect(store.darkMode).toBe(true)
       expect(store.showDatatypes).toBe(false)
+      expect(store.showStringDatatypes).toBe(true)
       expect(store.showLanguageTags).toBe(false)
       expect(store.showPreferredLanguageTag).toBe(true)
     })
@@ -350,6 +390,7 @@ describe('settings store', () => {
       const store = useSettingsStore()
 
       expect(store.showDatatypes).toBe(true)
+      expect(store.showStringDatatypes).toBe(false)
       expect(store.showLanguageTags).toBe(true)
       expect(store.showPreferredLanguageTag).toBe(false)
     })
@@ -366,6 +407,7 @@ describe('settings store', () => {
       // Old settings without showPreferredLanguageTag
       const storedSettings = {
         showDatatypes: false,
+        showStringDatatypes: true,
         showLanguageTags: true,
         // showPreferredLanguageTag is missing
       }
@@ -375,6 +417,7 @@ describe('settings store', () => {
       const store = useSettingsStore()
 
       expect(store.showDatatypes).toBe(false)
+      expect(store.showStringDatatypes).toBe(true)
       expect(store.showLanguageTags).toBe(true)
       expect(store.showPreferredLanguageTag).toBe(false) // uses default
     })

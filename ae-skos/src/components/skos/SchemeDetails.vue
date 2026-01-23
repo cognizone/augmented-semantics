@@ -12,7 +12,7 @@ import { storeToRefs } from 'pinia'
 import { useConceptStore, useSchemeStore, useSettingsStore, ORPHAN_SCHEME_URI } from '../../stores'
 import { isValidURI } from '../../services'
 import { useDelayedLoading, useLabelResolver, useElapsedTime, useResourceExport, useSchemeData, useDeprecation } from '../../composables'
-import { getUriFragment, formatTemporalValue, formatDatatype } from '../../utils/displayUtils'
+import { getUriFragment, formatTemporalValue, formatDatatype, isStringDatatype } from '../../utils/displayUtils'
 import { useToast } from 'primevue/usetoast'
 import RawRdfDialog from '../common/RawRdfDialog.vue'
 import DetailsStates from '../common/DetailsStates.vue'
@@ -62,6 +62,8 @@ const orphanPhase = computed(() => {
 const orphanPhaseLabel = computed(() => getPhaseLabel(orphanPhase.value, orphanProgress.value?.currentQueryName ?? null))
 const orphanTotal = computed(() => (orphanProgress.value?.remainingCandidates ?? 0) + (orphanProgress.value?.orphanCollections ?? 0))
 const orphanStrategyLabel = computed(() => settingsStore.orphanDetectionStrategy || 'auto')
+const showDatatypeTag = computed(() => settingsStore.showDatatypes)
+const showStringDatatype = computed(() => settingsStore.showStringDatatypes)
 
 // Preferred label for header
 const preferredLabelObj = computed(() => {
@@ -236,6 +238,32 @@ function formatQueryName(name: string): string {
     .split('-')
     .map(part => part.charAt(0).toUpperCase() + part.slice(1))
     .join(' → ')
+}
+
+function shouldShowDatatypeTag(datatype?: string): boolean {
+  if (!showDatatypeTag.value || !datatype) return false
+  if (!showStringDatatype.value && isStringDatatype(datatype)) return false
+  return true
+}
+
+function formatTemporalDisplay(value?: { value: string; datatype?: string }): string {
+  if (!value) return ''
+  if (!value.datatype) return value.value
+  const datatypeLabel = formatDatatype(value.datatype)
+  if (datatypeLabel === 'xsd:date' || datatypeLabel === 'xsd:dateTime' || datatypeLabel === 'xsd:time') {
+    return formatTemporalValue(value.value, value.datatype)
+  }
+  return value.value
+}
+
+function getDatatypeTag(value?: { value: string; datatype?: string }): string | undefined {
+  if (!value) return undefined
+  return value.datatype || 'xsd:string'
+}
+
+function getDatatypeLabel(value?: { value: string; datatype?: string }): string {
+  const datatype = getDatatypeTag(value)
+  return datatype ? formatDatatype(datatype) : ''
 }
 
 // Watch for viewing scheme changes
@@ -476,7 +504,7 @@ watch(
             <div class="label-values">
               <span v-for="(n, i) in details.notations" :key="i" class="notation-wrapper">
                 <code class="notation">{{ n.value }}</code>
-                <span v-if="n.datatype" class="datatype-tag">{{ formatDatatype(n.datatype) }}</span>
+                <span v-if="shouldShowDatatypeTag(n.datatype)" class="datatype-tag">{{ formatDatatype(n.datatype) }}</span>
               </span>
             </div>
           </div>
@@ -518,30 +546,41 @@ watch(
 
           <div v-if="details.versionInfo" class="property-row">
             <label>Version</label>
-            <span class="metadata-value">{{ details.versionInfo }}</span>
+            <span class="metadata-value">
+              {{ details.versionInfo.value }}
+              <span v-if="shouldShowDatatypeTag(getDatatypeTag(details.versionInfo))" class="datatype-tag">
+                {{ getDatatypeLabel(details.versionInfo) }}
+              </span>
+            </span>
           </div>
 
           <div v-if="details.issued" class="property-row">
             <label>Issued</label>
             <span class="metadata-value">
-              {{ formatTemporalValue(details.issued, 'xsd:date') }}
-              <span class="datatype-tag">xsd:date</span>
+              {{ formatTemporalDisplay(details.issued) }}
+              <span v-if="shouldShowDatatypeTag(getDatatypeTag(details.issued))" class="datatype-tag">
+                {{ getDatatypeLabel(details.issued) }}
+              </span>
             </span>
           </div>
 
           <div v-if="details.created" class="property-row">
             <label>Created</label>
             <span class="metadata-value">
-              {{ formatTemporalValue(details.created, 'xsd:date') }}
-              <span class="datatype-tag">xsd:date</span>
+              {{ formatTemporalDisplay(details.created) }}
+              <span v-if="shouldShowDatatypeTag(getDatatypeTag(details.created))" class="datatype-tag">
+                {{ getDatatypeLabel(details.created) }}
+              </span>
             </span>
           </div>
 
           <div v-if="details.modified" class="property-row">
             <label>Modified</label>
             <span class="metadata-value">
-              {{ formatTemporalValue(details.modified, 'xsd:date') }}
-              <span class="datatype-tag">xsd:date</span>
+              {{ formatTemporalDisplay(details.modified) }}
+              <span v-if="shouldShowDatatypeTag(getDatatypeTag(details.modified))" class="datatype-tag">
+                {{ getDatatypeLabel(details.modified) }}
+              </span>
             </span>
           </div>
         </section>

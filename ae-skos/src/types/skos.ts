@@ -73,10 +73,10 @@ export interface ConceptDetails {
   collections: ConceptRef[]   // Collections this concept belongs to
   // Metadata (Dublin Core / RDFS / OWL)
   identifier: string[]        // dc:identifier
-  created?: string            // dct:created
-  modified?: string           // dct:modified
-  issued?: string             // dct:issued
-  versionInfo?: string        // owl:versionInfo
+  created?: TemporalValue     // dct:created
+  modified?: TemporalValue    // dct:modified
+  issued?: TemporalValue      // dct:issued
+  versionInfo?: LiteralValue  // owl:versionInfo
   status?: string             // dct:status
   creator: string[]           // dct:creator
   publisher: string[]         // dct:publisher
@@ -112,10 +112,10 @@ export interface SchemeDetails {
   dcTitles: LabelValue[]      // dc:title (Dublin Core Elements, plural for consistency)
   description: LabelValue[]
   creator: string[]
-  created?: string
-  modified?: string
-  issued?: string             // dct:issued
-  versionInfo?: string        // owl:versionInfo
+  created?: TemporalValue
+  modified?: TemporalValue
+  issued?: TemporalValue      // dct:issued
+  versionInfo?: LiteralValue  // owl:versionInfo
   status?: string             // dct:status
   identifier: string[]        // dc:identifier
   publisher: string[]
@@ -143,9 +143,20 @@ export interface PropertyValue {
   isUri: boolean
 }
 
+export interface TemporalValue {
+  value: string
+  datatype?: string  // Full URI or short form if available
+}
+
+export interface LiteralValue {
+  value: string
+  datatype?: string
+}
+
 export interface LabelValue {
   value: string
   lang?: string
+  datatype?: string
 }
 
 export interface NotationValue {
@@ -256,10 +267,10 @@ export interface CollectionDetails {
   notations: NotationValue[]
   // Metadata (Dublin Core / RDFS / OWL)
   identifier: string[]        // dc:identifier
-  created?: string            // dct:created
-  modified?: string           // dct:modified
-  issued?: string             // dct:issued
-  versionInfo?: string        // owl:versionInfo
+  created?: TemporalValue     // dct:created
+  modified?: TemporalValue    // dct:modified
+  issued?: TemporalValue      // dct:issued
+  versionInfo?: LiteralValue  // owl:versionInfo
   status?: string             // dct:status
   creator: string[]           // dct:creator
   publisher: string[]         // dct:publisher

@@ -153,7 +153,7 @@ describe('useSchemeData', () => {
         results: {
           bindings: [
             { property: { value: 'http://purl.org/dc/terms/creator' }, value: { value: 'http://example.org/person/1' } },
-            { property: { value: 'http://purl.org/dc/terms/created' }, value: { value: '2024-01-01' } },
+            { property: { value: 'http://purl.org/dc/terms/created' }, value: { value: '2024-01-01', datatype: 'http://www.w3.org/2001/XMLSchema#date' } },
             { property: { value: 'http://purl.org/dc/terms/modified' }, value: { value: '2024-06-15' } },
           ],
         },
@@ -165,8 +165,8 @@ describe('useSchemeData', () => {
       await loadDetails('http://example.org/scheme/1')
 
       expect(details.value?.creator).toContain('http://example.org/person/1')
-      expect(details.value?.created).toBe('2024-01-01')
-      expect(details.value?.modified).toBe('2024-06-15')
+      expect(details.value?.created).toEqual({ value: '2024-01-01', datatype: 'http://www.w3.org/2001/XMLSchema#date' })
+      expect(details.value?.modified).toEqual({ value: '2024-06-15', datatype: undefined })
     })
 
     it('deduplicates creators', async () => {
@@ -256,7 +256,7 @@ describe('useSchemeData', () => {
       ;(executeSparql as Mock).mockResolvedValueOnce({
         results: {
           bindings: [
-            { property: { value: 'http://purl.org/dc/terms/issued' }, value: { value: '2023-05-15' } },
+            { property: { value: 'http://purl.org/dc/terms/issued' }, value: { value: '2023-05-15', datatype: 'http://www.w3.org/2001/XMLSchema#date' } },
           ],
         },
       })
@@ -266,7 +266,7 @@ describe('useSchemeData', () => {
       const { loadDetails, details } = useSchemeData()
       await loadDetails('http://example.org/scheme/1')
 
-      expect(details.value?.issued).toBe('2023-05-15')
+      expect(details.value?.issued).toEqual({ value: '2023-05-15', datatype: 'http://www.w3.org/2001/XMLSchema#date' })
     })
 
     it('handles owl:deprecated', async () => {
@@ -290,7 +290,7 @@ describe('useSchemeData', () => {
       ;(executeSparql as Mock).mockResolvedValueOnce({
         results: {
           bindings: [
-            { property: { value: 'http://www.w3.org/2002/07/owl#versionInfo' }, value: { value: '1.2.3' } },
+            { property: { value: 'http://www.w3.org/2002/07/owl#versionInfo' }, value: { value: '1.2.3', datatype: 'http://www.w3.org/2001/XMLSchema#string' } },
           ],
         },
       })
@@ -300,7 +300,7 @@ describe('useSchemeData', () => {
       const { loadDetails, details } = useSchemeData()
       await loadDetails('http://example.org/scheme/1')
 
-      expect(details.value?.versionInfo).toBe('1.2.3')
+      expect(details.value?.versionInfo).toEqual({ value: '1.2.3', datatype: 'http://www.w3.org/2001/XMLSchema#string' })
     })
 
     it('handles rdfs:seeAlso', async () => {

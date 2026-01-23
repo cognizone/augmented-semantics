@@ -9,15 +9,13 @@
  * @see /spec/ae-skos/sko04-ConceptDetails.md
  */
 import { useLabelResolver } from '../../composables'
-
-interface DocValue {
-  value: string
-  lang?: string
-}
+import { useSettingsStore } from '../../stores'
+import { formatDatatype, isStringDatatype } from '../../utils/displayUtils'
+import type { LabelValue } from '../../types'
 
 interface DocItem {
   label: string
-  values: DocValue[]
+  values: LabelValue[]
   class?: string  // e.g., 'example' for italic styling
 }
 
@@ -33,6 +31,24 @@ withDefaults(defineProps<Props>(), {
 })
 
 const { shouldShowLangTag } = useLabelResolver()
+const settingsStore = useSettingsStore()
+
+function shouldShowDatatypeTag(datatype?: string): boolean {
+  if (!settingsStore.showDatatypes || !datatype) return false
+  if (!settingsStore.showStringDatatypes && isStringDatatype(datatype)) return false
+  return true
+}
+
+function getDatatypeTag(datatype?: string, lang?: string): string | undefined {
+  if (datatype) return datatype
+  if (lang) return undefined
+  return 'xsd:string'
+}
+
+function getDatatypeLabel(datatype?: string): string {
+  if (!datatype) return ''
+  return formatDatatype(datatype)
+}
 </script>
 
 <template>
@@ -52,6 +68,9 @@ const { shouldShowLangTag } = useLabelResolver()
         >
           <span v-if="item.lang && shouldShowLangTag(item.lang)" class="lang-tag lang-tag-first">{{ item.lang }}</span>
           <span class="doc-text">{{ item.value }}</span>
+          <span v-if="shouldShowDatatypeTag(getDatatypeTag(item.datatype, item.lang))" class="datatype-tag">
+            {{ getDatatypeLabel(getDatatypeTag(item.datatype, item.lang)) }}
+          </span>
         </p>
       </div>
     </div>
@@ -85,20 +104,19 @@ const { shouldShowLangTag } = useLabelResolver()
   margin: 0;
   font-size: 0.875rem;
   line-height: 1.5;
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  align-items: baseline;
 }
 
 .doc-value .lang-tag-first {
-  grid-column: 1;
-  align-self: start;
-  margin-top: 0.1rem;
-  margin-right: 0.5rem;
+  margin-right: 0.25rem;
 }
 
 .doc-value .doc-text {
-  grid-column: 2;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .doc-value.example {

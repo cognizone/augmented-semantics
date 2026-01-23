@@ -179,7 +179,7 @@ export function useLabelResolver() {
     // Deduplicate by value+lang combination
     const seen = new Set<string>()
     const deduplicated = labels.filter(label => {
-      const key = `${label.value}|${label.lang || ''}`
+      const key = `${label.value}|${label.lang || ''}|${label.datatype || ''}`
       if (seen.has(key)) return false
       seen.add(key)
       return true

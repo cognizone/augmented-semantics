@@ -52,10 +52,10 @@ describe('propertyProcessor', () => {
         license: [] as string[],
         ccLicense: [] as string[],
         seeAlso: [] as string[],
-        created: undefined as string | undefined,
-        modified: undefined as string | undefined,
-        issued: undefined as string | undefined,
-        versionInfo: undefined as string | undefined,
+        created: undefined as { value: string; datatype?: string } | undefined,
+        modified: undefined as { value: string; datatype?: string } | undefined,
+        issued: undefined as { value: string; datatype?: string } | undefined,
+        versionInfo: undefined as { value: string; datatype?: string } | undefined,
         status: undefined as string | undefined,
         deprecated: undefined as boolean | undefined,
       }
@@ -270,18 +270,18 @@ describe('propertyProcessor', () => {
       })
     })
 
-    describe('single handler', () => {
-      it('sets single value properties', () => {
+    describe('singleLiteral handler', () => {
+      it('sets single value properties with datatype', () => {
         const target = createTarget()
         const bindings: SparqlBinding[] = [
-          { property: { value: PRED.dctCreated }, value: { value: '2024-01-15' } },
-          { property: { value: PRED.dctModified }, value: { value: '2024-06-20' } },
+          { property: { value: PRED.dctCreated }, value: { value: '2024-01-15', datatype: 'http://www.w3.org/2001/XMLSchema#date' } },
+          { property: { value: PRED.dctModified }, value: { value: '2024-06-20', datatype: 'http://www.w3.org/2001/XMLSchema#dateTime' } },
         ]
 
         processPropertyBindings(bindings, target, CONCEPT_PROPERTY_MAP)
 
-        expect(target.created).toBe('2024-01-15')
-        expect(target.modified).toBe('2024-06-20')
+        expect(target.created).toEqual({ value: '2024-01-15', datatype: 'http://www.w3.org/2001/XMLSchema#date' })
+        expect(target.modified).toEqual({ value: '2024-06-20', datatype: 'http://www.w3.org/2001/XMLSchema#dateTime' })
       })
 
       it('keeps first value for single properties (no overwrite)', () => {
@@ -293,18 +293,18 @@ describe('propertyProcessor', () => {
 
         processPropertyBindings(bindings, target, CONCEPT_PROPERTY_MAP)
 
-        expect(target.created).toBe('first')
+        expect(target.created).toEqual({ value: 'first', datatype: undefined })
       })
 
       it('handles versionInfo', () => {
         const target = createTarget()
         const bindings: SparqlBinding[] = [
-          { property: { value: PRED.versionInfo }, value: { value: '1.0.0' } },
+          { property: { value: PRED.versionInfo }, value: { value: '1.0.0', datatype: 'http://www.w3.org/2001/XMLSchema#string' } },
         ]
 
         processPropertyBindings(bindings, target, CONCEPT_PROPERTY_MAP)
 
-        expect(target.versionInfo).toBe('1.0.0')
+        expect(target.versionInfo).toEqual({ value: '1.0.0', datatype: 'http://www.w3.org/2001/XMLSchema#string' })
       })
     })
 

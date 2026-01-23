@@ -315,6 +315,16 @@ onUnmounted(() => {
             </label>
           </div>
 
+          <div v-if="settingsStore.showDatatypes" class="setting-row nested">
+            <label class="checkbox-label">
+              <Checkbox v-model="settingsStore.showStringDatatypes" :binary="true" />
+              <span class="checkbox-text">
+                Show xsd:string
+                <small>Display xsd:string datatype tags explicitly</small>
+              </span>
+            </label>
+          </div>
+
           <div class="setting-row">
             <label class="checkbox-label">
               <Checkbox v-model="settingsStore.showLanguageTags" :binary="true" />

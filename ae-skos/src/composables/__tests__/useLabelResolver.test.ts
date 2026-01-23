@@ -47,6 +47,20 @@ describe('useLabelResolver', () => {
       expect(result).toHaveLength(2)
     })
 
+    it('keeps labels with same value and language but different datatype', () => {
+      const languageStore = useLanguageStore()
+      languageStore.setPreferred('en')
+
+      const { sortLabels } = useLabelResolver()
+      const labels = [
+        { value: 'test', lang: 'en' },
+        { value: 'test', lang: 'en', datatype: 'xsd:string' },
+      ]
+
+      const result = sortLabels(labels)
+      expect(result).toHaveLength(2)
+    })
+
     it('sorts preferred language first', () => {
       const languageStore = useLanguageStore()
       languageStore.setPreferred('nl')

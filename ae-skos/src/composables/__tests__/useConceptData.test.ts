@@ -317,7 +317,7 @@ describe('useConceptData', () => {
       ;(executeSparql as Mock).mockResolvedValueOnce({
         results: {
           bindings: [
-            { property: { value: 'http://purl.org/dc/terms/issued' }, value: { value: '2024-01-15' } },
+            { property: { value: 'http://purl.org/dc/terms/issued' }, value: { value: '2024-01-15', datatype: 'http://www.w3.org/2001/XMLSchema#date' } },
           ],
         },
       })
@@ -325,14 +325,14 @@ describe('useConceptData', () => {
       const { loadDetails, details } = useConceptData()
       await loadDetails('http://example.org/concept/1')
 
-      expect(details.value?.issued).toBe('2024-01-15')
+      expect(details.value?.issued).toEqual({ value: '2024-01-15', datatype: 'http://www.w3.org/2001/XMLSchema#date' })
     })
 
     it('handles owl:versionInfo', async () => {
       ;(executeSparql as Mock).mockResolvedValueOnce({
         results: {
           bindings: [
-            { property: { value: 'http://www.w3.org/2002/07/owl#versionInfo' }, value: { value: '1.2.3' } },
+            { property: { value: 'http://www.w3.org/2002/07/owl#versionInfo' }, value: { value: '1.2.3', datatype: 'http://www.w3.org/2001/XMLSchema#string' } },
           ],
         },
       })
@@ -340,7 +340,7 @@ describe('useConceptData', () => {
       const { loadDetails, details } = useConceptData()
       await loadDetails('http://example.org/concept/1')
 
-      expect(details.value?.versionInfo).toBe('1.2.3')
+      expect(details.value?.versionInfo).toEqual({ value: '1.2.3', datatype: 'http://www.w3.org/2001/XMLSchema#string' })
     })
 
     it('handles dct:creator as URI', async () => {

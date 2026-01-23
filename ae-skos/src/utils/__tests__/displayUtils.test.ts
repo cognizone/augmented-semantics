@@ -4,7 +4,7 @@
  * Tests for display formatting utilities.
  */
 import { describe, it, expect } from 'vitest'
-import { formatTemporalValue, formatPropertyValue, getUriFragment, getPredicateName, formatDatatype, getRefLabel } from '../displayUtils'
+import { formatTemporalValue, formatPropertyValue, getUriFragment, getPredicateName, formatDatatype, getRefLabel, isStringDatatype } from '../displayUtils'
 
 describe('formatTemporalValue', () => {
   describe('xsd:date', () => {
@@ -160,6 +160,20 @@ describe('formatDatatype', () => {
 
   it('returns as-is for unknown non-hash datatype', () => {
     expect(formatDatatype('http://example.org/datatype/custom')).toBe('http://example.org/datatype/custom')
+  })
+})
+
+describe('isStringDatatype', () => {
+  it('detects xsd:string in short form', () => {
+    expect(isStringDatatype('xsd:string')).toBe(true)
+  })
+
+  it('detects xsd:string in full URI form', () => {
+    expect(isStringDatatype('http://www.w3.org/2001/XMLSchema#string')).toBe(true)
+  })
+
+  it('returns false for non-string datatypes', () => {
+    expect(isStringDatatype('xsd:date')).toBe(false)
   })
 })
 
