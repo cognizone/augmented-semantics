@@ -152,6 +152,98 @@ function sleep(ms: number): Promise<void> {
 }
 
 /**
+ * Parse SPARQL XML results to JSON format.
+ * Some endpoints (e.g., Getty) return XML despite claiming JSON content-type.
+ */
+function parseSparqlXml(xmlText: string): SPARQLResults | null {
+  try {
+    const parser = new DOMParser()
+    const doc = parser.parseFromString(xmlText, 'text/xml')
+
+    // Check for parse errors
+    const parseError = doc.querySelector('parsererror')
+    if (parseError) {
+      return null
+    }
+
+    const sparqlNs = 'http://www.w3.org/2005/sparql-results#'
+
+    // Verify this is a SPARQL results document (must have <sparql> root element)
+    const sparqlRoot = doc.getElementsByTagNameNS(sparqlNs, 'sparql')[0]
+    if (!sparqlRoot) {
+      return null
+    }
+
+    // Handle ASK query results (boolean)
+    const booleanEl = doc.getElementsByTagNameNS(sparqlNs, 'boolean')[0]
+    if (booleanEl) {
+      return {
+        head: { vars: [] },
+        results: { bindings: [] },
+        boolean: booleanEl.textContent?.trim().toLowerCase() === 'true'
+      }
+    }
+
+    // Handle SELECT query results
+    const vars: string[] = []
+    const variableEls = doc.getElementsByTagNameNS(sparqlNs, 'variable')
+    for (let i = 0; i < variableEls.length; i++) {
+      const name = variableEls[i].getAttribute('name')
+      if (name) vars.push(name)
+    }
+
+    const bindings: SPARQLBinding[] = []
+    const resultEls = doc.getElementsByTagNameNS(sparqlNs, 'result')
+    for (let i = 0; i < resultEls.length; i++) {
+      const binding: SPARQLBinding = {}
+      const bindingEls = resultEls[i].getElementsByTagNameNS(sparqlNs, 'binding')
+
+      for (let j = 0; j < bindingEls.length; j++) {
+        const bindingEl = bindingEls[j]
+        const varName = bindingEl.getAttribute('name')
+        if (!varName) continue
+
+        // Check for uri, literal, or bnode
+        const uriEl = bindingEl.getElementsByTagNameNS(sparqlNs, 'uri')[0]
+        const literalEl = bindingEl.getElementsByTagNameNS(sparqlNs, 'literal')[0]
+        const bnodeEl = bindingEl.getElementsByTagNameNS(sparqlNs, 'bnode')[0]
+
+        if (uriEl) {
+          binding[varName] = {
+            type: 'uri',
+            value: uriEl.textContent || ''
+          }
+        } else if (literalEl) {
+          const value: SPARQLBinding[string] = {
+            type: 'literal',
+            value: literalEl.textContent || ''
+          }
+          const lang = literalEl.getAttribute('xml:lang')
+          const datatype = literalEl.getAttribute('datatype')
+          if (lang) value['xml:lang'] = lang
+          if (datatype) value.datatype = datatype
+          binding[varName] = value
+        } else if (bnodeEl) {
+          binding[varName] = {
+            type: 'bnode',
+            value: bnodeEl.textContent || ''
+          }
+        }
+      }
+
+      bindings.push(binding)
+    }
+
+    return {
+      head: { vars },
+      results: { bindings }
+    }
+  } catch {
+    return null
+  }
+}
+
+/**
  * Execute a SPARQL query against an endpoint
  */
 export async function executeSparql(
@@ -218,19 +310,40 @@ export async function executeSparql(
       }
 
       const contentType = response.headers.get('content-type') || ''
-      if (!contentType.includes('json')) {
+      const responseText = await response.text()
+
+      // Try JSON first (most endpoints return JSON)
+      let data: SPARQLResults | null = null
+
+      if (contentType.includes('json')) {
+        try {
+          data = JSON.parse(responseText)
+        } catch {
+          // JSON parse failed - endpoint may return XML despite claiming JSON (e.g., Getty)
+          logger.debug('SPARQL', 'JSON parse failed despite json content-type, trying XML fallback')
+        }
+      }
+
+      // Try XML fallback (for endpoints that return XML or claim JSON but send XML)
+      if (!data) {
+        data = parseSparqlXml(responseText)
+        if (data) {
+          logger.debug('SPARQL', 'Parsed response as XML (fallback)')
+        }
+      }
+
+      if (!data) {
         logger.error('SPARQL', 'Invalid response format', { contentType })
         throw createError(
           'INVALID_RESPONSE',
           'Unexpected response format',
-          `Expected JSON, got: ${contentType}`
+          `Could not parse response as JSON or XML. Content-Type: ${contentType}`
         )
       }
 
-      const data = await response.json()
       const resultCount = data?.results?.bindings?.length ?? 0
       logger.info('SPARQL', `Query successful: ${resultCount} results`)
-      return data as SPARQLResults
+      return data
     } catch (error) {
       clearTimeout(timeoutId)
 
