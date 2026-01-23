@@ -16,28 +16,34 @@ interface SettingsState {
   // Display
   darkMode: boolean
   showOrphansSelector: boolean
-  showDeprecationIndicators: boolean
+  showDeprecationIndicator: boolean
+  showNotationInLabels: boolean
+
+  // Labels & Tags
+  showLanguageTags: boolean
+  showPreferredLanguageTag: boolean
+  showDatatypes: boolean
+  showStringDatatypes: boolean
 
   // Deprecation Detection
-  deprecationRules: {
-    owlDeprecated: boolean      // owl:deprecated = "true"
-    euvocStatus: boolean        // euvoc:status != CURRENT
-  }
+  deprecationRules: DeprecationRule[]
 
   // Orphan Detection
-  orphanStrategy: 'auto' | 'fast' | 'slow'
-
-  // Search
-  searchSettings: SearchSettings
+  orphanDetectionStrategy: 'auto' | 'fast' | 'slow'
+  orphanFastPrefilter: boolean
 
   // Developer
+  developerMode: boolean
   logLevel: 'debug' | 'info' | 'warn' | 'error'
 }
 
-interface SearchSettings {
-  labelScope: ('prefLabel' | 'altLabel' | 'hiddenLabel')[]
-  schemeScope: 'current' | 'all'
-  matchMode: 'contains' | 'startsWith' | 'exact' | 'regex'
+interface DeprecationRule {
+  id: string
+  name: string
+  enabled: boolean
+  predicate: string
+  valueCheck: 'equals' | 'notEquals'
+  value: string
 }
 ```
 
@@ -49,7 +55,19 @@ interface SearchSettings {
 |---------|------|---------|-------------|
 | `darkMode` | boolean | `false` | Enable dark theme |
 | `showOrphansSelector` | boolean | `true` | Show "Orphan Concepts" in scheme dropdown |
-| `showDeprecationIndicators` | boolean | `true` | Show deprecation badges in tree |
+| `showDeprecationIndicator` | boolean | `true` | Show deprecation badges in tree |
+| `showNotationInLabels` | boolean | `true` | Show notation prefix in concept/collection labels |
+
+### Labels & Tags Settings
+
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `showLanguageTags` | boolean | `true` | Show language tags on labels (e.g., `@en`) |
+| `showPreferredLanguageTag` | boolean | `false` | Show tag even for preferred language |
+| `showDatatypes` | boolean | `true` | Show datatype tags on literal values |
+| `showStringDatatypes` | boolean | `false` | Show `xsd:string` datatype explicitly |
+
+See [com07-DatatypeDisplay](../common/com07-DatatypeDisplay.md) for datatype rendering rules.
 
 ### Deprecation Rules
 
@@ -66,7 +84,8 @@ See [sko04-ConceptTree](./sko04-ConceptTree.md#deprecation-display) for visual d
 
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
-| `orphanStrategy` | enum | `'auto'` | Algorithm for detecting orphan concepts |
+| `orphanDetectionStrategy` | enum | `'auto'` | Algorithm for detecting orphan concepts |
+| `orphanFastPrefilter` | boolean | `false` | Prefilter direct scheme links before UNION checks |
 
 **Strategies:**
 
@@ -76,39 +95,21 @@ See [sko04-ConceptTree](./sko04-ConceptTree.md#deprecation-display) for visual d
 | `fast` | Single FILTER NOT EXISTS query (modern endpoints only) |
 | `slow` | Multiple exclusion queries + client-side subtraction |
 
+**Fast Prefilter:** When enabled, adds `FILTER NOT EXISTS` clauses for direct `skos:inScheme` and `skos:topConceptOf` links before hierarchical UNION checks. Can speed up queries on endpoints where most concepts have direct scheme links.
+
 See [sko08-OrphanDetection](./sko08-OrphanDetection.md) for algorithm details.
-
-### Search Settings
-
-| Setting | Type | Default | Description |
-|---------|------|---------|-------------|
-| `searchSettings.labelScope` | array | `['prefLabel', 'altLabel']` | Label types to search |
-| `searchSettings.schemeScope` | enum | `'current'` | Search in current or all schemes |
-| `searchSettings.matchMode` | enum | `'contains'` | Match algorithm |
-
-**Label Scope Options:**
-- `prefLabel` - Preferred labels
-- `altLabel` - Alternative labels
-- `hiddenLabel` - Hidden labels
-
-**Match Modes:**
-- `contains` - Substring match (default)
-- `startsWith` - Prefix match
-- `exact` - Exact match
-- `regex` - Regular expression
-
-See [sko07-SearchBox](./sko07-SearchBox.md) for search behavior details.
 
 ### Developer Settings
 
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
-| `logLevel` | enum | `'info'` | Minimum log level to display |
+| `developerMode` | boolean | `false` | Enable developer features (query viewer, etc.) |
+| `logLevel` | enum | `'warn'` | Minimum log level to display |
 
 **Log Levels:**
 - `debug` - All messages (verbose)
-- `info` - Info, warnings, errors (default)
-- `warn` - Warnings and errors only
+- `info` - Info and above
+- `warn` - Warnings and errors only (default)
 - `error` - Errors only
 
 See [sko11-DeveloperTools](./sko11-DeveloperTools.md) for logging details.
@@ -126,6 +127,15 @@ See [sko11-DeveloperTools](./sko11-DeveloperTools.md) for logging details.
 | | [x] Dark mode                         | |
 | | [x] Show orphans selector             | |
 | | [x] Show deprecation indicators       | |
+| | [x] Show notation in labels           | |
+| +---------------------------------------+ |
+|                                           |
+| LABELS & TAGS                             |
+| +---------------------------------------+ |
+| | [x] Show datatypes                    | |
+| |   [ ] Show xsd:string                 | |
+| | [x] Show language tags                | |
+| |   [ ] Show preferred language tag     | |
 | +---------------------------------------+ |
 |                                           |
 | DEPRECATION RULES                         |
@@ -140,29 +150,14 @@ See [sko11-DeveloperTools](./sko11-DeveloperTools.md) for logging details.
 | |   (*) Auto (recommended)              | |
 | |   ( ) Fast only                       | |
 | |   ( ) Slow only                       | |
-| +---------------------------------------+ |
-|                                           |
-| SEARCH                                    |
-| +---------------------------------------+ |
-| | Search in:                            | |
-| |   [x] Preferred labels                | |
-| |   [x] Alternative labels              | |
-| |   [ ] Hidden labels                   | |
 | |                                       | |
-| | Default scope:                        | |
-| |   (*) Current scheme                  | |
-| |   ( ) All schemes                     | |
-| |                                       | |
-| | Default match:                        | |
-| |   (*) Contains                        | |
-| |   ( ) Starts with                     | |
-| |   ( ) Exact                           | |
+| | [ ] Fast prefilter                    | |
 | +---------------------------------------+ |
 |                                           |
 | DEVELOPER                                 |
 | +---------------------------------------+ |
-| | Log level: [Info v]                   | |
-| | [View Logs] [Clear Logs]              | |
+| | [ ] Developer mode                    | |
+| | Log level: [Warn v]                   | |
 | +---------------------------------------+ |
 +-------------------------------------------+
 ```
@@ -201,26 +196,30 @@ const defaultSettings: SettingsState = {
   // Display
   darkMode: false,
   showOrphansSelector: true,
-  showDeprecationIndicators: true,
+  showDeprecationIndicator: true,
+  showNotationInLabels: true,
+
+  // Labels & Tags
+  showLanguageTags: true,
+  showPreferredLanguageTag: false,
+  showDatatypes: true,
+  showStringDatatypes: false,
 
   // Deprecation
-  deprecationRules: {
-    owlDeprecated: true,
-    euvocStatus: true,
-  },
+  deprecationRules: [
+    { id: 'owl-deprecated', name: 'OWL Deprecated', enabled: true,
+      predicate: 'owl:deprecated', valueCheck: 'equals', value: 'true' },
+    { id: 'euvoc-status', name: 'EU Vocabularies Status', enabled: true,
+      predicate: 'euvoc:status', valueCheck: 'notEquals', value: 'http://publications.europa.eu/resource/authority/concept-status/CURRENT' },
+  ],
 
   // Orphan Detection
-  orphanStrategy: 'auto',
-
-  // Search
-  searchSettings: {
-    labelScope: ['prefLabel', 'altLabel'],
-    schemeScope: 'current',
-    matchMode: 'contains',
-  },
+  orphanDetectionStrategy: 'auto',
+  orphanFastPrefilter: false,
 
   // Developer
-  logLevel: 'info',
+  developerMode: false,
+  logLevel: 'warn',
 }
 ```
 
@@ -237,8 +236,8 @@ function resetSettings() {
 
 ## Related Specs
 
-- [sko04-ConceptTree](./sko04-ConceptTree.md) - Deprecation display settings
-- [sko07-SearchBox](./sko07-SearchBox.md) - Search settings
-- [sko08-OrphanDetection](./sko08-OrphanDetection.md) - Orphan strategy setting
-- [sko11-DeveloperTools](./sko11-DeveloperTools.md) - Log level setting
+- [sko04-ConceptTree](./sko04-ConceptTree.md) - Deprecation display, notation in labels
+- [sko08-OrphanDetection](./sko08-OrphanDetection.md) - Orphan strategy and prefilter settings
+- [sko11-DeveloperTools](./sko11-DeveloperTools.md) - Developer mode and log level
 - [com02-StateManagement](../common/com02-StateManagement.md) - State architecture
+- [com07-DatatypeDisplay](../common/com07-DatatypeDisplay.md) - Datatype display rules

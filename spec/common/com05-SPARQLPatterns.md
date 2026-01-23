@@ -184,6 +184,57 @@ SELECT ...
 # Use HTTP header: Timeout: 30
 ```
 
+## Response Parsing
+
+### JSON Results (Standard)
+
+Most endpoints return `application/sparql-results+json`:
+
+```json
+{
+  "head": { "vars": ["concept", "label"] },
+  "results": {
+    "bindings": [
+      {
+        "concept": { "type": "uri", "value": "http://example.org/c1" },
+        "label": { "type": "literal", "value": "Example", "xml:lang": "en" }
+      }
+    ]
+  }
+}
+```
+
+### XML Fallback
+
+Some endpoints (e.g., Getty) may return XML despite claiming JSON content-type. The SPARQL service automatically detects and parses SPARQL Results XML format:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<sparql xmlns="http://www.w3.org/2005/sparql-results#">
+  <head>
+    <variable name="concept"/>
+    <variable name="label"/>
+  </head>
+  <results>
+    <result>
+      <binding name="concept">
+        <uri>http://example.org/c1</uri>
+      </binding>
+      <binding name="label">
+        <literal xml:lang="en">Example</literal>
+      </binding>
+    </result>
+  </results>
+</sparql>
+```
+
+**Automatic Detection:**
+1. Try parsing response as JSON
+2. If JSON parse fails, attempt SPARQL XML parsing
+3. Return normalized JSON format to callers
+
+This ensures compatibility with endpoints that have inconsistent content-type headers.
+
 ## Common Query Templates
 
 ### List Top Concepts

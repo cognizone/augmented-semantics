@@ -310,7 +310,7 @@ export function useConceptData() {
           skos:broadMatch, skos:narrowMatch, skos:relatedMatch,
           dc:identifier, dct:created, dct:modified, dct:issued, dct:status,
           dct:creator, dct:publisher, dct:rights, dct:license, cc:license,
-          owl:versionInfo, rdfs:seeAlso,
+          owl:versionInfo, owl:deprecated, rdfs:seeAlso,
           rdfs:comment, dct:description
         ))
       }
@@ -415,7 +415,9 @@ export function useConceptData() {
           source: 'useConceptData',
         }).then(async () => {
           // These depend on otherProperties being loaded
-          reactiveDetails.deprecated = isDeprecatedFromProperties(reactiveDetails.otherProperties)
+          if (reactiveDetails.deprecated === undefined) {
+            reactiveDetails.deprecated = isDeprecatedFromProperties(reactiveDetails.otherProperties)
+          }
 
           if (reactiveDetails.otherProperties.length > 0) {
             const predicates = reactiveDetails.otherProperties.map(p => p.predicate)

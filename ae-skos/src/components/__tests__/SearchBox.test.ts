@@ -172,11 +172,13 @@ describe('SearchBox', () => {
       expect(conceptStore.loadingSearch).toBe(true)
 
       // Resolve fetch
+      const results = createSparqlResults([])
       resolvePromise!({
         ok: true,
         status: 200,
         headers: new Headers({ 'content-type': 'application/json' }),
-        json: () => Promise.resolve(createSparqlResults([])),
+        json: () => Promise.resolve(results),
+        text: () => Promise.resolve(JSON.stringify(results)),
       })
 
       await flushPromises()

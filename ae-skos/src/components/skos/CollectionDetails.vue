@@ -228,6 +228,7 @@ const documentationConfig = computed(() => [
 // Has any metadata to show
 const hasMetadata = computed(() =>
   (details.value?.identifier?.length ?? 0) > 0 ||
+  details.value?.deprecated !== undefined ||
   details.value?.created ||
   details.value?.modified ||
   details.value?.issued ||
@@ -273,6 +274,10 @@ function navigateToMember(member: { uri: string; type?: string }) {
   } else {
     emit('selectConcept', member.uri)
   }
+}
+
+function handleSchemeClick(ref: ConceptRef) {
+  schemeStore.viewScheme(ref.uri)
 }
 
 
@@ -362,6 +367,27 @@ watch(
                 <span v-if="title.lang && shouldShowLangTag(title.lang)" class="lang-tag lang-tag-first">{{ title.lang }}</span>
                 <span class="doc-text">{{ title.value }}</span>
               </p>
+            </div>
+          </div>
+        </section>
+
+        <section v-if="details.inScheme.length" class="details-section">
+          <h3 class="section-title">
+            <span class="material-symbols-outlined section-icon">schema</span>
+            Schemes
+          </h3>
+          <div class="property-row">
+            <label>In Scheme</label>
+            <div class="concept-chips">
+              <span
+                v-for="ref in details.inScheme"
+                :key="ref.uri"
+                class="concept-chip clickable"
+                @click="handleSchemeClick(ref)"
+              >
+                <span class="material-symbols-outlined chip-icon icon-folder">folder</span>
+                {{ formatRefLabel(ref) }}<span v-if="ref.lang && shouldShowLangTag(ref.lang)" class="lang-tag">{{ ref.lang }}</span>
+              </span>
             </div>
           </div>
         </section>
@@ -513,6 +539,11 @@ watch(
               </span>
             </span>
           </div>
+
+          <div v-if="details.deprecated !== undefined" class="property-row">
+            <label>Deprecated</label>
+            <span class="metadata-value">{{ details.deprecated ? 'true' : 'false' }}</span>
+          </div>
         </section>
 
         <OtherPropertiesSection
@@ -567,6 +598,36 @@ watch(
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
   border: 1px solid var(--ae-border-color);
+}
+
+.concept-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.concept-chip {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.875rem;
+  background: var(--ae-bg-elevated);
+  border: 1px solid var(--ae-border-color);
+  border-radius: 4px;
+  padding: 0.375rem 0.75rem;
+}
+
+.concept-chip.clickable {
+  cursor: pointer;
+}
+
+.concept-chip.clickable:hover {
+  background: var(--ae-bg-hover);
+  color: var(--ae-accent);
+}
+
+.chip-icon {
+  font-size: 14px;
+  margin-right: 0.25rem;
 }
 
 .member-count {

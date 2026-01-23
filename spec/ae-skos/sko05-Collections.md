@@ -299,6 +299,10 @@ SELECT ?p ?o ?lang ?labelType WHERE {
   UNION { <COLLECTION_URI> dct:license ?o . BIND(dct:license AS ?p) BIND("license" AS ?labelType) }
   UNION { <COLLECTION_URI> cc:license ?o . BIND(cc:license AS ?p) BIND("ccLicense" AS ?labelType) }
   UNION { <COLLECTION_URI> rdfs:seeAlso ?o . BIND(rdfs:seeAlso AS ?p) BIND("seeAlso" AS ?labelType) }
+  # Scheme membership
+  UNION { <COLLECTION_URI> skos:inScheme ?o . BIND(skos:inScheme AS ?p) BIND("inScheme" AS ?labelType) }
+  # RDF type
+  UNION { <COLLECTION_URI> rdf:type ?o . BIND(rdf:type AS ?p) BIND("rdfType" AS ?labelType) }
 }
 ```
 
@@ -406,9 +410,11 @@ interface CollectionNode {
 interface CollectionDetails {
   uri: string
   deprecated?: boolean           // owl:deprecated
+  rdfTypes?: string[]            // rdf:type values
   prefLabels: LabelValue[]
   altLabels: LabelValue[]
   hiddenLabels: LabelValue[]     // skos:hiddenLabel
+  inScheme: ConceptRef[]         // skos:inScheme (schemes this collection belongs to)
   // Title/label properties (stored separately by predicate)
   dctTitles: LabelValue[]        // dct:title (Dublin Core Terms)
   dcTitles: LabelValue[]         // dc:title (Dublin Core Elements)

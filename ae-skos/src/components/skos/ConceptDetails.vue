@@ -221,6 +221,7 @@ const mappingsConfig = computed(() => [
 // Has any metadata to show
 const hasMetadata = computed(() =>
   (details.value?.identifier?.length ?? 0) > 0 ||
+  details.value?.deprecated !== undefined ||
   details.value?.created ||
   details.value?.modified ||
   details.value?.issued ||
@@ -669,6 +670,11 @@ watch(
                 {{ getDatatypeLabel(details.modified) }}
               </span>
             </span>
+          </div>
+
+          <div v-if="details.deprecated !== undefined" class="property-row">
+            <label>Deprecated</label>
+            <span class="metadata-value">{{ details.deprecated ? 'true' : 'false' }}</span>
           </div>
         </section>
 

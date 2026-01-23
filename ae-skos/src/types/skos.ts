@@ -250,6 +250,7 @@ export interface CollectionDetails {
   prefLabels: LabelValue[]
   altLabels: LabelValue[]
   hiddenLabels: LabelValue[]  // skos:hiddenLabel
+  inScheme: ConceptRef[]
   // Title/label properties (stored separately by predicate)
   dctTitles: LabelValue[]     // dct:title (Dublin Core Terms)
   dcTitles: LabelValue[]      // dc:title (Dublin Core Elements)

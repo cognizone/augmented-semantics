@@ -312,6 +312,45 @@ Setting to control orphan detection algorithm in Settings > Advanced.
 
 **UI:** Radio button group in app settings panel. Default: `auto` (recommended)
 
+### Fast Prefilter Setting
+
+Optional optimization for the fast orphan detection method.
+
+**Setting:** `orphanFastPrefilter` (boolean)
+**Default:** `false`
+**Location:** Settings > Orphan Detection > "Fast prefilter"
+
+**Behavior:**
+
+When enabled, the orphan query adds `FILTER NOT EXISTS` clauses for direct scheme links **before** the expensive hierarchical UNION checks:
+
+```sparql
+SELECT DISTINCT ?concept
+WHERE {
+  ?concept a skos:Concept .
+
+  # Prefilter: Skip concepts with direct scheme links (fast)
+  FILTER NOT EXISTS { ?concept skos:inScheme ?scheme . }
+  FILTER NOT EXISTS { ?concept skos:topConceptOf ?scheme . }
+
+  # Then check hierarchical paths (slower)
+  FILTER NOT EXISTS {
+    { ?scheme skos:hasTopConcept ?concept . }
+    UNION
+    { ?concept skos:broaderTransitive ?top . ?top skos:topConceptOf ?scheme . }
+    # ... additional branches
+  }
+}
+```
+
+**When to Enable:**
+- Endpoints where most concepts have direct `skos:inScheme` or `skos:topConceptOf` links
+- When orphan detection is slow with default settings
+
+**When to Keep Disabled:**
+- Endpoints where few concepts have direct scheme links
+- Default behavior is sufficient for most endpoints
+
 ### Show Orphans Selector Setting
 
 Controls visibility of the "Orphan Concepts" option in the scheme dropdown.

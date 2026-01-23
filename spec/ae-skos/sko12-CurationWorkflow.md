@@ -64,7 +64,10 @@ The curation script generates `output/endpoint.json`:
       { "lang": "en", "count": 3509 },
       { "lang": "es", "count": 376 }
     ],
+    "languageDetectionMethod": "full",
     "totalConcepts": 3439,
+    "totalCollections": 12,
+    "totalOrderedCollections": 0,
     "relationships": {
       "hasInScheme": true,
       "hasTopConceptOf": true,
@@ -101,6 +104,28 @@ The curation script generates `output/endpoint.json`:
 Label predicate detection records which label properties exist per resource type.
 This data is used in the app to build capability-aware label queries
 (including `dct:title` and `dc:title` when present).
+
+### Language Detection
+
+Language detection queries all label predicates to find language tags used in the endpoint.
+
+**Full Detection** (`languageDetectionMethod: "full"`):
+- Queries all labels across all concepts
+- Most accurate language counts
+- May timeout on very large endpoints (>100k concepts)
+
+**Sampled Detection** (`languageDetectionMethod: "sampled"`):
+- Fallback when full detection times out
+- Samples labels from a subset of concepts
+- Languages sorted alphabetically (no counts)
+
+### Collection Counts
+
+Collection counts enable the app to skip collection-related queries when an endpoint has no collections:
+
+- `totalCollections: 0` + `totalOrderedCollections: 0` = skip all collection queries
+- Used by `endpointHasCollections()` helper in the app
+- Improves performance on collection-free endpoints
 
 ## Curation Scripts
 

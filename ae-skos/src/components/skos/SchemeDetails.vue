@@ -513,7 +513,7 @@ watch(
         <DocumentationSection :items="documentationConfig" />
 
         <!-- Metadata Section (scheme-specific) -->
-        <section v-if="metadataLinksConfig.length || details.identifier?.length || details.status || details.versionInfo || details.created || details.modified || details.issued" class="details-section">
+        <section v-if="metadataLinksConfig.length || details.identifier?.length || details.status || details.versionInfo || details.created || details.modified || details.issued || details.deprecated !== undefined" class="details-section">
           <h3 class="section-title">
             <span class="material-symbols-outlined section-icon">info</span>
             Metadata
@@ -582,6 +582,11 @@ watch(
                 {{ getDatatypeLabel(details.modified) }}
               </span>
             </span>
+          </div>
+
+          <div v-if="details.deprecated !== undefined" class="property-row">
+            <label>Deprecated</label>
+            <span class="metadata-value">{{ details.deprecated ? 'true' : 'false' }}</span>
           </div>
         </section>
 

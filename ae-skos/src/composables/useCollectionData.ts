@@ -131,6 +131,12 @@ export function useCollectionData() {
           BIND("description" AS ?labelType)
         }`)
 
+    labelBranches.push(`{
+          <${collectionUri}> skos:inScheme ?o .
+          BIND(skos:inScheme AS ?p)
+          BIND("inScheme" AS ?labelType)
+        }`)
+
     // Metadata predicates (always included)
     labelBranches.push(`{
           <${collectionUri}> owl:deprecated ?o .
@@ -377,6 +383,7 @@ export function useCollectionData() {
     const license: string[] = []
     const ccLicense: string[] = []
     const seeAlso: string[] = []
+    const inScheme: ConceptRef[] = []
 
     function pushLabel(target: LabelValue[], value: string, lang?: string, datatype?: string) {
       if (datatype) {
@@ -430,6 +437,10 @@ export function useCollectionData() {
         pushLabel(examples, value, lang, datatype)
       } else if (predicate === PRED.note) {
         pushLabel(notes, value, lang, datatype)
+      } else if (predicate === PRED.inScheme) {
+        if (!inScheme.some(ref => ref.uri === value)) {
+          inScheme.push({ uri: value, type: 'scheme' })
+        }
       } else if (labelType === 'deprecated') {
         deprecated = value === 'true' || value === '1'
       } else if (labelType === 'created') {
@@ -481,6 +492,7 @@ export function useCollectionData() {
       notes,
       examples,
       notations,
+      inScheme,
       // Metadata
       identifier,
       created,
@@ -640,6 +652,23 @@ export function useCollectionData() {
 
       // Load SKOS-XL labels (6/12 real endpoints use xlPrefLabel for collections)
       await loadXLLabels(collectionUri, collectionDetails, { source: 'useCollectionData' })
+
+      if (collectionDetails.inScheme.length > 0) {
+        const { loadLabelsProgressively } = useProgressiveLabelLoader()
+        await loadLabelsProgressively(
+          collectionDetails.inScheme.map(ref => ref.uri),
+          'scheme',
+          (resolved) => {
+            collectionDetails.inScheme.forEach(ref => {
+              const label = resolved.get(ref.uri)
+              if (label) {
+                ref.label = label.value
+                ref.lang = label.lang
+              }
+            })
+          }
+        )
+      }
 
       // Load other (non-SKOS) properties
       await loadOtherProperties(collectionUri, collectionDetails, {
