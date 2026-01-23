@@ -13,3 +13,6 @@ dist/
 
 # Compiled JS (TypeScript outputs)
 src/**/*.js
+
+# Sandbox (local experimentation)
+sandbox/
