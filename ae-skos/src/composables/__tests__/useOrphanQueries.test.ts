@@ -232,6 +232,21 @@ describe('useOrphanQueries', () => {
       expect(query).toContain('OFFSET 10000')
     })
 
+    it('supports prefiltering direct scheme links', () => {
+      const endpoint = mockEndpoint({
+        hasInScheme: true,
+        hasTopConceptOf: true,
+        hasHasTopConcept: true,
+        hasBroader: true,
+      })
+
+      const query = buildSingleOrphanQuery(endpoint, 100, 0, { prefilterDirectLinks: true })
+      expect(query).not.toBeNull()
+      expect(query).toContain('FILTER NOT EXISTS { ?concept skos:inScheme ?scheme . }')
+      expect(query).toContain('FILTER NOT EXISTS { ?concept skos:topConceptOf ?scheme . }')
+      expect(query).toContain('FILTER NOT EXISTS { ?scheme skos:hasTopConcept ?concept . }')
+    })
+
     it('generates valid SPARQL syntax with all capabilities', () => {
       const endpoint = mockEndpoint({
         hasInScheme: true,

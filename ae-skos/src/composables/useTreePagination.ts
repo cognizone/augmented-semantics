@@ -465,6 +465,7 @@ export function useTreePagination() {
       orphanConceptUris.value = []
 
       const strategy = settingsStore.orphanDetectionStrategy ?? 'auto'
+      const usePrefilter = settingsStore.orphanFastPrefilter
 
       try {
         // Step 1: Calculate orphan concepts
@@ -476,14 +477,14 @@ export function useTreePagination() {
         } else if (strategy === 'fast') {
           orphanConceptUris.value = await calculateOrphanConceptsFast(endpoint, (progress) => {
             orphanProgress.value = { ...progress, orphanCollections: 0, collectionsPhase: 'idle' }
-          })
+          }, { prefilterDirectLinks: usePrefilter })
           logger.info('TreePagination', `Loaded ${orphanConceptUris.value.length} orphan concepts (fast single-query)`)
         } else {
           // Auto: Try fast first, fallback to slow on error
           try {
             orphanConceptUris.value = await calculateOrphanConceptsFast(endpoint, (progress) => {
               orphanProgress.value = { ...progress, orphanCollections: 0, collectionsPhase: 'idle' }
-            })
+            }, { prefilterDirectLinks: usePrefilter })
             logger.info('TreePagination', `Fast orphan detection succeeded: ${orphanConceptUris.value.length} orphan concepts`)
           } catch (fastError) {
             logger.warn('TreePagination', 'Fast orphan detection failed, falling back to multi-query', { error: fastError })

@@ -529,4 +529,54 @@ describe('settings store', () => {
       expect(savedData.orphanDetectionStrategy).toBe('slow')
     })
   })
+
+  describe('orphan fast prefilter', () => {
+    it('starts with false as default', () => {
+      const store = useSettingsStore()
+      expect(store.orphanFastPrefilter).toBe(false)
+    })
+
+    it('can be changed via setOrphanFastPrefilter', () => {
+      const store = useSettingsStore()
+
+      store.setOrphanFastPrefilter(true)
+      expect(store.orphanFastPrefilter).toBe(true)
+
+      store.setOrphanFastPrefilter(false)
+      expect(store.orphanFastPrefilter).toBe(false)
+    })
+
+    it('loads from localStorage on init', () => {
+      const storedSettings = {
+        orphanFastPrefilter: true,
+      }
+
+      vi.mocked(localStorage.getItem).mockReturnValue(JSON.stringify(storedSettings))
+
+      const store = useSettingsStore()
+      expect(store.orphanFastPrefilter).toBe(true)
+    })
+
+    it('resets to false on resetToDefaults', () => {
+      const store = useSettingsStore()
+
+      store.setOrphanFastPrefilter(true)
+      expect(store.orphanFastPrefilter).toBe(true)
+
+      store.resetToDefaults()
+      expect(store.orphanFastPrefilter).toBe(false)
+    })
+
+    it('is included in saved settings', () => {
+      const store = useSettingsStore()
+
+      store.setOrphanFastPrefilter(true)
+
+      const calls = vi.mocked(localStorage.setItem).mock.calls
+      const lastCall = calls[calls.length - 1]
+      const savedData = JSON.parse(lastCall[1] as string)
+
+      expect(savedData.orphanFastPrefilter).toBe(true)
+    })
+  })
 })

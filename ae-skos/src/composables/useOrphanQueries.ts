@@ -233,6 +233,7 @@ export function buildOrphanExclusionQueries(
  * @param endpoint - SPARQL endpoint with relationship analysis
  * @param pageSize - Number of results per page
  * @param offset - Pagination offset
+ * @param options - Optional query tuning (e.g., prefilter direct scheme links)
  * @returns SPARQL query string, or null if capabilities are missing
  *
  * @see /spec/ae-skos/sko02-SchemeSelector.md
@@ -240,7 +241,10 @@ export function buildOrphanExclusionQueries(
 export function buildSingleOrphanQuery(
   endpoint: SPARQLEndpoint,
   pageSize: number,
-  offset: number
+  offset: number,
+  options?: {
+    prefilterDirectLinks?: boolean
+  }
 ): string | null {
   const rel = endpoint.analysis?.relationships
 
@@ -248,22 +252,30 @@ export function buildSingleOrphanQuery(
     return null
   }
 
+  const prefilterDirectLinks = options?.prefilterDirectLinks ?? false
+
   // Build UNION branches based on endpoint capabilities
   const unionBranches: string[] = []
 
   // Branch 1: inScheme
   if (rel.hasInScheme) {
-    unionBranches.push('{ ?concept skos:inScheme ?scheme . }')
+    if (!prefilterDirectLinks) {
+      unionBranches.push('{ ?concept skos:inScheme ?scheme . }')
+    }
   }
 
   // Branch 2: hasTopConcept
   if (rel.hasHasTopConcept) {
-    unionBranches.push('{ ?scheme skos:hasTopConcept ?concept . }')
+    if (!prefilterDirectLinks) {
+      unionBranches.push('{ ?scheme skos:hasTopConcept ?concept . }')
+    }
   }
 
   // Branch 3: topConceptOf
   if (rel.hasTopConceptOf) {
-    unionBranches.push('{ ?concept skos:topConceptOf ?scheme . }')
+    if (!prefilterDirectLinks) {
+      unionBranches.push('{ ?concept skos:topConceptOf ?scheme . }')
+    }
   }
 
   // Branch 4: hasTopConcept + narrowerTransitive
@@ -306,9 +318,47 @@ export function buildSingleOrphanQuery(
     unionBranches.push('{ ?top skos:topConceptOf ?scheme . ?concept skos:broader+ ?top . }')
   }
 
-  // If no branches, cannot detect orphans
+  const candidateFilters: string[] = []
+  if (prefilterDirectLinks) {
+    if (rel.hasInScheme) {
+      candidateFilters.push('FILTER NOT EXISTS { ?concept skos:inScheme ?scheme . }')
+    }
+    if (rel.hasTopConceptOf) {
+      candidateFilters.push('FILTER NOT EXISTS { ?concept skos:topConceptOf ?scheme . }')
+    }
+    if (rel.hasHasTopConcept) {
+      candidateFilters.push('FILTER NOT EXISTS { ?scheme skos:hasTopConcept ?concept . }')
+    }
+  }
+
+  const candidatePattern = candidateFilters.length > 0
+    ? `
+      {
+        SELECT DISTINCT ?concept
+        WHERE {
+          ?concept a skos:Concept .
+          ${candidateFilters.join('\n          ')}
+        }
+      }
+    `
+    : `
+      ?concept a skos:Concept .
+    `
+
+  // If no branches beyond direct links, return candidate set (or null if no filters)
   if (unionBranches.length === 0) {
-    return null
+    if (candidateFilters.length === 0) {
+      return null
+    }
+    return withPrefixes(`
+      SELECT DISTINCT ?concept
+      WHERE {
+        ${candidatePattern}
+      }
+      ORDER BY ?concept
+      LIMIT ${pageSize}
+      OFFSET ${offset}
+    `)
   }
 
   // Build FILTER NOT EXISTS with UNION branches
@@ -317,7 +367,7 @@ export function buildSingleOrphanQuery(
   return withPrefixes(`
     SELECT DISTINCT ?concept
     WHERE {
-      ?concept a skos:Concept .
+      ${candidatePattern}
 
       FILTER NOT EXISTS {
         ${filterPattern}

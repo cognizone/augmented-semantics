@@ -424,6 +424,16 @@ onUnmounted(() => {
               Method for finding orphan concepts. Auto tries fast single-query with fallback to slow multi-query.
             </p>
           </div>
+
+          <div class="setting-row">
+            <label class="checkbox-label">
+              <Checkbox v-model="settingsStore.orphanFastPrefilter" :binary="true" />
+              <span class="checkbox-text">
+                Prefilter orphan candidates (fast mode)
+                <small>Excludes direct scheme links first, then runs hierarchy checks on remaining concepts.</small>
+              </span>
+            </label>
+          </div>
         </section>
       </div>
 

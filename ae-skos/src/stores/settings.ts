@@ -63,6 +63,7 @@ export interface AppSettings {
   developerMode: boolean                      // Enable developer tools (e.g., JSON export)
   logLevel: LogLevel                          // Minimum log level for console output
   orphanDetectionStrategy: OrphanDetectionStrategy  // Orphan detection method (auto/fast/slow)
+  orphanFastPrefilter: boolean                // Prefilter candidates in fast orphan detection
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -76,6 +77,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   developerMode: false,
   logLevel: 'warn',
   orphanDetectionStrategy: 'auto',
+  orphanFastPrefilter: false,
 }
 
 export const useSettingsStore = defineStore('settings', () => {
@@ -90,6 +92,7 @@ export const useSettingsStore = defineStore('settings', () => {
   const developerMode = ref(DEFAULT_SETTINGS.developerMode)
   const logLevel = ref<LogLevel>(DEFAULT_SETTINGS.logLevel)
   const orphanDetectionStrategy = ref<OrphanDetectionStrategy>(DEFAULT_SETTINGS.orphanDetectionStrategy)
+  const orphanFastPrefilter = ref(DEFAULT_SETTINGS.orphanFastPrefilter)
 
   // Apply dark mode to document
   function applyDarkMode(isDark: boolean) {
@@ -138,6 +141,9 @@ export const useSettingsStore = defineStore('settings', () => {
         if (settings.orphanDetectionStrategy !== undefined) {
           orphanDetectionStrategy.value = settings.orphanDetectionStrategy
         }
+        if (settings.orphanFastPrefilter !== undefined) {
+          orphanFastPrefilter.value = settings.orphanFastPrefilter
+        }
       }
     } catch (e) {
       logger.error('SettingsStore', 'Failed to load settings', { error: e })
@@ -158,6 +164,7 @@ export const useSettingsStore = defineStore('settings', () => {
         developerMode: developerMode.value,
         logLevel: logLevel.value,
         orphanDetectionStrategy: orphanDetectionStrategy.value,
+        orphanFastPrefilter: orphanFastPrefilter.value,
       }
       localStorage.setItem(STORAGE_KEY, JSON.stringify(settings))
     } catch (e) {
@@ -203,6 +210,11 @@ export const useSettingsStore = defineStore('settings', () => {
     saveSettings()
   }
 
+  function setOrphanFastPrefilter(value: boolean) {
+    orphanFastPrefilter.value = value
+    saveSettings()
+  }
+
   function resetToDefaults() {
     darkMode.value = DEFAULT_SETTINGS.darkMode
     applyDarkMode(DEFAULT_SETTINGS.darkMode)
@@ -215,6 +227,7 @@ export const useSettingsStore = defineStore('settings', () => {
     developerMode.value = DEFAULT_SETTINGS.developerMode
     logLevel.value = DEFAULT_SETTINGS.logLevel
     orphanDetectionStrategy.value = DEFAULT_SETTINGS.orphanDetectionStrategy
+    orphanFastPrefilter.value = DEFAULT_SETTINGS.orphanFastPrefilter
     logger.setMinLevel(DEFAULT_SETTINGS.logLevel)
     saveSettings()
   }
@@ -242,6 +255,7 @@ export const useSettingsStore = defineStore('settings', () => {
       developerMode.value,
       logLevel.value,
       orphanDetectionStrategy.value,
+      orphanFastPrefilter.value,
     ],
     () => saveSettings(),
     { deep: true }
@@ -262,6 +276,7 @@ export const useSettingsStore = defineStore('settings', () => {
     developerMode,
     logLevel,
     orphanDetectionStrategy,
+    orphanFastPrefilter,
     // Actions
     setDarkMode,
     setShowDatatypes,
@@ -270,6 +285,7 @@ export const useSettingsStore = defineStore('settings', () => {
     setDeprecationRules,
     setLogLevel,
     setOrphanDetectionStrategy,
+    setOrphanFastPrefilter,
     resetToDefaults,
     loadSettings,
   }

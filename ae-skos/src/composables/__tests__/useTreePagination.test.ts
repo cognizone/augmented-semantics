@@ -275,7 +275,8 @@ describe('useTreePagination', () => {
 
         expect(mockCalculateOrphanConceptsFast).toHaveBeenCalledWith(
           endpointStore.current,
-          expect.any(Function) // progress callback
+          expect.any(Function), // progress callback
+          expect.objectContaining({ prefilterDirectLinks: false })
         )
       })
 

@@ -287,6 +287,7 @@ export async function calculateOrphanConcepts(
  *
  * @param endpoint - SPARQL endpoint with analysis
  * @param onProgress - Optional progress callback
+ * @param options - Optional query tuning (e.g., prefilter direct scheme links)
  * @returns Array of orphan concept URIs
  * @throws Error if query cannot be built (missing capabilities)
  *
@@ -294,12 +295,15 @@ export async function calculateOrphanConcepts(
  */
 export async function calculateOrphanConceptsFast(
   endpoint: SPARQLEndpoint,
-  onProgress?: ProgressCallback
+  onProgress?: ProgressCallback,
+  options?: {
+    prefilterDirectLinks?: boolean
+  }
 ): Promise<string[]> {
   logger.info('OrphanConcepts', 'Starting fast single-query orphan detection')
 
   // Validate query can be built
-  const testQuery = buildSingleOrphanQuery(endpoint, 1, 0)
+  const testQuery = buildSingleOrphanQuery(endpoint, 1, 0, options)
   if (!testQuery) {
     throw new Error('Cannot build single orphan query: endpoint analysis missing or no relationships available')
   }
@@ -326,7 +330,7 @@ export async function calculateOrphanConceptsFast(
 
   // Paginated execution
   while (hasMore) {
-    const query = buildSingleOrphanQuery(endpoint, PAGE_SIZE + 1, offset)
+    const query = buildSingleOrphanQuery(endpoint, PAGE_SIZE + 1, offset, options)
     if (!query) {
       throw new Error('Failed to build orphan query')
     }
