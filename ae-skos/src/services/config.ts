@@ -1,7 +1,7 @@
 /**
  * Configuration Service - Load external app configuration
  *
- * Fetches optional config from /config/app.json
+ * Fetches optional config from {BASE_URL}/config/app.json
  * Falls back gracefully when config is not present (404)
  *
  * @see /spec/common/com01-EndpointManager.md
@@ -10,7 +10,7 @@ import { ref, readonly } from 'vue'
 import type { AppConfig, ResolvedConfig } from '../types'
 import { logger } from './logger'
 
-const CONFIG_PATH = '/config/app.json'
+const CONFIG_PATH = `${import.meta.env.BASE_URL}config/app.json`
 
 // Singleton state
 const state = ref<ResolvedConfig>({

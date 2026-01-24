@@ -30,12 +30,27 @@ watch(appName, (name) => {
 }, { immediate: true })
 
 const logoUrl = computed(() =>
-  config.value.config?.logoUrl ?? (config.value.configMode ? '/config/logo.png' : null)
+  config.value.config?.logoUrl ?? (config.value.configMode ? `${import.meta.env.BASE_URL}config/logo.png` : null)
 )
 const docsUrl = computed(() =>
   config.value.config?.documentationUrl ??
   'https://github.com/cognizone/augmented-semantics/blob/main/docs/user-manual/README.md'
 )
+
+// Build info
+const appVersion = __APP_VERSION__
+const gitCommit = __GIT_COMMIT__
+const buildDateFormatted = computed(() => {
+  const date = new Date(__BUILD_DATE__)
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+})
+
 const showSettingsDialog = ref(false)
 const endpointMenu = ref()
 const languageMenu = ref()
@@ -460,6 +475,35 @@ onUnmounted(() => {
             </label>
           </div>
         </section>
+
+        <!-- About Section -->
+        <section class="settings-section about-section">
+          <h3 class="section-title">
+            <span class="material-symbols-outlined section-icon">info</span>
+            About
+          </h3>
+          <div class="about-info">
+            <div class="about-row">
+              <span class="about-label">Version</span>
+              <span class="about-value">{{ appVersion }}</span>
+            </div>
+            <div class="about-row">
+              <span class="about-label">Build</span>
+              <span class="about-value mono">{{ gitCommit }}</span>
+            </div>
+            <div class="about-row">
+              <span class="about-label">Built</span>
+              <span class="about-value">{{ buildDateFormatted }}</span>
+            </div>
+            <div class="about-row">
+              <span class="about-label">Source</span>
+              <a href="https://github.com/cognizone/augmented-semantics" target="_blank" class="about-link">
+                GitHub
+                <span class="material-symbols-outlined link-icon">open_in_new</span>
+              </a>
+            </div>
+          </div>
+        </section>
       </div>
 
       <template #footer>
@@ -730,5 +774,54 @@ onUnmounted(() => {
 
 .config-error-banner .material-symbols-outlined {
   font-size: 1.25rem;
+}
+
+/* About section */
+.about-section {
+  border-top: 1px solid var(--ae-border-color);
+  padding-top: 1rem;
+  margin-top: 0.5rem;
+}
+
+.about-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.about-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8125rem;
+}
+
+.about-label {
+  color: var(--ae-text-secondary);
+}
+
+.about-value {
+  color: var(--ae-text-primary);
+}
+
+.about-value.mono {
+  font-family: var(--ae-font-mono);
+  font-size: 0.75rem;
+}
+
+.about-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: var(--ae-accent);
+  text-decoration: none;
+}
+
+.about-link:hover {
+  text-decoration: underline;
+}
+
+.about-link .link-icon {
+  font-size: 0.875rem;
 }
 </style>
