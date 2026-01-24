@@ -30,14 +30,36 @@ jobs:
           cache: pnpm
 
       - run: pnpm install
-      - run: pnpm --filter ae-skos build
+
+      # Build default app (root)
+      - name: Build default SKOS
+        run: pnpm --filter ae-skos build
         env:
           BASE_URL: /augmented-semantics/
-      - run: cp ae-skos/dist/index.html ae-skos/dist/404.html
+
+      - name: Prepare site structure
+        run: |
+          mkdir -p _site
+          cp -r ae-skos/dist/* _site/
+          cp _site/index.html _site/404.html
+
+      # Build ERA variant
+      - name: Build SKOS ERA
+        run: pnpm --filter ae-skos build
+        env:
+          BASE_URL: /augmented-semantics/skos-era/
+
+      - name: Add ERA to site
+        run: |
+          mkdir -p _site/skos-era
+          cp -r ae-skos/dist/* _site/skos-era/
+          mkdir -p _site/skos-era/config
+          cp apps/era/app.json _site/skos-era/config/
+          cp apps/era/logo.png _site/skos-era/config/
 
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: ae-skos/dist
+          path: _site
 
   deploy:
     needs: build
