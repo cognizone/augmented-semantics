@@ -188,18 +188,23 @@ function parseSparqlXml(xmlText: string): SPARQLResults | null {
     const vars: string[] = []
     const variableEls = doc.getElementsByTagNameNS(sparqlNs, 'variable')
     for (let i = 0; i < variableEls.length; i++) {
-      const name = variableEls[i].getAttribute('name')
+      const varEl = variableEls[i]
+      if (!varEl) continue
+      const name = varEl.getAttribute('name')
       if (name) vars.push(name)
     }
 
     const bindings: SPARQLBinding[] = []
     const resultEls = doc.getElementsByTagNameNS(sparqlNs, 'result')
     for (let i = 0; i < resultEls.length; i++) {
+      const resultEl = resultEls[i]
+      if (!resultEl) continue
       const binding: SPARQLBinding = {}
-      const bindingEls = resultEls[i].getElementsByTagNameNS(sparqlNs, 'binding')
+      const bindingEls = resultEl.getElementsByTagNameNS(sparqlNs, 'binding')
 
       for (let j = 0; j < bindingEls.length; j++) {
         const bindingEl = bindingEls[j]
+        if (!bindingEl) continue
         const varName = bindingEl.getAttribute('name')
         if (!varName) continue
 

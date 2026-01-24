@@ -14,7 +14,7 @@ import { useProgressiveLabelLoader } from './useProgressiveLabelLoader'
 import { useXLLabels } from './useXLLabels'
 import { PRED } from '../constants'
 import { getUriFragment } from '../utils/displayUtils'
-import type { CollectionDetails, LabelValue, NotationValue, ConceptRef, LabelPredicateCapabilities } from '../types'
+import type { CollectionDetails, LabelValue, NotationValue, ConceptRef, LabelPredicateCapabilities, EndpointAnalysis } from '../types'
 
 export function useCollectionData() {
   const endpointStore = useEndpointStore()
@@ -260,7 +260,7 @@ export function useCollectionData() {
   function buildMemberSchemeQuery(
     memberUris: string[],
     schemeUri: string,
-    relationships?: NonNullable<NonNullable<ReturnType<typeof useEndpointStore>['current']['value']>['analysis']>['relationships']
+    relationships?: EndpointAnalysis['relationships']
   ): string | null {
     if (!relationships || memberUris.length === 0) return null
 

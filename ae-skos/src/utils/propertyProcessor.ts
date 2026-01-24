@@ -158,7 +158,7 @@ export const SCHEME_PROPERTY_MAP: PropertyMapping = {
  * @param options - Processing options
  * @returns Array of rdf:type values found (for type checking)
  */
-export function processPropertyBindings<T extends Record<string, unknown>>(
+export function processPropertyBindings<T extends object>(
   bindings: SparqlBinding[],
   target: T,
   mapping: PropertyMapping,
@@ -169,6 +169,7 @@ export function processPropertyBindings<T extends Record<string, unknown>>(
 ): string[] {
   const { propertyVar = 'property', valueVar = 'value' } = options
   const types: string[] = []
+  const targetRecord = target as Record<string, unknown>
 
   for (const binding of bindings) {
     const prop = binding[propertyVar]?.value
@@ -187,7 +188,7 @@ export function processPropertyBindings<T extends Record<string, unknown>>(
     const handler = mapping[prop]
     if (!handler) continue
 
-    const targetArray = target[handler.target]
+    const targetArray = targetRecord[handler.target]
 
     switch (handler.type) {
       case 'label':
@@ -228,28 +229,28 @@ export function processPropertyBindings<T extends Record<string, unknown>>(
         break
 
       case 'single':
-        if (target[handler.target] === undefined || target[handler.target] === null) {
-          (target as Record<string, unknown>)[handler.target] = val
+        if (targetRecord[handler.target] === undefined || targetRecord[handler.target] === null) {
+          targetRecord[handler.target] = val
         }
         break
 
       case 'singleLiteral':
-        if (target[handler.target] === undefined || target[handler.target] === null) {
-          (target as Record<string, unknown>)[handler.target] = { value: val, datatype }
+        if (targetRecord[handler.target] === undefined || targetRecord[handler.target] === null) {
+          targetRecord[handler.target] = { value: val, datatype }
         }
         break
 
       case 'singleUri':
-        if (target[handler.target] === undefined || target[handler.target] === null) {
+        if (targetRecord[handler.target] === undefined || targetRecord[handler.target] === null) {
           // Extract fragment if it's a URI
           const extractedVal = val.includes('/') ? val.split('/').pop() || val : val
-          ;(target as Record<string, unknown>)[handler.target] = extractedVal
+          targetRecord[handler.target] = extractedVal
         }
         break
 
       case 'boolean':
-        if (target[handler.target] === undefined) {
-          (target as Record<string, unknown>)[handler.target] = val === 'true' || val === '1'
+        if (targetRecord[handler.target] === undefined) {
+          targetRecord[handler.target] = val === 'true' || val === '1'
         }
         break
     }

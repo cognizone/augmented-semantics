@@ -144,8 +144,9 @@ function handleAddAllSuggestedEndpoints() {
     endpointStore.addSuggestedEndpoint(suggested)
   }
   // Select the first added endpoint
-  if (endpointStore.endpoints.length > 0) {
-    endpointStore.selectEndpoint(endpointStore.endpoints[0].id)
+  const firstEndpoint = endpointStore.endpoints[0]
+  if (firstEndpoint) {
+    endpointStore.selectEndpoint(firstEndpoint.id)
     endpointStore.setStatus('connected')
   }
 }

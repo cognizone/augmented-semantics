@@ -52,6 +52,11 @@ function getDatatypeTag(datatype?: string, lang?: string): string | undefined {
   if (lang) return undefined
   return 'xsd:string'
 }
+
+function getDatatypeLabel(datatype?: string, lang?: string): string {
+  const tag = getDatatypeTag(datatype, lang)
+  return tag ? formatDatatype(tag) : ''
+}
 </script>
 
 <template>
@@ -88,7 +93,7 @@ function getDatatypeTag(datatype?: string, lang?: string): string | undefined {
               {{ formatPropertyValue(val.value, val.datatype) }}
               <span v-if="val.lang" class="lang-tag">{{ val.lang }}</span>
               <span v-else-if="shouldShowDatatypeTag(getDatatypeTag(val.datatype, val.lang))" class="datatype-tag">
-                {{ formatDatatype(getDatatypeTag(val.datatype, val.lang)) }}
+                {{ getDatatypeLabel(val.datatype, val.lang) }}
               </span>
             </span>
         </template>

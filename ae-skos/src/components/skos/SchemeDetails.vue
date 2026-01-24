@@ -504,7 +504,7 @@ watch(
             <div class="label-values">
               <span v-for="(n, i) in details.notations" :key="i" class="notation-wrapper">
                 <code class="notation">{{ n.value }}</code>
-                <span v-if="shouldShowDatatypeTag(n.datatype)" class="datatype-tag">{{ formatDatatype(n.datatype) }}</span>
+                <span v-if="n.datatype && shouldShowDatatypeTag(n.datatype)" class="datatype-tag">{{ formatDatatype(n.datatype) }}</span>
               </span>
             </div>
           </div>

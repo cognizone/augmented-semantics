@@ -11,7 +11,7 @@ import { useEndpointStore, useLanguageStore } from '../stores'
 import { executeSparql, logger, endpointHasCollections } from '../services'
 import { useLabelResolver } from './useLabelResolver'
 import { buildCollectionsStageQuery, buildChildCollectionsQuery, getCollectionQueryCapabilities, type CollectionQueryStage } from './useCollectionQueries'
-import type { CollectionNode } from '../types'
+import type { CollectionNode, SPARQLEndpoint } from '../types'
 
 export function useCollections() {
   const endpointStore = useEndpointStore()
@@ -127,17 +127,18 @@ export function useCollections() {
 
       const entry = collectionMap.get(uri)!
 
-      if (binding.label?.value) {
-        const lang = binding.labelLang?.value || binding.label['xml:lang'] || ''
+      const labelValue = binding.label?.value
+      if (labelValue) {
+        const lang = binding.labelLang?.value || binding.label?.['xml:lang'] || ''
         const type = binding.labelType?.value || 'prefLabel'
         const exists = entry.labels.some(l =>
-          l.value === binding.label.value &&
+          l.value === labelValue &&
           l.lang === lang &&
           l.type === type
         )
         if (!exists) {
           entry.labels.push({
-            value: binding.label.value,
+            value: labelValue,
             lang: lang || '',
             type,
           })
@@ -192,7 +193,7 @@ export function useCollections() {
 
   async function runStageQuery(
     stage: CollectionQueryStage,
-    endpoint: ReturnType<typeof useEndpointStore>['current']['value'],
+    endpoint: SPARQLEndpoint | null,
     schemeUri: string,
     collectionMap: Map<string, {
       uri: string
