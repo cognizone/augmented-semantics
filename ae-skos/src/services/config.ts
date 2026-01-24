@@ -10,7 +10,8 @@ import { ref, readonly } from 'vue'
 import type { AppConfig, ResolvedConfig } from '../types'
 import { logger } from './logger'
 
-const CONFIG_PATH = `${import.meta.env.BASE_URL}config/app.json`
+// Cache-bust with build timestamp to ensure fresh config after deployments
+const CONFIG_PATH = `${import.meta.env.BASE_URL}config/app.json?v=${__BUILD_DATE__}`
 
 // Singleton state
 const state = ref<ResolvedConfig>({
