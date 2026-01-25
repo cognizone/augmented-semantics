@@ -505,6 +505,108 @@ const CACHE_TTL = {
 | `scheme:selected` | Scheme-scoped cache |
 | Manual refresh | All cache |
 
+## Race Condition Prevention
+
+### Problem
+
+When users rapidly change selections (e.g., clicking through concepts quickly), multiple async operations may be in flight simultaneously. Without protection, a slow response from an earlier request could overwrite the results of a newer request, causing the UI to display stale data.
+
+```
+User clicks Concept A → Request 1 starts (slow endpoint)
+User clicks Concept B → Request 2 starts (fast response)
+Request 2 completes → UI shows Concept B ✓
+Request 1 completes → UI shows Concept A ✗ (stale!)
+```
+
+### Solution: Request ID Tracking
+
+Each composable that performs async data loading maintains a request counter. After each async operation completes, check if the request is still current before updating state.
+
+**Pattern:**
+```typescript
+export function useConceptData() {
+  const details = ref<ConceptDetails | null>(null)
+  const loading = ref(false)
+  let requestId = 0  // Counter for tracking current request
+
+  async function loadDetails(uri: string): Promise<void> {
+    const endpoint = endpointStore.current
+    if (!endpoint) return
+
+    const currentRequestId = ++requestId  // Increment and capture
+    const endpointId = endpoint.id
+
+    loading.value = true
+
+    // Helper to check if this request is still current
+    const isCurrentRequest = () =>
+      currentRequestId === requestId && endpointStore.current?.id === endpointId
+
+    try {
+      const results = await executeSparql(endpoint, query)
+
+      // Check before updating state
+      if (!isCurrentRequest()) {
+        loading.value = false
+        return  // Discard stale response
+      }
+
+      details.value = processResults(results)
+
+      // For chained async operations, check again
+      await loadLabels(details.value)
+      if (!isCurrentRequest()) return
+
+      await loadCollections(details.value)
+      if (!isCurrentRequest()) return
+
+      // ... more async operations
+
+    } finally {
+      if (isCurrentRequest()) {
+        loading.value = false
+      }
+    }
+  }
+
+  return { details, loading, loadDetails }
+}
+```
+
+### Key Points
+
+1. **Increment before async** - Capture the request ID before any await
+2. **Check after each await** - Verify the request is still current after every async operation
+3. **Include endpoint check** - Also verify the endpoint hasn't changed (user might switch endpoints)
+4. **Early return on stale** - Don't update any state if request is stale
+5. **Clean up loading state** - Only clear loading if this request is still current
+
+### Composables Using This Pattern
+
+| Composable | Purpose |
+|------------|---------|
+| `useConceptData` | Concept details loading |
+| `useSchemeData` | Scheme details loading |
+| `useCollectionData` | Collection details loading |
+| `ConceptBreadcrumb` | Breadcrumb path loading |
+
+### Helper Pattern for Chained Operations
+
+For cleaner code with many chained async operations:
+
+```typescript
+const runIfCurrent = async (action: () => Promise<void>) => {
+  if (!isCurrentRequest()) return
+  await action()
+}
+
+// Usage
+await Promise.all([
+  runIfCurrent(() => loadLabels(refs)),
+  runIfCurrent(() => loadCollections(uri)),
+])
+```
+
 ## Component State Binding
 
 ### Subscribe Pattern

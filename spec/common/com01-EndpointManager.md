@@ -61,26 +61,34 @@ Run analysis queries on connection to detect endpoint characteristics.
 Analysis runs automatically on endpoint connection and can be re-triggered via "Re-analyze" button.
 
 **Steps:**
-1. **SKOS Content** - Check for ConceptSchemes or Concepts
-2. **Named Graphs** - Detect graph support
-3. **SKOS Graphs** - Count graphs with SKOS content
-4. **Concept Schemes** - Detect and store scheme URIs (max 200)
-5. **Concept Count** - Count total concepts
-6. **Relationships** - Detect SKOS relationship capabilities
-7. **Languages** - Detect available label languages
+1. **JSON Support** - Test if endpoint returns JSON responses (`detectJsonSupport()`)
+2. **SKOS Content** - Check for ConceptSchemes or Concepts
+3. **Named Graphs** - Detect graph support
+4. **SKOS Graphs** - Count graphs with SKOS content (conditional on step 3)
+5. **Concept Schemes** - Detect and store scheme URIs (max 200)
+6. **Concepts** - Count total concepts
+7. **Collections** - Count SKOS Collections
+8. **Ordered Collections** - Count SKOS OrderedCollections
+9. **Relationships** - Detect SKOS relationship capabilities (7 properties)
+10. **Label Predicates** - Detect available label predicates per resource type
+11. **Languages** - Detect available label languages
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │ SPARQL Capabilities                                    [×]  │
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
-│ ✓ (1/7) SKOS Content: found                                │
-│ ✓ (2/7) Named Graphs: 12 graphs                            │
-│ ✓ (3/7) SKOS Graphs: 3 graphs                              │
-│ ✓ (4/7) Concept Schemes: 101 schemes                       │
-│ ✓ (5/7) Concepts: 3,439 total                              │
-│ ✓ (6/7) Relationships: 5/7 detected                        │
-│ ✓ (7/7) Languages: 45 languages                            │
+│ ✓ ( 1/11) JSON Support: yes                                │
+│ ✓ ( 2/11) SKOS Content: yes                                │
+│ ✓ ( 3/11) Named Graphs: yes                                │
+│ ✓ ( 4/11) SKOS Graphs: 3                                   │
+│ ✓ ( 5/11) Concept Schemes: 101                             │
+│ ✓ ( 6/11) Concepts: 3,439                                  │
+│ ✓ ( 7/11) Collections: 12                                  │
+│ ✓ ( 8/11) Ordered Collections: 0                           │
+│ ✓ ( 9/11) Relationships: 5/7                               │
+│ ✓ (10/11) Label Predicates: 3                              │
+│ ✓ (11/11) Languages: 45                                    │
 │                                                             │
 │ Last analyzed: 2 hours ago                                  │
 ├─────────────────────────────────────────────────────────────┤
@@ -191,6 +199,10 @@ ORDER BY DESC(?count)
 interface EndpointAnalysis {
   // SKOS Content (replaces generic graph detection)
   hasSkosContent: boolean              // true if endpoint contains SKOS ConceptSchemes or Concepts
+
+  // SPARQL result formats
+  supportsJsonResults?: boolean | null // true = JSON supported, false = XML-only, null = detection failed
+
   supportsNamedGraphs: boolean | null  // null = not supported, false = none, true = has graphs
   skosGraphCount: number | null        // null = count failed, number = SKOS graphs found
 
@@ -200,8 +212,10 @@ interface EndpointAnalysis {
   schemesLimited?: boolean      // true if more schemes exist than stored
 
   // SKOS Statistics
-  totalConcepts?: number        // Total concept count
-  relationships?: {             // Detected SKOS relationship capabilities
+  totalConcepts?: number              // Total concept count
+  totalCollections?: number           // Total SKOS Collection count
+  totalOrderedCollections?: number    // Total SKOS OrderedCollection count
+  relationships?: {                   // Detected SKOS relationship capabilities
     hasInScheme: boolean
     hasTopConceptOf: boolean
     hasHasTopConcept: boolean
@@ -211,10 +225,27 @@ interface EndpointAnalysis {
     hasNarrowerTransitive: boolean
   }
 
+  // Label predicates per resource type (detected during analysis)
+  labelPredicates?: LabelPredicatesByResourceType
+
   // Languages (sorted by count descending)
   languages?: DetectedLanguage[]
 
   analyzedAt: string  // ISO timestamp
+}
+
+interface LabelPredicateCapabilities {
+  prefLabel?: boolean      // skos:prefLabel
+  xlPrefLabel?: boolean    // skosxl:prefLabel/skosxl:literalForm
+  dctTitle?: boolean       // dct:title
+  dcTitle?: boolean        // dc:title
+  rdfsLabel?: boolean      // rdfs:label
+}
+
+interface LabelPredicatesByResourceType {
+  concept?: LabelPredicateCapabilities
+  scheme?: LabelPredicateCapabilities
+  collection?: LabelPredicateCapabilities
 }
 
 interface DetectedLanguage {
@@ -225,10 +256,13 @@ interface DetectedLanguage {
 
 **Changes from generic specification:**
 - `hasSkosContent` replaces generic content detection (SKOS-specific)
+- `supportsJsonResults` indicates JSON vs XML-only response format support
 - `skosGraphCount` counts only graphs containing SKOS data (not all graphs)
 - `graphCount` and `graphCountExact` removed (generic graph counting not implemented)
 - `hasDuplicateTriples` removed (duplicate detection not implemented)
 - `schemeUris` stores the whitelist of concept schemes to display in the UI
+- `totalCollections` and `totalOrderedCollections` count SKOS collection types
+- `labelPredicates` tracks available label predicates per resource type (concept, scheme, collection)
 
 See **SKOS-Specific Analysis** section below for implementation details.
 
@@ -243,6 +277,46 @@ During re-analysis, show step-by-step progress with colored status indicators:
 | Warning | Triangle | Orange |
 | Error | X circle | Red |
 | Info | Info circle | Gray |
+
+### Result Format Badge
+
+The endpoint list displays a badge indicating the SPARQL result format supported by each endpoint:
+
+| Badge | Color | Meaning |
+|-------|-------|---------|
+| JSON | Green (success) | Endpoint returns `application/sparql-results+json` |
+| XML | Orange (warning) | Endpoint only returns XML results (parsed client-side) |
+
+**Display Logic:**
+- Badge appears in the endpoint list (DataTable) as a severity tag
+- Based on `analysis.supportsJsonResults` value:
+  - `true` → Green "JSON" badge
+  - `false` → Orange "XML" badge
+  - `null` or undefined → No badge (detection failed or not analyzed)
+
+**Detection Method (`detectJsonSupport()`):**
+```typescript
+// Send ASK query with JSON Accept header
+const response = await fetch(url, {
+  method: 'POST',
+  headers: {
+    'Accept': 'application/sparql-results+json',
+  },
+  body: `query=ASK { ?s ?p ?o }&format=json`,
+})
+
+// Check response content type and parse attempt
+if (contentType.includes('xml') || text.startsWith('<?xml')) {
+  return false  // XML-only endpoint
+}
+JSON.parse(text)  // Validate JSON
+return true       // JSON supported
+```
+
+**Why This Matters:**
+- JSON responses are faster to parse in the browser
+- XML-only endpoints require client-side XML parsing (slower, more complex)
+- Helps users understand endpoint capabilities at a glance
 
 ### SKOS-Specific Analysis
 
