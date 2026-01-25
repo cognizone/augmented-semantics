@@ -55,6 +55,7 @@ The curation script generates `output/endpoint.json`:
   "description": "...",
   "analysis": {
     "hasSkosContent": true,
+    "supportsJsonResults": true,
     "supportsNamedGraphs": true,
     "skosGraphCount": 3,
     "schemeUris": ["..."],
@@ -100,6 +101,9 @@ The curation script generates `output/endpoint.json`:
   "suggestedLanguagePriorities": ["en", "es", ...]
 }
 ```
+
+Notes:
+- `supportsJsonResults` is detected by running a minimal `ASK` query with a JSON-only `Accept` header. If the response is XML or fails JSON parsing, the value is `false`.
 
 Label predicate detection records which label properties exist per resource type.
 This data is used in the app to build capability-aware label queries

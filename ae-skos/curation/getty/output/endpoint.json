@@ -4,6 +4,7 @@
   "description": "The Getty Research Institute's Linked Open Data vocabularies including AAT (Art & Architecture Thesaurus), TGN (Thesaurus of Geographic Names), and ULAN (Union List of Artist Names).",
   "analysis": {
     "hasSkosContent": true,
+    "supportsJsonResults": false,
     "supportsNamedGraphs": true,
     "skosGraphCount": 0,
     "schemeUris": [
@@ -248,7 +249,7 @@
         "rdfsLabel": true
       }
     },
-    "analyzedAt": "2026-01-23T13:10:53.477Z"
+    "analyzedAt": "2026-01-24T22:52:21.767Z"
   },
   "suggestedLanguagePriorities": [
     "en",

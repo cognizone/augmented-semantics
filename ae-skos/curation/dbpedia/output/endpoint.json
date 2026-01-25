@@ -4,6 +4,7 @@
   "description": "The semantic extraction of Wikipedia. It serves as a general knowledge hub, defining millions of entities and concepts that are linked to external thesauri (like YAGO or Wikidata).",
   "analysis": {
     "hasSkosContent": true,
+    "supportsJsonResults": true,
     "supportsNamedGraphs": true,
     "skosGraphCount": 1,
     "schemeCount": 0,
@@ -32,7 +33,7 @@
         "rdfsLabel": true
       }
     },
-    "analyzedAt": "2026-01-23T12:58:20.496Z"
+    "analyzedAt": "2026-01-24T22:39:52.424Z"
   },
   "suggestedLanguagePriorities": [
     "en"

@@ -235,6 +235,14 @@ function formatUIDate(dateStr?: string) {
               <span class="suggested-name">{{ suggested.name }}</span>
               <span v-if="suggested.description" class="suggested-description">{{ suggested.description }}</span>
               <span class="suggested-url">{{ suggested.url }}</span>
+              <div v-if="suggested.analysis?.supportsJsonResults !== undefined && suggested.analysis?.supportsJsonResults !== null" class="suggested-capabilities">
+                <Tag
+                  :severity="suggested.analysis.supportsJsonResults ? 'success' : 'warning'"
+                  class="capability-tag"
+                >
+                  {{ suggested.analysis.supportsJsonResults ? 'JSON' : 'XML' }}
+                </Tag>
+              </div>
               <div v-if="suggested.analysis.languages && suggested.analysis.languages.length > 0" class="suggested-langs">
                 <Tag
                   v-for="lang in suggested.analysis.languages.slice(0, 3)"
@@ -314,7 +322,16 @@ function formatUIDate(dateStr?: string) {
 
         <Column field="url" header="URL" :style="{ width: '40%' }">
           <template #body="{ data }">
-            <span class="url-cell">{{ data.url }}</span>
+            <div class="url-cell url-with-format">
+              <Tag
+                v-if="data.analysis?.supportsJsonResults !== undefined && data.analysis?.supportsJsonResults !== null"
+                :severity="data.analysis.supportsJsonResults ? 'success' : 'warning'"
+                class="capability-tag"
+              >
+                {{ data.analysis.supportsJsonResults ? 'JSON' : 'XML' }}
+              </Tag>
+              <span>{{ data.url }}</span>
+            </div>
           </template>
         </Column>
 
@@ -585,6 +602,7 @@ function formatUIDate(dateStr?: string) {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 .endpoint-name {
@@ -598,10 +616,32 @@ function formatUIDate(dateStr?: string) {
   letter-spacing: 0.03em;
 }
 
+.capability-tag {
+  font-size: 0.625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  height: 1.25rem;
+  display: inline-flex;
+  align-items: center;
+}
+
+.suggested-capabilities {
+  display: flex;
+  gap: 0.4rem;
+  margin-top: 0.4rem;
+}
+
 .url-cell {
   font-family: var(--ae-font-mono);
   font-size: 0.75rem;
   color: var(--ae-text-muted);
+}
+
+.url-with-format {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 .date-cell {

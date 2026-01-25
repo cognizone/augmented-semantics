@@ -30,6 +30,7 @@ export function useConceptData() {
   const loading = ref(false)
   const error: Ref<string | null> = ref(null)
   const resolvedPredicates: Ref<Map<string, { prefix: string; localName: string }>> = ref(new Map())
+  let detailsRequestId = 0
 
   /**
    * Load collections that contain this concept (inverse of skos:member)
@@ -288,6 +289,8 @@ export function useConceptData() {
   async function loadDetails(uri: string): Promise<void> {
     const endpoint = endpointStore.current
     if (!endpoint) return
+    const endpointId = endpoint.id
+    const requestId = ++detailsRequestId
 
     const startTime = performance.now()
     logger.info('useConceptData', 'Loading details', { uri })
@@ -316,8 +319,19 @@ export function useConceptData() {
       }
     `)
 
+    const isCurrentRequest = () =>
+      requestId === detailsRequestId && endpointStore.current?.id === endpointId
+    const runIfCurrent = async (action: () => Promise<void>) => {
+      if (!isCurrentRequest()) return
+      await action()
+    }
+
     try {
       const results = await executeSparql(endpoint, query, { retries: 1 })
+      if (!isCurrentRequest()) {
+        loading.value = false
+        return
+      }
 
       const conceptDetails: ConceptDetails = {
         uri,
@@ -385,19 +399,26 @@ export function useConceptData() {
       })
 
       const eagerRefLoads: Promise<void>[] = [
-        loadLabelsForRefs(conceptDetails.broader, 'broader', 'concept'),
-        loadLabelsForRefs(conceptDetails.inScheme, 'inScheme', 'scheme'),
-        loadLabelsForRefs(conceptDetails.related, 'related', 'concept'),
+        runIfCurrent(() => loadLabelsForRefs(conceptDetails.broader, 'broader', 'concept')),
+        runIfCurrent(() => loadLabelsForRefs(conceptDetails.inScheme, 'inScheme', 'scheme')),
+        runIfCurrent(() => loadLabelsForRefs(conceptDetails.related, 'related', 'concept')),
       ]
 
       if (conceptDetails.narrower.length <= 50) {
-        eagerRefLoads.push(loadLabelsForRefs(conceptDetails.narrower, 'narrower', 'concept', { skipSchemeCheck: true }))
+        eagerRefLoads.push(runIfCurrent(() =>
+          loadLabelsForRefs(conceptDetails.narrower, 'narrower', 'concept', { skipSchemeCheck: true })
+        ))
       }
 
       await Promise.all([
-        loadXLLabels(uri, conceptDetails, { source: 'useConceptData' }),
+        runIfCurrent(() => loadXLLabels(uri, conceptDetails, { source: 'useConceptData' })),
         ...eagerRefLoads,
       ])
+
+      if (!isCurrentRequest()) {
+        loading.value = false
+        return
+      }
 
       // Render after fast label loads to avoid flashing on details header/sections
       details.value = conceptDetails
@@ -415,17 +436,23 @@ export function useConceptData() {
       // Pass resource type for capability-aware label loading
       Promise.all([
         ...(reactiveDetails.narrower.length > 50
-          ? [loadLabelsForRefs(reactiveDetails.narrower, 'narrower', 'concept', { skipSchemeCheck: true })]
+          ? [runIfCurrent(() =>
+            loadLabelsForRefs(reactiveDetails.narrower, 'narrower', 'concept', { skipSchemeCheck: true })
+          )]
           : []),
         // Collections are discovered first, then labels loaded
-        loadCollections(uri, reactiveDetails).then(() =>
-          loadLabelsForRefs(reactiveDetails.collections, 'collections', 'collection')
-        ),
+        loadCollections(uri, reactiveDetails).then(async () => {
+          if (!isCurrentRequest()) return
+          await runIfCurrent(() =>
+            loadLabelsForRefs(reactiveDetails.collections, 'collections', 'collection')
+          )
+        }),
         loadOtherProperties(uri, reactiveDetails, {
           excludedPredicates: CONCEPT_EXCLUDED_PREDICATES,
           resolveDatatypes: true,
           source: 'useConceptData',
         }).then(async () => {
+          if (!isCurrentRequest()) return
           // These depend on otherProperties being loaded
           if (reactiveDetails.deprecated === undefined) {
             reactiveDetails.deprecated = isDeprecatedFromProperties(reactiveDetails.otherProperties)
@@ -438,12 +465,15 @@ export function useConceptData() {
             resolvedPredicates.value = new Map()
           }
 
+          if (!isCurrentRequest()) return
+
           // Resolve datatypes for notations
           const notationDatatypes = reactiveDetails.notations
             .map(n => n.datatype)
             .filter((d): d is string => !!d)
           if (notationDatatypes.length > 0) {
             const datatypeMap = await resolveUris(notationDatatypes)
+            if (!isCurrentRequest()) return
             reactiveDetails.notations.forEach(n => {
               if (n.datatype) {
                 const resolved = datatypeMap.get(n.datatype)
@@ -462,6 +492,10 @@ export function useConceptData() {
         })
       })
     } catch (e: unknown) {
+      if (!isCurrentRequest()) {
+        loading.value = false
+        return
+      }
       const errMsg = e && typeof e === 'object' && 'message' in e
         ? (e as { message: string }).message
         : 'Unknown error'

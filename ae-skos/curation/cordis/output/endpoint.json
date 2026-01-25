@@ -4,6 +4,7 @@
   "description": "EU's research and innovation database. Contains information about EU-funded research projects, participants, publications, and results from Framework Programmes (FP7, Horizon 2020, Horizon Europe).",
   "analysis": {
     "hasSkosContent": true,
+    "supportsJsonResults": true,
     "supportsNamedGraphs": true,
     "skosGraphCount": 4,
     "schemeUris": [
@@ -61,7 +62,7 @@
         "dctTitle": true
       }
     },
-    "analyzedAt": "2026-01-23T12:55:16.419Z"
+    "analyzedAt": "2026-01-24T22:37:09.473Z"
   },
   "suggestedLanguagePriorities": [
     "en",

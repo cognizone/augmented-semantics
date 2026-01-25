@@ -15,6 +15,7 @@
 import { writeFileSync, mkdirSync } from 'fs'
 import { join } from 'path'
 import {
+  detectJsonSupport,
   executeSparql,
   type EndpointAnalysis,
   type DetectedLanguage,
@@ -371,52 +372,62 @@ async function main() {
     process.exit(1)
   }
 
-  // Standard 10-step analysis
-  // 1/10 SKOS content - we know it's yes
-  logStep(1, 10, 'SKOS content', 'yes', 0)
+  // Standard 11-step analysis
+  // 1/11 JSON results support
+  start = Date.now()
+  let supportsJsonResults: boolean | null = null
+  try {
+    supportsJsonResults = await detectJsonSupport(ENDPOINT)
+    logStep(1, 11, 'JSON results', supportsJsonResults ? 'yes' : 'no', Date.now() - start)
+  } catch {
+    logStep(1, 11, 'JSON results', 'error', Date.now() - start)
+  }
 
-  // 2/10 Named graphs - we know it's yes
-  logStep(2, 10, 'Named graphs', 'yes', 0)
+  // 2/11 SKOS content - we know it's yes
+  logStep(2, 11, 'SKOS content', 'yes', 0)
 
-  // 3/10 SKOS graphs - already discovered
-  logStep(3, 10, 'SKOS graphs', String(validGraphs.length), 0)
+  // 3/11 Named graphs - we know it's yes
+  logStep(3, 11, 'Named graphs', 'yes', 0)
 
-  // 4/10 Concept schemes
+  // 4/11 SKOS graphs - already discovered
+  logStep(4, 11, 'SKOS graphs', String(validGraphs.length), 0)
+
+  // 5/11 Concept schemes
   start = Date.now()
   const schemeUris = await detectSchemesInGraphs(validGraphs)
-  logStep(4, 10, 'Concept schemes', String(schemeUris.length), Date.now() - start)
+  logStep(5, 11, 'Concept schemes', String(schemeUris.length), Date.now() - start)
 
-  // 5/10 Concepts
+  // 6/11 Concepts
   start = Date.now()
   const totalConcepts = await countConceptsInGraphs(validGraphs)
-  logStep(5, 10, 'Concepts', totalConcepts.toLocaleString(), Date.now() - start)
+  logStep(6, 11, 'Concepts', totalConcepts.toLocaleString(), Date.now() - start)
 
-  // 6/10 Collections
+  // 7/11 Collections
   start = Date.now()
   const totalCollections = await countCollectionsInGraphs(validGraphs)
-  logStep(6, 10, 'Collections', totalCollections.toLocaleString(), Date.now() - start)
+  logStep(7, 11, 'Collections', totalCollections.toLocaleString(), Date.now() - start)
 
-  // 7/10 Ordered collections
+  // 8/11 Ordered collections
   start = Date.now()
   const totalOrderedCollections = await countOrderedCollectionsInGraphs(validGraphs)
-  logStep(7, 10, 'Ordered collections', totalOrderedCollections.toLocaleString(), Date.now() - start)
+  logStep(8, 11, 'Ordered collections', totalOrderedCollections.toLocaleString(), Date.now() - start)
 
-  // 8/10 Relationships
+  // 9/11 Relationships
   start = Date.now()
   const relationships = await detectRelationshipsInGraphs(validGraphs)
   const relCount = Object.values(relationships).filter(Boolean).length
-  logStep(8, 10, 'Relationships', `${relCount}/7`, Date.now() - start)
+  logStep(9, 11, 'Relationships', `${relCount}/7`, Date.now() - start)
 
-  // 9/10 Label predicates
+  // 10/11 Label predicates
   start = Date.now()
   const labelPredicates = await detectLabelPredicatesInGraphs(validGraphs)
   const labelCount = Object.values(labelPredicates).reduce((sum, caps) => sum + Object.keys(caps || {}).length, 0)
-  logStep(9, 10, 'Label predicates', String(labelCount), Date.now() - start)
+  logStep(10, 11, 'Label predicates', String(labelCount), Date.now() - start)
 
-  // 10/10 Languages
+  // 11/11 Languages
   start = Date.now()
   const languages = await detectLanguagesInGraphs(validGraphs)
-  logStep(10, 10, 'Languages', String(languages.length), Date.now() - start)
+  logStep(11, 11, 'Languages', String(languages.length), Date.now() - start)
 
   const totalDuration = Date.now() - overallStart
   console.log('')
@@ -425,6 +436,7 @@ async function main() {
   // Build output
   const analysis: EndpointAnalysis = {
     hasSkosContent: true,
+    supportsJsonResults,
     supportsNamedGraphs: true,
     skosGraphCount: validGraphs.length,
     schemeUris: schemeUris.slice(0, 200),

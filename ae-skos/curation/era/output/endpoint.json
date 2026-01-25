@@ -4,6 +4,7 @@
   "description": "European Union Agency for Railways data interoperability platform. Contains SKOS vocabularies for railway infrastructure, vehicle types, and operational concepts.",
   "analysis": {
     "hasSkosContent": true,
+    "supportsJsonResults": true,
     "supportsNamedGraphs": true,
     "skosGraphCount": 3,
     "schemeUris": [
@@ -320,7 +321,7 @@
         "prefLabel": true
       }
     },
-    "analyzedAt": "2026-01-23T12:58:24.134Z"
+    "analyzedAt": "2026-01-24T22:39:56.111Z"
   },
   "suggestedLanguagePriorities": [
     "en",

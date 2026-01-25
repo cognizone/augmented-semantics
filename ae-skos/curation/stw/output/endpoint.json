@@ -4,6 +4,7 @@
   "description": "The STW Thesaurus for Economics is a comprehensive vocabulary for economics and business studies, maintained by ZBW - Leibniz Information Centre for Economics.",
   "analysis": {
     "hasSkosContent": true,
+    "supportsJsonResults": true,
     "supportsNamedGraphs": false,
     "skosGraphCount": null,
     "schemeUris": [
@@ -44,7 +45,7 @@
         "rdfsLabel": true
       }
     },
-    "analyzedAt": "2026-01-23T13:11:35.900Z"
+    "analyzedAt": "2026-01-24T22:53:47.498Z"
   },
   "suggestedLanguagePriorities": [
     "en",

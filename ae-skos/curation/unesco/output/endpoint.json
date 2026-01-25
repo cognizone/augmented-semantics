@@ -4,6 +4,7 @@
   "description": "The UNESCO Thesaurus is a controlled vocabulary covering education, culture, natural sciences, social and human sciences, communication and information.",
   "analysis": {
     "hasSkosContent": true,
+    "supportsJsonResults": true,
     "supportsNamedGraphs": true,
     "skosGraphCount": 1,
     "schemeUris": [
@@ -57,7 +58,7 @@
         "prefLabel": true
       }
     },
-    "analyzedAt": "2026-01-23T13:11:39.978Z"
+    "analyzedAt": "2026-01-24T22:53:52.919Z"
   },
   "suggestedLanguagePriorities": [
     "en",

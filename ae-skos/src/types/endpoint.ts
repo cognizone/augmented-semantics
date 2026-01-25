@@ -61,6 +61,9 @@ export interface EndpointAnalysis {
   // SKOS content (first check)
   hasSkosContent: boolean              // Has ConceptScheme or Concept
 
+  // SPARQL result formats
+  supportsJsonResults?: boolean | null // true = JSON supported, false = XML-only, null = detection failed
+
   // Named graphs support
   supportsNamedGraphs: boolean | null  // null = not supported by endpoint, false = none, true = has graphs
 

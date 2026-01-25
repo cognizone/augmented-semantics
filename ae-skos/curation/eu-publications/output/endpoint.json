@@ -4,6 +4,7 @@
   "description": "The CELLAR repository of the EU Publications Office. It hosts EU Vocabularies including EuroVoc, corporate bodies, countries, languages, and other authority tables used across EU institutions.",
   "analysis": {
     "hasSkosContent": true,
+    "supportsJsonResults": true,
     "supportsNamedGraphs": true,
     "skosGraphCount": 501,
     "schemeUris": [
@@ -442,7 +443,7 @@
         "xlPrefLabel": true
       }
     },
-    "analyzedAt": "2026-01-23T13:00:25.079Z"
+    "analyzedAt": "2026-01-24T22:41:46.999Z"
   },
   "suggestedLanguagePriorities": [
     "en",

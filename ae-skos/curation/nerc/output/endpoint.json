@@ -4,6 +4,7 @@
   "description": "Managed by the British Oceanographic Data Centre. It provides standard vocabularies for oceanography and earth sciences, used globally to tag marine data.",
   "analysis": {
     "hasSkosContent": true,
+    "supportsJsonResults": true,
     "supportsNamedGraphs": false,
     "skosGraphCount": null,
     "schemeUris": [
@@ -35,7 +36,7 @@
     "languages": [
       {
         "lang": "en",
-        "count": 361907
+        "count": 361909
       },
       {
         "lang": "fr",
@@ -58,7 +59,7 @@
         "count": 2
       }
     ],
-    "totalConcepts": 361917,
+    "totalConcepts": 361919,
     "totalCollections": 303,
     "totalOrderedCollections": 0,
     "relationships": {
@@ -83,7 +84,7 @@
         "dctTitle": true
       }
     },
-    "analyzedAt": "2026-01-23T13:11:32.418Z"
+    "analyzedAt": "2026-01-24T22:53:44.958Z"
   },
   "suggestedLanguagePriorities": [
     "en",

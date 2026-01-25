@@ -4,6 +4,7 @@
   "description": "The National Library of France. It hosts RAMEAU, the primary subject heading authority for French libraries, along with extensive concepts regarding authors, works, and periods.",
   "analysis": {
     "hasSkosContent": true,
+    "supportsJsonResults": true,
     "supportsNamedGraphs": true,
     "skosGraphCount": 1,
     "schemeUris": [
@@ -236,7 +237,7 @@
         "prefLabel": true
       }
     },
-    "analyzedAt": "2026-01-23T12:55:13.744Z"
+    "analyzedAt": "2026-01-24T22:37:06.562Z"
   },
   "suggestedLanguagePriorities": [
     "en",

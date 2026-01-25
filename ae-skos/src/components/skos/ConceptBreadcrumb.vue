@@ -137,10 +137,15 @@ function goHome() {
   }
 }
 
+// Track scheme load requests to ignore stale responses
+let schemeRequestId = 0
+
 // Load schemes from endpoint (uses schemeUris whitelist from analysis)
 async function loadSchemes() {
   const endpoint = endpointStore.current
   if (!endpoint) return
+  const endpointId = endpoint.id
+  const requestId = ++schemeRequestId
   const schemeCapabilities = endpoint.analysis?.labelPredicates?.scheme
 
   // Get whitelist from endpoint analysis
@@ -177,6 +182,10 @@ async function loadSchemes() {
 
   try {
     const results = await executeSparql(endpoint, query, { retries: 1 })
+    if (requestId !== schemeRequestId || endpointStore.current?.id !== endpointId) {
+      logger.debug('ConceptBreadcrumb', 'Ignoring stale schemes response', { requestId, endpointId })
+      return
+    }
 
     // Initialize map with ALL whitelist URIs (so we include schemes without labels)
     const schemeMap = new Map<string, {
@@ -237,6 +246,10 @@ async function loadSchemes() {
       schemeStore.selectScheme(uniqueSchemes[0].uri)
     }
   } catch (e: unknown) {
+    if (requestId !== schemeRequestId || endpointStore.current?.id !== endpointId) {
+      logger.debug('ConceptBreadcrumb', 'Ignoring stale schemes error', { requestId, endpointId })
+      return
+    }
     const errMsg = e && typeof e === 'object' && 'message' in e ? (e as { message: string }).message : 'Unknown error'
     logger.error('ConceptBreadcrumb', 'Failed to load schemes', { error: e, message: errMsg })
     endpointStore.setStatus('error')
@@ -305,6 +318,7 @@ const breadcrumbItems = computed(() => {
 
 // Track current request to ignore stale responses
 let breadcrumbRequestId = 0
+let collectionBreadcrumbRequestId = 0
 
 // Load breadcrumb path for concept using iterative queries (fast on large endpoints)
 async function loadBreadcrumb(uri: string) {
@@ -464,6 +478,8 @@ function navigateTo(uri: string) {
 async function loadCollectionBreadcrumb(collectionUri: string) {
   const endpoint = endpointStore.current
   if (!endpoint) return
+  const endpointId = endpoint.id
+  const requestId = ++collectionBreadcrumbRequestId
   const collectionCapabilities = endpoint.analysis?.labelPredicates?.collection
 
   const scheme = schemeStore.selected
@@ -488,6 +504,10 @@ async function loadCollectionBreadcrumb(collectionUri: string) {
     `)
 
     const results = await executeSparql(endpoint, query, { retries: 0 })
+    if (requestId !== collectionBreadcrumbRequestId || endpointStore.current?.id !== endpointId) {
+      logger.debug('Breadcrumb', 'Ignoring stale collection breadcrumb response', { requestId, endpointId })
+      return
+    }
 
     // Collect labels and notation
     const labels: { value: string; lang: string; type: string }[] = []
@@ -528,6 +548,10 @@ async function loadCollectionBreadcrumb(collectionUri: string) {
 
     conceptStore.setBreadcrumb(path)
   } catch (e) {
+    if (requestId !== collectionBreadcrumbRequestId || endpointStore.current?.id !== endpointId) {
+      logger.debug('Breadcrumb', 'Ignoring stale collection breadcrumb error', { requestId, endpointId })
+      return
+    }
     logger.warn('Breadcrumb', 'Failed to load collection labels', { error: e })
     // Fallback to URI fragment
     conceptStore.setBreadcrumb([{

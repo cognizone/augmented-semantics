@@ -24,6 +24,7 @@ export function useSchemeData() {
   const loading = ref(false)
   const error: Ref<string | null> = ref(null)
   const resolvedPredicates: Ref<Map<string, { prefix: string; localName: string }>> = ref(new Map())
+  let detailsRequestId = 0
 
   /**
    * Load complete scheme details
@@ -31,6 +32,10 @@ export function useSchemeData() {
   async function loadDetails(uri: string): Promise<void> {
     const endpoint = endpointStore.current
     if (!endpoint) return
+    const endpointId = endpoint.id
+    const requestId = ++detailsRequestId
+    const isCurrentRequest = () =>
+      requestId === detailsRequestId && endpointStore.current?.id === endpointId
 
     logger.info('useSchemeData', 'Loading details', { uri })
 
@@ -55,6 +60,9 @@ export function useSchemeData() {
 
     try {
       const results = await executeSparql(endpoint, query, { retries: 1 })
+      if (!isCurrentRequest()) {
+        return
+      }
 
       const schemeDetails: SchemeDetails = {
         uri,
@@ -96,6 +104,9 @@ export function useSchemeData() {
 
       // Load SKOS-XL labels
       await loadXLLabels(uri, schemeDetails, { source: 'useSchemeData' })
+      if (!isCurrentRequest()) {
+        return
+      }
 
       // Load other (non-SKOS) properties
       await loadOtherProperties(uri, schemeDetails, {
@@ -103,6 +114,9 @@ export function useSchemeData() {
         resolveDatatypes: false,
         source: 'useSchemeData',
       })
+      if (!isCurrentRequest()) {
+        return
+      }
 
       // Resolve prefixes for other properties
       if (schemeDetails.otherProperties.length > 0) {
@@ -110,6 +124,9 @@ export function useSchemeData() {
         resolvedPredicates.value = await resolveUris(predicates)
       } else {
         resolvedPredicates.value = new Map()
+      }
+      if (!isCurrentRequest()) {
+        return
       }
 
       logger.info('useSchemeData', 'Loaded details', {
@@ -119,6 +136,9 @@ export function useSchemeData() {
 
       details.value = schemeDetails
     } catch (e: unknown) {
+      if (!isCurrentRequest()) {
+        return
+      }
       const errMsg = e && typeof e === 'object' && 'message' in e
         ? (e as { message: string }).message
         : 'Unknown error'
@@ -126,7 +146,9 @@ export function useSchemeData() {
       error.value = `Failed to load details: ${errMsg}`
       details.value = null
     } finally {
-      loading.value = false
+      if (isCurrentRequest()) {
+        loading.value = false
+      }
     }
   }
 

@@ -4,6 +4,7 @@
   "description": "The official legal portal of the Grand Duchy of Luxembourg. It provides access to legislation and the 'Memorial' (official journal) using a structured legal vocabulary.",
   "analysis": {
     "hasSkosContent": true,
+    "supportsJsonResults": true,
     "supportsNamedGraphs": true,
     "skosGraphCount": 74,
     "schemeUris": [
@@ -266,7 +267,7 @@
         "prefLabel": true
       }
     },
-    "analyzedAt": "2026-01-23T13:11:13.292Z"
+    "analyzedAt": "2026-01-24T22:53:14.079Z"
   },
   "suggestedLanguagePriorities": [
     "en",

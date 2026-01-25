@@ -4,6 +4,7 @@
   "description": "Finto is a Finnish thesaurus and ontology service providing access to vocabularies used in Finland, including YSO (General Finnish Ontology) and other domain-specific vocabularies.",
   "analysis": {
     "hasSkosContent": true,
+    "supportsJsonResults": true,
     "supportsNamedGraphs": true,
     "skosGraphCount": 83,
     "schemeUris": [
@@ -115,7 +116,7 @@
     "languages": [
       {
         "lang": "fi",
-        "count": 1677849
+        "count": 1677883
       },
       {
         "lang": "sv",
@@ -123,7 +124,7 @@
       },
       {
         "lang": "en",
-        "count": 1190215
+        "count": 1190220
       },
       {
         "lang": "se",
@@ -314,7 +315,7 @@
         "count": 511
       }
     ],
-    "totalConcepts": 891967,
+    "totalConcepts": 892001,
     "totalCollections": 1106,
     "totalOrderedCollections": 0,
     "relationships": {
@@ -343,7 +344,7 @@
         "rdfsLabel": true
       }
     },
-    "analyzedAt": "2026-01-23T13:01:37.239Z"
+    "analyzedAt": "2026-01-24T22:43:02.430Z"
   },
   "suggestedLanguagePriorities": [
     "en",

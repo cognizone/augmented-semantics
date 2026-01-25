@@ -38,6 +38,7 @@ export function useCollectionData() {
   const error = ref<string | null>(null)
   const resolvedPredicates: Ref<Map<string, { prefix: string; localName: string }>> = ref(new Map())
   const memberUriSet = new Set<string>()
+  let detailsRequestId = 0
   /**
    * Build query to load collection properties
    * Supports SKOS-XL labels, dct:title, and rdfs:label for broader compatibility
@@ -623,11 +624,17 @@ export function useCollectionData() {
   async function loadDetails(collectionUri: string) {
     const endpoint = endpointStore.current
     if (!endpoint) return
+    const endpointId = endpoint.id
+    const requestId = ++detailsRequestId
+    const isCurrentRequest = () =>
+      requestId === detailsRequestId && endpointStore.current?.id === endpointId
 
     if (!endpointHasCollections(endpoint)) {
       logger.info('CollectionData', 'Skipping - endpoint reports no collections', { uri: collectionUri })
-      error.value = 'Endpoint reports no collections'
-      details.value = null
+      if (isCurrentRequest()) {
+        error.value = 'Endpoint reports no collections'
+        details.value = null
+      }
       return
     }
 
@@ -643,6 +650,9 @@ export function useCollectionData() {
       // Load properties
       const propsQuery = buildDetailsQuery(collectionUri, collectionCapabilities)
       const propsResults = await executeSparql(endpoint, propsQuery, { retries: 1 })
+      if (!isCurrentRequest()) {
+        return
+      }
       const collectionDetails = processDetailsBindings(
         collectionUri,
         propsResults.results.bindings as Array<Record<string, { value: string; 'xml:lang'?: string; datatype?: string }>>
@@ -652,6 +662,9 @@ export function useCollectionData() {
 
       // Load SKOS-XL labels (6/12 real endpoints use xlPrefLabel for collections)
       await loadXLLabels(collectionUri, collectionDetails, { source: 'useCollectionData' })
+      if (!isCurrentRequest()) {
+        return
+      }
 
       if (collectionDetails.inScheme.length > 0) {
         const { loadLabelsProgressively } = useProgressiveLabelLoader()
@@ -668,6 +681,9 @@ export function useCollectionData() {
             })
           }
         )
+        if (!isCurrentRequest()) {
+          return
+        }
       }
 
       // Load other (non-SKOS) properties
@@ -676,6 +692,9 @@ export function useCollectionData() {
         resolveDatatypes: true,
         source: 'useCollectionData',
       })
+      if (!isCurrentRequest()) {
+        return
+      }
 
       // Resolve prefixes for other properties
       if (collectionDetails.otherProperties.length > 0) {
@@ -684,12 +703,18 @@ export function useCollectionData() {
       } else {
         resolvedPredicates.value = new Map()
       }
+      if (!isCurrentRequest()) {
+        return
+      }
 
       details.value = collectionDetails
 
       // Load members separately
-      loadMembers(collectionUri)
+      loadMembers(collectionUri, requestId, endpointId)
     } catch (e: unknown) {
+      if (!isCurrentRequest()) {
+        return
+      }
       const errMsg = e && typeof e === 'object' && 'message' in e
         ? (e as { message: string }).message
         : 'Unknown error'
@@ -697,7 +722,9 @@ export function useCollectionData() {
       error.value = `Failed to load collection: ${errMsg}`
       details.value = null
     } finally {
-      loading.value = false
+      if (isCurrentRequest()) {
+        loading.value = false
+      }
     }
   }
 
@@ -706,19 +733,23 @@ export function useCollectionData() {
    * Uses progressive label loading for better performance with endpoints
    * that have many languages.
    */
-  async function loadMembers(collectionUri: string) {
+  async function loadMembers(collectionUri: string, requestId: number, endpointId: string) {
     const endpoint = endpointStore.current
     if (!endpoint) return
+    const isCurrentRequest = () =>
+      requestId === detailsRequestId && endpointStore.current?.id === endpointId
 
     if (!endpointHasCollections(endpoint)) {
       logger.info('CollectionData', 'Skipping members - endpoint reports no collections', { uri: collectionUri })
-      members.value = []
-      memberCount.value = 0
-      membersLoaded.value = true
-      loadingMembers.value = false
-      loadingMemberLabels.value = false
-      hierarchyLoading.value = false
-      schemeLoading.value = false
+      if (isCurrentRequest()) {
+        members.value = []
+        memberCount.value = 0
+        membersLoaded.value = true
+        loadingMembers.value = false
+        loadingMemberLabels.value = false
+        hierarchyLoading.value = false
+        schemeLoading.value = false
+      }
       return
     }
 
@@ -737,6 +768,9 @@ export function useCollectionData() {
       `)
       try {
         const countResults = await executeSparql(endpoint, countQuery, { retries: 1 })
+        if (!isCurrentRequest()) {
+          return
+        }
         const countValue = countResults.results.bindings[0]?.count?.value
         memberCount.value = countValue ? parseInt(countValue, 10) : null
       } catch (e) {
@@ -747,6 +781,9 @@ export function useCollectionData() {
       // Step 1: Load collection members (no paging)
       const collectionMembersQuery = buildCollectionMembersBaseQuery(collectionUri)
       const collectionResults = await executeSparql(endpoint, collectionMembersQuery, { retries: 1 })
+      if (!isCurrentRequest()) {
+        return
+      }
       const collectionMemberRefs = processMemberMetadataBindings(
         collectionResults.results.bindings as Array<Record<string, { value: string; 'xml:lang'?: string }>>
       )
@@ -754,9 +791,16 @@ export function useCollectionData() {
       // Step 2: Load concept members (fast)
       const metadataQuery = buildConceptMembersBaseQuery(collectionUri)
       const metadataResults = await executeSparql(endpoint, metadataQuery, { retries: 1 })
+      if (!isCurrentRequest()) {
+        return
+      }
       const pageMembers = processMemberMetadataBindings(
         metadataResults.results.bindings as Array<Record<string, { value: string; 'xml:lang'?: string }>>
       )
+
+      if (!isCurrentRequest()) {
+        return
+      }
 
       const combinedMembers = [...collectionMemberRefs, ...pageMembers]
 
@@ -789,6 +833,7 @@ export function useCollectionData() {
           conceptMembers.map(m => m.uri),
           'concept',
           (resolved) => {
+            if (!isCurrentRequest()) return
             labelsResolvedCount.value = resolved.size
             // Update members with resolved labels
             for (const member of members.value) {
@@ -805,6 +850,7 @@ export function useCollectionData() {
           collectionMembers.map(m => m.uri),
           'collection',
           (resolved) => {
+            if (!isCurrentRequest()) return
             labelsResolvedCount.value = Math.max(labelsResolvedCount.value, resolved.size)
             // Update members with resolved labels
             for (const member of members.value) {
@@ -827,6 +873,9 @@ export function useCollectionData() {
           hierarchyLoading.value = true
           const narrowerQuery = buildMemberNarrowerQuery(conceptUris)
           const narrowerResults = await executeSparql(endpoint, narrowerQuery, { retries: 1 })
+          if (!isCurrentRequest()) {
+            return
+          }
           const updates = new Map<string, Partial<ConceptRef>>()
           for (const b of narrowerResults.results.bindings) {
             const uri = b.member?.value
@@ -851,6 +900,9 @@ export function useCollectionData() {
               return
             }
             const schemeResults = await executeSparql(endpoint, schemeQuery, { retries: 1 })
+            if (!isCurrentRequest()) {
+              return
+            }
             const updates = new Map<string, Partial<ConceptRef>>()
             for (const b of schemeResults.results.bindings) {
               const uri = b.member?.value
@@ -872,10 +924,14 @@ export function useCollectionData() {
       logger.info('CollectionData', `Labels loaded for ${members.value.length} members`)
     } catch (e) {
       logger.error('CollectionData', 'Failed to load collection members', { error: e })
-      members.value = []
+      if (isCurrentRequest()) {
+        members.value = []
+      }
     } finally {
-      loadingMembers.value = false
-      loadingMemberLabels.value = false
+      if (isCurrentRequest()) {
+        loadingMembers.value = false
+        loadingMemberLabels.value = false
+      }
     }
   }
 
