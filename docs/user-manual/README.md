@@ -24,21 +24,20 @@ AE SKOS connects directly to SPARQL endpoints in your browser - no backend serve
 
 ### First Launch
 
-When you first open AE SKOS, you'll see an empty interface prompting you to configure an endpoint.
+When you first open AE SKOS, the Endpoint Manager opens automatically with a welcome message and a list of suggested endpoints to help you get started.
 
 AE SKOS can operate in two modes:
 1. **Standard mode** - You add and manage your own endpoints (continue with Quick Start below)
 2. **Pre-configured mode** - Endpoints are already set up by an administrator (skip to [Browsing Concept Schemes](#browsing-concept-schemes))
 
-![Initial screen showing the endpoint configuration prompt](screenshot-first-launch.png)
+![Initial screen showing welcome banner and suggested endpoints](screenshot-first-launch.png)
 
 ### Quick Start
 
-1. Click the endpoint dropdown in the header
-2. Select "Manage endpoints..."
-3. Add your SPARQL endpoint URL
-4. Select a concept scheme
-5. Start browsing!
+1. Pick a **suggested endpoint** from the list, or click "Add Endpoint" for a custom URL
+2. The endpoint is automatically analyzed
+3. Select a concept scheme from the dropdown
+4. Start browsing!
 
 ---
 
@@ -51,6 +50,16 @@ AE SKOS can operate in two modes:
 Click the endpoint badge in the header toolbar, then select "Manage endpoints..." from the dropdown.
 
 <img src="screenshot-endpoint-dropdown.png" alt="Endpoint dropdown showing the Manage endpoints option" width="300">
+
+### Suggested Endpoints
+
+The Endpoint Manager shows a curated list of public SKOS endpoints at the top:
+
+- Click **Add** next to any endpoint to add it to your list
+- Click **Import All** to add all suggested endpoints at once
+- Suggested endpoints are pre-analyzed with detected languages and capabilities
+
+Once added, endpoints appear in your "My Endpoints" list below.
 
 ### Adding a New Endpoint
 
@@ -102,6 +111,8 @@ To switch to a different endpoint, click the link icon (<img src="icon-link.svg"
 ### Editing an Endpoint
 
 Click the configure button (<img src="icon-tune.svg" height="16">) next to any endpoint to reopen the wizard with existing settings.
+
+**Tip:** You can also click anywhere on an endpoint row to open the configuration wizard.
 
 ### Deleting an Endpoint
 
@@ -341,20 +352,27 @@ Results show:
 
 ### Search Settings
 
-Click the settings icon (⚙️) next to the search input to configure:
+Click the settings icon (⚙️) next to the search input to open the Settings dialog to the Search section.
 
-<!-- IMAGE: screenshot-search-settings.png -->
-![Search settings popover](screenshot-search-settings.png)
-
-**Search In:**
+**Search in:**
 - Preferred Labels (default: on)
 - Alternative Labels (default: on)
 - Definitions (default: off)
-- Notations (default: off)
 
-**Options:**
-- Case Sensitive: Match exact case
-- Whole Word: Match complete words only
+**Match Mode:**
+
+| Mode | Description |
+|------|-------------|
+| Contains | Substring match anywhere (default) |
+| Starts with | Prefix match at the beginning |
+| Exact | Full label must match |
+| Regex | Regular expression pattern |
+
+**Scope:**
+- Current scheme only (default when a scheme is selected)
+- All schemes - search across the entire endpoint
+
+Settings are saved automatically and persist across sessions. When you change settings, any active search re-runs automatically.
 
 ### Navigating Results
 
@@ -404,27 +422,29 @@ History is saved to your browser's localStorage and persists across sessions. Up
 
 ### Opening Settings
 
-Click the settings icon (⚙️) in the header toolbar.
+Click the settings icon (⚙️) in the header toolbar. The Settings dialog uses a sidebar navigation with six sections.
 
 <!-- IMAGE: screenshot-settings-dialog.png -->
-![Settings dialog with all options](screenshot-settings-dialog.png)
+![Settings dialog with sidebar navigation](screenshot-settings-dialog.png)
 
-### Language
+**Quick Dark Mode Toggle:** You can toggle dark mode directly from the header toolbar using the sun/moon icon, without opening the Settings dialog.
 
-Select your preferred language for viewing labels. Only languages detected in the current endpoint are shown.
-
-### Display Options
+### Display Section
 
 | Setting | Description |
 |---------|-------------|
-| Dark Mode | Toggle dark/light color scheme |
 | Show Datatypes | Display datatype tags (e.g., xsd:date) on values |
+| Show xsd:string | Show string datatype explicitly |
 | Show Language Tags | Display language codes on labels |
 | Include Preferred Language | Show tag even when label matches your preference |
+| Show Notation in Labels | Prefix labels with notation codes |
+| Show Orphans Selector | Include "Orphan Concepts" in scheme dropdown |
 
-**Quick Dark Mode Toggle:** You can also toggle dark mode directly from the header toolbar using the sun/moon icon, without opening the Settings dialog.
+### Language Section
 
-### Deprecation Settings
+Select your preferred language for viewing labels. Only languages detected in the current endpoint are shown. The dropdown shows all available languages with their full names.
+
+### Deprecation Section
 
 | Setting | Description |
 |---------|-------------|
@@ -435,18 +455,33 @@ Configure which conditions indicate deprecation:
 - OWL Deprecated: `owl:deprecated = true`
 - EU Vocabularies Status: Status not equal to CURRENT
 
-### Developer Options
+### Search Section
+
+Configure search behavior (also accessible via the settings button in the Search panel):
+
+| Setting | Description |
+|---------|-------------|
+| Search in Preferred Labels | Include prefLabel in search |
+| Search in Alternative Labels | Include altLabel in search |
+| Search in Definitions | Include definitions in search |
+| Match Mode | Contains, Starts with, Exact, or Regex |
+| Search All Schemes | Ignore current scheme filter |
+
+### Developer Section
 
 | Setting | Description |
 |---------|-------------|
 | Developer Mode | Enable advanced debugging features |
+| Log Level | Control console logging verbosity |
 
 When Developer Mode is enabled:
 - A download button appears next to each endpoint in the Endpoint Manager
 - Click the download button to export endpoint data as JSON
 - The export includes: endpoint name, URL, analysis data, and language priorities
 
-This feature is useful for debugging endpoint configurations or sharing setup information.
+### About Section
+
+View build information including version number, build date, and links to source code and documentation.
 
 ### Pre-configured Deployments
 
