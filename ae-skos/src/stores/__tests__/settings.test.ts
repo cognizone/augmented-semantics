@@ -61,6 +61,15 @@ describe('settings store', () => {
       const store = useSettingsStore()
       expect(store.showNotationInLabels).toBe(true)
     })
+
+    it('starts with search defaults', () => {
+      const store = useSettingsStore()
+      expect(store.searchInPrefLabel).toBe(true)
+      expect(store.searchInAltLabel).toBe(true)
+      expect(store.searchInDefinition).toBe(false)
+      expect(store.searchMatchMode).toBe('contains')
+      expect(store.searchAllSchemes).toBe(false)
+    })
   })
 
   describe('setDarkMode', () => {
@@ -412,6 +421,11 @@ describe('settings store', () => {
       store.setDeprecationRules([])
       store.showOrphansSelector = false
       store.showNotationInLabels = false
+      store.searchInPrefLabel = false
+      store.searchInAltLabel = false
+      store.searchInDefinition = true
+      store.searchMatchMode = 'regex'
+      store.searchAllSchemes = true
       store.developerMode = true
 
       // Reset
@@ -427,6 +441,11 @@ describe('settings store', () => {
       expect(store.deprecationRules).toHaveLength(2)
       expect(store.showOrphansSelector).toBe(true)
       expect(store.showNotationInLabels).toBe(true)
+      expect(store.searchInPrefLabel).toBe(true)
+      expect(store.searchInAltLabel).toBe(true)
+      expect(store.searchInDefinition).toBe(false)
+      expect(store.searchMatchMode).toBe('contains')
+      expect(store.searchAllSchemes).toBe(false)
       expect(store.developerMode).toBe(false)
     })
   })
@@ -439,6 +458,8 @@ describe('settings store', () => {
         showStringDatatypes: true,
         showLanguageTags: false,
         showPreferredLanguageTag: true,
+        searchMatchMode: 'startsWith',
+        searchAllSchemes: true,
       }
 
       vi.mocked(localStorage.getItem).mockReturnValue(JSON.stringify(storedSettings))
@@ -450,6 +471,8 @@ describe('settings store', () => {
       expect(store.showStringDatatypes).toBe(true)
       expect(store.showLanguageTags).toBe(false)
       expect(store.showPreferredLanguageTag).toBe(true)
+      expect(store.searchMatchMode).toBe('startsWith')
+      expect(store.searchAllSchemes).toBe(true)
     })
 
     it('uses defaults when localStorage is empty', () => {

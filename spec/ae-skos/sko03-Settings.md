@@ -28,6 +28,13 @@ interface SettingsState {
   // Deprecation Detection
   deprecationRules: DeprecationRule[]
 
+  // Search
+  searchInPrefLabel: boolean
+  searchInAltLabel: boolean
+  searchInDefinition: boolean
+  searchMatchMode: 'contains' | 'startsWith' | 'exact' | 'regex'
+  searchAllSchemes: boolean
+
   // Orphan Detection
   orphanDetectionStrategy: 'auto' | 'fast' | 'slow'
   orphanFastPrefilter: boolean
@@ -80,6 +87,29 @@ Configure which rules determine if a concept is deprecated.
 
 See [sko04-ConceptTree](./sko04-ConceptTree.md#deprecation-display) for visual display details.
 
+### Search Settings
+
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `searchInPrefLabel` | boolean | `true` | Search in preferred labels |
+| `searchInAltLabel` | boolean | `true` | Search in alternative labels |
+| `searchInDefinition` | boolean | `false` | Search in definitions |
+| `searchMatchMode` | enum | `'contains'` | Match algorithm |
+| `searchAllSchemes` | boolean | `false` | Ignore scheme filter |
+
+**Match Modes:**
+
+| Value | Description |
+|-------|-------------|
+| `contains` | Substring match (default) |
+| `startsWith` | Prefix match |
+| `exact` | Exact match |
+| `regex` | Regular expression (case-insensitive SPARQL regex) |
+
+Search settings are persisted to localStorage and apply globally. Changing settings while a search is active triggers automatic re-search.
+
+See [sko07-SearchBox](./sko07-SearchBox.md) for search implementation.
+
 ### Orphan Detection
 
 | Setting | Type | Default | Description |
@@ -118,49 +148,41 @@ See [sko11-DeveloperTools](./sko11-DeveloperTools.md) for logging details.
 
 ### Dialog Structure
 
+The Settings dialog uses a sidebar navigation layout with six sections:
+
 ```
-+-------------------------------------------+
-| Settings                              [X] |
-+-------------------------------------------+
-| DISPLAY                                   |
-| +---------------------------------------+ |
-| | [x] Dark mode                         | |
-| | [x] Show orphans selector             | |
-| | [x] Show deprecation indicators       | |
-| | [x] Show notation in labels           | |
-| +---------------------------------------+ |
-|                                           |
-| LABELS & TAGS                             |
-| +---------------------------------------+ |
-| | [x] Show datatypes                    | |
-| |   [ ] Show xsd:string                 | |
-| | [x] Show language tags                | |
-| |   [ ] Show preferred language tag     | |
-| +---------------------------------------+ |
-|                                           |
-| DEPRECATION RULES                         |
-| +---------------------------------------+ |
-| | [x] OWL deprecated (owl:deprecated)   | |
-| | [x] EU Vocabularies status            | |
-| +---------------------------------------+ |
-|                                           |
-| ORPHAN DETECTION                          |
-| +---------------------------------------+ |
-| | Strategy:                             | |
-| |   (*) Auto (recommended)              | |
-| |   ( ) Fast only                       | |
-| |   ( ) Slow only                       | |
-| |                                       | |
-| | [ ] Fast prefilter                    | |
-| +---------------------------------------+ |
-|                                           |
-| DEVELOPER                                 |
-| +---------------------------------------+ |
-| | [ ] Developer mode                    | |
-| | Log level: [Warn v]                   | |
-| +---------------------------------------+ |
-+-------------------------------------------+
++---------------------------------------------------------------+
+| Settings                                                  [X] |
++---------------------------------------------------------------+
+| +-----------+ +---------------------------------------------+ |
+| | SETTINGS  | | Display                                     | |
+| |           | | Control label formatting and data tags.     | |
+| | Display   | |                                             | |
+| | Language  | | +=========================================+ | |
+| | Deprec... | | | [x] Show datatypes                      | | |
+| | Search    | | |   [ ] Show xsd:string                   | | |
+| | Developer | | | [x] Show language tags                  | | |
+| | About     | | |   [ ] Show preferred language tag       | | |
+| |           | | | [x] Show notation in labels             | | |
+| |           | | | [x] Show orphans selector               | | |
+| +-----------+ +=========================================+ | |
++---------------------------------------------------------------+
 ```
+
+### Navigation Sections
+
+| Section | Icon | Description |
+|---------|------|-------------|
+| Display | `palette` | Labels, tags, notation settings |
+| Language | `language` | Preferred label language |
+| Deprecation | `warning` | Indicators & detection rules |
+| Search | `manage_search` | Match mode & scope settings |
+| Developer | `code` | Diagnostics & tools |
+| About | `info` | Build info & source links |
+
+### Responsive Behavior
+
+On narrow screens (<900px), the sidebar collapses to a horizontal scrollable tab bar.
 
 ### Access
 
@@ -212,6 +234,13 @@ const defaultSettings: SettingsState = {
     { id: 'euvoc-status', name: 'EU Vocabularies Status', enabled: true,
       predicate: 'euvoc:status', valueCheck: 'notEquals', value: 'http://publications.europa.eu/resource/authority/concept-status/CURRENT' },
   ],
+
+  // Search
+  searchInPrefLabel: true,
+  searchInAltLabel: true,
+  searchInDefinition: false,
+  searchMatchMode: 'contains',
+  searchAllSchemes: false,
 
   // Orphan Detection
   orphanDetectionStrategy: 'auto',

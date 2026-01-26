@@ -15,6 +15,7 @@ import { ref, computed } from 'vue'
 export type ViewMode = 'tree' | 'flat'
 export type MobileTab = 'tree' | 'details' | 'search'
 export type SidebarTab = 'browse' | 'search' | 'recent'
+export type SettingsSection = 'search' | 'language' | 'display' | 'deprecation' | 'developer' | 'about'
 
 export const useUIStore = defineStore('ui', () => {
   // State - Loading
@@ -22,6 +23,8 @@ export const useUIStore = defineStore('ui', () => {
 
   // State - Dialogs
   const openDialogs = ref<string[]>([])
+  const settingsDialogOpen = ref(false)
+  const settingsSection = ref<SettingsSection>('display')
 
   // State - Layout
   const sidebarOpen = ref(true)
@@ -53,6 +56,22 @@ export const useUIStore = defineStore('ui', () => {
   // Actions - Dialogs
   function closeAllDialogs() {
     openDialogs.value = []
+    settingsDialogOpen.value = false
+  }
+
+  function setSettingsDialogOpen(open: boolean) {
+    settingsDialogOpen.value = open
+  }
+
+  function setSettingsSection(section: SettingsSection) {
+    settingsSection.value = section
+  }
+
+  function openSettingsDialog(section?: SettingsSection) {
+    if (section) {
+      settingsSection.value = section
+    }
+    settingsDialogOpen.value = true
   }
 
   // Actions - Layout
@@ -133,6 +152,8 @@ export const useUIStore = defineStore('ui', () => {
     // State
     loading,
     openDialogs,
+    settingsDialogOpen,
+    settingsSection,
     sidebarOpen,
     viewMode,
     mobileTab,
@@ -150,6 +171,9 @@ export const useUIStore = defineStore('ui', () => {
     setViewMode,
     setMobileTab,
     setSidebarTab,
+    setSettingsDialogOpen,
+    setSettingsSection,
+    openSettingsDialog,
     updateBreakpoints,
     initResponsive,
     destroyResponsive,

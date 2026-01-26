@@ -18,10 +18,6 @@ import { useDelayedLoading, useLabelResolver } from '../../composables'
 import { getRefLabel } from '../../utils/displayUtils'
 import type { SearchResult } from '../../types'
 import Listbox from 'primevue/listbox'
-import Dialog from 'primevue/dialog'
-import Button from 'primevue/button'
-import Checkbox from 'primevue/checkbox'
-import RadioButton from 'primevue/radiobutton'
 import ProgressSpinner from 'primevue/progressspinner'
 import Message from 'primevue/message'
 
@@ -45,16 +41,8 @@ function formatSearchLabel(result: SearchResult): string {
 // Local state
 const searchInput = ref('')
 const searchInputRef = ref<{ $el: HTMLInputElement } | null>(null)
-const showSettings = ref(false)
 const error = ref<string | null>(null)
 const debounceTimer = ref<number | null>(null)
-
-// Search settings
-const searchInPrefLabel = ref(true)
-const searchInAltLabel = ref(true)
-const searchInDefinition = ref(false)
-const matchMode = ref<'contains' | 'startsWith' | 'exact' | 'regex'>('contains')
-const searchAllSchemes = ref(false)
 
 // Computed
 const results = computed(() => conceptStore.searchResults)
@@ -100,7 +88,7 @@ async function executeSearch() {
   const escapedQuery = escapeSparqlString(query)
   let filterCondition: string
 
-  switch (matchMode.value) {
+  switch (settingsStore.searchMatchMode) {
     case 'startsWith':
       filterCondition = `STRSTARTS(LCASE(?matchedLabel), LCASE("${escapedQuery}"))`
       break
@@ -119,13 +107,13 @@ async function executeSearch() {
   // Build label match patterns
   const labelPatterns: string[] = []
 
-  if (searchInPrefLabel.value) {
+  if (settingsStore.searchInPrefLabel) {
     labelPatterns.push(`{ ?concept skos:prefLabel ?matchedLabel . BIND("prefLabel" AS ?matchType) }`)
   }
-  if (searchInAltLabel.value) {
+  if (settingsStore.searchInAltLabel) {
     labelPatterns.push(`{ ?concept skos:altLabel ?matchedLabel . BIND("altLabel" AS ?matchType) }`)
   }
-  if (searchInDefinition.value) {
+  if (settingsStore.searchInDefinition) {
     labelPatterns.push(`{ ?concept skos:definition ?matchedLabel . BIND("definition" AS ?matchType) }`)
   }
 
@@ -136,7 +124,7 @@ async function executeSearch() {
   const labelUnion = labelPatterns.join(' UNION ')
 
   // Build scheme filter
-  const schemeFilter = !searchAllSchemes.value && schemeStore.selected
+  const schemeFilter = !settingsStore.searchAllSchemes && schemeStore.selected
     ? `?concept skos:inScheme <${schemeStore.selected.uri}> .`
     : ''
 
@@ -215,7 +203,7 @@ function clearSearch() {
 watch(
   () => schemeStore.selectedUri,
   () => {
-    if (hasQuery.value && !searchAllSchemes.value) {
+    if (hasQuery.value && !settingsStore.searchAllSchemes) {
       executeSearch()
     }
   }
@@ -229,6 +217,21 @@ watch(
     const inputEl = searchInputRef.value?.$el
     inputEl?.focus()
     inputEl?.select()
+  }
+)
+
+watch(
+  () => [
+    settingsStore.searchInPrefLabel,
+    settingsStore.searchInAltLabel,
+    settingsStore.searchInDefinition,
+    settingsStore.searchMatchMode,
+    settingsStore.searchAllSchemes,
+  ],
+  () => {
+    if (hasQuery.value) {
+      executeSearch()
+    }
   }
 )
 </script>
@@ -259,8 +262,8 @@ watch(
       </div>
       <button
         class="settings-btn"
-        title="Search settings"
-        @click="showSettings = true"
+        title="Settings"
+        @click="uiStore.openSettingsDialog('search')"
       >
         <span class="material-symbols-outlined">tune</span>
       </button>
@@ -315,70 +318,6 @@ watch(
       <small>Try different keywords or adjust search settings</small>
     </div>
 
-    <!-- Settings Dialog -->
-    <Dialog
-      v-model:visible="showSettings"
-      header="Search Settings"
-      :style="{ width: '350px' }"
-      :modal="true"
-      position="top"
-    >
-      <div class="settings-content">
-        <div class="setting-group">
-          <label class="group-label">Search in:</label>
-          <div class="checkbox-group">
-            <div class="checkbox-item">
-              <Checkbox v-model="searchInPrefLabel" :binary="true" inputId="prefLabel" />
-              <label for="prefLabel">Preferred labels</label>
-            </div>
-            <div class="checkbox-item">
-              <Checkbox v-model="searchInAltLabel" :binary="true" inputId="altLabel" />
-              <label for="altLabel">Alternative labels</label>
-            </div>
-            <div class="checkbox-item">
-              <Checkbox v-model="searchInDefinition" :binary="true" inputId="definition" />
-              <label for="definition">Definitions</label>
-            </div>
-          </div>
-        </div>
-
-        <div class="setting-group">
-          <label class="group-label">Match mode:</label>
-          <div class="radio-group">
-            <div class="radio-item">
-              <RadioButton v-model="matchMode" inputId="contains" value="contains" />
-              <label for="contains">Contains</label>
-            </div>
-            <div class="radio-item">
-              <RadioButton v-model="matchMode" inputId="startsWith" value="startsWith" />
-              <label for="startsWith">Starts with</label>
-            </div>
-            <div class="radio-item">
-              <RadioButton v-model="matchMode" inputId="exact" value="exact" />
-              <label for="exact">Exact match</label>
-            </div>
-            <div class="radio-item">
-              <RadioButton v-model="matchMode" inputId="regex" value="regex" />
-              <label for="regex">Regular expression</label>
-            </div>
-          </div>
-        </div>
-
-        <div class="setting-group">
-          <label class="group-label">Scope:</label>
-          <div class="checkbox-group">
-            <div class="checkbox-item">
-              <Checkbox v-model="searchAllSchemes" :binary="true" inputId="allSchemes" />
-              <label for="allSchemes">Search all schemes</label>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <template #footer>
-        <Button label="Apply" @click="showSettings = false; hasQuery && executeSearch()" />
-      </template>
-    </Dialog>
   </div>
 </template>
 
@@ -570,41 +509,4 @@ watch(
   font-size: 0.75rem;
 }
 
-.settings-content {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.setting-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.group-label {
-  font-weight: 600;
-  font-size: 0.875rem;
-}
-
-.checkbox-group,
-.radio-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  padding-left: 0.5rem;
-}
-
-.checkbox-item,
-.radio-item {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.checkbox-item label,
-.radio-item label {
-  font-size: 0.875rem;
-  cursor: pointer;
-}
 </style>

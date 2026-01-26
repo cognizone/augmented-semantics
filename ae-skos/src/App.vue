@@ -51,9 +51,9 @@ const buildDateFormatted = computed(() => {
   })
 })
 
-const showSettingsDialog = ref(false)
 const endpointMenu = ref()
 const languageMenu = ref()
+const settingsLanguageMenu = ref()
 
 // Endpoint menu items
 const endpointMenuItems = computed(() => {
@@ -114,6 +114,18 @@ const languageMenuItems = computed(() => {
   }))
 })
 
+const settingsLanguageMenuItems = computed(() => {
+  if (!languageOptions.value.length) {
+    return [
+      {
+        label: 'No languages detected yet',
+        disabled: true,
+      },
+    ]
+  }
+  return languageMenuItems.value
+})
+
 // Log level options for settings dropdown
 const logLevelOptions = [
   { label: 'Debug (verbose)', value: 'debug' },
@@ -129,6 +141,27 @@ const orphanDetectionStrategyOptions = [
   { label: 'Fast (single query)', value: 'fast' },
   { label: 'Slow (multi query)', value: 'slow' },
 ]
+
+const searchMatchModeOptions = [
+  { label: 'Contains', value: 'contains' },
+  { label: 'Starts with', value: 'startsWith' },
+  { label: 'Exact match', value: 'exact' },
+  { label: 'Regular expression', value: 'regex' },
+]
+
+const settingsNavItems = [
+  { id: 'display', label: 'Display', icon: 'palette', hint: 'Labels, tags, notation' },
+  { id: 'language', label: 'Language', icon: 'language', hint: 'Preferred label language' },
+  { id: 'deprecation', label: 'Deprecation', icon: 'warning', hint: 'Indicators & rules' },
+  { id: 'search', label: 'Search', icon: 'manage_search', hint: 'Match & scope' },
+  { id: 'developer', label: 'Developer', icon: 'code', hint: 'Diagnostics & tools' },
+  { id: 'about', label: 'About', icon: 'info', hint: 'Build info' },
+]
+
+const settingsSection = computed({
+  get: () => uiStore.settingsSection,
+  set: (value) => uiStore.setSettingsSection(value),
+})
 
 // Language display names
 const languageNames: Record<string, string> = {
@@ -255,7 +288,7 @@ onUnmounted(() => {
               {{ settingsStore.darkMode ? 'light_mode' : 'dark_mode' }}
             </span>
           </button>
-          <button class="header-icon-btn" aria-label="Settings" @click="showSettingsDialog = true">
+          <button class="header-icon-btn" aria-label="Settings" @click="uiStore.openSettingsDialog()">
             <span class="material-symbols-outlined">settings</span>
           </button>
         </div>
@@ -286,221 +319,302 @@ onUnmounted(() => {
 
     <!-- Settings Dialog -->
     <Dialog
-      v-model:visible="showSettingsDialog"
+      v-model:visible="uiStore.settingsDialogOpen"
       header="Settings"
-      :style="{ width: '420px' }"
+      :style="{ width: '820px' }"
       :modal="true"
       position="top"
+      class="settings-dialog"
     >
-      <div class="settings-content">
-        <!-- Language Section -->
-        <section class="settings-section">
-          <h3 class="section-title">
-            <span class="material-symbols-outlined section-icon">language</span>
-            Language
-          </h3>
-          <div class="setting-row">
-            <Select
-              v-model="languageStore.preferred"
-              :options="languageOptions"
-              optionLabel="label"
-              optionValue="value"
-              placeholder="Select language"
-              class="language-select select-compact"
-              @change="(e: any) => languageStore.setPreferred(e.value)"
-            />
-            <p class="setting-hint">
-              Labels and descriptions will be shown in this language when available
-            </p>
-            <p v-if="!languageOptions.length" class="setting-hint warning">
-              Connect to an endpoint and run analysis to detect languages
-            </p>
-          </div>
-        </section>
-
-        <!-- Display Section -->
-        <section class="settings-section">
-          <h3 class="section-title">
-            <span class="material-symbols-outlined section-icon">palette</span>
-            Display
-          </h3>
-
-          <div class="setting-row">
-            <label class="checkbox-label">
-              <Checkbox v-model="settingsStore.showDatatypes" :binary="true" />
-              <span class="checkbox-text">
-                Show datatypes
-                <small>Display datatype tags (e.g., xsd:date) on property values</small>
-              </span>
-            </label>
-          </div>
-
-          <div v-if="settingsStore.showDatatypes" class="setting-row nested">
-            <label class="checkbox-label">
-              <Checkbox v-model="settingsStore.showStringDatatypes" :binary="true" />
-              <span class="checkbox-text">
-                Show xsd:string
-                <small>Display xsd:string datatype tags explicitly</small>
-              </span>
-            </label>
-          </div>
-
-          <div class="setting-row">
-            <label class="checkbox-label">
-              <Checkbox v-model="settingsStore.showLanguageTags" :binary="true" />
-              <span class="checkbox-text">
-                Show language tags
-                <small>Display language tags on labels when different from preferred</small>
-              </span>
-            </label>
-          </div>
-
-          <div v-if="settingsStore.showLanguageTags" class="setting-row nested">
-            <label class="checkbox-label">
-              <Checkbox v-model="settingsStore.showPreferredLanguageTag" :binary="true" />
-              <span class="checkbox-text">
-                Include preferred language
-                <small>Also show tag when label matches preferred language</small>
-              </span>
-            </label>
-          </div>
-
-          <div class="setting-row">
-            <label class="checkbox-label">
-              <Checkbox v-model="settingsStore.showNotationInLabels" :binary="true" />
-              <span class="checkbox-text">
-                Show notation in labels
-                <small>Include notation prefixes in labels and sorting</small>
-              </span>
-            </label>
-          </div>
-
-          <div class="setting-row">
-            <label class="checkbox-label">
-              <Checkbox v-model="settingsStore.showOrphansSelector" :binary="true" />
-              <span class="checkbox-text">
-                Show orphans selector
-                <small>Display "Orphan Concepts" option in scheme dropdown</small>
-              </span>
-            </label>
-          </div>
-        </section>
-
-        <!-- Deprecation Section -->
-        <section class="settings-section">
-          <h3 class="section-title">
-            <span class="material-symbols-outlined section-icon">warning</span>
-            Deprecation
-          </h3>
-
-          <div class="setting-row">
-            <label class="checkbox-label">
-              <Checkbox v-model="settingsStore.showDeprecationIndicator" :binary="true" />
-              <span class="checkbox-text">
-                Show deprecation indicators
-                <small>Display visual indicators for deprecated concepts</small>
-              </span>
-            </label>
-          </div>
-
-          <div v-if="settingsStore.showDeprecationIndicator" class="detection-rules">
-            <div class="rules-label">Detection Rules</div>
-            <div v-for="rule in settingsStore.deprecationRules" :key="rule.id" class="setting-row nested">
-              <label class="checkbox-label">
-                <Checkbox v-model="rule.enabled" :binary="true" />
-                <span class="checkbox-text">
-                  {{ rule.label }}
-                  <small class="rule-value">
-                    {{ rule.condition === 'equals' ? '=' : rule.condition === 'not-equals' ? '≠' : 'exists' }}
-                    {{ rule.value ? rule.value.split('/').pop() : '' }}
-                  </small>
-                </span>
-              </label>
+      <div class="settings-shell">
+        <aside class="settings-nav">
+          <div class="settings-nav-title">Settings</div>
+          <button
+            v-for="item in settingsNavItems"
+            :key="item.id"
+            class="settings-nav-item"
+            :class="{ active: settingsSection === item.id }"
+            @click="settingsSection = item.id"
+          >
+            <span class="material-symbols-outlined">{{ item.icon }}</span>
+            <span class="settings-nav-label">{{ item.label }}</span>
+            <span class="settings-nav-hint">{{ item.hint }}</span>
+          </button>
+        </aside>
+        <section class="settings-panel">
+          <div v-if="settingsSection === 'search'" class="settings-panel-content">
+            <div class="panel-header">
+              <h3 class="panel-title">Search</h3>
+              <p class="panel-subtitle">Tune match behavior, scope, and label targets.</p>
+            </div>
+            <div class="settings-group">
+              <div class="settings-group-title">Match mode</div>
+              <div class="setting-row">
+                <Select
+                  v-model="settingsStore.searchMatchMode"
+                  :options="searchMatchModeOptions"
+                  optionLabel="label"
+                  optionValue="value"
+                  class="select-compact full-width"
+                />
+                <p class="setting-hint">
+                  Regular expression mode uses case-insensitive SPARQL regex.
+                </p>
+              </div>
+            </div>
+            <div class="settings-group">
+              <div class="settings-group-title">Search in</div>
+              <div class="setting-row">
+                <label class="checkbox-label">
+                  <Checkbox v-model="settingsStore.searchInPrefLabel" :binary="true" />
+                  <span class="checkbox-text">
+                    Preferred labels
+                    <small>Match concepts by prefLabel</small>
+                  </span>
+                </label>
+              </div>
+              <div class="setting-row">
+                <label class="checkbox-label">
+                  <Checkbox v-model="settingsStore.searchInAltLabel" :binary="true" />
+                  <span class="checkbox-text">
+                    Alternative labels
+                    <small>Match concepts by altLabel</small>
+                  </span>
+                </label>
+              </div>
+              <div class="setting-row">
+                <label class="checkbox-label">
+                  <Checkbox v-model="settingsStore.searchInDefinition" :binary="true" />
+                  <span class="checkbox-text">
+                    Definitions
+                    <small>Search inside skos:definition</small>
+                  </span>
+                </label>
+              </div>
+            </div>
+            <div class="settings-group">
+              <div class="settings-group-title">Scope</div>
+              <div class="setting-row">
+                <label class="checkbox-label">
+                  <Checkbox v-model="settingsStore.searchAllSchemes" :binary="true" />
+                  <span class="checkbox-text">
+                    Search all schemes
+                    <small>Ignore the current scheme filter</small>
+                  </span>
+                </label>
+              </div>
             </div>
           </div>
-        </section>
 
-        <!-- Developer Section -->
-        <section class="settings-section">
-          <h3 class="section-title">
-            <span class="material-symbols-outlined section-icon">code</span>
-            Developer
-          </h3>
-
-          <div v-if="!config.configMode" class="setting-row">
-            <label class="checkbox-label">
-              <Checkbox v-model="settingsStore.developerMode" :binary="true" />
-              <span class="checkbox-text">
-                Developer mode
-                <small>Enable developer tools like JSON export in endpoint manager</small>
-              </span>
-            </label>
-          </div>
-
-          <div class="setting-row">
-            <label class="setting-label">Log level</label>
-            <Select
-              v-model="settingsStore.logLevel"
-              :options="logLevelOptions"
-              optionLabel="label"
-              optionValue="value"
-              class="log-level-select select-compact"
-            />
-            <p class="setting-hint">
-              Minimum log level shown in browser console (F12). All logs are stored in history.
-            </p>
-          </div>
-
-          <div class="setting-row">
-            <label class="setting-label">Orphan detection strategy</label>
-            <Select
-              v-model="settingsStore.orphanDetectionStrategy"
-              :options="orphanDetectionStrategyOptions"
-              optionLabel="label"
-              optionValue="value"
-              class="orphan-strategy-select select-compact"
-            />
-            <p class="setting-hint">
-              Method for finding orphan concepts. Auto tries fast single-query with fallback to slow multi-query.
-            </p>
-          </div>
-
-          <div class="setting-row">
-            <label class="checkbox-label">
-              <Checkbox v-model="settingsStore.orphanFastPrefilter" :binary="true" />
-              <span class="checkbox-text">
-                Prefilter orphan candidates (fast mode)
-                <small>Excludes direct scheme links first, then runs hierarchy checks on remaining concepts.</small>
-              </span>
-            </label>
-          </div>
-        </section>
-
-        <!-- About Section -->
-        <section class="settings-section about-section">
-          <h3 class="section-title">
-            <span class="material-symbols-outlined section-icon">info</span>
-            About
-          </h3>
-          <div class="about-info">
-            <div class="about-row">
-              <span class="about-label">Version</span>
-              <span class="about-value">{{ appVersion }}</span>
+          <div v-if="settingsSection === 'language'" class="settings-panel-content">
+            <div class="panel-header">
+              <h3 class="panel-title">Language</h3>
+              <p class="panel-subtitle">Choose the preferred language for labels and descriptions.</p>
             </div>
-            <div class="about-row">
-              <span class="about-label">Build</span>
-              <span class="about-value mono">{{ gitCommit }}</span>
+            <div class="settings-group">
+              <div class="setting-row">
+                <button
+                  class="dropdown-trigger settings-language-trigger"
+                  @click="(e) => settingsLanguageMenu.toggle(e)"
+                  aria-label="Select language"
+                >
+                  <span class="material-symbols-outlined">language</span>
+                  <span>{{ getLanguageName(languageStore.preferred) }}</span>
+                  <span class="material-symbols-outlined dropdown-arrow">arrow_drop_down</span>
+                </button>
+                <Menu
+                  ref="settingsLanguageMenu"
+                  :model="settingsLanguageMenuItems"
+                  :popup="true"
+                  appendTo="body"
+                  :baseZIndex="2000"
+                />
+                <p class="setting-hint">
+                  Labels and descriptions will be shown in this language when available.
+                </p>
+                <p v-if="!languageOptions.length" class="setting-hint warning">
+                  Connect to an endpoint and run analysis to detect languages.
+                </p>
+              </div>
             </div>
-            <div class="about-row">
-              <span class="about-label">Built</span>
-              <span class="about-value">{{ buildDateFormatted }}</span>
+          </div>
+
+          <div v-if="settingsSection === 'display'" class="settings-panel-content">
+            <div class="panel-header">
+              <h3 class="panel-title">Display</h3>
+              <p class="panel-subtitle">Control label formatting and data tags.</p>
             </div>
-            <div class="about-row">
-              <span class="about-label">Source</span>
-              <a href="https://github.com/cognizone/augmented-semantics" target="_blank" class="about-link">
-                GitHub
-                <span class="material-symbols-outlined link-icon">open_in_new</span>
-              </a>
+            <div class="settings-group">
+              <div class="setting-row">
+                <label class="checkbox-label">
+                  <Checkbox v-model="settingsStore.showDatatypes" :binary="true" />
+                  <span class="checkbox-text">
+                    Show datatypes
+                    <small>Display datatype tags (e.g., xsd:date) on property values</small>
+                  </span>
+                </label>
+              </div>
+              <div v-if="settingsStore.showDatatypes" class="setting-row nested">
+                <label class="checkbox-label">
+                  <Checkbox v-model="settingsStore.showStringDatatypes" :binary="true" />
+                  <span class="checkbox-text">
+                    Show xsd:string
+                    <small>Display xsd:string datatype tags explicitly</small>
+                  </span>
+                </label>
+              </div>
+              <div class="setting-row">
+                <label class="checkbox-label">
+                  <Checkbox v-model="settingsStore.showLanguageTags" :binary="true" />
+                  <span class="checkbox-text">
+                    Show language tags
+                    <small>Display language tags on labels when different from preferred</small>
+                  </span>
+                </label>
+              </div>
+              <div v-if="settingsStore.showLanguageTags" class="setting-row nested">
+                <label class="checkbox-label">
+                  <Checkbox v-model="settingsStore.showPreferredLanguageTag" :binary="true" />
+                  <span class="checkbox-text">
+                    Include preferred language
+                    <small>Also show tag when label matches preferred language</small>
+                  </span>
+                </label>
+              </div>
+              <div class="setting-row">
+                <label class="checkbox-label">
+                  <Checkbox v-model="settingsStore.showNotationInLabels" :binary="true" />
+                  <span class="checkbox-text">
+                    Show notation in labels
+                    <small>Include notation prefixes in labels and sorting</small>
+                  </span>
+                </label>
+              </div>
+              <div class="setting-row">
+                <label class="checkbox-label">
+                  <Checkbox v-model="settingsStore.showOrphansSelector" :binary="true" />
+                  <span class="checkbox-text">
+                    Show orphans selector
+                    <small>Display "Orphan Concepts" option in scheme dropdown</small>
+                  </span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div v-if="settingsSection === 'deprecation'" class="settings-panel-content">
+            <div class="panel-header">
+              <h3 class="panel-title">Deprecation</h3>
+              <p class="panel-subtitle">Highlight deprecated concepts and tune the rules.</p>
+            </div>
+            <div class="settings-group">
+              <div class="setting-row">
+                <label class="checkbox-label">
+                  <Checkbox v-model="settingsStore.showDeprecationIndicator" :binary="true" />
+                  <span class="checkbox-text">
+                    Show deprecation indicators
+                    <small>Display visual indicators for deprecated concepts</small>
+                  </span>
+                </label>
+              </div>
+              <div v-if="settingsStore.showDeprecationIndicator" class="detection-rules">
+                <div class="rules-label">Detection Rules</div>
+                <div v-for="rule in settingsStore.deprecationRules" :key="rule.id" class="setting-row nested">
+                  <label class="checkbox-label">
+                    <Checkbox v-model="rule.enabled" :binary="true" />
+                    <span class="checkbox-text">
+                      {{ rule.label }}
+                      <small class="rule-value">
+                        {{ rule.condition === 'equals' ? '=' : rule.condition === 'not-equals' ? '≠' : 'exists' }}
+                        {{ rule.value ? rule.value.split('/').pop() : '' }}
+                      </small>
+                    </span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div v-if="settingsSection === 'developer'" class="settings-panel-content">
+            <div class="panel-header">
+              <h3 class="panel-title">Developer</h3>
+              <p class="panel-subtitle">Diagnostics and endpoint tooling options.</p>
+            </div>
+            <div class="settings-group">
+              <div v-if="!config.configMode" class="setting-row">
+                <label class="checkbox-label">
+                  <Checkbox v-model="settingsStore.developerMode" :binary="true" />
+                  <span class="checkbox-text">
+                    Developer mode
+                    <small>Enable developer tools like JSON export in endpoint manager</small>
+                  </span>
+                </label>
+              </div>
+              <div class="setting-row">
+                <label class="setting-label">Log level</label>
+                <Select
+                  v-model="settingsStore.logLevel"
+                  :options="logLevelOptions"
+                  optionLabel="label"
+                  optionValue="value"
+                  class="select-compact full-width"
+                />
+                <p class="setting-hint">
+                  Minimum log level shown in browser console (F12). All logs are stored in history.
+                </p>
+              </div>
+              <div class="setting-row">
+                <label class="setting-label">Orphan detection strategy</label>
+                <Select
+                  v-model="settingsStore.orphanDetectionStrategy"
+                  :options="orphanDetectionStrategyOptions"
+                  optionLabel="label"
+                  optionValue="value"
+                  class="select-compact full-width"
+                />
+                <p class="setting-hint">
+                  Auto tries fast single-query with fallback to slow multi-query.
+                </p>
+              </div>
+              <div class="setting-row">
+                <label class="checkbox-label">
+                  <Checkbox v-model="settingsStore.orphanFastPrefilter" :binary="true" />
+                  <span class="checkbox-text">
+                    Prefilter orphan candidates (fast mode)
+                    <small>Excludes direct scheme links first, then runs hierarchy checks on remaining concepts.</small>
+                  </span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div v-if="settingsSection === 'about'" class="settings-panel-content">
+            <div class="panel-header">
+              <h3 class="panel-title">About</h3>
+              <p class="panel-subtitle">Build information and source links.</p>
+            </div>
+            <div class="settings-group">
+              <div class="about-info">
+                <div class="about-row">
+                  <span class="about-label">Version</span>
+                  <span class="about-value">{{ appVersion }}</span>
+                </div>
+                <div class="about-row">
+                  <span class="about-label">Build</span>
+                  <span class="about-value mono">{{ gitCommit }}</span>
+                </div>
+                <div class="about-row">
+                  <span class="about-label">Built</span>
+                  <span class="about-value">{{ buildDateFormatted }}</span>
+                </div>
+                <div class="about-row">
+                  <span class="about-label">Source</span>
+                  <a href="https://github.com/cognizone/augmented-semantics/tree/main/ae-skos" target="_blank" class="about-link">
+                    GitHub
+                    <span class="material-symbols-outlined link-icon">open_in_new</span>
+                  </a>
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -515,7 +629,7 @@ onUnmounted(() => {
         />
         <Button
           label="Close"
-          @click="showSettingsDialog = false"
+          @click="uiStore.setSettingsDialogOpen(false)"
         />
       </template>
     </Dialog>
@@ -665,21 +779,137 @@ onUnmounted(() => {
 }
 
 /* Settings dialog */
-.settings-content {
+.settings-dialog :deep(.p-dialog-content) {
+  padding: 0;
+}
+
+.settings-shell {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  min-height: 520px;
+  background: var(--ae-bg-base);
+}
+
+.settings-nav {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 0.25rem;
+  padding: 1rem 0.75rem;
+  background: linear-gradient(180deg, var(--ae-bg-elevated), var(--ae-bg-base));
+  border-right: 1px solid var(--ae-border-color);
 }
 
-.settings-section:first-child {
-  margin-top: 1.25rem;
+.settings-nav-title {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ae-text-secondary);
+  margin-bottom: 0.5rem;
+  padding: 0 0.5rem;
 }
 
-/* Tighter spacing for settings dialog */
-.settings-section .section-title {
-  margin-bottom: 0.75rem;
-  padding-bottom: 0.375rem;
+.settings-nav-item {
+  display: grid;
+  grid-template-columns: 20px 1fr;
+  grid-template-rows: auto auto;
+  column-gap: 0.5rem;
+  row-gap: 0.125rem;
+  align-items: center;
+  text-align: left;
+  border: none;
+  background: transparent;
+  color: var(--ae-text-secondary);
+  padding: 0.5rem 0.5rem;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s, transform 0.15s;
 }
+
+.settings-nav-item .material-symbols-outlined {
+  grid-row: 1 / span 2;
+  font-size: 18px;
+}
+
+.settings-nav-item:hover {
+  background: var(--ae-bg-hover);
+  color: var(--ae-text-primary);
+  transform: translateX(2px);
+}
+
+.settings-nav-item.active {
+  background: var(--ae-bg-base);
+  color: var(--ae-text-primary);
+  box-shadow: 0 0 0 1px var(--ae-border-color) inset;
+}
+
+.settings-nav-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.settings-nav-hint {
+  font-size: 0.7rem;
+  color: var(--ae-text-secondary);
+}
+
+.settings-panel {
+  padding: 1.25rem 1.5rem 1.5rem;
+  overflow: auto;
+}
+
+.settings-panel-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.panel-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+
+.panel-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.panel-subtitle {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--ae-text-secondary);
+}
+
+.settings-group {
+  background: var(--ae-bg-elevated);
+  border: 1px solid var(--ae-border-color);
+  border-radius: 12px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.settings-group-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ae-text-secondary);
+  margin-bottom: 0.25rem;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.settings-language-trigger {
+  width: 100%;
+  justify-content: space-between;
+}
+
 
 .setting-row {
   margin-bottom: 0.75rem;
@@ -708,10 +938,6 @@ onUnmounted(() => {
 .checkbox-text small {
   font-size: 0.75rem;
   color: var(--ae-text-secondary);
-}
-
-.language-select {
-  width: 100%;
 }
 
 .setting-hint {
@@ -754,14 +980,6 @@ onUnmounted(() => {
   margin-bottom: 0.5rem;
 }
 
-.log-level-select {
-  width: 100%;
-}
-
-.orphan-strategy-select {
-  width: 100%;
-}
-
 .config-error-banner {
   display: flex;
   align-items: center;
@@ -777,12 +995,6 @@ onUnmounted(() => {
 }
 
 /* About section */
-.about-section {
-  border-top: 1px solid var(--ae-border-color);
-  padding-top: 1rem;
-  margin-top: 0.5rem;
-}
-
 .about-info {
   display: flex;
   flex-direction: column;
@@ -823,5 +1035,27 @@ onUnmounted(() => {
 
 .about-link .link-icon {
   font-size: 0.875rem;
+}
+
+@media (max-width: 900px) {
+  .settings-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .settings-nav {
+    flex-direction: row;
+    overflow-x: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--ae-border-color);
+    padding: 0.75rem;
+  }
+
+  .settings-nav-title {
+    display: none;
+  }
+
+  .settings-nav-item {
+    min-width: 160px;
+  }
 }
 </style>

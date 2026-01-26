@@ -303,7 +303,7 @@ function formatUIDate(dateStr?: string) {
 
       <!-- Header -->
       <div class="list-header">
-        <h3>Saved Endpoints</h3>
+        <h3>My Endpoints</h3>
         <Button
           label="Add Endpoint"
           size="small"
@@ -604,6 +604,7 @@ function formatUIDate(dateStr?: string) {
 .add-endpoint-btn {
   background: var(--ae-accent) !important;
   border-color: var(--ae-accent) !important;
+  margin-top: 0.5rem;
 }
 
 .add-endpoint-btn:hover {
@@ -733,8 +734,9 @@ function formatUIDate(dateStr?: string) {
 .action-buttons {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  gap: 0.5rem;
+  justify-content: flex-start;
+  gap: 0.4rem;
+  padding-left: 0.25rem;
 }
 
 .action-btn {
@@ -797,8 +799,9 @@ function formatUIDate(dateStr?: string) {
 
 .action-divider {
   width: 1px;
-  height: 1rem;
+  height: 1.25rem;
   background: var(--ae-border-color);
+  margin: 0 0.25rem;
 }
 
 :deep(.clickable-row) {

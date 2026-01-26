@@ -65,6 +65,13 @@ interface SettingsState {
   // Deprecation settings
   showDeprecationIndicator: boolean;  // Show deprecation badges/styling
   deprecationRules: DeprecationRule[]; // Configurable detection rules
+
+  // Search settings (see sko03-Settings.md for full details)
+  searchInPrefLabel: boolean;         // Search in preferred labels
+  searchInAltLabel: boolean;          // Search in alternative labels
+  searchInDefinition: boolean;        // Search in definitions
+  searchMatchMode: 'contains' | 'startsWith' | 'exact' | 'regex';
+  searchAllSchemes: boolean;          // Ignore scheme filter
 }
 
 interface DeprecationRule {
@@ -80,7 +87,11 @@ interface UIState {
   loading: Record<string, boolean>;  // Loading flags by component
   errors: AppError[];                 // Active errors
   dialogs: string[];                  // Open dialog IDs
+  settingsDialogOpen: boolean;        // Settings dialog visibility
+  settingsSection: SettingsSection;   // Active section in settings dialog
 }
+
+type SettingsSection = 'display' | 'language' | 'deprecation' | 'search' | 'developer' | 'about'
 
 interface SKOSState {
   scheme: {
@@ -99,7 +110,7 @@ interface SKOSState {
   search: {
     query: string;
     results: SearchResult[];
-    settings: SearchSettings;
+    // Search settings are in SettingsState (see sko03-Settings.md)
   };
   history: HistoryEntry[];
 }
@@ -178,36 +189,36 @@ Dark mode is accessible via a dedicated header icon (sun/moon) for quick one-cli
 
 ### Settings Dialog
 
-The Settings dialog (accessible via toolbar) is organized into sections:
+The Settings dialog (accessible via toolbar) uses sidebar navigation with six sections:
 
 ```
-┌─────────────────────────────────────┐
-│ Settings                            │
-├─────────────────────────────────────┤
-│ PREFERRED LANGUAGE                  │
-│ ┌─────────────────────────────────┐ │
-│ │ [Language dropdown        ▾]    │ │
-│ │ Labels shown in this language   │ │
-│ └─────────────────────────────────┘ │
-│                                     │
-│ DISPLAY                             │
-│ ┌─────────────────────────────────┐ │
-│ │ ☑ Show datatypes                │ │
-│ │ ☑ Show language tags            │ │
-│ │   ☐ Include preferred language  │ │
-│ └─────────────────────────────────┘ │
-│                                     │
-│ DEPRECATION                         │
-│ ┌─────────────────────────────────┐ │
-│ │ ☑ Show deprecation indicators   │ │
-│ │   DETECTION RULES               │ │
-│ │   ☑ OWL Deprecated (= true)     │ │
-│ │   ☑ EU Vocabularies (≠ CURRENT) │ │
-│ └─────────────────────────────────┘ │
-├─────────────────────────────────────┤
-│ [Reset to defaults]        [Close]  │
-└─────────────────────────────────────┘
+┌───────────────────────────────────────────────────────────────┐
+│ Settings                                                  [X] │
+├───────────────────────────────────────────────────────────────┤
+│ ┌───────────┐ ┌─────────────────────────────────────────────┐ │
+│ │ Display   │ │ Display                                     │ │
+│ │ Language  │ │ Control label formatting and data tags.     │ │
+│ │ Deprec... │ │                                             │ │
+│ │ Search    │ │ [x] Show datatypes                          │ │
+│ │ Developer │ │ [x] Show language tags                      │ │
+│ │ About     │ │ [x] Show notation in labels                 │ │
+│ └───────────┘ └─────────────────────────────────────────────┘ │
+├───────────────────────────────────────────────────────────────┤
+│ [Reset to defaults]                                   [Close] │
+└───────────────────────────────────────────────────────────────┘
 ```
+
+**Navigation sections:**
+- **Display** - Labels, tags, notation settings
+- **Language** - Preferred label language
+- **Deprecation** - Indicators & detection rules
+- **Search** - Match mode & scope settings
+- **Developer** - Diagnostics & tools
+- **About** - Build info & source links
+
+**Deep linking:** Components can open Settings to a specific section via `uiStore.openSettingsDialog(section)`.
+
+See [sko03-Settings](../ae-skos/sko03-Settings.md) for full settings documentation.
 
 ### Persistence Rules
 
@@ -226,6 +237,11 @@ persist('ae-skos-settings', {
   showPreferredLanguageTag: state.settings.showPreferredLanguageTag,
   showDeprecationIndicator: state.settings.showDeprecationIndicator,
   deprecationRules: state.settings.deprecationRules,
+  searchInPrefLabel: state.settings.searchInPrefLabel,
+  searchInAltLabel: state.settings.searchInAltLabel,
+  searchInDefinition: state.settings.searchInDefinition,
+  searchMatchMode: state.settings.searchMatchMode,
+  searchAllSchemes: state.settings.searchAllSchemes,
 });
 
 // Restore on init
@@ -238,6 +254,11 @@ const settings = restore('ae-skos-settings') ?? {
   showPreferredLanguageTag: false,
   showDeprecationIndicator: true,
   deprecationRules: DEFAULT_DEPRECATION_RULES,
+  searchInPrefLabel: true,
+  searchInAltLabel: true,
+  searchInDefinition: false,
+  searchMatchMode: 'contains',
+  searchAllSchemes: false,
 };
 ```
 

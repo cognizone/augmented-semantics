@@ -109,23 +109,16 @@ Display matching concepts with:
 
 ### Search Settings (⚙)
 
-```
-┌─────────────────────────────────┐
-│ Search in:                      │
-│ ☑ Preferred labels              │
-│ ☑ Alternative labels            │
-│ ☐ Hidden labels                 │
-├─────────────────────────────────┤
-│ Scope:                          │
-│ ● Current scheme                │
-│ ○ All schemes                   │
-├─────────────────────────────────┤
-│ Match:                          │
-│ ● Contains                      │
-│ ○ Starts with                   │
-│ ○ Exact                         │
-└─────────────────────────────────┘
-```
+Clicking the settings button opens the global Settings dialog to the Search section.
+
+See [sko03-Settings](./sko03-Settings.md#search-settings) for setting details.
+
+**Settings include:**
+- **Search in**: Preferred labels, alternative labels, definitions
+- **Match mode**: Contains, starts with, exact, regex
+- **Scope**: Current scheme or all schemes
+
+Search settings are persisted to localStorage via the settings store. When settings change while a search is active, the search is automatically re-executed with the new settings.
 
 ### Search Results
 
@@ -154,14 +147,7 @@ interface SearchState {
   query: string;
   results: SearchResult[];
   loading: boolean;
-  settings: SearchSettings;
   autocomplete: string[];
-}
-
-interface SearchSettings {
-  labelScope: ('prefLabel' | 'altLabel' | 'hiddenLabel')[];
-  schemeScope: 'current' | 'all';
-  matchMode: 'contains' | 'startsWith' | 'exact' | 'regex';
 }
 
 interface SearchResult {
@@ -172,6 +158,8 @@ interface SearchResult {
   matchedValue: string;
 }
 ```
+
+**Note:** Search settings (label scope, match mode, scheme scope) are stored in the global settings store. See [sko03-Settings](./sko03-Settings.md#search-settings).
 
 ## Events
 

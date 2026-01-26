@@ -61,6 +61,13 @@ export interface AppSettings {
   // Scheme selector settings
   showOrphansSelector: boolean    // Show "Orphan Concepts" option in scheme dropdown
 
+  // Search settings
+  searchInPrefLabel: boolean
+  searchInAltLabel: boolean
+  searchInDefinition: boolean
+  searchMatchMode: 'contains' | 'startsWith' | 'exact' | 'regex'
+  searchAllSchemes: boolean
+
   // Developer settings
   developerMode: boolean                      // Enable developer tools (e.g., JSON export)
   logLevel: LogLevel                          // Minimum log level for console output
@@ -78,6 +85,11 @@ const DEFAULT_SETTINGS: AppSettings = {
   showDeprecationIndicator: true,
   deprecationRules: DEFAULT_DEPRECATION_RULES,
   showOrphansSelector: true,
+  searchInPrefLabel: true,
+  searchInAltLabel: true,
+  searchInDefinition: false,
+  searchMatchMode: 'contains',
+  searchAllSchemes: false,
   developerMode: false,
   logLevel: 'warn',
   orphanDetectionStrategy: 'auto',
@@ -95,6 +107,11 @@ export const useSettingsStore = defineStore('settings', () => {
   const showDeprecationIndicator = ref(DEFAULT_SETTINGS.showDeprecationIndicator)
   const deprecationRules = ref<DeprecationRule[]>([...DEFAULT_DEPRECATION_RULES])
   const showOrphansSelector = ref(DEFAULT_SETTINGS.showOrphansSelector)
+  const searchInPrefLabel = ref(DEFAULT_SETTINGS.searchInPrefLabel)
+  const searchInAltLabel = ref(DEFAULT_SETTINGS.searchInAltLabel)
+  const searchInDefinition = ref(DEFAULT_SETTINGS.searchInDefinition)
+  const searchMatchMode = ref<AppSettings['searchMatchMode']>(DEFAULT_SETTINGS.searchMatchMode)
+  const searchAllSchemes = ref(DEFAULT_SETTINGS.searchAllSchemes)
   const developerMode = ref(DEFAULT_SETTINGS.developerMode)
   const logLevel = ref<LogLevel>(DEFAULT_SETTINGS.logLevel)
   const orphanDetectionStrategy = ref<OrphanDetectionStrategy>(DEFAULT_SETTINGS.orphanDetectionStrategy)
@@ -143,6 +160,21 @@ export const useSettingsStore = defineStore('settings', () => {
         if (settings.showOrphansSelector !== undefined) {
           showOrphansSelector.value = settings.showOrphansSelector
         }
+        if (settings.searchInPrefLabel !== undefined) {
+          searchInPrefLabel.value = settings.searchInPrefLabel
+        }
+        if (settings.searchInAltLabel !== undefined) {
+          searchInAltLabel.value = settings.searchInAltLabel
+        }
+        if (settings.searchInDefinition !== undefined) {
+          searchInDefinition.value = settings.searchInDefinition
+        }
+        if (settings.searchMatchMode !== undefined) {
+          searchMatchMode.value = settings.searchMatchMode
+        }
+        if (settings.searchAllSchemes !== undefined) {
+          searchAllSchemes.value = settings.searchAllSchemes
+        }
         if (settings.developerMode !== undefined) {
           developerMode.value = settings.developerMode
         }
@@ -175,6 +207,11 @@ export const useSettingsStore = defineStore('settings', () => {
         showDeprecationIndicator: showDeprecationIndicator.value,
         deprecationRules: deprecationRules.value,
         showOrphansSelector: showOrphansSelector.value,
+        searchInPrefLabel: searchInPrefLabel.value,
+        searchInAltLabel: searchInAltLabel.value,
+        searchInDefinition: searchInDefinition.value,
+        searchMatchMode: searchMatchMode.value,
+        searchAllSchemes: searchAllSchemes.value,
         developerMode: developerMode.value,
         logLevel: logLevel.value,
         orphanDetectionStrategy: orphanDetectionStrategy.value,
@@ -250,6 +287,11 @@ export const useSettingsStore = defineStore('settings', () => {
     showDeprecationIndicator.value = DEFAULT_SETTINGS.showDeprecationIndicator
     deprecationRules.value = [...DEFAULT_DEPRECATION_RULES]
     showOrphansSelector.value = DEFAULT_SETTINGS.showOrphansSelector
+    searchInPrefLabel.value = DEFAULT_SETTINGS.searchInPrefLabel
+    searchInAltLabel.value = DEFAULT_SETTINGS.searchInAltLabel
+    searchInDefinition.value = DEFAULT_SETTINGS.searchInDefinition
+    searchMatchMode.value = DEFAULT_SETTINGS.searchMatchMode
+    searchAllSchemes.value = DEFAULT_SETTINGS.searchAllSchemes
     developerMode.value = DEFAULT_SETTINGS.developerMode
     logLevel.value = DEFAULT_SETTINGS.logLevel
     orphanDetectionStrategy.value = DEFAULT_SETTINGS.orphanDetectionStrategy
@@ -280,6 +322,11 @@ export const useSettingsStore = defineStore('settings', () => {
       showDeprecationIndicator.value,
       deprecationRules.value,
       showOrphansSelector.value,
+      searchInPrefLabel.value,
+      searchInAltLabel.value,
+      searchInDefinition.value,
+      searchMatchMode.value,
+      searchAllSchemes.value,
       developerMode.value,
       logLevel.value,
       orphanDetectionStrategy.value,
@@ -303,6 +350,11 @@ export const useSettingsStore = defineStore('settings', () => {
     showDeprecationIndicator,
     deprecationRules,
     showOrphansSelector,
+    searchInPrefLabel,
+    searchInAltLabel,
+    searchInDefinition,
+    searchMatchMode,
+    searchAllSchemes,
     developerMode,
     logLevel,
     orphanDetectionStrategy,
