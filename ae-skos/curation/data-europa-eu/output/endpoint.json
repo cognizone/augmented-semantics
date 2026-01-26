@@ -4,6 +4,8 @@
   "description": "The official open data portal of the European Union. Contains EU authority tables (languages, countries, corporate bodies) and EuroVoc thesaurus.",
   "analysis": {
     "hasSkosContent": true,
+    "cors": true,
+    "supportsJsonResults": true,
     "supportsNamedGraphs": true,
     "skosGraphCount": 32,
     "schemeUris": [
@@ -415,7 +417,7 @@
         "rdfsLabel": true
       }
     },
-    "analyzedAt": "2026-01-23T13:14:34.211Z"
+    "analyzedAt": "2026-01-26T09:44:35.587Z"
   },
   "suggestedLanguagePriorities": [
     "en",

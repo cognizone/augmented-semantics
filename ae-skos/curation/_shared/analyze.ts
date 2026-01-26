@@ -38,6 +38,7 @@ export interface LabelPredicatesByResourceType {
 
 export interface EndpointAnalysis {
   hasSkosContent: boolean
+  cors?: boolean
   supportsJsonResults?: boolean | null
   supportsNamedGraphs: boolean | null
   skosGraphCount: number | null
@@ -240,6 +241,44 @@ export async function detectJsonSupport(url: string): Promise<boolean> {
   try {
     JSON.parse(text)
     return true
+  } catch {
+    return false
+  }
+}
+
+const CORS_TEST_ORIGIN = 'https://example.com'
+
+export async function detectCors(url: string): Promise<boolean> {
+  const query = 'ASK { ?s ?p ?o }'
+  const postBody = `query=${encodeURIComponent(query)}&format=json`
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Accept': 'application/sparql-results+json',
+        'Origin': CORS_TEST_ORIGIN,
+      },
+      body: postBody,
+    })
+
+    const allowOrigin = response.headers.get('access-control-allow-origin')
+    if (!allowOrigin) {
+      return false
+    }
+
+    if (allowOrigin === '*') {
+      const allowMethods = response.headers.get('access-control-allow-methods')
+      return allowMethods ? allowMethods.toUpperCase().includes('POST') : true
+    }
+
+    const origins = allowOrigin.split(',').map(o => o.trim())
+    if (!origins.includes(CORS_TEST_ORIGIN)) {
+      return false
+    }
+    const allowMethods = response.headers.get('access-control-allow-methods')
+    return allowMethods ? allowMethods.toUpperCase().includes('POST') : true
   } catch {
     return false
   }
@@ -589,7 +628,7 @@ export async function analyzeEndpointWithSteps(
   url: string,
   onStep?: StepCallback
 ): Promise<EndpointAnalysis | null> {
-  const totalSteps = 11
+  const totalSteps = 12
   let currentStep = 0
 
   const runStep = async <T>(name: string, fn: () => Promise<T>, formatResult: (r: T) => string, errorResult = 'error'): Promise<T | null> => {
@@ -612,14 +651,21 @@ export async function analyzeEndpointWithSteps(
     onStep?.(currentStep, totalSteps, name, 0, '-')
   }
 
-  // Step 1: JSON results support
+  // Step 1: CORS support
+  const cors = await runStep(
+    'CORS',
+    () => detectCors(url),
+    r => r ? 'yes' : 'no'
+  )
+
+  // Step 2: JSON results support
   const supportsJsonResults = await runStep(
     'JSON results',
     () => detectJsonSupport(url),
     r => r ? 'yes' : 'no'
   )
 
-  // Step 2: Check SKOS content
+  // Step 3: Check SKOS content
   const hasSkos = await runStep(
     'SKOS content',
     () => checkSkosContent(url),
@@ -630,7 +676,7 @@ export async function analyzeEndpointWithSteps(
     return null
   }
 
-  // Step 3: Named graphs support
+  // Step 4: Named graphs support
   const supportsNamedGraphs = await runStep(
     'Named graphs',
     () => detectGraphs(url),
@@ -640,7 +686,7 @@ export async function analyzeEndpointWithSteps(
   let skosGraphCount: number | null = null
   let skosGraphUris: string[] | null = null
 
-  // Step 4: SKOS graphs (conditional)
+  // Step 5: SKOS graphs (conditional)
   if (supportsNamedGraphs) {
     const skosResult = await runStep(
       'SKOS graphs',
@@ -655,42 +701,42 @@ export async function analyzeEndpointWithSteps(
     skipStep('SKOS graphs')
   }
 
-  // Step 5: Concept schemes
+  // Step 6: Concept schemes
   const schemeResult = await runStep(
     'Concept schemes',
     () => detectSchemes(url),
     r => `${r.schemeCount}`
   )
 
-  // Step 6: Concepts
+  // Step 7: Concepts
   const totalConcepts = await runStep(
     'Concepts',
     () => countConcepts(url),
     r => r.toLocaleString()
   )
 
-  // Step 7: Collections
+  // Step 8: Collections
   const totalCollections = await runStep(
     'Collections',
     () => countCollections(url),
     r => r.toLocaleString()
   )
 
-  // Step 8: Ordered collections
+  // Step 9: Ordered collections
   const totalOrderedCollections = await runStep(
     'Ordered collections',
     () => countOrderedCollections(url),
     r => r.toLocaleString()
   )
 
-  // Step 9: Relationships
+  // Step 10: Relationships
   const relationships = await runStep(
     'Relationships',
     () => detectRelationships(url),
     r => `${Object.values(r).filter(Boolean).length}/7`
   )
 
-  // Step 10: Label predicates (capability detection, like relationships)
+  // Step 11: Label predicates (capability detection, like relationships)
   const labelPredicates = await runStep(
     'Label predicates',
     () => detectLabelPredicates(url),
@@ -700,7 +746,7 @@ export async function analyzeEndpointWithSteps(
     }
   )
 
-  // Step 11: Languages
+  // Step 12: Languages
   const languagesResult = await runStep(
     'Languages',
     () => detectLanguages(url, skosGraphUris),
@@ -714,6 +760,7 @@ export async function analyzeEndpointWithSteps(
 
   return {
     hasSkosContent: true,
+    cors: cors ?? false,
     supportsJsonResults: supportsJsonResults ?? null,
     supportsNamedGraphs,
     skosGraphCount,

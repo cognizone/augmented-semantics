@@ -393,6 +393,132 @@ describe('endpoint store', () => {
     })
   })
 
+  describe('test status fields', () => {
+    it('stores lastTestStatus on endpoint', () => {
+      const store = useEndpointStore()
+
+      const endpoint = store.addEndpoint({
+        name: 'Test',
+        url: 'https://example.org/sparql',
+      })
+
+      store.updateEndpoint(endpoint.id, {
+        lastTestStatus: 'success',
+      })
+
+      const updated = store.endpoints.find(e => e.id === endpoint.id)
+      expect(updated?.lastTestStatus).toBe('success')
+    })
+
+    it('stores lastTestedAt timestamp', () => {
+      const store = useEndpointStore()
+      const timestamp = '2024-01-15T10:30:00Z'
+
+      const endpoint = store.addEndpoint({
+        name: 'Test',
+        url: 'https://example.org/sparql',
+      })
+
+      store.updateEndpoint(endpoint.id, {
+        lastTestedAt: timestamp,
+      })
+
+      const updated = store.endpoints.find(e => e.id === endpoint.id)
+      expect(updated?.lastTestedAt).toBe(timestamp)
+    })
+
+    it('stores lastTestErrorCode on failed test', () => {
+      const store = useEndpointStore()
+
+      const endpoint = store.addEndpoint({
+        name: 'Test',
+        url: 'https://example.org/sparql',
+      })
+
+      store.updateEndpoint(endpoint.id, {
+        lastTestStatus: 'error',
+        lastTestErrorCode: 'CORS_BLOCKED',
+      })
+
+      const updated = store.endpoints.find(e => e.id === endpoint.id)
+      expect(updated?.lastTestStatus).toBe('error')
+      expect(updated?.lastTestErrorCode).toBe('CORS_BLOCKED')
+    })
+
+    it('preserves lastTestErrorCode on success (value becomes irrelevant)', () => {
+      const store = useEndpointStore()
+
+      const endpoint = store.addEndpoint({
+        name: 'Test',
+        url: 'https://example.org/sparql',
+      })
+
+      // First, set an error
+      store.updateEndpoint(endpoint.id, {
+        lastTestStatus: 'error',
+        lastTestErrorCode: 'NETWORK_ERROR',
+      })
+
+      // Then, update with success (error code persists but is irrelevant)
+      store.updateEndpoint(endpoint.id, {
+        lastTestStatus: 'success',
+      })
+
+      const updated = store.endpoints.find(e => e.id === endpoint.id)
+      expect(updated?.lastTestStatus).toBe('success')
+      // Note: lastTestErrorCode is preserved but irrelevant when status is 'success'
+      // This is by design - the ?? operator preserves existing values
+      expect(updated?.lastTestErrorCode).toBe('NETWORK_ERROR')
+    })
+
+    it('persists test status fields to localStorage', () => {
+      const store = useEndpointStore()
+
+      const endpoint = store.addEndpoint({
+        name: 'Test',
+        url: 'https://example.org/sparql',
+      })
+
+      store.updateEndpoint(endpoint.id, {
+        lastTestStatus: 'success',
+        lastTestedAt: '2024-01-15T10:30:00Z',
+      })
+
+      // Check that setItem was called with test status fields
+      const calls = vi.mocked(localStorage.setItem).mock.calls
+      const lastCall = calls[calls.length - 1]
+      expect(lastCall).toBeDefined()
+      const stored = JSON.parse(lastCall![1])
+      const storedEndpoint = stored.find((e: { id: string }) => e.id === endpoint.id)
+      expect(storedEndpoint?.lastTestStatus).toBe('success')
+      expect(storedEndpoint?.lastTestedAt).toBe('2024-01-15T10:30:00Z')
+    })
+
+    it('loads test status fields from localStorage', () => {
+      const storedEndpoints = [
+        {
+          id: 'stored-1',
+          name: 'Stored Endpoint',
+          url: 'https://stored.org/sparql',
+          auth: { type: 'none' },
+          createdAt: '2024-01-01T00:00:00Z',
+          accessCount: 5,
+          lastTestStatus: 'error',
+          lastTestedAt: '2024-01-10T08:00:00Z',
+          lastTestErrorCode: 'TIMEOUT',
+        },
+      ]
+
+      vi.mocked(localStorage.getItem).mockReturnValue(JSON.stringify(storedEndpoints))
+
+      const store = useEndpointStore()
+
+      expect(store.endpoints[0]?.lastTestStatus).toBe('error')
+      expect(store.endpoints[0]?.lastTestedAt).toBe('2024-01-10T08:00:00Z')
+      expect(store.endpoints[0]?.lastTestErrorCode).toBe('TIMEOUT')
+    })
+  })
+
   describe('persistence', () => {
     it('loads from localStorage on init', () => {
       const storedEndpoints = [

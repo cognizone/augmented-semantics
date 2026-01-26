@@ -744,6 +744,7 @@ watch(
 
 .notation {
   font-size: 0.875rem;
+  font-family: inherit;
   background: var(--ae-bg-hover);
   padding: 0.25rem 0.5rem;
   border-radius: 4px;

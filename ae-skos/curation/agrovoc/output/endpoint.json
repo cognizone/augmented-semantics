@@ -4,6 +4,7 @@
   "description": "Maintained by the FAO (UN), this is a massive multilingual thesaurus covering agriculture, forestry, fisheries, food, and related environmental concepts.",
   "analysis": {
     "hasSkosContent": true,
+    "cors": false,
     "supportsJsonResults": true,
     "supportsNamedGraphs": true,
     "skosGraphCount": 1,
@@ -240,7 +241,7 @@
         "xlPrefLabel": true
       }
     },
-    "analyzedAt": "2026-01-24T22:35:31.202Z"
+    "analyzedAt": "2026-01-26T09:39:54.458Z"
   },
   "suggestedLanguagePriorities": [
     "en",

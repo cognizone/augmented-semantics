@@ -4,6 +4,7 @@
   "description": "LOV (Linked Open Vocabularies) is a catalog of reusable vocabularies for the semantic web. It indexes vocabularies for describing datasets, services, and knowledge.",
   "analysis": {
     "hasSkosContent": true,
+    "cors": false,
     "supportsJsonResults": true,
     "supportsNamedGraphs": true,
     "skosGraphCount": 47,
@@ -261,7 +262,7 @@
         "rdfsLabel": true
       }
     },
-    "analyzedAt": "2026-01-24T22:53:29.461Z"
+    "analyzedAt": "2026-01-26T09:57:46.589Z"
   },
   "suggestedLanguagePriorities": [
     "en",

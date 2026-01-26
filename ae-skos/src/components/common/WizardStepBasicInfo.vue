@@ -33,6 +33,7 @@ const props = defineProps<{
   testing: boolean
   testResult: TestResult | null
   isEditing: boolean
+  corsIssue?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -111,6 +112,10 @@ const trustLabel = (level: string) => {
         <span v-if="trustCheck.reasons.length" class="trust-reason">
           {{ trustCheck.reasons[0] }}
         </span>
+      </div>
+      <div v-if="corsIssue" class="cors-indicator">
+        <Tag severity="warn">CORS Issue</Tag>
+        <span class="cors-reason">Browser access is blocked. A local CORS extension can help for testing.</span>
       </div>
     </div>
 
@@ -289,6 +294,18 @@ const trustLabel = (level: string) => {
 }
 
 .trust-reason {
+  font-size: 0.75rem;
+  color: var(--p-text-muted-color);
+}
+
+.cors-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.cors-reason {
   font-size: 0.75rem;
   color: var(--p-text-muted-color);
 }

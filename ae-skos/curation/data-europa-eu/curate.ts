@@ -15,6 +15,7 @@
 import { writeFileSync, mkdirSync } from 'fs'
 import { join } from 'path'
 import {
+  detectCors,
   detectJsonSupport,
   executeSparql,
   type EndpointAnalysis,
@@ -372,62 +373,67 @@ async function main() {
     process.exit(1)
   }
 
-  // Standard 11-step analysis
-  // 1/11 JSON results support
+  // Standard 12-step analysis
+  // 1/12 CORS
+  start = Date.now()
+  const cors = await detectCors(ENDPOINT)
+  logStep(1, 12, 'CORS', cors ? 'yes' : 'no', Date.now() - start)
+
+  // 2/12 JSON results support
   start = Date.now()
   let supportsJsonResults: boolean | null = null
   try {
     supportsJsonResults = await detectJsonSupport(ENDPOINT)
-    logStep(1, 11, 'JSON results', supportsJsonResults ? 'yes' : 'no', Date.now() - start)
+    logStep(2, 12, 'JSON results', supportsJsonResults ? 'yes' : 'no', Date.now() - start)
   } catch {
-    logStep(1, 11, 'JSON results', 'error', Date.now() - start)
+    logStep(2, 12, 'JSON results', 'error', Date.now() - start)
   }
 
-  // 2/11 SKOS content - we know it's yes
-  logStep(2, 11, 'SKOS content', 'yes', 0)
+  // 3/12 SKOS content - we know it's yes
+  logStep(3, 12, 'SKOS content', 'yes', 0)
 
-  // 3/11 Named graphs - we know it's yes
-  logStep(3, 11, 'Named graphs', 'yes', 0)
+  // 4/12 Named graphs - we know it's yes
+  logStep(4, 12, 'Named graphs', 'yes', 0)
 
-  // 4/11 SKOS graphs - already discovered
-  logStep(4, 11, 'SKOS graphs', String(validGraphs.length), 0)
+  // 5/12 SKOS graphs - already discovered
+  logStep(5, 12, 'SKOS graphs', String(validGraphs.length), 0)
 
-  // 5/11 Concept schemes
+  // 6/12 Concept schemes
   start = Date.now()
   const schemeUris = await detectSchemesInGraphs(validGraphs)
-  logStep(5, 11, 'Concept schemes', String(schemeUris.length), Date.now() - start)
+  logStep(6, 12, 'Concept schemes', String(schemeUris.length), Date.now() - start)
 
-  // 6/11 Concepts
+  // 7/12 Concepts
   start = Date.now()
   const totalConcepts = await countConceptsInGraphs(validGraphs)
-  logStep(6, 11, 'Concepts', totalConcepts.toLocaleString(), Date.now() - start)
+  logStep(7, 12, 'Concepts', totalConcepts.toLocaleString(), Date.now() - start)
 
-  // 7/11 Collections
+  // 8/12 Collections
   start = Date.now()
   const totalCollections = await countCollectionsInGraphs(validGraphs)
-  logStep(7, 11, 'Collections', totalCollections.toLocaleString(), Date.now() - start)
+  logStep(8, 12, 'Collections', totalCollections.toLocaleString(), Date.now() - start)
 
-  // 8/11 Ordered collections
+  // 9/12 Ordered collections
   start = Date.now()
   const totalOrderedCollections = await countOrderedCollectionsInGraphs(validGraphs)
-  logStep(8, 11, 'Ordered collections', totalOrderedCollections.toLocaleString(), Date.now() - start)
+  logStep(9, 12, 'Ordered collections', totalOrderedCollections.toLocaleString(), Date.now() - start)
 
-  // 9/11 Relationships
+  // 10/12 Relationships
   start = Date.now()
   const relationships = await detectRelationshipsInGraphs(validGraphs)
   const relCount = Object.values(relationships).filter(Boolean).length
-  logStep(9, 11, 'Relationships', `${relCount}/7`, Date.now() - start)
+  logStep(10, 12, 'Relationships', `${relCount}/7`, Date.now() - start)
 
-  // 10/11 Label predicates
+  // 11/12 Label predicates
   start = Date.now()
   const labelPredicates = await detectLabelPredicatesInGraphs(validGraphs)
   const labelCount = Object.values(labelPredicates).reduce((sum, caps) => sum + Object.keys(caps || {}).length, 0)
-  logStep(10, 11, 'Label predicates', String(labelCount), Date.now() - start)
+  logStep(11, 12, 'Label predicates', String(labelCount), Date.now() - start)
 
-  // 11/11 Languages
+  // 12/12 Languages
   start = Date.now()
   const languages = await detectLanguagesInGraphs(validGraphs)
-  logStep(11, 11, 'Languages', String(languages.length), Date.now() - start)
+  logStep(12, 12, 'Languages', String(languages.length), Date.now() - start)
 
   const totalDuration = Date.now() - overallStart
   console.log('')
@@ -436,6 +442,7 @@ async function main() {
   // Build output
   const analysis: EndpointAnalysis = {
     hasSkosContent: true,
+    cors,
     supportsJsonResults,
     supportsNamedGraphs: true,
     skosGraphCount: validGraphs.length,

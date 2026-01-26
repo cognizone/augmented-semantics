@@ -13,6 +13,7 @@
 import { ref, computed } from 'vue'
 import { useEndpointStore, useSettingsStore } from '../../stores'
 import { testConnection } from '../../services/sparql'
+import { getConfigStatus } from '../../utils'
 import type { SPARQLEndpoint, SuggestedEndpoint } from '../../types'
 
 import Dialog from 'primevue/dialog'
@@ -81,6 +82,8 @@ function handleWizardSave(endpoint: SPARQLEndpoint) {
       auth: endpoint.auth,
       analysis: endpoint.analysis,
       languagePriorities: endpoint.languagePriorities,
+      lastTestStatus: endpoint.lastTestStatus,
+      lastTestedAt: endpoint.lastTestedAt,
     })
   } else {
     // Add new endpoint
@@ -95,11 +98,20 @@ function handleWizardSave(endpoint: SPARQLEndpoint) {
       endpointStore.updateEndpoint(newEndpoint.id, {
         analysis: endpoint.analysis,
         languagePriorities: endpoint.languagePriorities,
+        lastTestStatus: endpoint.lastTestStatus,
+        lastTestedAt: endpoint.lastTestedAt,
+        lastAccessedAt: new Date().toISOString(),
       })
 
-      // Auto-select and set connected
+      wizardEndpoint.value = newEndpoint
+
+      // Auto-select new endpoint (active), connection status depends on test
       endpointStore.selectEndpoint(newEndpoint.id)
-      endpointStore.setStatus('connected')
+      if (endpoint.lastTestStatus === 'success') {
+        endpointStore.setStatus('connected')
+      } else {
+        endpointStore.setStatus('disconnected')
+      }
     }
   }
 }
@@ -117,17 +129,27 @@ function handleDeleteConfirm(endpoint: SPARQLEndpoint) {
 // Connection Handler
 async function handleTestConnection(endpoint: SPARQLEndpoint) {
   testingEndpointId.value = endpoint.id
+  endpointStore.updateEndpoint(endpoint.id, {
+    lastTestStatus: 'testing',
+  })
 
-  const result = await testConnection(endpoint)
-  if (result.success) {
-    endpointStore.selectEndpoint(endpoint.id)
-    endpointStore.setStatus('connected')
-  } else {
-    endpointStore.setStatus('error')
-    endpointStore.setError(result.error!)
+  try {
+    const result = await testConnection(endpoint)
+    endpointStore.updateEndpoint(endpoint.id, {
+      lastTestStatus: result.success ? 'success' : 'error',
+      lastTestedAt: new Date().toISOString(),
+      lastTestErrorCode: result.success ? undefined : result.error?.code,
+    })
+    if (result.success) {
+      endpointStore.selectEndpoint(endpoint.id)
+      endpointStore.setStatus('connected')
+    } else {
+      endpointStore.setStatus('error')
+      endpointStore.setError(result.error!)
+    }
+  } finally {
+    testingEndpointId.value = null
   }
-
-  testingEndpointId.value = null
 }
 
 // Suggested Endpoint Handlers
@@ -153,11 +175,14 @@ function handleAddAllSuggestedEndpoints() {
 
 // Developer Mode: Download JSON
 function handleDownloadJson(endpoint: SPARQLEndpoint) {
+  const suggestedLanguagePriorities = endpoint.languagePriorities?.length
+    ? endpoint.languagePriorities
+    : (endpoint.analysis?.languages?.map(l => l.lang) ?? [])
   const exportData = {
     name: endpoint.name,
     url: endpoint.url,
     analysis: endpoint.analysis,
-    suggestedLanguagePriorities: endpoint.languagePriorities,
+    suggestedLanguagePriorities,
     exportedAt: new Date().toISOString(),
   }
   const content = JSON.stringify(exportData, null, 2)
@@ -308,6 +333,11 @@ function formatUIDate(dateStr?: string) {
         <Column field="name" header="Name" sortable :style="{ width: '25%' }">
           <template #body="{ data }">
             <div class="endpoint-name-cell">
+              <span
+                class="config-status-dot"
+                :class="`status-${getConfigStatus(data).status}`"
+                :title="getConfigStatus(data).label"
+              ></span>
               <span class="endpoint-name">{{ data.name }}</span>
               <Tag
                 v-if="data.id === endpointStore.currentId"
@@ -323,13 +353,23 @@ function formatUIDate(dateStr?: string) {
         <Column field="url" header="URL" :style="{ width: '40%' }">
           <template #body="{ data }">
             <div class="url-cell url-with-format">
-              <Tag
-                v-if="data.analysis?.supportsJsonResults !== undefined && data.analysis?.supportsJsonResults !== null"
-                :severity="data.analysis.supportsJsonResults ? 'success' : 'warning'"
-                class="capability-tag"
-              >
-                {{ data.analysis.supportsJsonResults ? 'JSON' : 'XML' }}
-              </Tag>
+              <div class="url-tags">
+                <Tag
+                  v-if="data.analysis?.supportsJsonResults !== undefined && data.analysis?.supportsJsonResults !== null"
+                  :severity="data.analysis.supportsJsonResults ? 'success' : 'warning'"
+                  class="capability-tag"
+                >
+                  {{ data.analysis.supportsJsonResults ? 'JSON' : 'XML' }}
+                </Tag>
+                <Tag
+                  v-if="data.analysis?.cors === false"
+                  severity="warn"
+                  class="capability-tag cors-tag"
+                  title="Browser access blocked by CORS. A local extension can help for testing."
+                >
+                  CORS Issue
+                </Tag>
+              </div>
               <span>{{ data.url }}</span>
             </div>
           </template>
@@ -599,15 +639,41 @@ function formatUIDate(dateStr?: string) {
 
 /* Table Cells */
 .endpoint-name-cell {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  column-gap: 0.5rem;
+  row-gap: 0.25rem;
   align-items: center;
-  gap: 0.5rem;
-  flex-wrap: wrap;
 }
 
 .endpoint-name {
   font-weight: 500;
   color: var(--ae-text-primary);
+  min-width: 0;
+}
+
+.config-status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  display: inline-block;
+  border: 1px solid transparent;
+}
+
+.config-status-dot.status-success {
+  background: var(--ae-status-success);
+}
+
+.config-status-dot.status-warning {
+  background: var(--ae-status-warning);
+}
+
+.config-status-dot.status-error {
+  background: var(--ae-status-error);
+}
+
+.config-status-dot.status-neutral {
+  background: var(--ae-text-muted);
 }
 
 .active-tag {
@@ -639,9 +705,16 @@ function formatUIDate(dateStr?: string) {
 
 .url-with-format {
   display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+}
+
+.url-tags {
+  display: flex;
   align-items: center;
   gap: 0.5rem;
-  flex-wrap: wrap;
 }
 
 .date-cell {

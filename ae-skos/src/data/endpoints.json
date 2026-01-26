@@ -5,6 +5,7 @@
     "description": "AgroPortal is a vocabulary and ontology repository for agronomy and related domains. It hosts ontologies, thesauri, and terminologies for agriculture, food, and environment.",
     "analysis": {
       "hasSkosContent": true,
+      "cors": false,
       "supportsJsonResults": true,
       "supportsNamedGraphs": true,
       "skosGraphCount": 65,
@@ -438,7 +439,7 @@
           "rdfsLabel": true
         }
       },
-      "analyzedAt": "2026-01-24T22:24:21.648Z"
+      "analyzedAt": "2026-01-26T09:34:10.548Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -499,6 +500,7 @@
     "description": "Maintained by the FAO (UN), this is a massive multilingual thesaurus covering agriculture, forestry, fisheries, food, and related environmental concepts.",
     "analysis": {
       "hasSkosContent": true,
+      "cors": false,
       "supportsJsonResults": true,
       "supportsNamedGraphs": true,
       "skosGraphCount": 1,
@@ -735,7 +737,7 @@
           "xlPrefLabel": true
         }
       },
-      "analyzedAt": "2026-01-24T22:35:31.202Z"
+      "analyzedAt": "2026-01-26T09:39:54.458Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -796,6 +798,7 @@
     "description": "The National Library of France. It hosts RAMEAU, the primary subject heading authority for French libraries, along with extensive concepts regarding authors, works, and periods.",
     "analysis": {
       "hasSkosContent": true,
+      "cors": true,
       "supportsJsonResults": true,
       "supportsNamedGraphs": true,
       "skosGraphCount": 1,
@@ -1029,7 +1032,7 @@
           "prefLabel": true
         }
       },
-      "analyzedAt": "2026-01-24T22:37:06.562Z"
+      "analyzedAt": "2026-01-26T09:41:07.163Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -1090,6 +1093,7 @@
     "description": "EU's research and innovation database. Contains information about EU-funded research projects, participants, publications, and results from Framework Programmes (FP7, Horizon 2020, Horizon Europe).",
     "analysis": {
       "hasSkosContent": true,
+      "cors": true,
       "supportsJsonResults": true,
       "supportsNamedGraphs": true,
       "skosGraphCount": 4,
@@ -1148,7 +1152,7 @@
           "dctTitle": true
         }
       },
-      "analyzedAt": "2026-01-24T22:37:09.473Z"
+      "analyzedAt": "2026-01-26T09:41:09.840Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -1165,6 +1169,8 @@
     "description": "The official open data portal of the European Union. Contains EU authority tables (languages, countries, corporate bodies) and EuroVoc thesaurus.",
     "analysis": {
       "hasSkosContent": true,
+      "cors": true,
+      "supportsJsonResults": true,
       "supportsNamedGraphs": true,
       "skosGraphCount": 32,
       "schemeUris": [
@@ -1576,7 +1582,7 @@
           "rdfsLabel": true
         }
       },
-      "analyzedAt": "2026-01-23T13:14:34.211Z"
+      "analyzedAt": "2026-01-26T09:44:35.587Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -1671,6 +1677,7 @@
     "description": "The semantic extraction of Wikipedia. It serves as a general knowledge hub, defining millions of entities and concepts that are linked to external thesauri (like YAGO or Wikidata).",
     "analysis": {
       "hasSkosContent": true,
+      "cors": true,
       "supportsJsonResults": true,
       "supportsNamedGraphs": true,
       "skosGraphCount": 1,
@@ -1700,7 +1707,7 @@
           "rdfsLabel": true
         }
       },
-      "analyzedAt": "2026-01-24T22:39:52.424Z"
+      "analyzedAt": "2026-01-26T09:44:50.050Z"
     },
     "suggestedLanguagePriorities": [
       "en"
@@ -1712,6 +1719,7 @@
     "description": "European Union Agency for Railways data interoperability platform. Contains SKOS vocabularies for railway infrastructure, vehicle types, and operational concepts.",
     "analysis": {
       "hasSkosContent": true,
+      "cors": true,
       "supportsJsonResults": true,
       "supportsNamedGraphs": true,
       "skosGraphCount": 3,
@@ -2029,7 +2037,7 @@
           "prefLabel": true
         }
       },
-      "analyzedAt": "2026-01-24T22:39:56.111Z"
+      "analyzedAt": "2026-01-26T09:44:53.822Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -2085,6 +2093,7 @@
     "description": "The CELLAR repository of the EU Publications Office. It hosts EU Vocabularies including EuroVoc, corporate bodies, countries, languages, and other authority tables used across EU institutions.",
     "analysis": {
       "hasSkosContent": true,
+      "cors": false,
       "supportsJsonResults": true,
       "supportsNamedGraphs": true,
       "skosGraphCount": 501,
@@ -2524,7 +2533,7 @@
           "xlPrefLabel": true
         }
       },
-      "analyzedAt": "2026-01-24T22:41:46.999Z"
+      "analyzedAt": "2026-01-26T09:47:04.948Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -2585,6 +2594,7 @@
     "description": "The official publishing platform for Swiss federal law. It exposes the Classified Compilation of legislation as a hierarchical concept scheme, allowing navigation through Swiss legal domains (Systematic Collection of Federal Law).",
     "analysis": {
       "hasSkosContent": true,
+      "cors": true,
       "supportsJsonResults": true,
       "supportsNamedGraphs": true,
       "skosGraphCount": 47,
@@ -2704,7 +2714,7 @@
           "prefLabel": true
         }
       },
-      "analyzedAt": "2026-01-24T22:41:53.420Z"
+      "analyzedAt": "2026-01-26T09:47:09.983Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -2720,6 +2730,7 @@
     "description": "Finto is a Finnish thesaurus and ontology service providing access to vocabularies used in Finland, including YSO (General Finnish Ontology) and other domain-specific vocabularies.",
     "analysis": {
       "hasSkosContent": true,
+      "cors": true,
       "supportsJsonResults": true,
       "supportsNamedGraphs": true,
       "skosGraphCount": 83,
@@ -2832,7 +2843,7 @@
       "languages": [
         {
           "lang": "fi",
-          "count": 1677883
+          "count": 1677886
         },
         {
           "lang": "sv",
@@ -3031,7 +3042,7 @@
           "count": 511
         }
       ],
-      "totalConcepts": 892001,
+      "totalConcepts": 892004,
       "totalCollections": 1106,
       "totalOrderedCollections": 0,
       "relationships": {
@@ -3060,7 +3071,7 @@
           "rdfsLabel": true
         }
       },
-      "analyzedAt": "2026-01-24T22:43:02.430Z"
+      "analyzedAt": "2026-01-26T09:47:53.226Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -3121,6 +3132,7 @@
     "description": "The Getty Research Institute's Linked Open Data vocabularies including AAT (Art & Architecture Thesaurus), TGN (Thesaurus of Geographic Names), and ULAN (Union List of Artist Names).",
     "analysis": {
       "hasSkosContent": true,
+      "cors": true,
       "supportsJsonResults": false,
       "supportsNamedGraphs": true,
       "skosGraphCount": 0,
@@ -3366,7 +3378,7 @@
           "rdfsLabel": true
         }
       },
-      "analyzedAt": "2026-01-24T22:52:21.767Z"
+      "analyzedAt": "2026-01-26T09:57:10.341Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -3427,6 +3439,7 @@
     "description": "The official legal portal of the Grand Duchy of Luxembourg. It provides access to legislation and the 'Memorial' (official journal) using a structured legal vocabulary.",
     "analysis": {
       "hasSkosContent": true,
+      "cors": true,
       "supportsJsonResults": true,
       "supportsNamedGraphs": true,
       "skosGraphCount": 74,
@@ -3690,7 +3703,7 @@
           "prefLabel": true
         }
       },
-      "analyzedAt": "2026-01-24T22:53:14.079Z"
+      "analyzedAt": "2026-01-26T09:57:43.435Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -3741,6 +3754,7 @@
     "description": "LOV (Linked Open Vocabularies) is a catalog of reusable vocabularies for the semantic web. It indexes vocabularies for describing datasets, services, and knowledge.",
     "analysis": {
       "hasSkosContent": true,
+      "cors": false,
       "supportsJsonResults": true,
       "supportsNamedGraphs": true,
       "skosGraphCount": 47,
@@ -3998,7 +4012,7 @@
           "rdfsLabel": true
         }
       },
-      "analyzedAt": "2026-01-24T22:53:29.461Z"
+      "analyzedAt": "2026-01-26T09:57:46.589Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -4014,6 +4028,7 @@
     "description": "Managed by the British Oceanographic Data Centre. It provides standard vocabularies for oceanography and earth sciences, used globally to tag marine data.",
     "analysis": {
       "hasSkosContent": true,
+      "cors": true,
       "supportsJsonResults": true,
       "supportsNamedGraphs": false,
       "skosGraphCount": null,
@@ -4094,7 +4109,7 @@
           "dctTitle": true
         }
       },
-      "analyzedAt": "2026-01-24T22:53:44.958Z"
+      "analyzedAt": "2026-01-26T09:58:03.354Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -4111,6 +4126,7 @@
     "description": "The STW Thesaurus for Economics is a comprehensive vocabulary for economics and business studies, maintained by ZBW - Leibniz Information Centre for Economics.",
     "analysis": {
       "hasSkosContent": true,
+      "cors": true,
       "supportsJsonResults": true,
       "supportsNamedGraphs": false,
       "skosGraphCount": null,
@@ -4152,7 +4168,7 @@
           "rdfsLabel": true
         }
       },
-      "analyzedAt": "2026-01-24T22:53:47.498Z"
+      "analyzedAt": "2026-01-26T09:58:06.061Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -4165,6 +4181,7 @@
     "description": "The UNESCO Thesaurus is a controlled vocabulary covering education, culture, natural sciences, social and human sciences, communication and information.",
     "analysis": {
       "hasSkosContent": true,
+      "cors": false,
       "supportsJsonResults": true,
       "supportsNamedGraphs": true,
       "skosGraphCount": 1,
@@ -4219,7 +4236,7 @@
           "prefLabel": true
         }
       },
-      "analyzedAt": "2026-01-24T22:53:52.919Z"
+      "analyzedAt": "2026-01-26T09:58:10.615Z"
     },
     "suggestedLanguagePriorities": [
       "en",

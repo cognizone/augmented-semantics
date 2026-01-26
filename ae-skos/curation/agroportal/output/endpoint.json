@@ -4,6 +4,7 @@
   "description": "AgroPortal is a vocabulary and ontology repository for agronomy and related domains. It hosts ontologies, thesauri, and terminologies for agriculture, food, and environment.",
   "analysis": {
     "hasSkosContent": true,
+    "cors": false,
     "supportsJsonResults": true,
     "supportsNamedGraphs": true,
     "skosGraphCount": 65,
@@ -437,7 +438,7 @@
         "rdfsLabel": true
       }
     },
-    "analyzedAt": "2026-01-24T22:24:21.648Z"
+    "analyzedAt": "2026-01-26T09:34:10.548Z"
   },
   "suggestedLanguagePriorities": [
     "en",

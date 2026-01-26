@@ -11,6 +11,7 @@
  * @see /spec/common/com06-Security.md
  */
 import DOMPurify from 'dompurify'
+import suggestedEndpointsData from '../data/endpoints.json'
 import { logger } from './logger'
 
 /**
@@ -167,6 +168,17 @@ const TRUSTED_DOMAINS = [
   'data.bnf.fr',
   'linkeddata.uriburner.com',
 ]
+  .concat(
+    (suggestedEndpointsData as Array<{ url?: string }>).flatMap(entry => {
+      if (!entry.url) return []
+      try {
+        const hostname = new URL(entry.url).hostname.toLowerCase()
+        return hostname ? [hostname] : []
+      } catch {
+        return []
+      }
+    })
+  )
 
 export type TrustLevel = 'trusted' | 'unknown' | 'warning'
 

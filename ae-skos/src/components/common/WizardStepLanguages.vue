@@ -27,7 +27,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   'update:priorities': [priorities: string[]]
-  save: []
+  close: []
   back: []
 }>()
 
@@ -88,9 +88,9 @@ const prioritiesModel = {
       @click="$emit('back')"
     />
     <Button
-      :label="isEditing ? 'Save' : 'Add Endpoint'"
+      label="Done"
       icon="pi pi-check"
-      @click="$emit('save')"
+      @click="$emit('close')"
     />
   </div>
 </template>

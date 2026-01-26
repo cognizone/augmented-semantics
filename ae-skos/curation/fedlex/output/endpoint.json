@@ -4,6 +4,7 @@
   "description": "The official publishing platform for Swiss federal law. It exposes the Classified Compilation of legislation as a hierarchical concept scheme, allowing navigation through Swiss legal domains (Systematic Collection of Federal Law).",
   "analysis": {
     "hasSkosContent": true,
+    "cors": true,
     "supportsJsonResults": true,
     "supportsNamedGraphs": true,
     "skosGraphCount": 47,
@@ -123,7 +124,7 @@
         "prefLabel": true
       }
     },
-    "analyzedAt": "2026-01-24T22:41:53.420Z"
+    "analyzedAt": "2026-01-26T09:47:09.983Z"
   },
   "suggestedLanguagePriorities": [
     "en",

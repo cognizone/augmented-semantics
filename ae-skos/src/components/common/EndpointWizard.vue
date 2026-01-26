@@ -9,7 +9,7 @@
  *
  * @see /spec/common/com01-EndpointManager.md
  */
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import {
   useEndpointForm,
   useEndpointTest,
@@ -18,6 +18,7 @@ import {
   useEndpointCapabilities,
 } from '../../composables'
 import { testConnection, analyzeEndpoint } from '../../services/sparql'
+import { getConfigStatus } from '../../utils'
 import type { SPARQLEndpoint } from '../../types'
 import type { BasicInfoForm } from './WizardStepBasicInfo.vue'
 
@@ -88,6 +89,15 @@ const {
 
 const isEditing = computed(() => !!props.endpoint)
 const dialogTitle = computed(() => isEditing.value ? 'Configure Endpoint' : 'Add Endpoint')
+const corsIssue = computed(() => statusEndpoint.value?.analysis?.cors === false)
+const statusEndpoint = computed(() => tempEndpoint.value || props.endpoint || null)
+const configStatus = computed(() => {
+  const endpoint = statusEndpoint.value
+  const isTemp = endpoint === tempEndpoint.value
+  // In wizard, pass additional language count from priorities state
+  const additionalLanguageCount = isTemp ? priorities.value.length : 0
+  return getConfigStatus(endpoint, { additionalLanguageCount })
+})
 
 // Computed form object for step component
 const formData = computed<BasicInfoForm>(() => ({
@@ -101,21 +111,73 @@ const formData = computed<BasicInfoForm>(() => ({
   token: form.token,
 }))
 
+const isHydrating = ref(false)
+
 // Watch for endpoint changes (edit mode)
 watch(() => props.endpoint, (endpoint) => {
   if (endpoint) {
+    isHydrating.value = true
     loadEndpoint(endpoint)
     tempEndpoint.value = endpoint
     loadPriorities(endpoint)
+    nextTick(() => {
+      isHydrating.value = false
+    })
   } else {
     resetForm()
     tempEndpoint.value = null
   }
 }, { immediate: true })
 
+watch(() => props.endpoint?.id, (id) => {
+  if (id && tempEndpoint.value) {
+    tempEndpoint.value = {
+      ...tempEndpoint.value,
+      id,
+    }
+  }
+})
+
+const lastAnalyzedKey = ref<string | null>(null)
+
+function getAnalysisKey() {
+  const authKey = JSON.stringify({
+    type: form.authType,
+    username: form.username,
+    password: form.password,
+    apiKey: form.apiKey,
+    headerName: form.headerName,
+    token: form.token,
+  })
+  return `${form.url}::${authKey}`
+}
+
+watch(
+  () => [
+    form.url,
+    form.authType,
+    form.username,
+    form.password,
+    form.apiKey,
+    form.headerName,
+    form.token,
+  ],
+  () => {
+    if (isHydrating.value) return
+    lastAnalyzedKey.value = null
+    if (tempEndpoint.value?.analysis) {
+      tempEndpoint.value = {
+        ...tempEndpoint.value,
+        analysis: undefined,
+      }
+    }
+  }
+)
+
 // Handle dialog open/close
 watch(() => props.visible, (visible) => {
   if (visible) {
+    isHydrating.value = true
     // Load endpoint data when opening (handles re-open with same endpoint)
     if (props.endpoint) {
       loadEndpoint(props.endpoint)
@@ -126,6 +188,9 @@ watch(() => props.visible, (visible) => {
     if (props.initialStep) {
       activeStep.value = props.initialStep
     }
+    nextTick(() => {
+      isHydrating.value = false
+    })
   } else {
     // Clear state when dialog closes
     activeStep.value = '1'
@@ -135,6 +200,74 @@ watch(() => props.visible, (visible) => {
     tempEndpoint.value = null
   }
 })
+
+function buildAutosaveEndpoint(): SPARQLEndpoint | null {
+  if (!formValid.value) return null
+
+  const base = tempEndpoint.value || props.endpoint || buildEndpoint()
+  const auth = form.authType === 'none' ? undefined : buildEndpoint().auth
+  const languagePriorities = priorities.value.length > 0
+    ? priorities.value
+    : base.languagePriorities
+
+  return {
+    ...base,
+    name: form.name,
+    url: form.url,
+    auth,
+    languagePriorities,
+  }
+}
+
+function autosaveEndpoint() {
+  const endpoint = buildAutosaveEndpoint()
+  if (!endpoint) return
+  tempEndpoint.value = endpoint
+  emit('save', endpoint)
+}
+
+watch(
+  () => [
+    form.name,
+    form.url,
+    form.authType,
+    form.username,
+    form.password,
+    form.headerName,
+    form.apiKey,
+    form.token,
+    priorities.value.slice(),
+  ],
+  () => {
+    autosaveEndpoint()
+  },
+  { deep: true }
+)
+
+watch(
+  () => tempEndpoint.value?.analysis,
+  () => {
+    autosaveEndpoint()
+  }
+)
+
+watch(
+  () => [formValid.value, form.url, form.authType, form.username, form.password, form.apiKey, form.headerName, form.token] as const,
+  ([isValid, url]) => {
+    if (!isValid || !url.trim()) return
+    if (analyzing.value) return
+    if (isHydrating.value) return
+    if (trustCheck.value?.level === 'trusted' && tempEndpoint.value?.analysis) return
+    const key = getAnalysisKey()
+    if (lastAnalyzedKey.value === key) return
+
+    const endpoint = buildAutosaveEndpoint()
+    if (!endpoint) return
+    tempEndpoint.value = endpoint
+    lastAnalyzedKey.value = key
+    runAnalysis()
+  }
+)
 
 // Auto-trigger analysis when entering Capabilities step (step 2) for new endpoints
 watch(activeStep, (newStep) => {
@@ -157,7 +290,17 @@ function handleFormUpdate(newForm: BasicInfoForm) {
 
 async function handleTest() {
   const endpoint = buildEndpoint('test')
-  await testConn(endpoint)
+  const result = await testConn(endpoint)
+  if (!tempEndpoint.value) {
+    tempEndpoint.value = buildEndpoint()
+  }
+  tempEndpoint.value = {
+    ...tempEndpoint.value,
+    lastTestStatus: result.success ? 'success' : 'error',
+    lastTestedAt: new Date().toISOString(),
+    lastTestErrorCode: result.success ? undefined : result.errorCode,
+  }
+  autosaveEndpoint()
 }
 
 function handleNextFromBasicInfo(activateCallback: (step: string) => void) {
@@ -176,12 +319,22 @@ function handleNextFromBasicInfo(activateCallback: (step: string) => void) {
     tempEndpoint.value = buildEndpoint()
   }
 
+  autosaveEndpoint()
+
   activateCallback('2') // Go to Capabilities
 }
 
 // Step 2 handlers
 async function runAnalysis() {
   if (!tempEndpoint.value) return
+  if (analyzing.value) return
+
+  tempEndpoint.value = {
+    ...tempEndpoint.value,
+    lastTestStatus: 'testing',
+    lastTestErrorCode: undefined,
+  }
+  autosaveEndpoint()
 
   analyzing.value = true
   analyzeStep.value = 'Testing connection...'
@@ -190,6 +343,13 @@ async function runAnalysis() {
     // Step 1: Test connection
     const connectionResult = await testConnection(tempEndpoint.value)
     if (!connectionResult.success) {
+      tempEndpoint.value = {
+        ...tempEndpoint.value,
+        lastTestStatus: 'error',
+        lastTestedAt: new Date().toISOString(),
+        lastTestErrorCode: connectionResult.error?.code,
+      }
+      autosaveEndpoint()
       throw new Error(connectionResult.error?.message || 'Connection failed')
     }
 
@@ -202,6 +362,9 @@ async function runAnalysis() {
     // Store the endpoint with analysis
     tempEndpoint.value = {
       ...tempEndpoint.value,
+      lastTestStatus: 'success',
+      lastTestedAt: new Date().toISOString(),
+      lastTestErrorCode: undefined,
       analysis: {
         hasSkosContent: true,
         supportsNamedGraphs: analysis.supportsNamedGraphs,
@@ -225,6 +388,10 @@ async function runAnalysis() {
     // Load language priorities from analysis
     loadPriorities(tempEndpoint.value!)
 
+    autosaveEndpoint()
+
+    lastAnalyzedKey.value = getAnalysisKey()
+
     // Brief delay to show "Done!"
     await new Promise(resolve => setTimeout(resolve, 500))
 
@@ -233,6 +400,9 @@ async function runAnalysis() {
   } catch (e) {
     analyzeStep.value = `Error: ${e instanceof Error ? e.message : 'Unknown error'}`
     analyzing.value = false
+    if (tempEndpoint.value) {
+      lastAnalyzedKey.value = getAnalysisKey()
+    }
   }
 }
 
@@ -240,8 +410,21 @@ async function handleReanalyze() {
   if (!tempEndpoint.value) return
 
   try {
+    tempEndpoint.value = {
+      ...tempEndpoint.value,
+      lastTestStatus: 'testing',
+      lastTestErrorCode: undefined,
+    }
+    autosaveEndpoint()
+
     const analysis = await reanalyzeEndpoint(tempEndpoint.value)
-    tempEndpoint.value = { ...tempEndpoint.value, analysis }
+    tempEndpoint.value = {
+      ...tempEndpoint.value,
+      analysis,
+      lastTestStatus: 'success',
+      lastTestedAt: new Date().toISOString(),
+      lastTestErrorCode: undefined,
+    }
 
     // Log analysis results for debugging
     console.log('📊 Analysis result (handleReanalyze):', {
@@ -250,7 +433,17 @@ async function handleReanalyze() {
     })
 
     loadPriorities(tempEndpoint.value!)
+    autosaveEndpoint()
   } catch {
+    if (tempEndpoint.value) {
+      tempEndpoint.value = {
+        ...tempEndpoint.value,
+        lastTestStatus: 'error',
+        lastTestedAt: new Date().toISOString(),
+        lastTestErrorCode: 'UNKNOWN',
+      }
+      autosaveEndpoint()
+    }
     // Error handled in composable
   }
 }
@@ -258,18 +451,6 @@ async function handleReanalyze() {
 // Step 3 handlers
 function handlePrioritiesUpdate(newPriorities: string[]) {
   priorities.value = newPriorities
-}
-
-function handleSave() {
-  if (!tempEndpoint.value) return
-
-  const finalEndpoint: SPARQLEndpoint = {
-    ...tempEndpoint.value,
-    languagePriorities: priorities.value,
-  }
-
-  emit('save', finalEndpoint)
-  emit('update:visible', false)
 }
 
 function handleClose() {
@@ -280,7 +461,6 @@ function handleClose() {
 <template>
   <Dialog
     :visible="visible"
-    :header="dialogTitle"
     :style="{ width: '600px' }"
     :modal="true"
     :closable="true"
@@ -288,11 +468,29 @@ function handleClose() {
     class="endpoint-wizard-dialog"
     @update:visible="$emit('update:visible', $event)"
   >
+    <template #header>
+      <div class="wizard-header">
+        <span class="wizard-title">{{ dialogTitle }}</span>
+        <span
+          class="config-status-dot"
+          :class="`status-${configStatus.status}`"
+          :title="configStatus.label"
+        ></span>
+        <span class="config-status-label">{{ configStatus.label }}</span>
+      </div>
+    </template>
     <Stepper v-model:value="activeStep">
       <StepList>
         <Step value="1">Basic Info</Step>
         <Step value="2">Capabilities</Step>
-        <Step value="3">Languages</Step>
+        <Step value="3">
+          <span class="step-label">Languages</span>
+          <span
+            class="config-status-dot step-status-dot"
+            :class="`status-${configStatus.status}`"
+            :title="configStatus.label"
+          ></span>
+        </Step>
       </StepList>
 
       <StepPanels>
@@ -306,6 +504,7 @@ function handleClose() {
             :testing="testing"
             :testResult="testResult"
             :isEditing="isEditing"
+            :corsIssue="corsIssue"
             @update:form="handleFormUpdate"
             @test="handleTest"
             @next="handleNextFromBasicInfo(activateCallback)"
@@ -363,7 +562,7 @@ function handleClose() {
             :getPriorityLabel="getPriorityLabel"
             :getBadgeColor="getBadgeColor"
             @update:priorities="handlePrioritiesUpdate"
-            @save="handleSave"
+            @close="handleClose"
             @back="activateCallback('2')"
           />
         </StepPanel>
@@ -373,5 +572,50 @@ function handleClose() {
 </template>
 
 <style scoped>
-/* All step-specific styles are now in individual step components */
+.wizard-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.wizard-title {
+  font-weight: 600;
+}
+
+.config-status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  display: inline-block;
+  border: 1px solid transparent;
+}
+
+.config-status-dot.status-success {
+  background: var(--ae-status-success);
+}
+
+.config-status-dot.status-warning {
+  background: var(--ae-status-warning);
+}
+
+.config-status-dot.status-error {
+  background: var(--ae-status-error);
+}
+
+.config-status-dot.status-neutral {
+  background: var(--ae-text-muted);
+}
+
+.config-status-label {
+  font-size: 0.8125rem;
+  color: var(--ae-text-secondary);
+}
+
+.step-label {
+  margin-right: 0.375rem;
+}
+
+.step-status-dot {
+  vertical-align: middle;
+}
 </style>

@@ -364,6 +364,21 @@ describe('isValidEndpointUrl', () => {
   })
 })
 
+describe('dynamic trusted domains', () => {
+  it('trusts endpoints from endpoints.json', () => {
+    // AgroPortal is a suggested endpoint from endpoints.json
+    const result = assessEndpointTrust('https://sparql.agroportal.lirmm.fr/sparql')
+    expect(result.level).toBe('trusted')
+    expect(result.reasons).toContain('Known trusted vocabulary provider')
+  })
+
+  it('does not trust unrelated domains', () => {
+    const result = assessEndpointTrust('https://random-unknown-domain.xyz/sparql')
+    expect(result.level).toBe('unknown')
+    expect(result.reasons).not.toContain('Known trusted vocabulary provider')
+  })
+})
+
 describe('credential storage', () => {
   beforeEach(() => {
     sessionStorage.clear()

@@ -14,6 +14,7 @@ export interface TestResult {
   success: boolean
   message: string
   time?: number
+  errorCode?: string
 }
 
 export function useEndpointTest() {
@@ -50,6 +51,7 @@ export function useEndpointTest() {
       const errorResult = {
         success: false,
         message: result.error?.message || 'Connection failed',
+        errorCode: result.error?.code,
       }
       testResult.value = errorResult
       return errorResult

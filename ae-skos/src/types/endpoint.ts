@@ -12,6 +12,9 @@ export interface SPARQLEndpoint {
   analysis?: EndpointAnalysis
   selectedGraphs?: string[]
   languagePriorities?: string[]  // User-ordered language codes
+  lastTestStatus?: 'success' | 'error' | 'testing'
+  lastTestedAt?: string
+  lastTestErrorCode?: string
   createdAt: string
   lastAccessedAt?: string
   accessCount: number
@@ -60,6 +63,7 @@ export type SkosResourceType = 'concept' | 'scheme' | 'collection'
 export interface EndpointAnalysis {
   // SKOS content (first check)
   hasSkosContent: boolean              // Has ConceptScheme or Concept
+  cors?: boolean
 
   // SPARQL result formats
   supportsJsonResults?: boolean | null // true = JSON supported, false = XML-only, null = detection failed
