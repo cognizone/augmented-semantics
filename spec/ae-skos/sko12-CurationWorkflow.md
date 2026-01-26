@@ -55,6 +55,7 @@ The curation script generates `output/endpoint.json`:
   "description": "...",
   "analysis": {
     "hasSkosContent": true,
+    "cors": true,
     "supportsJsonResults": true,
     "supportsNamedGraphs": true,
     "skosGraphCount": 3,
@@ -130,6 +131,74 @@ Collection counts enable the app to skip collection-related queries when an endp
 - `totalCollections: 0` + `totalOrderedCollections: 0` = skip all collection queries
 - Used by `endpointHasCollections()` helper in the app
 - Improves performance on collection-free endpoints
+
+### CORS Detection
+
+The curation workflow detects whether browser-based access is possible by checking CORS headers.
+
+**Detection Method:**
+```typescript
+async function detectCors(url: string): Promise<boolean> {
+  try {
+    // Make a test request with CORS mode
+    const response = await fetch(url, {
+      method: 'HEAD',
+      mode: 'cors',
+    })
+    return response.ok
+  } catch {
+    return false  // CORS blocked or network error
+  }
+}
+```
+
+**Field in Output:**
+
+| Value | Meaning |
+|-------|---------|
+| `true` | Browser access allowed (CORS headers present) |
+| `false` | Browser access blocked (no Access-Control-Allow-Origin) |
+
+**Usage:**
+- Displayed as warning badge in EndpointManager when `cors: false`
+- Used by `getConfigStatus()` to show "CORS issue" warning
+- Helps users understand why an endpoint might not work in browser
+
+**Default Behavior:**
+If CORS detection fails due to network issues, the field is omitted rather than set to `false`.
+
+### Runtime vs Curation Fields
+
+The `SPARQLEndpoint` interface contains two categories of fields:
+
+**Curation Fields (in `analysis`):**
+Set during curation workflow, stored in `endpoints.json`, static.
+
+| Field | Description |
+|-------|-------------|
+| `hasSkosContent` | Whether SKOS content exists |
+| `cors` | Browser CORS access status |
+| `supportsJsonResults` | JSON response format support |
+| `languages` | Detected label languages |
+| `schemeUris` | Concept scheme URIs |
+| `relationships` | SKOS relationship capabilities |
+| `analyzedAt` | When analysis was performed |
+
+**Runtime Fields (on `SPARQLEndpoint`):**
+Set during user interaction, stored in localStorage, dynamic.
+
+| Field | Description |
+|-------|-------------|
+| `lastTestStatus` | User's connection test result |
+| `lastTestedAt` | When user last tested |
+| `lastTestErrorCode` | Specific error from user's test |
+| `languagePriorities` | User-customized language order |
+| `selectedGraphs` | User-selected graphs |
+
+**Key Distinction:**
+- Curated endpoints don't have runtime fields until the user interacts with them
+- The `cors` field (curation) tells what *should* work
+- The `lastTestErrorCode` field (runtime) tells what *actually* happened for this user
 
 ## Curation Scripts
 

@@ -199,6 +199,7 @@ ORDER BY DESC(?count)
 interface EndpointAnalysis {
   // SKOS Content (replaces generic graph detection)
   hasSkosContent: boolean              // true if endpoint contains SKOS ConceptSchemes or Concepts
+  cors?: boolean                       // CORS access status (detected during curation)
 
   // SPARQL result formats
   supportsJsonResults?: boolean | null // true = JSON supported, false = XML-only, null = detection failed
@@ -779,6 +780,9 @@ interface SPARQLEndpoint {
   analysis?: EndpointAnalysis    // Analysis results
   selectedGraphs?: string[]      // User-selected graphs (empty = all)
   languagePriorities?: string[]  // User-ordered language codes
+  lastTestStatus?: 'success' | 'error' | 'testing'  // Connection test result
+  lastTestedAt?: string          // ISO timestamp of last test
+  lastTestErrorCode?: string     // Error code (e.g., 'CORS_BLOCKED')
   createdAt: string              // ISO timestamp
   lastAccessedAt?: string        // ISO timestamp
   accessCount: number            // Times accessed
@@ -795,6 +799,146 @@ interface EndpointAuth {
   }
 }
 ```
+
+## Test Status Tracking
+
+Runtime fields that track connection test results for each endpoint.
+
+### Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `lastTestStatus` | `'success' \| 'error' \| 'testing'` | Result of the last connection test |
+| `lastTestedAt` | `string` | ISO timestamp when test was performed |
+| `lastTestErrorCode` | `string` | Specific error code if test failed |
+
+### Lifecycle
+
+1. **Testing starts**: `lastTestStatus = 'testing'`, `lastTestedAt = now()`
+2. **Test succeeds**: `lastTestStatus = 'success'`, `lastTestErrorCode = undefined`
+3. **Test fails**: `lastTestStatus = 'error'`, `lastTestErrorCode = <error_code>`
+
+### Error Codes
+
+| Code | Description |
+|------|-------------|
+| `CORS_BLOCKED` | Browser blocked request due to CORS policy |
+| `NETWORK_ERROR` | Network-level failure (DNS, connection refused) |
+| `TIMEOUT` | Request exceeded timeout limit |
+| `HTTP_ERROR` | Non-2xx HTTP status code received |
+| `PARSE_ERROR` | Failed to parse SPARQL response |
+
+### Persistence
+
+Test status fields are stored in localStorage alongside other endpoint data. They persist across sessions but are considered transient - a cached "success" status doesn't guarantee current availability.
+
+### Triggering Test Updates
+
+Test status updates occur when:
+- User clicks "Test Connection" button
+- Endpoint wizard runs auto-analysis on trusted endpoints
+- Manual re-analysis is triggered
+
+## Configuration Status Indicators
+
+The `getConfigStatus()` utility function calculates a summary status for endpoint configuration completeness.
+
+**Implementation:** `utils/endpointStatus.ts`
+
+### Status Types
+
+| Status | Color | Meaning |
+|--------|-------|---------|
+| `success` | Green | Fully configured and ready to use |
+| `warning` | Orange | Partially configured or potential issues |
+| `error` | Red | Configuration problem preventing use |
+| `neutral` | Gray | Not yet configured |
+
+### Status Matrix
+
+Status is determined by checking conditions in order (first match wins):
+
+| Status | Label | Condition |
+|--------|-------|-----------|
+| `neutral` | Not configured | No URL provided |
+| `error` | Invalid URL | URL validation fails |
+| `warning` | Testing... | `lastTestStatus === 'testing'` |
+| `error` | No SKOS content | `analysis.hasSkosContent === false` |
+| `warning` | CORS blocked | `lastTestErrorCode === 'CORS_BLOCKED'` |
+| `error` | Connection failed | `lastTestStatus === 'error'` |
+| `warning` | Analysis pending | No analysis data exists |
+| `warning` | No languages detected | No languages in analysis or priorities |
+| `warning` | CORS issue | `analysis.cors === false` (curation-detected) |
+| `success` | Configuration complete | All checks pass |
+
+### Usage
+
+```typescript
+import { getConfigStatus } from '@/utils/endpointStatus'
+
+const status = getConfigStatus(endpoint)
+// Returns: { status: 'success' | 'warning' | 'error' | 'neutral', label: string }
+```
+
+### UI Display
+
+- **EndpointManager table**: Colored dot indicator next to endpoint name
+- **EndpointWizard header**: Status badge showing current configuration state
+- **Color mapping**: Uses CSS variables `--ae-status-success`, `--ae-status-warning`, `--ae-status-error`
+
+### Additional Language Count Option
+
+For wizard context where language priorities may not yet be saved to the endpoint:
+
+```typescript
+const status = getConfigStatus(endpoint, {
+  additionalLanguageCount: wizardPriorities.length
+})
+```
+
+## CORS Field in Analysis
+
+The `cors` field in EndpointAnalysis indicates whether browser-based access is possible.
+
+### Field Definition
+
+```typescript
+interface EndpointAnalysis {
+  cors?: boolean  // CORS access status (detected during curation)
+  // ... other fields
+}
+```
+
+### Values
+
+| Value | Meaning |
+|-------|---------|
+| `true` | Browser can access endpoint (CORS headers present) |
+| `false` | Browser access blocked (no CORS or restrictive policy) |
+| `undefined` | Not yet detected or detection failed |
+
+### Detection Context
+
+The `cors` field is set during curation workflow, not at runtime:
+- Curation scripts test CORS access when analyzing endpoints
+- Results are stored in `output/endpoint.json`
+- Runtime code checks this cached value
+
+### Difference from `lastTestErrorCode`
+
+| Field | Set During | Scope |
+|-------|------------|-------|
+| `cors` | Curation | Pre-analyzed, static indicator |
+| `lastTestErrorCode` | Runtime | User's current test result |
+
+Both can indicate CORS issues, but `cors` is a static curation result while `lastTestErrorCode` reflects the user's actual test.
+
+### UI Display
+
+When `analysis.cors === false`:
+- Warning badge appears in EndpointManager table
+- Config status shows "CORS issue" warning
+- Tooltip explains browser access may be limited
 
 ## Implementation Architecture
 
@@ -841,6 +985,7 @@ When `developerMode` is enabled in settings, a download button appears in the en
   - Step 2: Capabilities (SKOS content, graphs, schemes, concepts, relationships)
   - Step 3: Languages (drag-and-drop priority ordering)
 - Handles both add and edit modes
+- Auto-save and auto-analysis features (see below)
 
 **EndpointDeleteDialog.vue** (~101 lines)
 - Deletion confirmation dialog
@@ -1002,6 +1147,63 @@ Features:
 - Priority labels ("Default fallback", "2nd priority", etc.)
 - Colored badge styling (cycling palette)
 - Defaults: 'en' first, others alphabetically
+
+### Wizard Auto-Save and Auto-Analysis
+
+The endpoint wizard provides automatic save and analysis features for improved UX.
+
+**Form Auto-Save:**
+- Changes to form fields (name, URL, auth settings) are saved immediately
+- Uses `watchEffect` to detect changes and persist to localStorage
+- No explicit "Save" button needed for basic configuration
+
+**Auto-Analysis Triggers:**
+When the endpoint URL changes, auto-analysis may run based on trust level:
+
+```typescript
+// Auto-analysis runs when:
+// 1. URL changes to a valid endpoint URL
+// 2. Endpoint is trusted (known domain or from suggested endpoints)
+// 3. Not currently analyzing
+// 4. Analysis hasn't been run for this URL yet
+
+watch(() => endpoint.url, async (newUrl) => {
+  if (!isValidEndpointUrl(newUrl)) return
+  if (!isTrustedEndpoint(newUrl)) return
+  if (isAnalyzing.value) return
+  if (lastAnalyzedKey.value === newUrl) return
+
+  await runAutoAnalysis()
+})
+```
+
+**Trust Check Before Auto-Analyzing:**
+Only trusted endpoints trigger automatic analysis to prevent:
+- Unnecessary network requests to unknown endpoints
+- Potential security issues from untrusted sources
+- User confusion when analysis fails on misconfigured endpoints
+
+See [com06-Security](./com06-Security.md) for trusted domain definitions.
+
+**Race Condition Prevention:**
+The `lastAnalyzedKey` pattern prevents duplicate analysis runs:
+
+```typescript
+const lastAnalyzedKey = ref<string | null>(null)
+
+async function runAnalysis() {
+  const key = endpoint.url
+  if (lastAnalyzedKey.value === key) return
+
+  lastAnalyzedKey.value = key
+  // ... run analysis
+}
+```
+
+This ensures:
+- Rapid URL changes don't trigger multiple concurrent analyses
+- Re-analysis of same URL is prevented unless explicitly requested
+- Race conditions between URL changes are handled correctly
 
 ### Benefits
 
