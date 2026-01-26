@@ -2,6 +2,7 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { RouterView } from 'vue-router'
 import { useUIStore, useConceptStore, useSettingsStore, useLanguageStore, useEndpointStore } from './stores'
+import type { SettingsSection } from './stores/ui'
 import { useConfig } from './services'
 import Toast from 'primevue/toast'
 import Button from 'primevue/button'
@@ -149,7 +150,7 @@ const searchMatchModeOptions = [
   { label: 'Regular expression', value: 'regex' },
 ]
 
-const settingsNavItems = [
+const settingsNavItems: { id: SettingsSection; label: string; icon: string; hint: string }[] = [
   { id: 'display', label: 'Display', icon: 'palette', hint: 'Labels, tags, notation' },
   { id: 'language', label: 'Language', icon: 'language', hint: 'Preferred label language' },
   { id: 'deprecation', label: 'Deprecation', icon: 'warning', hint: 'Indicators & rules' },

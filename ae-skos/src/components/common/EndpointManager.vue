@@ -230,6 +230,20 @@ function formatUIDate(dateStr?: string) {
     position="top"
   >
     <div class="endpoint-manager-content">
+      <!-- Welcome Banner (shown when no endpoints) -->
+      <div v-if="endpointStore.endpoints.length === 0" class="welcome-banner">
+        <div class="welcome-icon">
+          <span class="material-symbols-outlined">explore</span>
+        </div>
+        <div class="welcome-content">
+          <h3 class="welcome-title">Welcome to AE SKOS</h3>
+          <p class="welcome-text">
+            Explore SKOS vocabularies from any SPARQL endpoint.
+            Pick a suggested endpoint below, or add your own to get started.
+          </p>
+        </div>
+      </div>
+
       <!-- Suggested Endpoints -->
       <div v-if="endpointStore.availableSuggestedEndpoints.length > 0" class="suggested-section">
         <div class="suggested-header-row">
@@ -450,6 +464,52 @@ function formatUIDate(dateStr?: string) {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+}
+
+/* Welcome Banner */
+.welcome-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.25rem;
+  margin-top: 0.5rem;
+  background: linear-gradient(135deg, var(--ae-bg-elevated), var(--ae-bg-base));
+  border: 1px solid var(--ae-border-color);
+  border-radius: 0.5rem;
+}
+
+.welcome-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: var(--ae-accent);
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.welcome-icon .material-symbols-outlined {
+  font-size: 28px;
+  color: white;
+}
+
+.welcome-content {
+  flex: 1;
+}
+
+.welcome-title {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--ae-text-primary);
+}
+
+.welcome-text {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--ae-text-secondary);
+  line-height: 1.5;
 }
 
 /* Suggested Endpoints */
