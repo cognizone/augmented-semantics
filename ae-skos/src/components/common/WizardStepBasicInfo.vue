@@ -225,12 +225,6 @@ const trustLabel = (level: string) => {
     />
     <div class="footer-right">
       <Button
-        label="Cancel"
-        severity="secondary"
-        text
-        @click="$emit('close')"
-      />
-      <Button
         label="Next"
         icon="pi pi-arrow-right"
         iconPos="right"

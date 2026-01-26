@@ -126,6 +126,10 @@ function handleDeleteConfirm(endpoint: SPARQLEndpoint) {
   endpointStore.removeEndpoint(endpoint.id)
 }
 
+function handleRowClick(event: { data: SPARQLEndpoint }) {
+  openConfigureWizard(event.data)
+}
+
 // Connection Handler
 async function handleTestConnection(endpoint: SPARQLEndpoint) {
   testingEndpointId.value = endpoint.id
@@ -321,6 +325,9 @@ function formatUIDate(dateStr?: string) {
         currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
         class="endpoints-table"
         stripedRows
+        rowHover
+        :rowClass="() => 'clickable-row'"
+        @row-click="handleRowClick"
       >
         <template #empty>
           <div class="empty-state">
@@ -389,7 +396,7 @@ function formatUIDate(dateStr?: string) {
                 :class="{ 'action-btn-disabled': data.id === endpointStore.currentId }"
                 :disabled="data.id === endpointStore.currentId || testingEndpointId === data.id"
                 title="Check connection"
-                @click="handleTestConnection(data)"
+                @click.stop="handleTestConnection(data)"
               >
                 <span v-if="testingEndpointId === data.id" class="material-symbols-outlined spinning">sync</span>
                 <span v-else class="material-symbols-outlined">link</span>
@@ -398,7 +405,7 @@ function formatUIDate(dateStr?: string) {
               <button
                 class="action-btn action-btn-configure"
                 title="Configure Endpoint"
-                @click="openConfigureWizard(data)"
+                @click.stop="openConfigureWizard(data)"
               >
                 <span class="material-symbols-outlined">tune</span>
               </button>
@@ -406,14 +413,14 @@ function formatUIDate(dateStr?: string) {
                 v-if="settingsStore.developerMode && !endpointStore.configMode"
                 class="action-btn action-btn-download"
                 title="Download analysis JSON"
-                @click="handleDownloadJson(data)"
+                @click.stop="handleDownloadJson(data)"
               >
                 <span class="material-symbols-outlined">download</span>
               </button>
               <button
                 class="action-btn action-btn-delete"
                 title="Delete"
-                @click="handleDelete(data)"
+                @click.stop="handleDelete(data)"
               >
                 <span class="material-symbols-outlined">delete</span>
               </button>
@@ -792,6 +799,10 @@ function formatUIDate(dateStr?: string) {
   width: 1px;
   height: 1rem;
   background: var(--ae-border-color);
+}
+
+:deep(.clickable-row) {
+  cursor: pointer;
 }
 
 /* Spinning animation for loading state */
