@@ -85,11 +85,13 @@ export const useSchemeStore = defineStore('scheme', () => {
     loading.value = isLoading
   }
 
-  function reset() {
+  function reset(options?: { preserveSelection?: boolean }) {
     schemes.value = []
-    selectedUri.value = null
     viewingSchemeUri.value = null
     schemeDetails.value = null
+    if (!options?.preserveSelection) {
+      selectedUri.value = null
+    }
   }
 
   // Scheme details viewing actions

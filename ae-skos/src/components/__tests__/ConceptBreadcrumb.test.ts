@@ -244,6 +244,109 @@ describe('ConceptBreadcrumb', () => {
 
       expect(schemeStore.viewingSchemeUri).toBe('http://ex.org/scheme/1')
     })
+
+    it('preserves selected scheme across endpoint change when still valid', async () => {
+      // Setup endpoint with schemes (fresh pinia)
+      setActivePinia(createPinia())
+      const schemeUris = ['http://ex.org/scheme/1', 'http://ex.org/scheme/2']
+      setupEndpointWithSchemes(schemeUris)
+
+      ;(executeSparql as Mock)
+        .mockResolvedValueOnce({
+          results: {
+            bindings: [
+              { scheme: { value: 'http://ex.org/scheme/1' }, label: { value: 'Scheme One' }, labelLang: { value: 'en' }, labelType: { value: 'prefLabel' } },
+              { scheme: { value: 'http://ex.org/scheme/2' }, label: { value: 'Scheme Two' }, labelLang: { value: 'en' }, labelType: { value: 'prefLabel' } },
+            ],
+          },
+        })
+        .mockResolvedValueOnce({
+          results: {
+            bindings: [
+              { scheme: { value: 'http://ex.org/scheme/1' }, label: { value: 'Scheme One' }, labelLang: { value: 'en' }, labelType: { value: 'prefLabel' } },
+              { scheme: { value: 'http://ex.org/scheme/2' }, label: { value: 'Scheme Two' }, labelLang: { value: 'en' }, labelType: { value: 'prefLabel' } },
+            ],
+          },
+        })
+
+      mountBreadcrumb()
+      await flushPromises()
+
+      const schemeStore = useSchemeStore()
+      const endpointStore = useEndpointStore()
+
+      // Simulate URL-selected scheme
+      schemeStore.selectScheme('http://ex.org/scheme/1')
+
+      // Switch endpoint
+      const nextEndpoint = endpointStore.addEndpoint({
+        name: 'Other Endpoint',
+        url: 'https://example.org/sparql-2',
+        analysis: {
+          hasSkosContent: true,
+          supportsNamedGraphs: false,
+          skosGraphCount: 0,
+          schemeUris,
+          schemeCount: schemeUris.length,
+          schemesLimited: false,
+          analyzedAt: new Date().toISOString(),
+        },
+      })
+      endpointStore.selectEndpoint(nextEndpoint.id)
+      await flushPromises()
+
+      expect(schemeStore.selectedUri).toBe('http://ex.org/scheme/1')
+    })
+
+    it('clears selected scheme if not present after endpoint change', async () => {
+      // Setup endpoint with schemes (fresh pinia)
+      setActivePinia(createPinia())
+      setupEndpointWithSchemes(['http://ex.org/scheme/1'])
+
+      ;(executeSparql as Mock)
+        .mockResolvedValueOnce({
+          results: {
+            bindings: [
+              { scheme: { value: 'http://ex.org/scheme/1' }, label: { value: 'Scheme One' }, labelLang: { value: 'en' }, labelType: { value: 'prefLabel' } },
+            ],
+          },
+        })
+        .mockResolvedValueOnce({
+          results: {
+            bindings: [
+              { scheme: { value: 'http://ex.org/scheme/2' }, label: { value: 'Scheme Two' }, labelLang: { value: 'en' }, labelType: { value: 'prefLabel' } },
+              { scheme: { value: 'http://ex.org/scheme/3' }, label: { value: 'Scheme Three' }, labelLang: { value: 'en' }, labelType: { value: 'prefLabel' } },
+            ],
+          },
+        })
+
+      mountBreadcrumb()
+      await flushPromises()
+
+      const schemeStore = useSchemeStore()
+      const endpointStore = useEndpointStore()
+
+      schemeStore.selectScheme('http://ex.org/scheme/1')
+
+      // Second endpoint has multiple schemes (to avoid auto-select) but NOT scheme/1
+      const nextEndpoint = endpointStore.addEndpoint({
+        name: 'Other Endpoint',
+        url: 'https://example.org/sparql-2',
+        analysis: {
+          hasSkosContent: true,
+          supportsNamedGraphs: false,
+          skosGraphCount: 0,
+          schemeUris: ['http://ex.org/scheme/2', 'http://ex.org/scheme/3'],
+          schemeCount: 2,
+          schemesLimited: false,
+          analyzedAt: new Date().toISOString(),
+        },
+      })
+      endpointStore.selectEndpoint(nextEndpoint.id)
+      await flushPromises()
+
+      expect(schemeStore.selectedUri).toBeNull()
+    })
   })
 
   describe('breadcrumb path', () => {

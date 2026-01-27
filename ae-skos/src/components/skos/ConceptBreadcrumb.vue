@@ -241,8 +241,14 @@ async function loadSchemes() {
     endpointStore.setStatus('connected')
     schemeStore.setSchemes(uniqueSchemes)
 
-    // Auto-select if only one scheme
-    if (uniqueSchemes.length === 1 && uniqueSchemes[0] && !schemeStore.selectedUri) {
+    // Preserve selection if valid, otherwise auto-select
+    if (schemeStore.selectedUri) {
+      const stillValid = uniqueSchemes.some(scheme => scheme.uri === schemeStore.selectedUri)
+      if (!stillValid) {
+        schemeStore.selectScheme(null)
+      }
+    }
+    if (!schemeStore.selectedUri && uniqueSchemes.length === 1 && uniqueSchemes[0]) {
       schemeStore.selectScheme(uniqueSchemes[0].uri)
     }
   } catch (e: unknown) {
@@ -262,7 +268,7 @@ watch(
   () => endpointStore.current?.id,
   (newId, oldId) => {
     if (newId && newId !== oldId) {
-      schemeStore.reset()
+      schemeStore.reset({ preserveSelection: true })
       loadSchemes()
     }
   },
