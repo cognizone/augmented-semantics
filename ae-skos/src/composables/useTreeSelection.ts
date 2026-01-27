@@ -9,6 +9,7 @@
 
 import { computed } from 'vue'
 import { useConceptStore, useEndpointStore, useSchemeStore } from '../stores'
+import { logger } from '../services'
 import type { ConceptNode } from '../types'
 import type { TreeNode } from 'primevue/treenode'
 
@@ -109,7 +110,25 @@ export function useTreeSelection(options: UseTreeSelectionOptions) {
    */
   function onNodeExpand(node: TreeNode) {
     const conceptNode = node.data as ConceptNode | undefined
-    if (conceptNode?.hasNarrower && !conceptNode.children && node.key) {
+    const isSchemeNode = Boolean((node.data as { isScheme?: boolean } | undefined)?.isScheme)
+    const isCollectionNode = Boolean((node.data as { isCollection?: boolean; type?: string } | undefined)?.isCollection)
+      || (node.data as { type?: string } | undefined)?.type === 'collection'
+    const isConceptNode = !isSchemeNode && !isCollectionNode
+    const needsChildren = !conceptNode?.children || conceptNode.children.length === 0
+
+    logger.debug('useTreeSelection', 'onNodeExpand called', {
+      key: node.key,
+      label: node.label,
+      isSchemeNode,
+      isCollectionNode,
+      isConceptNode,
+      hasNarrower: conceptNode?.hasNarrower,
+      childrenLength: conceptNode?.children?.length,
+      needsChildren,
+      willLoadChildren: isConceptNode && conceptNode?.hasNarrower && needsChildren && node.key,
+    })
+
+    if (isConceptNode && conceptNode?.hasNarrower && needsChildren && node.key) {
       loadChildren(String(node.key))
     }
     if (node.key) {

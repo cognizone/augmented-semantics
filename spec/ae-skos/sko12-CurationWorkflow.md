@@ -97,6 +97,8 @@ The curation script generates `output/endpoint.json`:
         "rdfsLabel": true
       }
     },
+    "schemeUriSlashMismatch": false,
+    "schemeUriSlashMismatchPairs": [],
     "analyzedAt": "2026-01-15T21:04:59.537Z"
   },
   "suggestedLanguagePriorities": ["en", "es", ...]
@@ -167,6 +169,45 @@ async function detectCors(url: string): Promise<boolean> {
 **Default Behavior:**
 If CORS detection fails due to network issues, the field is omitted rather than set to `false`.
 
+### Scheme URI Mismatch Detection
+
+Some SPARQL endpoints have inconsistent URI formatting between:
+- The **declared** scheme URI in `skos:ConceptScheme` definitions (e.g., with trailing slash)
+- The **used** scheme URI in `skos:inScheme` assertions (e.g., without trailing slash)
+
+This causes silent query failures when filtering by scheme.
+
+**Detection Method:**
+1. Query all `skos:ConceptScheme` URIs (declared)
+2. Query all distinct `skos:inScheme` values (used)
+3. Compare normalized forms (without trailing slash)
+4. Report mismatches where the slash differs
+
+**Output Fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `schemeUriSlashMismatch` | boolean | `true` if any trailing slash mismatches found |
+| `schemeUriSlashMismatchPairs` | array | Up to 5 example pairs of `{ declared, used }` |
+
+**Example Output:**
+```json
+{
+  "schemeUriSlashMismatch": true,
+  "schemeUriSlashMismatchPairs": [
+    {
+      "declared": "http://data.bnf.fr/vocabulary/rameau/",
+      "used": "http://data.bnf.fr/vocabulary/rameau"
+    }
+  ]
+}
+```
+
+**Usage in App:**
+- User enables `enableSchemeUriSlashFix` setting (Developer section)
+- App queries try both URI variants when `schemeUriSlashMismatch: true`
+- Fixes tree loading issues on affected endpoints (e.g., BnF)
+
 ### Runtime vs Curation Fields
 
 The `SPARQLEndpoint` interface contains two categories of fields:
@@ -182,6 +223,8 @@ Set during curation workflow, stored in `endpoints.json`, static.
 | `languages` | Detected label languages |
 | `schemeUris` | Concept scheme URIs |
 | `relationships` | SKOS relationship capabilities |
+| `schemeUriSlashMismatch` | Whether scheme URI trailing slash mismatches detected |
+| `schemeUriSlashMismatchPairs` | Example pairs of declared vs used URIs |
 | `analyzedAt` | When analysis was performed |
 
 **Runtime Fields (on `SPARQLEndpoint`):**
@@ -255,6 +298,8 @@ writeOutput(import.meta.dirname, {
 | `generateLanguagePriorities(languages)` | Sort languages with 'en' first |
 | `writeOutput(dir, data)` | Write `output/endpoint.json` |
 | `curate(dir)` | Convenience wrapper for standard flow |
+| `detectSchemeUriSlashMismatch(url, declaredSchemes)` | Compare declared vs used scheme URIs |
+| `detectUsedSchemes(url)` | Query endpoint for actually-used scheme URIs |
 
 ## Merge Script
 

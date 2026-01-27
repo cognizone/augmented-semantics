@@ -16,6 +16,7 @@ import { useConceptStore, useEndpointStore, useSchemeStore, useLanguageStore, us
 import { executeSparql, withPrefixes, logger, escapeSparqlString } from '../../services'
 import { useDelayedLoading, useLabelResolver } from '../../composables'
 import { getRefLabel } from '../../utils/displayUtils'
+import { buildSchemeValuesClause } from '../../utils/schemeUri'
 import type { SearchResult } from '../../types'
 import Listbox from 'primevue/listbox'
 import ProgressSpinner from 'primevue/progressspinner'
@@ -124,9 +125,19 @@ async function executeSearch() {
   const labelUnion = labelPatterns.join(' UNION ')
 
   // Build scheme filter
-  const schemeFilter = !settingsStore.searchAllSchemes && schemeStore.selected
-    ? `?concept skos:inScheme <${schemeStore.selected.uri}> .`
-    : ''
+  let schemeFilter = ''
+  if (!settingsStore.searchAllSchemes && schemeStore.selected) {
+    const { schemeTerm, valuesClause } = buildSchemeValuesClause(
+      schemeStore.selected.uri,
+      endpointStore.current?.analysis,
+      settingsStore.enableSchemeUriSlashFix,
+      'scheme'
+    )
+    schemeFilter = `
+      ${valuesClause}
+      ?concept skos:inScheme ${schemeTerm} .
+    `
+  }
 
   const sparqlQuery = withPrefixes(`
     SELECT DISTINCT ?concept ?label ?labelLang ?notation ?matchedLabel ?matchType
@@ -227,6 +238,7 @@ watch(
     settingsStore.searchInDefinition,
     settingsStore.searchMatchMode,
     settingsStore.searchAllSchemes,
+    settingsStore.enableSchemeUriSlashFix,
   ],
   () => {
     if (hasQuery.value) {

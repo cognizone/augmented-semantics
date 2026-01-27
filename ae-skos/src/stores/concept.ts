@@ -103,6 +103,7 @@ export const useConceptStore = defineStore('concept', () => {
       for (const node of nodes) {
         if (node.uri === uri) {
           node.children = children
+          node.hasNarrower = children.length > 0
           return true
         }
         if (node.children && updateInList(node.children)) {

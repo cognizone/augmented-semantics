@@ -212,6 +212,61 @@ The tree only needs to know IF there are children (show expand arrow), not HOW M
 
 Removing the type check can provide 40x speedup on some endpoints.
 
+### Scheme URI Slash Fix
+
+Some endpoints have inconsistent scheme URIs where the declared `skos:ConceptScheme` URI differs from the URI used in `skos:inScheme` assertions (typically trailing slash differences).
+
+**Problem:**
+```
+Declared: http://example.org/scheme/
+Used:     http://example.org/scheme   (no trailing slash)
+```
+
+Standard queries fail to match concepts to their scheme.
+
+**Solution (`buildSchemeValuesClause()`):**
+
+When `enableSchemeUriSlashFix` is enabled and `analysis.schemeUriSlashMismatch` is `true`, queries use a VALUES clause with both URI variants:
+
+```sparql
+VALUES ?scheme { <http://example.org/scheme/> <http://example.org/scheme> }
+...
+?concept skos:inScheme ?scheme .
+```
+
+**Implementation (`utils/schemeUri.ts`):**
+
+| Function | Purpose |
+|----------|---------|
+| `getSchemeUriVariants()` | Returns array of URI variants to try |
+| `buildSchemeValuesClause()` | Generates SPARQL VALUES clause + scheme term |
+
+**Post-Load Correction (`updateHasNarrowerFlags()`):**
+
+The EXISTS-based `hasNarrower` detection in metadata queries may return false negatives on mismatched endpoints. After loading nodes, a correction query verifies which concepts actually have children:
+
+```sparql
+SELECT DISTINCT ?concept
+WHERE {
+  VALUES ?concept { <uri1> <uri2> ... }
+  { ?concept skos:narrower ?child }
+  UNION
+  { ?child skos:broader ?concept }
+}
+```
+
+This only runs when:
+1. `enableSchemeUriSlashFix` setting is `true`
+2. `endpoint.analysis.schemeUriSlashMismatch` is `true`
+
+**Affected Queries:**
+- Top concepts (explicit and in-scheme-only)
+- Children loading
+- Collection queries
+
+See [sko03-Settings](./sko03-Settings.md) for the `enableSchemeUriSlashFix` setting.
+See [sko12-CurationWorkflow](./sko12-CurationWorkflow.md) for scheme URI mismatch detection.
+
 ### Broader Concepts
 
 Display parent hierarchy for selected concept.

@@ -278,12 +278,24 @@ function formatUIDate(dateStr?: string) {
               <span class="suggested-name">{{ suggested.name }}</span>
               <span v-if="suggested.description" class="suggested-description">{{ suggested.description }}</span>
               <span class="suggested-url">{{ suggested.url }}</span>
-              <div v-if="suggested.analysis?.supportsJsonResults !== undefined && suggested.analysis?.supportsJsonResults !== null" class="suggested-capabilities">
+              <div
+                v-if="(suggested.analysis?.supportsJsonResults !== undefined && suggested.analysis?.supportsJsonResults !== null) || suggested.analysis?.schemeUriSlashMismatch"
+                class="suggested-capabilities"
+              >
                 <Tag
+                  v-if="suggested.analysis?.supportsJsonResults !== undefined && suggested.analysis?.supportsJsonResults !== null"
                   :severity="suggested.analysis.supportsJsonResults ? 'success' : 'warning'"
                   class="capability-tag"
                 >
                   {{ suggested.analysis.supportsJsonResults ? 'JSON' : 'XML' }}
+                </Tag>
+                <Tag
+                  v-if="suggested.analysis?.schemeUriSlashMismatch"
+                  severity="warn"
+                  class="capability-tag mismatch-tag"
+                  title="Scheme URI mismatch (trailing slash). Enable fix in Settings → Developer."
+                >
+                  Scheme URI mismatch
                 </Tag>
               </div>
               <div v-if="suggested.analysis.languages && suggested.analysis.languages.length > 0" class="suggested-langs">
@@ -381,6 +393,14 @@ function formatUIDate(dateStr?: string) {
                   class="capability-tag"
                 >
                   {{ data.analysis.supportsJsonResults ? 'JSON' : 'XML' }}
+                </Tag>
+                <Tag
+                  v-if="data.analysis?.schemeUriSlashMismatch"
+                  severity="warn"
+                  class="capability-tag mismatch-tag"
+                  title="Scheme URI mismatch (trailing slash). Enable fix in Settings → Developer."
+                >
+                  Scheme URI mismatch
                 </Tag>
                 <Tag
                   v-if="data.analysis?.cors === false"

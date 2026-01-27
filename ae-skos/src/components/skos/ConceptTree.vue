@@ -113,6 +113,15 @@ function isCollectionNode(node: TreeNode): boolean {
 }
 
 async function onNodeExpand(node: TreeNode) {
+  logger.debug('ConceptTree', 'onNodeExpand fired', {
+    key: node.key,
+    label: node.label,
+    leaf: node.leaf,
+    isCollection: isCollectionNode(node),
+    hasChildCollections: node.data?.hasChildCollections,
+    childrenLength: node.children?.length,
+  })
+
   if (isCollectionNode(node) && node.data?.hasChildCollections) {
     // Load child collections for this collection
     if (!node.children?.length) {  // Only load if not already loaded
@@ -226,7 +235,8 @@ function convertToTreeNode(node: ConceptNode): TreeNode {
       showLangTag: node.lang ? shouldShowLangTag(node.lang) : false,
     },
     leaf: !node.hasNarrower,
-    children: node.children?.map(child => convertToTreeNode(child)),
+    children: node.children?.map(child => convertToTreeNode(child))
+      ?? (node.hasNarrower ? [] : undefined),
   }
 }
 
@@ -400,6 +410,20 @@ watch(
   { deep: true }
 )
 
+// Reload when scheme URI fix setting changes
+watch(
+  () => settingsStore.enableSchemeUriSlashFix,
+  () => {
+    if (!endpointStore.current) return
+    conceptStore.clearAllChildren()
+    loadTopConcepts()
+
+    if (schemeStore.selected && !schemeStore.isOrphanSchemeSelected) {
+      loadCollectionsForScheme(schemeStore.selected.uri)
+    }
+  }
+)
+
 // Watch for collections loading to handle pending collection reveal (cross-scheme navigation)
 watch(
   () => collections.value.length,
@@ -555,7 +579,7 @@ watch(
             <!-- Icon based on node type -->
             <span v-if="slotProps.node.data?.isScheme" class="material-symbols-outlined node-icon icon-folder">folder</span>
             <span v-else-if="isCollectionNode(slotProps.node)" class="material-symbols-outlined node-icon icon-collection">collections_bookmark</span>
-            <span v-else-if="slotProps.node.data?.hasNarrower" class="material-symbols-outlined node-icon icon-label">label</span>
+            <span v-else-if="!slotProps.node.leaf" class="material-symbols-outlined node-icon icon-label">label</span>
             <span v-else class="material-symbols-outlined node-icon icon-leaf">circle</span>
             <span class="node-label">
               {{ slotProps.node.label }}

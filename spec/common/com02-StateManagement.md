@@ -72,6 +72,9 @@ interface SettingsState {
   searchInDefinition: boolean;        // Search in definitions
   searchMatchMode: 'contains' | 'startsWith' | 'exact' | 'regex';
   searchAllSchemes: boolean;          // Ignore scheme filter
+
+  // Data fixes
+  enableSchemeUriSlashFix: boolean;   // Try URI variants for mismatched endpoints
 }
 
 interface DeprecationRule {
@@ -242,6 +245,7 @@ persist('ae-skos-settings', {
   searchInDefinition: state.settings.searchInDefinition,
   searchMatchMode: state.settings.searchMatchMode,
   searchAllSchemes: state.settings.searchAllSchemes,
+  enableSchemeUriSlashFix: state.settings.enableSchemeUriSlashFix,
 });
 
 // Restore on init
@@ -259,6 +263,7 @@ const settings = restore('ae-skos-settings') ?? {
   searchInDefinition: false,
   searchMatchMode: 'contains',
   searchAllSchemes: false,
+  enableSchemeUriSlashFix: false,
 };
 ```
 

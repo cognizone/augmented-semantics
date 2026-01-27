@@ -7,7 +7,7 @@
  * @see /spec/ae-skos/sko03-ConceptTree.md
  */
 import { ref, computed } from 'vue'
-import { useEndpointStore, useLanguageStore } from '../stores'
+import { useEndpointStore, useLanguageStore, useSettingsStore } from '../stores'
 import { executeSparql, logger, endpointHasCollections } from '../services'
 import { useLabelResolver } from './useLabelResolver'
 import { buildCollectionsStageQuery, buildChildCollectionsQuery, getCollectionQueryCapabilities, type CollectionQueryStage } from './useCollectionQueries'
@@ -16,6 +16,7 @@ import type { CollectionNode, SPARQLEndpoint } from '../types'
 export function useCollections() {
   const endpointStore = useEndpointStore()
   const languageStore = useLanguageStore()
+  const settingsStore = useSettingsStore()
   const { shouldShowLangTag, selectLabelByPriority } = useLabelResolver()
 
   // State
@@ -206,7 +207,9 @@ export function useCollections() {
   ): Promise<void> {
     if (!endpoint) return
 
-    const query = buildCollectionsStageQuery(endpoint, schemeUri, stage)
+    const query = buildCollectionsStageQuery(endpoint, schemeUri, stage, {
+      enableSchemeUriSlashFix: settingsStore.enableSchemeUriSlashFix,
+    })
     if (!query) {
       logger.info('Collections', 'Stage skipped - no query generated', { stage })
       return
@@ -322,7 +325,9 @@ export function useCollections() {
       return []
     }
 
-    const query = buildChildCollectionsQuery(parentUri, schemeUri, endpoint)
+    const query = buildChildCollectionsQuery(parentUri, schemeUri, endpoint, {
+      enableSchemeUriSlashFix: settingsStore.enableSchemeUriSlashFix,
+    })
     if (!query) {
       logger.info('Collections', 'No query generated for child collections - missing capabilities')
       return []

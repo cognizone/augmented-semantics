@@ -7,12 +7,23 @@
  * @see /spec/ae-skos/sko03-ConceptTree.md
  */
 import { withPrefixes } from '../services'
-import { useEndpointStore } from '../stores'
+import { useEndpointStore, useSettingsStore } from '../stores'
 import { useDeprecation } from './useDeprecation'
+import { buildSchemeValuesClause } from '../utils/schemeUri'
 
 export function useConceptTreeQueries() {
   const endpointStore = useEndpointStore()
+  const settingsStore = useSettingsStore()
   const { getDeprecationSparqlClauses, getDeprecationSelectVars } = useDeprecation()
+
+  function buildHasNarrowerClause(): string {
+    return `
+      BIND(EXISTS {
+        { [] skos:broader ?concept }
+        UNION
+        { ?concept skos:narrower [] }
+      } AS ?hasNarrower)`
+  }
 
   /**
    * Build metadata query for explicit top concepts (fast path).
@@ -27,13 +38,20 @@ export function useConceptTreeQueries() {
 
     const deprecationSelectVars = getDeprecationSelectVars()
     const deprecationClauses = getDeprecationSparqlClauses('?concept')
+    const schemeValues = buildSchemeValuesClause(
+      schemeUri,
+      endpointStore.current?.analysis,
+      settingsStore.enableSchemeUriSlashFix,
+      'scheme'
+    )
+    const { schemeTerm, valuesClause } = schemeValues
 
     const branches: string[] = []
     if (rel.hasTopConceptOf) {
-      branches.push(`{ ?concept skos:topConceptOf <${schemeUri}> }`)
+      branches.push(`{ ?concept skos:topConceptOf ${schemeTerm} }`)
     }
     if (rel.hasHasTopConcept) {
-      branches.push(`{ <${schemeUri}> skos:hasTopConcept ?concept }`)
+      branches.push(`{ ${schemeTerm} skos:hasTopConcept ?concept }`)
     }
 
     return withPrefixes(`
@@ -42,6 +60,7 @@ export function useConceptTreeQueries() {
       {
         SELECT DISTINCT ?concept ${deprecationSelectVars}
         WHERE {
+          ${valuesClause}
           ${branches.join('\n          UNION\n          ')}
           ${deprecationClauses}
         }
@@ -50,11 +69,7 @@ export function useConceptTreeQueries() {
         OFFSET ${offset}
       }
       OPTIONAL { ?concept skos:notation ?notation }
-      BIND(EXISTS {
-        { [] skos:broader ?concept }
-        UNION
-        { ?concept skos:narrower [] }
-      } AS ?hasNarrower)
+      ${buildHasNarrowerClause()}
     }
   `)
   }
@@ -66,6 +81,13 @@ export function useConceptTreeQueries() {
   function buildInSchemeOnlyTopConceptsMetadataQuery(schemeUri: string, pageSize: number, offset: number): string {
     const deprecationSelectVars = getDeprecationSelectVars()
     const deprecationClauses = getDeprecationSparqlClauses('?concept')
+    const schemeValues = buildSchemeValuesClause(
+      schemeUri,
+      endpointStore.current?.analysis,
+      settingsStore.enableSchemeUriSlashFix,
+      'scheme'
+    )
+    const { schemeTerm, valuesClause } = schemeValues
 
     return withPrefixes(`
     SELECT ?concept ?notation ?hasNarrower ${deprecationSelectVars}
@@ -73,8 +95,9 @@ export function useConceptTreeQueries() {
       {
         SELECT DISTINCT ?concept ${deprecationSelectVars}
         WHERE {
+          ${valuesClause}
           ?concept a skos:Concept .
-          ?concept skos:inScheme <${schemeUri}> .
+          ?concept skos:inScheme ${schemeTerm} .
           FILTER NOT EXISTS { ?concept skos:broader ?x }
           FILTER NOT EXISTS { ?x skos:narrower ?concept }
           FILTER NOT EXISTS { ?concept skos:broaderTransitive ?x }
@@ -88,11 +111,7 @@ export function useConceptTreeQueries() {
         OFFSET ${offset}
       }
       OPTIONAL { ?concept skos:notation ?notation }
-      BIND(EXISTS {
-        { [] skos:broader ?concept }
-        UNION
-        { ?concept skos:narrower [] }
-      } AS ?hasNarrower)
+      ${buildHasNarrowerClause()}
     }
   `)
   }
@@ -104,6 +123,13 @@ export function useConceptTreeQueries() {
   function buildTopConceptsMetadataQuery(schemeUri: string, pageSize: number, offset: number): string {
     const deprecationSelectVars = getDeprecationSelectVars()
     const deprecationClauses = getDeprecationSparqlClauses('?concept')
+    const schemeValues = buildSchemeValuesClause(
+      schemeUri,
+      endpointStore.current?.analysis,
+      settingsStore.enableSchemeUriSlashFix,
+      'scheme'
+    )
+    const { schemeTerm, valuesClause } = schemeValues
 
     return withPrefixes(`
     SELECT ?concept ?notation ?hasNarrower ${deprecationSelectVars}
@@ -111,15 +137,16 @@ export function useConceptTreeQueries() {
       {
         SELECT DISTINCT ?concept ${deprecationSelectVars}
         WHERE {
+          ${valuesClause}
           {
-            { ?concept skos:topConceptOf <${schemeUri}> }
+            { ?concept skos:topConceptOf ${schemeTerm} }
             UNION
-            { <${schemeUri}> skos:hasTopConcept ?concept }
+            { ${schemeTerm} skos:hasTopConcept ?concept }
           }
           UNION
           {
             ?concept a skos:Concept .
-            ?concept skos:inScheme <${schemeUri}> .
+            ?concept skos:inScheme ${schemeTerm} .
             FILTER NOT EXISTS { ?concept skos:broader ?x }
             FILTER NOT EXISTS { ?x skos:narrower ?concept }
             FILTER NOT EXISTS { ?concept skos:broaderTransitive ?x }
@@ -134,11 +161,7 @@ export function useConceptTreeQueries() {
         OFFSET ${offset}
       }
       OPTIONAL { ?concept skos:notation ?notation }
-      BIND(EXISTS {
-        { [] skos:broader ?concept }
-        UNION
-        { ?concept skos:narrower [] }
-      } AS ?hasNarrower)
+      ${buildHasNarrowerClause()}
     }
   `)
   }
@@ -150,7 +173,6 @@ export function useConceptTreeQueries() {
   function buildChildrenMetadataQuery(parentUri: string, pageSize: number, offset: number): string {
     const deprecationSelectVars = getDeprecationSelectVars()
     const deprecationClauses = getDeprecationSparqlClauses('?concept')
-
     return withPrefixes(`
     SELECT ?concept ?notation ?hasNarrower ${deprecationSelectVars}
     WHERE {
@@ -167,11 +189,7 @@ export function useConceptTreeQueries() {
         OFFSET ${offset}
       }
       OPTIONAL { ?concept skos:notation ?notation }
-      BIND(EXISTS {
-        { [] skos:broader ?concept }
-        UNION
-        { ?concept skos:narrower [] }
-      } AS ?hasNarrower)
+      ${buildHasNarrowerClause()}
     }
   `)
   }

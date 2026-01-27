@@ -212,6 +212,29 @@
     ],
     "schemeCount": 200,
     "schemesLimited": true,
+    "schemeUriSlashMismatch": true,
+    "schemeUriSlashMismatchPairs": [
+      {
+        "declared": "http://publications.europa.eu/resource/authority/corporate-body",
+        "used": "http://publications.europa.eu/resource/authority/corporate-body/"
+      },
+      {
+        "declared": "http://publications.europa.eu/resource/authority/language",
+        "used": "http://publications.europa.eu/resource/authority/language/"
+      },
+      {
+        "declared": "http://publications.europa.eu/resource/authority/resource-type",
+        "used": "http://publications.europa.eu/resource/authority/resource-type/"
+      },
+      {
+        "declared": "http://publications.europa.eu/resource/authority/event",
+        "used": "http://publications.europa.eu/resource/authority/event/"
+      },
+      {
+        "declared": "http://publications.europa.eu/resource/authority/fd_100",
+        "used": "http://publications.europa.eu/resource/authority/fd_100/"
+      }
+    ],
     "languages": [
       {
         "lang": "en",
@@ -444,7 +467,7 @@
         "xlPrefLabel": true
       }
     },
-    "analyzedAt": "2026-01-26T09:47:04.948Z"
+    "analyzedAt": "2026-01-27T09:23:48.302Z"
   },
   "suggestedLanguagePriorities": [
     "en",

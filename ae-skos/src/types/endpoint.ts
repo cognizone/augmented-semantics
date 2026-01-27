@@ -84,6 +84,11 @@ export interface EndpointAnalysis {
   schemeUris?: string[]         // List of scheme URIs (max 200)
   schemeCount?: number          // Total count found
   schemesLimited?: boolean      // true if more exist than stored
+  schemeUriSlashMismatch?: boolean
+  schemeUriSlashMismatchPairs?: Array<{
+    declared: string
+    used: string
+  }>
 
   // SKOS statistics
   totalConcepts?: number

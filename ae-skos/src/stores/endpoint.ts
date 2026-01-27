@@ -52,6 +52,40 @@ export const useEndpointStore = defineStore('endpoint', () => {
   )
 
   // Actions
+  function mergeAnalysis(
+    existing: SPARQLEndpoint['analysis'] | undefined,
+    suggested: SuggestedEndpoint['analysis'] | undefined
+  ) {
+    if (!suggested) return existing
+    if (!existing) return suggested
+
+    const merged = { ...suggested, ...existing }
+    if (suggested.schemeUriSlashMismatch !== undefined) {
+      merged.schemeUriSlashMismatch = suggested.schemeUriSlashMismatch
+    }
+    if (suggested.schemeUriSlashMismatchPairs !== undefined) {
+      merged.schemeUriSlashMismatchPairs = suggested.schemeUriSlashMismatchPairs
+    }
+    return merged
+  }
+
+  function enrichEndpointFromSuggested(endpoint: SPARQLEndpoint) {
+    const suggested = suggestedEndpoints.find(se => se.url === endpoint.url)
+    if (!suggested) return endpoint
+
+    const mergedAnalysis = mergeAnalysis(endpoint.analysis, suggested.analysis)
+    const mergedLanguagePriorities =
+      endpoint.languagePriorities && endpoint.languagePriorities.length > 0
+        ? endpoint.languagePriorities
+        : suggested.suggestedLanguagePriorities
+
+    return {
+      ...endpoint,
+      analysis: mergedAnalysis,
+      languagePriorities: mergedLanguagePriorities,
+    }
+  }
+
   function loadFromStorage() {
     // Check if we should use config instead
     if (isConfigMode()) {
@@ -62,7 +96,8 @@ export const useEndpointStore = defineStore('endpoint', () => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY)
       if (stored) {
-        endpoints.value = JSON.parse(stored)
+        const parsed = JSON.parse(stored)
+        endpoints.value = parsed.map(enrichEndpointFromSuggested)
       }
     } catch (e) {
       logger.error('EndpointStore', 'Failed to load endpoints from storage', { error: e })

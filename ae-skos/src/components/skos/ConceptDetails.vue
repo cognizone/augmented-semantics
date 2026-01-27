@@ -368,6 +368,17 @@ watch(
   { immediate: true }
 )
 
+// Reload when scheme URI fix setting changes
+watch(
+  () => settingsStore.enableSchemeUriSlashFix,
+  () => {
+    const uri = conceptStore.selectedUri
+    if (uri) {
+      loadDetails(uri)
+    }
+  }
+)
+
 </script>
 
 <template>

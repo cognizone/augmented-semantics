@@ -552,6 +552,15 @@ onUnmounted(() => {
                 </label>
               </div>
               <div class="setting-row">
+                <label class="checkbox-label">
+                  <Checkbox v-model="settingsStore.enableSchemeUriSlashFix" :binary="true" />
+                  <span class="checkbox-text">
+                    Enable scheme URI slash fix
+                    <small>Checks both trailing-slash variants for endpoints flagged with mismatched scheme URIs.</small>
+                  </span>
+                </label>
+              </div>
+              <div class="setting-row">
                 <label class="setting-label">Log level</label>
                 <Select
                   v-model="settingsStore.logLevel"

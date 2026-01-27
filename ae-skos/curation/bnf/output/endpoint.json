@@ -13,6 +13,13 @@
     ],
     "schemeCount": 1,
     "schemesLimited": false,
+    "schemeUriSlashMismatch": true,
+    "schemeUriSlashMismatchPairs": [
+      {
+        "declared": "http://data.bnf.fr/vocabulary/rameau/",
+        "used": "http://data.bnf.fr/vocabulary/rameau"
+      }
+    ],
     "languages": [
       {
         "lang": "fr",
@@ -238,7 +245,7 @@
         "prefLabel": true
       }
     },
-    "analyzedAt": "2026-01-26T09:41:07.163Z"
+    "analyzedAt": "2026-01-27T09:16:23.545Z"
   },
   "suggestedLanguagePriorities": [
     "en",

@@ -34,10 +34,12 @@
     ],
     "schemeCount": 22,
     "schemesLimited": false,
+    "schemeUriSlashMismatch": false,
+    "schemeUriSlashMismatchPairs": [],
     "languages": [
       {
         "lang": "en",
-        "count": 361909
+        "count": 361935
       },
       {
         "lang": "fr",
@@ -60,7 +62,7 @@
         "count": 2
       }
     ],
-    "totalConcepts": 361919,
+    "totalConcepts": 361945,
     "totalCollections": 303,
     "totalOrderedCollections": 0,
     "relationships": {
@@ -85,7 +87,7 @@
         "dctTitle": true
       }
     },
-    "analyzedAt": "2026-01-26T09:58:03.354Z"
+    "analyzedAt": "2026-01-27T09:35:20.074Z"
   },
   "suggestedLanguagePriorities": [
     "en",

@@ -40,6 +40,10 @@ function formatDuration(ms: number): string {
   return `${(ms / 1000).toFixed(1)}s`
 }
 
+function stripTrailingSlash(uri: string): string {
+  return uri.replace(/\/+$/, '')
+}
+
 // =============================================================================
 // Graph Discovery
 // =============================================================================
@@ -180,6 +184,50 @@ async function detectSchemesInGraphs(graphUris: string[]): Promise<string[]> {
   return results.results.bindings
     .map((b: any) => b.scheme?.value)
     .filter((uri: string | undefined): uri is string => !!uri)
+}
+
+async function detectUsedSchemesInGraphs(graphUris: string[]): Promise<string[]> {
+  const valuesClause = graphUris.slice(0, 50).map(uri => `<${uri}>`).join(' ')
+  const query = `
+    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+    SELECT DISTINCT ?scheme
+    WHERE {
+      VALUES ?g { ${valuesClause} }
+      GRAPH ?g {
+        ?concept skos:inScheme ?scheme .
+      }
+    }
+    LIMIT 200
+  `
+  const results = await executeSparql(ENDPOINT, query)
+  return results.results.bindings
+    .map((b: any) => b.scheme?.value)
+    .filter((uri: string | undefined): uri is string => !!uri)
+}
+
+async function detectSchemeUriSlashMismatchInGraphs(
+  graphUris: string[],
+  declaredSchemes: string[]
+): Promise<Array<{ declared: string; used: string }>> {
+  if (declaredSchemes.length === 0) return []
+
+  const usedSchemes = await detectUsedSchemesInGraphs(graphUris)
+  const declaredNormalized = new Map(declaredSchemes.map(d => [stripTrailingSlash(d), d]))
+  const usedNormalized = new Map(usedSchemes.map(u => [stripTrailingSlash(u), u]))
+
+  const mismatches: Array<{ declared: string; used: string }> = []
+  for (const [norm, declaredUri] of declaredNormalized) {
+    const usedUri = usedNormalized.get(norm)
+    if (!usedUri || usedUri === declaredUri) continue
+    const isTrailingSlash =
+      (declaredUri.endsWith('/') && !usedUri.endsWith('/')) ||
+      (!declaredUri.endsWith('/') && usedUri.endsWith('/'))
+    if (isTrailingSlash) {
+      mismatches.push({ declared: declaredUri, used: usedUri })
+    }
+  }
+
+  return mismatches
 }
 
 async function detectLanguagesInGraphs(graphUris: string[]): Promise<DetectedLanguage[]> {
@@ -373,67 +421,72 @@ async function main() {
     process.exit(1)
   }
 
-  // Standard 12-step analysis
-  // 1/12 CORS
+  // Standard 13-step analysis
+  // 1/13 CORS
   start = Date.now()
   const cors = await detectCors(ENDPOINT)
-  logStep(1, 12, 'CORS', cors ? 'yes' : 'no', Date.now() - start)
+  logStep(1, 13, 'CORS', cors ? 'yes' : 'no', Date.now() - start)
 
-  // 2/12 JSON results support
+  // 2/13 JSON results support
   start = Date.now()
   let supportsJsonResults: boolean | null = null
   try {
     supportsJsonResults = await detectJsonSupport(ENDPOINT)
-    logStep(2, 12, 'JSON results', supportsJsonResults ? 'yes' : 'no', Date.now() - start)
+    logStep(2, 13, 'JSON results', supportsJsonResults ? 'yes' : 'no', Date.now() - start)
   } catch {
-    logStep(2, 12, 'JSON results', 'error', Date.now() - start)
+    logStep(2, 13, 'JSON results', 'error', Date.now() - start)
   }
 
-  // 3/12 SKOS content - we know it's yes
-  logStep(3, 12, 'SKOS content', 'yes', 0)
+  // 3/13 SKOS content - we know it's yes
+  logStep(3, 13, 'SKOS content', 'yes', 0)
 
-  // 4/12 Named graphs - we know it's yes
-  logStep(4, 12, 'Named graphs', 'yes', 0)
+  // 4/13 Named graphs - we know it's yes
+  logStep(4, 13, 'Named graphs', 'yes', 0)
 
-  // 5/12 SKOS graphs - already discovered
-  logStep(5, 12, 'SKOS graphs', String(validGraphs.length), 0)
+  // 5/13 SKOS graphs - already discovered
+  logStep(5, 13, 'SKOS graphs', String(validGraphs.length), 0)
 
-  // 6/12 Concept schemes
+  // 6/13 Concept schemes
   start = Date.now()
   const schemeUris = await detectSchemesInGraphs(validGraphs)
-  logStep(6, 12, 'Concept schemes', String(schemeUris.length), Date.now() - start)
+  logStep(6, 13, 'Concept schemes', String(schemeUris.length), Date.now() - start)
 
-  // 7/12 Concepts
+  // 7/13 Scheme URI mismatch
+  start = Date.now()
+  const schemeUriSlashMismatchPairs = await detectSchemeUriSlashMismatchInGraphs(validGraphs, schemeUris)
+  logStep(7, 13, 'Scheme URI mismatch', String(schemeUriSlashMismatchPairs.length), Date.now() - start)
+
+  // 8/13 Concepts
   start = Date.now()
   const totalConcepts = await countConceptsInGraphs(validGraphs)
-  logStep(7, 12, 'Concepts', totalConcepts.toLocaleString(), Date.now() - start)
+  logStep(8, 13, 'Concepts', totalConcepts.toLocaleString(), Date.now() - start)
 
-  // 8/12 Collections
+  // 9/13 Collections
   start = Date.now()
   const totalCollections = await countCollectionsInGraphs(validGraphs)
-  logStep(8, 12, 'Collections', totalCollections.toLocaleString(), Date.now() - start)
+  logStep(9, 13, 'Collections', totalCollections.toLocaleString(), Date.now() - start)
 
-  // 9/12 Ordered collections
+  // 10/13 Ordered collections
   start = Date.now()
   const totalOrderedCollections = await countOrderedCollectionsInGraphs(validGraphs)
-  logStep(9, 12, 'Ordered collections', totalOrderedCollections.toLocaleString(), Date.now() - start)
+  logStep(10, 13, 'Ordered collections', totalOrderedCollections.toLocaleString(), Date.now() - start)
 
-  // 10/12 Relationships
+  // 11/13 Relationships
   start = Date.now()
   const relationships = await detectRelationshipsInGraphs(validGraphs)
   const relCount = Object.values(relationships).filter(Boolean).length
-  logStep(10, 12, 'Relationships', `${relCount}/7`, Date.now() - start)
+  logStep(11, 13, 'Relationships', `${relCount}/7`, Date.now() - start)
 
-  // 11/12 Label predicates
+  // 12/13 Label predicates
   start = Date.now()
   const labelPredicates = await detectLabelPredicatesInGraphs(validGraphs)
   const labelCount = Object.values(labelPredicates).reduce((sum, caps) => sum + Object.keys(caps || {}).length, 0)
-  logStep(11, 12, 'Label predicates', String(labelCount), Date.now() - start)
+  logStep(12, 13, 'Label predicates', String(labelCount), Date.now() - start)
 
-  // 12/12 Languages
+  // 13/13 Languages
   start = Date.now()
   const languages = await detectLanguagesInGraphs(validGraphs)
-  logStep(12, 12, 'Languages', String(languages.length), Date.now() - start)
+  logStep(13, 13, 'Languages', String(languages.length), Date.now() - start)
 
   const totalDuration = Date.now() - overallStart
   console.log('')
@@ -449,6 +502,8 @@ async function main() {
     schemeUris: schemeUris.slice(0, 200),
     schemeCount: schemeUris.length,
     schemesLimited: schemeUris.length > 200,
+    schemeUriSlashMismatch: schemeUriSlashMismatchPairs.length > 0,
+    schemeUriSlashMismatchPairs: schemeUriSlashMismatchPairs.slice(0, 5),
     languages,
     totalConcepts,
     totalCollections,

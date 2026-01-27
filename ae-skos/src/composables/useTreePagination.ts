@@ -285,6 +285,50 @@ export function useTreePagination() {
     }
   }
 
+  async function updateHasNarrowerFlags(endpoint: SPARQLEndpoint, nodes: ConceptNode[]) {
+    if (!settingsStore.enableSchemeUriSlashFix || !endpoint.analysis?.schemeUriSlashMismatch) {
+      return
+    }
+
+    const uris = nodes.map(node => node.uri).filter(Boolean)
+    if (uris.length === 0) return
+
+    try {
+      const flags = new Map<string, boolean>()
+      const chunkSize = 25
+      for (let i = 0; i < uris.length; i += chunkSize) {
+        const chunk = uris.slice(i, i + chunkSize)
+        const valuesClause = chunk.map(uri => `<${uri}>`).join(' ')
+        const query = withPrefixes(`
+          SELECT DISTINCT ?concept
+          WHERE {
+            VALUES ?concept { ${valuesClause} }
+            {
+              { ?concept skos:narrower ?child }
+              UNION
+              { ?child skos:broader ?concept }
+            }
+          }
+        `)
+
+        const results = await executeSparql(endpoint, query, { retries: 1 })
+        for (const b of results.results.bindings) {
+          const uri = b.concept?.value
+          if (!uri) continue
+          flags.set(uri, true)
+        }
+      }
+
+      for (const node of nodes) {
+        if (flags.get(node.uri)) {
+          node.hasNarrower = true
+        }
+      }
+    } catch (e) {
+      logger.warn('ConceptTree', 'Failed to update hasNarrower flags', { error: e })
+    }
+  }
+
   /**
    * Load top concepts for selected scheme.
    * Uses sequential merge: runs explicit query first (fast), displays results,
@@ -352,6 +396,7 @@ export function useTreePagination() {
         const results = await executeSparql(endpoint, query, { retries: 1 })
         const concepts = processMetadataBindings(results.results.bindings)
         await loadLabelsForNodes(concepts)
+        await updateHasNarrowerFlags(endpoint, concepts)
         concepts.sort(compareNodesWithSettings)
         processTopConceptsResults(concepts, offset, isFirstPage)
         return
@@ -367,6 +412,7 @@ export function useTreePagination() {
         const results = await executeSparql(endpoint, explicitQuery, { retries: 1 })
         explicitConcepts = processMetadataBindings(results.results.bindings)
         await loadLabelsForNodes(explicitConcepts)
+        await updateHasNarrowerFlags(endpoint, explicitConcepts)
         explicitConcepts.sort(compareNodesWithSettings)
 
         if (explicitConcepts.length > 0) {
@@ -383,6 +429,7 @@ export function useTreePagination() {
       const inschemeResults = await executeSparql(endpoint, inschemeQuery, { retries: 1 })
       const inschemeConcepts = processMetadataBindings(inschemeResults.results.bindings)
       await loadLabelsForNodes(inschemeConcepts)
+      await updateHasNarrowerFlags(endpoint, inschemeConcepts)
       inschemeConcepts.sort(compareNodesWithSettings)
 
       // Determine query mode and merge results
@@ -737,15 +784,26 @@ export function useTreePagination() {
    * Load children for a node
    */
   async function loadChildren(uri: string, offset = 0) {
+    logger.debug('ConceptTree', 'loadChildren called', { uri, offset })
+
     const endpoint = endpointStore.current
-    if (!endpoint) return
+    if (!endpoint) {
+      logger.debug('ConceptTree', 'loadChildren early return: no endpoint')
+      return
+    }
 
     const isFirstPage = offset === 0
 
     // Prevent duplicate requests
-    if (isFirstPage && loadingChildren.value.has(uri)) return
+    if (isFirstPage && loadingChildren.value.has(uri)) {
+      logger.debug('ConceptTree', 'loadChildren early return: already loading', { uri })
+      return
+    }
     const pagination = childrenPagination.value.get(uri)
-    if (!isFirstPage && pagination?.loading) return
+    if (!isFirstPage && pagination?.loading) {
+      logger.debug('ConceptTree', 'loadChildren early return: pagination loading')
+      return
+    }
 
     if (isFirstPage) {
       loadingChildren.value.add(uri)
@@ -786,6 +844,8 @@ export function useTreePagination() {
           node.children = [...node.children, ...children]
         }
       }
+
+      void updateHasNarrowerFlags(endpoint, children)
     } catch (e) {
       logger.error('ConceptTree', 'Failed to load children', { parent: uri, error: e })
     } finally {

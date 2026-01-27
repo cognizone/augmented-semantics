@@ -232,6 +232,10 @@ interface EndpointAnalysis {
   // Languages (sorted by count descending)
   languages?: DetectedLanguage[]
 
+  // Scheme URI data quality
+  schemeUriSlashMismatch?: boolean   // Whether trailing slash mismatches detected
+  schemeUriSlashMismatchPairs?: Array<{ declared: string; used: string }>  // Example pairs
+
   analyzedAt: string  // ISO timestamp
 }
 
@@ -1562,6 +1566,68 @@ If sourceHash doesn't match, endpoint is re-analyzed at runtime.
 | TheSoz | https://sparql.gesis.org/sparql | de, en | 1 |
 
 **Note:** Exact numbers may vary based on last analysis date.
+
+## Endpoint Enrichment
+
+User-saved endpoints are enriched with pre-calculated analysis data from suggested endpoints when loaded from localStorage.
+
+### Purpose
+
+Ensures endpoints benefit from the latest curation data even if the user saved them before analysis fields were added.
+
+### Implementation
+
+**Store Method (`enrichEndpointFromSuggested`):**
+```typescript
+function enrichEndpointFromSuggested(endpoint: SPARQLEndpoint): SPARQLEndpoint {
+  // Find matching suggested endpoint by URL
+  const suggested = suggestedEndpoints.find(s => s.url === endpoint.url)
+  if (!suggested?.analysis) return endpoint
+
+  return {
+    ...endpoint,
+    analysis: mergeAnalysis(endpoint.analysis, suggested.analysis),
+    languagePriorities: endpoint.languagePriorities || suggested.suggestedLanguagePriorities
+  }
+}
+```
+
+**Analysis Merge Logic (`mergeAnalysis`):**
+```typescript
+function mergeAnalysis(
+  existing: EndpointAnalysis | undefined,
+  suggested: EndpointAnalysis
+): EndpointAnalysis {
+  if (!existing) return suggested
+
+  return {
+    ...suggested,      // Base from suggested
+    ...existing,       // Override with existing user data
+    // Special handling for fields that should come from curation:
+    schemeUriSlashMismatch: suggested.schemeUriSlashMismatch,
+    schemeUriSlashMismatchPairs: suggested.schemeUriSlashMismatchPairs,
+  }
+}
+```
+
+### Enrichment Priority
+
+| Field | Priority | Reason |
+|-------|----------|--------|
+| User-analyzed fields | User data | User ran their own analysis |
+| `schemeUriSlashMismatch` | Curation | Only detected during curation workflow |
+| `languagePriorities` | User > Suggested | User customization takes precedence |
+
+### When Enrichment Runs
+
+Enrichment occurs in `loadFromStorage()` when endpoints are loaded from localStorage:
+
+```typescript
+function loadFromStorage() {
+  const parsed = JSON.parse(stored)
+  endpoints.value = parsed.map(enrichEndpointFromSuggested)
+}
+```
 
 ## External Configuration (Config Mode)
 

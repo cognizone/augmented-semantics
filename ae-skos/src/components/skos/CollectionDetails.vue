@@ -319,6 +319,16 @@ watch(
   { immediate: true }
 )
 
+// Reload when scheme URI fix setting changes
+watch(
+  () => settingsStore.enableSchemeUriSlashFix,
+  () => {
+    if (props.collectionUri) {
+      loadDetails(props.collectionUri)
+    }
+  }
+)
+
 </script>
 
 <template>

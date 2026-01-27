@@ -15,6 +15,7 @@ import { useOtherProperties, CONCEPT_EXCLUDED_PREDICATES } from './useOtherPrope
 import { useProgressiveLabelLoader } from './useProgressiveLabelLoader'
 import { TYPE } from '../constants'
 import { CONCEPT_PROPERTY_MAP, processPropertyBindings, type SparqlBinding } from '../utils/propertyProcessor'
+import { buildSchemeValuesClause } from '../utils/schemeUri'
 import type { ConceptDetails, ConceptRef, SkosResourceType } from '../types'
 
 export function useConceptData() {
@@ -102,14 +103,24 @@ export function useConceptData() {
     // Skip scheme checking for narrower concepts (they're always same-scheme by SKOS semantics)
     const includeSchemeCheck = !options?.skipSchemeCheck && currentSchemeUri
 
+    const schemeValues = includeSchemeCheck
+      ? buildSchemeValuesClause(
+          currentSchemeUri,
+          endpointStore.current?.analysis,
+          settingsStore.enableSchemeUriSlashFix,
+          'scheme'
+        )
+      : null
+
     // Step 1: Load metadata (notation, hasNarrower, optionally inCurrentScheme/displayScheme, deprecation) - no labels
     // This query returns one row per concept (efficient, no label explosion)
     const metadataQuery = withPrefixes(`
       SELECT ?concept ?notation ?hasNarrower${includeSchemeCheck ? ' ?inCurrentScheme ?displayScheme' : ''}${deprecationSelectVars ? ' ' + deprecationSelectVars : ''}
       WHERE {
         VALUES ?concept { ${uris} }
+        ${includeSchemeCheck ? schemeValues?.valuesClause : ''}
         OPTIONAL { ?concept skos:notation ?notation }
-        ${includeSchemeCheck ? `BIND(EXISTS { ?concept skos:inScheme <${currentSchemeUri}> } AS ?inCurrentScheme)` : ''}
+        ${includeSchemeCheck ? `BIND(EXISTS { ?concept skos:inScheme ${schemeValues?.schemeTerm} } AS ?inCurrentScheme)` : ''}
         ${includeSchemeCheck ? 'OPTIONAL { ?concept skos:inScheme ?displayScheme }' : ''}
         BIND(EXISTS {
           { ?narrowerChild skos:broader ?concept }

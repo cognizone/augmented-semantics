@@ -10,6 +10,7 @@
     "skosGraphCount": 1,
     "schemeCount": 0,
     "schemesLimited": false,
+    "schemeUriSlashMismatch": false,
     "languages": [
       {
         "lang": "en",
@@ -34,7 +35,7 @@
         "rdfsLabel": true
       }
     },
-    "analyzedAt": "2026-01-26T09:44:50.050Z"
+    "analyzedAt": "2026-01-27T09:20:50.437Z"
   },
   "suggestedLanguagePriorities": [
     "en"

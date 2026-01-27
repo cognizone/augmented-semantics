@@ -68,6 +68,9 @@ export interface AppSettings {
   searchMatchMode: 'contains' | 'startsWith' | 'exact' | 'regex'
   searchAllSchemes: boolean
 
+  // Data fixes
+  enableSchemeUriSlashFix: boolean
+
   // Developer settings
   developerMode: boolean                      // Enable developer tools (e.g., JSON export)
   logLevel: LogLevel                          // Minimum log level for console output
@@ -90,6 +93,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   searchInDefinition: false,
   searchMatchMode: 'contains',
   searchAllSchemes: false,
+  enableSchemeUriSlashFix: false,
   developerMode: false,
   logLevel: 'warn',
   orphanDetectionStrategy: 'auto',
@@ -112,6 +116,7 @@ export const useSettingsStore = defineStore('settings', () => {
   const searchInDefinition = ref(DEFAULT_SETTINGS.searchInDefinition)
   const searchMatchMode = ref<AppSettings['searchMatchMode']>(DEFAULT_SETTINGS.searchMatchMode)
   const searchAllSchemes = ref(DEFAULT_SETTINGS.searchAllSchemes)
+  const enableSchemeUriSlashFix = ref(DEFAULT_SETTINGS.enableSchemeUriSlashFix)
   const developerMode = ref(DEFAULT_SETTINGS.developerMode)
   const logLevel = ref<LogLevel>(DEFAULT_SETTINGS.logLevel)
   const orphanDetectionStrategy = ref<OrphanDetectionStrategy>(DEFAULT_SETTINGS.orphanDetectionStrategy)
@@ -175,6 +180,9 @@ export const useSettingsStore = defineStore('settings', () => {
         if (settings.searchAllSchemes !== undefined) {
           searchAllSchemes.value = settings.searchAllSchemes
         }
+        if (settings.enableSchemeUriSlashFix !== undefined) {
+          enableSchemeUriSlashFix.value = settings.enableSchemeUriSlashFix
+        }
         if (settings.developerMode !== undefined) {
           developerMode.value = settings.developerMode
         }
@@ -212,6 +220,7 @@ export const useSettingsStore = defineStore('settings', () => {
         searchInDefinition: searchInDefinition.value,
         searchMatchMode: searchMatchMode.value,
         searchAllSchemes: searchAllSchemes.value,
+        enableSchemeUriSlashFix: enableSchemeUriSlashFix.value,
         developerMode: developerMode.value,
         logLevel: logLevel.value,
         orphanDetectionStrategy: orphanDetectionStrategy.value,
@@ -292,6 +301,7 @@ export const useSettingsStore = defineStore('settings', () => {
     searchInDefinition.value = DEFAULT_SETTINGS.searchInDefinition
     searchMatchMode.value = DEFAULT_SETTINGS.searchMatchMode
     searchAllSchemes.value = DEFAULT_SETTINGS.searchAllSchemes
+    enableSchemeUriSlashFix.value = DEFAULT_SETTINGS.enableSchemeUriSlashFix
     developerMode.value = DEFAULT_SETTINGS.developerMode
     logLevel.value = DEFAULT_SETTINGS.logLevel
     orphanDetectionStrategy.value = DEFAULT_SETTINGS.orphanDetectionStrategy
@@ -327,6 +337,7 @@ export const useSettingsStore = defineStore('settings', () => {
       searchInDefinition.value,
       searchMatchMode.value,
       searchAllSchemes.value,
+      enableSchemeUriSlashFix.value,
       developerMode.value,
       logLevel.value,
       orphanDetectionStrategy.value,
@@ -355,6 +366,7 @@ export const useSettingsStore = defineStore('settings', () => {
     searchInDefinition,
     searchMatchMode,
     searchAllSchemes,
+    enableSchemeUriSlashFix,
     developerMode,
     logLevel,
     orphanDetectionStrategy,

@@ -413,6 +413,56 @@ export async function detectSchemes(url: string): Promise<{
   }
 }
 
+async function detectUsedSchemes(url: string): Promise<string[]> {
+  const query = `
+    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+    SELECT DISTINCT ?scheme WHERE {
+      ?concept skos:inScheme ?scheme .
+    }
+    LIMIT ${MAX_STORED_SCHEMES + 1}
+  `
+
+  const result = await executeSparql(url, query)
+  return result.results.bindings
+    .map((b: any) => b.scheme?.value)
+    .filter((uri: string | undefined): uri is string => !!uri)
+}
+
+function stripTrailingSlash(uri: string): string {
+  return uri.replace(/\/+$/, '')
+}
+
+export async function detectSchemeUriSlashMismatch(
+  url: string,
+  declaredSchemes: string[]
+): Promise<{ mismatches: Array<{ declared: string; used: string }> }> {
+  if (declaredSchemes.length === 0) {
+    return { mismatches: [] }
+  }
+
+  const usedSchemes = await detectUsedSchemes(url)
+
+  const declaredNormalized = new Map(declaredSchemes.map(d => [stripTrailingSlash(d), d]))
+  const usedNormalized = new Map(usedSchemes.map(u => [stripTrailingSlash(u), u]))
+
+  const mismatches: Array<{ declared: string; used: string }> = []
+
+  for (const [norm, declaredUri] of declaredNormalized) {
+    const usedUri = usedNormalized.get(norm)
+    if (!usedUri || usedUri === declaredUri) continue
+
+    const isTrailingSlash =
+      (declaredUri.endsWith('/') && !usedUri.endsWith('/')) ||
+      (!declaredUri.endsWith('/') && usedUri.endsWith('/'))
+
+    if (isTrailingSlash) {
+      mismatches.push({ declared: declaredUri, used: usedUri })
+    }
+  }
+
+  return { mismatches }
+}
+
 export async function detectLanguages(url: string, graphUris?: string[] | null): Promise<DetectedLanguage[]> {
   const parseResults = (results: any): DetectedLanguage[] => {
     return results.results.bindings
@@ -628,7 +678,7 @@ export async function analyzeEndpointWithSteps(
   url: string,
   onStep?: StepCallback
 ): Promise<EndpointAnalysis | null> {
-  const totalSteps = 12
+  const totalSteps = 13
   let currentStep = 0
 
   const runStep = async <T>(name: string, fn: () => Promise<T>, formatResult: (r: T) => string, errorResult = 'error'): Promise<T | null> => {
@@ -708,6 +758,14 @@ export async function analyzeEndpointWithSteps(
     r => `${r.schemeCount}`
   )
 
+  const schemeMismatchResult = schemeResult?.schemeUris?.length
+    ? await runStep(
+        'Scheme URI mismatch',
+        () => detectSchemeUriSlashMismatch(url, schemeResult.schemeUris),
+        r => `${r.mismatches.length}`
+      )
+    : (skipStep('Scheme URI mismatch'), null)
+
   // Step 7: Concepts
   const totalConcepts = await runStep(
     'Concepts',
@@ -767,6 +825,8 @@ export async function analyzeEndpointWithSteps(
     schemeUris: schemeResult?.schemeUris?.length ? schemeResult.schemeUris : undefined,
     schemeCount: schemeResult?.schemeCount,
     schemesLimited: schemeResult?.schemesLimited,
+    schemeUriSlashMismatch: !!schemeMismatchResult?.mismatches.length,
+    schemeUriSlashMismatchPairs: schemeMismatchResult?.mismatches.slice(0, 5),
     languages,
     totalConcepts,
     totalCollections,

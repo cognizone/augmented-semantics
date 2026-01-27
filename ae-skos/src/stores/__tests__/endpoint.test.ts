@@ -10,6 +10,25 @@ import { setActivePinia, createPinia } from 'pinia'
 import { useEndpointStore } from '../endpoint'
 import * as configService from '../../services/config'
 
+vi.mock('../../data/endpoints.json', () => ({
+  default: [
+    {
+      name: 'Suggested Endpoint',
+      url: 'https://stored.org/sparql',
+      analysis: {
+        schemeUriSlashMismatch: true,
+        schemeUriSlashMismatchPairs: [
+          {
+            declared: 'http://example.org/scheme/',
+            used: 'http://example.org/scheme',
+          },
+        ],
+      },
+      suggestedLanguagePriorities: ['en', 'fr'],
+    },
+  ],
+}))
+
 describe('endpoint store', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
@@ -539,6 +558,33 @@ describe('endpoint store', () => {
 
       expect(store.endpoints).toHaveLength(1)
       expect(store.endpoints[0]?.name).toBe('Stored Endpoint')
+    })
+
+    it('enriches stored endpoints with suggested analysis', () => {
+      const storedEndpoints = [
+        {
+          id: 'stored-1',
+          name: 'Stored Endpoint',
+          url: 'https://stored.org/sparql',
+          auth: { type: 'none' },
+          createdAt: '2024-01-01T00:00:00Z',
+          accessCount: 5,
+          analysis: {
+            hasSkosContent: true,
+          },
+        },
+      ]
+
+      vi.mocked(localStorage.getItem).mockReturnValue(JSON.stringify(storedEndpoints))
+
+      const store = useEndpointStore()
+      expect(store.endpoints[0]?.analysis?.schemeUriSlashMismatch).toBe(true)
+      expect(store.endpoints[0]?.analysis?.schemeUriSlashMismatchPairs).toEqual([
+        {
+          declared: 'http://example.org/scheme/',
+          used: 'http://example.org/scheme',
+        },
+      ])
     })
 
     it('loads languagePriorities from localStorage', () => {

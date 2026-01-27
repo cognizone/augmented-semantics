@@ -81,6 +81,8 @@
     ],
     "schemeCount": 69,
     "schemesLimited": false,
+    "schemeUriSlashMismatch": false,
+    "schemeUriSlashMismatchPairs": [],
     "languages": [
       {
         "lang": "fr",
@@ -268,7 +270,7 @@
         "prefLabel": true
       }
     },
-    "analyzedAt": "2026-01-26T09:57:43.435Z"
+    "analyzedAt": "2026-01-27T09:34:58.345Z"
   },
   "suggestedLanguagePriorities": [
     "en",

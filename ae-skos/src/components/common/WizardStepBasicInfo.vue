@@ -34,6 +34,7 @@ const props = defineProps<{
   testResult: TestResult | null
   isEditing: boolean
   corsIssue?: boolean
+  schemeUriMismatch?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -112,6 +113,10 @@ const trustLabel = (level: string) => {
         <span v-if="trustCheck.reasons.length" class="trust-reason">
           {{ trustCheck.reasons[0] }}
         </span>
+      </div>
+      <div v-if="schemeUriMismatch" class="cors-indicator">
+        <Tag severity="warn">Scheme URI mismatch</Tag>
+        <span class="cors-reason">Trailing slash differs in data. Enable fix in Settings → Developer.</span>
       </div>
       <div v-if="corsIssue" class="cors-indicator">
         <Tag severity="warn">CORS Issue</Tag>

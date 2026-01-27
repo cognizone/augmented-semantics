@@ -13,6 +13,8 @@
     ],
     "schemeCount": 1,
     "schemesLimited": false,
+    "schemeUriSlashMismatch": false,
+    "schemeUriSlashMismatchPairs": [],
     "languages": [
       {
         "lang": "de",
@@ -46,7 +48,7 @@
         "rdfsLabel": true
       }
     },
-    "analyzedAt": "2026-01-26T09:58:06.061Z"
+    "analyzedAt": "2026-01-27T09:35:23.035Z"
   },
   "suggestedLanguagePriorities": [
     "en",

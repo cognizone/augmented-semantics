@@ -282,6 +282,17 @@ watch(
   },
   { immediate: true }
 )
+
+// Reload when scheme URI fix setting changes
+watch(
+  () => settingsStore.enableSchemeUriSlashFix,
+  () => {
+    const uri = schemeStore.viewingSchemeUri
+    if (uri && uri !== ORPHAN_SCHEME_URI) {
+      loadDetails(uri)
+    }
+  }
+)
 </script>
 
 <template>

@@ -90,6 +90,9 @@ const {
 const isEditing = computed(() => !!props.endpoint)
 const dialogTitle = computed(() => isEditing.value ? 'Configure Endpoint' : 'Add Endpoint')
 const corsIssue = computed(() => statusEndpoint.value?.analysis?.cors === false)
+const schemeUriMismatch = computed(
+  () => statusEndpoint.value?.analysis?.schemeUriSlashMismatch === true
+)
 const statusEndpoint = computed(() => tempEndpoint.value || props.endpoint || null)
 const configStatus = computed(() => {
   const endpoint = statusEndpoint.value
@@ -505,6 +508,7 @@ function handleClose() {
             :testResult="testResult"
             :isEditing="isEditing"
             :corsIssue="corsIssue"
+            :schemeUriMismatch="schemeUriMismatch"
             @update:form="handleFormUpdate"
             @test="handleTest"
             @next="handleNextFromBasicInfo(activateCallback)"

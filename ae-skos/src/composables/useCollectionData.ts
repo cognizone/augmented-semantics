@@ -14,6 +14,7 @@ import { useProgressiveLabelLoader } from './useProgressiveLabelLoader'
 import { useXLLabels } from './useXLLabels'
 import { PRED } from '../constants'
 import { getUriFragment } from '../utils/displayUtils'
+import { buildSchemeValuesClause } from '../utils/schemeUri'
 import type { CollectionDetails, LabelValue, NotationValue, ConceptRef, LabelPredicateCapabilities, EndpointAnalysis } from '../types'
 
 export function useCollectionData() {
@@ -265,24 +266,31 @@ export function useCollectionData() {
   ): string | null {
     if (!relationships || memberUris.length === 0) return null
 
+    const { schemeTerm, valuesClause: schemeValuesClause } = buildSchemeValuesClause(
+      schemeUri,
+      endpointStore.current?.analysis,
+      settingsStore.enableSchemeUriSlashFix,
+      'scheme'
+    )
+
     const patterns: string[] = []
 
     if (relationships.hasInScheme) {
-      patterns.push(`{ ?member skos:inScheme <${schemeUri}> . }`)
+      patterns.push(`{ ?member skos:inScheme ${schemeTerm} . }`)
     }
     if (relationships.hasTopConceptOf) {
-      patterns.push(`{ ?member skos:topConceptOf <${schemeUri}> . }`)
+      patterns.push(`{ ?member skos:topConceptOf ${schemeTerm} . }`)
     }
     if (relationships.hasHasTopConcept) {
-      patterns.push(`{ <${schemeUri}> skos:hasTopConcept ?member . }`)
+      patterns.push(`{ ${schemeTerm} skos:hasTopConcept ?member . }`)
     }
 
     const topPatterns: string[] = []
     if (relationships.hasTopConceptOf) {
-      topPatterns.push(`?top skos:topConceptOf <${schemeUri}> .`)
+      topPatterns.push(`?top skos:topConceptOf ${schemeTerm} .`)
     }
     if (relationships.hasHasTopConcept) {
-      topPatterns.push(`<${schemeUri}> skos:hasTopConcept ?top .`)
+      topPatterns.push(`${schemeTerm} skos:hasTopConcept ?top .`)
     }
 
     const hasTransitive = relationships.hasBroaderTransitive || relationships.hasNarrowerTransitive
@@ -318,6 +326,7 @@ export function useCollectionData() {
     return withPrefixes(`
       SELECT ?member ?inCurrentScheme ?displayScheme WHERE {
         VALUES ?member { ${valuesClause} }
+        ${schemeValuesClause}
         BIND(EXISTS {
           ${patterns.join('\n          UNION\n          ')}
         } AS ?inCurrentScheme)

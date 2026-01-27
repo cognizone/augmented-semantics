@@ -7,7 +7,7 @@
     "cors": true,
     "supportsJsonResults": true,
     "supportsNamedGraphs": true,
-    "skosGraphCount": 3,
+    "skosGraphCount": 4,
     "schemeUris": [
       "http://publications.europa.eu/resource/authority/country",
       "http://data.europa.eu/949/concepts/restrictions/Restrictions",
@@ -113,122 +113,124 @@
     ],
     "schemeCount": 101,
     "schemesLimited": false,
+    "schemeUriSlashMismatch": false,
+    "schemeUriSlashMismatchPairs": [],
     "languages": [
       {
         "lang": "en",
-        "count": 3509
+        "count": 4949
       },
       {
         "lang": "es",
-        "count": 376
+        "count": 429
       },
       {
         "lang": "cs",
-        "count": 334
+        "count": 359
       },
       {
         "lang": "de",
-        "count": 334
+        "count": 359
       },
       {
         "lang": "el",
-        "count": 334
+        "count": 359
       },
       {
         "lang": "ro",
-        "count": 334
+        "count": 359
       },
       {
         "lang": "pl",
-        "count": 334
+        "count": 359
       },
       {
         "lang": "lt",
-        "count": 334
+        "count": 359
       },
       {
         "lang": "lv",
-        "count": 334
+        "count": 359
       },
       {
         "lang": "fr",
-        "count": 334
+        "count": 359
       },
       {
         "lang": "mt",
-        "count": 334
+        "count": 359
       },
       {
         "lang": "pt",
-        "count": 334
+        "count": 359
       },
       {
         "lang": "sk",
-        "count": 334
+        "count": 359
       },
       {
         "lang": "da",
-        "count": 334
+        "count": 359
       },
       {
         "lang": "sv",
-        "count": 334
+        "count": 359
       },
       {
         "lang": "ga",
-        "count": 334
+        "count": 359
       },
       {
         "lang": "it",
-        "count": 334
+        "count": 359
       },
       {
         "lang": "et",
-        "count": 334
+        "count": 359
       },
       {
         "lang": "hr",
-        "count": 334
+        "count": 359
       },
       {
         "lang": "hu",
-        "count": 334
+        "count": 359
       },
       {
         "lang": "bg",
-        "count": 334
+        "count": 359
       },
       {
         "lang": "sl",
-        "count": 334
+        "count": 359
       },
       {
         "lang": "nl",
-        "count": 334
+        "count": 359
       },
       {
         "lang": "fi",
-        "count": 334
+        "count": 359
       },
       {
         "lang": "no",
-        "count": 308
+        "count": 333
       },
       {
         "lang": "is",
-        "count": 308
+        "count": 333
       },
       {
         "lang": "tr",
-        "count": 308
+        "count": 333
       },
       {
         "lang": "uk",
-        "count": 308
+        "count": 333
       },
       {
         "lang": "ru",
-        "count": 308
+        "count": 333
       },
       {
         "lang": "ca",
@@ -252,11 +254,19 @@
       },
       {
         "lang": "mk",
-        "count": 108
+        "count": 133
       },
       {
         "lang": "sr",
-        "count": 108
+        "count": 133
+      },
+      {
+        "lang": "sh",
+        "count": 75
+      },
+      {
+        "lang": "hsb",
+        "count": 75
       },
       {
         "lang": "be",
@@ -285,14 +295,6 @@
       {
         "lang": "rm",
         "count": 52
-      },
-      {
-        "lang": "sh",
-        "count": 50
-      },
-      {
-        "lang": "hsb",
-        "count": 50
       }
     ],
     "totalConcepts": 3439,
@@ -322,7 +324,7 @@
         "prefLabel": true
       }
     },
-    "analyzedAt": "2026-01-26T09:44:53.822Z"
+    "analyzedAt": "2026-01-27T09:20:54.670Z"
   },
   "suggestedLanguagePriorities": [
     "en",
@@ -361,14 +363,14 @@
     "ja",
     "mk",
     "sr",
+    "sh",
+    "hsb",
     "be",
     "gl",
     "bs",
     "eu",
     "fo",
     "sq",
-    "rm",
-    "sh",
-    "hsb"
+    "rm"
   ]
 }

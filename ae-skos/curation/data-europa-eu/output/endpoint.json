@@ -191,6 +191,8 @@
     ],
     "schemeCount": 179,
     "schemesLimited": false,
+    "schemeUriSlashMismatch": false,
+    "schemeUriSlashMismatchPairs": [],
     "languages": [
       {
         "lang": "cs",
@@ -417,7 +419,7 @@
         "rdfsLabel": true
       }
     },
-    "analyzedAt": "2026-01-26T09:44:35.587Z"
+    "analyzedAt": "2026-01-27T09:20:04.167Z"
   },
   "suggestedLanguagePriorities": [
     "en",

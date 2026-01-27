@@ -69,6 +69,7 @@ describe('settings store', () => {
       expect(store.searchInDefinition).toBe(false)
       expect(store.searchMatchMode).toBe('contains')
       expect(store.searchAllSchemes).toBe(false)
+      expect(store.enableSchemeUriSlashFix).toBe(false)
     })
   })
 
@@ -426,6 +427,7 @@ describe('settings store', () => {
       store.searchInDefinition = true
       store.searchMatchMode = 'regex'
       store.searchAllSchemes = true
+      store.enableSchemeUriSlashFix = true
       store.developerMode = true
 
       // Reset
@@ -446,6 +448,7 @@ describe('settings store', () => {
       expect(store.searchInDefinition).toBe(false)
       expect(store.searchMatchMode).toBe('contains')
       expect(store.searchAllSchemes).toBe(false)
+      expect(store.enableSchemeUriSlashFix).toBe(false)
       expect(store.developerMode).toBe(false)
     })
   })
@@ -460,6 +463,7 @@ describe('settings store', () => {
         showPreferredLanguageTag: true,
         searchMatchMode: 'startsWith',
         searchAllSchemes: true,
+        enableSchemeUriSlashFix: true,
       }
 
       vi.mocked(localStorage.getItem).mockReturnValue(JSON.stringify(storedSettings))
@@ -473,6 +477,7 @@ describe('settings store', () => {
       expect(store.showPreferredLanguageTag).toBe(true)
       expect(store.searchMatchMode).toBe('startsWith')
       expect(store.searchAllSchemes).toBe(true)
+      expect(store.enableSchemeUriSlashFix).toBe(true)
     })
 
     it('uses defaults when localStorage is empty', () => {

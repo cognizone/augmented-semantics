@@ -114,18 +114,20 @@
     ],
     "schemeCount": 102,
     "schemesLimited": false,
+    "schemeUriSlashMismatch": false,
+    "schemeUriSlashMismatchPairs": [],
     "languages": [
       {
         "lang": "fi",
-        "count": 1677886
+        "count": 1677911
       },
       {
         "lang": "sv",
-        "count": 1224586
+        "count": 1224587
       },
       {
         "lang": "en",
-        "count": 1190220
+        "count": 1190225
       },
       {
         "lang": "se",
@@ -316,7 +318,7 @@
         "count": 511
       }
     ],
-    "totalConcepts": 892004,
+    "totalConcepts": 892042,
     "totalCollections": 1106,
     "totalOrderedCollections": 0,
     "relationships": {
@@ -345,7 +347,7 @@
         "rdfsLabel": true
       }
     },
-    "analyzedAt": "2026-01-26T09:47:53.226Z"
+    "analyzedAt": "2026-01-27T09:25:20.094Z"
   },
   "suggestedLanguagePriorities": [
     "en",

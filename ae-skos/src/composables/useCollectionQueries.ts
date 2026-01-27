@@ -9,8 +9,12 @@
 import type { SPARQLEndpoint } from '../types'
 import { withPrefixes } from '../services'
 import { buildCapabilityAwareLabelUnionClause } from '../constants'
+import { buildSchemeValuesClause } from '../utils/schemeUri'
 
 export type CollectionQueryStage = 'inScheme' | 'topConcept' | 'transitive' | 'path'
+export interface SchemeFixOptions {
+  enableSchemeUriSlashFix?: boolean
+}
 
 /**
  * Get capabilities for collection queries.
@@ -54,7 +58,7 @@ export function getCollectionQueryCapabilities(
 }
 
 function buildTopConceptPatterns(
-  schemeUri: string,
+  schemeTerm: string,
   rel: NonNullable<SPARQLEndpoint['analysis']>['relationships']
 ): string[] {
   if (!rel) return []
@@ -62,10 +66,10 @@ function buildTopConceptPatterns(
   const patterns: string[] = []
 
   if (rel.hasTopConceptOf) {
-    patterns.push(`?top skos:topConceptOf <${schemeUri}> .`)
+    patterns.push(`?top skos:topConceptOf ${schemeTerm} .`)
   }
   if (rel.hasHasTopConcept) {
-    patterns.push(`<${schemeUri}> skos:hasTopConcept ?top .`)
+    patterns.push(`${schemeTerm} skos:hasTopConcept ?top .`)
   }
 
   return patterns
@@ -73,7 +77,7 @@ function buildTopConceptPatterns(
 
 function buildMemberSchemeBranches(
   memberVar: string,
-  schemeUri: string,
+  schemeTerm: string,
   rel: NonNullable<SPARQLEndpoint['analysis']>['relationships'],
   options?: { includeHierarchy?: boolean }
 ): string[] {
@@ -82,17 +86,17 @@ function buildMemberSchemeBranches(
   const branches: string[] = []
 
   if (rel.hasInScheme) {
-    branches.push(`{ ${memberVar} skos:inScheme <${schemeUri}> . }`)
+    branches.push(`{ ${memberVar} skos:inScheme ${schemeTerm} . }`)
   }
   if (rel.hasTopConceptOf) {
-    branches.push(`{ ${memberVar} skos:topConceptOf <${schemeUri}> . }`)
+    branches.push(`{ ${memberVar} skos:topConceptOf ${schemeTerm} . }`)
   }
   if (rel.hasHasTopConcept) {
-    branches.push(`{ <${schemeUri}> skos:hasTopConcept ${memberVar} . }`)
+    branches.push(`{ ${schemeTerm} skos:hasTopConcept ${memberVar} . }`)
   }
 
   const includeHierarchy = options?.includeHierarchy !== false
-  const topPatterns = includeHierarchy ? buildTopConceptPatterns(schemeUri, rel) : []
+  const topPatterns = includeHierarchy ? buildTopConceptPatterns(schemeTerm, rel) : []
   const hasTopCapability = topPatterns.length > 0
 
   if (hasTopCapability) {
@@ -127,7 +131,7 @@ function buildMemberSchemeBranches(
 function buildStageFilterClause(
   stage: CollectionQueryStage,
   endpoint: SPARQLEndpoint,
-  schemeUri: string
+  schemeTerm: string
 ): string | null {
   const rel = endpoint.analysis?.relationships
   if (!rel) return null
@@ -136,7 +140,7 @@ function buildStageFilterClause(
     if (!rel.hasInScheme) return null
     return `FILTER EXISTS {
       ?collection skos:member ?concept .
-      ?concept skos:inScheme <${schemeUri}> .
+      ?concept skos:inScheme ${schemeTerm} .
     }`
   }
 
@@ -144,10 +148,10 @@ function buildStageFilterClause(
     if (!rel.hasTopConceptOf && !rel.hasHasTopConcept) return null
     const patterns: string[] = []
     if (rel.hasTopConceptOf) {
-      patterns.push(`{ ?concept skos:topConceptOf <${schemeUri}> . }`)
+      patterns.push(`{ ?concept skos:topConceptOf ${schemeTerm} . }`)
     }
     if (rel.hasHasTopConcept) {
-      patterns.push(`{ <${schemeUri}> skos:hasTopConcept ?concept . }`)
+      patterns.push(`{ ${schemeTerm} skos:hasTopConcept ?concept . }`)
     }
     if (patterns.length === 0) return null
     const union = patterns.join(' UNION ')
@@ -157,7 +161,7 @@ function buildStageFilterClause(
     }`
   }
 
-  const topPatterns = buildTopConceptPatterns(schemeUri, rel)
+  const topPatterns = buildTopConceptPatterns(schemeTerm, rel)
   if (topPatterns.length === 0) return null
 
   if (stage === 'transitive') {
@@ -224,15 +228,23 @@ function buildStageFilterClause(
 export function buildCollectionsStageQuery(
   endpoint: SPARQLEndpoint,
   schemeUri: string,
-  stage: CollectionQueryStage
+  stage: CollectionQueryStage,
+  options?: SchemeFixOptions
 ): string | null {
   const rel = endpoint.analysis?.relationships
   if (!rel) return null
 
-  const filterClause = buildStageFilterClause(stage, endpoint, schemeUri)
+  const { schemeTerm, valuesClause } = buildSchemeValuesClause(
+    schemeUri,
+    endpoint.analysis,
+    !!options?.enableSchemeUriSlashFix,
+    'scheme'
+  )
+
+  const filterClause = buildStageFilterClause(stage, endpoint, schemeTerm)
   if (!filterClause) return null
 
-  const childMembershipBranches = buildMemberSchemeBranches('?member', schemeUri, rel, { includeHierarchy: true })
+  const childMembershipBranches = buildMemberSchemeBranches('?member', schemeTerm, rel, { includeHierarchy: true })
   const childMembershipPattern = childMembershipBranches.length > 0
     ? childMembershipBranches.join('\n        UNION\n        ')
     : null
@@ -243,6 +255,7 @@ export function buildCollectionsStageQuery(
   return withPrefixes(`
     SELECT DISTINCT ?collection ?label ?labelLang ?labelType ?notation
            ?hasParentCollection ?hasChildCollections WHERE {
+      ${valuesClause}
       ?collection a skos:Collection .
       ${filterClause}
 
@@ -282,7 +295,8 @@ export function buildCollectionsStageQuery(
  */
 export function buildCollectionsQuery(
   endpoint: SPARQLEndpoint,
-  schemeUri: string
+  schemeUri: string,
+  options?: SchemeFixOptions
 ): string | null {
   const rel = endpoint.analysis?.relationships
 
@@ -290,22 +304,29 @@ export function buildCollectionsQuery(
     return null
   }
 
+  const { schemeTerm, valuesClause } = buildSchemeValuesClause(
+    schemeUri,
+    endpoint.analysis,
+    !!options?.enableSchemeUriSlashFix,
+    'scheme'
+  )
+
   // Build membership UNION branches based on endpoint capabilities
   const membershipBranches: string[] = []
 
   // Branch 1: inScheme
   if (rel.hasInScheme) {
-    membershipBranches.push(`{ ?concept skos:inScheme <${schemeUri}> . }`)
+    membershipBranches.push(`{ ?concept skos:inScheme ${schemeTerm} . }`)
   }
 
   // Branch 2: topConceptOf
   if (rel.hasTopConceptOf) {
-    membershipBranches.push(`{ ?concept skos:topConceptOf <${schemeUri}> . }`)
+    membershipBranches.push(`{ ?concept skos:topConceptOf ${schemeTerm} . }`)
   }
 
   // Branch 3: hasTopConcept
   if (rel.hasHasTopConcept) {
-    membershipBranches.push(`{ <${schemeUri}> skos:hasTopConcept ?concept . }`)
+    membershipBranches.push(`{ ${schemeTerm} skos:hasTopConcept ?concept . }`)
   }
 
   // Hierarchical branches - need top concept capability
@@ -319,10 +340,10 @@ export function buildCollectionsQuery(
     if (broaderPredicate) {
       // Add separate branch for each top concept pattern to avoid nested UNION issues
       if (rel.hasTopConceptOf) {
-        membershipBranches.push(`{ ?concept ${broaderPredicate} ?top . ?top skos:topConceptOf <${schemeUri}> . }`)
+        membershipBranches.push(`{ ?concept ${broaderPredicate} ?top . ?top skos:topConceptOf ${schemeTerm} . }`)
       }
       if (rel.hasHasTopConcept) {
-        membershipBranches.push(`{ ?concept ${broaderPredicate} ?top . <${schemeUri}> skos:hasTopConcept ?top . }`)
+        membershipBranches.push(`{ ?concept ${broaderPredicate} ?top . ${schemeTerm} skos:hasTopConcept ?top . }`)
       }
     }
   }
@@ -342,6 +363,7 @@ export function buildCollectionsQuery(
   return withPrefixes(`
     SELECT DISTINCT ?collection ?label ?labelLang ?labelType ?notation
            ?hasParentCollection ?hasChildCollections WHERE {
+      ${valuesClause}
       ?collection a skos:Collection .
       ?collection skos:member ?concept .
 
@@ -385,7 +407,8 @@ export function buildCollectionsQuery(
 export function buildChildCollectionsQuery(
   parentUri: string,
   schemeUri: string,
-  endpoint: SPARQLEndpoint
+  endpoint: SPARQLEndpoint,
+  options?: SchemeFixOptions
 ): string | null {
   const rel = endpoint.analysis?.relationships
 
@@ -393,7 +416,14 @@ export function buildChildCollectionsQuery(
     return null
   }
 
-  const membershipBranches = buildMemberSchemeBranches('?member', schemeUri, rel, { includeHierarchy: true })
+  const { schemeTerm, valuesClause } = buildSchemeValuesClause(
+    schemeUri,
+    endpoint.analysis,
+    !!options?.enableSchemeUriSlashFix,
+    'scheme'
+  )
+
+  const membershipBranches = buildMemberSchemeBranches('?member', schemeTerm, rel, { includeHierarchy: true })
   if (membershipBranches.length === 0) {
     return null
   }
@@ -407,6 +437,7 @@ export function buildChildCollectionsQuery(
   return withPrefixes(`
     SELECT DISTINCT ?collection ?label ?labelLang ?labelType ?notation
            ?hasChildCollections WHERE {
+      ${valuesClause}
       <${parentUri}> skos:member ?collection .
       ?collection a skos:Collection .
 

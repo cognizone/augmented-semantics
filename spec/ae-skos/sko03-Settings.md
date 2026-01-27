@@ -42,6 +42,9 @@ interface SettingsState {
   // Developer
   developerMode: boolean
   logLevel: 'debug' | 'info' | 'warn' | 'error'
+
+  // Data Fixes
+  enableSchemeUriSlashFix: boolean
 }
 
 interface DeprecationRule {
@@ -135,6 +138,10 @@ See [sko08-OrphanDetection](./sko08-OrphanDetection.md) for algorithm details.
 |---------|------|---------|-------------|
 | `developerMode` | boolean | `false` | Enable developer features (query viewer, etc.) |
 | `logLevel` | enum | `'warn'` | Minimum log level to display |
+| `enableSchemeUriSlashFix` | boolean | `false` | Enable scheme URI variant matching |
+
+**Scheme URI Slash Fix:**
+When enabled, SPARQL queries try both URI variants (with/without trailing slash) for endpoints where `analysis.schemeUriSlashMismatch` is `true`. This fixes tree loading issues on affected endpoints like BnF where declared scheme URIs differ from URIs used in `skos:inScheme` assertions.
 
 **Log Levels:**
 - `debug` - All messages (verbose)
@@ -249,6 +256,9 @@ const defaultSettings: SettingsState = {
   // Developer
   developerMode: false,
   logLevel: 'warn',
+
+  // Data Fixes
+  enableSchemeUriSlashFix: false,
 }
 ```
 
@@ -268,5 +278,6 @@ function resetSettings() {
 - [sko04-ConceptTree](./sko04-ConceptTree.md) - Deprecation display, notation in labels
 - [sko08-OrphanDetection](./sko08-OrphanDetection.md) - Orphan strategy and prefilter settings
 - [sko11-DeveloperTools](./sko11-DeveloperTools.md) - Developer mode and log level
+- [sko12-CurationWorkflow](./sko12-CurationWorkflow.md) - Scheme URI mismatch detection
 - [com02-StateManagement](../common/com02-StateManagement.md) - State architecture
 - [com07-DatatypeDisplay](../common/com07-DatatypeDisplay.md) - Datatype display rules

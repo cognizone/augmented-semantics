@@ -206,6 +206,8 @@
       ],
       "schemeCount": 193,
       "schemesLimited": true,
+      "schemeUriSlashMismatch": false,
+      "schemeUriSlashMismatchPairs": [],
       "languages": [
         {
           "lang": "en",
@@ -439,7 +441,7 @@
           "rdfsLabel": true
         }
       },
-      "analyzedAt": "2026-01-26T09:34:10.548Z"
+      "analyzedAt": "2026-01-27T09:04:05.433Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -500,7 +502,7 @@
     "description": "Maintained by the FAO (UN), this is a massive multilingual thesaurus covering agriculture, forestry, fisheries, food, and related environmental concepts.",
     "analysis": {
       "hasSkosContent": true,
-      "cors": false,
+      "cors": true,
       "supportsJsonResults": true,
       "supportsNamedGraphs": true,
       "skosGraphCount": 1,
@@ -509,6 +511,8 @@
       ],
       "schemeCount": 1,
       "schemesLimited": false,
+      "schemeUriSlashMismatch": false,
+      "schemeUriSlashMismatchPairs": [],
       "languages": [
         {
           "lang": "en",
@@ -737,7 +741,7 @@
           "xlPrefLabel": true
         }
       },
-      "analyzedAt": "2026-01-26T09:39:54.458Z"
+      "analyzedAt": "2026-01-27T09:14:49.333Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -807,6 +811,13 @@
       ],
       "schemeCount": 1,
       "schemesLimited": false,
+      "schemeUriSlashMismatch": true,
+      "schemeUriSlashMismatchPairs": [
+        {
+          "declared": "http://data.bnf.fr/vocabulary/rameau/",
+          "used": "http://data.bnf.fr/vocabulary/rameau"
+        }
+      ],
       "languages": [
         {
           "lang": "fr",
@@ -1032,7 +1043,7 @@
           "prefLabel": true
         }
       },
-      "analyzedAt": "2026-01-26T09:41:07.163Z"
+      "analyzedAt": "2026-01-27T09:16:23.545Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -1103,6 +1114,8 @@
       ],
       "schemeCount": 2,
       "schemesLimited": false,
+      "schemeUriSlashMismatch": false,
+      "schemeUriSlashMismatchPairs": [],
       "languages": [
         {
           "lang": "en",
@@ -1152,7 +1165,7 @@
           "dctTitle": true
         }
       },
-      "analyzedAt": "2026-01-26T09:41:09.840Z"
+      "analyzedAt": "2026-01-27T09:16:26.326Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -1356,6 +1369,8 @@
       ],
       "schemeCount": 179,
       "schemesLimited": false,
+      "schemeUriSlashMismatch": false,
+      "schemeUriSlashMismatchPairs": [],
       "languages": [
         {
           "lang": "cs",
@@ -1582,7 +1597,7 @@
           "rdfsLabel": true
         }
       },
-      "analyzedAt": "2026-01-26T09:44:35.587Z"
+      "analyzedAt": "2026-01-27T09:20:04.167Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -1683,6 +1698,7 @@
       "skosGraphCount": 1,
       "schemeCount": 0,
       "schemesLimited": false,
+      "schemeUriSlashMismatch": false,
       "languages": [
         {
           "lang": "en",
@@ -1707,7 +1723,7 @@
           "rdfsLabel": true
         }
       },
-      "analyzedAt": "2026-01-26T09:44:50.050Z"
+      "analyzedAt": "2026-01-27T09:20:50.437Z"
     },
     "suggestedLanguagePriorities": [
       "en"
@@ -1722,7 +1738,7 @@
       "cors": true,
       "supportsJsonResults": true,
       "supportsNamedGraphs": true,
-      "skosGraphCount": 3,
+      "skosGraphCount": 4,
       "schemeUris": [
         "http://publications.europa.eu/resource/authority/country",
         "http://data.europa.eu/949/concepts/restrictions/Restrictions",
@@ -1828,122 +1844,124 @@
       ],
       "schemeCount": 101,
       "schemesLimited": false,
+      "schemeUriSlashMismatch": false,
+      "schemeUriSlashMismatchPairs": [],
       "languages": [
         {
           "lang": "en",
-          "count": 3509
+          "count": 4949
         },
         {
           "lang": "es",
-          "count": 376
+          "count": 429
         },
         {
           "lang": "cs",
-          "count": 334
+          "count": 359
         },
         {
           "lang": "de",
-          "count": 334
+          "count": 359
         },
         {
           "lang": "el",
-          "count": 334
+          "count": 359
         },
         {
           "lang": "ro",
-          "count": 334
+          "count": 359
         },
         {
           "lang": "pl",
-          "count": 334
+          "count": 359
         },
         {
           "lang": "lt",
-          "count": 334
+          "count": 359
         },
         {
           "lang": "lv",
-          "count": 334
+          "count": 359
         },
         {
           "lang": "fr",
-          "count": 334
+          "count": 359
         },
         {
           "lang": "mt",
-          "count": 334
+          "count": 359
         },
         {
           "lang": "pt",
-          "count": 334
+          "count": 359
         },
         {
           "lang": "sk",
-          "count": 334
+          "count": 359
         },
         {
           "lang": "da",
-          "count": 334
+          "count": 359
         },
         {
           "lang": "sv",
-          "count": 334
+          "count": 359
         },
         {
           "lang": "ga",
-          "count": 334
+          "count": 359
         },
         {
           "lang": "it",
-          "count": 334
+          "count": 359
         },
         {
           "lang": "et",
-          "count": 334
+          "count": 359
         },
         {
           "lang": "hr",
-          "count": 334
+          "count": 359
         },
         {
           "lang": "hu",
-          "count": 334
+          "count": 359
         },
         {
           "lang": "bg",
-          "count": 334
+          "count": 359
         },
         {
           "lang": "sl",
-          "count": 334
+          "count": 359
         },
         {
           "lang": "nl",
-          "count": 334
+          "count": 359
         },
         {
           "lang": "fi",
-          "count": 334
+          "count": 359
         },
         {
           "lang": "no",
-          "count": 308
+          "count": 333
         },
         {
           "lang": "is",
-          "count": 308
+          "count": 333
         },
         {
           "lang": "tr",
-          "count": 308
+          "count": 333
         },
         {
           "lang": "uk",
-          "count": 308
+          "count": 333
         },
         {
           "lang": "ru",
-          "count": 308
+          "count": 333
         },
         {
           "lang": "ca",
@@ -1967,11 +1985,19 @@
         },
         {
           "lang": "mk",
-          "count": 108
+          "count": 133
         },
         {
           "lang": "sr",
-          "count": 108
+          "count": 133
+        },
+        {
+          "lang": "sh",
+          "count": 75
+        },
+        {
+          "lang": "hsb",
+          "count": 75
         },
         {
           "lang": "be",
@@ -2000,14 +2026,6 @@
         {
           "lang": "rm",
           "count": 52
-        },
-        {
-          "lang": "sh",
-          "count": 50
-        },
-        {
-          "lang": "hsb",
-          "count": 50
         }
       ],
       "totalConcepts": 3439,
@@ -2037,7 +2055,7 @@
           "prefLabel": true
         }
       },
-      "analyzedAt": "2026-01-26T09:44:53.822Z"
+      "analyzedAt": "2026-01-27T09:20:54.670Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -2076,15 +2094,15 @@
       "ja",
       "mk",
       "sr",
+      "sh",
+      "hsb",
       "be",
       "gl",
       "bs",
       "eu",
       "fo",
       "sq",
-      "rm",
-      "sh",
-      "hsb"
+      "rm"
     ]
   },
   {
@@ -2301,6 +2319,29 @@
       ],
       "schemeCount": 200,
       "schemesLimited": true,
+      "schemeUriSlashMismatch": true,
+      "schemeUriSlashMismatchPairs": [
+        {
+          "declared": "http://publications.europa.eu/resource/authority/corporate-body",
+          "used": "http://publications.europa.eu/resource/authority/corporate-body/"
+        },
+        {
+          "declared": "http://publications.europa.eu/resource/authority/language",
+          "used": "http://publications.europa.eu/resource/authority/language/"
+        },
+        {
+          "declared": "http://publications.europa.eu/resource/authority/resource-type",
+          "used": "http://publications.europa.eu/resource/authority/resource-type/"
+        },
+        {
+          "declared": "http://publications.europa.eu/resource/authority/event",
+          "used": "http://publications.europa.eu/resource/authority/event/"
+        },
+        {
+          "declared": "http://publications.europa.eu/resource/authority/fd_100",
+          "used": "http://publications.europa.eu/resource/authority/fd_100/"
+        }
+      ],
       "languages": [
         {
           "lang": "en",
@@ -2533,7 +2574,7 @@
           "xlPrefLabel": true
         }
       },
-      "analyzedAt": "2026-01-26T09:47:04.948Z"
+      "analyzedAt": "2026-01-27T09:23:48.302Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -2667,18 +2708,20 @@
       ],
       "schemeCount": 65,
       "schemesLimited": false,
+      "schemeUriSlashMismatch": false,
+      "schemeUriSlashMismatchPairs": [],
       "languages": [
         {
           "lang": "it",
-          "count": 33760
+          "count": 33761
         },
         {
           "lang": "de",
-          "count": 32725
+          "count": 32726
         },
         {
           "lang": "fr",
-          "count": 32478
+          "count": 32479
         },
         {
           "lang": "en",
@@ -2689,7 +2732,7 @@
           "count": 1307
         }
       ],
-      "totalConcepts": 49080,
+      "totalConcepts": 49081,
       "totalCollections": 36,
       "totalOrderedCollections": 0,
       "relationships": {
@@ -2714,7 +2757,7 @@
           "prefLabel": true
         }
       },
-      "analyzedAt": "2026-01-26T09:47:09.983Z"
+      "analyzedAt": "2026-01-27T09:23:52.975Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -2840,18 +2883,20 @@
       ],
       "schemeCount": 102,
       "schemesLimited": false,
+      "schemeUriSlashMismatch": false,
+      "schemeUriSlashMismatchPairs": [],
       "languages": [
         {
           "lang": "fi",
-          "count": 1677886
+          "count": 1677911
         },
         {
           "lang": "sv",
-          "count": 1224586
+          "count": 1224587
         },
         {
           "lang": "en",
-          "count": 1190220
+          "count": 1190225
         },
         {
           "lang": "se",
@@ -3042,7 +3087,7 @@
           "count": 511
         }
       ],
-      "totalConcepts": 892004,
+      "totalConcepts": 892042,
       "totalCollections": 1106,
       "totalOrderedCollections": 0,
       "relationships": {
@@ -3071,7 +3116,7 @@
           "rdfsLabel": true
         }
       },
-      "analyzedAt": "2026-01-26T09:47:53.226Z"
+      "analyzedAt": "2026-01-27T09:25:20.094Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -3149,6 +3194,8 @@
       ],
       "schemeCount": 9,
       "schemesLimited": false,
+      "schemeUriSlashMismatch": false,
+      "schemeUriSlashMismatchPairs": [],
       "languages": [
         {
           "lang": "en",
@@ -3378,7 +3425,7 @@
           "rdfsLabel": true
         }
       },
-      "analyzedAt": "2026-01-26T09:57:10.341Z"
+      "analyzedAt": "2026-01-27T09:34:42.207Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -3516,6 +3563,8 @@
       ],
       "schemeCount": 69,
       "schemesLimited": false,
+      "schemeUriSlashMismatch": false,
+      "schemeUriSlashMismatchPairs": [],
       "languages": [
         {
           "lang": "fr",
@@ -3703,7 +3752,7 @@
           "prefLabel": true
         }
       },
-      "analyzedAt": "2026-01-26T09:57:43.435Z"
+      "analyzedAt": "2026-01-27T09:34:58.345Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -3962,6 +4011,8 @@
       ],
       "schemeCount": 200,
       "schemesLimited": false,
+      "schemeUriSlashMismatch": false,
+      "schemeUriSlashMismatchPairs": [],
       "languages": [
         {
           "lang": "en",
@@ -4012,7 +4063,7 @@
           "rdfsLabel": true
         }
       },
-      "analyzedAt": "2026-01-26T09:57:46.589Z"
+      "analyzedAt": "2026-01-27T09:35:03.582Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -4058,10 +4109,12 @@
       ],
       "schemeCount": 22,
       "schemesLimited": false,
+      "schemeUriSlashMismatch": false,
+      "schemeUriSlashMismatchPairs": [],
       "languages": [
         {
           "lang": "en",
-          "count": 361909
+          "count": 361935
         },
         {
           "lang": "fr",
@@ -4084,7 +4137,7 @@
           "count": 2
         }
       ],
-      "totalConcepts": 361919,
+      "totalConcepts": 361945,
       "totalCollections": 303,
       "totalOrderedCollections": 0,
       "relationships": {
@@ -4109,7 +4162,7 @@
           "dctTitle": true
         }
       },
-      "analyzedAt": "2026-01-26T09:58:03.354Z"
+      "analyzedAt": "2026-01-27T09:35:20.074Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -4135,6 +4188,8 @@
       ],
       "schemeCount": 1,
       "schemesLimited": false,
+      "schemeUriSlashMismatch": false,
+      "schemeUriSlashMismatchPairs": [],
       "languages": [
         {
           "lang": "de",
@@ -4168,7 +4223,7 @@
           "rdfsLabel": true
         }
       },
-      "analyzedAt": "2026-01-26T09:58:06.061Z"
+      "analyzedAt": "2026-01-27T09:35:23.035Z"
     },
     "suggestedLanguagePriorities": [
       "en",
@@ -4190,29 +4245,31 @@
       ],
       "schemeCount": 1,
       "schemesLimited": false,
+      "schemeUriSlashMismatch": false,
+      "schemeUriSlashMismatchPairs": [],
       "languages": [
         {
           "lang": "en",
-          "count": 4590
+          "count": 4594
         },
         {
           "lang": "es",
-          "count": 4590
+          "count": 4594
         },
         {
           "lang": "fr",
-          "count": 4590
+          "count": 4594
         },
         {
           "lang": "ar",
-          "count": 4584
+          "count": 4588
         },
         {
           "lang": "ru",
-          "count": 4550
+          "count": 4554
         }
       ],
-      "totalConcepts": 4494,
+      "totalConcepts": 4498,
       "totalCollections": 95,
       "totalOrderedCollections": 0,
       "relationships": {
@@ -4236,7 +4293,7 @@
           "prefLabel": true
         }
       },
-      "analyzedAt": "2026-01-26T09:58:10.615Z"
+      "analyzedAt": "2026-01-27T09:35:29.819Z"
     },
     "suggestedLanguagePriorities": [
       "en",
