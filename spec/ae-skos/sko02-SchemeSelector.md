@@ -4,6 +4,52 @@ Component for listing and selecting SKOS Concept Schemes.
 
 ## Features
 
+### Root Mode Selector
+
+A dropdown control in the breadcrumb header allows switching between two root browsing modes.
+
+**Implementation:** `ConceptBreadcrumb.vue` with `schemeStore.rootMode`
+
+**Modes:**
+
+| Mode | Icon | Description |
+|------|------|-------------|
+| `scheme` | `folder` | Browse by concept schemes (default) |
+| `collection` | `collections_bookmark` | Browse by collections |
+
+**State:**
+```typescript
+rootMode: 'scheme' | 'collection'  // Default: 'scheme'
+```
+
+**Persistence:** `ae-skos-root-mode` localStorage key
+
+**UI:**
+```
+┌─────────────────────────────────┐
+│ 📁 Schemes ▼  │ [Select scheme...] │
+└─────────────────────────────────┘
+        ↓ click dropdown
+┌─────────────────────────────────┐
+│ 📁 Schemes                      │
+│ 📚 Collections                  │
+└─────────────────────────────────┘
+```
+
+**Behavior when switching modes:**
+- Clears current concept selection
+- Clears current collection selection
+- Clears scheme details view
+- Resets breadcrumb path
+- In scheme mode: Shows scheme selector dropdown
+- In collection mode: Hides scheme selector, loads all top-level collections
+
+**Scheme Selector Visibility:**
+- Only visible when `rootMode === 'scheme'`
+- Hidden in collection mode (collections become the root)
+
+See [sko05-Collections](./sko05-Collections.md#collection-root-mode) for collection mode behavior.
+
 ### List Concept Schemes
 
 Schemes are loaded from the endpoint's pre-configured `schemeUris` whitelist (stored during endpoint analysis). Labels are fetched dynamically using a VALUES clause query.
@@ -260,12 +306,14 @@ Same logic as concepts for consistency:
 
 ### Scheme Selection
 
-- Dropdown selector in toolbar
+- Dropdown selector in toolbar (only visible when `rootMode === 'scheme'`)
 - "All Schemes" option to browse without filter
 - Selection affects:
   - Top concepts shown in navigation
   - Search scope
   - Language detection scope
+
+**Note:** In collection mode, the scheme selector is hidden and collections become the root navigation elements. See [Root Mode Selector](#root-mode-selector).
 
 ### Scheme Details
 

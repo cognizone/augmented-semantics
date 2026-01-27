@@ -100,6 +100,7 @@ interface SKOSState {
   scheme: {
     current: ConceptScheme | null;
     all: ConceptScheme[];
+    rootMode: 'scheme' | 'collection';  // Root browsing mode (default: 'scheme')
   };
   concept: {
     selected: string | null;         // Current concept URI
@@ -153,6 +154,7 @@ Two types for concept references serve different purposes:
 | `ae-language` | Global preferred language | Cross-tab |
 | `ae-skos-settings` | App settings (display, deprecation) | Cross-tab |
 | `ae-skos-scheme` | Last selected scheme | Per-endpoint |
+| `ae-skos-root-mode` | Root browsing mode ('scheme' \| 'collection') | Cross-tab |
 | `ae-skos-history` | Recently viewed | Per-endpoint |
 | `ae-skos-tree-expanded` | Expanded nodes | Per-session |
 

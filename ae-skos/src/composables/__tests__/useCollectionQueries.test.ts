@@ -9,6 +9,7 @@ import {
   buildCollectionsQuery,
   buildCollectionsStageQuery,
   buildChildCollectionsQuery,
+  buildAllCollectionsQuery,
   getCollectionQueryCapabilities,
 } from '../useCollectionQueries'
 import type { SPARQLEndpoint } from '../../types'
@@ -564,6 +565,94 @@ describe('useCollectionQueries', () => {
       const query = buildChildCollectionsQuery(testParentUri, testScheme, endpoint)
       expect(query).not.toBeNull()
       expect(query).toContain('ORDER BY ?collection')
+    })
+
+    it('generates query without scheme filter when schemeUri is null', () => {
+      const endpoint = mockEndpoint({ hasInScheme: true })
+
+      const query = buildChildCollectionsQuery(testParentUri, null, endpoint)
+      expect(query).not.toBeNull()
+      expect(query).toContain(`<${testParentUri}> skos:member ?collection`)
+      expect(query).toContain('?collection a skos:Collection')
+      // Should not contain scheme filtering
+      expect(query).not.toContain('skos:inScheme')
+      expect(query).not.toContain('skos:topConceptOf')
+    })
+  })
+
+  describe('buildAllCollectionsQuery (collection root mode)', () => {
+    it('generates valid SPARQL query', () => {
+      const endpoint = mockEndpoint({ hasInScheme: true })
+
+      const query = buildAllCollectionsQuery(endpoint)
+      expect(query).toContain('SELECT DISTINCT ?collection')
+      expect(query).toContain('WHERE {')
+      expect(query).toContain('?collection a skos:Collection')
+    })
+
+    it('includes FILTER NOT EXISTS for top-level only', () => {
+      const endpoint = mockEndpoint({ hasInScheme: true })
+
+      const query = buildAllCollectionsQuery(endpoint)
+      expect(query).toContain('FILTER NOT EXISTS {')
+      expect(query).toContain('?parentCol a skos:Collection')
+      expect(query).toContain('?parentCol skos:member ?collection')
+    })
+
+    it('includes hasParentCollection binding', () => {
+      const endpoint = mockEndpoint({ hasInScheme: true })
+
+      const query = buildAllCollectionsQuery(endpoint)
+      expect(query).toContain('?hasParentCollection')
+      expect(query).toContain('AS ?hasParentCollection')
+    })
+
+    it('includes hasChildCollections binding', () => {
+      const endpoint = mockEndpoint({ hasInScheme: true })
+
+      const query = buildAllCollectionsQuery(endpoint)
+      expect(query).toContain('?hasChildCollections')
+      expect(query).toContain('AS ?hasChildCollections')
+      expect(query).toContain('?collection skos:member ?childCol')
+      expect(query).toContain('?childCol a skos:Collection')
+    })
+
+    it('includes label resolution patterns', () => {
+      const endpoint = mockEndpoint({ hasInScheme: true })
+
+      const query = buildAllCollectionsQuery(endpoint)
+      expect(query).toContain('skos:prefLabel')
+    })
+
+    it('includes notation pattern', () => {
+      const endpoint = mockEndpoint({ hasInScheme: true })
+
+      const query = buildAllCollectionsQuery(endpoint)
+      expect(query).toContain('skos:notation')
+    })
+
+    it('includes PREFIX declarations', () => {
+      const endpoint = mockEndpoint({ hasInScheme: true })
+
+      const query = buildAllCollectionsQuery(endpoint)
+      expect(query).toContain('PREFIX skos:')
+    })
+
+    it('orders by collection', () => {
+      const endpoint = mockEndpoint({ hasInScheme: true })
+
+      const query = buildAllCollectionsQuery(endpoint)
+      expect(query).toContain('ORDER BY ?collection')
+    })
+
+    it('does not include scheme filtering', () => {
+      const endpoint = mockEndpoint({ hasInScheme: true })
+
+      const query = buildAllCollectionsQuery(endpoint)
+      // Should not contain any scheme URI references
+      expect(query).not.toContain('skos:inScheme <')
+      expect(query).not.toContain('skos:topConceptOf <')
+      expect(query).not.toContain('skos:hasTopConcept')
     })
   })
 })

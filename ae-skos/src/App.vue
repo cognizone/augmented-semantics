@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { RouterView } from 'vue-router'
-import { useUIStore, useConceptStore, useSettingsStore, useLanguageStore, useEndpointStore } from './stores'
+import { useUIStore, useConceptStore, useSchemeStore, useSettingsStore, useLanguageStore, useEndpointStore } from './stores'
 import type { SettingsSection } from './stores/ui'
 import { useConfig } from './services'
 import Toast from 'primevue/toast'
@@ -16,6 +16,7 @@ import ConceptBreadcrumb from './components/skos/ConceptBreadcrumb.vue'
 
 const uiStore = useUIStore()
 const conceptStore = useConceptStore()
+const schemeStore = useSchemeStore()
 const settingsStore = useSettingsStore()
 const languageStore = useLanguageStore()
 const endpointStore = useEndpointStore()
@@ -179,9 +180,12 @@ function getLanguageName(code: string): string {
   return languageNames[code] || code.toUpperCase()
 }
 
-function selectConcept(uri: string) {
+async function selectConcept(uri: string) {
   if (uri) {
-    conceptStore.selectConcept(uri)
+    if (schemeStore.rootMode !== 'collection') {
+      conceptStore.selectCollection(null)
+    }
+    await conceptStore.selectConceptWithEvent(uri)
   } else {
     conceptStore.selectConcept(null)
   }

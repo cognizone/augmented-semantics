@@ -29,6 +29,8 @@ https://app.example.com/?endpoint=...&lang=...&scheme=...&concept=...
 | `search` | Search query | `search=agriculture` |
 | `view` | Active view | `view=tree` or `view=search` |
 
+**Note:** The `scheme` parameter is only included when `rootMode === 'scheme'`. In collection mode, scheme is not part of the URL since collections are the root navigation level.
+
 ### Examples
 
 ```
@@ -77,7 +79,8 @@ function buildURL(state: AppState): string {
     params.set('lang', state.language.preferred);
   }
 
-  if (state.skos?.scheme.current) {
+  // Only include scheme when in scheme mode (not collection mode)
+  if (state.skos?.scheme.rootMode === 'scheme' && state.skos?.scheme.current) {
     params.set('scheme', state.skos.scheme.current.uri);
   }
 
@@ -126,9 +129,9 @@ async function restoreFromURL(): Promise<void> {
     dispatch({ type: 'SET_LANGUAGE', payload: { preferred: lang, fallback: state.language.fallback } });
   }
 
-  // 3. Restore scheme (after language set)
+  // 3. Restore scheme (after language set, only in scheme mode)
   const schemeUri = params.get('scheme');
-  if (schemeUri) {
+  if (schemeUri && state.skos?.scheme.rootMode === 'scheme') {
     const scheme = await loadScheme(schemeUri);
     if (scheme) {
       dispatch({ type: 'SELECT_SCHEME', payload: scheme });
@@ -136,11 +139,16 @@ async function restoreFromURL(): Promise<void> {
   }
 
   // 4. Restore concept (after scheme set)
+  // In collection mode, use selectConceptWithEvent to fire proper events
   const conceptUri = params.get('concept');
   if (conceptUri) {
-    dispatch({ type: 'SELECT_CONCEPT', payload: conceptUri });
-    await loadConceptDetails(conceptUri);
-    await expandTreeTo(conceptUri);
+    if (state.skos?.scheme.rootMode === 'collection') {
+      await conceptStore.selectConceptWithEvent(conceptUri);
+    } else {
+      dispatch({ type: 'SELECT_CONCEPT', payload: conceptUri });
+      await loadConceptDetails(conceptUri);
+      await expandTreeTo(conceptUri);
+    }
   }
 
   // 5. Restore search

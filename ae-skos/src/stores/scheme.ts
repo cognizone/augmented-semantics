@@ -13,6 +13,8 @@ import type { ConceptScheme, SchemeDetails } from '../types'
 import { logger } from '../services'
 
 const STORAGE_KEY = 'ae-skos-scheme'
+const ROOT_MODE_STORAGE_KEY = 'ae-skos-root-mode'
+export type RootMode = 'scheme' | 'collection'
 
 /** Special URI for orphan concepts and collections (not linked to any scheme) */
 export const ORPHAN_SCHEME_URI = '~orphans~'
@@ -28,6 +30,7 @@ export const useSchemeStore = defineStore('scheme', () => {
   const schemes = ref<ConceptScheme[]>([])
   const selectedUri = ref<string | null>(null)
   const loading = ref(false)
+  const rootMode = ref<RootMode>('scheme')
 
   // Scheme details viewing state (separate from selection for filtering)
   const viewingSchemeUri = ref<string | null>(null)
@@ -59,6 +62,10 @@ export const useSchemeStore = defineStore('scheme', () => {
       if (stored) {
         selectedUri.value = JSON.parse(stored)
       }
+      const storedRootMode = localStorage.getItem(ROOT_MODE_STORAGE_KEY)
+      if (storedRootMode === 'collection' || storedRootMode === 'scheme') {
+        rootMode.value = storedRootMode
+      }
     } catch (e) {
       logger.error('SchemeStore', 'Failed to load scheme from storage', { error: e })
     }
@@ -67,6 +74,7 @@ export const useSchemeStore = defineStore('scheme', () => {
   function saveToStorage() {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(selectedUri.value))
+      localStorage.setItem(ROOT_MODE_STORAGE_KEY, rootMode.value)
     } catch (e) {
       logger.error('SchemeStore', 'Failed to save scheme to storage', { error: e })
     }
@@ -78,6 +86,11 @@ export const useSchemeStore = defineStore('scheme', () => {
 
   function selectScheme(uri: string | null) {
     selectedUri.value = uri
+    saveToStorage()
+  }
+
+  function setRootMode(mode: RootMode) {
+    rootMode.value = mode
     saveToStorage()
   }
 
@@ -118,6 +131,7 @@ export const useSchemeStore = defineStore('scheme', () => {
     schemes,
     selectedUri,
     loading,
+    rootMode,
     viewingSchemeUri,
     schemeDetails,
     loadingDetails,
@@ -129,6 +143,7 @@ export const useSchemeStore = defineStore('scheme', () => {
     loadFromStorage,
     setSchemes,
     selectScheme,
+    setRootMode,
     setLoading,
     reset,
     viewScheme,

@@ -267,6 +267,51 @@ This only runs when:
 See [sko03-Settings](./sko03-Settings.md) for the `enableSchemeUriSlashFix` setting.
 See [sko12-CurationWorkflow](./sko12-CurationWorkflow.md) for scheme URI mismatch detection.
 
+### Collection Root Mode
+
+When `schemeStore.rootMode === 'collection'`, the tree displays collections as root items instead of concepts.
+
+**Behavior:**
+- Top-level collections appear as root tree nodes
+- Concepts are only visible as collection members
+- Scheme selector is hidden (collections become the root)
+- Tree loads via `loadAllCollections()` instead of `loadTopConcepts()`
+
+**Tree Loading:**
+```typescript
+if (rootMode === 'collection') {
+  loadAllCollections()
+  return
+}
+loadTopConcepts()
+```
+
+**Root Items:**
+| Mode | Root Items | Loading Function |
+|------|------------|------------------|
+| `scheme` | Top concepts | `loadTopConcepts()` |
+| `collection` | Top-level collections | `loadAllCollections()` |
+
+**Conditional Logic Affected:**
+- Empty state message: "No collections found" vs "No concepts found"
+- Loading message: "Loading collections..." vs "Loading concepts..."
+- Refresh button: Calls `loadAllCollections()` vs `loadTopConcepts()`
+- Scroll pagination: Disabled in collection mode
+- "Go to URI": Skips scheme detection in collection mode
+
+**Shared Collections State:**
+
+The tree uses a shared collections composable to ensure consistent state:
+
+```typescript
+const { topLevelCollections, loadAllCollections } = useCollections({ shared: true })
+```
+
+The `shared: true` option returns a singleton instance so breadcrumb and tree share the same collections state.
+
+See [sko02-SchemeSelector](./sko02-SchemeSelector.md#root-mode-selector) for mode switching UI.
+See [sko05-Collections](./sko05-Collections.md#collection-root-mode) for collection loading details.
+
 ### Broader Concepts
 
 Display parent hierarchy for selected concept.
@@ -285,30 +330,73 @@ WHERE {
 
 ### Breadcrumb Navigation
 
-Show full path from root to current concept.
+Show full path from root to current selection.
 
 **IMPORTANT:** Breadcrumb labels MUST match the labels shown in ConceptDetails. Use the same label resolution logic everywhere.
 
-**Query (recursive path):**
+**Separate Path Tracking:**
+
+The breadcrumb maintains separate paths that are merged for display:
+
+```typescript
+const conceptPath = ref<ConceptRef[]>([])    // Ancestor concepts
+const collectionPath = ref<ConceptRef[]>([]) // Ancestor collections
+
+function updateBreadcrumb() {
+  if (isCollectionMode.value) {
+    // Collection mode: collection path + concept path (if member selected)
+    conceptStore.setBreadcrumb([...collectionPath.value, ...conceptPath.value])
+  } else {
+    // Scheme mode: concept path only (or collection path if viewing collection)
+    conceptStore.setBreadcrumb(conceptPath.value.length > 0
+      ? conceptPath.value
+      : collectionPath.value)
+  }
+}
+```
+
+**Root Collection Icon Suppression:**
+
+In collection mode, the root collection (first breadcrumb item) renders text-only without an icon:
+
+```typescript
+const isRootCollection =
+  isCollectionMode.value &&
+  item.type === 'collection' &&
+  item.uri === conceptStore.selectedCollectionUri
+```
+
+Template logic: `v-if="!item.isRootCollection"` guards all icon spans.
+
+**Concept Path Query (iterative):**
 ```sparql
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 
-SELECT ?concept ?label ?depth
+SELECT ?broader ?label ?labelLang ?labelType ?notation ?hasNarrower
 WHERE {
-  <CONCEPT_URI> skos:broader* ?concept .
-  ?concept skos:prefLabel ?label .
-  FILTER (LANGMATCHES(LANG(?label), "LANG") || LANG(?label) = "")
-  {
-    SELECT ?concept (COUNT(?mid) AS ?depth)
-    WHERE {
-      <CONCEPT_URI> skos:broader* ?mid .
-      ?mid skos:broader* ?concept .
-    }
-    GROUP BY ?concept
+  OPTIONAL {
+    { <CONCEPT_URI> skos:broader ?broader }
+    UNION
+    { ?broader skos:narrower <CONCEPT_URI> }
   }
+  OPTIONAL { <CONCEPT_URI> skos:notation ?notation }
+  OPTIONAL { ... label patterns ... }
 }
-ORDER BY DESC(?depth)
 ```
+
+**Collection Path Query (iterative, collection mode only):**
+```sparql
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+
+SELECT ?parent ?label ?labelLang ?labelType ?notation
+WHERE {
+  OPTIONAL { ?parent skos:member <COLLECTION_URI> }
+  OPTIONAL { <COLLECTION_URI> skos:notation ?notation }
+  OPTIONAL { ... label patterns ... }
+}
+```
+
+Uses `skos:member` to traverse up the collection hierarchy (collections containing this collection).
 
 ### Concept Reveal (History/Search/URL Navigation)
 

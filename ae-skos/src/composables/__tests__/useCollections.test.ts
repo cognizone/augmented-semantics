@@ -499,4 +499,139 @@ describe('useCollections', () => {
       expect(children).toEqual([])
     })
   })
+
+  describe('loadAllCollections (collection root mode)', () => {
+    it('returns early when no endpoint is selected', async () => {
+      const endpointStore = useEndpointStore()
+      endpointStore.selectEndpoint(null as unknown as string)
+
+      const { loadAllCollections, loading } = useCollections()
+      await loadAllCollections()
+
+      expect(executeSparql).not.toHaveBeenCalled()
+      expect(loading.value).toBe(false)
+    })
+
+    it('sets loading state during execution', async () => {
+      const { loadAllCollections, loading } = useCollections()
+
+      expect(loading.value).toBe(false)
+      const promise = loadAllCollections()
+      expect(loading.value).toBe(true)
+
+      await promise
+      expect(loading.value).toBe(false)
+    })
+
+    it('loads all collections without scheme filter', async () => {
+      ;(executeSparql as Mock).mockResolvedValueOnce({
+        results: {
+          bindings: [
+            {
+              collection: { value: 'http://example.org/collection/1' },
+              label: { value: 'Collection One' },
+              labelLang: { value: 'en' },
+              labelType: { value: 'prefLabel' },
+              hasParentCollection: { value: 'false' },
+            },
+            {
+              collection: { value: 'http://example.org/collection/2' },
+              label: { value: 'Collection Two' },
+              labelLang: { value: 'en' },
+              labelType: { value: 'prefLabel' },
+              hasParentCollection: { value: 'false' },
+            },
+          ],
+        },
+      })
+
+      const { loadAllCollections, collections, topLevelCollections } = useCollections()
+      await loadAllCollections()
+
+      expect(collections.value).toHaveLength(2)
+      expect(topLevelCollections.value).toHaveLength(2)
+      expect(collections.value[0].uri).toBe('http://example.org/collection/1')
+    })
+
+    it('sets error on query failure', async () => {
+      ;(executeSparql as Mock).mockRejectedValueOnce(new Error('Query failed'))
+
+      const { loadAllCollections, collections, error } = useCollections()
+      await loadAllCollections()
+
+      expect(collections.value).toEqual([])
+      expect(error.value).toContain('Query failed')
+    })
+
+    it('filters nested collections from topLevelCollections', async () => {
+      ;(executeSparql as Mock).mockResolvedValueOnce({
+        results: {
+          bindings: [
+            {
+              collection: { value: 'http://example.org/collection/top' },
+              label: { value: 'Top Level' },
+              labelLang: { value: 'en' },
+              labelType: { value: 'prefLabel' },
+              hasParentCollection: { value: 'false' },
+            },
+            {
+              collection: { value: 'http://example.org/collection/nested' },
+              label: { value: 'Nested' },
+              labelLang: { value: 'en' },
+              labelType: { value: 'prefLabel' },
+              hasParentCollection: { value: 'true' },
+            },
+          ],
+        },
+      })
+
+      const { loadAllCollections, collections, topLevelCollections } = useCollections()
+      await loadAllCollections()
+
+      expect(collections.value).toHaveLength(2)
+      expect(topLevelCollections.value).toHaveLength(1)
+      expect(topLevelCollections.value[0].uri).toBe('http://example.org/collection/top')
+    })
+  })
+
+  describe('shared singleton pattern', () => {
+    it('returns same instance when shared option is true', () => {
+      const instance1 = useCollections({ shared: true })
+      const instance2 = useCollections({ shared: true })
+
+      expect(instance1).toBe(instance2)
+    })
+
+    it('returns different instances when shared option is false/undefined', () => {
+      const instance1 = useCollections()
+      const instance2 = useCollections()
+      const instance3 = useCollections({ shared: false })
+
+      // Each call creates a new instance
+      expect(instance1).not.toBe(instance2)
+      expect(instance2).not.toBe(instance3)
+    })
+
+    it('shared instance retains state across calls', async () => {
+      ;(executeSparql as Mock).mockResolvedValueOnce({
+        results: {
+          bindings: [
+            {
+              collection: { value: 'http://example.org/collection/1' },
+              label: { value: 'Test Collection' },
+              labelLang: { value: 'en' },
+              labelType: { value: 'prefLabel' },
+            },
+          ],
+        },
+      })
+
+      const instance1 = useCollections({ shared: true })
+      await instance1.loadAllCollections()
+
+      const instance2 = useCollections({ shared: true })
+      expect(instance2.collections.value).toHaveLength(1)
+      expect(instance2.collections.value[0].label).toBe('Test Collection')
+    })
+  })
 })

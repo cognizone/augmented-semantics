@@ -14,6 +14,10 @@ import { nextTick } from 'vue'
 import { useEndpointStore, useSchemeStore, useConceptStore, useUIStore } from '../stores'
 import { executeSparql, withPrefixes, logger } from '../services'
 
+export type SelectConceptOptions = {
+  preserveCollection?: boolean
+}
+
 export function useConceptSelection() {
   const endpointStore = useEndpointStore()
   const schemeStore = useSchemeStore()
@@ -75,11 +79,13 @@ export function useConceptSelection() {
    * @param conceptUri - The concept URI to select
    * @param schemeUri - Optional scheme URI (will be discovered if not provided)
    * @param endpointUrl - Optional endpoint URL (for history navigation)
+   * @param options - Optional selection flags
    */
   async function selectConceptWithScheme(
     conceptUri: string,
     schemeUri?: string | null,
-    endpointUrl?: string
+    endpointUrl?: string,
+    options?: SelectConceptOptions
   ): Promise<void> {
     if (!conceptUri) {
       conceptStore.selectConcept(null)
@@ -99,6 +105,17 @@ export function useConceptSelection() {
         endpointStore.selectEndpoint(endpoint.id)
         await nextTick()
       }
+    }
+
+    // Collection mode skips scheme discovery/switching
+    if (schemeStore.rootMode === 'collection') {
+      schemeStore.viewScheme(null)
+      if (!options?.preserveCollection) {
+        conceptStore.selectCollection(null)
+      }
+      await conceptStore.selectConceptWithEvent(conceptUri)
+      uiStore.setSidebarTab('browse')
+      return
     }
 
     // 2. If scheme not provided, try to discover it
@@ -122,8 +139,9 @@ export function useConceptSelection() {
       }
     }
 
-    // 4. Clear scheme viewing and select concept
+    // 4. Clear scheme viewing and select concept (and clear any collection selection)
     schemeStore.viewScheme(null)
+    conceptStore.selectCollection(null)
     await conceptStore.selectConceptWithEvent(conceptUri)
 
     // 5. Switch to browse tab
@@ -160,6 +178,13 @@ export function useConceptSelection() {
         endpointStore.selectEndpoint(endpoint.id)
         await nextTick()
       }
+    }
+
+    if (schemeStore.rootMode === 'collection') {
+      schemeStore.viewScheme(null)
+      await conceptStore.selectCollectionWithEvent(collectionUri)
+      uiStore.setSidebarTab('browse')
+      return
     }
 
     // 2. Switch scheme if needed (BEFORE selecting collection)

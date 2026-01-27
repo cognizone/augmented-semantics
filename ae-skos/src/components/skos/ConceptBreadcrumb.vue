@@ -10,13 +10,14 @@
 import { ref, watch, computed } from 'vue'
 import { useConceptStore, useEndpointStore, useLanguageStore, useSchemeStore, useSettingsStore, useUIStore, ORPHAN_SCHEME_URI, ORPHAN_SCHEME } from '../../stores'
 import { executeSparql, withPrefixes, logger } from '../../services'
-import { useLabelResolver } from '../../composables'
+import { useCollections, useLabelResolver } from '../../composables'
 import { buildCapabilityAwareLabelUnionClause, CONCEPT_LABEL_PRIORITY } from '../../constants'
 import { getRefLabel } from '../../utils/displayUtils'
 import type { ConceptRef, ConceptScheme } from '../../types'
 import Breadcrumb from 'primevue/breadcrumb'
 import Select from 'primevue/select'
 import InputText from 'primevue/inputtext'
+import Menu from 'primevue/menu'
 
 const emit = defineEmits<{
   selectConcept: [uri: string]
@@ -30,14 +31,34 @@ const settingsStore = useSettingsStore()
 const uiStore = useUIStore()
 const { shouldShowLangTag, selectLabelByPriority } = useLabelResolver()
 const includeNotation = computed(() => settingsStore.showNotationInLabels)
+const rootMode = computed({
+  get: () => schemeStore.rootMode,
+  set: (mode) => schemeStore.setRootMode(mode),
+})
+const isCollectionMode = computed(() => rootMode.value === 'collection')
+
+const {
+  topLevelCollections,
+  loadAllCollections,
+  loading: collectionsLoading,
+} = useCollections({ shared: true })
 
 function formatBreadcrumbLabel(item: ConceptRef): string {
   return getRefLabel(item, { includeNotation: includeNotation.value })
 }
 
+function formatCollectionLabel(item: { label?: string; uri: string; notation?: string }): string {
+  const label = item.label || item.uri.split('/').pop() || item.uri
+  return includeNotation.value
+    ? (item.notation && item.label ? `${item.notation} - ${label}` : item.notation || label)
+    : label
+}
+
 // Local state
 const loading = ref(false)
 const filterValue = ref('')
+const conceptPath = ref<ConceptRef[]>([])
+const collectionPath = ref<ConceptRef[]>([])
 
 // Handle keyboard in filter input
 function onFilterKeyDown(event: KeyboardEvent) {
@@ -50,6 +71,7 @@ function onFilterKeyDown(event: KeyboardEvent) {
 
 // All scheme options (unfiltered)
 const allSchemeOptions = computed(() => {
+  if (isCollectionMode.value) return []
   const options: { label: string; value: string | null; isOrphan?: boolean; isPinned?: boolean }[] = [
     { label: 'All Schemes', value: null, isPinned: true },
   ]
@@ -118,6 +140,35 @@ const currentSchemeName = computed(() => {
   return schemeStore.selected.label || schemeStore.selected.uri.split('/').pop() || 'Scheme'
 })
 
+const rootModeMenu = ref()
+const rootModeMenuItems = [
+  {
+    label: 'Schemes',
+    iconName: 'folder',
+    iconClass: 'icon-folder',
+    command: () => schemeStore.setRootMode('scheme'),
+  },
+  {
+    label: 'Collections',
+    iconName: 'collections_bookmark',
+    iconClass: 'icon-collection',
+    command: () => schemeStore.setRootMode('collection'),
+  },
+]
+
+watch(
+  () => rootMode.value,
+  (mode, oldMode) => {
+    if (mode === oldMode) return
+    conceptStore.selectConcept(null)
+    conceptStore.selectCollection(null)
+    schemeStore.viewScheme(null)
+    conceptPath.value = []
+    collectionPath.value = []
+    updateBreadcrumb()
+  }
+)
+
 // Go to scheme home (show scheme details)
 function goHome() {
   const scheme = schemeStore.selected
@@ -135,6 +186,11 @@ function goHome() {
       type: 'scheme',
     })
   }
+}
+
+function selectRootCollection(uri: string) {
+  conceptStore.selectCollectionWithEvent(uri)
+  uiStore.setSidebarTab('browse')
 }
 
 // Track scheme load requests to ignore stale responses
@@ -265,11 +321,17 @@ async function loadSchemes() {
 
 // Watch for endpoint changes to load schemes
 watch(
-  () => endpointStore.current?.id,
-  (newId, oldId) => {
-    if (newId && newId !== oldId) {
-      schemeStore.reset({ preserveSelection: true })
-      loadSchemes()
+  () => [endpointStore.current?.id, rootMode.value] as const,
+  ([newId, rootMode], oldValue) => {
+    const [oldId, oldMode] = oldValue || [undefined, 'scheme']
+    if (newId && (newId !== oldId || rootMode !== oldMode)) {
+      if (rootMode === 'scheme') {
+        schemeStore.reset({ preserveSelection: true })
+        loadSchemes()
+      } else {
+        schemeStore.viewScheme(null)
+        loadAllCollections()
+      }
     }
   },
   { immediate: true }
@@ -279,8 +341,17 @@ watch(
 watch(
   () => languageStore.preferred,
   () => {
-    if (endpointStore.current) {
+    if (endpointStore.current && !isCollectionMode.value) {
       loadSchemes()
+    }
+  }
+)
+
+watch(
+  () => [languageStore.preferred, rootMode.value, endpointStore.current?.id] as const,
+  ([, activeRootMode]) => {
+    if (endpointStore.current && activeRootMode === 'collection') {
+      loadAllCollections()
     }
   }
 )
@@ -304,10 +375,17 @@ const breadcrumbItems = computed(() => {
     } else if (item.type === 'scheme') {
       // Clicking scheme in collection breadcrumb goes to scheme details
       command = () => goHome()
+    } else if (item.type === 'collection') {
+      command = () => selectRootCollection(item.uri)
     } else {
       // Regular concept navigation
       command = () => navigateTo(item.uri)
     }
+
+    const isRootCollection =
+      isCollectionMode.value &&
+      item.type === 'collection' &&
+      item.uri === conceptStore.selectedCollectionUri
 
     return {
       label: displayLabel,
@@ -316,20 +394,24 @@ const breadcrumbItems = computed(() => {
       type: item.type,
       hasNarrower: (item as ConceptRef & { hasNarrower?: boolean }).hasNarrower,
       isLast,
+      isRootCollection,
       showLangTag: item.lang ? shouldShowLangTag(item.lang) : false,
       command,
     }
   })
 })
 
+const hasRootCollectionCrumb = computed(() => breadcrumbItems.value[0]?.isRootCollection ?? false)
+
+
 // Track current request to ignore stale responses
 let breadcrumbRequestId = 0
 let collectionBreadcrumbRequestId = 0
 
 // Load breadcrumb path for concept using iterative queries (fast on large endpoints)
-async function loadBreadcrumb(uri: string) {
+async function loadConceptPath(uri: string): Promise<ConceptRef[]> {
   const endpoint = endpointStore.current
-  if (!endpoint) return
+  if (!endpoint) return []
   const conceptCapabilities = endpoint.analysis?.labelPredicates?.concept
 
   // Track this request
@@ -377,7 +459,7 @@ async function loadBreadcrumb(uri: string) {
       // Check for stale request after each query
       if (requestId !== breadcrumbRequestId) {
         logger.debug('Breadcrumb', 'Ignoring stale response', { requestId, current: breadcrumbRequestId })
-        return
+        return []
       }
 
       // Collect labels and find broader
@@ -440,7 +522,7 @@ async function loadBreadcrumb(uri: string) {
     path.reverse()
 
     logger.debug('Breadcrumb', `Loaded path with ${path.length} items (${path.length} queries)`)
-    conceptStore.setBreadcrumb(path)
+    return path
   } catch (e) {
     logger.warn('Breadcrumb', 'Failed to load path, using simple fallback', { error: e })
     // Fallback: just show the current concept with any available label
@@ -463,9 +545,9 @@ async function loadBreadcrumb(uri: string) {
       const selected = selectLabelByPriority(labels, CONCEPT_LABEL_PRIORITY)
       const bestLabel = selected?.value
 
-      conceptStore.setBreadcrumb([{ uri, label: bestLabel }])
+      return [{ uri, label: bestLabel }]
     } catch {
-      conceptStore.setBreadcrumb([{ uri }])
+      return [{ uri }]
     }
   } finally {
     loading.value = false
@@ -479,20 +561,13 @@ function navigateTo(uri: string) {
 
 /**
  * Load breadcrumb for collection via SPARQL query
- * Similar to loadBreadcrumb() but simpler (no broader chain)
  */
-async function loadCollectionBreadcrumb(collectionUri: string) {
+async function loadCollectionBreadcrumb(collectionUri: string): Promise<ConceptRef[]> {
   const endpoint = endpointStore.current
-  if (!endpoint) return
+  if (!endpoint) return []
   const endpointId = endpoint.id
   const requestId = ++collectionBreadcrumbRequestId
   const collectionCapabilities = endpoint.analysis?.labelPredicates?.collection
-
-  const scheme = schemeStore.selected
-  if (!scheme) {
-    conceptStore.setBreadcrumb([])
-    return
-  }
 
   logger.debug('Breadcrumb', 'Loading collection labels', { uri: collectionUri })
   loading.value = true
@@ -512,7 +587,7 @@ async function loadCollectionBreadcrumb(collectionUri: string) {
     const results = await executeSparql(endpoint, query, { retries: 0 })
     if (requestId !== collectionBreadcrumbRequestId || endpointStore.current?.id !== endpointId) {
       logger.debug('Breadcrumb', 'Ignoring stale collection breadcrumb response', { requestId, endpointId })
-      return
+      return []
     }
 
     // Collect labels and notation
@@ -542,7 +617,7 @@ async function loadCollectionBreadcrumb(collectionUri: string) {
     const bestLabelLang = selected?.lang || undefined
 
     // Build breadcrumb with just the collection
-    const path: ConceptRef[] = [
+    return [
       {
         uri: collectionUri,
         label: bestLabel || collectionUri.split('/').pop() || collectionUri,
@@ -551,49 +626,196 @@ async function loadCollectionBreadcrumb(collectionUri: string) {
         type: 'collection',
       },
     ]
-
-    conceptStore.setBreadcrumb(path)
   } catch (e) {
     if (requestId !== collectionBreadcrumbRequestId || endpointStore.current?.id !== endpointId) {
       logger.debug('Breadcrumb', 'Ignoring stale collection breadcrumb error', { requestId, endpointId })
-      return
+      return []
     }
     logger.warn('Breadcrumb', 'Failed to load collection labels', { error: e })
     // Fallback to URI fragment
-    conceptStore.setBreadcrumb([{
+    return [{
       uri: collectionUri,
       label: collectionUri.split('/').pop() || collectionUri,
       type: 'collection',
-    }])
+    }]
   } finally {
     loading.value = false
   }
 }
 
-// Watch for selection OR language changes to reload breadcrumb
-watch(
-  [() => conceptStore.selectedUri, () => conceptStore.selectedCollectionUri, () => languageStore.preferred],
-  ([conceptUri, collectionUri]) => {
-    if (conceptUri) {
-      loadBreadcrumb(conceptUri)
-    } else if (collectionUri) {
-      loadCollectionBreadcrumb(collectionUri)
+/**
+ * Load collection breadcrumb path (parent collections chain).
+ */
+async function loadCollectionPath(collectionUri: string): Promise<ConceptRef[]> {
+  const endpoint = endpointStore.current
+  if (!endpoint) return []
+  const endpointId = endpoint.id
+  const requestId = ++collectionBreadcrumbRequestId
+  const collectionCapabilities = endpoint.analysis?.labelPredicates?.collection
+
+  logger.debug('Breadcrumb', 'Loading collection path', { uri: collectionUri })
+  loading.value = true
+
+  const path: ConceptRef[] = []
+  let current: string | null = collectionUri
+  const visited = new Set<string>()
+  const MAX_DEPTH = 20
+
+  try {
+    while (current && !visited.has(current) && path.length < MAX_DEPTH) {
+      visited.add(current)
+
+      const query = withPrefixes(`
+        SELECT ?parent ?label ?labelLang ?labelType ?notation
+        WHERE {
+          OPTIONAL {
+            ?parent a skos:Collection .
+            ?parent skos:member <${current}> .
+          }
+          OPTIONAL { <${current}> skos:notation ?notation }
+          OPTIONAL {
+            ${buildCapabilityAwareLabelUnionClause(`<${current}>`, collectionCapabilities)}
+          }
+        }
+      `)
+
+      const results = await executeSparql(endpoint, query, { retries: 0 })
+      if (requestId !== collectionBreadcrumbRequestId || endpointStore.current?.id !== endpointId) {
+        logger.debug('Breadcrumb', 'Ignoring stale collection breadcrumb response', { requestId, endpointId })
+        return []
+      }
+
+      const labels: { value: string; lang: string; type: string }[] = []
+      let notation: string | undefined
+      let parent: string | null = null
+
+      for (const b of results.results.bindings) {
+        if (b.parent?.value && !parent) {
+          parent = b.parent.value
+        }
+        if (b.notation?.value && !notation) {
+          notation = b.notation.value
+        }
+        const labelValue = b.label?.value
+        if (labelValue) {
+          const labelLang = b.labelLang?.value || ''
+          const labelType = b.labelType?.value || 'prefLabel'
+          const exists = labels.some(l =>
+            l.value === labelValue && l.lang === labelLang && l.type === labelType
+          )
+          if (!exists) {
+            labels.push({ value: labelValue, lang: labelLang, type: labelType })
+          }
+        }
+      }
+
+      const selected = selectLabelByPriority(labels)
+      const bestLabel = selected?.value
+      const bestLabelLang = selected?.lang || undefined
+
+      path.push({
+        uri: current,
+        label: bestLabel || current.split('/').pop() || current,
+        lang: bestLabelLang,
+        notation,
+        type: 'collection',
+      })
+
+      current = parent
+    }
+
+    path.reverse()
+    return path
+  } catch (e) {
+    logger.warn('Breadcrumb', 'Failed to load collection path', { error: e })
+    return await loadCollectionBreadcrumb(collectionUri)
+  } finally {
+    loading.value = false
+  }
+}
+
+function updateBreadcrumb() {
+  if (isCollectionMode.value) {
+    if (collectionPath.value.length > 0) {
+      conceptStore.setBreadcrumb([...collectionPath.value, ...conceptPath.value])
+    } else if (conceptPath.value.length > 0) {
+      conceptStore.setBreadcrumb(conceptPath.value)
     } else {
-      breadcrumbRequestId++  // Invalidate any in-flight requests
       conceptStore.setBreadcrumb([])
     }
+    return
+  }
+
+  if (conceptPath.value.length > 0) {
+    conceptStore.setBreadcrumb(conceptPath.value)
+    return
+  }
+
+  if (collectionPath.value.length > 0) {
+    conceptStore.setBreadcrumb(collectionPath.value)
+    return
+  }
+
+  conceptStore.setBreadcrumb([])
+}
+
+// Watch for selection OR language changes to reload breadcrumb
+watch(
+  [() => conceptStore.selectedUri, () => conceptStore.selectedCollectionUri, () => languageStore.preferred, () => rootMode.value],
+  async ([conceptUri, collectionUri]) => {
+    if (conceptUri) {
+      conceptPath.value = await loadConceptPath(conceptUri)
+    } else {
+      conceptPath.value = []
+    }
+
+    if (collectionUri) {
+      collectionPath.value = isCollectionMode.value
+        ? await loadCollectionPath(collectionUri)
+        : await loadCollectionBreadcrumb(collectionUri)
+    } else {
+      collectionPath.value = []
+    }
+
+    updateBreadcrumb()
   },
   { immediate: true }
 )
 </script>
 
 <template>
-  <div class="concept-breadcrumb">
-    <!-- Scheme icon -->
-    <span class="material-symbols-outlined breadcrumb-icon icon-folder">folder</span>
+  <div class="concept-breadcrumb" :class="{ 'collection-mode': isCollectionMode }">
+    <!-- Root icon + mode dropdown -->
+    <button
+      class="dropdown-trigger root-mode-trigger"
+      aria-label="Select root mode"
+      @click="(e) => rootModeMenu.toggle(e)"
+    >
+      <span
+        class="material-symbols-outlined breadcrumb-icon root-mode-icon"
+        :class="isCollectionMode ? 'icon-collection' : 'icon-folder'"
+      >
+        {{ isCollectionMode ? 'collections_bookmark' : 'folder' }}
+      </span>
+      <span class="root-mode-label">{{ isCollectionMode ? 'Collections' : 'Schemes' }}</span>
+      <span class="material-symbols-outlined dropdown-arrow">arrow_drop_down</span>
+    </button>
+    <Menu ref="rootModeMenu" :model="rootModeMenuItems" :popup="true">
+      <template #item="{ item, props }">
+        <a v-bind="props.action" class="root-mode-menu-item">
+          <span
+            class="material-symbols-outlined root-mode-menu-icon"
+            :class="item.iconClass"
+            aria-hidden="true"
+          >{{ item.iconName }}</span>
+          <span>{{ item.label }}</span>
+        </a>
+      </template>
+    </Menu>
 
     <!-- Scheme selector (styled like endpoint badge) -->
     <Select
+      v-if="!isCollectionMode"
       v-model="selectedScheme"
       :options="schemeOptions"
       optionLabel="label"
@@ -638,23 +860,43 @@ watch(
       </template>
     </Select>
 
-    <!-- Breadcrumb path (only when concept selected) -->
+    <!-- Root collections list (collection mode) -->
+    <div v-else class="root-collections-empty">
+      <span v-if="collectionsLoading">Loading…</span>
+    </div>
+
+    <!-- Breadcrumb path (only when concept/collection selected) -->
     <template v-if="breadcrumbItems.length > 0">
-      <span class="breadcrumb-separator">
+      <span v-if="!hasRootCollectionCrumb" class="breadcrumb-separator">
         <span class="material-symbols-outlined">chevron_right</span>
       </span>
       <Breadcrumb :model="breadcrumbItems" class="breadcrumb-nav">
         <template #item="{ item }">
           <span v-if="item.isLast" class="breadcrumb-current">
-            <span v-if="item.type === 'collection'" class="material-symbols-outlined breadcrumb-icon icon-collection">collections_bookmark</span>
-            <span v-else-if="item.hasNarrower" class="material-symbols-outlined breadcrumb-icon icon-label">label</span>
-            <span v-else class="material-symbols-outlined breadcrumb-icon icon-leaf">circle</span>
+            <span
+              v-if="!item.isRootCollection && item.type === 'collection'"
+              class="material-symbols-outlined breadcrumb-icon icon-collection"
+            >collections_bookmark</span>
+            <span
+              v-else-if="!item.isRootCollection && item.hasNarrower"
+              class="material-symbols-outlined breadcrumb-icon icon-label"
+            >label</span>
+            <span
+              v-else-if="!item.isRootCollection"
+              class="material-symbols-outlined breadcrumb-icon icon-leaf"
+            >circle</span>
             {{ item.label }}
             <span v-if="item.showLangTag" class="lang-tag">{{ item.lang }}</span>
           </span>
           <a v-else class="breadcrumb-link" @click.prevent="() => item.command && item.command({} as never)">
-            <span v-if="item.type === 'collection'" class="material-symbols-outlined breadcrumb-icon icon-collection">collections_bookmark</span>
-            <span v-else class="material-symbols-outlined breadcrumb-icon icon-label">label</span>
+            <span
+              v-if="!item.isRootCollection && item.type === 'collection'"
+              class="material-symbols-outlined breadcrumb-icon icon-collection"
+            >collections_bookmark</span>
+            <span
+              v-else-if="!item.isRootCollection"
+              class="material-symbols-outlined breadcrumb-icon icon-label"
+            >label</span>
             {{ item.label }}
             <span v-if="item.showLangTag" class="lang-tag">{{ item.lang }}</span>
           </a>
@@ -673,6 +915,51 @@ watch(
   background: var(--ae-bg-elevated);
   border-bottom: 1px solid var(--ae-border-color);
   min-height: 40px;
+}
+
+/* Root mode dropdown tweaks */
+.root-mode-label {
+  white-space: nowrap;
+}
+
+.root-mode-trigger .breadcrumb-icon {
+  font-size: 14px;
+}
+
+.root-mode-trigger {
+  background: var(--ae-bg-base);
+  color: var(--ae-text-primary);
+}
+
+.root-mode-trigger .dropdown-arrow {
+  color: var(--ae-text-secondary);
+}
+
+.root-collections-empty {
+  font-size: 0.75rem;
+  color: var(--ae-text-muted);
+  padding-left: 0.25rem;
+}
+
+.root-mode-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  color: inherit;
+}
+
+.root-mode-menu-item:link,
+.root-mode-menu-item:visited,
+.root-mode-menu-item:hover,
+.root-mode-menu-item:focus,
+.root-mode-menu-item:focus-visible {
+  text-decoration: none;
+}
+
+.root-mode-menu-icon {
+  font-size: 14px;
+  line-height: 1;
 }
 
 /* Scheme filter (inside dropdown header) */
@@ -753,6 +1040,24 @@ watch(
   flex-shrink: 0;
 }
 
+:deep(.scheme-select .p-select-dropdown) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+:deep(.scheme-select .p-select-dropdown .p-icon) {
+  display: none;
+}
+
+:deep(.scheme-select .p-select-dropdown)::before {
+  content: 'arrow_drop_down';
+  font-family: 'Material Symbols Outlined';
+  font-size: 18px;
+  color: var(--ae-text-secondary);
+  line-height: 1;
+}
+
 .scheme-value {
   white-space: nowrap;
   color: var(--ae-text-primary);
@@ -815,7 +1120,8 @@ watch(
 }
 
 .breadcrumb-current {
-  color: var(--ae-text-secondary);
+  color: var(--ae-text-primary);
+  font-weight: 400;
   font-size: 0.8125rem;
   display: flex;
   align-items: center;
@@ -843,6 +1149,7 @@ watch(
   align-items: center;
   min-width: 0;
 }
+
 
 :deep(.p-breadcrumb-separator) {
   color: var(--ae-text-muted);

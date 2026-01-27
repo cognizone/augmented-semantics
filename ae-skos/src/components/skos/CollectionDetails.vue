@@ -28,6 +28,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   selectConcept: [uri: string]
   selectCollection: [uri: string]
+  selectMember: [uri: string]
 }>()
 
 const schemeStore = useSchemeStore()
@@ -275,7 +276,7 @@ function navigateToMember(member: { uri: string; type?: string }) {
   if (member.type === 'collection') {
     emit('selectCollection', member.uri)
   } else {
-    emit('selectConcept', member.uri)
+    emit('selectMember', member.uri)
   }
 }
 

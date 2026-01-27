@@ -395,6 +395,51 @@ export function buildCollectionsQuery(
 }
 
 /**
+ * Build SPARQL query for loading all root collections (no scheme filtering).
+ * Filters out nested collections so only top-level collections appear.
+ */
+export function buildAllCollectionsQuery(
+  endpoint: SPARQLEndpoint
+): string {
+  const collectionCapabilities = endpoint.analysis?.labelPredicates?.collection
+  const labelClause = buildCapabilityAwareLabelUnionClause('?collection', collectionCapabilities)
+
+  return withPrefixes(`
+    SELECT DISTINCT ?collection ?label ?labelLang ?labelType ?notation
+           ?hasParentCollection ?hasChildCollections WHERE {
+      ?collection a skos:Collection .
+
+      # Only top-level collections (no parent collection)
+      FILTER NOT EXISTS {
+        ?parentCol a skos:Collection .
+        ?parentCol skos:member ?collection .
+      }
+
+      # Detect if nested (kept for consistent bindings; always false here)
+      BIND(EXISTS {
+        ?parentCol a skos:Collection .
+        ?parentCol skos:member ?collection .
+      } AS ?hasParentCollection)
+
+      # Detect if has children (has child collections)
+      BIND(EXISTS {
+        ?collection skos:member ?childCol .
+        ?childCol a skos:Collection .
+      } AS ?hasChildCollections)
+
+      # Label resolution with priority tracking (capability-aware)
+      OPTIONAL {
+        ${labelClause}
+      }
+
+      # Notation
+      OPTIONAL { ?collection skos:notation ?notation }
+    }
+    ORDER BY ?collection
+  `)
+}
+
+/**
  * Build SPARQL query for loading child collections of a parent collection.
  * Used for lazy-loading nested collections on expand.
  * Filters to only include child collections with members in the current scheme.
@@ -406,10 +451,41 @@ export function buildCollectionsQuery(
  */
 export function buildChildCollectionsQuery(
   parentUri: string,
-  schemeUri: string,
+  schemeUri: string | null,
   endpoint: SPARQLEndpoint,
   options?: SchemeFixOptions
 ): string | null {
+  if (!schemeUri) {
+    const collectionCapabilities = endpoint.analysis?.labelPredicates?.collection
+    const labelClause = buildCapabilityAwareLabelUnionClause('?collection', collectionCapabilities)
+
+    return withPrefixes(`
+      SELECT DISTINCT ?collection ?label ?labelLang ?labelType ?notation
+             ?hasParentCollection ?hasChildCollections WHERE {
+        <${parentUri}> skos:member ?collection .
+        ?collection a skos:Collection .
+
+        # Child collections are nested by definition
+        BIND(true AS ?hasParentCollection)
+
+        # Detect if has children (for recursive expandability)
+        BIND(EXISTS {
+          ?collection skos:member ?childCol .
+          ?childCol a skos:Collection .
+        } AS ?hasChildCollections)
+
+        # Label resolution with priority tracking (capability-aware)
+        OPTIONAL {
+          ${labelClause}
+        }
+
+        # Notation
+        OPTIONAL { ?collection skos:notation ?notation }
+      }
+      ORDER BY ?collection
+    `)
+  }
+
   const rel = endpoint.analysis?.relationships
 
   if (!rel) {

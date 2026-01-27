@@ -50,14 +50,21 @@ const {
   collections,
   topLevelCollections,
   loadCollectionsForScheme,
+  loadAllCollections,
   loadChildCollections,
+  loading: collectionsLoading,
+  error: collectionsError,
   reset: resetCollections,
   shouldShowLangTag: shouldShowCollectionLangTag,
-} = useCollections()
+} = useCollections({ shared: true })
+
+const isCollectionMode = computed(() => schemeStore.rootMode === 'collection')
 
 
 // Delayed loading - show spinner only after 300ms to prevent flicker
-const showTreeLoading = useDelayedLoading(computed(() => conceptStore.loadingTree))
+const showTreeLoading = useDelayedLoading(computed(() =>
+  conceptStore.loadingTree || (isCollectionMode.value && collectionsLoading.value)
+))
 
 // Elapsed time for tree loading (shows after 1s delay)
 const treeLoadingElapsed = useElapsedTime(computed(() => conceptStore.loadingTree))
@@ -79,6 +86,8 @@ const {
   loadChildren,
   findNode,
 } = useTreePagination()
+
+const activeError = computed(() => isCollectionMode.value ? collectionsError.value : error.value)
 
 const {
   revealConceptIfNeeded,
@@ -156,10 +165,16 @@ async function onNodeExpand(node: TreeNode) {
 // Only top-level collections appear at root level; nested collections load on expand
 // Exception: orphan "scheme" displays items directly at root (no fake scheme wrapper)
 const treeNodes = computed((): TreeNode[] => {
-  const topNodes = conceptStore.topConcepts.map(node => convertToTreeNode(node))
+  const topNodes = isCollectionMode.value
+    ? []
+    : conceptStore.topConcepts.map(node => convertToTreeNode(node))
   const collectionNodes = topLevelCollections.value.map(col => convertCollectionToTreeNode(col))
 
   const scheme = schemeStore.selected
+
+  if (isCollectionMode.value) {
+    return collectionNodes
+  }
 
   // Orphan scheme: display items directly at root level (no wrapper)
   if (schemeStore.isOrphanSchemeSelected) {
@@ -256,7 +271,7 @@ function onNodeClick(node: TreeNode) {
       lang: node.data.lang,
       notation: node.data.notation,
       endpointUrl: endpointStore.current?.url,
-      schemeUri: schemeStore.selectedUri || undefined,
+      schemeUri: isCollectionMode.value ? undefined : schemeStore.selectedUri || undefined,
       type: 'collection',
     })
     emit('selectCollection', uri)
@@ -327,7 +342,7 @@ async function goToUri() {
 
     // Check if this URI is a known scheme
     const scheme = schemeStore.schemes.find(s => s.uri === uri)
-    if (scheme) {
+    if (scheme && !isCollectionMode.value) {
       // Select the scheme in the dropdown (triggers tree loading via watcher)
       schemeStore.selectScheme(uri)
       // Clear concept selection and show scheme details on the right
@@ -352,7 +367,9 @@ async function goToUri() {
       gotoUri.value = ''
     } else {
       // URI not found as scheme, collection, or concept
-      gotoWarning.value = 'URI not found as a scheme, collection, or concept'
+      gotoWarning.value = isCollectionMode.value
+        ? 'URI not found as a collection or concept (scheme mode is disabled)'
+        : 'URI not found as a scheme, collection, or concept'
       logger.warn('ConceptTree', 'Invalid goto URI', { uri })
       // Auto-clear warning after 3 seconds
       setTimeout(() => {
@@ -367,7 +384,7 @@ function onTreeScroll(event: Event) {
   const el = event.target as HTMLElement
   const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 100
 
-  if (nearBottom && hasMoreTopConcepts.value && !loadingMoreTopConcepts.value && !conceptStore.loadingTree) {
+  if (!isCollectionMode.value && nearBottom && hasMoreTopConcepts.value && !loadingMoreTopConcepts.value && !conceptStore.loadingTree) {
     loadMoreTopConcepts()
   }
 }
@@ -375,12 +392,18 @@ function onTreeScroll(event: Event) {
 // Watch for scheme/endpoint changes
 // Use selectedUri directly so we react immediately when scheme changes (e.g., from history)
 watch(
-  () => [schemeStore.selectedUri, endpointStore.current?.id] as const,
-  ([newScheme, newEndpoint], oldValue) => {
-    const [oldScheme, oldEndpoint] = oldValue || [null, undefined]
-    if (newEndpoint && (newScheme !== oldScheme || newEndpoint !== oldEndpoint)) {
+  () => [schemeStore.rootMode, schemeStore.selectedUri, endpointStore.current?.id] as const,
+  ([rootMode, newScheme, newEndpoint], oldValue) => {
+    const [oldMode, oldScheme, oldEndpoint] = oldValue || ['scheme', null, undefined]
+    if (newEndpoint && (rootMode !== oldMode || newScheme !== oldScheme || newEndpoint !== oldEndpoint)) {
       conceptStore.reset()
       resetCollections()
+
+      if (rootMode === 'collection') {
+        loadAllCollections()
+        return
+      }
+
       loadTopConcepts()
 
       // Load collections for the selected scheme (async, doesn't block tree)
@@ -396,6 +419,11 @@ watch(
 watch(
   () => languageStore.preferred,
   () => {
+    if (endpointStore.current && isCollectionMode.value) {
+      loadAllCollections()
+      return
+    }
+
     if (endpointStore.current && schemeStore.selected) {
       // Clear cached children so they reload with new language labels
       conceptStore.clearAllChildren()
@@ -415,6 +443,7 @@ watch(
   () => settingsStore.enableSchemeUriSlashFix,
   () => {
     if (!endpointStore.current) return
+    if (isCollectionMode.value) return
     conceptStore.clearAllChildren()
     loadTopConcepts()
 
@@ -527,29 +556,39 @@ watch(
     </div>
 
     <!-- Error message -->
-    <Message v-if="error" severity="error" :closable="true" @close="error = null">
-      {{ error }}
+    <Message
+      v-if="activeError"
+      severity="error"
+      :closable="true"
+      @close="isCollectionMode ? (collectionsError = null) : (error = null)"
+    >
+      {{ activeError }}
     </Message>
 
     <!-- Loading state (delayed to prevent flicker) -->
     <div v-if="showTreeLoading" class="loading-container">
       <ProgressSpinner style="width: 40px; height: 40px" />
 
-      <!-- Simple loading for non-orphan schemes -->
-      <template v-if="!schemeStore.isOrphanSchemeSelected">
+      <template v-if="isCollectionMode">
+        <span>Loading collections...{{ treeLoadingElapsed.show.value ? ` (${treeLoadingElapsed.elapsed.value}s)` : '' }}</span>
+      </template>
+      <template v-else-if="!schemeStore.isOrphanSchemeSelected">
         <span>Loading concepts...{{ treeLoadingElapsed.show.value ? ` (${treeLoadingElapsed.elapsed.value}s)` : '' }}</span>
       </template>
-
       <template v-else>
         <span>Loading orphans...{{ treeLoadingElapsed.show.value ? ` (${treeLoadingElapsed.elapsed.value}s)` : '' }}</span>
       </template>
     </div>
 
     <!-- Empty state (only when no treeNodes - scheme or concepts) -->
-    <div v-else-if="!conceptStore.loadingTree && !treeNodes.length && !error" class="empty-state">
+    <div
+      v-else-if="!conceptStore.loadingTree && (!isCollectionMode || !collectionsLoading) && !treeNodes.length && !activeError"
+      class="empty-state"
+    >
       <span class="material-symbols-outlined empty-icon">folder_open</span>
-      <p>No concepts found</p>
-      <small v-if="!schemeStore.selected">Select a concept scheme to browse</small>
+      <p>{{ isCollectionMode ? 'No collections found' : 'No concepts found' }}</p>
+      <small v-if="isCollectionMode">This endpoint has no top-level collections</small>
+      <small v-else-if="!schemeStore.selected">Select a concept scheme to browse</small>
       <small v-else-if="schemeStore.isOrphanSchemeSelected">Orphan concepts will appear here</small>
       <small v-else>This scheme has no top-level concepts</small>
     </div>
@@ -608,7 +647,12 @@ watch(
         <button class="toolbar-btn" aria-label="Expand all" title="Expand all">
           <span class="material-symbols-outlined">unfold_more</span>
         </button>
-        <button class="toolbar-btn" aria-label="Refresh" title="Refresh" @click="loadTopConcepts(0)">
+        <button
+          class="toolbar-btn"
+          aria-label="Refresh"
+          title="Refresh"
+          @click="isCollectionMode ? loadAllCollections() : loadTopConcepts(0)"
+        >
           <span class="material-symbols-outlined">refresh</span>
         </button>
       </div>

@@ -6,6 +6,90 @@ SKOS Collections support for grouping concepts without hierarchical relationship
 
 SKOS Collections (`skos:Collection`) group concepts without implying hierarchical relationships. Collections support hierarchical nesting: top-level collections appear at the scheme root, while nested collections (contained by another collection via `skos:member`) appear under their parent collection and load on-demand when expanded.
 
+## Collection Root Mode
+
+When `schemeStore.rootMode === 'collection'`, collections become the primary navigation root instead of concepts.
+
+**Mode Behavior:**
+
+| Root Mode | Tree Shows | Scheme Selector | Breadcrumb Root |
+|-----------|------------|-----------------|-----------------|
+| `scheme` | Top concepts + collections below | Visible | Scheme |
+| `collection` | Top-level collections only | Hidden | Collection |
+
+**Loading All Collections:**
+
+In collection mode, all top-level collections are loaded without scheme filtering:
+
+```sparql
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+
+SELECT DISTINCT ?collection ?label ?labelLang ?labelType ?notation
+       ?hasParentCollection ?hasChildCollections
+WHERE {
+  ?collection a skos:Collection .
+
+  # Detect nesting
+  BIND(EXISTS {
+    ?parentCol a skos:Collection .
+    ?parentCol skos:member ?collection .
+  } AS ?hasParentCollection)
+
+  BIND(EXISTS {
+    ?collection skos:member ?childCol .
+    ?childCol a skos:Collection .
+  } AS ?hasChildCollections)
+
+  # Label resolution (capability-aware)
+  OPTIONAL { ... }
+  OPTIONAL { ?collection skos:notation ?notation }
+}
+ORDER BY ?collection
+```
+
+**Implementation:** `useCollections.ts` composable
+
+```typescript
+function loadAllCollections() {
+  currentSchemeUri.value = null
+  currentMode.value = 'collection'
+  // Execute query without scheme filter...
+}
+```
+
+**Shared Singleton Pattern:**
+
+To ensure consistent collections state across components, use the shared option:
+
+```typescript
+// ConceptTree.vue and ConceptBreadcrumb.vue
+const { topLevelCollections, loadAllCollections } = useCollections({ shared: true })
+```
+
+The `shared: true` option returns a singleton instance, so tree and breadcrumb share the same loaded collections.
+
+**Mode Context for Child Collections:**
+
+The composable tracks the current mode to handle child collection loading correctly:
+
+```typescript
+const currentMode = ref<'scheme' | 'collection'>('scheme')
+
+async function loadChildCollections(parentUri: string) {
+  const schemeUri = currentMode.value === 'scheme' ? currentSchemeUri.value : null
+  // Build query with optional scheme filter...
+}
+```
+
+**Integration with Tree:**
+- Tree loads via `loadAllCollections()` when root mode is `collection`
+- Collections appear as root items (concepts hidden)
+- Expanding collections shows nested collections
+- Clicking a collection shows its members in details panel
+
+See [sko02-SchemeSelector](./sko02-SchemeSelector.md#root-mode-selector) for mode switching UI.
+See [sko04-ConceptTree](./sko04-ConceptTree.md#collection-root-mode) for tree display behavior.
+
 ## Collection Loading
 
 Collections are loaded when a scheme is selected. Only collections with members belonging to the current scheme are shown.

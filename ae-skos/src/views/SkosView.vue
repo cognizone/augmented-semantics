@@ -47,6 +47,11 @@ async function selectConceptInScheme(uri: string) {
   uiStore.setSidebarTab('browse')
 }
 
+async function selectMemberConcept(uri: string) {
+  await selectConceptWithScheme(uri, null, undefined, { preserveCollection: true })
+  uiStore.setSidebarTab('browse')
+}
+
 // Handle concept selection from search - allow cross-scheme navigation
 async function selectConceptFromSearch(uri: string) {
   await selectConceptWithScheme(uri)
@@ -57,6 +62,7 @@ function selectCollection(uri: string) {
   // Store automatically clears concept selection, also clear scheme view
   schemeStore.viewScheme(null)
   conceptStore.selectCollectionWithEvent(uri)
+  uiStore.setSidebarTab('browse')
 }
 
 // Handle history selection - may need to switch endpoint/scheme
@@ -104,8 +110,8 @@ function updateUrl() {
     query[URL_PARAMS.ENDPOINT] = endpointStore.current.url
   }
 
-  // Add scheme URI
-  if (schemeStore.selectedUri) {
+  // Add scheme URI (only when in scheme mode)
+  if (schemeStore.rootMode === 'scheme' && schemeStore.selectedUri) {
     query[URL_PARAMS.SCHEME] = schemeStore.selectedUri
   }
 
@@ -158,7 +164,7 @@ function restoreFromUrl() {
 
   // Restore scheme (will be applied after schemes load)
   const schemeUri = params[URL_PARAMS.SCHEME] as string | undefined
-  if (schemeUri) {
+  if (schemeUri && schemeStore.rootMode === 'scheme') {
     // Store for later when schemes are loaded
     schemeStore.selectScheme(schemeUri)
   }
@@ -166,7 +172,11 @@ function restoreFromUrl() {
   // Restore concept (will be applied after tree loads)
   const conceptUri = params[URL_PARAMS.CONCEPT] as string | undefined
   if (conceptUri) {
-    conceptStore.selectConcept(conceptUri)
+    if (schemeStore.rootMode === 'collection') {
+      void conceptStore.selectConceptWithEvent(conceptUri)
+    } else {
+      conceptStore.selectConcept(conceptUri)
+    }
     // Initialize tracking to avoid pushing history on restore
     previousConceptUri = conceptUri
   }
@@ -184,6 +194,7 @@ function restoreFromUrl() {
 watch(
   () => [
     endpointStore.current?.url,
+    schemeStore.rootMode,
     schemeStore.selectedUri,
     conceptStore.selectedUri,
     languageStore.preferred,
@@ -208,7 +219,11 @@ watch(
       previousConceptUri = newConcept || null
 
       if (newConcept) {
-        conceptStore.selectConcept(newConcept)
+        if (schemeStore.rootMode === 'collection') {
+          void conceptStore.selectConceptWithEvent(newConcept)
+        } else {
+          conceptStore.selectConcept(newConcept)
+        }
       } else {
         conceptStore.selectConcept(null)
       }
@@ -259,16 +274,18 @@ onMounted(() => {
         <SchemeDetails
           v-if="schemeStore.viewingSchemeUri"
         />
+        <ConceptDetails
+          v-else-if="schemeStore.rootMode === 'collection' && conceptStore.selectedUri"
+          @select-concept="selectConceptInScheme"
+        />
         <CollectionDetails
           v-else-if="conceptStore.selectedCollectionUri"
           :collection-uri="conceptStore.selectedCollectionUri"
           @select-concept="selectConceptInScheme"
+          @select-member="selectMemberConcept"
           @select-collection="selectCollection"
         />
-        <ConceptDetails
-          v-else
-          @select-concept="selectConceptInScheme"
-        />
+        <ConceptDetails v-else @select-concept="selectConceptInScheme" />
       </SplitterPanel>
     </Splitter>
   </div>

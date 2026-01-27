@@ -3173,7 +3173,7 @@
   },
   {
     "name": "Getty Vocabularies",
-    "url": "http://vocab.getty.edu/sparql",
+    "url": "https://vocab.getty.edu/sparql",
     "description": "The Getty Research Institute's Linked Open Data vocabularies including AAT (Art & Architecture Thesaurus), TGN (Thesaurus of Geographic Names), and ULAN (Union List of Artist Names).",
     "analysis": {
       "hasSkosContent": true,

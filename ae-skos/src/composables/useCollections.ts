@@ -10,10 +10,14 @@ import { ref, computed } from 'vue'
 import { useEndpointStore, useLanguageStore, useSettingsStore } from '../stores'
 import { executeSparql, logger, endpointHasCollections } from '../services'
 import { useLabelResolver } from './useLabelResolver'
-import { buildCollectionsStageQuery, buildChildCollectionsQuery, getCollectionQueryCapabilities, type CollectionQueryStage } from './useCollectionQueries'
+import { buildAllCollectionsQuery, buildCollectionsStageQuery, buildChildCollectionsQuery, getCollectionQueryCapabilities, type CollectionQueryStage } from './useCollectionQueries'
 import type { CollectionNode, SPARQLEndpoint } from '../types'
 
-export function useCollections() {
+type CollectionsMode = 'scheme' | 'collection'
+
+let sharedState: ReturnType<typeof createCollectionsState> | null = null
+
+function createCollectionsState() {
   const endpointStore = useEndpointStore()
   const languageStore = useLanguageStore()
   const settingsStore = useSettingsStore()
@@ -24,6 +28,7 @@ export function useCollections() {
   const loading = ref(false)
   const error = ref<string | null>(null)
   const currentSchemeUri = ref<string | null>(null)
+  const currentMode = ref<CollectionsMode>('scheme')
   let activeRequestId = 0
   /**
    * Process query bindings into CollectionNode array.
@@ -249,6 +254,7 @@ export function useCollections() {
 
     // Track current scheme for child collection queries
     currentSchemeUri.value = schemeUri
+    currentMode.value = 'scheme'
 
     if (!endpointHasCollections(endpoint)) {
       logger.info('Collections', 'Skipping - endpoint reports no collections', { scheme: schemeUri })
@@ -298,6 +304,53 @@ export function useCollections() {
   }
 
   /**
+   * Load all top-level collections (no scheme filtering).
+   */
+  async function loadAllCollections() {
+    const endpoint = endpointStore.current
+    if (!endpoint) return
+
+    currentSchemeUri.value = null
+    currentMode.value = 'collection'
+
+    if (!endpointHasCollections(endpoint)) {
+      logger.info('Collections', 'Skipping - endpoint reports no collections', { mode: 'collection' })
+      collections.value = []
+      return
+    }
+
+    loading.value = true
+    error.value = null
+    collections.value = []
+
+    logger.info('Collections', 'Loading all root collections', {
+      language: languageStore.preferred,
+    })
+
+    const requestId = ++activeRequestId
+    const query = buildAllCollectionsQuery(endpoint)
+
+    try {
+      const results = await executeSparql(endpoint, query, { retries: 1 })
+      if (requestId !== activeRequestId) return
+      collections.value = processBindings(results.results.bindings as Array<Record<string, { value: string; 'xml:lang'?: string }>>)
+      logger.info('Collections', `Loaded ${collections.value.length} root collections`)
+    } catch (e: unknown) {
+      const errMsg = e && typeof e === 'object' && 'message' in e
+        ? (e as { message: string }).message
+        : 'Unknown error'
+      logger.error('Collections', 'Failed to load root collections', { error: e })
+      if (requestId === activeRequestId) {
+        error.value = `Failed to load collections: ${errMsg}`
+      }
+    } finally {
+      if (requestId === activeRequestId) {
+        loading.value = false
+      }
+    }
+  }
+
+  /**
    * Top-level collections (not nested inside another collection).
    * These are shown at the root level under the scheme.
    */
@@ -314,14 +367,14 @@ export function useCollections() {
     const endpoint = endpointStore.current
     if (!endpoint) return []
 
-    const schemeUri = currentSchemeUri.value
-    if (!schemeUri) {
-      logger.warn('Collections', 'No current scheme set, cannot load child collections')
+    if (!endpointHasCollections(endpoint)) {
+      logger.info('Collections', 'Skipping child collections - endpoint reports no collections', { parentUri })
       return []
     }
 
-    if (!endpointHasCollections(endpoint)) {
-      logger.info('Collections', 'Skipping child collections - endpoint reports no collections', { parentUri })
+    const schemeUri = currentMode.value === 'scheme' ? currentSchemeUri.value : null
+    if (currentMode.value === 'scheme' && !schemeUri) {
+      logger.warn('Collections', 'No current scheme set, cannot load child collections')
       return []
     }
 
@@ -333,7 +386,7 @@ export function useCollections() {
       return []
     }
 
-    logger.debug('Collections', 'Loading child collections', { parentUri, schemeUri, query })
+    logger.debug('Collections', 'Loading child collections', { parentUri, schemeUri, mode: currentMode.value, query })
 
     try {
       const results = await executeSparql(endpoint, query, { retries: 1 })
@@ -357,6 +410,7 @@ export function useCollections() {
     loading.value = false
     error.value = null
     currentSchemeUri.value = null
+    currentMode.value = 'scheme'
   }
 
   return {
@@ -367,9 +421,21 @@ export function useCollections() {
     error,
     // Actions
     loadCollectionsForScheme,
+    loadAllCollections,
     loadChildCollections,
     reset,
     // Utilities
     shouldShowLangTag,
   }
+}
+
+export function useCollections(options?: { shared?: boolean }) {
+  if (options?.shared) {
+    if (!sharedState) {
+      sharedState = createCollectionsState()
+    }
+    return sharedState
+  }
+
+  return createCollectionsState()
 }
