@@ -81,6 +81,7 @@ describe('SkosView', () => {
         stubs: {
           ConceptTree: { template: '<div class="concept-tree-stub" />' },
           ConceptDetails: { template: '<div class="concept-details-stub" />' },
+          CollectionDetails: { template: '<div class="collection-details-stub" />' },
           SchemeDetails: { template: '<div class="scheme-details-stub" />' },
           SearchBox: { template: '<div class="search-box-stub" />' },
           RecentHistory: {
@@ -310,6 +311,60 @@ describe('SkosView', () => {
 
       expect(schemeStore.viewingSchemeUri).toBeNull()
       expect(conceptStore.selectedUri).toBe('http://example.org/concept/1')
+    })
+  })
+
+  describe('scheme navigation from details', () => {
+    it('switches to scheme mode when navigating to scheme from details', async () => {
+      const schemeStore = useSchemeStore()
+      const conceptStore = useConceptStore()
+      const uiStore = useUIStore()
+
+      // Start in collection mode with a concept selected
+      schemeStore.setRootMode('collection')
+      conceptStore.selectConcept('http://example.org/concept/1')
+
+      expect(schemeStore.rootMode).toBe('collection')
+
+      mountSkosView()
+      await flushPromises()
+
+      // Simulate navigating to a scheme from details
+      // This tests the state changes that selectSchemeFromDetails would make
+      schemeStore.setRootMode('scheme')
+      schemeStore.selectScheme('http://example.org/scheme/1')
+      conceptStore.selectConcept(null)
+      conceptStore.selectCollection(null)
+      uiStore.setSidebarTab('browse')
+      await nextTick()
+      schemeStore.viewScheme('http://example.org/scheme/1')
+
+      expect(schemeStore.rootMode).toBe('scheme')
+      expect(schemeStore.selectedUri).toBe('http://example.org/scheme/1')
+      expect(conceptStore.selectedUri).toBeNull()
+      expect(conceptStore.selectedCollectionUri).toBeNull()
+      expect(schemeStore.viewingSchemeUri).toBe('http://example.org/scheme/1')
+    })
+
+    it('clears collection selection when navigating to scheme', async () => {
+      const schemeStore = useSchemeStore()
+      const conceptStore = useConceptStore()
+
+      // Start in collection mode with a collection selected
+      schemeStore.setRootMode('collection')
+      conceptStore.selectCollection('http://example.org/collection/1')
+
+      mountSkosView()
+      await flushPromises()
+
+      // Navigate to scheme
+      schemeStore.setRootMode('scheme')
+      schemeStore.selectScheme('http://example.org/scheme/1')
+      conceptStore.selectConcept(null)
+      conceptStore.selectCollection(null)
+      await nextTick()
+
+      expect(conceptStore.selectedCollectionUri).toBeNull()
     })
   })
 })

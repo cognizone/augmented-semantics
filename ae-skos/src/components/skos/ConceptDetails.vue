@@ -32,6 +32,7 @@ import OtherPropertiesSection from '../common/OtherPropertiesSection.vue'
 
 const emit = defineEmits<{
   selectConcept: [uri: string]
+  selectScheme: [uri: string]
 }>()
 
 const conceptStore = useConceptStore()
@@ -39,9 +40,13 @@ const settingsStore = useSettingsStore()
 const schemeStore = useSchemeStore()
 const { selectLabelWithXL, sortLabels, shouldShowLangTag } = useLabelResolver()
 const { details, loading, error, resolvedPredicates, loadDetails } = useConceptData()
-const { navigateTo, handleSchemeClick, isLocalScheme, navigateToCollection } = useConceptNavigation(emit)
+const { navigateTo, isLocalScheme, navigateToCollection } = useConceptNavigation(emit)
 const { exportAsJson, exportAsTurtle, exportAsCsv } = useResourceExport()
 const { showIndicator: showDeprecationIndicator } = useDeprecation()
+
+function handleSchemeClick(ref: ConceptRef): void {
+  emit('selectScheme', ref.uri)
+}
 
 // Local state
 const showRawRdfDialog = ref(false)

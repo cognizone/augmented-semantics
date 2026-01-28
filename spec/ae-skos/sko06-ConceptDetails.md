@@ -376,12 +376,44 @@ interface PropertyValue {
 }
 ```
 
+## Navigation Behavior
+
+### Scheme Navigation
+
+When a user clicks on a scheme in the "In Scheme" section:
+
+1. **Mode switch**: Automatically switches from collection mode to scheme mode
+2. **Scheme selection**: Selects the clicked scheme
+3. **Clear selection**: Clears current concept and collection selection
+4. **Tab switch**: Switches to browse tab
+5. **View scheme**: Opens the scheme details view
+6. **Scroll to top**: Scrolls the tree to the top
+
+**Implementation:** `selectSchemeFromDetails()` in SkosView.vue
+
+This behavior ensures consistent navigation when exploring scheme relationships from within concept details, regardless of the current browsing mode.
+
+### Concept Navigation
+
+Clicking on related concepts (broader, narrower, related) navigates to that concept:
+- Updates tree selection
+- Loads new concept details
+- Updates breadcrumb
+
+### Collection Navigation
+
+Clicking on a collection in the "Collections" section:
+- Selects the collection
+- Shows collection details in the panel
+
 ## Events
 
 | Event | Payload | Description |
 |-------|---------|-------------|
 | `details:loaded` | `ConceptDetails` | Details fetched |
 | `relation:clicked` | `string` | Related concept clicked |
+| `selectConcept` | `string` | Concept navigation requested |
+| `selectScheme` | `string` | Scheme navigation requested |
 | `copy:uri` | `string` | URI copied |
 | `copy:label` | `string` | Label copied |
 

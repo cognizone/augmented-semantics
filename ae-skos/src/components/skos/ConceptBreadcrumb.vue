@@ -166,6 +166,9 @@ watch(
     conceptPath.value = []
     collectionPath.value = []
     updateBreadcrumb()
+    if (mode === 'scheme' && endpointStore.current) {
+      loadSchemes()
+    }
   }
 )
 

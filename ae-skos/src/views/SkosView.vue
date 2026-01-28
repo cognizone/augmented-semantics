@@ -7,7 +7,7 @@
  *
  * @see /spec/common/com04-URLRouting.md
  */
-import { computed, watch, onMounted } from 'vue'
+import { computed, watch, onMounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUIStore, useConceptStore, useSchemeStore, useLanguageStore, useEndpointStore } from '../stores'
 import { useConceptSelection } from '../composables'
@@ -55,6 +55,17 @@ async function selectMemberConcept(uri: string) {
 // Handle concept selection from search - allow cross-scheme navigation
 async function selectConceptFromSearch(uri: string) {
   await selectConceptWithScheme(uri)
+}
+
+async function selectSchemeFromDetails(uri: string) {
+  schemeStore.setRootMode('scheme')
+  schemeStore.selectScheme(uri)
+  conceptStore.selectConcept(null)
+  conceptStore.selectCollection(null)
+  uiStore.setSidebarTab('browse')
+  await nextTick()
+  schemeStore.viewScheme(uri)
+  conceptStore.scrollTreeToTop()
 }
 
 // Handle collection selection
@@ -277,6 +288,7 @@ onMounted(() => {
         <ConceptDetails
           v-else-if="schemeStore.rootMode === 'collection' && conceptStore.selectedUri"
           @select-concept="selectConceptInScheme"
+          @select-scheme="selectSchemeFromDetails"
         />
         <CollectionDetails
           v-else-if="conceptStore.selectedCollectionUri"
@@ -284,8 +296,13 @@ onMounted(() => {
           @select-concept="selectConceptInScheme"
           @select-member="selectMemberConcept"
           @select-collection="selectCollection"
+          @select-scheme="selectSchemeFromDetails"
         />
-        <ConceptDetails v-else @select-concept="selectConceptInScheme" />
+        <ConceptDetails
+          v-else
+          @select-concept="selectConceptInScheme"
+          @select-scheme="selectSchemeFromDetails"
+        />
       </SplitterPanel>
     </Splitter>
   </div>

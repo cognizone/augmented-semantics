@@ -29,6 +29,7 @@ const emit = defineEmits<{
   selectConcept: [uri: string]
   selectCollection: [uri: string]
   selectMember: [uri: string]
+  selectScheme: [uri: string]
 }>()
 
 const schemeStore = useSchemeStore()
@@ -281,7 +282,7 @@ function navigateToMember(member: { uri: string; type?: string }) {
 }
 
 function handleSchemeClick(ref: ConceptRef) {
-  schemeStore.viewScheme(ref.uri)
+  emit('selectScheme', ref.uri)
 }
 
 

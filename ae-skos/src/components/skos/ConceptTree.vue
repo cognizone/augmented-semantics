@@ -415,6 +415,21 @@ watch(
   { immediate: true }
 )
 
+// If schemes load after selectedUri is set, selected may become available later.
+// Ensure tree loads once the selected scheme object is ready.
+watch(
+  () => schemeStore.selected?.uri,
+  (newScheme, oldScheme) => {
+    if (!newScheme || newScheme === oldScheme) return
+    if (isCollectionMode.value || !endpointStore.current) return
+
+    loadTopConcepts()
+    if (!schemeStore.isOrphanSchemeSelected) {
+      loadCollectionsForScheme(newScheme)
+    }
+  }
+)
+
 // Reload when language changes
 watch(
   () => languageStore.preferred,
