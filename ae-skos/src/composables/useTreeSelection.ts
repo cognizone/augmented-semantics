@@ -50,18 +50,24 @@ export function useTreeSelection(options: UseTreeSelectionOptions) {
     },
     set: (keys) => {
       if (keys) {
+        // Collection mode uses explicit click handling; ignore Tree's selectionKeys updates.
+        if (schemeStore.rootMode === 'collection') {
+          return
+        }
         const uri = Object.keys(keys)[0]
         if (uri) {
-          // Check if this is the scheme node
-          const scheme = schemeStore.selected
-          if (scheme && uri === scheme.uri) {
+          if (conceptStore.selectedCollectionUri === uri) {
+            return
+          }
+          // Scheme nodes must be recognized by selectedUri because schemes load async.
+          if (schemeStore.rootMode === 'scheme' && schemeStore.selectedUri === uri) {
             conceptStore.selectConcept(null) // Clear concept selection when viewing scheme
             schemeStore.viewScheme(uri)
             // Add to history
             conceptStore.addToHistory({
-              uri: scheme.uri,
-              label: scheme.label || scheme.uri,
-              lang: scheme.labelLang,
+              uri,
+              label: schemeStore.selected?.label || uri,
+              lang: schemeStore.selected?.labelLang,
               endpointUrl: endpointStore.current?.url,
               type: 'scheme',
             })

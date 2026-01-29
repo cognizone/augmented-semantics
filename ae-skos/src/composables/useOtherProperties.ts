@@ -62,6 +62,7 @@ export function useOtherProperties() {
     `)
 
     try {
+      logger.debug('OtherProperties', 'Executing query', { source, uri, query })
       const results = await executeSparql(endpoint, query, { retries: 0 })
 
       // Collect all datatypes for resolution if needed
@@ -70,6 +71,7 @@ export function useOtherProperties() {
       // Group by predicate with deduplication
       const propMap = new Map<string, Map<string, { value: string; lang?: string; datatype?: string; isUri: boolean }>>()
 
+      let sawSkosMember = false
       for (const binding of results.results.bindings) {
         const predicate = binding.predicate?.value
         const value = binding.value?.value
@@ -78,6 +80,9 @@ export function useOtherProperties() {
         const isUri = binding.value?.type === 'uri'
 
         if (!predicate || !value) continue
+        if (predicate === 'http://www.w3.org/2004/02/skos/core#member') {
+          sawSkosMember = true
+        }
 
         if (resolveDatatypes && datatype) {
           datatypeUris.add(datatype)
@@ -111,6 +116,10 @@ export function useOtherProperties() {
           return v
         }),
       }))
+
+      if (sawSkosMember) {
+        logger.warn('OtherProperties', 'skos:member returned despite exclusion filter', { source, uri })
+      }
 
       logger.debug(source, 'Loaded other properties', {
         count: target.otherProperties.length,

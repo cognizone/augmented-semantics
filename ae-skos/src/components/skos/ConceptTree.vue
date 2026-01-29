@@ -262,6 +262,13 @@ function convertToTreeNode(node: ConceptNode): TreeNode {
 function onNodeClick(node: TreeNode) {
   const uri = node.data?.uri || node.key
   if (!uri) return
+  logger.debug('ConceptTree', 'Node click', {
+    uri,
+    isCollectionNode: isCollectionNode(node),
+    dataType: node.data?.type,
+    isScheme: node.data?.isScheme,
+    hasNarrower: node.data?.hasNarrower,
+  })
 
   if (isCollectionNode(node)) {
     // Collection selection
@@ -277,6 +284,8 @@ function onNodeClick(node: TreeNode) {
     emit('selectCollection', uri)
   } else if (node.data?.isScheme) {
     // Scheme selection - view scheme details
+    // Keep dropdown + tree selection aligned with the scheme node click.
+    schemeStore.selectScheme(String(uri))
     conceptStore.selectConcept(null)
     schemeStore.viewScheme(String(uri))
     conceptStore.addToHistory({
@@ -287,7 +296,14 @@ function onNodeClick(node: TreeNode) {
       type: 'scheme',
     })
   } else {
-    // Concept selection
+    // Concept selection (collection mode should never reach here)
+    if (isCollectionMode.value) {
+      logger.warn('ConceptTree', 'Collection mode node missing collection flag; ignoring click', {
+        uri,
+        dataType: node.data?.type,
+      })
+      return
+    }
     emit('selectConcept', String(uri))
   }
 }
@@ -361,7 +377,7 @@ async function goToUri() {
       // It's a collection - emit to parent for collection handling
       emit('selectCollection', uri)
       gotoUri.value = ''
-    } else if (await isConcept(uri)) {
+    } else if (!isCollectionMode.value && await isConcept(uri)) {
       // It's a concept - emit to parent for unified handling
       emit('selectConcept', uri)
       gotoUri.value = ''

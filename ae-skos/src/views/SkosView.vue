@@ -184,7 +184,12 @@ function restoreFromUrl() {
   const conceptUri = params[URL_PARAMS.CONCEPT] as string | undefined
   if (conceptUri) {
     if (schemeStore.rootMode === 'collection') {
-      void conceptStore.selectConceptWithEvent(conceptUri)
+      // In collection mode, prefer collection selection if we already know this URI.
+      if (conceptStore.selectedCollectionUri === conceptUri) {
+        void conceptStore.selectCollectionWithEvent(conceptUri)
+      } else {
+        void conceptStore.selectConceptWithEvent(conceptUri)
+      }
     } else {
       conceptStore.selectConcept(conceptUri)
     }
@@ -229,12 +234,17 @@ watch(
       isUpdatingFromUrl = true
       previousConceptUri = newConcept || null
 
-      if (newConcept) {
-        if (schemeStore.rootMode === 'collection') {
-          void conceptStore.selectConceptWithEvent(newConcept)
+    if (newConcept) {
+      if (schemeStore.rootMode === 'collection') {
+        // In collection mode, avoid forcing concept selection for collection URIs.
+        if (conceptStore.selectedCollectionUri === newConcept) {
+          void conceptStore.selectCollectionWithEvent(newConcept)
         } else {
-          conceptStore.selectConcept(newConcept)
+          void conceptStore.selectConceptWithEvent(newConcept)
         }
+      } else {
+        conceptStore.selectConcept(newConcept)
+      }
       } else {
         conceptStore.selectConcept(null)
       }

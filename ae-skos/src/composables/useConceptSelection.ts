@@ -12,7 +12,7 @@
  */
 import { nextTick } from 'vue'
 import { useEndpointStore, useSchemeStore, useConceptStore, useUIStore } from '../stores'
-import { executeSparql, withPrefixes, logger } from '../services'
+import { executeSparql, withPrefixes, logger, endpointHasCollections } from '../services'
 
 export type SelectConceptOptions = {
   preserveCollection?: boolean
@@ -110,6 +110,19 @@ export function useConceptSelection() {
     // Collection mode skips scheme discovery/switching
     if (schemeStore.rootMode === 'collection') {
       schemeStore.viewScheme(null)
+      if (endpointStore.current && endpointHasCollections(endpointStore.current)) {
+        const query = withPrefixes(`ASK { <${conceptUri}> a skos:Collection }`)
+        try {
+          const result = await executeSparql(endpointStore.current, query, { retries: 0 })
+          if (result.boolean === true) {
+            conceptStore.selectCollectionWithEvent(conceptUri)
+            uiStore.setSidebarTab('browse')
+            return
+          }
+        } catch (e) {
+          logger.debug('useConceptSelection', 'Collection check failed, continuing as concept', { conceptUri, error: e })
+        }
+      }
       if (!options?.preserveCollection) {
         conceptStore.selectCollection(null)
       }
