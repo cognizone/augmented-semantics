@@ -114,12 +114,14 @@ export function useTreePagination() {
    * Groups by concept URI, aggregates notations, and parses hasNarrower/deprecated flags.
    */
   function processMetadataBindings(
-    bindings: Array<Record<string, { value: string; type: string }>>
+    bindings: Array<Record<string, { value: string; type: string }>>,
+    source?: 'inscheme'
   ): ConceptNode[] {
     const conceptMap = new Map<string, {
       notations: string[]
       hasNarrower: boolean
       deprecated: boolean
+      isInSchemeOnly?: boolean
     }>()
 
     for (const b of bindings) {
@@ -131,6 +133,7 @@ export function useTreePagination() {
           notations: [],
           hasNarrower: false,
           deprecated: isDeprecatedFromBinding(b),
+          isInSchemeOnly: source === 'inscheme' ? true : undefined,
         })
       }
 
@@ -148,6 +151,13 @@ export function useTreePagination() {
       if (!entry.deprecated) {
         entry.deprecated = isDeprecatedFromBinding(b)
       }
+
+      const inSchemeOnlyVal = b.isInSchemeOnly?.value
+      if (inSchemeOnlyVal === 'true' || inSchemeOnlyVal === '1') {
+        entry.isInSchemeOnly = true
+      } else if (inSchemeOnlyVal === 'false' || inSchemeOnlyVal === '0') {
+        entry.isInSchemeOnly = false
+      }
     }
 
     return Array.from(conceptMap.entries()).map(([uri, data]) => ({
@@ -158,6 +168,7 @@ export function useTreePagination() {
       hasNarrower: data.hasNarrower,
       expanded: false,
       deprecated: data.deprecated,
+      topConceptSource: data.isInSchemeOnly ? 'inscheme' : undefined,
     }))
   }
 
@@ -394,7 +405,10 @@ export function useTreePagination() {
           logger.debug('ConceptTree', 'Top concepts explicit metadata query (pagination)', { query })
         }
         const results = await executeSparql(endpoint, query, { retries: 1 })
-        const concepts = processMetadataBindings(results.results.bindings)
+        const concepts = processMetadataBindings(
+          results.results.bindings,
+          queryMode.value === 'inscheme' ? 'inscheme' : undefined
+        )
         await loadLabelsForNodes(concepts)
         await updateHasNarrowerFlags(endpoint, concepts)
         concepts.sort(compareNodesWithSettings)
@@ -427,7 +441,7 @@ export function useTreePagination() {
       logger.debug('ConceptTree', 'Running in-scheme-only query to check for unplaced concepts')
       const inschemeQuery = buildInSchemeOnlyTopConceptsMetadataQuery(scheme.uri, PAGE_SIZE, offset)
       const inschemeResults = await executeSparql(endpoint, inschemeQuery, { retries: 1 })
-      const inschemeConcepts = processMetadataBindings(inschemeResults.results.bindings)
+      const inschemeConcepts = processMetadataBindings(inschemeResults.results.bindings, 'inscheme')
       await loadLabelsForNodes(inschemeConcepts)
       await updateHasNarrowerFlags(endpoint, inschemeConcepts)
       inschemeConcepts.sort(compareNodesWithSettings)

@@ -132,16 +132,17 @@ export function useConceptTreeQueries() {
     const { schemeTerm, valuesClause } = schemeValues
 
     return withPrefixes(`
-    SELECT ?concept ?notation ?hasNarrower ${deprecationSelectVars}
+    SELECT ?concept ?notation ?hasNarrower ?isInSchemeOnly ${deprecationSelectVars}
     WHERE {
       {
-        SELECT DISTINCT ?concept ${deprecationSelectVars}
+        SELECT DISTINCT ?concept ?isInSchemeOnly ${deprecationSelectVars}
         WHERE {
           ${valuesClause}
           {
             { ?concept skos:topConceptOf ${schemeTerm} }
             UNION
             { ${schemeTerm} skos:hasTopConcept ?concept }
+            BIND(false AS ?isInSchemeOnly)
           }
           UNION
           {
@@ -153,6 +154,7 @@ export function useConceptTreeQueries() {
             FILTER NOT EXISTS { ?concept skos:narrowerTransitive ?x }
             FILTER NOT EXISTS { ?concept skos:topConceptOf ?x }
             FILTER NOT EXISTS { ?x skos:hasTopConcept ?concept }
+            BIND(true AS ?isInSchemeOnly)
           }
           ${deprecationClauses}
         }

@@ -658,6 +658,11 @@ watch(
               </span>
               <span v-if="slotProps.node.data?.deprecated && showDeprecationIndicator" class="deprecated-badge">deprecated</span>
             </span>
+            <span
+              v-if="slotProps.node.data?.topConceptSource === 'inscheme'"
+              class="material-symbols-outlined node-meta-icon"
+              title="In-scheme only"
+            >account_tree</span>
             <ProgressSpinner
               v-if="loadingChildren.has(slotProps.node.key) || loadingCollectionChildren.has(slotProps.node.key)"
               style="width: 16px; height: 16px"
@@ -854,6 +859,12 @@ watch(
 
 .node-icon {
   font-size: 14px;
+  flex-shrink: 0;
+}
+
+.node-meta-icon {
+  font-size: 12px;
+  color: var(--ae-text-muted);
   flex-shrink: 0;
 }
 

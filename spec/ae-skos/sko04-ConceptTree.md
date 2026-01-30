@@ -689,6 +689,28 @@ When a scheme is selected, the tree wraps top concepts under a synthetic scheme 
 **Contrast with "All Schemes":**
 When "All Schemes" is selected, no scheme root appears - only top concepts from all schemes are shown at root level.
 
+#### Node Icons
+
+Each tree node displays an icon indicating its type and source:
+
+| Node Type | Icon | CSS Class | Description |
+|-----------|------|-----------|-------------|
+| Scheme | `folder` | `icon-folder` | Concept scheme root node |
+| Collection | `collections_bookmark` | `icon-collection` | SKOS Collection |
+| Concept (with children) | `label` | `icon-label` | Has narrower concepts |
+| Concept (leaf) | `circle` | `icon-leaf` | No narrower concepts |
+| **In-scheme-only top concept** | `radio_button_unchecked` | `icon-top-fallback` | Fallback top concept (see below) |
+
+**In-Scheme-Only Visual Indicator:**
+
+Top concepts found via the `skos:inScheme` fallback query (not explicit `topConceptOf`/`hasTopConcept`) display a hollow circle icon with muted color. This visual distinction indicates:
+
+- The concept is placed at the root level because it has `skos:inScheme` but no hierarchical relationships
+- It may represent an improperly modeled concept or a flat vocabulary without hierarchy
+- Users can identify which top concepts are "official" vs "fallback"
+
+The `topConceptSource: 'inscheme'` flag on `ConceptRef` tracks this distinction, populated from the `?isInSchemeOnly` SPARQL variable in combined pagination queries.
+
 ### Breadcrumb
 
 ```

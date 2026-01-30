@@ -30,6 +30,7 @@ export interface ConceptRef {
   hasNarrower?: boolean      // For icon display (leaf vs label)
   inCurrentScheme?: boolean  // True if in currently selected scheme (for cross-scheme indicators)
   displayScheme?: string     // One scheme URI for badge display (when external)
+  topConceptSource?: 'inscheme' // Mark in-scheme-only top concepts for UI treatment
 }
 
 // Tree node with expansion state
