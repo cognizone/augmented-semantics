@@ -1,3 +1,8 @@
+/**
+ * Application entry point.
+ * Bootstraps Vue app with Pinia, PrimeVue, and router.
+ * @see /spec/ae-skos/sko00-overview.md
+ */
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import PrimeVue from 'primevue/config'

@@ -51,6 +51,7 @@ const {
   topLevelCollections,
   loadCollectionsForScheme,
   loadAllCollections,
+  loadAllOrderedCollections,
   loadChildCollections,
   loading: collectionsLoading,
   error: collectionsError,
@@ -59,11 +60,13 @@ const {
 } = useCollections({ shared: true })
 
 const isCollectionMode = computed(() => schemeStore.rootMode === 'collection')
+const isOrderedCollectionMode = computed(() => schemeStore.rootMode === 'orderedCollection')
+const isCollectionRootMode = computed(() => schemeStore.rootMode !== 'scheme')
 
 
 // Delayed loading - show spinner only after 300ms to prevent flicker
 const showTreeLoading = useDelayedLoading(computed(() =>
-  conceptStore.loadingTree || (isCollectionMode.value && collectionsLoading.value)
+  conceptStore.loadingTree || (isCollectionRootMode.value && collectionsLoading.value)
 ))
 
 // Elapsed time for tree loading (shows after 1s delay)
@@ -87,7 +90,7 @@ const {
   findNode,
 } = useTreePagination()
 
-const activeError = computed(() => isCollectionMode.value ? collectionsError.value : error.value)
+const activeError = computed(() => isCollectionRootMode.value ? collectionsError.value : error.value)
 
 const {
   revealConceptIfNeeded,
@@ -118,7 +121,7 @@ const loadingCollectionChildren = ref<Set<string>>(new Set())
  */
 /** Check if a tree node represents a collection */
 function isCollectionNode(node: TreeNode): boolean {
-  return node.data?.isCollection || node.data?.type === 'collection'
+  return node.data?.isCollection || node.data?.type === 'collection' || node.data?.type === 'orderedCollection' || node.data?.isOrdered
 }
 
 async function onNodeExpand(node: TreeNode) {
@@ -165,14 +168,14 @@ async function onNodeExpand(node: TreeNode) {
 // Only top-level collections appear at root level; nested collections load on expand
 // Exception: orphan "scheme" displays items directly at root (no fake scheme wrapper)
 const treeNodes = computed((): TreeNode[] => {
-  const topNodes = isCollectionMode.value
+  const topNodes = isCollectionRootMode.value
     ? []
     : conceptStore.topConcepts.map(node => convertToTreeNode(node))
   const collectionNodes = topLevelCollections.value.map(col => convertCollectionToTreeNode(col))
 
   const scheme = schemeStore.selected
 
-  if (isCollectionMode.value) {
+  if (isCollectionRootMode.value) {
     return collectionNodes
   }
 
@@ -224,6 +227,8 @@ function convertCollectionToTreeNode(col: CollectionNode): TreeNode {
     data: {
       uri: col.uri,
       isCollection: true,
+      isOrdered: col.isOrdered,
+      type: col.isOrdered ? 'orderedCollection' : 'collection',
       label: col.label,
       notation: col.notation,
       showLangTag: col.labelLang ? shouldShowCollectionLangTag(col.labelLang) : false,
@@ -278,8 +283,8 @@ function onNodeClick(node: TreeNode) {
       lang: node.data.lang,
       notation: node.data.notation,
       endpointUrl: endpointStore.current?.url,
-      schemeUri: isCollectionMode.value ? undefined : schemeStore.selectedUri || undefined,
-      type: 'collection',
+      schemeUri: isCollectionRootMode.value ? undefined : schemeStore.selectedUri || undefined,
+      type: node.data?.isOrdered ? 'orderedCollection' : 'collection',
     })
     emit('selectCollection', uri)
   } else if (node.data?.isScheme) {
@@ -297,7 +302,7 @@ function onNodeClick(node: TreeNode) {
     })
   } else {
     // Concept selection (collection mode should never reach here)
-    if (isCollectionMode.value) {
+    if (isCollectionRootMode.value) {
       logger.warn('ConceptTree', 'Collection mode node missing collection flag; ignoring click', {
         uri,
         dataType: node.data?.type,
@@ -358,7 +363,7 @@ async function goToUri() {
 
     // Check if this URI is a known scheme
     const scheme = schemeStore.schemes.find(s => s.uri === uri)
-    if (scheme && !isCollectionMode.value) {
+    if (scheme && !isCollectionRootMode.value) {
       // Select the scheme in the dropdown (triggers tree loading via watcher)
       schemeStore.selectScheme(uri)
       // Clear concept selection and show scheme details on the right
@@ -377,13 +382,13 @@ async function goToUri() {
       // It's a collection - emit to parent for collection handling
       emit('selectCollection', uri)
       gotoUri.value = ''
-    } else if (!isCollectionMode.value && await isConcept(uri)) {
+    } else if (!isCollectionRootMode.value && await isConcept(uri)) {
       // It's a concept - emit to parent for unified handling
       emit('selectConcept', uri)
       gotoUri.value = ''
     } else {
       // URI not found as scheme, collection, or concept
-      gotoWarning.value = isCollectionMode.value
+      gotoWarning.value = isCollectionRootMode.value
         ? 'URI not found as a collection or concept (scheme mode is disabled)'
         : 'URI not found as a scheme, collection, or concept'
       logger.warn('ConceptTree', 'Invalid goto URI', { uri })
@@ -400,7 +405,7 @@ function onTreeScroll(event: Event) {
   const el = event.target as HTMLElement
   const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 100
 
-  if (!isCollectionMode.value && nearBottom && hasMoreTopConcepts.value && !loadingMoreTopConcepts.value && !conceptStore.loadingTree) {
+  if (!isCollectionRootMode.value && nearBottom && hasMoreTopConcepts.value && !loadingMoreTopConcepts.value && !conceptStore.loadingTree) {
     loadMoreTopConcepts()
   }
 }
@@ -417,6 +422,10 @@ watch(
 
       if (rootMode === 'collection') {
         loadAllCollections()
+        return
+      }
+      if (rootMode === 'orderedCollection') {
+        loadAllOrderedCollections()
         return
       }
 
@@ -437,7 +446,7 @@ watch(
   () => schemeStore.selected?.uri,
   (newScheme, oldScheme) => {
     if (!newScheme || newScheme === oldScheme) return
-    if (isCollectionMode.value || !endpointStore.current) return
+    if (isCollectionRootMode.value || !endpointStore.current) return
 
     loadTopConcepts()
     if (!schemeStore.isOrphanSchemeSelected) {
@@ -452,6 +461,10 @@ watch(
   () => {
     if (endpointStore.current && isCollectionMode.value) {
       loadAllCollections()
+      return
+    }
+    if (endpointStore.current && isOrderedCollectionMode.value) {
+      loadAllOrderedCollections()
       return
     }
 
@@ -474,7 +487,7 @@ watch(
   () => settingsStore.enableSchemeUriSlashFix,
   () => {
     if (!endpointStore.current) return
-    if (isCollectionMode.value) return
+    if (isCollectionRootMode.value) return
     conceptStore.clearAllChildren()
     loadTopConcepts()
 
@@ -591,7 +604,7 @@ watch(
       v-if="activeError"
       severity="error"
       :closable="true"
-      @close="isCollectionMode ? (collectionsError = null) : (error = null)"
+      @close="isCollectionRootMode ? (collectionsError = null) : (error = null)"
     >
       {{ activeError }}
     </Message>
@@ -603,6 +616,9 @@ watch(
       <template v-if="isCollectionMode">
         <span>Loading collections...{{ treeLoadingElapsed.show.value ? ` (${treeLoadingElapsed.elapsed.value}s)` : '' }}</span>
       </template>
+      <template v-else-if="isOrderedCollectionMode">
+        <span>Loading ordered collections...{{ treeLoadingElapsed.show.value ? ` (${treeLoadingElapsed.elapsed.value}s)` : '' }}</span>
+      </template>
       <template v-else-if="!schemeStore.isOrphanSchemeSelected">
         <span>Loading concepts...{{ treeLoadingElapsed.show.value ? ` (${treeLoadingElapsed.elapsed.value}s)` : '' }}</span>
       </template>
@@ -613,12 +629,13 @@ watch(
 
     <!-- Empty state (only when no treeNodes - scheme or concepts) -->
     <div
-      v-else-if="!conceptStore.loadingTree && (!isCollectionMode || !collectionsLoading) && !treeNodes.length && !activeError"
+      v-else-if="!conceptStore.loadingTree && (!isCollectionRootMode || !collectionsLoading) && !treeNodes.length && !activeError"
       class="empty-state"
     >
       <span class="material-symbols-outlined empty-icon">folder_open</span>
-      <p>{{ isCollectionMode ? 'No collections found' : 'No concepts found' }}</p>
-      <small v-if="isCollectionMode">This endpoint has no top-level collections</small>
+      <p>{{ isOrderedCollectionMode ? 'No ordered collections found' : (isCollectionMode ? 'No collections found' : 'No concepts found') }}</p>
+      <small v-if="isOrderedCollectionMode">This endpoint has no ordered collections</small>
+      <small v-else-if="isCollectionMode">This endpoint has no top-level collections</small>
       <small v-else-if="!schemeStore.selected">Select a concept scheme to browse</small>
       <small v-else-if="schemeStore.isOrphanSchemeSelected">Orphan concepts will appear here</small>
       <small v-else>This scheme has no top-level concepts</small>
@@ -648,7 +665,11 @@ watch(
           >
             <!-- Icon based on node type -->
             <span v-if="slotProps.node.data?.isScheme" class="material-symbols-outlined node-icon icon-folder">folder</span>
-            <span v-else-if="isCollectionNode(slotProps.node)" class="material-symbols-outlined node-icon icon-collection">collections_bookmark</span>
+            <span
+              v-else-if="isCollectionNode(slotProps.node)"
+              class="material-symbols-outlined node-icon"
+              :class="slotProps.node.data?.isOrdered ? 'icon-ordered-collection' : 'icon-collection'"
+            >{{ slotProps.node.data?.isOrdered ? 'format_list_numbered' : 'collections_bookmark' }}</span>
             <span v-else-if="!slotProps.node.leaf" class="material-symbols-outlined node-icon icon-label">label</span>
             <span v-else class="material-symbols-outlined node-icon icon-leaf">circle</span>
             <span class="node-label">
@@ -687,7 +708,7 @@ watch(
           class="toolbar-btn"
           aria-label="Refresh"
           title="Refresh"
-          @click="isCollectionMode ? loadAllCollections() : loadTopConcepts(0)"
+          @click="isOrderedCollectionMode ? loadAllOrderedCollections() : (isCollectionMode ? loadAllCollections() : loadTopConcepts(0))"
         >
           <span class="material-symbols-outlined">refresh</span>
         </button>

@@ -51,7 +51,7 @@ export function useTreeSelection(options: UseTreeSelectionOptions) {
     set: (keys) => {
       if (keys) {
         // Collection mode uses explicit click handling; ignore Tree's selectionKeys updates.
-        if (schemeStore.rootMode === 'collection') {
+        if (schemeStore.rootMode !== 'scheme') {
           return
         }
         const uri = Object.keys(keys)[0]
@@ -117,8 +117,10 @@ export function useTreeSelection(options: UseTreeSelectionOptions) {
   function onNodeExpand(node: TreeNode) {
     const conceptNode = node.data as ConceptNode | undefined
     const isSchemeNode = Boolean((node.data as { isScheme?: boolean } | undefined)?.isScheme)
-    const isCollectionNode = Boolean((node.data as { isCollection?: boolean; type?: string } | undefined)?.isCollection)
-      || (node.data as { type?: string } | undefined)?.type === 'collection'
+    const isCollectionNode = Boolean((node.data as { isCollection?: boolean; type?: string; isOrdered?: boolean } | undefined)?.isCollection)
+      || (node.data as { type?: string; isOrdered?: boolean } | undefined)?.type === 'collection'
+      || (node.data as { type?: string; isOrdered?: boolean } | undefined)?.type === 'orderedCollection'
+      || Boolean((node.data as { isOrdered?: boolean } | undefined)?.isOrdered)
     const isConceptNode = !isSchemeNode && !isCollectionNode
     const needsChildren = !conceptNode?.children || conceptNode.children.length === 0
 

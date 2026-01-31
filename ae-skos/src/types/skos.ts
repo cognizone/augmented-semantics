@@ -26,7 +26,7 @@ export interface ConceptRef {
   notation?: string
   lang?: string
   deprecated?: boolean
-  type?: 'concept' | 'scheme' | 'collection'
+  type?: 'concept' | 'scheme' | 'collection' | 'orderedCollection'
   hasNarrower?: boolean      // For icon display (leaf vs label)
   inCurrentScheme?: boolean  // True if in currently selected scheme (for cross-scheme indicators)
   displayScheme?: string     // One scheme URI for badge display (when external)
@@ -224,7 +224,7 @@ export interface HistoryEntry {
   accessedAt: string
   endpointUrl?: string
   schemeUri?: string
-  type?: 'concept' | 'scheme' | 'collection'
+  type?: 'concept' | 'scheme' | 'collection' | 'orderedCollection'
   hasNarrower?: boolean
 }
 
@@ -237,6 +237,7 @@ export interface CollectionNode {
   label?: string
   labelLang?: string
   notation?: string
+  isOrdered?: boolean
   // Nesting support
   hasChildCollections?: boolean  // True = expandable (has nested collections)
   isNested?: boolean             // True = has parent collection (hide from root)
@@ -247,6 +248,7 @@ export interface CollectionNode {
  */
 export interface CollectionDetails {
   uri: string
+  isOrdered?: boolean
   deprecated?: boolean        // owl:deprecated
   prefLabels: LabelValue[]
   altLabels: LabelValue[]

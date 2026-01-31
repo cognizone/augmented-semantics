@@ -108,7 +108,7 @@ export function useConceptSelection() {
     }
 
     // Collection mode skips scheme discovery/switching
-    if (schemeStore.rootMode === 'collection') {
+    if (schemeStore.rootMode !== 'scheme') {
       schemeStore.viewScheme(null)
       if (endpointStore.current && endpointHasCollections(endpointStore.current)) {
         const query = withPrefixes(`ASK { <${conceptUri}> a skos:Collection }`)
@@ -193,7 +193,7 @@ export function useConceptSelection() {
       }
     }
 
-    if (schemeStore.rootMode === 'collection') {
+    if (schemeStore.rootMode !== 'scheme') {
       schemeStore.viewScheme(null)
       await conceptStore.selectCollectionWithEvent(collectionUri)
       uiStore.setSidebarTab('browse')

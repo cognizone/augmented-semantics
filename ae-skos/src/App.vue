@@ -1,3 +1,8 @@
+/**
+ * Root application component.
+ * Provides the main layout shell with header, breadcrumb, and content area.
+ * @see /spec/ae-skos/sko00-overview.md
+ */
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { RouterView } from 'vue-router'
@@ -182,7 +187,7 @@ function getLanguageName(code: string): string {
 
 async function selectConcept(uri: string) {
   if (uri) {
-    if (schemeStore.rootMode !== 'collection') {
+    if (schemeStore.rootMode === 'scheme') {
       conceptStore.selectCollection(null)
     }
     await conceptStore.selectConceptWithEvent(uri)

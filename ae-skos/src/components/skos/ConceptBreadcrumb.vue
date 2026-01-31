@@ -36,10 +36,13 @@ const rootMode = computed({
   set: (mode) => schemeStore.setRootMode(mode),
 })
 const isCollectionMode = computed(() => rootMode.value === 'collection')
+const isOrderedCollectionMode = computed(() => rootMode.value === 'orderedCollection')
+const isCollectionRootMode = computed(() => rootMode.value !== 'scheme')
 
 const {
   topLevelCollections,
   loadAllCollections,
+  loadAllOrderedCollections,
   loading: collectionsLoading,
 } = useCollections({ shared: true })
 
@@ -71,7 +74,7 @@ function onFilterKeyDown(event: KeyboardEvent) {
 
 // All scheme options (unfiltered)
 const allSchemeOptions = computed(() => {
-  if (isCollectionMode.value) return []
+  if (isCollectionRootMode.value) return []
   const options: { label: string; value: string | null; isOrphan?: boolean; isPinned?: boolean }[] = [
     { label: 'All Schemes', value: null, isPinned: true },
   ]
@@ -154,7 +157,31 @@ const rootModeMenuItems = [
     iconClass: 'icon-collection',
     command: () => schemeStore.setRootMode('collection'),
   },
+  {
+    label: 'Ordered Collections',
+    iconName: 'format_list_numbered',
+    iconClass: 'icon-ordered-collection',
+    command: () => schemeStore.setRootMode('orderedCollection'),
+  },
 ]
+
+const rootModeLabel = computed(() => {
+  if (isOrderedCollectionMode.value) return 'Ordered Collections'
+  if (isCollectionMode.value) return 'Collections'
+  return 'Schemes'
+})
+
+const rootModeIcon = computed(() => {
+  if (isOrderedCollectionMode.value) return 'format_list_numbered'
+  if (isCollectionMode.value) return 'collections_bookmark'
+  return 'folder'
+})
+
+const rootModeIconClass = computed(() => {
+  if (isOrderedCollectionMode.value) return 'icon-ordered-collection'
+  if (isCollectionMode.value) return 'icon-collection'
+  return 'icon-folder'
+})
 
 watch(
   () => rootMode.value,
@@ -168,6 +195,14 @@ watch(
     updateBreadcrumb()
     if (mode === 'scheme' && endpointStore.current) {
       loadSchemes()
+      return
+    }
+    if (mode === 'collection') {
+      loadAllCollections()
+      return
+    }
+    if (mode === 'orderedCollection') {
+      loadAllOrderedCollections()
     }
   }
 )
@@ -331,9 +366,12 @@ watch(
       if (rootMode === 'scheme') {
         schemeStore.reset({ preserveSelection: true })
         loadSchemes()
-      } else {
+      } else if (rootMode === 'collection') {
         schemeStore.viewScheme(null)
         loadAllCollections()
+      } else if (rootMode === 'orderedCollection') {
+        schemeStore.viewScheme(null)
+        loadAllOrderedCollections()
       }
     }
   },
@@ -344,7 +382,7 @@ watch(
 watch(
   () => languageStore.preferred,
   () => {
-    if (endpointStore.current && !isCollectionMode.value) {
+    if (endpointStore.current && !isCollectionRootMode.value) {
       loadSchemes()
     }
   }
@@ -353,8 +391,12 @@ watch(
 watch(
   () => [languageStore.preferred, rootMode.value, endpointStore.current?.id] as const,
   ([, activeRootMode]) => {
-    if (endpointStore.current && activeRootMode === 'collection') {
+    if (!endpointStore.current) return
+    if (activeRootMode === 'collection') {
       loadAllCollections()
+    }
+    if (activeRootMode === 'orderedCollection') {
+      loadAllOrderedCollections()
     }
   }
 )
@@ -378,7 +420,7 @@ const breadcrumbItems = computed(() => {
     } else if (item.type === 'scheme') {
       // Clicking scheme in collection breadcrumb goes to scheme details
       command = () => goHome()
-    } else if (item.type === 'collection') {
+    } else if (item.type === 'collection' || item.type === 'orderedCollection') {
       command = () => selectRootCollection(item.uri)
     } else {
       // Regular concept navigation
@@ -386,8 +428,8 @@ const breadcrumbItems = computed(() => {
     }
 
     const isRootCollection =
-      isCollectionMode.value &&
-      item.type === 'collection' &&
+      isCollectionRootMode.value &&
+      (item.type === 'collection' || item.type === 'orderedCollection') &&
       item.uri === conceptStore.selectedCollectionUri
 
     return {
@@ -578,9 +620,10 @@ async function loadCollectionBreadcrumb(collectionUri: string): Promise<ConceptR
   try {
     // Query for collection labels using collection priority
     const query = withPrefixes(`
-      SELECT ?label ?labelLang ?labelType ?notation
+      SELECT ?label ?labelLang ?labelType ?notation ?isOrdered
       WHERE {
         OPTIONAL { <${collectionUri}> skos:notation ?notation }
+        BIND(EXISTS { <${collectionUri}> a skos:OrderedCollection . } AS ?isOrdered)
         OPTIONAL {
           ${buildCapabilityAwareLabelUnionClause(`<${collectionUri}>`, collectionCapabilities)}
         }
@@ -596,10 +639,14 @@ async function loadCollectionBreadcrumb(collectionUri: string): Promise<ConceptR
     // Collect labels and notation
     const labels: { value: string; lang: string; type: string }[] = []
     let notation: string | undefined
+    let isOrdered = false
 
     for (const b of results.results.bindings) {
       if (b.notation?.value && !notation) {
         notation = b.notation.value
+      }
+      if (b.isOrdered?.value === 'true') {
+        isOrdered = true
       }
       const labelValue = b.label?.value
       if (labelValue) {
@@ -626,7 +673,7 @@ async function loadCollectionBreadcrumb(collectionUri: string): Promise<ConceptR
         label: bestLabel || collectionUri.split('/').pop() || collectionUri,
         lang: bestLabelLang,
         notation,
-        type: 'collection',
+        type: isOrdered ? 'orderedCollection' : 'collection',
       },
     ]
   } catch (e) {
@@ -639,7 +686,7 @@ async function loadCollectionBreadcrumb(collectionUri: string): Promise<ConceptR
     return [{
       uri: collectionUri,
       label: collectionUri.split('/').pop() || collectionUri,
-      type: 'collection',
+      type: isOrderedCollectionMode.value ? 'orderedCollection' : 'collection',
     }]
   } finally {
     loading.value = false
@@ -669,13 +716,15 @@ async function loadCollectionPath(collectionUri: string): Promise<ConceptRef[]> 
       visited.add(current)
 
       const query = withPrefixes(`
-        SELECT ?parent ?label ?labelLang ?labelType ?notation
+        SELECT ?parent ?label ?labelLang ?labelType ?notation ?isOrdered
         WHERE {
           OPTIONAL {
-            ?parent a skos:Collection .
-            ?parent skos:member <${current}> .
+            ?parent a ?parentType .
+            FILTER(?parentType IN (skos:Collection, skos:OrderedCollection))
+            ?parent (skos:member|skos:memberList/rdf:rest*/rdf:first) <${current}> .
           }
           OPTIONAL { <${current}> skos:notation ?notation }
+          BIND(EXISTS { <${current}> a skos:OrderedCollection . } AS ?isOrdered)
           OPTIONAL {
             ${buildCapabilityAwareLabelUnionClause(`<${current}>`, collectionCapabilities)}
           }
@@ -691,6 +740,7 @@ async function loadCollectionPath(collectionUri: string): Promise<ConceptRef[]> 
       const labels: { value: string; lang: string; type: string }[] = []
       let notation: string | undefined
       let parent: string | null = null
+      let isOrdered = false
 
       for (const b of results.results.bindings) {
         if (b.parent?.value && !parent) {
@@ -698,6 +748,9 @@ async function loadCollectionPath(collectionUri: string): Promise<ConceptRef[]> 
         }
         if (b.notation?.value && !notation) {
           notation = b.notation.value
+        }
+        if (b.isOrdered?.value === 'true') {
+          isOrdered = true
         }
         const labelValue = b.label?.value
         if (labelValue) {
@@ -721,7 +774,7 @@ async function loadCollectionPath(collectionUri: string): Promise<ConceptRef[]> 
         label: bestLabel || current.split('/').pop() || current,
         lang: bestLabelLang,
         notation,
-        type: 'collection',
+        type: isOrdered ? 'orderedCollection' : 'collection',
       })
 
       current = parent
@@ -738,7 +791,7 @@ async function loadCollectionPath(collectionUri: string): Promise<ConceptRef[]> 
 }
 
 function updateBreadcrumb() {
-  if (isCollectionMode.value) {
+  if (isCollectionRootMode.value) {
     if (collectionPath.value.length > 0) {
       conceptStore.setBreadcrumb([...collectionPath.value, ...conceptPath.value])
     } else if (conceptPath.value.length > 0) {
@@ -773,7 +826,7 @@ watch(
     }
 
     if (collectionUri) {
-      collectionPath.value = isCollectionMode.value
+      collectionPath.value = isCollectionRootMode.value
         ? await loadCollectionPath(collectionUri)
         : await loadCollectionBreadcrumb(collectionUri)
     } else {
@@ -787,7 +840,7 @@ watch(
 </script>
 
 <template>
-  <div class="concept-breadcrumb" :class="{ 'collection-mode': isCollectionMode }">
+  <div class="concept-breadcrumb" :class="{ 'collection-mode': isCollectionRootMode }">
     <!-- Root icon + mode dropdown -->
     <button
       class="dropdown-trigger root-mode-trigger"
@@ -796,11 +849,11 @@ watch(
     >
       <span
         class="material-symbols-outlined breadcrumb-icon root-mode-icon"
-        :class="isCollectionMode ? 'icon-collection' : 'icon-folder'"
+        :class="rootModeIconClass"
       >
-        {{ isCollectionMode ? 'collections_bookmark' : 'folder' }}
+        {{ rootModeIcon }}
       </span>
-      <span class="root-mode-label">{{ isCollectionMode ? 'Collections' : 'Schemes' }}</span>
+      <span class="root-mode-label">{{ rootModeLabel }}</span>
       <span class="material-symbols-outlined dropdown-arrow">arrow_drop_down</span>
     </button>
     <Menu ref="rootModeMenu" :model="rootModeMenuItems" :popup="true">
@@ -818,7 +871,7 @@ watch(
 
     <!-- Scheme selector (styled like endpoint badge) -->
     <Select
-      v-if="!isCollectionMode"
+      v-if="!isCollectionRootMode"
       v-model="selectedScheme"
       :options="schemeOptions"
       optionLabel="label"
@@ -877,9 +930,10 @@ watch(
         <template #item="{ item }">
           <span v-if="item.isLast" class="breadcrumb-current">
             <span
-              v-if="!item.isRootCollection && item.type === 'collection'"
-              class="material-symbols-outlined breadcrumb-icon icon-collection"
-            >collections_bookmark</span>
+              v-if="!item.isRootCollection && (item.type === 'collection' || item.type === 'orderedCollection')"
+              class="material-symbols-outlined breadcrumb-icon"
+              :class="item.type === 'orderedCollection' ? 'icon-ordered-collection' : 'icon-collection'"
+            >{{ item.type === 'orderedCollection' ? 'format_list_numbered' : 'collections_bookmark' }}</span>
             <span
               v-else-if="!item.isRootCollection && item.hasNarrower"
               class="material-symbols-outlined breadcrumb-icon icon-label"
@@ -893,9 +947,10 @@ watch(
           </span>
           <a v-else class="breadcrumb-link" @click.prevent="() => item.command && item.command({} as never)">
             <span
-              v-if="!item.isRootCollection && item.type === 'collection'"
-              class="material-symbols-outlined breadcrumb-icon icon-collection"
-            >collections_bookmark</span>
+              v-if="!item.isRootCollection && (item.type === 'collection' || item.type === 'orderedCollection')"
+              class="material-symbols-outlined breadcrumb-icon"
+              :class="item.type === 'orderedCollection' ? 'icon-ordered-collection' : 'icon-collection'"
+            >{{ item.type === 'orderedCollection' ? 'format_list_numbered' : 'collections_bookmark' }}</span>
             <span
               v-else-if="!item.isRootCollection"
               class="material-symbols-outlined breadcrumb-icon icon-label"

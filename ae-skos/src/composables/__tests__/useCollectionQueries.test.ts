@@ -10,6 +10,7 @@ import {
   buildCollectionsStageQuery,
   buildChildCollectionsQuery,
   buildAllCollectionsQuery,
+  buildAllOrderedCollectionsQuery,
   getCollectionQueryCapabilities,
 } from '../useCollectionQueries'
 import type { SPARQLEndpoint } from '../../types'
@@ -474,7 +475,7 @@ describe('useCollectionQueries', () => {
       expect(query).not.toBeNull()
       expect(query).toContain('SELECT DISTINCT ?collection')
       expect(query).toContain('WHERE {')
-      expect(query).toContain(`<${testParentUri}> skos:member ?collection`)
+      expect(query).toContain(`<${testParentUri}> skos:member|skos:memberList/rdf:rest*/rdf:first ?collection`)
       expect(query).toContain('?collection a skos:Collection')
     })
 
@@ -572,7 +573,7 @@ describe('useCollectionQueries', () => {
 
       const query = buildChildCollectionsQuery(testParentUri, null, endpoint)
       expect(query).not.toBeNull()
-      expect(query).toContain(`<${testParentUri}> skos:member ?collection`)
+      expect(query).toContain(`<${testParentUri}> skos:member|skos:memberList/rdf:rest*/rdf:first ?collection`)
       expect(query).toContain('?collection a skos:Collection')
       // Should not contain scheme filtering
       expect(query).not.toContain('skos:inScheme')
@@ -596,7 +597,7 @@ describe('useCollectionQueries', () => {
       const query = buildAllCollectionsQuery(endpoint)
       expect(query).toContain('FILTER NOT EXISTS {')
       expect(query).toContain('?parentCol a skos:Collection')
-      expect(query).toContain('?parentCol skos:member ?collection')
+      expect(query).toContain('?parentCol skos:member|skos:memberList/rdf:rest*/rdf:first ?collection')
     })
 
     it('includes hasParentCollection binding', () => {
@@ -613,7 +614,7 @@ describe('useCollectionQueries', () => {
       const query = buildAllCollectionsQuery(endpoint)
       expect(query).toContain('?hasChildCollections')
       expect(query).toContain('AS ?hasChildCollections')
-      expect(query).toContain('?collection skos:member ?childCol')
+      expect(query).toContain('?collection skos:member|skos:memberList/rdf:rest*/rdf:first ?childCol')
       expect(query).toContain('?childCol a skos:Collection')
     })
 
@@ -653,6 +654,35 @@ describe('useCollectionQueries', () => {
       expect(query).not.toContain('skos:inScheme <')
       expect(query).not.toContain('skos:topConceptOf <')
       expect(query).not.toContain('skos:hasTopConcept')
+    })
+  })
+
+  describe('buildAllOrderedCollectionsQuery (ordered collection root mode)', () => {
+    it('generates valid SPARQL query', () => {
+      const endpoint = mockEndpoint({ hasInScheme: true })
+
+      const query = buildAllOrderedCollectionsQuery(endpoint)
+      expect(query).toContain('SELECT DISTINCT ?collection')
+      expect(query).toContain('WHERE {')
+      expect(query).toContain('?collection a skos:OrderedCollection')
+    })
+
+    it('filters out nested ordered collections', () => {
+      const endpoint = mockEndpoint({ hasInScheme: true })
+
+      const query = buildAllOrderedCollectionsQuery(endpoint)
+      expect(query).toContain('FILTER NOT EXISTS {')
+      expect(query).toContain('?parentCol a skos:OrderedCollection')
+      expect(query).toContain('?parentCol skos:member|skos:memberList/rdf:rest*/rdf:first ?collection')
+    })
+
+    it('includes hasChildCollections binding for ordered collections', () => {
+      const endpoint = mockEndpoint({ hasInScheme: true })
+
+      const query = buildAllOrderedCollectionsQuery(endpoint)
+      expect(query).toContain('?hasChildCollections')
+      expect(query).toContain('?collection skos:member|skos:memberList/rdf:rest*/rdf:first ?childCol')
+      expect(query).toContain('?childCol a skos:OrderedCollection')
     })
   })
 })

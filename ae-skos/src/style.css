@@ -15,6 +15,7 @@
   --ae-icon-label: #a855f7;
   --ae-icon-leaf: #22c55e;
   --ae-icon-collection: #8b5cf6;
+  --ae-icon-ordered-collection: #0ea5e9;
 }
 
 .dark-mode {
@@ -23,6 +24,7 @@
   --ae-icon-label: #a855f7;
   --ae-icon-leaf: #22c55e;
   --ae-icon-collection: #8b5cf6;
+  --ae-icon-ordered-collection: #0ea5e9;
 }
 
 .icon-folder {
@@ -39,6 +41,10 @@
 
 .icon-collection {
   color: var(--ae-icon-collection);
+}
+
+.icon-ordered-collection {
+  color: var(--ae-icon-ordered-collection);
 }
 
 /* ============================================

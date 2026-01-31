@@ -117,10 +117,12 @@ function handleDeleteConfirm() {
           <span
             class="material-symbols-outlined item-icon"
             :class="slotProps.option.type === 'scheme' ? 'icon-folder'
+              : slotProps.option.type === 'orderedCollection' ? 'icon-ordered-collection'
               : slotProps.option.type === 'collection' ? 'icon-collection'
               : (slotProps.option.hasNarrower ? 'icon-label' : 'icon-leaf')"
           >{{
             slotProps.option.type === 'scheme' ? 'folder'
+              : slotProps.option.type === 'orderedCollection' ? 'format_list_numbered'
               : slotProps.option.type === 'collection' ? 'collections_bookmark'
               : (slotProps.option.hasNarrower ? 'label' : 'circle')
           }}</span>

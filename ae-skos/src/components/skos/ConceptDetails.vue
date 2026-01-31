@@ -277,7 +277,7 @@ function isExternalScheme(ref: ConceptRef): boolean {
   // Skip if no scheme selected (no badges shown)
   if (!schemeStore.selectedUri) return false
   // Schemes and collections don't show external indicator
-  if (ref.type === 'scheme' || ref.type === 'collection') return false
+  if (ref.type === 'scheme' || ref.type === 'collection' || ref.type === 'orderedCollection') return false
   // External if inCurrentScheme is explicitly false (undefined means we didn't check)
   return ref.inCurrentScheme === false
 }
@@ -588,7 +588,10 @@ watch(
                 :class="['concept-chip', 'clickable', { deprecated: ref.deprecated && showDeprecationIndicator }]"
                 @click="navigateToCollection(ref)"
               >
-                <span class="material-symbols-outlined chip-icon icon-collection">collections_bookmark</span>
+                <span
+                  class="material-symbols-outlined chip-icon"
+                  :class="ref.type === 'orderedCollection' ? 'icon-ordered-collection' : 'icon-collection'"
+                >{{ ref.type === 'orderedCollection' ? 'format_list_numbered' : 'collections_bookmark' }}</span>
                 {{ formatRefLabel(ref) }}<span v-if="ref.lang && shouldShowLangTag(ref.lang)" class="lang-tag">{{ ref.lang }}</span>
                 <span v-if="isExternalScheme(ref)" class="scheme-badge" :title="ref.displayScheme">{{ getSchemeShortName(ref.displayScheme!) }}</span>
                 <span v-if="ref.deprecated && showDeprecationIndicator" class="deprecated-badge">deprecated</span>

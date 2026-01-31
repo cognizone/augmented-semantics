@@ -1,3 +1,7 @@
+/**
+ * Scheme URI utilities for handling trailing slash mismatches.
+ * @see /spec/ae-skos/sko04-ConceptTree.md - Scheme URI Slash Fix section
+ */
 import type { EndpointAnalysis } from '../types'
 
 function stripTrailingSlash(uri: string): string {

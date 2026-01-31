@@ -14,7 +14,7 @@ import { logger } from '../services'
 
 const STORAGE_KEY = 'ae-skos-scheme'
 const ROOT_MODE_STORAGE_KEY = 'ae-skos-root-mode'
-export type RootMode = 'scheme' | 'collection'
+export type RootMode = 'scheme' | 'collection' | 'orderedCollection'
 
 /** Special URI for orphan concepts and collections (not linked to any scheme) */
 export const ORPHAN_SCHEME_URI = '~orphans~'
@@ -63,7 +63,7 @@ export const useSchemeStore = defineStore('scheme', () => {
         selectedUri.value = JSON.parse(stored)
       }
       const storedRootMode = localStorage.getItem(ROOT_MODE_STORAGE_KEY)
-      if (storedRootMode === 'collection' || storedRootMode === 'scheme') {
+      if (storedRootMode === 'collection' || storedRootMode === 'scheme' || storedRootMode === 'orderedCollection') {
         rootMode.value = storedRootMode
       }
     } catch (e) {

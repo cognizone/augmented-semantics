@@ -89,7 +89,7 @@ async function selectFromHistory(entry: { uri: string; endpointUrl?: string; sch
   }
 
   // Handle collection entries (with cross-scheme navigation support)
-  if (entry.type === 'collection') {
+  if (entry.type === 'collection' || entry.type === 'orderedCollection') {
     await selectCollectionWithScheme(entry.uri, entry.schemeUri, entry.endpointUrl)
     return
   }
@@ -183,7 +183,7 @@ function restoreFromUrl() {
   // Restore concept (will be applied after tree loads)
   const conceptUri = params[URL_PARAMS.CONCEPT] as string | undefined
   if (conceptUri) {
-    if (schemeStore.rootMode === 'collection') {
+    if (schemeStore.rootMode !== 'scheme') {
       // In collection mode, prefer collection selection if we already know this URI.
       if (conceptStore.selectedCollectionUri === conceptUri) {
         void conceptStore.selectCollectionWithEvent(conceptUri)
@@ -235,7 +235,7 @@ watch(
       previousConceptUri = newConcept || null
 
     if (newConcept) {
-      if (schemeStore.rootMode === 'collection') {
+      if (schemeStore.rootMode !== 'scheme') {
         // In collection mode, avoid forcing concept selection for collection URIs.
         if (conceptStore.selectedCollectionUri === newConcept) {
           void conceptStore.selectCollectionWithEvent(newConcept)
@@ -296,7 +296,7 @@ onMounted(() => {
           v-if="schemeStore.viewingSchemeUri"
         />
         <ConceptDetails
-          v-else-if="schemeStore.rootMode === 'collection' && conceptStore.selectedUri"
+          v-else-if="schemeStore.rootMode !== 'scheme' && conceptStore.selectedUri"
           @select-concept="selectConceptInScheme"
           @select-scheme="selectSchemeFromDetails"
         />

@@ -10,10 +10,10 @@ import { ref, computed } from 'vue'
 import { useEndpointStore, useLanguageStore, useSettingsStore } from '../stores'
 import { executeSparql, logger, endpointHasCollections } from '../services'
 import { useLabelResolver } from './useLabelResolver'
-import { buildAllCollectionsQuery, buildCollectionsStageQuery, buildChildCollectionsQuery, getCollectionQueryCapabilities, type CollectionQueryStage } from './useCollectionQueries'
+import { buildAllCollectionsQuery, buildAllOrderedCollectionsQuery, buildCollectionsStageQuery, buildChildCollectionsQuery, getCollectionQueryCapabilities, type CollectionQueryMode, type CollectionQueryStage } from './useCollectionQueries'
 import type { CollectionNode, SPARQLEndpoint } from '../types'
 
-type CollectionsMode = 'scheme' | 'collection'
+type CollectionsMode = 'scheme' | 'collection' | 'orderedCollection'
 
 let sharedState: ReturnType<typeof createCollectionsState> | null = null
 
@@ -42,6 +42,7 @@ function createCollectionsState() {
       notation?: string
       isNested?: boolean
       hasChildCollections?: boolean
+      isOrdered?: boolean
     }>()
 
     for (const binding of bindings) {
@@ -80,6 +81,9 @@ function createCollectionsState() {
       if (binding.hasChildCollections?.value === 'true') {
         entry.hasChildCollections = true
       }
+      if (binding.isOrdered?.value === 'true') {
+        entry.isOrdered = true
+      }
     }
 
     // Convert to CollectionNode array with priority-based label selection
@@ -96,6 +100,7 @@ function createCollectionsState() {
         notation: entry.notation,
         isNested: entry.isNested,
         hasChildCollections: entry.hasChildCollections,
+        isOrdered: entry.isOrdered,
       })
     }
 
@@ -117,6 +122,7 @@ function createCollectionsState() {
       notation?: string
       isNested?: boolean
       hasChildCollections?: boolean
+      isOrdered?: boolean
     }>
   ) {
     for (const binding of bindings) {
@@ -161,6 +167,9 @@ function createCollectionsState() {
       if (binding.hasChildCollections?.value === 'true') {
         entry.hasChildCollections = true
       }
+      if (binding.isOrdered?.value === 'true') {
+        entry.isOrdered = true
+      }
     }
   }
 
@@ -171,6 +180,7 @@ function createCollectionsState() {
       notation?: string
       isNested?: boolean
       hasChildCollections?: boolean
+      isOrdered?: boolean
     }>
   ): CollectionNode[] {
     const result: CollectionNode[] = []
@@ -185,6 +195,7 @@ function createCollectionsState() {
         notation: entry.notation,
         isNested: entry.isNested,
         hasChildCollections: entry.hasChildCollections,
+        isOrdered: entry.isOrdered,
       })
     }
 
@@ -287,6 +298,7 @@ function createCollectionsState() {
       notation?: string
       isNested?: boolean
       hasChildCollections?: boolean
+      isOrdered?: boolean
     }>()
 
     collections.value = []
@@ -351,6 +363,53 @@ function createCollectionsState() {
   }
 
   /**
+   * Load all top-level ordered collections (no scheme filtering).
+   */
+  async function loadAllOrderedCollections() {
+    const endpoint = endpointStore.current
+    if (!endpoint) return
+
+    currentSchemeUri.value = null
+    currentMode.value = 'orderedCollection'
+
+    if (!endpointHasCollections(endpoint)) {
+      logger.info('Collections', 'Skipping - endpoint reports no collections', { mode: 'orderedCollection' })
+      collections.value = []
+      return
+    }
+
+    loading.value = true
+    error.value = null
+    collections.value = []
+
+    logger.info('Collections', 'Loading all ordered root collections', {
+      language: languageStore.preferred,
+    })
+
+    const requestId = ++activeRequestId
+    const query = buildAllOrderedCollectionsQuery(endpoint)
+
+    try {
+      const results = await executeSparql(endpoint, query, { retries: 1 })
+      if (requestId !== activeRequestId) return
+      collections.value = processBindings(results.results.bindings as Array<Record<string, { value: string; 'xml:lang'?: string }>>)
+      logger.info('Collections', `Loaded ${collections.value.length} ordered root collections`)
+    } catch (e: unknown) {
+      const errMsg = e && typeof e === 'object' && 'message' in e
+        ? (e as { message: string }).message
+        : 'Unknown error'
+      logger.error('Collections', 'Failed to load ordered root collections', { error: e })
+      if (requestId === activeRequestId) {
+        error.value = `Failed to load collections: ${errMsg}`
+      }
+    } finally {
+      if (requestId === activeRequestId) {
+        loading.value = false
+      }
+    }
+  }
+
+  /**
    * Top-level collections (not nested inside another collection).
    * These are shown at the root level under the scheme.
    */
@@ -378,7 +437,8 @@ function createCollectionsState() {
       return []
     }
 
-    const query = buildChildCollectionsQuery(parentUri, schemeUri, endpoint, {
+    const mode: CollectionQueryMode = currentMode.value === 'orderedCollection' ? 'ordered' : 'collection'
+    const query = buildChildCollectionsQuery(parentUri, schemeUri, endpoint, mode, {
       enableSchemeUriSlashFix: settingsStore.enableSchemeUriSlashFix,
     })
     if (!query) {
@@ -422,6 +482,7 @@ function createCollectionsState() {
     // Actions
     loadCollectionsForScheme,
     loadAllCollections,
+    loadAllOrderedCollections,
     loadChildCollections,
     reset,
     // Utilities

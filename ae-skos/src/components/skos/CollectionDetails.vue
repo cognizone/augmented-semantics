@@ -55,6 +55,10 @@ const { showIndicator: showDeprecationIndicator } = useDeprecation()
 // Track elapsed time when loading
 const loadingElapsed = useElapsedTime(loading)
 
+const headerIcon = computed(() => details.value?.isOrdered ? 'format_list_numbered' : 'collections_bookmark')
+const headerIconClass = computed(() => details.value?.isOrdered ? 'icon-ordered-collection' : 'icon-collection')
+const headerWrapperClass = computed(() => details.value?.isOrdered ? 'wrapper-ordered-collection' : 'wrapper-collection')
+
 // Export menu items (only Turtle for collections)
 const exportMenuItems = computed(() => [
   { label: 'Export as Turtle', icon: 'pi pi-code', command: () => details.value && exportAsTurtle(details.value.uri) },
@@ -274,7 +278,7 @@ function clearError() {
 }
 
 function navigateToMember(member: { uri: string; type?: string }) {
-  if (member.type === 'collection') {
+  if (member.type === 'collection' || member.type === 'orderedCollection') {
     emit('selectCollection', member.uri)
   } else {
     emit('selectMember', member.uri)
@@ -294,7 +298,7 @@ function isExternalScheme(ref: ConceptRef): boolean {
   // Skip if no scheme selected (no badges shown)
   if (!schemeStore.selectedUri) return false
   // Schemes and collections don't show external indicator
-  if (ref.type === 'scheme' || ref.type === 'collection') return false
+  if (ref.type === 'scheme' || ref.type === 'collection' || ref.type === 'orderedCollection') return false
   // External if inCurrentScheme is explicitly false (undefined means we didn't check)
   return ref.inCurrentScheme === false
 }
@@ -349,9 +353,9 @@ watch(
     >
       <div v-if="details" class="details-content">
         <DetailsHeader
-          icon="collections_bookmark"
-          icon-class="icon-collection"
-          wrapper-class="wrapper-collection"
+          :icon="headerIcon"
+          :icon-class="headerIconClass"
+          :wrapper-class="headerWrapperClass"
           :title="displayTitle"
           :uri="details.uri"
           :lang-tag="displayLang || undefined"
@@ -465,8 +469,12 @@ watch(
               @click="navigateToMember(member)"
             >
               <span class="material-symbols-outlined member-icon"
-                    :class="member.type === 'collection' ? 'icon-collection' : (member.hasNarrower ? 'icon-label' : 'icon-leaf')">
-                {{ member.type === 'collection' ? 'collections_bookmark' : (member.hasNarrower ? 'label' : 'circle') }}
+                    :class="member.type === 'orderedCollection'
+                      ? 'icon-ordered-collection'
+                      : (member.type === 'collection' ? 'icon-collection' : (member.hasNarrower ? 'icon-label' : 'icon-leaf'))">
+                {{ member.type === 'orderedCollection'
+                  ? 'format_list_numbered'
+                  : (member.type === 'collection' ? 'collections_bookmark' : (member.hasNarrower ? 'label' : 'circle')) }}
               </span>
               <span class="member-label">
                 {{ formatRefLabel(member) }}
@@ -718,6 +726,10 @@ watch(
 /* Wrapper class for collection icon in header */
 :deep(.wrapper-collection) {
   background: color-mix(in srgb, var(--ae-icon-collection) 15%, transparent);
+}
+
+:deep(.wrapper-ordered-collection) {
+  background: color-mix(in srgb, var(--ae-icon-ordered-collection) 15%, transparent);
 }
 
 .doc-values {

@@ -34,6 +34,7 @@ export const TYPE = {
   Concept: `${NS.SKOS}Concept`,
   ConceptScheme: `${NS.SKOS}ConceptScheme`,
   Collection: `${NS.SKOS}Collection`,
+  OrderedCollection: `${NS.SKOS}OrderedCollection`,
 } as const
 
 export type TypeUri = typeof TYPE[keyof typeof TYPE]

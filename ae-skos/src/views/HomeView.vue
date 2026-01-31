@@ -1,3 +1,8 @@
+/**
+ * Home view placeholder component.
+ * Provides basic responsive layout structure for SKOS browser.
+ * @see /spec/ae-skos/sko00-overview.md
+ */
 <script setup lang="ts">
 import { useUIStore } from '../stores'
 

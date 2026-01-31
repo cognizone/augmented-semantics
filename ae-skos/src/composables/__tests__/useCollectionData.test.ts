@@ -950,6 +950,65 @@ describe('useCollectionData', () => {
       expect(members.value[1].label).toBe('Zebra')
     })
 
+    it('loads ordered collection members in memberList order', async () => {
+      const orderedUris = [
+        'http://example.org/concept/2',
+        'http://example.org/collection/ordered-child',
+      ]
+      const head = 'http://example.org/list/1'
+      const node2 = 'http://example.org/list/2'
+      const nil = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#nil'
+
+      ;(executeSparql as Mock).mockImplementation(async (_endpoint, query: string) => {
+        if (query.includes('ASK') && query.includes('skos:OrderedCollection')) {
+          return { boolean: true }
+        }
+        if (query.includes('skos:memberList') && query.includes('rdf:first')) {
+          return {
+            results: {
+              bindings: [
+                { head: { value: head }, node: { value: node2 }, first: { value: orderedUris[1] }, rest: { value: nil } },
+                { head: { value: head }, node: { value: head }, first: { value: orderedUris[0] }, rest: { value: node2 } },
+              ],
+            },
+          }
+        }
+        if (query.includes('VALUES ?member')) {
+          return {
+            results: {
+              bindings: [
+                { member: { value: orderedUris[1] }, isOrderedCollection: { value: 'true' } },
+                { member: { value: orderedUris[0] }, isCollection: { value: 'false' } },
+              ],
+            },
+          }
+        }
+        if (query.includes('SELECT ?predicate ?value')) {
+          return { results: { bindings: [] } }
+        }
+        if (query.includes('labelType') && !query.includes('skos:member')) {
+          return { results: { bindings: [] } }
+        }
+        if (query.includes('hasNarrower')) {
+          return { results: { bindings: [] } }
+        }
+        return { results: { bindings: [] } }
+      })
+
+      mockMemberLabelsData.current = new Map([
+        [orderedUris[0], { value: 'ZZZ', lang: 'en' }],
+        [orderedUris[1], { value: 'AAA', lang: 'en' }],
+      ])
+
+      const { loadDetails, members, memberCount } = useCollectionData()
+      await loadDetails('http://example.org/collection/ordered')
+      await flushPromises()
+
+      expect(memberCount.value).toBe(2)
+      expect(members.value.map((m) => m.uri)).toEqual(orderedUris)
+      expect(members.value[1].type).toBe('orderedCollection')
+    })
+
     it('extracts hasNarrower for member icons', async () => {
       ;(executeSparql as Mock).mockImplementation(async (_endpoint, query: string) => {
         if (query.includes('skos:member')) {

@@ -12,9 +12,12 @@ import { buildCapabilityAwareLabelUnionClause } from '../constants'
 import { buildSchemeValuesClause } from '../utils/schemeUri'
 
 export type CollectionQueryStage = 'inScheme' | 'topConcept' | 'transitive' | 'path'
+export type CollectionQueryMode = 'collection' | 'ordered'
 export interface SchemeFixOptions {
   enableSchemeUriSlashFix?: boolean
 }
+
+const COLLECTION_MEMBER_PATH = 'skos:member|skos:memberList/rdf:rest*/rdf:first'
 
 /**
  * Get capabilities for collection queries.
@@ -362,7 +365,7 @@ export function buildCollectionsQuery(
 
   return withPrefixes(`
     SELECT DISTINCT ?collection ?label ?labelLang ?labelType ?notation
-           ?hasParentCollection ?hasChildCollections WHERE {
+           ?hasParentCollection ?hasChildCollections ?isOrdered WHERE {
       ${valuesClause}
       ?collection a skos:Collection .
       ?collection skos:member ?concept .
@@ -373,14 +376,17 @@ export function buildCollectionsQuery(
       # Detect if nested (has parent collection)
       BIND(EXISTS {
         ?parentCol a skos:Collection .
-        ?parentCol skos:member ?collection .
+        ?parentCol ${COLLECTION_MEMBER_PATH} ?collection .
       } AS ?hasParentCollection)
 
       # Detect if has children (has child collections)
       BIND(EXISTS {
-        ?collection skos:member ?childCol .
+        ?collection ${COLLECTION_MEMBER_PATH} ?childCol .
         ?childCol a skos:Collection .
       } AS ?hasChildCollections)
+
+      # OrderedCollection marker (for icon/display)
+      BIND(EXISTS { ?collection a skos:OrderedCollection . } AS ?isOrdered)
 
       # Label resolution with priority tracking (capability-aware)
       OPTIONAL {
@@ -406,26 +412,77 @@ export function buildAllCollectionsQuery(
 
   return withPrefixes(`
     SELECT DISTINCT ?collection ?label ?labelLang ?labelType ?notation
-           ?hasParentCollection ?hasChildCollections WHERE {
+           ?hasParentCollection ?hasChildCollections ?isOrdered WHERE {
       ?collection a skos:Collection .
 
       # Only top-level collections (no parent collection)
       FILTER NOT EXISTS {
         ?parentCol a skos:Collection .
-        ?parentCol skos:member ?collection .
+        ?parentCol ${COLLECTION_MEMBER_PATH} ?collection .
       }
 
       # Detect if nested (kept for consistent bindings; always false here)
       BIND(EXISTS {
         ?parentCol a skos:Collection .
-        ?parentCol skos:member ?collection .
+        ?parentCol ${COLLECTION_MEMBER_PATH} ?collection .
       } AS ?hasParentCollection)
 
       # Detect if has children (has child collections)
       BIND(EXISTS {
-        ?collection skos:member ?childCol .
+        ?collection ${COLLECTION_MEMBER_PATH} ?childCol .
         ?childCol a skos:Collection .
       } AS ?hasChildCollections)
+
+      # OrderedCollection marker (for icon/display)
+      BIND(EXISTS { ?collection a skos:OrderedCollection . } AS ?isOrdered)
+
+      # Label resolution with priority tracking (capability-aware)
+      OPTIONAL {
+        ${labelClause}
+      }
+
+      # Notation
+      OPTIONAL { ?collection skos:notation ?notation }
+    }
+    ORDER BY ?collection
+  `)
+}
+
+/**
+ * Build SPARQL query for loading all root ordered collections (no scheme filtering).
+ * Filters out ordered collections nested inside other ordered collections.
+ */
+export function buildAllOrderedCollectionsQuery(
+  endpoint: SPARQLEndpoint
+): string {
+  const collectionCapabilities = endpoint.analysis?.labelPredicates?.collection
+  const labelClause = buildCapabilityAwareLabelUnionClause('?collection', collectionCapabilities)
+
+  return withPrefixes(`
+    SELECT DISTINCT ?collection ?label ?labelLang ?labelType ?notation
+           ?hasParentCollection ?hasChildCollections ?isOrdered WHERE {
+      ?collection a skos:OrderedCollection .
+
+      # Only top-level ordered collections (no ordered parent collection)
+      FILTER NOT EXISTS {
+        ?parentCol a skos:OrderedCollection .
+        ?parentCol ${COLLECTION_MEMBER_PATH} ?collection .
+      }
+
+      # Detect if nested (kept for consistent bindings; always false here)
+      BIND(EXISTS {
+        ?parentCol a skos:OrderedCollection .
+        ?parentCol ${COLLECTION_MEMBER_PATH} ?collection .
+      } AS ?hasParentCollection)
+
+      # Detect if has ordered child collections
+      BIND(EXISTS {
+        ?collection ${COLLECTION_MEMBER_PATH} ?childCol .
+        ?childCol a skos:OrderedCollection .
+      } AS ?hasChildCollections)
+
+      # OrderedCollection marker (for icon/display)
+      BIND(true AS ?isOrdered)
 
       # Label resolution with priority tracking (capability-aware)
       OPTIONAL {
@@ -453,26 +510,33 @@ export function buildChildCollectionsQuery(
   parentUri: string,
   schemeUri: string | null,
   endpoint: SPARQLEndpoint,
+  mode: CollectionQueryMode = 'collection',
   options?: SchemeFixOptions
 ): string | null {
   if (!schemeUri) {
     const collectionCapabilities = endpoint.analysis?.labelPredicates?.collection
     const labelClause = buildCapabilityAwareLabelUnionClause('?collection', collectionCapabilities)
+    const typePattern = mode === 'ordered'
+      ? '?collection a skos:OrderedCollection .'
+      : '?collection a skos:Collection .'
 
     return withPrefixes(`
       SELECT DISTINCT ?collection ?label ?labelLang ?labelType ?notation
-             ?hasParentCollection ?hasChildCollections WHERE {
-        <${parentUri}> skos:member ?collection .
-        ?collection a skos:Collection .
+             ?hasParentCollection ?hasChildCollections ?isOrdered WHERE {
+        <${parentUri}> ${COLLECTION_MEMBER_PATH} ?collection .
+        ${typePattern}
 
         # Child collections are nested by definition
         BIND(true AS ?hasParentCollection)
 
         # Detect if has children (for recursive expandability)
         BIND(EXISTS {
-          ?collection skos:member ?childCol .
-          ?childCol a skos:Collection .
+          ?collection ${COLLECTION_MEMBER_PATH} ?childCol .
+          ?childCol a ${mode === 'ordered' ? 'skos:OrderedCollection' : 'skos:Collection'} .
         } AS ?hasChildCollections)
+
+        # OrderedCollection marker (for icon/display)
+        BIND(${mode === 'ordered' ? 'true' : 'EXISTS { ?collection a skos:OrderedCollection . }'} AS ?isOrdered)
 
         # Label resolution with priority tracking (capability-aware)
         OPTIONAL {
@@ -512,10 +576,10 @@ export function buildChildCollectionsQuery(
 
   return withPrefixes(`
     SELECT DISTINCT ?collection ?label ?labelLang ?labelType ?notation
-           ?hasChildCollections WHERE {
+           ?hasChildCollections ?isOrdered WHERE {
       ${valuesClause}
-      <${parentUri}> skos:member ?collection .
-      ?collection a skos:Collection .
+      <${parentUri}> ${COLLECTION_MEMBER_PATH} ?collection .
+      ${mode === 'ordered' ? '?collection a skos:OrderedCollection .' : '?collection a skos:Collection .'}
 
       # Child collection must have members in current scheme
       ?collection skos:member ?member .
@@ -523,9 +587,12 @@ export function buildChildCollectionsQuery(
 
       # Detect if has children (for recursive expandability)
       BIND(EXISTS {
-        ?collection skos:member ?childCol .
-        ?childCol a skos:Collection .
+        ?collection ${COLLECTION_MEMBER_PATH} ?childCol .
+        ?childCol a ${mode === 'ordered' ? 'skos:OrderedCollection' : 'skos:Collection'} .
       } AS ?hasChildCollections)
+
+      # OrderedCollection marker (for icon/display)
+      BIND(${mode === 'ordered' ? 'true' : 'EXISTS { ?collection a skos:OrderedCollection . }'} AS ?isOrdered)
 
       # Label resolution with priority tracking (capability-aware)
       OPTIONAL {
