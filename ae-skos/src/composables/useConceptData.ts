@@ -34,7 +34,11 @@ export function useConceptData() {
   let detailsRequestId = 0
 
   /**
-   * Load collections that contain this concept (inverse of skos:member)
+   * Load collections that contain this concept (inverse of skos:member).
+   *
+   * @param uri - The concept URI to find containing collections for
+   * @param conceptDetails - The concept details object to populate with collections
+   * @returns Promise that resolves when collections are loaded into conceptDetails
    */
   async function loadCollections(uri: string, conceptDetails: ConceptDetails): Promise<void> {
     const endpoint = endpointStore.current
@@ -254,8 +258,8 @@ export function useConceptData() {
         // Sort: current scheme first, then by scheme, then by notation, then by label
         refs.sort((a, b) => {
           // Current scheme items first (treat undefined as external)
-          const aInCurrent = a.inCurrentScheme ?? (a.type === 'scheme' || a.type === 'collection')
-          const bInCurrent = b.inCurrentScheme ?? (b.type === 'scheme' || b.type === 'collection')
+          const aInCurrent = a.inCurrentScheme ?? (a.type === 'scheme' || a.type === 'collection' || a.type === 'orderedCollection')
+          const bInCurrent = b.inCurrentScheme ?? (b.type === 'scheme' || b.type === 'collection' || b.type === 'orderedCollection')
           if (aInCurrent !== bInCurrent) {
             return aInCurrent ? -1 : 1
           }
@@ -295,7 +299,10 @@ export function useConceptData() {
   }
 
   /**
-   * Load complete concept details
+   * Load complete concept details.
+   *
+   * @param uri - The concept URI to load details for
+   * @returns Promise that resolves when main properties are loaded (async loads continue)
    */
   async function loadDetails(uri: string): Promise<void> {
     const endpoint = endpointStore.current

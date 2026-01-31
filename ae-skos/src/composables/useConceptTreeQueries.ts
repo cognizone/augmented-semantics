@@ -16,6 +16,11 @@ export function useConceptTreeQueries() {
   const settingsStore = useSettingsStore()
   const { getDeprecationSparqlClauses, getDeprecationSelectVars } = useDeprecation()
 
+  /**
+   * Build SPARQL clause to check if a concept has narrower concepts.
+   *
+   * @returns SPARQL BIND clause that sets ?hasNarrower boolean
+   */
   function buildHasNarrowerClause(): string {
     return `
       BIND(EXISTS {
@@ -29,6 +34,11 @@ export function useConceptTreeQueries() {
    * Build metadata query for explicit top concepts (fast path).
    * Returns concept URIs + notation + hasNarrower (no labels).
    * Returns null if endpoint has no explicit top concept capabilities.
+   *
+   * @param schemeUri - The scheme URI to query top concepts for
+   * @param pageSize - Number of concepts per page (query fetches pageSize + 1 for hasMore)
+   * @param offset - Number of concepts to skip for pagination
+   * @returns SPARQL SELECT query string, or null if no explicit top concept relationships exist
    */
   function buildExplicitTopConceptsMetadataQuery(schemeUri: string, pageSize: number, offset: number): string | null {
     const rel = endpointStore.current?.analysis?.relationships
@@ -77,6 +87,11 @@ export function useConceptTreeQueries() {
   /**
    * Build metadata query for in-scheme-only concepts (special case).
    * Returns concepts in the scheme with no placement relationships.
+   *
+   * @param schemeUri - The scheme URI to query concepts for
+   * @param pageSize - Number of concepts per page (query fetches pageSize + 1 for hasMore)
+   * @param offset - Number of concepts to skip for pagination
+   * @returns SPARQL SELECT query string for orphan-like concepts with only inScheme
    */
   function buildInSchemeOnlyTopConceptsMetadataQuery(schemeUri: string, pageSize: number, offset: number): string {
     const deprecationSelectVars = getDeprecationSelectVars()
@@ -119,6 +134,11 @@ export function useConceptTreeQueries() {
   /**
    * Build combined metadata query for top concepts (explicit + in-scheme-only).
    * Used for mixed pagination.
+   *
+   * @param schemeUri - The scheme URI to query top concepts for
+   * @param pageSize - Number of concepts per page (query fetches pageSize + 1 for hasMore)
+   * @param offset - Number of concepts to skip for pagination
+   * @returns SPARQL SELECT query string with isInSchemeOnly flag to distinguish types
    */
   function buildTopConceptsMetadataQuery(schemeUri: string, pageSize: number, offset: number): string {
     const deprecationSelectVars = getDeprecationSelectVars()
@@ -171,6 +191,11 @@ export function useConceptTreeQueries() {
   /**
    * Build metadata query for children of a concept.
    * Returns concept URIs + notation + hasNarrower (no labels).
+   *
+   * @param parentUri - The parent concept URI to query children for
+   * @param pageSize - Number of concepts per page (query fetches pageSize + 1 for hasMore)
+   * @param offset - Number of concepts to skip for pagination
+   * @returns SPARQL SELECT query string for narrower concepts of the parent
    */
   function buildChildrenMetadataQuery(parentUri: string, pageSize: number, offset: number): string {
     const deprecationSelectVars = getDeprecationSelectVars()

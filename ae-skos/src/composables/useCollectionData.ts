@@ -41,9 +41,13 @@ export function useCollectionData() {
   const memberUriSet = new Set<string>()
   let detailsRequestId = 0
   /**
-   * Build query to load collection properties
-   * Supports SKOS-XL labels, dct:title, and rdfs:label for broader compatibility
-   * Uses capability-aware label detection when available
+   * Build query to load collection properties.
+   * Supports SKOS-XL labels, dct:title, and rdfs:label for broader compatibility.
+   * Uses capability-aware label detection when available.
+   *
+   * @param collectionUri - The URI of the collection to query
+   * @param capabilities - Optional label predicate capabilities from endpoint analysis
+   * @returns SPARQL SELECT query string with prefixes
    */
   function buildDetailsQuery(collectionUri: string, capabilities?: LabelPredicateCapabilities): string {
     // Build label UNION branches based on capabilities
@@ -227,13 +231,17 @@ export function useCollectionData() {
 
   /**
    * Build query to load concept members (fast, no expensive metadata).
+   *
+   * @param collectionUri - The URI of the collection to query members from
+   * @returns SPARQL SELECT query string for concept members with notation
    */
   function buildConceptMembersBaseQuery(collectionUri: string): string {
     return withPrefixes(`
-      SELECT DISTINCT ?member ?notation ?isCollection WHERE {
+      SELECT DISTINCT ?member ?notation ?isCollection ?isOrderedCollection WHERE {
         <${collectionUri}> skos:member ?member .
         ?member a skos:Concept .
         BIND(false AS ?isCollection)
+        BIND(false AS ?isOrderedCollection)
         OPTIONAL { ?member skos:notation ?notation }
       }
       ORDER BY ?member
@@ -242,16 +250,24 @@ export function useCollectionData() {
 
   /**
    * Build query to load collection members (fast, no expensive metadata).
+   *
+   * @param collectionUri - The URI of the parent collection to query
+   * @returns SPARQL SELECT query string for nested collection members
    */
   function buildCollectionMembersBaseQuery(collectionUri: string): string {
     return withPrefixes(`
-      SELECT DISTINCT ?member ?notation ?isCollection WHERE {
+      SELECT DISTINCT ?member ?notation ?isCollection ?isOrderedCollection WHERE {
         <${collectionUri}> skos:member ?member .
         BIND(EXISTS {
           { ?member a skos:Collection }
-          UNION
-          { ?member skos:member ?child }
+          UNION { ?member a skos:OrderedCollection }
+          UNION { ?member skos:member ?child }
+          UNION { ?member skos:memberList ?list }
         } AS ?isCollection)
+        BIND(EXISTS {
+          { ?member a skos:OrderedCollection }
+          UNION { ?member skos:memberList ?list }
+        } AS ?isOrderedCollection)
         FILTER(?isCollection = true)
         OPTIONAL { ?member skos:notation ?notation }
       }
@@ -259,6 +275,111 @@ export function useCollectionData() {
     `)
   }
 
+  /**
+   * Build query to load ordered collection member list structure.
+   *
+   * @param collectionUri - The URI of the ordered collection
+   * @returns SPARQL SELECT query string for RDF list traversal (head, node, first, rest)
+   */
+  function buildOrderedMemberListQuery(collectionUri: string): string {
+    return withPrefixes(`
+      SELECT ?head ?node ?first ?rest WHERE {
+        <${collectionUri}> skos:memberList ?head .
+        ?head rdf:rest* ?node .
+        ?node rdf:first ?first .
+        OPTIONAL { ?node rdf:rest ?rest }
+      }
+    `)
+  }
+
+  const RDF_NIL = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#nil'
+
+  /**
+   * Resolve ordered member URIs from RDF list structure bindings.
+   * Traverses the rdf:first/rdf:rest chain to reconstruct member order.
+   *
+   * @param bindings - SPARQL result bindings with head, node, first, rest values
+   * @returns Ordered array of unique member URIs
+   */
+  function resolveOrderedMemberUris(
+    bindings: Array<Record<string, { value: string }>>
+  ): string[] {
+    const headMap = new Map<string, Map<string, { first: string; rest?: string }>>()
+
+    for (const b of bindings) {
+      const head = b.head?.value
+      const node = b.node?.value
+      const first = b.first?.value
+      const rest = b.rest?.value
+      if (!head || !node || !first) continue
+
+      if (!headMap.has(head)) {
+        headMap.set(head, new Map())
+      }
+      headMap.get(head)!.set(node, { first, rest })
+    }
+
+    const ordered: string[] = []
+    const orderedHeads = Array.from(headMap.keys()).sort()
+    for (const head of orderedHeads) {
+      const nodes = headMap.get(head)!
+      let current: string | undefined = head
+      const visited = new Set<string>()
+      while (current && current !== RDF_NIL && !visited.has(current)) {
+        visited.add(current)
+        const entry = nodes.get(current)
+        if (!entry) break
+        ordered.push(entry.first)
+        current = entry.rest
+      }
+    }
+
+    const unique: string[] = []
+    const seen = new Set<string>()
+    for (const uri of ordered) {
+      if (seen.has(uri)) continue
+      seen.add(uri)
+      unique.push(uri)
+    }
+
+    return unique
+  }
+
+  /**
+   * Build query to load metadata for ordered collection members.
+   *
+   * @param memberUris - Array of member URIs to query metadata for
+   * @returns SPARQL SELECT query string with notation and collection type flags
+   */
+  function buildOrderedMembersMetadataQuery(memberUris: string[]): string {
+    const valuesClause = memberUris.map(uri => `<${uri}>`).join(' ')
+    return withPrefixes(`
+      SELECT ?member ?notation ?isCollection ?isOrderedCollection WHERE {
+        VALUES ?member { ${valuesClause} }
+        OPTIONAL { ?member skos:notation ?notation }
+        BIND(EXISTS {
+          { ?member a skos:Collection }
+          UNION { ?member a skos:OrderedCollection }
+          UNION { ?member skos:member ?child }
+          UNION { ?member skos:memberList ?list }
+        } AS ?isCollection)
+        BIND(EXISTS {
+          { ?member a skos:OrderedCollection }
+          UNION { ?member skos:memberList ?list }
+        } AS ?isOrderedCollection)
+      }
+    `)
+  }
+
+  /**
+   * Build query to check member scheme membership.
+   * Determines if members belong to the current scheme using various relationship patterns.
+   *
+   * @param memberUris - Array of member URIs to check scheme membership for
+   * @param schemeUri - The current scheme URI to check membership against
+   * @param relationships - Optional endpoint relationship capabilities from analysis
+   * @returns SPARQL SELECT query string, or null if no relationship patterns available
+   */
   function buildMemberSchemeQuery(
     memberUris: string[],
     schemeUri: string,
@@ -339,6 +460,13 @@ export function useCollectionData() {
     `)
   }
 
+  /**
+   * Build query to check if members have narrower concepts.
+   * Used for displaying expand/collapse icons in the tree.
+   *
+   * @param memberUris - Array of member URIs to check for narrower concepts
+   * @returns SPARQL SELECT query string with hasNarrower boolean for each member
+   */
   function buildMemberNarrowerQuery(memberUris: string[]): string {
     const valuesClause = memberUris.map(uri => `<${uri}>`).join(' ')
     return withPrefixes(`
@@ -354,9 +482,13 @@ export function useCollectionData() {
   }
 
   /**
-   * Process detail bindings into CollectionDetails
-   * Stores title types separately: dctTitles, dcTitles, rdfsLabels
-   * XL labels are loaded separately via loadXLLabels for proper URI tracking
+   * Process detail bindings into CollectionDetails.
+   * Stores title types separately: dctTitles, dcTitles, rdfsLabels.
+   * XL labels are loaded separately via loadXLLabels for proper URI tracking.
+   *
+   * @param uri - The collection URI
+   * @param bindings - SPARQL result bindings with predicate, value, lang, and datatype
+   * @returns Populated CollectionDetails object (XL labels and otherProperties empty)
    */
   function processDetailsBindings(
     uri: string,
@@ -528,9 +660,15 @@ export function useCollectionData() {
    * Process member metadata bindings into ConceptRef array (without labels).
    * Labels are loaded progressively after this processing.
    * Also tracks hasNarrower for icon display and cross-scheme indicator fields.
+   *
+   * @param bindings - SPARQL result bindings with member, notation, hasNarrower, etc.
+   * @param options - Optional processing options
+   * @param options.order - If provided, preserves this URI order (for ordered collections)
+   * @returns Array of ConceptRef objects with metadata but no labels
    */
   function processMemberMetadataBindings(
-    bindings: Array<Record<string, { value: string; 'xml:lang'?: string }>>
+    bindings: Array<Record<string, { value: string; 'xml:lang'?: string }>>,
+    options?: { order?: string[] }
   ): ConceptRef[] {
     // Group by member URI to handle multiple bindings per member
     const memberMap = new Map<string, {
@@ -538,6 +676,7 @@ export function useCollectionData() {
       notation?: string
       hasNarrower?: boolean
       isCollection?: boolean
+      isOrdered?: boolean
       inCurrentScheme?: boolean
       displayScheme?: string
     }>()
@@ -565,6 +704,10 @@ export function useCollectionData() {
       if (b.isCollection?.value === 'true') {
         entry.isCollection = true
       }
+      if (b.isOrderedCollection?.value === 'true') {
+        entry.isOrdered = true
+        entry.isCollection = true
+      }
 
       // Track inCurrentScheme (boolean from EXISTS check)
       if (b.inCurrentScheme?.value !== undefined && entry.inCurrentScheme === undefined) {
@@ -579,13 +722,17 @@ export function useCollectionData() {
 
     // Convert to ConceptRef array (labels will be loaded progressively)
     const result: ConceptRef[] = []
+    const orderedUris = options?.order
 
-    for (const entry of memberMap.values()) {
+    const pushRef = (entry: { uri: string; notation?: string; hasNarrower?: boolean; isCollection?: boolean; isOrdered?: boolean; inCurrentScheme?: boolean; displayScheme?: string }) => {
+      const type: ConceptRef['type'] = entry.isOrdered
+        ? 'orderedCollection'
+        : (entry.isCollection ? 'collection' : 'concept')
       const ref: ConceptRef = {
         uri: entry.uri,
         notation: entry.notation,
         hasNarrower: entry.hasNarrower,
-        type: entry.isCollection ? 'collection' : 'concept',
+        type,
       }
 
       // Set cross-scheme indicator fields (only for concepts, not collections)
@@ -601,13 +748,31 @@ export function useCollectionData() {
       result.push(ref)
     }
 
+    if (orderedUris?.length) {
+      for (const uri of orderedUris) {
+        const entry = memberMap.get(uri) ?? { uri }
+        pushRef(entry)
+      }
+      return result
+    }
+
+    for (const entry of memberMap.values()) {
+      pushRef(entry)
+    }
+
     return result
   }
 
+  /**
+   * Sort members by type (collections first), then by notation or label.
+   * Mutates the array in place for stable reactivity.
+   *
+   * @param entries - Array of ConceptRef members to sort in place
+   */
   function sortMembersStable(entries: ConceptRef[]) {
     entries.sort((a, b) => {
-      const groupA = a.type === 'collection' ? 0 : 1
-      const groupB = b.type === 'collection' ? 0 : 1
+      const groupA = (a.type === 'collection' || a.type === 'orderedCollection') ? 0 : 1
+      const groupB = (b.type === 'collection' || b.type === 'orderedCollection') ? 0 : 1
       if (groupA !== groupB) return groupA - groupB
 
       const keyA = (settingsStore.showNotationInLabels ? (a.notation || getUriFragment(a.uri) || a.uri) : (getUriFragment(a.uri) || a.uri)).toLowerCase()
@@ -616,6 +781,12 @@ export function useCollectionData() {
     })
   }
 
+  /**
+   * Update member refs in place with new data by URI.
+   * Used for progressive enrichment (hasNarrower, scheme info) after initial load.
+   *
+   * @param updates - Map of URI to partial ConceptRef updates to apply
+   */
   function updateMembersByUri(
     updates: Map<string, Partial<ConceptRef>>
   ) {
@@ -628,7 +799,10 @@ export function useCollectionData() {
   }
 
   /**
-   * Load collection details
+   * Load collection details including properties, XL labels, and other properties.
+   * Triggers member loading as a follow-up operation.
+   *
+   * @param collectionUri - The URI of the collection to load
    */
   async function loadDetails(collectionUri: string) {
     const endpoint = endpointStore.current
@@ -716,10 +890,22 @@ export function useCollectionData() {
         return
       }
 
+      // Detect OrderedCollection for icon/display
+      try {
+        const orderedQuery = withPrefixes(`ASK { <${collectionUri}> a skos:OrderedCollection }`)
+        const orderedResults = await executeSparql(endpoint, orderedQuery, { retries: 0 })
+        if (!isCurrentRequest()) {
+          return
+        }
+        collectionDetails.isOrdered = orderedResults.boolean === true
+      } catch (e) {
+        logger.debug('CollectionData', 'Failed to detect ordered collection type', { uri: collectionUri, error: e })
+      }
+
       details.value = collectionDetails
 
       // Load members separately
-      loadMembers(collectionUri, requestId, endpointId)
+      loadMembers(collectionUri, requestId, endpointId, collectionDetails.isOrdered === true)
     } catch (e: unknown) {
       if (!isCurrentRequest()) {
         return
@@ -741,8 +927,13 @@ export function useCollectionData() {
    * Load collection members (separate from main details).
    * Uses progressive label loading for better performance with endpoints
    * that have many languages.
+   *
+   * @param collectionUri - The URI of the collection to load members for
+   * @param requestId - Request ID for staleness detection
+   * @param endpointId - Endpoint ID for staleness detection
+   * @param isOrderedCollection - Whether this is an ordered collection (uses memberList)
    */
-  async function loadMembers(collectionUri: string, requestId: number, endpointId: string) {
+  async function loadMembers(collectionUri: string, requestId: number, endpointId: string, isOrderedCollection = false) {
     const endpoint = endpointStore.current
     if (!endpoint) return
     const isCurrentRequest = () =>
@@ -770,6 +961,150 @@ export function useCollectionData() {
 
     try {
       const currentSchemeUri = schemeStore.selectedUri
+      const isOrdered = isOrderedCollection === true
+
+      if (isOrdered) {
+        memberUriSet.clear()
+
+        const listQuery = buildOrderedMemberListQuery(collectionUri)
+        const listResults = await executeSparql(endpoint, listQuery, { retries: 1 })
+        if (!isCurrentRequest()) {
+          return
+        }
+        const orderedUris = resolveOrderedMemberUris(
+          listResults.results.bindings as Array<Record<string, { value: string }>>
+        )
+        memberCount.value = orderedUris.length
+
+        if (orderedUris.length === 0) {
+          members.value = []
+          membersLoaded.value = true
+          loadingMembers.value = false
+          loadingMemberLabels.value = false
+          hierarchyLoading.value = false
+          schemeLoading.value = false
+          return
+        }
+
+        const metadataQuery = buildOrderedMembersMetadataQuery(orderedUris)
+        const metadataResults = await executeSparql(endpoint, metadataQuery, { retries: 1 })
+        if (!isCurrentRequest()) {
+          return
+        }
+
+        const orderedMembers = processMemberMetadataBindings(
+          metadataResults.results.bindings as Array<Record<string, { value: string; 'xml:lang'?: string }>>,
+          { order: orderedUris }
+        )
+
+        members.value = orderedMembers
+        membersLoaded.value = true
+
+        logger.info('CollectionData', `Loaded ${orderedMembers.length} ordered member metadata`)
+
+        // Step 2: Progressive label loading
+        const conceptMembers = orderedMembers.filter(m => m.type === 'concept')
+        const collectionMembers = orderedMembers.filter(m => m.type === 'collection' || m.type === 'orderedCollection')
+
+        loadingMembers.value = false
+        loadingMemberLabels.value = true
+
+        const { loadLabelsProgressively } = useProgressiveLabelLoader()
+
+        await Promise.all([
+          conceptMembers.length > 0 ? loadLabelsProgressively(
+            conceptMembers.map(m => m.uri),
+            'concept',
+            (resolved) => {
+              if (!isCurrentRequest()) return
+              labelsResolvedCount.value = resolved.size
+              for (const member of members.value) {
+                const label = resolved.get(member.uri)
+                if (label) {
+                  member.label = label.value
+                  member.lang = label.lang
+                }
+              }
+            }
+          ) : Promise.resolve(),
+
+          collectionMembers.length > 0 ? loadLabelsProgressively(
+            collectionMembers.map(m => m.uri),
+            'collection',
+            (resolved) => {
+              if (!isCurrentRequest()) return
+              labelsResolvedCount.value = Math.max(labelsResolvedCount.value, resolved.size)
+              for (const member of members.value) {
+                const label = resolved.get(member.uri)
+                if (label) {
+                  member.label = label.value
+                  member.lang = label.lang
+                }
+              }
+            }
+          ) : Promise.resolve(),
+        ])
+        loadingMemberLabels.value = false
+
+        // Step 3: Enrich concepts with hierarchy and scheme info (async, non-blocking)
+        const conceptUris = conceptMembers.map(m => m.uri)
+
+        if (conceptUris.length > 0) {
+          try {
+            hierarchyLoading.value = true
+            const narrowerQuery = buildMemberNarrowerQuery(conceptUris)
+            const narrowerResults = await executeSparql(endpoint, narrowerQuery, { retries: 1 })
+            if (!isCurrentRequest()) {
+              return
+            }
+            const updates = new Map<string, Partial<ConceptRef>>()
+            for (const b of narrowerResults.results.bindings) {
+              const uri = b.member?.value
+              if (!uri) continue
+              updates.set(uri, {
+                hasNarrower: b.hasNarrower?.value === 'true',
+              })
+            }
+            updateMembersByUri(updates)
+          } catch (e) {
+            logger.warn('CollectionData', 'Failed to load member hierarchy info', { error: e })
+          } finally {
+            hierarchyLoading.value = false
+          }
+
+          if (currentSchemeUri) {
+            try {
+              schemeLoading.value = true
+              const schemeQuery = buildMemberSchemeQuery(conceptUris, currentSchemeUri, endpoint.analysis?.relationships)
+              if (!schemeQuery) {
+                schemeLoading.value = false
+                return
+              }
+              const schemeResults = await executeSparql(endpoint, schemeQuery, { retries: 1 })
+              if (!isCurrentRequest()) {
+                return
+              }
+              const updates = new Map<string, Partial<ConceptRef>>()
+              for (const b of schemeResults.results.bindings) {
+                const uri = b.member?.value
+                if (!uri) continue
+                updates.set(uri, {
+                  inCurrentScheme: b.inCurrentScheme?.value === 'true',
+                  displayScheme: b.displayScheme?.value,
+                })
+              }
+              updateMembersByUri(updates)
+            } catch (e) {
+              logger.warn('CollectionData', 'Failed to load member scheme info', { error: e })
+            } finally {
+              schemeLoading.value = false
+            }
+          }
+        }
+
+        logger.info('CollectionData', `Labels loaded for ${members.value.length} members`)
+        return
+      }
 
       const countQuery = withPrefixes(`
         SELECT (COUNT(DISTINCT ?member) AS ?count)
@@ -829,7 +1164,7 @@ export function useCollectionData() {
       // Step 2: Progressive label loading
       // Members can be concepts OR collections - we need to handle both types
       const conceptMembers = newMembers.filter(m => m.type === 'concept')
-      const collectionMembers = newMembers.filter(m => m.type === 'collection')
+      const collectionMembers = newMembers.filter(m => m.type === 'collection' || m.type === 'orderedCollection')
 
       loadingMembers.value = false
       loadingMemberLabels.value = true
