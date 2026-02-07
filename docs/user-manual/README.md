@@ -1,14 +1,15 @@
 # AE SKOS User Manual
 
-A browser-based tool for exploring SKOS (Simple Knowledge Organization System) vocabularies via SPARQL endpoints.
+A fast, modern browser for exploring SKOS vocabularies. Lazy-loaded trees, instant search, multilingual support, dark mode, and keyboard shortcuts — all running directly in your browser. No backend, no installation, no data leaves your machine.
 
 ## Table of Contents
 
 - [Getting Started](#getting-started)
 - [Managing Endpoints](#managing-endpoints)
+- [Switching Browsing Modes](#switching-browsing-modes)
 - [Browsing Concept Schemes](#browsing-concept-schemes)
-- [Orphan Concepts](#orphan-concepts)
 - [Navigating the Concept Tree](#navigating-the-concept-tree)
+- [Browsing Collections](#browsing-collections)
 - [Viewing Details](#viewing-details)
 - [Searching](#searching)
 - [Recent History](#recent-history)
@@ -24,18 +25,18 @@ AE SKOS connects directly to SPARQL endpoints in your browser - no backend serve
 
 ### First Launch
 
-When you first open AE SKOS, the Endpoint Manager opens automatically with a welcome message and a list of suggested endpoints to help you get started.
+When you first open AE SKOS, what you see depends on how it was deployed:
 
-AE SKOS can operate in two modes:
-1. **Standard mode** - You add and manage your own endpoints (continue with Quick Start below)
-2. **Pre-configured mode** - Endpoints are already set up by an administrator (skip to [Browsing Concept Schemes](#browsing-concept-schemes))
-
-![Initial screen showing welcome banner and suggested endpoints](screenshot-first-launch.png)
+| Standard Mode | Pre-configured Mode |
+|---------------|---------------------|
+| The Endpoint Manager opens with suggested endpoints for you to add and manage. | Endpoints are already set up by an administrator — you're ready to browse. |
+| <img src="screenshot-mode-standard.png" width="350" alt="Standard Mode"> | <img src="screenshot-mode-preconfigured.png" width="350" alt="Pre-configured Mode"> |
+| Continue with **Quick Start** below | Skip to [Browsing Concept Schemes](#browsing-concept-schemes) |
 
 ### Quick Start
 
 1. Pick a **suggested endpoint** from the list, or click "Add Endpoint" for a custom URL
-2. The endpoint is automatically analyzed
+2. Click **Done** to close the Endpoint Manager
 3. Select a concept scheme from the dropdown
 4. Start browsing!
 
@@ -61,12 +62,15 @@ The Endpoint Manager shows a curated list of public SKOS endpoints at the top:
 
 Once added, endpoints appear in your "My Endpoints" list below.
 
+<img src="screenshot-mode-standard.png" width="500" alt="Endpoint Manager showing suggested endpoints">
+
 ### Adding a New Endpoint
 
 1. Click **Add Endpoint** in the Endpoint Manager
-2. The setup wizard opens with multiple steps:
 
-<img src="screenshot-endpoint-wizard.png" alt="Endpoint wizard showing the connection step" width="720">
+<img src="screenshot-endpoint-wizard.png" alt="Endpoint Manager showing the Add Endpoint button" width="720">
+
+2. The setup wizard opens with multiple steps:
 
 #### Step 1: Connection
 
@@ -80,10 +84,18 @@ Click **Test Connection** to verify the endpoint is reachable.
 
 #### Step 2: Analysis
 
-The wizard automatically analyzes the endpoint to detect:
-- Available named graphs
-- SKOS concept schemes
-- Languages used in labels
+The wizard automatically analyzes the endpoint and shows six capabilities:
+
+| Capability | Description |
+|------------|-------------|
+| SKOS Content | Whether the endpoint contains SKOS concepts or schemes |
+| Concept Count | Total number of SKOS concepts |
+| Concept Schemes | Number of concept schemes found |
+| Relationships | Available relationship types (inScheme, topConceptOf, broader, narrower, etc.) |
+| Graph Support | Whether the endpoint supports named graph queries |
+| SKOS Graphs | How many graphs contain SKOS data |
+
+Languages are also detected during this step and shown in the next step (Language Priorities).
 
 <img src="screenshot-endpoint-analysis.png" alt="Analysis step showing detected schemes and languages" width="500">
 
@@ -128,16 +140,34 @@ Click the endpoint badge in the header and select a different endpoint from the 
 
 ---
 
+## Switching Browsing Modes
+
+Use the breadcrumb dropdown to switch between three browsing modes:
+
+1. Click the first breadcrumb segment (shows "Schemes", "Collections", or "Ordered Collections")
+2. Select your preferred browsing mode from the dropdown
+
+| Mode | Description |
+|------|-------------|
+| [Schemes](#browsing-concept-schemes) | Browse concepts organized by concept schemes (default) |
+| [Collections](#browsing-collections) | Browse concepts organized by SKOS collections |
+| [Ordered Collections](#browsing-ordered-collections) | Browse ordered collections where members are displayed in a defined sequence |
+
+<img src="screenshot-browsing-mode.png" alt="Breadcrumb dropdown showing Schemes, Collections, and Ordered Collections options" width="300">
+
+---
+
 ## Browsing Concept Schemes
 
 ### Selecting a Scheme
 
 Use the scheme dropdown in the breadcrumb bar to select a concept scheme.
 
-<!-- IMAGE: screenshot-scheme-dropdown.png -->
-![Scheme dropdown showing available concept schemes](screenshot-scheme-dropdown.png)
-
 **Filtering Schemes:** For endpoints with many schemes, use the filter input at the top of the dropdown. Type to filter schemes by name - the list updates as you type. The filter automatically clears after you make a selection.
+
+<img src="screenshot-scheme-dropdown.png" alt="Scheme dropdown with filter input" width="400">
+
+The dropdown also includes an **Orphan Concepts & Collections** entry for finding disconnected concepts. If you don't see it, enable it in [Settings](#settings) under "Show Orphan Concepts in Scheme Selector".
 
 When you select a scheme:
 - The tree loads with top-level concepts
@@ -148,23 +178,17 @@ When you select a scheme:
 
 When viewing a scheme (no concept selected), the right panel displays:
 
-- **Title/Labels**: Scheme name in multiple languages
-- **Documentation**: Definitions, scope notes, and other descriptions
-- **Metadata**: Creator, dates, version information
-- **Other Properties**: Any additional RDF properties
+- **Titles**: Dublin Core titles (dct:title, dc:title) and RDFS labels
+- **Labels & Notation**: Preferred, alternative, and hidden labels, plus notation codes
+- **Documentation**: Definitions, descriptions, scope notes, history/change/editorial notes, examples
+- **Metadata**: Creator, publisher, rights, license, identifier, status, version, dates (issued, created, modified), deprecation status
+- **Other Properties**: Any additional RDF properties not covered above
 
-<!-- IMAGE: screenshot-scheme-details.png -->
-![Scheme details panel showing labels and metadata](screenshot-scheme-details.png)
-
-### Deprecated Schemes
+<img src="screenshot-scheme-details.png" alt="Scheme details panel showing labels and metadata" width="500">
 
 Schemes marked as deprecated show a "deprecated" badge next to their name in both the dropdown and the tree.
 
----
-
-## Orphan Concepts
-
-### What Are Orphan Concepts?
+### Orphan Concepts
 
 Orphan concepts are concepts that lack proper hierarchical relationships within their scheme. Specifically, a concept is considered an orphan if it:
 - Has no `skos:broader` relationship to a parent concept
@@ -173,35 +197,21 @@ Orphan concepts are concepts that lack proper hierarchical relationships within 
 
 These concepts exist in the vocabulary but are disconnected from the main hierarchy, making them difficult to discover through normal browsing.
 
-### Finding Orphan Concepts
-
-To view orphan concepts:
+**Finding Orphan Concepts:**
 
 1. Open the scheme dropdown in the breadcrumb bar
-2. Look for "Orphan Concepts" at the top of the list (if orphans exist)
-3. Select "Orphan Concepts" to load them in the tree
+2. Look for "Orphan Concepts & Collections" at the top of the list
+3. Select it to load orphan concepts in the tree
 
-When you select Orphan Concepts:
-- The tree shows all orphan concepts as a flat list
-- The right panel displays information about the orphan collection
-- You can click any concept to view its details
+The first time you access orphan concepts for an endpoint, the application runs a detection process in the background. Results are cached for subsequent access. Note that orphan detection can be quite slow on large endpoints and is not recommended for endpoints with millions of concepts.
 
-### Orphan Detection Process
+<img src="screenshot-orphan-detection.png" alt="Orphan detection in progress" width="500">
 
-The first time you access Orphan Concepts for an endpoint, the application runs a detection process:
-- Progress is displayed as concepts are analyzed
-- Detection runs in the background
-- Results are cached for subsequent access
+Once complete, the tree shows both orphan concepts and orphan collections:
 
-### Hiding the Orphan Selector
+<img src="screenshot-orphan-results.png" alt="Orphan detection results showing orphan concepts and collections" width="500">
 
-If you don't need the orphan concepts feature, you can hide it:
-
-1. Open Settings (⚙️ in the header)
-2. Find "Show Orphan Concepts in Scheme Selector"
-3. Toggle it off
-
-The Orphan Concepts option will no longer appear in the scheme dropdown.
+> **Not seeing the orphan selector?** It must be enabled in [Settings](#settings) under "Show Orphan Concepts in Scheme Selector".
 
 ---
 
@@ -211,21 +221,21 @@ The Orphan Concepts option will no longer appear in the scheme dropdown.
 
 The concept tree displays a hierarchical view of concepts within the selected scheme.
 
-<!-- IMAGE: screenshot-concept-tree.png -->
-![Concept tree showing expanded hierarchy with different node types](screenshot-concept-tree.png)
+<img src="screenshot-concept-tree.png" alt="Concept tree showing expanded hierarchy with different node types" width="400">
 
-**Node Icons:**
-| Icon | Meaning |
-|------|---------|
-| 📁 | Scheme (root node) |
-| 🏷️ | Concept with children |
-| ⚫ | Leaf concept (no children) |
+Concepts with children show an arrow (▶) that can be expanded to reveal child concepts. Leaf concepts (no children) are shown as circles without an arrow. Children are loaded on-demand as you expand nodes.
 
-### Expanding and Collapsing
+**Node types:**
+- **Folder icon** (orange) — Scheme root node
+- **Label icon** (purple, with arrow) — Concept with children, click arrow to expand
+- **Filled circle** (green) — Top concept with explicit `skos:topConceptOf`
+- **Open circle** (green) — Top concept inferred from `skos:inScheme` only
+- **Small circle** (green) — Leaf concept, no children
+- **Collection icon** (purple) — SKOS collection, may appear alongside concepts within a scheme
 
-- Click the arrow (▶) to expand a node and load its children
-- Click again to collapse
-- Children are loaded on-demand (lazy loading)
+Schemes can contain both individual concepts and collections. Here a scheme shows collections (e.g. "Collection for axle counters") alongside leaf concepts:
+
+<img src="screenshot-tree-collections.png" alt="Tree showing collections alongside concepts within a scheme" width="400">
 
 ### Selecting a Concept
 
@@ -269,8 +279,37 @@ Deprecated concepts are visually indicated with:
 - A "deprecated" badge after the label
 - Reduced opacity (60%)
 
-<!-- IMAGE: screenshot-deprecated-concept.png -->
-![Deprecated concept in tree with badge](screenshot-deprecated-concept.png)
+<img src="screenshot-deprecated-concept.png" alt="Deprecated concept in tree with badge" width="500">
+
+---
+
+## Browsing Collections
+
+SKOS Collections provide an alternative way to organize concepts, independent of the hierarchical broader/narrower relationships.
+
+When in Collections mode:
+- The tree shows top-level collections
+- Expand a collection to see its members (concepts or nested collections)
+- Click a collection to view its details in the right panel
+- Ordered collections display members in their defined sequence
+
+Some schemes contain both collections and individual concepts. Collections appear with a purple icon and are listed alongside regular concepts in the tree:
+
+<img src="screenshot-tree-collections.png" alt="Tree showing collections alongside concepts within a scheme" width="400">
+
+### Collection Details
+
+When you select a collection, the right panel shows its details. The following sections appear (each only if data is available):
+
+- **Labels & Notation** — Preferred, alternative, and hidden labels, plus notation codes
+- **Titles** — Dublin Core titles (dct:title, dc:title) and RDFS labels
+- **Schemes** — Which concept schemes this collection belongs to
+- **Documentation** — Definition, description, scope notes, history/change/editorial notes, examples
+- **Members** — List of member concepts and sub-collections, with a count badge. Members are loaded progressively (labels, hierarchy icons, scheme badges)
+- **Metadata** — Creator, publisher, rights, license, identifier, status, version, dates, deprecation
+- **Other Properties** — Any additional RDF properties
+
+<img src="screenshot-collection-details.png" alt="Collection details panel showing labels and members" width="720">
 
 ---
 
@@ -280,40 +319,20 @@ Deprecated concepts are visually indicated with:
 
 When a concept is selected, the right panel shows comprehensive information:
 
-<!-- IMAGE: screenshot-concept-details.png -->
-![Full concept details panel](screenshot-concept-details.png)
+<img src="screenshot-concept-details.png" alt="Concept details panel" width="500">
 
-#### Labels Section
-- **Preferred Labels**: Primary labels (skos:prefLabel)
-- **Alternative Labels**: Synonyms and variants (skos:altLabel)
-- **Hidden Labels**: Labels for search only (skos:hiddenLabel)
+The details panel shows the following sections (each only appears if data is available):
 
-Labels show language tags when different from your preferred language.
-
-#### Notations
-Concept codes or identifiers (skos:notation) with their datatypes.
-
-#### Documentation
-- **Definitions**: What the concept means
-- **Scope Notes**: Usage guidance
-- **Examples**: Usage examples
-- **History/Change/Editorial Notes**: Administrative information
-
-#### Relationships
-- **Broader**: Parent concepts (click to navigate)
-- **Narrower**: Child concepts (click to navigate)
-- **Related**: Associated concepts (click to navigate)
-
-#### Mapping Properties
-Links to equivalent concepts in other vocabularies:
-- Exact Match, Close Match
-- Broad Match, Narrow Match, Related Match
-
-#### Metadata
-Dublin Core properties like identifier, creation date, modification date, status.
-
-#### Other Properties
-Any additional RDF properties not covered above.
+- **Labels & Notation** — Preferred, alternative, and hidden labels, plus notation codes. Language tags are shown when a label's language differs from your preferred language.
+- **Titles** — Dublin Core titles (dct:title, dc:title) and RDFS labels, if present
+- **Documentation** — Definition, description, comment, scope note, history/change/editorial notes, examples
+- **Hierarchy** — Broader (parent) and narrower (child) concepts, clickable to navigate
+- **Relations** — Related concepts (skos:related), clickable to navigate
+- **Mappings** — Links to equivalent concepts in other vocabularies: exact match, close match, broad match, narrow match, related match
+- **Collections** — Which collections this concept belongs to
+- **Schemes** — Which concept schemes this concept is in
+- **Metadata** — Creator, publisher, rights, license, identifier, status, version, dates (issued, created, modified), deprecation
+- **Other Properties** — Any additional RDF properties not covered above
 
 ### Header Actions
 
