@@ -1,0 +1,5 @@
+{
+  "name": "Example Endpoint",
+  "url": "https://example.org/sparql",
+  "description": "Example SPARQL endpoint for ae-rdf analysis."
+}

@@ -274,7 +274,7 @@ watch(
 
 // Auto-trigger analysis when entering Capabilities step (step 2) for new endpoints
 watch(activeStep, (newStep) => {
-  if (newStep === '2' && !isEditing.value && !tempEndpoint.value?.analysis) {
+  if (newStep === '2' && !isEditing.value) {
     runAnalysis()
   }
 })
