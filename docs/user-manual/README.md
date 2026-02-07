@@ -258,21 +258,9 @@ Use the "Go to URI..." input at the top of the tree to navigate directly to any 
 
 **Tip:** You can paste URIs with angle brackets (e.g., `<http://example.org/concept/1>`) - they're automatically cleaned.
 
-### Home Button
-
-Click the home button (🏠) in the breadcrumb to:
-- Return to the scheme root
-- Show scheme details
-- Scroll the tree to the top
-
 ### Breadcrumb Navigation
 
-The breadcrumb shows the path from the scheme to the current concept.
-
-<!-- IMAGE: screenshots/breadcrumb.png -->
-![Breadcrumb showing: Home > Scheme > Parent > Child > Current](screenshots/breadcrumb.png)
-
-Click any segment to navigate to that level.
+The breadcrumb bar combines a root mode dropdown, a scheme selector, and a concept path. When you navigate into a hierarchy, ancestor concepts appear as clickable segments — click any segment to jump back to that level.
 
 ### Deprecation Indicators
 

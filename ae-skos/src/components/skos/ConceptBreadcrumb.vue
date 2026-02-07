@@ -207,8 +207,8 @@ watch(
   }
 )
 
-// Go to scheme home (show scheme details)
-function goHome() {
+// Navigate to scheme root (clear selection, show scheme details)
+function navigateToSchemeRoot() {
   const scheme = schemeStore.selected
   if (scheme) {
     conceptStore.selectConcept(null)
@@ -419,7 +419,7 @@ const breadcrumbItems = computed(() => {
       command = undefined
     } else if (item.type === 'scheme') {
       // Clicking scheme in collection breadcrumb goes to scheme details
-      command = () => goHome()
+      command = () => navigateToSchemeRoot()
     } else if (item.type === 'collection' || item.type === 'orderedCollection') {
       command = () => selectRootCollection(item.uri)
     } else {
