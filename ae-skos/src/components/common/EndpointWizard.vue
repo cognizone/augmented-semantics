@@ -272,12 +272,6 @@ watch(
   }
 )
 
-// Auto-trigger analysis when entering Capabilities step (step 2) for new endpoints
-watch(activeStep, (newStep) => {
-  if (newStep === '2' && !isEditing.value) {
-    runAnalysis()
-  }
-})
 
 // Step 1 handlers
 function handleFormUpdate(newForm: BasicInfoForm) {
@@ -325,6 +319,11 @@ function handleNextFromBasicInfo(activateCallback: (step: string) => void) {
   autosaveEndpoint()
 
   activateCallback('2') // Go to Capabilities
+
+  // Trigger analysis after step transition
+  nextTick(() => {
+    runAnalysis()
+  })
 }
 
 // Step 2 handlers
