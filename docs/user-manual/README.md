@@ -30,7 +30,7 @@ When you first open AE SKOS, what you see depends on how it was deployed:
 | Standard Mode | Pre-configured Mode |
 |---------------|---------------------|
 | The Endpoint Manager opens with suggested endpoints for you to add and manage. | Endpoints are already set up by an administrator — you're ready to browse. |
-| <img src="screenshot-mode-standard.png" width="350" alt="Standard Mode"> | <img src="screenshot-mode-preconfigured.png" width="350" alt="Pre-configured Mode"> |
+| <img src="screenshots/mode-standard.png" width="350" alt="Standard Mode"> | <img src="screenshots/mode-preconfigured.png" width="350" alt="Pre-configured Mode"> |
 | Continue with **Quick Start** below | Skip to [Browsing Concept Schemes](#browsing-concept-schemes) |
 
 ### Quick Start
@@ -50,7 +50,7 @@ When you first open AE SKOS, what you see depends on how it was deployed:
 
 Click the endpoint badge in the header toolbar, then select "Manage endpoints..." from the dropdown.
 
-<img src="screenshot-endpoint-dropdown.png" alt="Endpoint dropdown showing the Manage endpoints option" width="300">
+<img src="screenshots/endpoint-dropdown.png" alt="Endpoint dropdown showing the Manage endpoints option" width="300">
 
 ### Suggested Endpoints
 
@@ -62,13 +62,13 @@ The Endpoint Manager shows a curated list of public SKOS endpoints at the top:
 
 Once added, endpoints appear in your "My Endpoints" list below.
 
-<img src="screenshot-mode-standard.png" width="500" alt="Endpoint Manager showing suggested endpoints">
+<img src="screenshots/mode-standard.png" width="500" alt="Endpoint Manager showing suggested endpoints">
 
 ### Adding a New Endpoint
 
 1. Click **Add Endpoint** in the Endpoint Manager
 
-<img src="screenshot-endpoint-wizard.png" alt="Endpoint Manager showing the Add Endpoint button" width="720">
+<img src="screenshots/endpoint-wizard.png" alt="Endpoint Manager showing the Add Endpoint button" width="720">
 
 2. The setup wizard opens with multiple steps:
 
@@ -80,7 +80,7 @@ Once added, endpoints appear in your "My Endpoints" list below.
 
 Click **Test Connection** to verify the endpoint is reachable.
 
-<img src="screenshot-endpoint-fedlex.png" alt="Example endpoint configuration for Fedlex" width="500">
+<img src="screenshots/endpoint-fedlex.png" alt="Example endpoint configuration for Fedlex" width="500">
 
 #### Step 2: Analysis
 
@@ -97,19 +97,19 @@ The wizard automatically analyzes the endpoint and shows six capabilities:
 
 Languages are also detected during this step and shown in the next step (Language Priorities).
 
-<img src="screenshot-endpoint-analysis.png" alt="Analysis step showing detected schemes and languages" width="500">
+<img src="screenshots/endpoint-analysis.png" alt="Analysis step showing detected schemes and languages" width="500">
 
 #### Step 3: Language Priorities
 
 Drag and drop languages to set your preferred order. Labels will be shown in the first available language from this list.
 
-<img src="screenshot-language-priorities.png" alt="Language priority configuration with drag-and-drop" width="500">
+<img src="screenshots/language-priorities.png" alt="Language priority configuration with drag-and-drop" width="500">
 
 ### Managing Your Endpoints
 
 Once you've added endpoints, they appear in the Endpoint Manager list.
 
-<img src="screenshot-endpoint-list.png" alt="Endpoint Manager showing configured endpoints" width="720">
+<img src="screenshots/endpoint-list.png" alt="Endpoint Manager showing configured endpoints" width="720">
 
 Each endpoint shows:
 - **Name**: The friendly name you assigned
@@ -130,13 +130,13 @@ Click the configure button (<img src="icon-tune.svg" height="16">) next to any e
 
 Click the delete button (🗑️) next to an endpoint. A confirmation dialog will appear before deletion.
 
-<img src="screenshot-endpoint-delete.png" alt="Delete confirmation dialog" width="400">
+<img src="screenshots/endpoint-delete.png" alt="Delete confirmation dialog" width="400">
 
 ### Switching Endpoints
 
 Click the endpoint badge in the header and select a different endpoint from the dropdown.
 
-<img src="screenshot-endpoint-switch.png" alt="Switching endpoints via header dropdown" width="300">
+<img src="screenshots/endpoint-switch.png" alt="Switching endpoints via header dropdown" width="300">
 
 ---
 
@@ -153,7 +153,7 @@ Use the breadcrumb dropdown to switch between three browsing modes:
 | [Collections](#browsing-collections) | Browse concepts organized by SKOS collections |
 | [Ordered Collections](#browsing-ordered-collections) | Browse ordered collections where members are displayed in a defined sequence |
 
-<img src="screenshot-browsing-mode.png" alt="Breadcrumb dropdown showing Schemes, Collections, and Ordered Collections options" width="300">
+<img src="screenshots/browsing-mode.png" alt="Breadcrumb dropdown showing Schemes, Collections, and Ordered Collections options" width="300">
 
 ---
 
@@ -165,7 +165,7 @@ Use the scheme dropdown in the breadcrumb bar to select a concept scheme.
 
 **Filtering Schemes:** For endpoints with many schemes, use the filter input at the top of the dropdown. Type to filter schemes by name - the list updates as you type. The filter automatically clears after you make a selection.
 
-<img src="screenshot-scheme-dropdown.png" alt="Scheme dropdown with filter input" width="400">
+<img src="screenshots/scheme-dropdown.png" alt="Scheme dropdown with filter input" width="400">
 
 The dropdown also includes an **Orphan Concepts & Collections** entry for finding disconnected concepts. If you don't see it, enable it in [Settings](#settings) under "Show Orphan Concepts in Scheme Selector".
 
@@ -184,9 +184,15 @@ When viewing a scheme (no concept selected), the right panel displays:
 - **Metadata**: Creator, publisher, rights, license, identifier, status, version, dates (issued, created, modified), deprecation status
 - **Other Properties**: Any additional RDF properties not covered above
 
-<img src="screenshot-scheme-details.png" alt="Scheme details panel showing labels and metadata" width="500">
+<img src="screenshots/scheme-details.png" alt="Scheme details panel showing labels and metadata" width="500">
 
 Schemes marked as deprecated show a "deprecated" badge next to their name in both the dropdown and the tree.
+
+### Collections Within a Scheme
+
+Some schemes contain SKOS collections that group related concepts together. When browsing such a scheme, collections appear in the tree alongside regular concepts:
+
+<img src="screenshots/tree-collections.png" alt="Scheme with collections and concepts in the tree" width="400">
 
 ### Orphan Concepts
 
@@ -205,11 +211,11 @@ These concepts exist in the vocabulary but are disconnected from the main hierar
 
 The first time you access orphan concepts for an endpoint, the application runs a detection process in the background. Results are cached for subsequent access. Note that orphan detection can be quite slow on large endpoints and is not recommended for endpoints with millions of concepts.
 
-<img src="screenshot-orphan-detection.png" alt="Orphan detection in progress" width="500">
+<img src="screenshots/orphan-detection.png" alt="Orphan detection in progress" width="500">
 
 Once complete, the tree shows both orphan concepts and orphan collections:
 
-<img src="screenshot-orphan-results.png" alt="Orphan detection results showing orphan concepts and collections" width="500">
+<img src="screenshots/orphan-results.png" alt="Orphan detection results showing orphan concepts and collections" width="500">
 
 > **Not seeing the orphan selector?** It must be enabled in [Settings](#settings) under "Show Orphan Concepts in Scheme Selector".
 
@@ -221,21 +227,16 @@ Once complete, the tree shows both orphan concepts and orphan collections:
 
 The concept tree displays a hierarchical view of concepts within the selected scheme.
 
-<img src="screenshot-concept-tree.png" alt="Concept tree showing expanded hierarchy with different node types" width="400">
+<img src="screenshots/concept-tree.png" alt="Concept tree showing expanded hierarchy with different node types" width="400">
 
 Concepts with children show an arrow (▶) that can be expanded to reveal child concepts. Leaf concepts (no children) are shown as circles without an arrow. Children are loaded on-demand as you expand nodes.
 
 **Node types:**
 - **Folder icon** (orange) — Scheme root node
 - **Label icon** (purple, with arrow) — Concept with children, click arrow to expand
-- **Filled circle** (green) — Top concept with explicit `skos:topConceptOf`
-- **Open circle** (green) — Top concept inferred from `skos:inScheme` only
-- **Small circle** (green) — Leaf concept, no children
+- **Circle** (green) — Leaf concept, no children
+- **Tree icon** at the end of a label — indicates the concept is a top concept inferred from `skos:inScheme` only (no explicit `skos:topConceptOf`)
 - **Collection icon** (purple) — SKOS collection, may appear alongside concepts within a scheme
-
-Schemes can contain both individual concepts and collections. Here a scheme shows collections (e.g. "Collection for axle counters") alongside leaf concepts:
-
-<img src="screenshot-tree-collections.png" alt="Tree showing collections alongside concepts within a scheme" width="400">
 
 ### Selecting a Concept
 
@@ -248,8 +249,8 @@ Click on any concept label to:
 
 Use the "Go to URI..." input at the top of the tree to navigate directly to any concept or scheme by its URI.
 
-<!-- IMAGE: screenshot-goto-uri.png -->
-![Go to URI input field](screenshot-goto-uri.png)
+<!-- IMAGE: screenshots/goto-uri.png -->
+![Go to URI input field](screenshots/goto-uri.png)
 
 **Supported URIs:**
 - **Concept URI**: Selects the concept and reveals it in the tree
@@ -268,8 +269,8 @@ Click the home button (🏠) in the breadcrumb to:
 
 The breadcrumb shows the path from the scheme to the current concept.
 
-<!-- IMAGE: screenshot-breadcrumb.png -->
-![Breadcrumb showing: Home > Scheme > Parent > Child > Current](screenshot-breadcrumb.png)
+<!-- IMAGE: screenshots/breadcrumb.png -->
+![Breadcrumb showing: Home > Scheme > Parent > Child > Current](screenshots/breadcrumb.png)
 
 Click any segment to navigate to that level.
 
@@ -279,7 +280,7 @@ Deprecated concepts are visually indicated with:
 - A "deprecated" badge after the label
 - Reduced opacity (60%)
 
-<img src="screenshot-deprecated-concept.png" alt="Deprecated concept in tree with badge" width="500">
+<img src="screenshots/deprecated-concept.png" alt="Deprecated concept in tree with badge" width="500">
 
 ---
 
@@ -293,10 +294,6 @@ When in Collections mode:
 - Click a collection to view its details in the right panel
 - Ordered collections display members in their defined sequence
 
-Some schemes contain both collections and individual concepts. Collections appear with a purple icon and are listed alongside regular concepts in the tree:
-
-<img src="screenshot-tree-collections.png" alt="Tree showing collections alongside concepts within a scheme" width="400">
-
 ### Collection Details
 
 When you select a collection, the right panel shows its details. The following sections appear (each only if data is available):
@@ -309,7 +306,7 @@ When you select a collection, the right panel shows its details. The following s
 - **Metadata** — Creator, publisher, rights, license, identifier, status, version, dates, deprecation
 - **Other Properties** — Any additional RDF properties
 
-<img src="screenshot-collection-details.png" alt="Collection details panel showing labels and members" width="720">
+<img src="screenshots/collection-details.png" alt="Collection details panel showing labels and members" width="720">
 
 ---
 
@@ -319,7 +316,7 @@ When you select a collection, the right panel shows its details. The following s
 
 When a concept is selected, the right panel shows comprehensive information:
 
-<img src="screenshot-concept-details.png" alt="Concept details panel" width="500">
+<img src="screenshots/concept-details.png" alt="Concept details panel" width="500">
 
 The details panel shows the following sections (each only appears if data is available):
 
@@ -338,8 +335,8 @@ The details panel shows the following sections (each only appears if data is ava
 
 The details header includes action buttons:
 
-<!-- IMAGE: screenshot-details-header.png -->
-![Details header showing copy and expand buttons](screenshot-details-header.png)
+<!-- IMAGE: screenshots/details-header.png -->
+![Details header showing copy and expand buttons](screenshots/details-header.png)
 
 | Button | Action |
 |--------|--------|
@@ -355,8 +352,8 @@ The details header includes action buttons:
 
 Click the **Search** tab in the left sidebar to access the search panel.
 
-<!-- IMAGE: screenshot-search-panel.png -->
-![Search panel with input and results](screenshot-search-panel.png)
+<!-- IMAGE: screenshots/search-panel.png -->
+![Search panel with input and results](screenshots/search-panel.png)
 
 ### Basic Search
 
@@ -408,8 +405,8 @@ Click any search result to:
 
 Click the **Recent** tab in the left sidebar to see your browsing history.
 
-<!-- IMAGE: screenshot-recent-history.png -->
-![Recent history panel showing visited concepts and schemes](screenshot-recent-history.png)
+<!-- IMAGE: screenshots/recent-history.png -->
+![Recent history panel showing visited concepts and schemes](screenshots/recent-history.png)
 
 Each entry shows:
 - Icon indicating type (folder for schemes, label/circle for concepts)
@@ -428,8 +425,8 @@ Click any history entry to:
 
 Click the delete button (🗑️) in the history header. A confirmation dialog appears before clearing.
 
-<!-- IMAGE: screenshot-clear-history.png -->
-![Clear history confirmation dialog](screenshot-clear-history.png)
+<!-- IMAGE: screenshots/clear-history.png -->
+![Clear history confirmation dialog](screenshots/clear-history.png)
 
 ### History Persistence
 
@@ -443,8 +440,8 @@ History is saved to your browser's localStorage and persists across sessions. Up
 
 Click the settings icon (⚙️) in the header toolbar. The Settings dialog uses a sidebar navigation with six sections.
 
-<!-- IMAGE: screenshot-settings-dialog.png -->
-![Settings dialog with sidebar navigation](screenshot-settings-dialog.png)
+<!-- IMAGE: screenshots/settings-dialog.png -->
+![Settings dialog with sidebar navigation](screenshots/settings-dialog.png)
 
 **Quick Dark Mode Toggle:** You can toggle dark mode directly from the header toolbar using the sun/moon icon, without opening the Settings dialog.
 
