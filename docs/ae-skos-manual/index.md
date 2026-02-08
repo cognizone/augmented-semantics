@@ -2,6 +2,8 @@
 
 A fast, modern browser for exploring SKOS vocabularies. Lazy-loaded trees, instant search, multilingual support, dark mode, and keyboard shortcuts — all running directly in your browser. No backend, no installation, no data leaves your machine.
 
+> **Want your endpoint on the list?** If you maintain a public SKOS endpoint and would like it included as a suggested endpoint (pre-analyzed, no setup needed for users), [open an issue on GitHub](https://github.com/cognizone/augmented-semantics/issues).
+
 ## Getting Started
 
 AE SKOS connects directly to SPARQL endpoints in your browser - no backend server required. Your data stays between you and the endpoint.

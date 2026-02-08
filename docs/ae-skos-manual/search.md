@@ -87,3 +87,7 @@ Click the delete button (🗑️) in the history header. A confirmation dialog a
 ### History Persistence
 
 History is saved to your browser's localStorage and persists across sessions. Up to 50 items are stored.
+
+---
+
+← [Viewing Details](details.md) · [User Manual](index.md) · [Settings](settings.md) →

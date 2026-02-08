@@ -30,6 +30,8 @@ The Endpoint Manager shows a curated list of public SKOS endpoints at the top:
 - Click **Import All** to add all suggested endpoints at once
 - Suggested endpoints are pre-analyzed with detected languages and capabilities
 
+> **Want your endpoint on the list?** If you maintain a public SKOS endpoint and would like it included as a suggested endpoint (pre-analyzed, no setup needed for users), [open an issue on GitHub](https://github.com/cognizone/augmented-semantics/issues).
+
 Once added, endpoints appear in your "My Endpoints" list below.
 
 <img src="screenshots/mode-standard.png" width="500" alt="Endpoint Manager showing suggested endpoints">
@@ -92,7 +94,9 @@ Each endpoint shows:
 
 ### Connection Status
 
-Each endpoint displays a colored dot next to its name indicating overall configuration health. Hover over the dot to see the specific reason.
+Each endpoint displays a colored dot next to its name indicating overall configuration health. Hover over the dot to see the specific reason. The dot also appears in the endpoint wizard header:
+
+<img src="screenshots/status-connection-failed.png" alt="Red dot with 'Connection failed' tooltip" width="300">
 
 | Color | Meaning |
 |-------|---------|
@@ -100,10 +104,6 @@ Each endpoint displays a colored dot next to its name indicating overall configu
 | Orange | Partially configured or in progress — analysis hasn't run yet, connection test in progress, CORS issue detected, or no languages detected. |
 | Red | Problem detected — invalid URL, connection failed, or no SKOS content found. |
 | Gray | Not yet configured — no URL entered. |
-
-The status dot and tooltip also appear in the endpoint wizard header:
-
-<img src="screenshots/status-not-configured.png" alt="Gray dot with 'Not configured' tooltip" width="300"> <img src="screenshots/status-connection-failed.png" alt="Red dot with 'Connection failed' tooltip" width="300">
 
 ### Status Tags
 
@@ -140,3 +140,7 @@ Click the endpoint badge in the header and select a different endpoint from the 
 > **Tip:** If you have many endpoints, the dropdown is scrollable.
 
 <img src="screenshots/endpoint-switch.png" alt="Switching endpoints via header dropdown" width="300">
+
+---
+
+← [User Manual](index.md) · [Browsing](browsing.md) →

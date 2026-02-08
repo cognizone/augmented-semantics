@@ -33,3 +33,7 @@ The details header includes action buttons:
 | 📋 | Copy URI to clipboard |
 | <img src="icons/icon-link.svg" height="16"> | Copy as "Label" \<URI\> format |
 | ↗️ | Open URI in new tab |
+
+---
+
+← [Browsing](browsing.md) · [User Manual](index.md) · [Search & History](search.md) →

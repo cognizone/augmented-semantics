@@ -51,3 +51,7 @@
 
 - **Issues**: Report bugs at [GitHub Issues](https://github.com/cognizone/augmented-semantics/issues)
 - **Source Code**: [GitHub Repository](https://github.com/cognizone/augmented-semantics)
+
+---
+
+← [Settings](settings.md) · [User Manual](index.md)

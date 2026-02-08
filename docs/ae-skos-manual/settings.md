@@ -103,3 +103,7 @@ If you're using a pre-configured deployment and need to modify settings, contact
 ## Reset to Defaults
 
 Click "Reset to defaults" to restore all settings to their original values.
+
+---
+
+← [Search & History](search.md) · [User Manual](index.md) · [Troubleshooting](troubleshooting.md) →

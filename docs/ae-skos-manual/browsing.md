@@ -20,7 +20,7 @@ Use the breadcrumb dropdown to switch between three browsing modes:
 | [Collections](#browsing-collections) | Browse concepts organized by SKOS collections |
 | [Ordered Collections](#browsing-ordered-collections) | Browse ordered collections where members are displayed in a defined sequence |
 
-<img src="screenshots/browsing-mode.png" alt="Breadcrumb dropdown showing Schemes, Collections, and Ordered Collections options" width="300">
+<img src="screenshots/browsing-mode.png" alt="Breadcrumb dropdown showing Schemes, Collections, and Ordered Collections options" width="250">
 
 ---
 
@@ -162,3 +162,7 @@ When you select a collection, the right panel shows its details. The following s
 - **Other Properties** — Any additional RDF properties
 
 <img src="screenshots/collection-details.png" alt="Collection details panel showing labels and members" width="720">
+
+---
+
+← [Managing Endpoints](endpoints.md) · [User Manual](index.md) · [Viewing Details](details.md) →
