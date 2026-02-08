@@ -2,20 +2,21 @@
 
 # 4. Search & History
 
+- [Searching](#searching)
+- [Recent History](#recent-history)
+
 ## Searching
 
 ### Search Interface
 
 Click the **Search** tab in the left sidebar to access the search panel.
 
-<!-- IMAGE: screenshots/search-panel.png -->
-![Search panel with input and results](screenshots/search-panel.png)
+<img src="screenshots/search-panel.png" alt="Search panel with input and results" width="400">
 
 ### Basic Search
 
-1. Enter your search term
-2. Press Enter or click the search button
-3. Results appear below
+1. Enter your search term — results appear as you type
+2. Refine your query to narrow results
 
 Results show:
 - Concept label and notation
@@ -24,34 +25,18 @@ Results show:
 
 ### Search Settings
 
-Click the settings icon (⚙️) next to the search input to open the Settings dialog to the Search section.
-
-**Search in:**
-- Preferred Labels (default: on)
-- Alternative Labels (default: on)
-- Definitions (default: off)
-
-**Match Mode:**
-
-| Mode | Description |
-|------|-------------|
-| Contains | Substring match anywhere (default) |
-| Starts with | Prefix match at the beginning |
-| Exact | Full label must match |
-| Regex | Regular expression pattern |
-
-**Scope:**
-- Current scheme only (default when a scheme is selected)
-- All schemes - search across the entire endpoint
+Click the settings icon (<img src="icons/icon-tune.svg" height="16">) next to the search input to configure match mode, search targets, and scope. See [5. Settings — Search Section](05-settings.md#search-section) for details.
 
 Settings are saved automatically and persist across sessions. When you change settings, any active search re-runs automatically.
 
 ### Navigating Results
 
 Click any search result to:
-- Select that concept
-- Reveal it in the tree (expanding ancestors as needed)
+- Switch to the browse tab and select that concept in the tree
+- Expand ancestors as needed and scroll the concept into view
 - Show its details in the right panel
+- Switch scheme automatically if the concept belongs to a different scheme
+- Add the concept to your [Recent History](#recent-history)
 
 ---
 
@@ -61,8 +46,7 @@ Click any search result to:
 
 Click the **Recent** tab in the left sidebar to see your browsing history.
 
-<!-- IMAGE: screenshots/recent-history.png -->
-![Recent history panel showing visited concepts and schemes](screenshots/recent-history.png)
+<img src="screenshots/recent-history.png" alt="Recent history panel showing visited concepts and schemes" width="400">
 
 Each entry shows:
 - Icon indicating type (folder for schemes, label/circle for concepts)
@@ -73,16 +57,16 @@ Each entry shows:
 ### Navigating from History
 
 Click any history entry to:
-- Navigate to that concept or scheme
-- Switch endpoints if necessary
-- Reveal in tree and show details
+- Switch to the browse tab and navigate to that item
+- Switch endpoints or schemes if necessary
+- Expand ancestors and scroll the concept into view
+- Show its details in the right panel
 
 ### Clearing History
 
 Click the delete button (🗑️) in the history header. A confirmation dialog appears before clearing.
 
-<!-- IMAGE: screenshots/clear-history.png -->
-![Clear history confirmation dialog](screenshots/clear-history.png)
+<img src="screenshots/clear-history.png" alt="Clear history confirmation dialog" width="400">
 
 ### History Persistence
 
