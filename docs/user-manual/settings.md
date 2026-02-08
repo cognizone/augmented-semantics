@@ -1,4 +1,4 @@
-[← Back to User Manual](README.md)
+[← Back to User Manual](index.md)
 
 # Settings
 

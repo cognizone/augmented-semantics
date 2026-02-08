@@ -41,7 +41,7 @@ const logoUrl = computed(() =>
 )
 const docsUrl = computed(() =>
   config.value.config?.documentationUrl ??
-  'https://github.com/cognizone/augmented-semantics/blob/main/docs/user-manual/README.md'
+  'https://github.com/cognizone/augmented-semantics/blob/main/docs/user-manual/index.md'
 )
 
 // Build info

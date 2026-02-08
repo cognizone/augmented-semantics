@@ -1,6 +1,6 @@
 {
   "appName": "ERA SKOS Browser",
-  "documentationUrl": "https://github.com/cognizone/augmented-semantics/blob/main/docs/user-manual/README.md",
+  "documentationUrl": "https://github.com/cognizone/augmented-semantics/blob/main/docs/user-manual/index.md",
   "endpoints": [
     {
       "name": "ERA Data Interop",
