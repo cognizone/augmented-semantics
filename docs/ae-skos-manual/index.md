@@ -50,4 +50,4 @@ The header toolbar provides quick access to key functions. From left to right:
 
 ---
 
-*AE SKOS is part of the Augmented Semantics toolkit by Cognizone.*
+*AE SKOS is part of the [Augmented Semantics](https://github.com/cognizone/augmented-semantics) toolkit by [Cognizone](https://cogni.zone).*

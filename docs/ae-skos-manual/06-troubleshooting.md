@@ -2,6 +2,12 @@
 
 # 6. Troubleshooting
 
+- [Keyboard Shortcuts](#keyboard-shortcuts)
+- [Connection Issues](#connection-issues)
+- [Display Issues](#display-issues)
+- [Performance](#performance)
+- [Getting Help](#getting-help)
+
 ## Keyboard Shortcuts
 
 | Shortcut | Action |
