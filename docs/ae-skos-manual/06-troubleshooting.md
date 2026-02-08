@@ -1,6 +1,6 @@
 [← Back to User Manual](index.md)
 
-# Troubleshooting
+# 6. Troubleshooting
 
 ## Keyboard Shortcuts
 
@@ -15,7 +15,7 @@
 **"Failed to connect to endpoint"**
 - Verify the endpoint URL is correct
 - Check if the endpoint requires authentication
-- Ensure CORS is enabled on the endpoint — if a **CORS Issue** tag appears on the endpoint in the [Endpoint Manager](endpoints.md#endpoint-status-indicators), the endpoint is blocking browser access. A CORS browser extension can work around this.
+- Ensure CORS is enabled on the endpoint — if a **CORS Issue** tag appears on the endpoint in the [Endpoint Manager](01-endpoints.md#endpoint-status-indicators), the endpoint is blocking browser access. A CORS browser extension can work around this.
 - Try accessing the endpoint directly in your browser
 
 **"No concept schemes found"**
@@ -54,4 +54,4 @@
 
 ---
 
-← [Settings](settings.md) · [User Manual](index.md)
+← [5. Settings](05-settings.md) · [User Manual](index.md)

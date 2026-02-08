@@ -1,6 +1,6 @@
 [← Back to User Manual](index.md)
 
-# Managing Endpoints
+# 1. Managing Endpoints
 
 - [Opening the Endpoint Manager](#opening-the-endpoint-manager)
 - [Suggested Endpoints](#suggested-endpoints)
@@ -113,7 +113,7 @@ Endpoints in your list may also display status tags that indicate detected capab
 |-----|---------|
 | **JSON** / **XML** | The response format returned by the endpoint. JSON is preferred for performance; XML works but is used as a fallback. This is auto-detected during analysis. |
 | **CORS Issue** | The endpoint blocks browser-based access due to missing CORS headers. Since AE SKOS runs entirely in the browser, it cannot reach endpoints that don't allow cross-origin requests. As a workaround, you can install a CORS browser extension (search for "CORS Unblock" in your browser's extension store). |
-| **Scheme URI mismatch** | A trailing-slash inconsistency was detected between how concept scheme URIs are declared and how they are referenced by concepts. This can cause the tree to appear empty even though concepts exist. To fix this, enable **Enable Scheme URI Slash Fix** in [Settings → Developer](settings.md#developer-section). |
+| **Scheme URI mismatch** | A trailing-slash inconsistency was detected between how concept scheme URIs are declared and how they are referenced by concepts. This can cause the tree to appear empty even though concepts exist. To fix this, enable **Enable Scheme URI Slash Fix** in [Settings → Developer](05-settings.md#developer-section). |
 
 <img src="screenshots/endpoint-status.png" alt="Endpoint list showing status dots and tags" width="720">
 
@@ -143,4 +143,4 @@ Click the endpoint badge in the header and select a different endpoint from the 
 
 ---
 
-← [User Manual](index.md) · [Browsing](browsing.md) →
+← [User Manual](index.md) · [2. Browsing](02-browsing.md) →

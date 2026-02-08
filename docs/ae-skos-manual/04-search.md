@@ -1,6 +1,6 @@
 [← Back to User Manual](index.md)
 
-# Search & History
+# 4. Search & History
 
 ## Searching
 
@@ -90,4 +90,4 @@ History is saved to your browser's localStorage and persists across sessions. Up
 
 ---
 
-← [Viewing Details](details.md) · [User Manual](index.md) · [Settings](settings.md) →
+← [3. Viewing Details](03-details.md) · [User Manual](index.md) · [5. Settings](05-settings.md) →

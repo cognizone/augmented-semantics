@@ -1,6 +1,6 @@
 [← Back to User Manual](index.md)
 
-# Settings
+# 5. Settings
 
 - [Opening Settings](#opening-settings)
 - [Display](#display-section)
@@ -29,7 +29,7 @@ Control how labels and metadata are formatted in the details panel.
 | Show Language Tags | Show language codes (e.g., `en`, `fr`) on labels when the language differs from your preferred language. |
 | Include Preferred Language | Also show the language tag on labels that match your preferred language. Only applies when Show Language Tags is enabled. |
 | Show Notation in Labels | Prefix concept labels with their notation code (e.g., "01 - Agriculture" instead of "Agriculture"). Also affects sorting. |
-| Show Orphans Selector | Add an "Orphan Concepts & Collections" entry to the scheme dropdown for finding disconnected concepts. See [Orphan Concepts](browsing.md#orphan-concepts). |
+| Show Orphans Selector | Add an "Orphan Concepts & Collections" entry to the scheme dropdown for finding disconnected concepts. See [Orphan Concepts](02-browsing.md#orphan-concepts). |
 
 ## Language Section
 
@@ -45,7 +45,7 @@ Select your preferred language for viewing labels. Only languages detected in th
 
 | Setting | Description |
 |---------|-------------|
-| Show Deprecation Indicators | Toggle visibility of deprecated badges. See [how deprecation appears in the tree](browsing.md#deprecation-indicators). |
+| Show Deprecation Indicators | Toggle visibility of deprecated badges. See [how deprecation appears in the tree](02-browsing.md#deprecation-indicators). |
 
 **Detection Rules:**
 Configure which conditions indicate deprecation:
@@ -54,7 +54,7 @@ Configure which conditions indicate deprecation:
 
 ## Search Section
 
-Configure search behavior (also accessible via the [settings button in the Search panel](search.md#search-settings)):
+Configure search behavior (also accessible via the [settings button in the Search panel](04-search.md#search-settings)):
 
 <img src="screenshots/settings-search.png" alt="Settings Search section showing match mode, search targets, and scope" width="500">
 
@@ -73,7 +73,7 @@ Configure search behavior (also accessible via the [settings button in the Searc
 | Setting | Description |
 |---------|-------------|
 | Developer Mode | Enable developer tools like JSON export in the Endpoint Manager. |
-| Enable Scheme URI Slash Fix | Checks both trailing-slash variants for endpoints flagged with mismatched scheme URIs. Turn this on if the [Scheme URI mismatch](endpoints.md#endpoint-status-indicators) tag appears on an endpoint. |
+| Enable Scheme URI Slash Fix | Checks both trailing-slash variants for endpoints flagged with mismatched scheme URIs. Turn this on if the [Scheme URI mismatch](01-endpoints.md#endpoint-status-indicators) tag appears on an endpoint. |
 | Log Level | Minimum log level shown in the browser console (F12). Higher levels mean fewer messages. |
 | Orphan Detection Strategy | **Auto** (recommended) tries a fast single-query approach first, with fallback to a slower multi-query method. |
 | Prefilter Orphan Candidates | Excludes direct scheme links first, then runs hierarchy checks on the remaining concepts. Can speed up orphan detection on large endpoints. |
@@ -106,4 +106,4 @@ Click "Reset to defaults" to restore all settings to their original values.
 
 ---
 
-← [Search & History](search.md) · [User Manual](index.md) · [Troubleshooting](troubleshooting.md) →
+← [4. Search & History](04-search.md) · [User Manual](index.md) · [6. Troubleshooting](06-troubleshooting.md) →

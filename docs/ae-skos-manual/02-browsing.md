@@ -1,6 +1,6 @@
 [← Back to User Manual](index.md)
 
-# Browsing
+# 2. Browsing
 
 - [Switching Browsing Modes](#switching-browsing-modes)
 - [Browsing Concept Schemes](#browsing-concept-schemes)
@@ -34,7 +34,7 @@ Use the scheme dropdown in the breadcrumb bar to select a concept scheme.
 
 <img src="screenshots/scheme-dropdown.png" alt="Scheme dropdown with filter input" width="400">
 
-The dropdown also includes an **Orphan Concepts & Collections** entry for finding disconnected concepts. If you don't see it, enable it in [Settings](settings.md) under "Show Orphan Concepts in Scheme Selector".
+The dropdown also includes an **Orphan Concepts & Collections** entry for finding disconnected concepts. If you don't see it, enable it in [Settings](05-settings.md) under "Show Orphan Concepts in Scheme Selector".
 
 When you select a scheme:
 - The tree loads with top-level concepts
@@ -84,7 +84,7 @@ Once complete, the tree shows both orphan concepts and orphan collections:
 
 <img src="screenshots/orphan-results.png" alt="Orphan detection results showing orphan concepts and collections" width="500">
 
-> **Not seeing the orphan selector?** It must be enabled in [Settings](settings.md) under "Show Orphan Concepts in Scheme Selector".
+> **Not seeing the orphan selector?** It must be enabled in [Settings](05-settings.md) under "Show Orphan Concepts in Scheme Selector".
 
 ---
 
@@ -165,4 +165,4 @@ When you select a collection, the right panel shows its details. The following s
 
 ---
 
-← [Managing Endpoints](endpoints.md) · [User Manual](index.md) · [Viewing Details](details.md) →
+← [1. Managing Endpoints](01-endpoints.md) · [User Manual](index.md) · [3. Viewing Details](03-details.md) →

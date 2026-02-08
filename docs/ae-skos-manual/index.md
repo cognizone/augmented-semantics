@@ -16,7 +16,7 @@ When you first open AE SKOS, what you see depends on how it was deployed:
 |---------------|---------------------|
 | The Endpoint Manager opens with suggested endpoints for you to add and manage. | Endpoints are already set up by an administrator — you're ready to browse. |
 | <img src="screenshots/mode-standard.png" width="350" alt="Standard Mode"> | <img src="screenshots/mode-preconfigured.png" width="350" alt="Pre-configured Mode"> |
-| Continue with **Quick Start** below | Skip to [Browsing](browsing.md#browsing-concept-schemes) |
+| Continue with **Quick Start** below | Skip to [Browsing](02-browsing.md#browsing-concept-schemes) |
 
 ### Quick Start
 
@@ -33,20 +33,20 @@ The header toolbar provides quick access to key functions. From left to right:
 
 | Button | | Description |
 |--------|---|-------------|
-| **Endpoint** | badge | Shows the active endpoint name. Click to switch endpoints or open the [Endpoint Manager](endpoints.md). |
-| **Language** | <img src="icons/icon-language.svg" height="16"> | Change the display language. The dropdown shows languages detected in the current endpoint. See [Language settings](settings.md#language-section). |
+| **Endpoint** | badge | Shows the active endpoint name. Click to switch endpoints or open the [Endpoint Manager](01-endpoints.md). |
+| **Language** | <img src="icons/icon-language.svg" height="16"> | Change the display language. The dropdown shows languages detected in the current endpoint. See [Language settings](05-settings.md#language-section). |
 | **Help** | <img src="icons/icon-help.svg" height="16"> | Opens this user manual in a new tab. |
 | **Dark mode** | <img src="icons/icon-dark-mode.svg" height="16"> | Toggle between light and dark theme. |
-| **Settings** | <img src="icons/icon-settings.svg" height="16"> | Open the [Settings](settings.md) dialog. |
+| **Settings** | <img src="icons/icon-settings.svg" height="16"> | Open the [Settings](05-settings.md) dialog. |
 
 ## User Guide
 
-- [Managing Endpoints](endpoints.md) — Add, configure, and switch SPARQL endpoints
-- [Browsing](browsing.md) — Schemes, concept tree, collections, and orphan detection
-- [Viewing Details](details.md) — Concept, collection, and scheme properties
-- [Search & History](search.md) — Search concepts and revisit recent items
-- [Settings](settings.md) — Display, language, deprecation, search, and developer options
-- [Troubleshooting](troubleshooting.md) — Common issues, keyboard shortcuts, and getting help
+1. [Managing Endpoints](01-endpoints.md) — Add, configure, and switch SPARQL endpoints
+2. [Browsing](02-browsing.md) — Schemes, concept tree, collections, and orphan detection
+3. [Viewing Details](03-details.md) — Concept, collection, and scheme properties
+4. [Search & History](04-search.md) — Search concepts and revisit recent items
+5. [Settings](05-settings.md) — Display, language, deprecation, search, and developer options
+6. [Troubleshooting](06-troubleshooting.md) — Common issues, keyboard shortcuts, and getting help
 
 ---
 

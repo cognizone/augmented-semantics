@@ -1,6 +1,6 @@
 [← Back to User Manual](index.md)
 
-# Viewing Details
+# 3. Viewing Details
 
 ## Concept Details
 
@@ -36,4 +36,4 @@ The details header includes action buttons:
 
 ---
 
-← [Browsing](browsing.md) · [User Manual](index.md) · [Search & History](search.md) →
+← [2. Browsing](02-browsing.md) · [User Manual](index.md) · [4. Search & History](04-search.md) →
