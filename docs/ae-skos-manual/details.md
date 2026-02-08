@@ -31,5 +31,5 @@ The details header includes action buttons:
 | Button | Action |
 |--------|--------|
 | 📋 | Copy URI to clipboard |
-| <img src="icon-link.svg" height="16"> | Copy as "Label" \<URI\> format |
+| <img src="icons/icon-link.svg" height="16"> | Copy as "Label" \<URI\> format |
 | ↗️ | Open URI in new tab |

@@ -119,11 +119,11 @@ Endpoints in your list may also display status tags that indicate detected capab
 
 ## Activating an Endpoint
 
-To switch to a different endpoint, click the link icon (<img src="icon-link.svg" height="16">) next to the endpoint you want to use. The clicked endpoint becomes active (indicated by the green **ACTIVE** badge, as shown in the [screenshot above](#status-tags)) and is used for all browsing and search operations. Your tree view and details panel will update to show data from the newly activated endpoint.
+To switch to a different endpoint, click the link icon (<img src="icons/icon-link.svg" height="16">) next to the endpoint you want to use. The clicked endpoint becomes active (indicated by the green **ACTIVE** badge, as shown in the [screenshot above](#status-tags)) and is used for all browsing and search operations. Your tree view and details panel will update to show data from the newly activated endpoint.
 
 ## Editing an Endpoint
 
-Click the configure button (<img src="icon-tune.svg" height="16">) next to any endpoint to reopen the wizard with existing settings.
+Click the configure button (<img src="icons/icon-tune.svg" height="16">) next to any endpoint to reopen the wizard with existing settings.
 
 **Tip:** You can also click anywhere on an endpoint row to open the configuration wizard.
 

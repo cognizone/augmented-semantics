@@ -23,6 +23,20 @@ When you first open AE SKOS, what you see depends on how it was deployed:
 3. Select a concept scheme from the dropdown
 4. Start browsing!
 
+### Header Toolbar
+
+The header toolbar provides quick access to key functions. From left to right:
+
+<img src="screenshots/header-toolbar.png" alt="Header toolbar showing endpoint badge, language selector, help, dark mode, and settings buttons" width="720">
+
+| Button | | Description |
+|--------|---|-------------|
+| **Endpoint** | badge | Shows the active endpoint name. Click to switch endpoints or open the [Endpoint Manager](endpoints.md). |
+| **Language** | <img src="icons/icon-language.svg" height="16"> | Change the display language. The dropdown shows languages detected in the current endpoint. See [Language settings](settings.md#language-section). |
+| **Help** | <img src="icons/icon-help.svg" height="16"> | Opens this user manual in a new tab. |
+| **Dark mode** | <img src="icons/icon-dark-mode.svg" height="16"> | Toggle between light and dark theme. |
+| **Settings** | <img src="icons/icon-settings.svg" height="16"> | Open the [Settings](settings.md) dialog. |
+
 ## User Guide
 
 - [Managing Endpoints](endpoints.md) — Add, configure, and switch SPARQL endpoints

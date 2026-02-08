@@ -14,33 +14,38 @@
 
 ## Opening Settings
 
-Click the settings icon (⚙️) in the header toolbar. The Settings dialog uses a sidebar navigation with six sections.
-
-<!-- IMAGE: screenshots/settings-dialog.png -->
-![Settings dialog with sidebar navigation](screenshots/settings-dialog.png)
-
-**Quick Dark Mode Toggle:** You can toggle dark mode directly from the header toolbar using the sun/moon icon, without opening the Settings dialog.
+Click the settings button (<img src="icons/icon-settings.svg" height="16">) in the [header toolbar](index.md#header-toolbar). The Settings dialog uses a sidebar navigation with six sections.
 
 ## Display Section
 
+Control how labels and metadata are formatted in the details panel.
+
+<img src="screenshots/settings-dialog.png" alt="Settings dialog showing Display section" width="500">
+
 | Setting | Description |
 |---------|-------------|
-| Show Datatypes | Display datatype tags (e.g., xsd:date) on values |
-| Show xsd:string | Show string datatype explicitly |
-| Show Language Tags | Display language codes on labels |
-| Include Preferred Language | Show tag even when label matches your preference |
-| Show Notation in Labels | Prefix labels with notation codes |
-| Show Orphans Selector | Include "Orphan Concepts" in scheme dropdown |
+| Show Datatypes | Display datatype tags (e.g., `xsd:date`, `xsd:boolean`) next to property values in the details panel. |
+| Show xsd:string | When Show Datatypes is enabled, also display the `xsd:string` tag on plain text values. Off by default since most values are strings. |
+| Show Language Tags | Show language codes (e.g., `en`, `fr`) on labels when the language differs from your preferred language. |
+| Include Preferred Language | Also show the language tag on labels that match your preferred language. Only applies when Show Language Tags is enabled. |
+| Show Notation in Labels | Prefix concept labels with their notation code (e.g., "01 - Agriculture" instead of "Agriculture"). Also affects sorting. |
+| Show Orphans Selector | Add an "Orphan Concepts & Collections" entry to the scheme dropdown for finding disconnected concepts. See [Orphan Concepts](browsing.md#orphan-concepts). |
 
 ## Language Section
 
 Select your preferred language for viewing labels. Only languages detected in the current endpoint are shown. The dropdown shows all available languages with their full names.
 
+<img src="screenshots/settings-language.png" alt="Settings Language section showing language dropdown" width="500">
+
+> **Tip:** You can also quickly switch languages from the [header toolbar](index.md#header-toolbar) without opening Settings.
+
 ## Deprecation Section
+
+<img src="screenshots/settings-deprecation.png" alt="Settings Deprecation section showing indicators and detection rules" width="500">
 
 | Setting | Description |
 |---------|-------------|
-| Show Deprecation Indicators | Toggle visibility of deprecated badges |
+| Show Deprecation Indicators | Toggle visibility of deprecated badges. See [how deprecation appears in the tree](browsing.md#deprecation-indicators). |
 
 **Detection Rules:**
 Configure which conditions indicate deprecation:
@@ -49,32 +54,42 @@ Configure which conditions indicate deprecation:
 
 ## Search Section
 
-Configure search behavior (also accessible via the settings button in the Search panel):
+Configure search behavior (also accessible via the [settings button in the Search panel](search.md#search-settings)):
+
+<img src="screenshots/settings-search.png" alt="Settings Search section showing match mode, search targets, and scope" width="500">
 
 | Setting | Description |
 |---------|-------------|
-| Search in Preferred Labels | Include prefLabel in search |
-| Search in Alternative Labels | Include altLabel in search |
-| Search in Definitions | Include definitions in search |
-| Match Mode | Contains, Starts with, Exact, or Regex |
-| Search All Schemes | Ignore current scheme filter |
+| Match Mode | How search terms are matched: **Contains** (substring match anywhere), **Starts with** (prefix match), **Exact** (full label must match), or **Regex** (regular expression pattern using SPARQL regex). |
+| Search in Preferred Labels | Include `skos:prefLabel` values when searching. Enabled by default. |
+| Search in Alternative Labels | Include `skos:altLabel` values when searching. Enabled by default. |
+| Search in Definitions | Also search inside `skos:definition` text. Off by default since it can slow down queries on large endpoints. |
+| Search All Schemes | Search across all concept schemes in the endpoint, ignoring the currently selected scheme filter. |
 
 ## Developer Section
 
+<img src="screenshots/settings-developer.png" alt="Settings Developer section showing diagnostics and tooling options" width="500">
+
 | Setting | Description |
 |---------|-------------|
-| Developer Mode | Enable advanced debugging features |
-| Log Level | Control console logging verbosity |
-| Enable Scheme URI Slash Fix | Automatically corrects trailing-slash mismatches between declared concept scheme URIs and the URIs used by concepts. Turn this on if the [Scheme URI mismatch](endpoints.md#endpoint-status-indicators) tag appears on an endpoint. |
+| Developer Mode | Enable developer tools like JSON export in the Endpoint Manager. |
+| Enable Scheme URI Slash Fix | Checks both trailing-slash variants for endpoints flagged with mismatched scheme URIs. Turn this on if the [Scheme URI mismatch](endpoints.md#endpoint-status-indicators) tag appears on an endpoint. |
+| Log Level | Minimum log level shown in the browser console (F12). Higher levels mean fewer messages. |
+| Orphan Detection Strategy | **Auto** (recommended) tries a fast single-query approach first, with fallback to a slower multi-query method. |
+| Prefilter Orphan Candidates | Excludes direct scheme links first, then runs hierarchy checks on the remaining concepts. Can speed up orphan detection on large endpoints. |
 
 When Developer Mode is enabled:
 - A download button appears next to each endpoint in the Endpoint Manager
 - Click the download button to export endpoint data as JSON
 - The export includes: endpoint name, URL, analysis data, and language priorities
 
+**Log history:** All log entries are kept in memory (last 100) regardless of the Log Level setting. In development builds, you can access them from the browser console by typing `__logger.dump()` to print all recent logs, or `__logger.getHistory()` to get them as an array.
+
 ## About Section
 
-View build information including version number, build date, and links to source code and documentation.
+View build information including version number, build commit, build date, and a link to the [source code on GitHub](https://github.com/cognizone/augmented-semantics).
+
+<img src="screenshots/settings-about.png" alt="Settings About section showing version, build, and source link" width="500">
 
 ## Pre-configured Deployments
 
