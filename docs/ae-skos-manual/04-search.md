@@ -90,4 +90,4 @@ History is saved to your browser's localStorage and persists across sessions. Up
 
 ---
 
-← [3. Viewing Details](03-details.md) · [User Manual](index.md) · [5. Settings](05-settings.md) →
+← [3. Viewing Details](03-details.md) &nbsp; · &nbsp; [User Manual](index.md) &nbsp; · &nbsp; [5. Settings](05-settings.md) →

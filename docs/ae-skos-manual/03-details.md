@@ -36,4 +36,4 @@ The details header includes action buttons:
 
 ---
 
-← [2. Browsing](02-browsing.md) · [User Manual](index.md) · [4. Search & History](04-search.md) →
+← [2. Browsing](02-browsing.md) &nbsp; · &nbsp; [User Manual](index.md) &nbsp; · &nbsp; [4. Search & History](04-search.md) →

@@ -54,4 +54,4 @@
 
 ---
 
-← [5. Settings](05-settings.md) · [User Manual](index.md)
+← [5. Settings](05-settings.md) &nbsp; · &nbsp; [User Manual](index.md)

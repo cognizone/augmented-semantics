@@ -165,4 +165,4 @@ When you select a collection, the right panel shows its details. The following s
 
 ---
 
-← [1. Managing Endpoints](01-endpoints.md) · [User Manual](index.md) · [3. Viewing Details](03-details.md) →
+← [1. Managing Endpoints](01-endpoints.md) &nbsp; · &nbsp; [User Manual](index.md) &nbsp; · &nbsp; [3. Viewing Details](03-details.md) →
