@@ -40,7 +40,6 @@ const isOrderedCollectionMode = computed(() => rootMode.value === 'orderedCollec
 const isCollectionRootMode = computed(() => rootMode.value !== 'scheme')
 
 const {
-  topLevelCollections,
   loadAllCollections,
   loadAllOrderedCollections,
   loading: collectionsLoading,
@@ -49,13 +48,6 @@ const {
 
 function formatBreadcrumbLabel(item: ConceptRef): string {
   return getRefLabel(item, { includeNotation: includeNotation.value })
-}
-
-function formatCollectionLabel(item: { label?: string; uri: string; notation?: string }): string {
-  const label = item.label || item.uri.split('/').pop() || item.uri
-  return includeNotation.value
-    ? (item.notation && item.label ? `${item.notation} - ${label}` : item.notation || label)
-    : label
 }
 
 // Local state

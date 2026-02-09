@@ -91,7 +91,7 @@ function selectCollection(uri: string) {
 }
 
 // Handle history selection - may need to switch endpoint/scheme
-async function selectFromHistory(entry: { uri: string; endpointUrl?: string; schemeUri?: string; type?: 'concept' | 'scheme' | 'collection' }) {
+async function selectFromHistory(entry: { uri: string; endpointUrl?: string; schemeUri?: string; type?: 'concept' | 'scheme' | 'collection' | 'orderedCollection' }) {
   // Handle scheme entries specially (not a concept selection)
   if (entry.type === 'scheme') {
     conceptStore.selectCollection(null)
