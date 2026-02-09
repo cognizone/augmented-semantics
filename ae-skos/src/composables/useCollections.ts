@@ -328,6 +328,7 @@ function createCollectionsState() {
 
     currentSchemeUri.value = null
     currentMode.value = 'collection'
+    error.value = null
 
     if (!endpointHasCollections(endpoint)) {
       logger.info('Collections', 'Skipping - endpoint reports no collections', { mode: 'collection' })
@@ -336,7 +337,6 @@ function createCollectionsState() {
     }
 
     loading.value = true
-    error.value = null
     collections.value = []
 
     logger.info('Collections', 'Loading all root collections', {
@@ -375,6 +375,7 @@ function createCollectionsState() {
 
     currentSchemeUri.value = null
     currentMode.value = 'orderedCollection'
+    error.value = null
 
     if (!endpointHasCollections(endpoint)) {
       logger.info('Collections', 'Skipping - endpoint reports no collections', { mode: 'orderedCollection' })
@@ -383,7 +384,6 @@ function createCollectionsState() {
     }
 
     loading.value = true
-    error.value = null
     collections.value = []
 
     logger.info('Collections', 'Loading all ordered collections', {

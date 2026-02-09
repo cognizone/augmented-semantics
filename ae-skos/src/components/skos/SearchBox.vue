@@ -66,6 +66,26 @@ function parseResourceType(value?: string): SearchSelection['type'] {
   return 'concept'
 }
 
+function inferResourceType(params: {
+  baseType?: SearchSelection['type']
+  hasMembers: boolean
+  hasMemberList: boolean
+  isSchemeType: boolean
+  isCollectionType: boolean
+  isOrderedCollectionType: boolean
+}): SearchSelection['type'] {
+  if (params.isOrderedCollectionType || params.hasMemberList) {
+    return 'orderedCollection'
+  }
+  if (params.isCollectionType || params.hasMembers) {
+    return 'collection'
+  }
+  if (params.isSchemeType) {
+    return 'scheme'
+  }
+  return params.baseType || 'concept'
+}
+
 function getResourceTypePriority(type?: SearchSelection['type']): number {
   if (type === 'orderedCollection') return 4
   if (type === 'collection') return 3
@@ -388,13 +408,19 @@ async function executeSearch() {
   }
 
   const sparqlQuery = withPrefixes(`
-    SELECT DISTINCT ?resource ?resourceType ?label ?labelLang ?notation ?hasNarrower ?hasMembers ?hasMemberList ?matchedLabel ?matchType ?scheme ?schemeLabel ?schemeLabelLang
+    SELECT DISTINCT ?resource ?resourceType ?label ?labelLang ?notation
+           ?hasNarrower ?hasMembers ?hasMemberList
+           ?isSchemeType ?isCollectionType ?isOrderedCollectionType
+           ?matchedLabel ?matchType ?scheme ?schemeLabel ?schemeLabelLang
     WHERE {
       ${resourceTypeUnion}
       ${scopeFilter}
       ${labelUnion}
       FILTER (${filterCondition})
       OPTIONAL { ?resource skos:notation ?notation }
+      BIND(EXISTS { ?resource a skos:ConceptScheme } AS ?isSchemeType)
+      BIND(EXISTS { ?resource a skos:Collection } AS ?isCollectionType)
+      BIND(EXISTS { ?resource a skos:OrderedCollection } AS ?isOrderedCollectionType)
       BIND(EXISTS { ?resource skos:member [] } AS ?hasMembers)
       BIND(EXISTS { ?resource skos:memberList [] } AS ?hasMemberList)
       BIND(
@@ -461,9 +487,17 @@ async function executeSearch() {
       const baseType = parseResourceType(b.resourceType?.value)
       const hasMemberList = parseExistsValue(b.hasMemberList?.value)
       const hasMembers = parseExistsValue(b.hasMembers?.value)
-      const inferredType: SearchSelection['type'] = hasMemberList
-        ? 'orderedCollection'
-        : (hasMembers && baseType === 'concept' ? 'collection' : baseType)
+      const isSchemeType = parseExistsValue(b.isSchemeType?.value)
+      const isCollectionType = parseExistsValue(b.isCollectionType?.value)
+      const isOrderedCollectionType = parseExistsValue(b.isOrderedCollectionType?.value)
+      const inferredType = inferResourceType({
+        baseType,
+        hasMembers,
+        hasMemberList,
+        isSchemeType,
+        isCollectionType,
+        isOrderedCollectionType,
+      })
 
       return {
         uri: b.resource?.value || '',

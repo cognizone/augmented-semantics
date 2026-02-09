@@ -44,6 +44,7 @@ const {
   loadAllCollections,
   loadAllOrderedCollections,
   loading: collectionsLoading,
+  error: collectionsError,
 } = useCollections({ shared: true })
 
 function formatBreadcrumbLabel(item: ConceptRef): string {
@@ -198,11 +199,11 @@ watch(
       return
     }
     if (mode === 'collection') {
-      loadAllCollections()
+      void loadCollectionRoots('collection')
       return
     }
     if (mode === 'orderedCollection') {
-      loadAllOrderedCollections()
+      void loadCollectionRoots('orderedCollection')
     }
   }
 )
@@ -233,6 +234,7 @@ function selectRootCollection(uri: string) {
 
 // Track scheme load requests to ignore stale responses
 let schemeRequestId = 0
+let collectionRootRequestId = 0
 
 // Load schemes from endpoint (uses schemeUris whitelist from analysis)
 async function loadSchemes() {
@@ -357,6 +359,28 @@ async function loadSchemes() {
   }
 }
 
+async function loadCollectionRoots(mode: 'collection' | 'orderedCollection') {
+  const endpoint = endpointStore.current
+  if (!endpoint) return
+
+  const endpointId = endpoint.id
+  const requestId = ++collectionRootRequestId
+
+  endpointStore.setStatus('connecting')
+
+  if (mode === 'collection') {
+    await loadAllCollections()
+  } else {
+    await loadAllOrderedCollections()
+  }
+
+  if (requestId !== collectionRootRequestId || endpointStore.current?.id !== endpointId || rootMode.value !== mode) {
+    return
+  }
+
+  endpointStore.setStatus(collectionsError.value ? 'error' : 'connected')
+}
+
 // Watch for endpoint changes to load schemes
 watch(
   () => [endpointStore.current?.id, rootMode.value] as const,
@@ -368,10 +392,10 @@ watch(
         loadSchemes()
       } else if (rootMode === 'collection') {
         schemeStore.viewScheme(null)
-        loadAllCollections()
+        void loadCollectionRoots('collection')
       } else if (rootMode === 'orderedCollection') {
         schemeStore.viewScheme(null)
-        loadAllOrderedCollections()
+        void loadCollectionRoots('orderedCollection')
       }
     }
   },
@@ -393,10 +417,10 @@ watch(
   ([, activeRootMode]) => {
     if (!endpointStore.current) return
     if (activeRootMode === 'collection') {
-      loadAllCollections()
+      void loadCollectionRoots('collection')
     }
     if (activeRootMode === 'orderedCollection') {
-      loadAllOrderedCollections()
+      void loadCollectionRoots('orderedCollection')
     }
   }
 )

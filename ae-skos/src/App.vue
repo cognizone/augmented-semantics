@@ -86,6 +86,13 @@ const endpointMenuItems = computed(() => {
   return items
 })
 
+const endpointStatusClass = computed(() => {
+  if (endpointStore.status === 'connecting' || endpointStore.status === 'error') {
+    return endpointStore.status
+  }
+  return endpointStore.current ? 'connected' : 'disconnected'
+})
+
 // Language options from current endpoint - use priorities order if available
 const languageOptions = computed(() => {
   const endpoint = endpointStore.current
@@ -261,7 +268,7 @@ onUnmounted(() => {
         <button
           v-if="!endpointStore.isSingleEndpoint"
           class="dropdown-trigger"
-          :class="endpointStore.status"
+          :class="endpointStatusClass"
           aria-label="Select endpoint"
           @click="(e) => endpointMenu.toggle(e)"
         >

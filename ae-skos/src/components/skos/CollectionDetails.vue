@@ -375,6 +375,54 @@ watch(
           </div>
         </LabelsSection>
 
+        <!-- Members Section -->
+        <section v-if="members.length || loadingMembers" class="details-section">
+          <h3 class="section-title section-title-row">
+            <span class="material-symbols-outlined section-icon">list</span>
+            <span class="section-title-text">
+              Members
+              <span v-if="memberCount !== null" class="member-count">({{ memberCount }})</span>
+            </span>
+            <span v-if="showMemberStep" class="member-step-inline">
+              Step {{ currentMemberStep }}/4: {{ memberStepLabel }}
+            </span>
+          </h3>
+
+          <div v-if="loadingMembers && !members.length" class="loading-members">
+            Loading members...
+          </div>
+
+          <div v-else class="member-list">
+            <div
+              v-for="member in members"
+              :key="member.uri"
+              class="member-item"
+              @click="navigateToMember(member)"
+            >
+              <span class="material-symbols-outlined member-icon"
+                    :class="member.type === 'orderedCollection'
+                      ? 'icon-ordered-collection'
+                      : (member.type === 'collection' ? 'icon-collection' : (member.hasNarrower ? 'icon-label' : 'icon-leaf'))">
+                {{ member.type === 'orderedCollection'
+                  ? 'format_list_numbered'
+                  : (member.type === 'collection' ? 'collections_bookmark' : (member.hasNarrower ? 'label' : 'circle')) }}
+              </span>
+              <span class="member-label">
+                {{ formatRefLabel(member) }}
+                <span v-if="member.lang && shouldShowLangTag(member.lang)" class="lang-tag">
+                  {{ member.lang }}
+                </span>
+                <span v-if="isExternalScheme(member) && member.displayScheme" class="scheme-badge" :title="member.displayScheme">
+                  {{ getSchemeShortName(member.displayScheme!) }}
+                </span>
+              </span>
+            </div>
+            <div v-if="loadingMemberLabels" class="loading-members">
+              Loading labels...
+            </div>
+          </div>
+        </section>
+
         <!-- Title/Label Sections (displayed separately by predicate) -->
         <section v-if="sortedDctTitles.length" class="details-section">
           <h3 class="section-title">
@@ -443,54 +491,6 @@ watch(
         </section>
 
         <DocumentationSection :items="documentationConfig" />
-
-        <!-- Members Section -->
-        <section v-if="members.length || loadingMembers" class="details-section">
-          <h3 class="section-title section-title-row">
-            <span class="material-symbols-outlined section-icon">list</span>
-            <span class="section-title-text">
-              Members
-              <span v-if="memberCount !== null" class="member-count">({{ memberCount }})</span>
-            </span>
-            <span v-if="showMemberStep" class="member-step-inline">
-              Step {{ currentMemberStep }}/4: {{ memberStepLabel }}
-            </span>
-          </h3>
-
-          <div v-if="loadingMembers && !members.length" class="loading-members">
-            Loading members...
-          </div>
-
-          <div v-else class="member-list">
-            <div
-              v-for="member in members"
-              :key="member.uri"
-              class="member-item"
-              @click="navigateToMember(member)"
-            >
-              <span class="material-symbols-outlined member-icon"
-                    :class="member.type === 'orderedCollection'
-                      ? 'icon-ordered-collection'
-                      : (member.type === 'collection' ? 'icon-collection' : (member.hasNarrower ? 'icon-label' : 'icon-leaf'))">
-                {{ member.type === 'orderedCollection'
-                  ? 'format_list_numbered'
-                  : (member.type === 'collection' ? 'collections_bookmark' : (member.hasNarrower ? 'label' : 'circle')) }}
-              </span>
-              <span class="member-label">
-                {{ formatRefLabel(member) }}
-                <span v-if="member.lang && shouldShowLangTag(member.lang)" class="lang-tag">
-                  {{ member.lang }}
-                </span>
-                <span v-if="isExternalScheme(member) && member.displayScheme" class="scheme-badge" :title="member.displayScheme">
-                  {{ getSchemeShortName(member.displayScheme!) }}
-                </span>
-              </span>
-            </div>
-            <div v-if="loadingMemberLabels" class="loading-members">
-              Loading labels...
-            </div>
-          </div>
-        </section>
 
         <!-- Metadata Section -->
         <section v-if="hasMetadata" class="details-section">

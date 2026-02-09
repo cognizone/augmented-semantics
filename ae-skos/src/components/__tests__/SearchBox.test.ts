@@ -453,6 +453,55 @@ describe('SearchBox', () => {
       expect(conceptStore.searchResults[0]?.type).toBe('collection')
       expect(conceptStore.searchResults[1]?.type).toBe('orderedCollection')
     })
+
+    it('infers collection/ordered type from rdf:type bindings even when member predicates are absent', async () => {
+      vi.useRealTimers()
+
+      const endpointStore = useEndpointStore()
+      const conceptStore = useConceptStore()
+
+      endpointStore.addEndpoint({
+        name: 'Test',
+        url: 'https://example.org/sparql',
+        auth: { type: 'none' },
+      })
+      endpointStore.selectEndpoint(endpointStore.endpoints[0]!.id)
+
+      global.fetch = mockFetchSuccess(createSparqlResults([
+        {
+          resource: 'http://ex.org/r3',
+          resourceType: 'concept',
+          label: 'Typed Collection',
+          matchedLabel: 'Typed Collection',
+          matchType: 'prefLabel',
+          hasMembers: 'false',
+          hasMemberList: 'false',
+          isSchemeType: 'false',
+          isCollectionType: 'true',
+          isOrderedCollectionType: 'false',
+        },
+        {
+          resource: 'http://ex.org/r4',
+          resourceType: 'concept',
+          label: 'Typed Ordered',
+          matchedLabel: 'Typed Ordered',
+          matchType: 'prefLabel',
+          hasMembers: 'false',
+          hasMemberList: 'false',
+          isSchemeType: 'false',
+          isCollectionType: 'true',
+          isOrderedCollectionType: 'true',
+        },
+      ]))
+
+      const wrapper = mountSearchBox()
+      await wrapper.find('input').setValue('typed')
+      await new Promise(r => setTimeout(r, 350))
+      await flushPromises()
+
+      expect(conceptStore.searchResults[0]?.type).toBe('collection')
+      expect(conceptStore.searchResults[1]?.type).toBe('orderedCollection')
+    })
   })
 
   describe('result selection', () => {
