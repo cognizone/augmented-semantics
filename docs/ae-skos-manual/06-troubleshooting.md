@@ -60,4 +60,4 @@
 
 ---
 
-← [5. Settings](05-settings.md) &nbsp; · &nbsp; [User Manual](index.md)
+<p align="center">← <a href="05-settings.md">5. Settings</a> &nbsp; · &nbsp; <a href="index.md">User Manual</a></p>

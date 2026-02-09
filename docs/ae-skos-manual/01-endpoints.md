@@ -143,4 +143,4 @@ Click the endpoint badge in the header and select a different endpoint from the 
 
 ---
 
-← [User Manual](index.md) &nbsp; · &nbsp; [2. Browsing](02-browsing.md) →
+<p align="center">← <a href="index.md">User Manual</a> &nbsp; · &nbsp; <a href="02-browsing.md">2. Browsing</a> →</p>

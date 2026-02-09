@@ -43,17 +43,7 @@ When you select a scheme:
 
 ### Scheme Details
 
-When viewing a scheme (no concept selected), the right panel displays:
-
-- **Titles**: Dublin Core titles (dct:title, dc:title) and RDFS labels
-- **Labels & Notation**: Preferred, alternative, and hidden labels, plus notation codes
-- **Documentation**: Definitions, descriptions, scope notes, history/change/editorial notes, examples
-- **Metadata**: Creator, publisher, rights, license, identifier, status, version, dates (issued, created, modified), deprecation status
-- **Other Properties**: Any additional RDF properties not covered above
-
-<img src="screenshots/scheme-details.png" alt="Scheme details panel showing labels and metadata" width="500">
-
-Schemes marked as deprecated show a "deprecated" badge next to their name in both the dropdown and the tree.
+When viewing a scheme (no concept selected), the right panel displays scheme information including titles, labels, documentation, and metadata. See [Scheme Details](03-details.md#scheme-details) for the full list of sections.
 
 ### Collections Within a Scheme
 
@@ -149,17 +139,7 @@ When in Collections mode:
 
 ### Collection Details
 
-When you select a collection, the right panel shows its details. The following sections appear (each only if data is available):
-
-- **Labels & Notation** — Preferred, alternative, and hidden labels, plus notation codes
-- **Titles** — Dublin Core titles (dct:title, dc:title) and RDFS labels
-- **Schemes** — Which concept schemes this collection belongs to
-- **Documentation** — Definition, description, scope notes, history/change/editorial notes, examples
-- **Members** — List of member concepts and sub-collections, with a count badge. Members are loaded progressively (labels, hierarchy icons, scheme badges)
-- **Metadata** — Creator, publisher, rights, license, identifier, status, version, dates, deprecation
-- **Other Properties** — Any additional RDF properties
-
-<img src="screenshots/collection-details.png" alt="Collection details panel showing labels and members" width="720">
+When you select a collection, the right panel shows its details including labels, members, and metadata. See [Collection Details](03-details.md#collection-details) for the full list of sections.
 
 ---
 
@@ -185,8 +165,8 @@ When in Ordered Collections mode:
 
 ### Ordered Collection Details
 
-When you select an ordered collection, the right panel shows the same sections as regular collections, but the **Members** list preserves the defined order.
+When you select an ordered collection, the right panel shows similar sections as regular collections, with members displayed in their defined sequence. See [Ordered Collection Details](03-details.md#ordered-collection-details) for more information.
 
 ---
 
-← [1. Managing Endpoints](01-endpoints.md) &nbsp; · &nbsp; [User Manual](index.md) &nbsp; · &nbsp; [3. Viewing Details](03-details.md) →
+<p align="center">← <a href="01-endpoints.md">1. Managing Endpoints</a> &nbsp; · &nbsp; <a href="index.md">User Manual</a> &nbsp; · &nbsp; <a href="03-details.md">3. Viewing Details</a> →</p>

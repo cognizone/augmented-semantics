@@ -106,4 +106,4 @@ Click "Reset to defaults" to restore all settings to their original values.
 
 ---
 
-← [4. Search & History](04-search.md) &nbsp; · &nbsp; [User Manual](index.md) &nbsp; · &nbsp; [6. Troubleshooting](06-troubleshooting.md) →
+<p align="center">← <a href="04-search.md">4. Search & History</a> &nbsp; · &nbsp; <a href="index.md">User Manual</a> &nbsp; · &nbsp; <a href="06-troubleshooting.md">6. Troubleshooting</a> →</p>

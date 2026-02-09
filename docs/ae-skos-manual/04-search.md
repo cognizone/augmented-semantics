@@ -74,4 +74,4 @@ History is saved to your browser's localStorage and persists across sessions. Up
 
 ---
 
-← [3. Viewing Details](03-details.md) &nbsp; · &nbsp; [User Manual](index.md) &nbsp; · &nbsp; [5. Settings](05-settings.md) →
+<p align="center">← <a href="03-details.md">3. Viewing Details</a> &nbsp; · &nbsp; <a href="index.md">User Manual</a> &nbsp; · &nbsp; <a href="05-settings.md">5. Settings</a> →</p>
