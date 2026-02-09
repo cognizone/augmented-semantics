@@ -4,7 +4,6 @@
 
 - [Switching Browsing Modes](#switching-browsing-modes)
 - [Browsing Concept Schemes](#browsing-concept-schemes)
-- [Navigating the Concept Tree](#navigating-the-concept-tree)
 - [Browsing Collections](#browsing-collections)
 - [Browsing Ordered Collections](#browsing-ordered-collections)
 
@@ -87,11 +86,9 @@ Once complete, the tree shows both orphan concepts and orphan collections:
 
 > **Not seeing the orphan selector?** It must be enabled in [Settings](05-settings.md) under "Show Orphan Concepts in Scheme Selector".
 
----
+### Navigating the Concept Tree
 
-## Navigating the Concept Tree
-
-### Tree Structure
+#### Tree Structure
 
 The concept tree displays a hierarchical view of concepts within the selected scheme.
 
@@ -106,14 +103,14 @@ Concepts with children show an arrow (▶) that can be expanded to reveal child 
 - **Tree icon** at the end of a label — indicates the concept is a top concept inferred from `skos:inScheme` only (no explicit `skos:topConceptOf`)
 - **Collection icon** (purple) — SKOS collection, may appear alongside concepts within a scheme
 
-### Selecting a Concept
+#### Selecting a Concept
 
 Click on any concept label to:
 - Select it (highlighted in the tree)
 - Load its details in the right panel
 - Update the breadcrumb path
 
-### Go to URI
+#### Go to URI
 
 Use the "Go to URI..." input at the top of the tree to navigate directly to any concept or scheme by its URI.
 
@@ -126,11 +123,11 @@ Use the "Go to URI..." input at the top of the tree to navigate directly to any 
 
 **Tip:** You can paste URIs with angle brackets (e.g., `<http://example.org/concept/1>`) - they're automatically cleaned.
 
-### Breadcrumb Navigation
+#### Breadcrumb Navigation
 
 The breadcrumb bar combines a root mode dropdown, a scheme selector, and a concept path. When you navigate into a hierarchy, ancestor concepts appear as clickable segments — click any segment to jump back to that level.
 
-### Deprecation Indicators
+#### Deprecation Indicators
 
 Deprecated concepts are visually indicated with:
 - A "deprecated" badge after the label
