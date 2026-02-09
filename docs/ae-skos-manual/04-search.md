@@ -19,9 +19,9 @@ Click the **Search** tab in the left sidebar to access the search panel.
 2. Refine your query to narrow results
 
 Results show:
-- Concept label and notation
+- Resource label and notation
 - Which field matched (prefLabel, altLabel, definition, notation)
-- The scheme containing the concept
+- The scheme containing the resource (when applicable)
 
 ### Search Settings
 
@@ -32,11 +32,11 @@ Settings are saved automatically and persist across sessions. When you change se
 ### Navigating Results
 
 Click any search result to:
-- Switch to the browse tab and select that concept in the tree
-- Expand ancestors as needed and scroll the concept into view
-- Show its details in the right panel
-- Switch scheme automatically if the concept belongs to a different scheme
-- Add the concept to your [Recent History](#recent-history)
+- Switch to the browse tab and select that item
+- Show details in the right panel
+- Switch scheme automatically when needed
+- Navigate to schemes, concepts, collections, and ordered collections
+- Add the item to your [Recent History](#recent-history)
 
 ---
 

@@ -64,7 +64,7 @@ Configure search behavior (also accessible via the [settings button in the Searc
 | Search in Preferred Labels | Include `skos:prefLabel` values when searching. Enabled by default. |
 | Search in Alternative Labels | Include `skos:altLabel` values when searching. Enabled by default. |
 | Search in Definitions | Also search inside `skos:definition` text. Off by default since it can slow down queries on large endpoints. |
-| Search All Schemes | Search across all concept schemes in the endpoint, ignoring the currently selected scheme filter. |
+| Search All Schemes | Search across all concept schemes in the endpoint, ignoring the currently selected scheme filter. Enabled by default. |
 
 ## Developer Section
 
