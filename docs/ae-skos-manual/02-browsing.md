@@ -6,6 +6,7 @@
 - [Browsing Concept Schemes](#browsing-concept-schemes)
 - [Navigating the Concept Tree](#navigating-the-concept-tree)
 - [Browsing Collections](#browsing-collections)
+- [Browsing Ordered Collections](#browsing-ordered-collections)
 
 ## Switching Browsing Modes
 
@@ -162,6 +163,32 @@ When you select a collection, the right panel shows its details. The following s
 - **Other Properties** — Any additional RDF properties
 
 <img src="screenshots/collection-details.png" alt="Collection details panel showing labels and members" width="720">
+
+---
+
+## Browsing Ordered Collections
+
+Ordered Collections are a special type of SKOS collection where members are displayed in a defined sequence (using `skos:memberList` with RDF lists).
+
+### Switching to Ordered Collections Mode
+
+1. Click the browsing mode dropdown in the breadcrumb bar
+2. Select "Ordered Collections"
+
+<img src="screenshots/browsing-mode.png" alt="Selecting Ordered Collections mode from breadcrumb dropdown" width="250">
+
+### Viewing Ordered Collections
+
+When in Ordered Collections mode:
+- The tree shows all ordered collections in the endpoint (flat list, no nesting)
+- Members are displayed in their defined sequence order
+- Click a collection to view its details in the right panel
+
+**Note:** Not all endpoints have ordered collections. If the list is empty, the endpoint doesn't use this SKOS feature. Endpoints with ordered collections include EU Publications Office and Getty Vocabularies.
+
+### Ordered Collection Details
+
+When you select an ordered collection, the right panel shows the same sections as regular collections, but the **Members** list preserves the defined order.
 
 ---
 
