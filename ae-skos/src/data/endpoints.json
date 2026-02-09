@@ -2345,99 +2345,99 @@
       "languages": [
         {
           "lang": "en",
-          "count": 897836
+          "count": 898015
         },
         {
           "lang": "fr",
-          "count": 848814
+          "count": 848983
         },
         {
           "lang": "de",
-          "count": 780324
+          "count": 780497
         },
         {
           "lang": "it",
-          "count": 761216
+          "count": 761388
         },
         {
           "lang": "es",
-          "count": 759839
+          "count": 759986
         },
         {
           "lang": "pl",
-          "count": 746746
+          "count": 746915
         },
         {
           "lang": "fi",
-          "count": 743151
+          "count": 743317
         },
         {
           "lang": "cs",
-          "count": 740822
+          "count": 740992
         },
         {
           "lang": "nl",
-          "count": 739751
+          "count": 739920
         },
         {
           "lang": "da",
-          "count": 736534
+          "count": 736697
         },
         {
           "lang": "pt",
-          "count": 735825
+          "count": 735984
         },
         {
           "lang": "hu",
-          "count": 735545
+          "count": 735713
         },
         {
           "lang": "sv",
-          "count": 735300
+          "count": 735460
         },
         {
           "lang": "et",
-          "count": 735131
+          "count": 735291
         },
         {
           "lang": "lt",
-          "count": 732899
+          "count": 733064
         },
         {
           "lang": "sk",
-          "count": 732129
+          "count": 732302
         },
         {
           "lang": "lv",
-          "count": 730249
+          "count": 730414
         },
         {
           "lang": "el",
-          "count": 728620
+          "count": 728784
         },
         {
           "lang": "ro",
-          "count": 726072
+          "count": 726232
         },
         {
           "lang": "sl",
-          "count": 723835
+          "count": 723998
         },
         {
           "lang": "bg",
-          "count": 719298
+          "count": 719466
         },
         {
           "lang": "mt",
-          "count": 718126
+          "count": 718289
         },
         {
           "lang": "hr",
-          "count": 715503
+          "count": 715669
         },
         {
           "lang": "ga",
-          "count": 432480
+          "count": 432659
         },
         {
           "lang": "tr",
@@ -2445,7 +2445,7 @@
         },
         {
           "lang": "mk",
-          "count": 35591
+          "count": 35590
         },
         {
           "lang": "no",
@@ -2544,9 +2544,9 @@
           "count": 155
         }
       ],
-      "totalConcepts": 322630,
+      "totalConcepts": 322710,
       "totalCollections": 1068,
-      "totalOrderedCollections": 7,
+      "totalOrderedCollections": 10,
       "relationships": {
         "hasInScheme": true,
         "hasTopConceptOf": true,
@@ -2574,7 +2574,7 @@
           "xlPrefLabel": true
         }
       },
-      "analyzedAt": "2026-01-27T09:23:48.302Z"
+      "analyzedAt": "2026-02-03T11:20:02.962Z"
     },
     "suggestedLanguagePriorities": [
       "en",

@@ -257,7 +257,7 @@ export function buildCollectionsStageQuery(
 
   return withPrefixes(`
     SELECT DISTINCT ?collection ?label ?labelLang ?labelType ?notation
-           ?hasParentCollection ?hasChildCollections WHERE {
+           ?hasParentCollection ?hasChildCollections ?isOrdered WHERE {
       ${valuesClause}
       ?collection a skos:Collection .
       ${filterClause}
@@ -275,6 +275,9 @@ export function buildCollectionsStageQuery(
         ?childCol skos:member ?member .
         ${childMembershipPattern}
       } AS ?hasChildCollections)` : 'BIND(false AS ?hasChildCollections)'}
+
+      # OrderedCollection marker (for icon/display)
+      BIND(EXISTS { ?collection a skos:OrderedCollection . } AS ?isOrdered)
 
       # Label resolution with priority tracking (capability-aware)
       OPTIONAL {
@@ -449,8 +452,8 @@ export function buildAllCollectionsQuery(
 }
 
 /**
- * Build SPARQL query for loading all root ordered collections (no scheme filtering).
- * Filters out ordered collections nested inside other ordered collections.
+ * Build SPARQL query for loading all ordered collections (no scheme filtering).
+ * Ordered collections are shown flat (no parent/child nesting checks).
  */
 export function buildAllOrderedCollectionsQuery(
   endpoint: SPARQLEndpoint
@@ -463,23 +466,9 @@ export function buildAllOrderedCollectionsQuery(
            ?hasParentCollection ?hasChildCollections ?isOrdered WHERE {
       ?collection a skos:OrderedCollection .
 
-      # Only top-level ordered collections (no ordered parent collection)
-      FILTER NOT EXISTS {
-        ?parentCol a skos:OrderedCollection .
-        ?parentCol ${COLLECTION_MEMBER_PATH} ?collection .
-      }
-
-      # Detect if nested (kept for consistent bindings; always false here)
-      BIND(EXISTS {
-        ?parentCol a skos:OrderedCollection .
-        ?parentCol ${COLLECTION_MEMBER_PATH} ?collection .
-      } AS ?hasParentCollection)
-
-      # Detect if has ordered child collections
-      BIND(EXISTS {
-        ?collection ${COLLECTION_MEMBER_PATH} ?childCol .
-        ?childCol a skos:OrderedCollection .
-      } AS ?hasChildCollections)
+      # No parent/child checks for ordered collections (shown flat)
+      BIND(false AS ?hasParentCollection)
+      BIND(false AS ?hasChildCollections)
 
       # OrderedCollection marker (for icon/display)
       BIND(true AS ?isOrdered)

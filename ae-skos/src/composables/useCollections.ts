@@ -93,13 +93,15 @@ function createCollectionsState() {
       // Use centralized resolver for label selection
       const selected = selectLabelByPriority(entry.labels)
 
+      const hasChildCollections = entry.isOrdered ? false : entry.hasChildCollections
+
       result.push({
         uri: entry.uri,
         label: selected?.value,
         labelLang: selected?.lang || undefined,
         notation: entry.notation,
         isNested: entry.isNested,
-        hasChildCollections: entry.hasChildCollections,
+        hasChildCollections,
         isOrdered: entry.isOrdered,
       })
     }
@@ -188,13 +190,15 @@ function createCollectionsState() {
     for (const entry of collectionMap.values()) {
       const selected = selectLabelByPriority(entry.labels)
 
+      const hasChildCollections = entry.isOrdered ? false : entry.hasChildCollections
+
       result.push({
         uri: entry.uri,
         label: selected?.value,
         labelLang: selected?.lang || undefined,
         notation: entry.notation,
         isNested: entry.isNested,
-        hasChildCollections: entry.hasChildCollections,
+        hasChildCollections,
         isOrdered: entry.isOrdered,
       })
     }
@@ -363,7 +367,7 @@ function createCollectionsState() {
   }
 
   /**
-   * Load all top-level ordered collections (no scheme filtering).
+   * Load all ordered collections (no scheme filtering, flat list).
    */
   async function loadAllOrderedCollections() {
     const endpoint = endpointStore.current
@@ -382,7 +386,7 @@ function createCollectionsState() {
     error.value = null
     collections.value = []
 
-    logger.info('Collections', 'Loading all ordered root collections', {
+    logger.info('Collections', 'Loading all ordered collections', {
       language: languageStore.preferred,
     })
 
@@ -393,7 +397,7 @@ function createCollectionsState() {
       const results = await executeSparql(endpoint, query, { retries: 1 })
       if (requestId !== activeRequestId) return
       collections.value = processBindings(results.results.bindings as Array<Record<string, { value: string; 'xml:lang'?: string }>>)
-      logger.info('Collections', `Loaded ${collections.value.length} ordered root collections`)
+      logger.info('Collections', `Loaded ${collections.value.length} ordered collections`)
     } catch (e: unknown) {
       const errMsg = e && typeof e === 'object' && 'message' in e
         ? (e as { message: string }).message

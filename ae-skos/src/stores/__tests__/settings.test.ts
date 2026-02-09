@@ -68,7 +68,7 @@ describe('settings store', () => {
       expect(store.searchInAltLabel).toBe(true)
       expect(store.searchInDefinition).toBe(false)
       expect(store.searchMatchMode).toBe('contains')
-      expect(store.searchAllSchemes).toBe(false)
+      expect(store.searchAllSchemes).toBe(true)
       expect(store.enableSchemeUriSlashFix).toBe(false)
     })
   })
@@ -426,7 +426,7 @@ describe('settings store', () => {
       store.searchInAltLabel = false
       store.searchInDefinition = true
       store.searchMatchMode = 'regex'
-      store.searchAllSchemes = true
+      store.searchAllSchemes = false
       store.enableSchemeUriSlashFix = true
       store.developerMode = true
 
@@ -447,7 +447,7 @@ describe('settings store', () => {
       expect(store.searchInAltLabel).toBe(true)
       expect(store.searchInDefinition).toBe(false)
       expect(store.searchMatchMode).toBe('contains')
-      expect(store.searchAllSchemes).toBe(false)
+      expect(store.searchAllSchemes).toBe(true)
       expect(store.enableSchemeUriSlashFix).toBe(false)
       expect(store.developerMode).toBe(false)
     })

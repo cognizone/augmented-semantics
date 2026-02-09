@@ -411,6 +411,31 @@ describe('useCollections', () => {
       expect(collections.value[0].hasChildCollections).toBe(true)
     })
 
+    it('forces ordered collections to not be expandable', async () => {
+      ;(executeSparql as Mock).mockResolvedValueOnce({
+        results: {
+          bindings: [
+            {
+              collection: { value: 'http://example.org/collection/1' },
+              label: { value: 'Ordered Collection' },
+              labelLang: { value: 'en' },
+              labelType: { value: 'prefLabel' },
+              hasParentCollection: { value: 'false' },
+              hasChildCollections: { value: 'true' },
+              isOrdered: { value: 'true' },
+            },
+          ],
+        },
+      })
+
+      const { loadCollectionsForScheme, collections } = useCollections()
+      await loadCollectionsForScheme('http://example.org/scheme')
+
+      expect(collections.value).toHaveLength(1)
+      expect(collections.value[0].isOrdered).toBe(true)
+      expect(collections.value[0].hasChildCollections).toBe(false)
+    })
+
     it('topLevelCollections excludes nested collections', async () => {
       ;(executeSparql as Mock).mockResolvedValueOnce({
         results: {

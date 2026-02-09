@@ -463,6 +463,10 @@ function formatUIDate(dateStr?: string) {
         </Column>
       </DataTable>
     </div>
+
+    <template #footer>
+      <Button label="Done" @click="dialogVisible = false" />
+    </template>
   </Dialog>
 
   <!-- Child Dialogs -->

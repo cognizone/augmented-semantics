@@ -53,8 +53,22 @@ async function selectMemberConcept(uri: string) {
 }
 
 // Handle concept selection from search - allow cross-scheme navigation
-async function selectConceptFromSearch(uri: string) {
-  await selectConceptWithScheme(uri)
+async function selectConceptFromSearch(selection: {
+  uri: string
+  type: 'concept' | 'scheme' | 'collection' | 'orderedCollection'
+  schemeUri?: string
+}) {
+  if (selection.type === 'scheme') {
+    await selectSchemeFromDetails(selection.uri)
+    return
+  }
+
+  if (selection.type === 'collection' || selection.type === 'orderedCollection') {
+    await selectCollectionWithScheme(selection.uri, selection.schemeUri)
+    return
+  }
+
+  await selectConceptWithScheme(selection.uri, selection.schemeUri)
 }
 
 async function selectSchemeFromDetails(uri: string) {

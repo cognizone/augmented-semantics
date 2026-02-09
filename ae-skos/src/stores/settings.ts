@@ -92,7 +92,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   searchInAltLabel: true,
   searchInDefinition: false,
   searchMatchMode: 'contains',
-  searchAllSchemes: false,
+  searchAllSchemes: true,
   enableSchemeUriSlashFix: false,
   developerMode: false,
   logLevel: 'warn',

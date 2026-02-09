@@ -1,10 +1,11 @@
 <script setup lang="ts">
 /**
- * SearchBox - SKOS concept search
+ * SearchBox - SKOS resource search
  *
  * Full-text search with:
  * - Multiple match modes (contains, startsWith, exact)
  * - Search scope (prefLabel, altLabel, definition)
+ * - Resource types (concepts, schemes, collections, ordered collections)
  * - Scheme filtering
  * - Debounced input (300ms)
  * - Result highlighting
@@ -17,13 +18,21 @@ import { executeSparql, withPrefixes, logger, escapeSparqlString } from '../../s
 import { useDelayedLoading, useLabelResolver } from '../../composables'
 import { getRefLabel } from '../../utils/displayUtils'
 import { buildSchemeValuesClause } from '../../utils/schemeUri'
-import type { SearchResult } from '../../types'
+import type { SearchResult, SPARQLEndpoint } from '../../types'
 import Listbox from 'primevue/listbox'
 import ProgressSpinner from 'primevue/progressspinner'
 import Message from 'primevue/message'
 
+type SearchSelection = {
+  uri: string
+  type: 'concept' | 'scheme' | 'collection' | 'orderedCollection'
+  schemeUri?: string
+}
+
+type RelationshipCapabilities = NonNullable<NonNullable<SPARQLEndpoint['analysis']>['relationships']>
+
 const emit = defineEmits<{
-  selectConcept: [uri: string]
+  selectConcept: [selection: SearchSelection]
 }>()
 
 const conceptStore = useConceptStore()
@@ -37,6 +46,185 @@ const includeNotation = computed(() => settingsStore.showNotationInLabels)
 
 function formatSearchLabel(result: SearchResult): string {
   return getRefLabel({ uri: result.uri, label: result.label, notation: result.notation }, { includeNotation: includeNotation.value })
+}
+
+function getSchemeLabel(result: SearchResult): string | undefined {
+  const schemeUri = result.scheme?.uri
+  if (!schemeUri) return undefined
+  const scheme = schemeStore.schemes.find(s => s.uri === schemeUri)
+  return result.scheme?.label || scheme?.label || schemeUri.split('/').pop() || schemeUri
+}
+
+function parseExistsValue(value?: string): boolean {
+  return value === 'true' || value === '1'
+}
+
+function parseResourceType(value?: string): SearchSelection['type'] {
+  if (value === 'scheme' || value === 'collection' || value === 'orderedCollection') {
+    return value
+  }
+  return 'concept'
+}
+
+function getResourceTypePriority(type?: SearchSelection['type']): number {
+  if (type === 'orderedCollection') return 4
+  if (type === 'collection') return 3
+  if (type === 'scheme') return 2
+  return 1
+}
+
+function pickPreferredResourceType(
+  current?: SearchSelection['type'],
+  candidate?: SearchSelection['type']
+): SearchSelection['type'] {
+  return getResourceTypePriority(candidate) > getResourceTypePriority(current)
+    ? (candidate || 'concept')
+    : (current || 'concept')
+}
+
+/**
+ * Build membership branches that determine whether a concept belongs to a scheme.
+ * Uses endpoint capabilities when available, otherwise falls back to a broad SKOS pattern set.
+ */
+function buildConceptSchemeMembershipBranches(
+  conceptVar: string,
+  schemeTerm: string,
+  relationships?: RelationshipCapabilities
+): string[] {
+  if (!relationships) {
+    return [
+      `{ ${conceptVar} skos:inScheme ${schemeTerm} . }`,
+      `{ ${conceptVar} skos:topConceptOf ${schemeTerm} . }`,
+      `{ ${schemeTerm} skos:hasTopConcept ${conceptVar} . }`,
+      `{ ${conceptVar} (skos:broader|^skos:narrower)+ ?topConcept . ?topConcept skos:topConceptOf ${schemeTerm} . }`,
+      `{ ${conceptVar} (skos:broader|^skos:narrower)+ ?topConcept . ${schemeTerm} skos:hasTopConcept ?topConcept . }`,
+    ]
+  }
+
+  const branches: string[] = []
+
+  if (relationships.hasInScheme) {
+    branches.push(`{ ${conceptVar} skos:inScheme ${schemeTerm} . }`)
+  }
+  if (relationships.hasTopConceptOf) {
+    branches.push(`{ ${conceptVar} skos:topConceptOf ${schemeTerm} . }`)
+  }
+  if (relationships.hasHasTopConcept) {
+    branches.push(`{ ${schemeTerm} skos:hasTopConcept ${conceptVar} . }`)
+  }
+
+  const hasTopCapability = relationships.hasTopConceptOf || relationships.hasHasTopConcept
+  if (hasTopCapability) {
+    const topPatterns: string[] = []
+    if (relationships.hasTopConceptOf) {
+      topPatterns.push(`?topConcept skos:topConceptOf ${schemeTerm} .`)
+    }
+    if (relationships.hasHasTopConcept) {
+      topPatterns.push(`${schemeTerm} skos:hasTopConcept ?topConcept .`)
+    }
+
+    if (relationships.hasBroaderTransitive || relationships.hasNarrowerTransitive) {
+      if (relationships.hasBroaderTransitive) {
+        for (const topPattern of topPatterns) {
+          branches.push(`{ ${conceptVar} skos:broaderTransitive ?topConcept . ${topPattern} }`)
+        }
+      }
+      if (relationships.hasNarrowerTransitive) {
+        for (const topPattern of topPatterns) {
+          branches.push(`{ ?topConcept skos:narrowerTransitive ${conceptVar} . ${topPattern} }`)
+        }
+      }
+    } else {
+      if (relationships.hasBroader) {
+        for (const topPattern of topPatterns) {
+          branches.push(`{ ${conceptVar} skos:broader+ ?topConcept . ${topPattern} }`)
+        }
+      }
+      if (relationships.hasNarrower) {
+        for (const topPattern of topPatterns) {
+          branches.push(`{ ?topConcept skos:narrower+ ${conceptVar} . ${topPattern} }`)
+        }
+      }
+    }
+  }
+
+  if (branches.length === 0) {
+    branches.push(`{ ${conceptVar} skos:inScheme ${schemeTerm} . }`)
+  }
+
+  return branches
+}
+
+/**
+ * Build branches that resolve a concept's scheme URI for result context display.
+ */
+function buildConceptSchemeResolutionBranches(
+  conceptVar: string,
+  schemeVar: string,
+  relationships?: RelationshipCapabilities
+): string[] {
+  if (!relationships) {
+    return [
+      `{ ${conceptVar} skos:inScheme ${schemeVar} . }`,
+      `{ ${conceptVar} skos:topConceptOf ${schemeVar} . }`,
+      `{ ${schemeVar} skos:hasTopConcept ${conceptVar} . }`,
+      `{ ${conceptVar} (skos:broader|^skos:narrower)+ ?topConcept . ?topConcept skos:topConceptOf ${schemeVar} . }`,
+      `{ ${conceptVar} (skos:broader|^skos:narrower)+ ?topConcept . ${schemeVar} skos:hasTopConcept ?topConcept . }`,
+    ]
+  }
+
+  const branches: string[] = []
+
+  if (relationships.hasInScheme) {
+    branches.push(`{ ${conceptVar} skos:inScheme ${schemeVar} . }`)
+  }
+  if (relationships.hasTopConceptOf) {
+    branches.push(`{ ${conceptVar} skos:topConceptOf ${schemeVar} . }`)
+  }
+  if (relationships.hasHasTopConcept) {
+    branches.push(`{ ${schemeVar} skos:hasTopConcept ${conceptVar} . }`)
+  }
+
+  const hasTopCapability = relationships.hasTopConceptOf || relationships.hasHasTopConcept
+  if (hasTopCapability) {
+    const topPatterns: string[] = []
+    if (relationships.hasTopConceptOf) {
+      topPatterns.push(`?topConcept skos:topConceptOf ${schemeVar} .`)
+    }
+    if (relationships.hasHasTopConcept) {
+      topPatterns.push(`${schemeVar} skos:hasTopConcept ?topConcept .`)
+    }
+
+    if (relationships.hasBroaderTransitive || relationships.hasNarrowerTransitive) {
+      if (relationships.hasBroaderTransitive) {
+        for (const topPattern of topPatterns) {
+          branches.push(`{ ${conceptVar} skos:broaderTransitive ?topConcept . ${topPattern} }`)
+        }
+      }
+      if (relationships.hasNarrowerTransitive) {
+        for (const topPattern of topPatterns) {
+          branches.push(`{ ?topConcept skos:narrowerTransitive ${conceptVar} . ${topPattern} }`)
+        }
+      }
+    } else {
+      if (relationships.hasBroader) {
+        for (const topPattern of topPatterns) {
+          branches.push(`{ ${conceptVar} skos:broader+ ?topConcept . ${topPattern} }`)
+        }
+      }
+      if (relationships.hasNarrower) {
+        for (const topPattern of topPatterns) {
+          branches.push(`{ ?topConcept skos:narrower+ ${conceptVar} . ${topPattern} }`)
+        }
+      }
+    }
+  }
+
+  if (branches.length === 0) {
+    branches.push(`{ ${conceptVar} skos:inScheme ${schemeVar} . }`)
+  }
+
+  return branches
 }
 
 // Local state
@@ -73,12 +261,13 @@ function onSearchInput() {
 async function executeSearch() {
   const endpoint = endpointStore.current
   const query = searchInput.value.trim()
+  const selectedSchemeUri = schemeStore.selectedUri
 
   if (!endpoint || query.length < 2) return
 
   logger.info('SearchBox', 'Executing search', {
     query,
-    scheme: schemeStore.selected?.uri || 'all'
+    scheme: selectedSchemeUri || 'all'
   })
 
   conceptStore.setLoadingSearch(true)
@@ -109,51 +298,151 @@ async function executeSearch() {
   const labelPatterns: string[] = []
 
   if (settingsStore.searchInPrefLabel) {
-    labelPatterns.push(`{ ?concept skos:prefLabel ?matchedLabel . BIND("prefLabel" AS ?matchType) }`)
+    labelPatterns.push(`{ ?resource skos:prefLabel ?matchedLabel . BIND("prefLabel" AS ?matchType) }`)
   }
   if (settingsStore.searchInAltLabel) {
-    labelPatterns.push(`{ ?concept skos:altLabel ?matchedLabel . BIND("altLabel" AS ?matchType) }`)
+    labelPatterns.push(`{ ?resource skos:altLabel ?matchedLabel . BIND("altLabel" AS ?matchType) }`)
   }
   if (settingsStore.searchInDefinition) {
-    labelPatterns.push(`{ ?concept skos:definition ?matchedLabel . BIND("definition" AS ?matchType) }`)
+    labelPatterns.push(`{ ?resource skos:definition ?matchedLabel . BIND("definition" AS ?matchType) }`)
   }
 
   if (!labelPatterns.length) {
-    labelPatterns.push(`{ ?concept skos:prefLabel ?matchedLabel . BIND("prefLabel" AS ?matchType) }`)
+    labelPatterns.push(`{ ?resource skos:prefLabel ?matchedLabel . BIND("prefLabel" AS ?matchType) }`)
   }
 
   const labelUnion = labelPatterns.join(' UNION ')
 
-  // Build scheme filter
-  let schemeFilter = ''
-  if (!settingsStore.searchAllSchemes && schemeStore.selected) {
+  const resourceTypeUnion = `
+    { ?resource a skos:Concept . BIND("concept" AS ?resourceType) }
+    UNION
+    { ?resource a skos:ConceptScheme . BIND("scheme" AS ?resourceType) }
+    UNION
+    { ?resource a skos:OrderedCollection . BIND("orderedCollection" AS ?resourceType) }
+    UNION
+    { ?resource skos:memberList ?memberList . BIND("orderedCollection" AS ?resourceType) }
+    UNION
+    {
+      ?resource a skos:Collection .
+      FILTER NOT EXISTS { ?resource a skos:OrderedCollection }
+      BIND("collection" AS ?resourceType)
+    }
+    UNION
+    {
+      ?resource skos:member ?member .
+      FILTER NOT EXISTS { ?resource a skos:OrderedCollection }
+      FILTER NOT EXISTS { ?resource skos:memberList ?_memberList }
+      BIND("collection" AS ?resourceType)
+    }
+  `
+
+  const relationships = endpoint.analysis?.relationships
+  const resourceSchemeResolutionBranches = buildConceptSchemeResolutionBranches('?resource', '?resourceDerivedScheme', relationships)
+  const resourceSchemeResolutionUnion = resourceSchemeResolutionBranches.join('\n        UNION\n        ')
+  const memberSchemeResolutionBranches = buildConceptSchemeResolutionBranches('?memberConcept', '?memberDerivedScheme', relationships)
+  const memberSchemeResolutionUnion = memberSchemeResolutionBranches.join('\n          UNION\n          ')
+
+  // Build scope filter
+  let scopeFilter = ''
+  if (!settingsStore.searchAllSchemes && selectedSchemeUri) {
     const { schemeTerm, valuesClause } = buildSchemeValuesClause(
-      schemeStore.selected.uri,
+      selectedSchemeUri,
       endpointStore.current?.analysis,
       settingsStore.enableSchemeUriSlashFix,
-      'scheme'
+      'selectedScheme'
     )
-    schemeFilter = `
+    const conceptMembershipBranches = buildConceptSchemeMembershipBranches('?resource', schemeTerm, relationships)
+    const conceptMembershipUnion = conceptMembershipBranches.join('\n                UNION\n                ')
+    const collectionMemberBranches = buildConceptSchemeMembershipBranches('?memberConcept', schemeTerm, relationships)
+    const collectionMemberUnion = collectionMemberBranches.join('\n                  UNION\n                  ')
+
+    scopeFilter = `
       ${valuesClause}
-      ?concept skos:inScheme ${schemeTerm} .
+      FILTER (
+        (
+          ?resourceType = "concept"
+          && EXISTS {
+            ${conceptMembershipUnion}
+          }
+        )
+        ||
+        (
+          (?resourceType = "collection" || ?resourceType = "orderedCollection")
+          && (
+            EXISTS { ?resource skos:inScheme ${schemeTerm} . }
+            ||
+            EXISTS {
+              ?resource (skos:member|skos:memberList/rdf:rest*/rdf:first)* ?memberConcept .
+              ?memberConcept a skos:Concept .
+              ${collectionMemberUnion}
+            }
+          )
+        )
+        ||
+        (
+          ?resourceType = "scheme"
+          && ?resource = ${schemeTerm}
+        )
+      )
     `
   }
 
   const sparqlQuery = withPrefixes(`
-    SELECT DISTINCT ?concept ?label ?labelLang ?notation ?matchedLabel ?matchType
+    SELECT DISTINCT ?resource ?resourceType ?label ?labelLang ?notation ?hasNarrower ?hasMembers ?hasMemberList ?matchedLabel ?matchType ?scheme ?schemeLabel ?schemeLabelLang
     WHERE {
-      ?concept a skos:Concept .
-      ${schemeFilter}
+      ${resourceTypeUnion}
+      ${scopeFilter}
       ${labelUnion}
       FILTER (${filterCondition})
-      OPTIONAL { ?concept skos:notation ?notation }
+      OPTIONAL { ?resource skos:notation ?notation }
+      BIND(EXISTS { ?resource skos:member [] } AS ?hasMembers)
+      BIND(EXISTS { ?resource skos:memberList [] } AS ?hasMemberList)
+      BIND(
+        IF(
+          ?resourceType = "concept",
+          EXISTS {
+            { ?resource skos:narrower ?narrowerConcept }
+            UNION
+            { ?narrowerConcept skos:broader ?resource }
+          },
+          false
+        )
+        AS ?hasNarrower
+      )
       OPTIONAL {
-        ?concept skos:prefLabel ?label .
+        ?resource skos:prefLabel ?label .
         BIND(LANG(?label) AS ?labelLang)
         FILTER (LANG(?label) = "${languageStore.preferred}" || LANG(?label) = "")
       }
+      OPTIONAL {
+        FILTER (?resourceType = "concept")
+        ${resourceSchemeResolutionUnion}
+      }
+      OPTIONAL {
+        FILTER (?resourceType = "collection" || ?resourceType = "orderedCollection")
+        ?resource skos:inScheme ?collectionDirectScheme .
+      }
+      OPTIONAL {
+        FILTER (?resourceType = "collection" || ?resourceType = "orderedCollection")
+        ?resource (skos:member|skos:memberList/rdf:rest*/rdf:first)+ ?memberConcept .
+        ?memberConcept a skos:Concept .
+        ${memberSchemeResolutionUnion}
+      }
+      BIND(
+        IF(
+          ?resourceType = "scheme",
+          ?resource,
+          COALESCE(?collectionDirectScheme, ?resourceDerivedScheme, ?memberDerivedScheme)
+        )
+        AS ?scheme
+      )
+      OPTIONAL {
+        ?scheme skos:prefLabel ?schemeLabel .
+        BIND(LANG(?schemeLabel) AS ?schemeLabelLang)
+        FILTER (LANG(?schemeLabel) = "${languageStore.preferred}" || LANG(?schemeLabel) = "")
+      }
     }
-    ORDER BY ?label
+    ORDER BY LCASE(COALESCE(STR(?label), STR(?matchedLabel)))
     LIMIT 100
   `)
 
@@ -161,20 +450,61 @@ async function executeSearch() {
 
   try {
     const results = await executeSparql(endpoint, sparqlQuery, { retries: 1 })
+    const singleScopeScheme = (!settingsStore.searchAllSchemes && selectedSchemeUri)
+      ? {
+          uri: selectedSchemeUri,
+          label: schemeStore.selected?.label,
+        }
+      : null
 
-    const searchResults: SearchResult[] = results.results.bindings.map(b => ({
-      uri: b.concept?.value || '',
-      label: b.label?.value || b.matchedLabel?.value || '',
-      notation: b.notation?.value,
-      lang: b.labelLang?.value || undefined,
-      matchedIn: (b.matchType?.value as SearchResult['matchedIn']) || 'prefLabel',
-      matchedValue: b.matchedLabel?.value,
-    })).filter(r => r.uri)
+    const searchResults: SearchResult[] = results.results.bindings.map(b => {
+      const baseType = parseResourceType(b.resourceType?.value)
+      const hasMemberList = parseExistsValue(b.hasMemberList?.value)
+      const hasMembers = parseExistsValue(b.hasMembers?.value)
+      const inferredType: SearchSelection['type'] = hasMemberList
+        ? 'orderedCollection'
+        : (hasMembers && baseType === 'concept' ? 'collection' : baseType)
 
-    // Deduplicate by URI
-    const uniqueResults = Array.from(
-      new Map(searchResults.map(r => [r.uri, r])).values()
-    )
+      return {
+        uri: b.resource?.value || '',
+        type: inferredType,
+        label: b.label?.value || b.matchedLabel?.value || '',
+        notation: b.notation?.value,
+        lang: b.labelLang?.value || undefined,
+        hasNarrower: parseExistsValue(b.hasNarrower?.value),
+        matchedIn: (b.matchType?.value as SearchResult['matchedIn']) || 'prefLabel',
+        matchedValue: b.matchedLabel?.value,
+        scheme: singleScopeScheme || (b.scheme?.value ? {
+          uri: b.scheme.value,
+          label: b.schemeLabel?.value,
+          lang: b.schemeLabelLang?.value || undefined,
+        } : undefined),
+      }
+    }).filter(r => r.uri)
+
+    // Deduplicate by URI while preserving best label hit and richer resource typing.
+    const deduped = new Map<string, SearchResult>()
+    for (const result of searchResults) {
+      const existing = deduped.get(result.uri)
+      if (!existing) {
+        deduped.set(result.uri, result)
+        continue
+      }
+
+      // Prefer prefLabel hits as the visual row anchor.
+      const base = existing.matchedIn !== 'prefLabel' && result.matchedIn === 'prefLabel'
+        ? { ...result }
+        : { ...existing }
+
+      deduped.set(result.uri, {
+        ...base,
+        // Preserve richer typing when a resource appears under multiple inferred types.
+        type: pickPreferredResourceType(existing.type, result.type),
+        hasNarrower: !!(existing.hasNarrower || result.hasNarrower),
+        scheme: base.scheme || existing.scheme || result.scheme,
+      })
+    }
+    const uniqueResults = Array.from(deduped.values())
 
     logger.info('SearchBox', `Found ${uniqueResults.length} results`)
     conceptStore.setSearchResults(uniqueResults)
@@ -192,14 +522,17 @@ async function executeSearch() {
 
 // Handle result selection
 function selectResult(result: SearchResult) {
-  emit('selectConcept', result.uri)
+  const resultType = result.type || 'concept'
+  emit('selectConcept', { uri: result.uri, type: resultType, schemeUri: result.scheme?.uri })
   conceptStore.addToHistory({
     uri: result.uri,
     label: result.label,
     notation: result.notation,
     lang: result.lang,
     endpointUrl: endpointStore.current?.url,
-    schemeUri: schemeStore.selectedUri || undefined,
+    schemeUri: result.scheme?.uri || schemeStore.selectedUri || undefined,
+    type: resultType,
+    hasNarrower: result.hasNarrower,
   })
 }
 
@@ -258,7 +591,7 @@ watch(
           ref="searchInputRef"
           v-model="searchInput"
           type="text"
-          placeholder="Search concepts..."
+          placeholder="Search resources..."
           class="ae-input ae-input-with-icon"
           @input="onSearchInput"
           @keyup.escape="clearSearch"
@@ -307,6 +640,18 @@ watch(
         <template #option="slotProps">
           <div class="result-item">
             <div class="result-label">
+              <span
+                class="material-symbols-outlined result-icon"
+                :class="slotProps.option.type === 'scheme' ? 'icon-folder'
+                  : slotProps.option.type === 'orderedCollection' ? 'icon-ordered-collection'
+                  : slotProps.option.type === 'collection' ? 'icon-collection'
+                  : (slotProps.option.hasNarrower ? 'icon-label' : 'icon-leaf')"
+              >{{
+                slotProps.option.type === 'scheme' ? 'folder'
+                  : slotProps.option.type === 'orderedCollection' ? 'format_list_numbered'
+                  : slotProps.option.type === 'collection' ? 'collections_bookmark'
+                  : (slotProps.option.hasNarrower ? 'label' : 'circle')
+              }}</span>
               {{ formatSearchLabel(slotProps.option) }}
               <span v-if="slotProps.option.lang && shouldShowLangTag(slotProps.option.lang)" class="lang-tag">
                 {{ slotProps.option.lang }}
@@ -314,6 +659,9 @@ watch(
             </div>
             <div class="result-meta">
               <span class="result-uri">{{ slotProps.option.uri }}</span>
+              <span v-if="slotProps.option.type !== 'scheme' && getSchemeLabel(slotProps.option)" class="result-context">
+                {{ getSchemeLabel(slotProps.option) }}
+              </span>
               <span v-if="slotProps.option.matchedIn !== 'prefLabel'" class="match-type">
                 matched in {{ slotProps.option.matchedIn }}
               </span>
@@ -474,6 +822,14 @@ watch(
 .result-label {
   font-size: 0.875rem;
   font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.result-icon {
+  font-size: 15px;
+  flex-shrink: 0;
 }
 
 .result-meta {
@@ -485,6 +841,15 @@ watch(
 .result-uri {
   font-size: 0.7rem;
   color: var(--ae-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 300px;
+}
+
+.result-context {
+  font-size: 0.7rem;
+  color: var(--ae-text-muted);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

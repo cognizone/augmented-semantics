@@ -667,22 +667,20 @@ describe('useCollectionQueries', () => {
       expect(query).toContain('?collection a skos:OrderedCollection')
     })
 
-    it('filters out nested ordered collections', () => {
+    it('does not include ordered collection nesting checks', () => {
       const endpoint = mockEndpoint({ hasInScheme: true })
 
       const query = buildAllOrderedCollectionsQuery(endpoint)
-      expect(query).toContain('FILTER NOT EXISTS {')
-      expect(query).toContain('?parentCol a skos:OrderedCollection')
-      expect(query).toContain('?parentCol skos:member|skos:memberList/rdf:rest*/rdf:first ?collection')
+      expect(query).not.toContain('FILTER NOT EXISTS {')
+      expect(query).not.toContain('skos:memberList/rdf:rest*/rdf:first')
     })
 
-    it('includes hasChildCollections binding for ordered collections', () => {
+    it('binds parent/child flags to false for ordered collections', () => {
       const endpoint = mockEndpoint({ hasInScheme: true })
 
       const query = buildAllOrderedCollectionsQuery(endpoint)
-      expect(query).toContain('?hasChildCollections')
-      expect(query).toContain('?collection skos:member|skos:memberList/rdf:rest*/rdf:first ?childCol')
-      expect(query).toContain('?childCol a skos:OrderedCollection')
+      expect(query).toContain('BIND(false AS ?hasParentCollection)')
+      expect(query).toContain('BIND(false AS ?hasChildCollections)')
     })
   })
 })

@@ -198,8 +198,10 @@ export interface OtherPropertiesTarget {
 export interface SearchResult {
   uri: string
   label: string
+  type?: 'concept' | 'scheme' | 'collection' | 'orderedCollection'
   notation?: string
   lang?: string
+  hasNarrower?: boolean
   matchedIn: 'prefLabel' | 'altLabel' | 'definition' | 'notation'
   matchedValue?: string
   scheme?: ConceptRef
