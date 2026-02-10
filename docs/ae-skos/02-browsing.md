@@ -1,4 +1,3 @@
-[← Back to User Manual](index.md)
 
 # 2. Browsing
 
@@ -20,7 +19,7 @@ Use the breadcrumb dropdown to switch between three browsing modes:
 | [Collections](#browsing-collections) | Browse concepts organized by SKOS collections |
 | [Ordered Collections](#browsing-ordered-collections) | Browse ordered collections where members are displayed in a defined sequence |
 
-<img src="screenshots/browsing-mode.png" alt="Breadcrumb dropdown showing Schemes, Collections, and Ordered Collections options" width="250">
+<img src="./screenshots/browsing-mode.png" alt="Breadcrumb dropdown showing Schemes, Collections, and Ordered Collections options" width="250">
 
 ---
 
@@ -32,7 +31,7 @@ Use the scheme dropdown in the breadcrumb bar to select a concept scheme.
 
 **Filtering Schemes:** For endpoints with many schemes, use the filter input at the top of the dropdown. Type to filter schemes by name - the list updates as you type. The filter automatically clears after you make a selection.
 
-<img src="screenshots/scheme-dropdown.png" alt="Scheme dropdown with filter input" width="400">
+<img src="./screenshots/scheme-dropdown.png" alt="Scheme dropdown with filter input" width="400">
 
 The dropdown also includes an **Orphan Concepts & Collections** entry for finding disconnected concepts. If you don't see it, enable it in [Settings](05-settings.md) under "Show Orphan Concepts in Scheme Selector".
 
@@ -49,7 +48,7 @@ When viewing a scheme (no concept selected), the right panel displays scheme inf
 
 Some schemes contain SKOS collections that group related concepts together. When browsing such a scheme, collections appear in the tree alongside regular concepts:
 
-<img src="screenshots/tree-collections.png" alt="Scheme with collections and concepts in the tree" width="400">
+<img src="./screenshots/tree-collections.png" alt="Scheme with collections and concepts in the tree" width="400">
 
 ### Orphan Concepts
 
@@ -68,11 +67,11 @@ These concepts exist in the vocabulary but are disconnected from the main hierar
 
 The first time you access orphan concepts for an endpoint, the application runs a detection process in the background. Results are cached for subsequent access. Note that orphan detection can be quite slow on large endpoints and is not recommended for endpoints with millions of concepts.
 
-<img src="screenshots/orphan-detection.png" alt="Orphan detection in progress" width="500">
+<img src="./screenshots/orphan-detection.png" alt="Orphan detection in progress" width="500">
 
 Once complete, the tree shows both orphan concepts and orphan collections:
 
-<img src="screenshots/orphan-results.png" alt="Orphan detection results showing orphan concepts and collections" width="500">
+<img src="./screenshots/orphan-results.png" alt="Orphan detection results showing orphan concepts and collections" width="500">
 
 > **Not seeing the orphan selector?** It must be enabled in [Settings](05-settings.md) under "Show Orphan Concepts in Scheme Selector".
 
@@ -82,7 +81,7 @@ Once complete, the tree shows both orphan concepts and orphan collections:
 
 The concept tree displays a hierarchical view of concepts within the selected scheme.
 
-<img src="screenshots/concept-tree.png" alt="Concept tree showing expanded hierarchy with different node types" width="400">
+<img src="./screenshots/concept-tree.png" alt="Concept tree showing expanded hierarchy with different node types" width="400">
 
 Concepts with children show an arrow (▶) that can be expanded to reveal child concepts. Leaf concepts (no children) are shown as circles without an arrow. Children are loaded on-demand as you expand nodes.
 
@@ -104,8 +103,7 @@ Click on any concept label to:
 
 Use the "Go to URI..." input at the top of the tree to navigate directly to any concept or scheme by its URI.
 
-<!-- IMAGE: screenshots/goto-uri.png -->
-![Go to URI input field](screenshots/goto-uri.png)
+<!-- Screenshot TODO: goto-uri.png -->
 
 **Supported URIs:**
 - **Concept URI**: Selects the concept and reveals it in the tree
@@ -123,7 +121,7 @@ Deprecated concepts are visually indicated with:
 - A "deprecated" badge after the label
 - Reduced opacity (60%)
 
-<img src="screenshots/deprecated-concept.png" alt="Deprecated concept in tree with badge" width="500">
+<img src="./screenshots/deprecated-concept.png" alt="Deprecated concept in tree with badge" width="500">
 
 ---
 
@@ -152,7 +150,7 @@ Ordered Collections are a special type of SKOS collection where members are disp
 1. Click the browsing mode dropdown in the breadcrumb bar
 2. Select "Ordered Collections"
 
-<img src="screenshots/browsing-mode.png" alt="Selecting Ordered Collections mode from breadcrumb dropdown" width="250">
+<img src="./screenshots/browsing-mode.png" alt="Selecting Ordered Collections mode from breadcrumb dropdown" width="250">
 
 ### Viewing Ordered Collections
 
@@ -167,6 +165,3 @@ When in Ordered Collections mode:
 
 When you select an ordered collection, the right panel shows similar sections as regular collections, with members displayed in their defined sequence. See [Ordered Collection Details](03-details.md#ordered-collection-details) for more information.
 
----
-
-<p align="center">← <a href="01-endpoints.md">1. Managing Endpoints</a> &nbsp; · &nbsp; <a href="index.md">User Manual</a> &nbsp; · &nbsp; <a href="03-details.md">3. Viewing Details</a> →</p>

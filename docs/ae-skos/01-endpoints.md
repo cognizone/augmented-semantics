@@ -1,4 +1,3 @@
-[← Back to User Manual](index.md)
 
 # 1. Managing Endpoints
 
@@ -20,7 +19,7 @@
 
 Click the endpoint badge in the header toolbar, then select "Manage endpoints..." from the dropdown.
 
-<img src="screenshots/endpoint-dropdown.png" alt="Endpoint dropdown showing the Manage endpoints option" width="300">
+<img src="./screenshots/endpoint-dropdown.png" alt="Endpoint dropdown showing the Manage endpoints option" width="300">
 
 ## Suggested Endpoints
 
@@ -34,13 +33,13 @@ The Endpoint Manager shows a curated list of public SKOS endpoints at the top:
 
 Once added, endpoints appear in your "My Endpoints" list below.
 
-<img src="screenshots/mode-standard.png" width="500" alt="Endpoint Manager showing suggested endpoints">
+<img src="./screenshots/mode-standard.png" width="500" alt="Endpoint Manager showing suggested endpoints">
 
 ## Adding a New Endpoint
 
 1. Click **Add Endpoint** in the Endpoint Manager
 
-<img src="screenshots/endpoint-wizard.png" alt="Endpoint Manager showing the Add Endpoint button" width="720">
+<img src="./screenshots/endpoint-wizard.png" alt="Endpoint Manager showing the Add Endpoint button" width="720">
 
 2. The setup wizard opens with multiple steps:
 
@@ -52,7 +51,7 @@ Once added, endpoints appear in your "My Endpoints" list below.
 
 Click **Test Connection** to verify the endpoint is reachable.
 
-<img src="screenshots/endpoint-fedlex.png" alt="Example endpoint configuration for Fedlex" width="500">
+<img src="./screenshots/endpoint-fedlex.png" alt="Example endpoint configuration for Fedlex" width="500">
 
 ### Step 2: Analysis
 
@@ -69,13 +68,13 @@ The wizard automatically analyzes the endpoint and shows six capabilities:
 
 Languages are also detected during this step and shown in the next step (Language Priorities).
 
-<img src="screenshots/endpoint-analysis.png" alt="Analysis step showing detected schemes and languages" width="500">
+<img src="./screenshots/endpoint-analysis.png" alt="Analysis step showing detected schemes and languages" width="500">
 
 ### Step 3: Language Priorities
 
 Drag and drop languages to set your preferred order. Labels will be shown in the first available language from this list.
 
-<img src="screenshots/language-priorities.png" alt="Language priority configuration with drag-and-drop" width="500">
+<img src="./screenshots/language-priorities.png" alt="Language priority configuration with drag-and-drop" width="500">
 
 Endpoint configuration is automatically saved to your browser's localStorage. Your endpoints persist across sessions — no export or manual save needed.
 
@@ -83,7 +82,7 @@ Endpoint configuration is automatically saved to your browser's localStorage. Yo
 
 Once you've added endpoints, they appear in the Endpoint Manager list.
 
-<img src="screenshots/endpoint-list.png" alt="Endpoint Manager showing configured endpoints" width="720">
+<img src="./screenshots/endpoint-list.png" alt="Endpoint Manager showing configured endpoints" width="720">
 
 Each endpoint shows:
 - **Name**: The friendly name you assigned
@@ -96,7 +95,7 @@ Each endpoint shows:
 
 Each endpoint displays a colored dot next to its name indicating overall configuration health. Hover over the dot to see the specific reason. The dot also appears in the endpoint wizard header:
 
-<img src="screenshots/status-connection-failed.png" alt="Red dot with 'Connection failed' tooltip" width="300">
+<img src="./screenshots/status-connection-failed.png" alt="Red dot with 'Connection failed' tooltip" width="300">
 
 | Color | Meaning |
 |-------|---------|
@@ -115,15 +114,15 @@ Endpoints in your list may also display status tags that indicate detected capab
 | **CORS Issue** | The endpoint blocks browser-based access due to missing CORS headers. Since AE SKOS runs entirely in the browser, it cannot reach endpoints that don't allow cross-origin requests. As a workaround, you can install a CORS browser extension (search for "CORS Unblock" in your browser's extension store). |
 | **Scheme URI mismatch** | A trailing-slash inconsistency was detected between how concept scheme URIs are declared and how they are referenced by concepts. This can cause the tree to appear empty even though concepts exist. To fix this, enable **Enable Scheme URI Slash Fix** in [Settings → Developer](05-settings.md#developer-section). |
 
-<img src="screenshots/endpoint-status.png" alt="Endpoint list showing status dots and tags" width="720">
+<img src="./screenshots/endpoint-status.png" alt="Endpoint list showing status dots and tags" width="720">
 
 ## Activating an Endpoint
 
-To switch to a different endpoint, click the link icon (<img src="icons/icon-link.svg" height="16">) next to the endpoint you want to use. The clicked endpoint becomes active (indicated by the green **ACTIVE** badge, as shown in the [screenshot above](#status-tags)) and is used for all browsing and search operations. Your tree view and details panel will update to show data from the newly activated endpoint.
+To switch to a different endpoint, click the link icon (<img src="./icons/icon-link.svg" height="16">) next to the endpoint you want to use. The clicked endpoint becomes active (indicated by the green **ACTIVE** badge, as shown in the [screenshot above](#status-tags)) and is used for all browsing and search operations. Your tree view and details panel will update to show data from the newly activated endpoint.
 
 ## Editing an Endpoint
 
-Click the configure button (<img src="icons/icon-tune.svg" height="16">) next to any endpoint to reopen the wizard with existing settings.
+Click the configure button (<img src="./icons/icon-tune.svg" height="16">) next to any endpoint to reopen the wizard with existing settings.
 
 **Tip:** You can also click anywhere on an endpoint row to open the configuration wizard.
 
@@ -131,7 +130,7 @@ Click the configure button (<img src="icons/icon-tune.svg" height="16">) next to
 
 Click the delete button (🗑️) next to an endpoint. A confirmation dialog will appear before deletion.
 
-<img src="screenshots/endpoint-delete.png" alt="Delete confirmation dialog" width="400">
+<img src="./screenshots/endpoint-delete.png" alt="Delete confirmation dialog" width="400">
 
 ## Switching Endpoints
 
@@ -139,8 +138,5 @@ Click the endpoint badge in the header and select a different endpoint from the 
 
 > **Tip:** If you have many endpoints, the dropdown is scrollable.
 
-<img src="screenshots/endpoint-switch.png" alt="Switching endpoints via header dropdown" width="300">
+<img src="./screenshots/endpoint-switch.png" alt="Switching endpoints via header dropdown" width="300">
 
----
-
-<p align="center">← <a href="index.md">User Manual</a> &nbsp; · &nbsp; <a href="02-browsing.md">2. Browsing</a> →</p>

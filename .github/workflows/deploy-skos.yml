@@ -57,6 +57,15 @@ jobs:
           cp apps/era/app.json _site/skos-era/config/
           cp apps/era/logo.png _site/skos-era/config/
 
+      # Build documentation
+      - name: Build docs
+        run: pnpm docs:build
+
+      - name: Add docs to site
+        run: |
+          mkdir -p _site/docs
+          cp -r docs/.vitepress/dist/* _site/docs/
+
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site

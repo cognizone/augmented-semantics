@@ -1,4 +1,3 @@
-[← Back to User Manual](index.md)
 
 # 6. Troubleshooting
 
@@ -58,6 +57,3 @@
 - **Issues**: Report bugs at [GitHub Issues](https://github.com/cognizone/augmented-semantics/issues)
 - **Source Code**: [GitHub Repository](https://github.com/cognizone/augmented-semantics)
 
----
-
-<p align="center">← <a href="05-settings.md">5. Settings</a> &nbsp; · &nbsp; <a href="index.md">User Manual</a></p>

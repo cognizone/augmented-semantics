@@ -1,4 +1,3 @@
-[← Back to User Manual](index.md)
 
 # 5. Settings
 
@@ -14,13 +13,13 @@
 
 ## Opening Settings
 
-Click the settings button (<img src="icons/icon-settings.svg" height="16">) in the [header toolbar](index.md#header-toolbar). The Settings dialog uses a sidebar navigation with six sections.
+Click the settings button (<img src="./icons/icon-settings.svg" height="16">) in the [header toolbar](index.md#header-toolbar). The Settings dialog uses a sidebar navigation with six sections.
 
 ## Display Section
 
 Control how labels and metadata are formatted in the details panel.
 
-<img src="screenshots/settings-dialog.png" alt="Settings dialog showing Display section" width="500">
+<img src="./screenshots/settings-dialog.png" alt="Settings dialog showing Display section" width="500">
 
 | Setting | Description |
 |---------|-------------|
@@ -35,13 +34,13 @@ Control how labels and metadata are formatted in the details panel.
 
 Select your preferred language for viewing labels. Only languages detected in the current endpoint are shown. The dropdown shows all available languages with their full names.
 
-<img src="screenshots/settings-language.png" alt="Settings Language section showing language dropdown" width="500">
+<img src="./screenshots/settings-language.png" alt="Settings Language section showing language dropdown" width="500">
 
 > **Tip:** You can also quickly switch languages from the [header toolbar](index.md#header-toolbar) without opening Settings.
 
 ## Deprecation Section
 
-<img src="screenshots/settings-deprecation.png" alt="Settings Deprecation section showing indicators and detection rules" width="500">
+<img src="./screenshots/settings-deprecation.png" alt="Settings Deprecation section showing indicators and detection rules" width="500">
 
 | Setting | Description |
 |---------|-------------|
@@ -56,7 +55,7 @@ Configure which conditions indicate deprecation:
 
 Configure search behavior (also accessible via the [settings button in the Search panel](04-search.md#search-settings)):
 
-<img src="screenshots/settings-search.png" alt="Settings Search section showing match mode, search targets, and scope" width="500">
+<img src="./screenshots/settings-search.png" alt="Settings Search section showing match mode, search targets, and scope" width="500">
 
 | Setting | Description |
 |---------|-------------|
@@ -68,7 +67,7 @@ Configure search behavior (also accessible via the [settings button in the Searc
 
 ## Developer Section
 
-<img src="screenshots/settings-developer.png" alt="Settings Developer section showing diagnostics and tooling options" width="500">
+<img src="./screenshots/settings-developer.png" alt="Settings Developer section showing diagnostics and tooling options" width="500">
 
 | Setting | Description |
 |---------|-------------|
@@ -89,7 +88,7 @@ When Developer Mode is enabled:
 
 View build information including version number, build commit, build date, and a link to the [source code on GitHub](https://github.com/cognizone/augmented-semantics).
 
-<img src="screenshots/settings-about.png" alt="Settings About section showing version, build, and source link" width="500">
+<img src="./screenshots/settings-about.png" alt="Settings About section showing version, build, and source link" width="500">
 
 ## Pre-configured Deployments
 
@@ -98,12 +97,9 @@ Some deployments of AE SKOS may be pre-configured by administrators:
 - Endpoint management features may be restricted
 - Some settings (like Developer Mode) may be hidden
 
-If you're using a pre-configured deployment and need to modify settings, contact your administrator. Administrators can find setup instructions in the [Deployment Guide](https://github.com/cognizone/augmented-semantics/blob/main/ae-skos/DEPLOYMENT.md).
+If you're using a pre-configured deployment and need to modify settings, contact your administrator. Administrators can find setup instructions in the [Deployment Guide](./deployment.md).
 
 ## Reset to Defaults
 
 Click "Reset to defaults" to restore all settings to their original values.
 
----
-
-<p align="center">← <a href="04-search.md">4. Search & History</a> &nbsp; · &nbsp; <a href="index.md">User Manual</a> &nbsp; · &nbsp; <a href="06-troubleshooting.md">6. Troubleshooting</a> →</p>

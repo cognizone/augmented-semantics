@@ -1,4 +1,12 @@
+---
+outline: deep
+---
+
 # AE SKOS User Manual
+
+::: tip Try it now
+[Open AE SKOS](https://cognizone.github.io/augmented-semantics/) in your browser - no installation required.
+:::
 
 A fast, modern browser for exploring SKOS vocabularies. Lazy-loaded trees, instant search, multilingual support, dark mode, and keyboard shortcuts — all running directly in your browser. No backend, no installation, no data leaves your machine.
 
@@ -15,7 +23,7 @@ When you first open AE SKOS, what you see depends on how it was deployed:
 | Standard Mode | Pre-configured Mode |
 |---------------|---------------------|
 | The Endpoint Manager opens with suggested endpoints for you to add and manage. | Endpoints are already set up by an administrator — you're ready to browse. |
-| <img src="screenshots/mode-standard.png" width="350" alt="Standard Mode"> | <img src="screenshots/mode-preconfigured.png" width="350" alt="Pre-configured Mode"> |
+| <img src="./screenshots/mode-standard.png" width="350" alt="Standard Mode"> | <img src="./screenshots/mode-preconfigured.png" width="350" alt="Pre-configured Mode"> |
 | Continue with **Quick Start** below | Skip to [Browsing](02-browsing.md#browsing-concept-schemes) |
 
 ### Quick Start
@@ -29,15 +37,15 @@ When you first open AE SKOS, what you see depends on how it was deployed:
 
 The header toolbar provides quick access to key functions. From left to right:
 
-<img src="screenshots/header-toolbar.png" alt="Header toolbar showing endpoint badge, language selector, help, dark mode, and settings buttons" width="720">
+<img src="./screenshots/header-toolbar.png" alt="Header toolbar showing endpoint badge, language selector, help, dark mode, and settings buttons" width="720">
 
 | Button | | Description |
 |--------|---|-------------|
 | **Endpoint** | badge | Shows the active endpoint name. Click to switch endpoints or open the [Endpoint Manager](01-endpoints.md). |
-| **Language** | <img src="icons/icon-language.svg" height="16"> | Change the display language. The dropdown shows languages detected in the current endpoint. See [Language settings](05-settings.md#language-section). |
-| **Help** | <img src="icons/icon-help.svg" height="16"> | Opens this user manual in a new tab. |
-| **Dark mode** | <img src="icons/icon-dark-mode.svg" height="16"> | Toggle between light and dark theme. |
-| **Settings** | <img src="icons/icon-settings.svg" height="16"> | Open the [Settings](05-settings.md) dialog. |
+| **Language** | <img src="./icons/icon-language.svg" height="16"> | Change the display language. The dropdown shows languages detected in the current endpoint. See [Language settings](05-settings.md#language-section). |
+| **Help** | <img src="./icons/icon-help.svg" height="16"> | Opens this user manual in a new tab. |
+| **Dark mode** | <img src="./icons/icon-dark-mode.svg" height="16"> | Toggle between light and dark theme. |
+| **Settings** | <img src="./icons/icon-settings.svg" height="16"> | Open the [Settings](05-settings.md) dialog. |
 
 ## User Guide
 

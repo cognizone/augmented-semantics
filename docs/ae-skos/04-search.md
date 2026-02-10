@@ -1,4 +1,3 @@
-[← Back to User Manual](index.md)
 
 # 4. Search & History
 
@@ -11,7 +10,7 @@
 
 Click the **Search** tab in the left sidebar to access the search panel.
 
-<img src="screenshots/search-panel.png" alt="Search panel with input and results" width="400">
+<img src="./screenshots/search-panel.png" alt="Search panel with input and results" width="400">
 
 ### Basic Search
 
@@ -25,7 +24,7 @@ Results show:
 
 ### Search Settings
 
-Click the settings icon (<img src="icons/icon-tune.svg" height="16">) next to the search input to configure match mode, search targets, and scope. See [5. Settings — Search Section](05-settings.md#search-section) for details.
+Click the settings icon (<img src="./icons/icon-tune.svg" height="16">) next to the search input to configure match mode, search targets, and scope. See [5. Settings — Search Section](05-settings.md#search-section) for details.
 
 Settings are saved automatically and persist across sessions. When you change settings, any active search re-runs automatically.
 
@@ -46,7 +45,7 @@ Click any search result to:
 
 Click the **Recent** tab in the left sidebar to see your browsing history.
 
-<img src="screenshots/recent-history.png" alt="Recent history panel showing visited concepts and schemes" width="400">
+<img src="./screenshots/recent-history.png" alt="Recent history panel showing visited concepts and schemes" width="400">
 
 Each entry shows:
 - Icon indicating type (folder for schemes, label/circle for concepts)
@@ -66,12 +65,9 @@ Click any history entry to:
 
 Click the delete button (🗑️) in the history header. A confirmation dialog appears before clearing.
 
-<img src="screenshots/clear-history.png" alt="Clear history confirmation dialog" width="400">
+<img src="./screenshots/clear-history.png" alt="Clear history confirmation dialog" width="400">
 
 ### History Persistence
 
 History is saved to your browser's localStorage and persists across sessions. Up to 50 items are stored.
 
----
-
-<p align="center">← <a href="03-details.md">3. Viewing Details</a> &nbsp; · &nbsp; <a href="index.md">User Manual</a> &nbsp; · &nbsp; <a href="05-settings.md">5. Settings</a> →</p>
