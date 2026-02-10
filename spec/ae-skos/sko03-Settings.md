@@ -98,7 +98,7 @@ See [sko04-ConceptTree](./sko04-ConceptTree.md#deprecation-display) for visual d
 | `searchInAltLabel` | boolean | `true` | Search in alternative labels |
 | `searchInDefinition` | boolean | `false` | Search in definitions |
 | `searchMatchMode` | enum | `'contains'` | Match algorithm |
-| `searchAllSchemes` | boolean | `false` | Ignore scheme filter |
+| `searchAllSchemes` | boolean | `true` | Ignore scheme filter |
 
 **Match Modes:**
 
@@ -247,7 +247,7 @@ const defaultSettings: SettingsState = {
   searchInAltLabel: true,
   searchInDefinition: false,
   searchMatchMode: 'contains',
-  searchAllSchemes: false,
+  searchAllSchemes: true,
 
   // Orphan Detection
   orphanDetectionStrategy: 'auto',

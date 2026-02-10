@@ -1,12 +1,12 @@
 # SearchBox
 
-Component for searching SKOS concepts.
+Component for searching SKOS resources.
 
 ## Features
 
 ### Basic Search
 
-Text search across concept labels. Search targets `skos:Concept` resources only (not schemes or collections).
+Text search across SKOS labels and definitions. Search targets concepts, concept schemes, collections, and ordered collections.
 
 **Query:**
 ```sparql
@@ -46,8 +46,8 @@ Toggle which labels to search:
 
 #### Scheme Scope
 
-- Current scheme only (default when scheme selected)
-- All schemes
+- All schemes (default)
+- Current scheme only
 
 Add scheme filter to query:
 ```sparql
@@ -85,7 +85,7 @@ LIMIT 10
 
 ### Search Results
 
-Display matching concepts with:
+Display matching resources with:
 - Label (highlighted match)
 - URI
 - Scheme (if searching all schemes)
@@ -97,7 +97,7 @@ Display matching concepts with:
 
 ```
 ┌──────────────────────────────────────────────────────┐
-│ 🔍 [Search concepts...                        ] [⚙] │
+│ 🔍 [Search resources...                       ] [⚙] │
 │   ┌──────────────────────────────────────────────┐  │
 │   │ agriculture                                  │  │
 │   │ agricultural economics                       │  │
