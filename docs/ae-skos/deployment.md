@@ -350,8 +350,15 @@ The app analyzes endpoints on first connection to determine capabilities. You ca
 | `schemeUris` | string[] | ConceptScheme URIs (max 200, populates scheme dropdown) |
 | `schemeCount` | number | Total number of schemes found |
 | `schemesLimited` | boolean | `true` if more schemes exist than stored |
+| `cors` | boolean | Whether CORS is supported by the endpoint |
+| `supportsJsonResults` | boolean/null | `true` = JSON supported, `false` = XML-only, `null` = detection failed |
 | `totalConcepts` | number | Total SKOS Concept count (displayed in capabilities) |
+| `totalCollections` | number | Total SKOS Collection count |
+| `totalOrderedCollections` | number | Total SKOS OrderedCollection count |
+| `schemeUriSlashMismatch` | boolean | Whether scheme URI slash inconsistencies were detected |
+| `schemeUriSlashMismatchPairs` | array | Pairs of `{declared, used}` URIs with trailing slash differences |
 | `relationships` | object | Which SKOS relationships exist (used for orphan detection queries) |
+| `labelPredicates` | object | Label predicate capabilities per resource type |
 | `analyzedAt` | string | ISO timestamp of analysis |
 
 **Relationships object:**
@@ -366,6 +373,18 @@ The app analyzes endpoints on first connection to determine capabilities. You ca
 | `hasBroaderTransitive` | `skos:broaderTransitive` | Transitive hierarchy |
 | `hasNarrowerTransitive` | `skos:narrowerTransitive` | Transitive hierarchy |
 
+**Label predicates object:**
+
+Each resource type (`concept`, `scheme`, `collection`) can have:
+
+| Field | Label Predicate | Description |
+|-------|----------------|-------------|
+| `prefLabel` | `skos:prefLabel` | Standard SKOS preferred label |
+| `xlPrefLabel` | `skosxl:prefLabel` | SKOS-XL extended label |
+| `dctTitle` | `dct:title` | Dublin Core Terms title |
+| `dcTitle` | `dc:title` | Dublin Core title |
+| `rdfsLabel` | `rdfs:label` | RDF Schema label |
+
 **Example:**
 
 ```json
@@ -376,6 +395,8 @@ The app analyzes endpoints on first connection to determine capabilities. You ca
       "url": "https://vocab.example.com/sparql",
       "analysis": {
         "hasSkosContent": true,
+        "cors": true,
+        "supportsJsonResults": true,
         "supportsNamedGraphs": true,
         "skosGraphCount": 3,
         "languages": [
@@ -388,6 +409,8 @@ The app analyzes endpoints on first connection to determine capabilities. You ca
         ],
         "schemeCount": 2,
         "totalConcepts": 8000,
+        "totalCollections": 5,
+        "totalOrderedCollections": 0,
         "relationships": {
           "hasInScheme": true,
           "hasTopConceptOf": true,
@@ -396,6 +419,11 @@ The app analyzes endpoints on first connection to determine capabilities. You ca
           "hasNarrower": true,
           "hasBroaderTransitive": false,
           "hasNarrowerTransitive": false
+        },
+        "labelPredicates": {
+          "concept": { "prefLabel": true, "rdfsLabel": true },
+          "scheme": { "prefLabel": true, "dctTitle": true },
+          "collection": { "prefLabel": true }
         },
         "analyzedAt": "2024-01-15T10:30:00Z"
       },
@@ -422,35 +450,9 @@ Or for public endpoints:
 Access-Control-Allow-Origin: *
 ```
 
-## GitHub Pages Deployment
+## CI/CD
 
-The repository includes a GitHub Actions workflow for automated deployment to GitHub Pages.
-
-### Setup
-
-1. Go to repo **Settings** → **Pages**
-2. Under "Build and deployment", select **GitHub Actions** as source
-
-### How It Works
-
-The workflow (`.github/workflows/deploy-skos.yml`):
-1. Builds with `BASE_URL=/augmented-semantics/`
-2. Copies `index.html` to `404.html` for SPA routing
-3. Deploys to GitHub Pages
-
-### URL
-
-After deployment: `https://cognizone.github.io/augmented-semantics/`
-
-### Customizing for Forks
-
-If you fork this repository, update the workflow's `BASE_URL`:
-
-```yaml
-- run: pnpm --filter ae-skos build
-  env:
-    BASE_URL: /your-repo-name/
-```
+For GitHub Pages deployment and Tauri desktop builds, see [CI/CD Deployment](./ci-cd.md).
 
 ## Troubleshooting
 

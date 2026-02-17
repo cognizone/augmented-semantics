@@ -42,7 +42,8 @@ export default defineConfig({
         {
           text: 'Administration',
           items: [
-            { text: 'Deployment Guide', link: '/ae-skos/deployment' }
+            { text: 'Deployment Guide', link: '/ae-skos/deployment' },
+            { text: 'CI/CD', link: '/ae-skos/ci-cd' }
           ]
         }
       ],
