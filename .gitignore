@@ -2,7 +2,10 @@
 .idea/
 
 # Claude Code
-.claude/
+.claude/*
+!.claude/hooks/
+!.claude/skills/
+!.claude/settings.json
 
 # Dependencies
 node_modules/

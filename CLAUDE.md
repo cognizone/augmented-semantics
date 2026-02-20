@@ -6,6 +6,28 @@ AI-powered toolkit for Semantic Web technologies.
 
 Browser-only tools that connect directly to SPARQL endpoints via HTTP. No backend server required.
 
+This is a TypeScript/Vue monorepo managed with pnpm workspaces. Always check pnpm workspace structure before running install commands.
+
+## General Rules
+
+- When I ask a simple question (e.g., "is X a prefLabel or title?"), just answer it directly. Do not launch tool calls, run scripts, or start an investigation unless I explicitly ask for one.
+- When I ask you to review or check something, be thorough the first time. Review ALL uncommitted changes, ALL relevant files. Do not require me to ask multiple times for completeness.
+- Stay within the explicitly stated scope. If I say "we are working on ae-skos-manual only", do not touch or commit files outside that package. Always confirm before expanding scope.
+
+## Committing Rules
+
+- Always run type checking before committing code changes (e.g., `pnpm --filter <package> vue-tsc --noEmit` or equivalent for the affected package).
+- A Claude Code pre-commit hook (`.claude/hooks/pre-commit.sh`) automatically runs type-checking and unit tests before any `git commit`. If checks fail, the commit is blocked.
+
+## File Editing Rules
+
+- When I say to edit documentation, always confirm which file path I mean before making changes. Never assume `ae-skos/README.md` when I might mean `docs/user-manual/README.md` or another path. Ask if ambiguous.
+- Never remove content from documentation unless I explicitly ask you to remove it. When reorganizing or splitting docs, preserve all existing content.
+
+## Documentation Conventions
+
+- For icons in documentation: always use inline SVG icons as used in the codebase, never use backtick-formatted icon names or Material Symbol text names. Check existing docs for the icon format convention before adding icons.
+
 ## Tech Stack
 
 | Layer | Technology |
