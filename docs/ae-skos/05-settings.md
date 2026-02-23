@@ -59,7 +59,7 @@ Configure search behavior (also accessible via the [settings button in the Searc
 
 | Setting | Description |
 |---------|-------------|
-| Match Mode | How search terms are matched: **Contains** (substring match anywhere), **Starts with** (prefix match), **Exact** (full label must match), or **Regex** (regular expression pattern using SPARQL regex). |
+| Match Mode | How search terms are matched: **Contains** (substring match anywhere), **Starts with** (prefix match), **Exact match** (full label must match), or **Regular expression** (regular expression pattern using SPARQL regex). |
 | Search in Preferred Labels | Include `skos:prefLabel` values when searching. Enabled by default. |
 | Search in Alternative Labels | Include `skos:altLabel` values when searching. Enabled by default. |
 | Search in Definitions | Also search inside `skos:definition` text. Off by default since it can slow down queries on large endpoints. |

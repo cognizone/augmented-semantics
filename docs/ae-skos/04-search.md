@@ -19,7 +19,7 @@ Click the **Search** tab in the left sidebar to access the search panel.
 
 Results show:
 - Resource label and notation
-- Which field matched (prefLabel, altLabel, definition, notation)
+- Which field matched (prefLabel, altLabel, definition)
 - The scheme containing the resource (when applicable)
 
 ### Search Settings
@@ -63,7 +63,7 @@ Click any history entry to:
 
 ### Clearing History
 
-Click the delete button (🗑️) in the history header. A confirmation dialog appears before clearing.
+Click the delete button (<img src="./icons/icon-delete.svg" height="16">) in the history header. A confirmation dialog appears before clearing.
 
 <img src="./screenshots/clear-history.png" alt="Clear history confirmation dialog" width="400">
 

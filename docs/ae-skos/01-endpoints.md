@@ -43,7 +43,7 @@ Once added, endpoints appear in your "My Endpoints" list below.
 
 2. The setup wizard opens with multiple steps:
 
-### Step 1: Connection
+### Step 1: Basic Info
 
 - **Name**: A friendly name for this endpoint (e.g., "Fedlex")
 - **URL**: The SPARQL endpoint URL (e.g., `https://fedlex.data.admin.ch/sparqlendpoint`)
@@ -53,7 +53,7 @@ Click **Test Connection** to verify the endpoint is reachable.
 
 <img src="./screenshots/endpoint-fedlex.png" alt="Example endpoint configuration for Fedlex" width="500">
 
-### Step 2: Analysis
+### Step 2: Capabilities
 
 The wizard automatically analyzes the endpoint and shows six capabilities:
 
@@ -66,11 +66,11 @@ The wizard automatically analyzes the endpoint and shows six capabilities:
 | Graph Support | Whether the endpoint supports named graph queries |
 | SKOS Graphs | How many graphs contain SKOS data |
 
-Languages are also detected during this step and shown in the next step (Language Priorities).
+Languages are also detected during this step and shown in the next step (Languages).
 
 <img src="./screenshots/endpoint-analysis.png" alt="Analysis step showing detected schemes and languages" width="500">
 
-### Step 3: Language Priorities
+### Step 3: Languages
 
 Drag and drop languages to set your preferred order. Labels will be shown in the first available language from this list.
 
@@ -118,7 +118,7 @@ Endpoints in your list may also display status tags that indicate detected capab
 
 ## Activating an Endpoint
 
-To switch to a different endpoint, click the link icon (<img src="./icons/icon-link.svg" height="16">) next to the endpoint you want to use. The clicked endpoint becomes active (indicated by the green **ACTIVE** badge, as shown in the [screenshot above](#status-tags)) and is used for all browsing and search operations. Your tree view and details panel will update to show data from the newly activated endpoint.
+To switch to a different endpoint, click the link icon (<img src="./icons/icon-link.svg" height="16">) next to the endpoint you want to use. This checks the connection and, if successful, makes it the active endpoint (indicated by the green **ACTIVE** badge, as shown in the [screenshot above](#status-tags)). Your tree view and details panel will update to show data from the newly activated endpoint.
 
 ## Editing an Endpoint
 
@@ -128,7 +128,7 @@ Click the configure button (<img src="./icons/icon-tune.svg" height="16">) next 
 
 ## Deleting an Endpoint
 
-Click the delete button (🗑️) next to an endpoint. A confirmation dialog will appear before deletion.
+Click the delete button (<img src="./icons/icon-delete.svg" height="16">) next to an endpoint. A confirmation dialog will appear before deletion.
 
 <img src="./screenshots/endpoint-delete.png" alt="Delete confirmation dialog" width="400">
 
