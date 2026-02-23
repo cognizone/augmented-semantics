@@ -198,7 +198,7 @@ describe('EndpointWizard', () => {
       global: {
         stubs: {
           Dialog: {
-            template: '<div class="p-dialog" v-if="visible"><slot /></div>',
+            template: '<div class="p-dialog" v-if="visible"><slot name="header" /><slot /></div>',
             props: ['visible', 'header', 'modal', 'closable'],
           },
           Stepper: {
@@ -347,7 +347,7 @@ describe('EndpointWizard', () => {
       expect(wrapper.props('endpoint')).toBeUndefined()
     })
 
-    it('shows "Add Endpoint" on save button', () => {
+    it('shows "Add Endpoint" in dialog title', () => {
       const wrapper = mountEndpointWizard()
       expect(wrapper.text()).toContain('Add Endpoint')
     })
@@ -367,7 +367,7 @@ describe('EndpointWizard', () => {
       expect(wrapper.props('endpoint')).toBeDefined()
     })
 
-    it('shows "Save" on save button in edit mode', () => {
+    it('shows "Configure Endpoint" in dialog title in edit mode', () => {
       const wrapper = mountEndpointWizard({
         endpoint: {
           id: 'test-1',
@@ -377,7 +377,7 @@ describe('EndpointWizard', () => {
           accessCount: 0,
         },
       })
-      expect(wrapper.text()).toContain('Save')
+      expect(wrapper.text()).toContain('Configure Endpoint')
     })
   })
 

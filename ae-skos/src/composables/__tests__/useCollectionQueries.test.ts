@@ -432,7 +432,7 @@ describe('useCollectionQueries', () => {
       expect(query).not.toBeNull()
       expect(query).toContain('BIND(EXISTS {')
       expect(query).toContain('?parentCol a skos:Collection')
-      expect(query).toContain('?parentCol skos:member ?collection')
+      expect(query).toContain('?parentCol skos:member|skos:memberList/rdf:rest*/rdf:first ?collection')
     })
 
     it('uses EXISTS pattern for hasChildCollections detection', () => {
@@ -440,7 +440,7 @@ describe('useCollectionQueries', () => {
 
       const query = buildCollectionsQuery(endpoint, testScheme)
       expect(query).not.toBeNull()
-      expect(query).toContain('?collection skos:member ?childCol')
+      expect(query).toContain('?collection skos:member|skos:memberList/rdf:rest*/rdf:first ?childCol')
       expect(query).toContain('?childCol a skos:Collection')
     })
   })

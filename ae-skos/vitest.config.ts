@@ -4,6 +4,11 @@ import { fileURLToPath } from 'node:url'
 
 export default defineConfig({
   plugins: [vue()],
+  define: {
+    __APP_VERSION__: JSON.stringify('test'),
+    __BUILD_DATE__: JSON.stringify('2020-01-01T00:00:00.000Z'),
+    __GIT_COMMIT__: JSON.stringify('test'),
+  },
   test: {
     environment: 'happy-dom',
     globals: true,

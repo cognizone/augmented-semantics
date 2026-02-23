@@ -523,28 +523,28 @@ describe('useConceptData', () => {
     })
 
     it('deduplicates collection URIs', async () => {
-      // 1. Main query
-      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
-      // 2. Collections query (same collection twice)
-      ;(executeSparql as Mock).mockResolvedValueOnce({
-        results: {
-          bindings: [
-            { collection: { value: 'http://example.org/collection/1' } },
-            { collection: { value: 'http://example.org/collection/1' } },
-          ],
-        },
+      ;(executeSparql as Mock).mockImplementation((_endpoint: unknown, query: string) => {
+        // Collections query (same collection twice)
+        if (query.includes('skos:member') && query.includes('?collection')) {
+          return {
+            results: {
+              bindings: [
+                { collection: { value: 'http://example.org/collection/1' } },
+                { collection: { value: 'http://example.org/collection/1' } },
+              ],
+            },
+          }
+        }
+        // Default empty response
+        return { results: { bindings: [] } }
       })
-      // 3. Related labels query
-      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
-      // 4. XL labels query
-      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
-      // 5. Other properties query
-      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
 
       const { loadDetails, details } = useConceptData()
       await loadDetails('http://example.org/concept/1')
 
-      expect(details.value?.collections).toHaveLength(1)
+      await vi.waitFor(() => {
+        expect(details.value?.collections).toHaveLength(1)
+      })
     })
 
     it('continues silently on collections query failure', async () => {
@@ -782,21 +782,21 @@ describe('useConceptData', () => {
 
   describe('loadXLLabels', () => {
     it('loads SKOS-XL extended labels', async () => {
-      // 1. Main query (empty - no relations)
-      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
-      // 2. Collections query
-      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
-      // 3. XL labels query (no loadRelatedLabels call since no relations/collections)
-      ;(executeSparql as Mock).mockResolvedValueOnce({
-        results: {
-          bindings: [
-            { xlLabel: { value: 'http://example.org/xl/1' }, labelType: { value: 'prefLabel' }, literalForm: { value: 'XL Pref Label' }, literalLang: { value: 'en' } },
-            { xlLabel: { value: 'http://example.org/xl/2' }, labelType: { value: 'altLabel' }, literalForm: { value: 'XL Alt Label' }, literalLang: { value: 'en' } },
-          ],
-        },
+      ;(executeSparql as Mock).mockImplementation((_endpoint: unknown, query: string) => {
+        // XL labels query
+        if (query.includes('skosxl:') || query.includes('literalForm')) {
+          return {
+            results: {
+              bindings: [
+                { xlLabel: { value: 'http://example.org/xl/1' }, labelType: { value: 'prefLabel' }, literalForm: { value: 'XL Pref Label' }, literalLang: { value: 'en' } },
+                { xlLabel: { value: 'http://example.org/xl/2' }, labelType: { value: 'altLabel' }, literalForm: { value: 'XL Alt Label' }, literalLang: { value: 'en' } },
+              ],
+            },
+          }
+        }
+        // Default empty response
+        return { results: { bindings: [] } }
       })
-      // 4. Other properties query
-      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
 
       const { loadDetails, details } = useConceptData()
       await loadDetails('http://example.org/concept/1')
@@ -808,21 +808,21 @@ describe('useConceptData', () => {
     })
 
     it('deduplicates XL labels by URI', async () => {
-      // 1. Main query
-      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
-      // 2. Collections query
-      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
-      // 3. XL labels query
-      ;(executeSparql as Mock).mockResolvedValueOnce({
-        results: {
-          bindings: [
-            { xlLabel: { value: 'http://example.org/xl/1' }, labelType: { value: 'prefLabel' }, literalForm: { value: 'XL Label' }, literalLang: { value: 'en' } },
-            { xlLabel: { value: 'http://example.org/xl/1' }, labelType: { value: 'prefLabel' }, literalForm: { value: 'XL Label' }, literalLang: { value: 'en' } },
-          ],
-        },
+      ;(executeSparql as Mock).mockImplementation((_endpoint: unknown, query: string) => {
+        // XL labels query (same label twice)
+        if (query.includes('skosxl:') || query.includes('literalForm')) {
+          return {
+            results: {
+              bindings: [
+                { xlLabel: { value: 'http://example.org/xl/1' }, labelType: { value: 'prefLabel' }, literalForm: { value: 'XL Label' }, literalLang: { value: 'en' } },
+                { xlLabel: { value: 'http://example.org/xl/1' }, labelType: { value: 'prefLabel' }, literalForm: { value: 'XL Label' }, literalLang: { value: 'en' } },
+              ],
+            },
+          }
+        }
+        // Default empty response
+        return { results: { bindings: [] } }
       })
-      // 4. Other properties query
-      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
 
       const { loadDetails, details } = useConceptData()
       await loadDetails('http://example.org/concept/1')

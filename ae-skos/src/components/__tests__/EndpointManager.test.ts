@@ -112,9 +112,9 @@ describe('EndpointManager', () => {
       expect(wrapper.find('.p-dialog').exists()).toBe(false)
     })
 
-    it('shows "Saved Endpoints" header', () => {
+    it('shows "My Endpoints" header', () => {
       const wrapper = mountEndpointManager()
-      expect(wrapper.find('.list-header h3').text()).toBe('Saved Endpoints')
+      expect(wrapper.find('.list-header h3').text()).toBe('My Endpoints')
     })
 
     it('shows Add Endpoint button', () => {
