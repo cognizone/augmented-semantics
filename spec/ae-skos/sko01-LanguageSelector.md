@@ -478,7 +478,7 @@ interface AppSettings {
 interface LanguageState {
   preferred: string  // Global preferred language
 }
-// Key: ae-language
+// Key: ae-preferred-language
 ```
 
 ### Endpoint Store

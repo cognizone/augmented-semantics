@@ -668,7 +668,7 @@ When a scheme is selected, the tree wraps top concepts under a synthetic scheme 
   key: scheme.uri,
   data: { isScheme: true },
   label: scheme.prefLabel,  // Resolved via useLabelResolver
-  icon: 'folder_special',   // Material Symbol
+  icon: 'folder',            // Material Symbol
   children: topConcepts,    // Array of ConceptNode[]
   leaf: false,              // Always expandable (even if no top concepts)
 }
@@ -699,7 +699,6 @@ Each tree node displays an icon indicating its type and source:
 | Collection | `collections_bookmark` | `icon-collection` | SKOS Collection |
 | Concept (with children) | `label` | `icon-label` | Has narrower concepts |
 | Concept (leaf) | `circle` | `icon-leaf` | No narrower concepts |
-| **In-scheme-only top concept** | `radio_button_unchecked` | `icon-top-fallback` | Fallback top concept (see below) |
 
 **In-Scheme-Only Visual Indicator:**
 

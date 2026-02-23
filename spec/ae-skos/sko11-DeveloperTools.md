@@ -53,7 +53,7 @@ The logger service provides a centralized logging system with filtering, history
 type LogLevel = 'debug' | 'info' | 'warn' | 'error'
 
 interface LogEntry {
-  timestamp: number       // Performance.now() for precision
+  timestamp: string       // ISO timestamp
   level: LogLevel
   component: string       // Source component name
   message: string         // Human-readable message
@@ -134,7 +134,7 @@ export default {
 ```typescript
 class Logger {
   private history: LogEntry[] = []
-  private maxHistory = 1000
+  private maxHistory = 100
 
   private addToHistory(entry: LogEntry): void {
     this.history.push(entry)
@@ -147,7 +147,7 @@ class Logger {
 
 **Minimum Level Filtering:**
 ```typescript
-private minLevel: LogLevel = 'info'  // Default
+private minLevel: LogLevel = 'warn'  // Default
 
 debug(component: string, message: string, data?: any): void {
   if (this.shouldLog('debug')) {
@@ -182,7 +182,7 @@ interface SettingsState {
 }
 ```
 
-**Default:** `'info'` (shows info, warn, error; hides debug)
+**Default:** `'warn'` (shows warn and error; hides debug and info)
 
 **Persistence:** Auto-saved to `localStorage: ae-skos-settings`
 
@@ -342,7 +342,7 @@ app.config.errorHandler = (err, instance, info) => {
 |------|---------|
 | `services/logger.ts` | Logger service implementation |
 | `stores/settings.ts` | Log level setting |
-| `components/common/SettingsDialog.vue` | Settings UI |
+| `App.vue` | Settings UI (inline settings dialog) |
 | `main.ts` | Global logger exposure, Vue error handler |
 
 ## Related Specs

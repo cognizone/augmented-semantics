@@ -156,7 +156,7 @@ interface HistoryEntry {
   accessedAt: string;    // ISO timestamp
   endpointUrl?: string;  // Endpoint URL for cross-endpoint navigation
   schemeUri?: string;    // Scheme URI for cross-scheme navigation
-  type?: 'concept' | 'scheme';  // Entry type for visual distinction
+  type?: 'concept' | 'scheme' | 'collection' | 'orderedCollection';  // Entry type for visual distinction
   hasNarrower?: boolean; // Has children (for icon selection)
 }
 

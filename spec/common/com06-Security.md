@@ -40,7 +40,8 @@ function escapeSparqlString(input: string): string {
     .replace(/"/g, '\\"')
     .replace(/\n/g, '\\n')
     .replace(/\r/g, '\\r')
-    .replace(/\t/g, '\\t');
+    .replace(/\t/g, '\\t')
+    .replace(/'/g, "\\'");
 }
 
 const query = `SELECT * WHERE { ?s ?p "${escapeSparqlString(userInput)}" }`;
@@ -99,8 +100,8 @@ import DOMPurify from 'dompurify';
 
 function sanitizeHtml(html: string): string {
   return DOMPurify.sanitize(html, {
-    ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a', 'br'],
-    ALLOWED_ATTR: ['href', 'title'],
+    ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a', 'br', 'p', 'ul', 'ol', 'li'],
+    ALLOWED_ATTR: ['href', 'title', 'target'],
   });
 }
 ```
@@ -184,6 +185,7 @@ Display warning when storing credentials:
 ```typescript
 interface EndpointSecurityCheck {
   isHttps: boolean;
+  isLocalhost: boolean;
   warning?: string;
 }
 

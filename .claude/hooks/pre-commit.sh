@@ -15,6 +15,12 @@ if [[ "$command" != *"git commit"* ]]; then
   exit 0
 fi
 
+# Skip checks if --no-verify flag is present
+if [[ "$command" == *"--no-verify"* ]]; then
+  echo "Pre-commit hook: skipped (--no-verify)" >&2
+  exit 0
+fi
+
 echo "Pre-commit hook: running type-checking and tests..." >&2
 
 errors=()

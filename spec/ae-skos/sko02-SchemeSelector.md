@@ -19,7 +19,7 @@ A dropdown control in the breadcrumb header allows switching between two root br
 
 **State:**
 ```typescript
-rootMode: 'scheme' | 'collection'  // Default: 'scheme'
+rootMode: 'scheme' | 'collection' | 'orderedCollection'  // Default: 'scheme'
 ```
 
 **Persistence:** `ae-skos-root-mode` localStorage key
@@ -157,8 +157,7 @@ export const ORPHAN_SCHEME_URI = '~orphans~'
 // Pseudo-scheme object added to scheme list
 {
   uri: ORPHAN_SCHEME_URI,
-  prefLabel: [{ value: 'Orphan Concepts', lang: 'en' }],
-  isOrphan: true  // Flag for special handling
+  label: 'Orphan Concepts & Collections',
 }
 ```
 
@@ -196,7 +195,7 @@ See [sko08-OrphanDetection](./sko08-OrphanDetection.md#orphan-collection-detecti
 
 Setting to control orphan detection algorithm. Affects performance and compatibility.
 
-**Implementation:** `stores/settings.ts` with localStorage persistence (`ae-skos-orphan-strategy`)
+**Implementation:** `stores/settings.ts` with localStorage persistence (`ae-skos-settings`, part of the unified settings object)
 
 **Strategies:**
 

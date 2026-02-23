@@ -300,7 +300,7 @@ async function loadOrphanConcepts() {
 
 Setting to control orphan detection algorithm in Settings > Advanced.
 
-**Implementation:** `stores/settings.ts` with localStorage persistence (`ae-skos-orphan-strategy`)
+**Implementation:** `stores/settings.ts` with localStorage persistence (`ae-skos-settings`, part of the unified settings object)
 
 **Strategies:**
 

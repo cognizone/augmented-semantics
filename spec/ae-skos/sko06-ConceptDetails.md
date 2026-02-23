@@ -364,7 +364,7 @@ interface ConceptRef {
   notation?: string;
   lang?: string;
   hasNarrower?: boolean;  // For dynamic icon display
-  type?: 'collection' | 'scheme';  // For static icon display
+  type?: 'concept' | 'scheme' | 'collection' | 'orderedCollection';  // For static icon display
 }
 
 interface PropertyValue {

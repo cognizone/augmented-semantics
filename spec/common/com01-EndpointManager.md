@@ -1387,12 +1387,11 @@ interface SuggestedEndpointSource {
   name: string
   url: string
   description?: string
-  suggestedLanguagePriorities?: string[]  // Recommended language order
 }
 
 interface SuggestedEndpoint extends SuggestedEndpointSource {
-  analysis: EndpointAnalysis        // Pre-calculated analysis
-  sourceHash: string                 // Hash for cache invalidation
+  analysis: EndpointAnalysis              // Pre-calculated analysis
+  suggestedLanguagePriorities: string[]   // Recommended language order
 }
 ```
 
@@ -1423,62 +1422,9 @@ Manually curated list of recommended SKOS endpoints:
 - `description` - Short description of the vocabulary
 - `suggestedLanguagePriorities` - Recommended language order for this vocabulary
 
-### Build Script: `prebuild-endpoints.ts`
+### Pre-analyzed Data: `endpoints.json`
 
-Runs during `npm run build` to analyze endpoints and generate cached results.
-
-**Process:**
-1. Read `suggested-endpoints.json`
-2. For each endpoint:
-   - Connect to endpoint
-   - Run full analysis (SKOS detection, graphs, languages)
-   - Calculate source hash (for change detection)
-   - Store analysis results
-3. Write `suggested-endpoints.generated.json`
-4. Commit generated file to repository
-
-**Source Hash Calculation:**
-```typescript
-import { createHash } from 'crypto'
-
-function calculateSourceHash(source: SuggestedEndpointSource): string {
-  const content = JSON.stringify(source)
-  return createHash('sha256').update(content).digest('hex').slice(0, 16)
-}
-```
-
-**Benefits:**
-- No runtime analysis delay
-- Pre-tested endpoints (broken endpoints can be removed before build)
-- Version control for analysis results
-- Fast first-time user experience
-
-### Generated File: `suggested-endpoints.generated.json`
-
-Auto-generated file (committed to repo):
-
-```json
-[
-  {
-    "name": "Fedlex",
-    "url": "https://fedlex.data.admin.ch/sparql",
-    "description": "Swiss Federal Law",
-    "suggestedLanguagePriorities": ["de", "fr", "it", "rm", "en"],
-    "analysis": {
-      "hasSkosContent": true,
-      "supportsNamedGraphs": true,
-      "skosGraphCount": 3,
-      "languages": [
-        { "lang": "de", "count": 45123 },
-        { "lang": "fr", "count": 44891 },
-        { "lang": "it", "count": 44567 }
-      ],
-      "analyzedAt": "2025-01-10T10:30:00.000Z"
-    },
-    "sourceHash": "a3f5c8d2e1b4f9a7"
-  }
-]
-```
+Pre-analyzed endpoint data is stored directly in `ae-skos/src/data/endpoints.json`. This file is manually maintained and committed to the repository — no build script or generation step is needed.
 
 ### Runtime Integration
 
@@ -1486,7 +1432,7 @@ Auto-generated file (committed to repo):
 ```typescript
 function addSuggestedEndpoint(suggested: SuggestedEndpoint): void {
   const endpoint: SPARQLEndpoint = {
-    id: uuid(),
+    id: crypto.randomUUID(),
     name: suggested.name,
     url: suggested.url,
     analysis: suggested.analysis,
@@ -1775,4 +1721,4 @@ In config mode, these operations are blocked (return `null`):
 | `types/config.ts` | TypeScript interfaces |
 | `stores/endpoint.ts` | Config mode support |
 | `App.vue` | Conditional UI rendering |
-| `DEPLOYMENT.md` | Deployment documentation |
+| `docs/ae-skos/deployment.md` | Deployment documentation |

@@ -8,36 +8,35 @@ Error handling, loading states, and empty states for all AE tools.
 
 ```typescript
 interface AppError {
-  code: string;           // Error code (e.g., "CORS_BLOCKED")
+  code: ErrorCode;        // Error code (e.g., "CORS_BLOCKED")
   message: string;        // User-friendly message
   details?: string;       // Technical details (for debugging)
-  recoverable: boolean;   // Can user retry?
-  action?: ErrorAction;   // Suggested recovery action
+  recoveryAction?: RecoveryAction;  // Suggested recovery action
   timestamp: string;      // ISO timestamp
 }
 
-type ErrorAction =
+type RecoveryAction =
   | { type: 'retry' }
   | { type: 'configure'; target: 'endpoint' | 'auth' }
-  | { type: 'dismiss' }
-  | { type: 'contact'; url: string };
+  | { type: 'refresh' }
+  | { type: 'dismiss' };
 ```
 
 ### Error Catalog
 
-| Code | Message | Recoverable | Action |
-|------|---------|-------------|--------|
-| `NETWORK_ERROR` | Unable to reach the endpoint. Check your internet connection. | Yes | retry |
-| `CORS_BLOCKED` | This endpoint doesn't allow browser connections. Contact the endpoint administrator. | No | contact |
-| `TIMEOUT` | The request took too long. Try a simpler query or check the endpoint status. | Yes | retry |
-| `AUTH_FAILED` | Authentication failed. Check your credentials. | Yes | configure:auth |
-| `AUTH_REQUIRED` | This endpoint requires authentication. | Yes | configure:auth |
-| `SPARQL_SYNTAX` | The query contains a syntax error. | No | dismiss |
-| `SPARQL_TIMEOUT` | The endpoint timed out processing the query. | Yes | retry |
-| `NOT_FOUND` | The requested resource was not found. | No | dismiss |
-| `SERVER_ERROR` | The endpoint returned an error. Try again later. | Yes | retry |
-| `INVALID_RESPONSE` | Received an unexpected response format. | No | dismiss |
-| `QUOTA_EXCEEDED` | Request limit exceeded. Try again later. | Yes | retry |
+| Code | Message | Recovery |
+|------|---------|----------|
+| `NETWORK_ERROR` | Unable to reach the endpoint. Check your internet connection. | retry |
+| `CORS_BLOCKED` | This endpoint doesn't allow browser connections. Contact the endpoint administrator. | dismiss |
+| `TIMEOUT` | The request took too long. Try a simpler query or check the endpoint status. | retry |
+| `INVALID_RESPONSE` | Received an unexpected response format. | dismiss |
+| `AUTH_REQUIRED` | This endpoint requires authentication. | configure:auth |
+| `AUTH_FAILED` | Authentication failed. Check your credentials. | configure:auth |
+| `NOT_FOUND` | The requested resource was not found. | dismiss |
+| `SERVER_ERROR` | The endpoint returned an error. Try again later. | retry |
+| `QUERY_ERROR` | The SPARQL query failed. | dismiss |
+| `PARSE_ERROR` | Failed to parse the response. | dismiss |
+| `UNKNOWN` | An unexpected error occurred. | dismiss |
 
 ### Error Detection
 

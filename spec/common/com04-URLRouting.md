@@ -26,8 +26,7 @@ https://app.example.com/?endpoint=...&lang=...&scheme=...&concept=...
 | `lang` | Preferred language | `lang=nl` |
 | `scheme` | Concept scheme URI (encoded) | `scheme=http%3A%2F%2Fexample.org%2Fscheme` |
 | `concept` | Selected concept URI (encoded) | `concept=http%3A%2F%2Fexample.org%2Fconcept%2F123` |
-| `search` | Search query | `search=agriculture` |
-| `view` | Active view | `view=tree` or `view=search` |
+| `q` | Search query | `q=agriculture` |
 
 **Note:** The `scheme` parameter is only included when `rootMode === 'scheme'`. In collection mode, scheme is not part of the URL since collections are the root navigation level.
 
@@ -47,7 +46,7 @@ https://app.example.com/?endpoint=...&lang=...&scheme=...&concept=...
 /?endpoint=dbpedia&lang=en&scheme=http%3A%2F%2Fdbpedia.org%2Fontology&concept=http%3A%2F%2Fdbpedia.org%2Fresource%2FAgriculture
 
 # Search results
-/?endpoint=dbpedia&lang=en&search=agriculture&view=search
+/?endpoint=dbpedia&lang=en&q=agriculture
 ```
 
 ## URL Encoding

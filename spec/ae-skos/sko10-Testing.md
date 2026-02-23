@@ -5,8 +5,8 @@ Testing infrastructure and guidelines for AE SKOS browser.
 ## Current State
 
 **Testing infrastructure is in place:**
-- **47 test files** in `src/composables/__tests__/` and `src/components/__tests__/`
-- **~1,150 test cases** covering composables, stores, and components
+- **53 test files** in `src/composables/__tests__/` and `src/components/__tests__/`
+- **~1,420 test cases** covering composables, stores, and components
 - **Vitest** configured (`vitest.config.ts`)
 - **Vue Test Utils** for component testing
 
@@ -59,7 +59,7 @@ npm test -- --run     # Single run
 | `endpoint.ts` (store) | 144 | Endpoint CRUD, localStorage persistence |
 | `concept.ts` (store) | 239 | Tree state, history, search results |
 | `EndpointManager.vue` | 691 | Auth forms, connection testing |
-| `SchemeSelector.vue` | 436 | Scheme loading, selection |
+| `ConceptBreadcrumb.vue` | — | Scheme loading, selection, breadcrumb navigation |
 
 ### Lower Priority (Simple Logic)
 

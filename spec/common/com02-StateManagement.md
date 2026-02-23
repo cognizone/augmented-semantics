@@ -59,12 +59,17 @@ interface SettingsState {
   // Display settings
   darkMode: boolean;                  // Use dark color scheme
   showDatatypes: boolean;             // Show datatype tags on property values
-  showLanguageTags: boolean;          // Show language tags on labels
+  showStringDatatypes: boolean;       // Show xsd:string datatype tags
+  showLanguageTags: boolean;          // Show language tags on labels (when not current)
   showPreferredLanguageTag: boolean;  // Show tag even when matching preferred
+  showNotationInLabels: boolean;      // Show notation in labels and use for sorting
 
   // Deprecation settings
   showDeprecationIndicator: boolean;  // Show deprecation badges/styling
   deprecationRules: DeprecationRule[]; // Configurable detection rules
+
+  // Scheme selector settings
+  showOrphansSelector: boolean;       // Show "Orphan Concepts" option in scheme dropdown
 
   // Search settings (see sko03-Settings.md for full details)
   searchInPrefLabel: boolean;         // Search in preferred labels
@@ -75,6 +80,12 @@ interface SettingsState {
 
   // Data fixes
   enableSchemeUriSlashFix: boolean;   // Try URI variants for mismatched endpoints
+
+  // Developer settings
+  developerMode: boolean;                      // Enable developer tools
+  logLevel: LogLevel;                          // Minimum log level for console output
+  orphanDetectionStrategy: OrphanDetectionStrategy; // Orphan detection method
+  orphanFastPrefilter: boolean;                // Prefilter candidates in fast orphan detection
 }
 
 interface DeprecationRule {
@@ -88,8 +99,7 @@ interface DeprecationRule {
 
 interface UIState {
   loading: Record<string, boolean>;  // Loading flags by component
-  errors: AppError[];                 // Active errors
-  dialogs: string[];                  // Open dialog IDs
+  openDialogs: string[];              // Open dialog IDs
   settingsDialogOpen: boolean;        // Settings dialog visibility
   settingsSection: SettingsSection;   // Active section in settings dialog
 }
@@ -100,7 +110,7 @@ interface SKOSState {
   scheme: {
     current: ConceptScheme | null;
     all: ConceptScheme[];
-    rootMode: 'scheme' | 'collection';  // Root browsing mode (default: 'scheme')
+    rootMode: 'scheme' | 'collection' | 'orderedCollection';  // Root browsing mode (default: 'scheme')
   };
   concept: {
     selected: string | null;         // Current concept URI
@@ -123,6 +133,14 @@ interface SKOSState {
 interface ConceptRef {
   uri: string;
   label?: string;
+  notation?: string;
+  lang?: string;
+  deprecated?: boolean;
+  type?: 'concept' | 'scheme' | 'collection' | 'orderedCollection';
+  hasNarrower?: boolean;      // For icon display (leaf vs label)
+  inCurrentScheme?: boolean;  // True if in currently selected scheme
+  displayScheme?: string;     // One scheme URI for badge display (when external)
+  topConceptSource?: 'inscheme'; // Mark in-scheme-only top concepts
 }
 
 interface ConceptNode extends ConceptRef {
@@ -151,12 +169,11 @@ Two types for concept references serve different purposes:
 | Key | Content | Sync |
 |-----|---------|------|
 | `ae-endpoints` | Saved endpoints (includes languagePriorities) | Cross-tab |
-| `ae-language` | Global preferred language | Cross-tab |
+| `ae-preferred-language` | Global preferred language | Cross-tab |
 | `ae-skos-settings` | App settings (display, deprecation) | Cross-tab |
 | `ae-skos-scheme` | Last selected scheme | Per-endpoint |
 | `ae-skos-root-mode` | Root browsing mode ('scheme' \| 'collection') | Cross-tab |
 | `ae-skos-history` | Recently viewed | Per-endpoint |
-| `ae-skos-tree-expanded` | Expanded nodes | Per-session |
 
 ### Default Deprecation Rules
 
@@ -264,7 +281,7 @@ const settings = restore('ae-skos-settings') ?? {
   searchInAltLabel: true,
   searchInDefinition: false,
   searchMatchMode: 'contains',
-  searchAllSchemes: false,
+  searchAllSchemes: true,
   enableSchemeUriSlashFix: false,
 };
 ```
@@ -280,31 +297,23 @@ const key = `ae-skos-history-${endpoint.id}`;
 
 ## Event Bus
 
-### Core Events
+### Events
 
 | Event | Payload | Triggered When |
 |-------|---------|----------------|
 | `endpoint:changed` | `SPARQLEndpoint` | User selects endpoint |
-| `endpoint:connected` | `SPARQLEndpoint` | Connection successful |
-| `endpoint:error` | `AppError` | Connection failed |
-| `language:preferred` | `string` | Global preferred language changed |
-| `settings:changed` | `SettingsState` | Settings changed |
-
-### SKOS Events
-
-| Event | Payload | Triggered When |
-|-------|---------|----------------|
 | `scheme:selected` | `ConceptScheme \| null` | User selects scheme |
-| `scheme:loaded` | `ConceptScheme[]` | Schemes fetched from endpoint |
-| `concept:selected` | `string` (URI) | User clicks concept |
-| `details:loaded` | `ConceptDetails` | Concept details fetched |
-| `tree:expanded` | `string` (URI) | Node expanded |
-| `tree:collapsed` | `string` (URI) | Node collapsed |
-| `search:executed` | `{ query, results }` | Search completed |
+| `concept:selecting` | `string` (URI) | Before concept selection (preparation) |
+| `concept:selected` | `string \| null` | Concept was selected |
+| `concept:revealed` | `string` (URI) | Concept scrolled into view |
+| `collection:selecting` | `string` (URI) | Before collection selection |
+| `collection:selected` | `string \| null` | Collection was selected |
+| `tree:loading` | - | Tree starting to load |
+| `tree:loaded` | `ConceptNode[]` | Tree finished loading |
 
 **Event naming convention:**
-- `*:selected` - User action (e.g., user clicks)
-- `*:loaded` - Data fetched successfully
+- `*:selecting` - Pre-selection preparation
+- `*:selected` - Selection completed
 - `*:changed` - State changed (any cause)
 
 ### Event Handler Pattern
@@ -320,12 +329,12 @@ eventBus.on('endpoint:changed', async (endpoint) => {
   await detectLanguages(endpoint);
 });
 
-eventBus.on('language:changed', () => {
-  // Invalidate cached labels
-  dispatch({ type: 'INVALIDATE_LABEL_CACHE' });
+eventBus.on('scheme:selected', async (scheme) => {
+  // Clear concept-specific state
+  dispatch({ type: 'RESET_CONCEPT_STATE' });
 
-  // Reload visible components
-  await reloadCurrentView();
+  // Reload tree for new scheme
+  await loadTopConcepts(scheme);
 });
 ```
 
@@ -376,15 +385,6 @@ eventBus.on('concept:selected', async (uri) => {
   }
 });
 ```
-
-**Additional Event Types:**
-
-| Event | Payload | Triggered When |
-|-------|---------|----------------|
-| `concept:selecting` | `string` (URI) | Before concept selection (preparation) |
-| `concept:revealed` | `string` (URI) | After concept scrolled into view |
-| `tree:loading` | - | Tree starting to load |
-| `tree:loaded` | `ConceptNode[]` | Tree finished loading |
 
 **Use Cases:**
 

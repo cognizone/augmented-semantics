@@ -15,6 +15,8 @@ All tools are **browser-only** applications that connect directly to SPARQL endp
 | com03 | [ErrorHandling](./common/com03-ErrorHandling.md) | Errors, loading states, empty states |
 | com04 | [URLRouting](./common/com04-URLRouting.md) | Deep linking, bookmarking, sharing |
 | com05 | [SPARQLPatterns](./common/com05-SPARQLPatterns.md) | Unified SPARQL query patterns |
+| com06 | [Security](./common/com06-Security.md) | Security considerations |
+| com07 | [DatatypeDisplay](./common/com07-DatatypeDisplay.md) | Datatype display rules |
 
 ## Tools Overview
 

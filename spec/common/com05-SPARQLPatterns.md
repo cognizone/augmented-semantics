@@ -12,6 +12,9 @@ PREFIX dct: <http://purl.org/dc/terms/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX skosxl: <http://www.w3.org/2008/05/skos-xl#>
+PREFIX dc: <http://purl.org/dc/elements/1.1/>
+PREFIX cc: <http://creativecommons.org/ns#>
 ```
 
 ## Language Filtering
@@ -375,7 +378,7 @@ WHERE {
 
 | Setting | Value | Description |
 |---------|-------|-------------|
-| Timeout | 30000ms | Request timeout |
+| Timeout | 60000ms | Request timeout |
 | Method | POST | Prefer POST for longer queries |
 | Accept | `application/sparql-results+json` | JSON results |
 | Content-Type | `application/x-www-form-urlencoded` | Query encoding |

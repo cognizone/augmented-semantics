@@ -49,11 +49,11 @@ interface SettingsState {
 
 interface DeprecationRule {
   id: string
-  name: string
-  enabled: boolean
+  label: string
   predicate: string
-  valueCheck: 'equals' | 'notEquals'
-  value: string
+  condition: 'equals' | 'not-equals' | 'exists'
+  value?: string
+  enabled: boolean
 }
 ```
 
@@ -236,10 +236,11 @@ const defaultSettings: SettingsState = {
 
   // Deprecation
   deprecationRules: [
-    { id: 'owl-deprecated', name: 'OWL Deprecated', enabled: true,
-      predicate: 'owl:deprecated', valueCheck: 'equals', value: 'true' },
-    { id: 'euvoc-status', name: 'EU Vocabularies Status', enabled: true,
-      predicate: 'euvoc:status', valueCheck: 'notEquals', value: 'http://publications.europa.eu/resource/authority/concept-status/CURRENT' },
+    { id: 'owl-deprecated', label: 'OWL Deprecated',
+      predicate: 'http://www.w3.org/2002/07/owl#deprecated', condition: 'equals', value: 'true', enabled: true },
+    { id: 'euvoc-status', label: 'EU Vocabularies Status',
+      predicate: 'http://publications.europa.eu/ontology/euvoc#status', condition: 'not-equals',
+      value: 'http://publications.europa.eu/resource/authority/concept-status/CURRENT', enabled: true },
   ],
 
   // Search

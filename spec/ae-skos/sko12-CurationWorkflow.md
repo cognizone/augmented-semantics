@@ -366,12 +366,19 @@ This curates all endpoints sequentially and automatically runs the merge script 
 
 | Folder | Name | URL |
 |--------|------|-----|
+| `agroportal` | AgroPortal | sparql.agroportal.lirmm.fr |
 | `agrovoc` | AGROVOC | agrovoc.fao.org |
 | `bnf` | BnF | data.bnf.fr |
 | `cordis` | Cordis Datalab | cordis.europa.eu |
+| `data-europa-eu` | data.europa.eu | data.europa.eu |
 | `dbpedia` | DBpedia | dbpedia.org |
 | `era` | ERA Data Interop | data-interop.era.europa.eu |
 | `eu-publications` | EU Publications Office | publications.europa.eu |
 | `fedlex` | Fedlex | fedlex.data.admin.ch |
+| `finto` | Finto - Finnish Thesaurus and Ontology Service | api.finto.fi |
+| `getty` | Getty Vocabularies | vocab.getty.edu |
 | `legilux` | Legilux | data.legilux.public.lu |
+| `lov` | Linked Open Vocabularies | lov.linkeddata.es |
 | `nerc` | NERC Vocabulary Server | vocab.nerc.ac.uk |
+| `stw` | STW Thesaurus for Economics | zbw.eu |
+| `unesco` | UNESCO Thesaurus | vocabularies.unesco.org |
