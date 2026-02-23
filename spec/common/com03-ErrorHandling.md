@@ -63,7 +63,6 @@ function classifyError(response: Response, error?: Error): AppError {
     case 403: return { code: 'AUTH_FAILED', ... };
     case 404: return { code: 'NOT_FOUND', ... };
     case 408: return { code: 'TIMEOUT', ... };
-    case 429: return { code: 'QUOTA_EXCEEDED', ... };
     case 500:
     case 502:
     case 503: return { code: 'SERVER_ERROR', ... };

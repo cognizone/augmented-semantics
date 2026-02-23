@@ -249,7 +249,7 @@ See [sko03-Settings](../ae-skos/sko03-Settings.md) for full settings documentati
 persist('ae-endpoints', state.endpoint.all);
 
 // Persist global preferred language
-persist('ae-language', state.language.preferred);
+persist('ae-preferred-language', state.language.preferred);
 
 // Persist settings
 persist('ae-skos-settings', {
@@ -269,20 +269,27 @@ persist('ae-skos-settings', {
 
 // Restore on init
 const endpoints = restore('ae-endpoints') ?? [];
-const preferred = restore('ae-language') ?? navigator.language.split('-')[0] ?? 'en';
+const preferred = restore('ae-preferred-language') ?? navigator.language.split('-')[0] ?? 'en';
 const settings = restore('ae-skos-settings') ?? {
   darkMode: false,
   showDatatypes: true,
+  showStringDatatypes: false,
   showLanguageTags: true,
   showPreferredLanguageTag: false,
+  showNotationInLabels: true,
   showDeprecationIndicator: true,
   deprecationRules: DEFAULT_DEPRECATION_RULES,
+  showOrphansSelector: true,
   searchInPrefLabel: true,
   searchInAltLabel: true,
   searchInDefinition: false,
   searchMatchMode: 'contains',
   searchAllSchemes: true,
   enableSchemeUriSlashFix: false,
+  developerMode: false,
+  logLevel: 'warn',
+  orphanDetectionStrategy: 'auto',
+  orphanFastPrefilter: false,
 };
 ```
 
@@ -484,7 +491,7 @@ window.addEventListener('storage', (event) => {
     dispatch({ type: 'SYNC_ENDPOINTS', payload: JSON.parse(event.newValue) });
   }
 
-  if (event.key === 'ae-language') {
+  if (event.key === 'ae-preferred-language') {
     // Another tab changed language
     dispatch({ type: 'SET_LANGUAGE', payload: JSON.parse(event.newValue) });
   }

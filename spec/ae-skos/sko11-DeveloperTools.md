@@ -7,8 +7,8 @@ Debug logging and development settings for AE SKOS.
 Developer tools provide configurable logging, browser console access, and debugging capabilities for troubleshooting and development.
 
 **Key Features:**
-- Configurable log levels (debug, info, warn, error)
-- Log history with 1000-message buffer
+- Configurable log levels (debug, info, warn, error, fatal)
+- Log history with 100-message buffer
 - Browser console integration via `__logger` global
 - Settings UI for log level configuration
 - Component-based logging with context
@@ -35,7 +35,7 @@ The logger service provides a centralized logging system with filtering, history
 │  └────────────┬───────────────────────────────┘ │
 │               ▼                                  │
 │  ┌────────────────────────────────────────────┐ │
-│  │ Log History (last 1000 messages)           │ │
+│  │ Log History (last 100 messages)            │ │
 │  └────────────┬───────────────────────────────┘ │
 └───────────────┼──────────────────────────────────┘
                 │
@@ -50,7 +50,7 @@ The logger service provides a centralized logging system with filtering, history
 ### Data Model
 
 ```typescript
-type LogLevel = 'debug' | 'info' | 'warn' | 'error'
+type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'fatal'
 
 interface LogEntry {
   timestamp: string       // ISO timestamp
@@ -86,6 +86,7 @@ interface LoggerService {
 | `info` | 1 | Important state changes | "Scheme loaded: Albania Thesaurus" |
 | `warn` | 2 | Recoverable issues | "Fallback to default language" |
 | `error` | 3 | Failures requiring attention | "Failed to load concept: network error" |
+| `fatal` | 4 | Critical/unrecoverable failures | "Application state corrupted" |
 
 **Filtering:** Only log levels >= configured minimum are logged and stored.
 
@@ -152,7 +153,7 @@ private minLevel: LogLevel = 'warn'  // Default
 debug(component: string, message: string, data?: any): void {
   if (this.shouldLog('debug')) {
     const entry: LogEntry = {
-      timestamp: performance.now(),
+      timestamp: formatTimestamp(),  // ISO time string
       level: 'debug',
       component,
       message,

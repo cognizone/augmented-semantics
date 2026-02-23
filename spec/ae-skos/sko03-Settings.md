@@ -12,7 +12,7 @@ AE SKOS provides configurable settings that persist across sessions via localSto
 ## Settings Store
 
 ```typescript
-interface SettingsState {
+interface AppSettings {
   // Display
   darkMode: boolean
   showOrphansSelector: boolean
@@ -41,7 +41,7 @@ interface SettingsState {
 
   // Developer
   developerMode: boolean
-  logLevel: 'debug' | 'info' | 'warn' | 'error'
+  logLevel: 'debug' | 'info' | 'warn' | 'error' | 'fatal'
 
   // Data Fixes
   enableSchemeUriSlashFix: boolean
@@ -221,7 +221,7 @@ function loadSettings(): SettingsState {
 ## Default Values
 
 ```typescript
-const defaultSettings: SettingsState = {
+const defaultSettings: AppSettings = {
   // Display
   darkMode: false,
   showOrphansSelector: true,

@@ -66,7 +66,6 @@ The curation script generates `output/endpoint.json`:
       { "lang": "en", "count": 3509 },
       { "lang": "es", "count": 376 }
     ],
-    "languageDetectionMethod": "full",
     "totalConcepts": 3439,
     "totalCollections": 12,
     "totalOrderedCollections": 0,
@@ -114,17 +113,7 @@ This data is used in the app to build capability-aware label queries
 
 ### Language Detection
 
-Language detection queries all label predicates to find language tags used in the endpoint.
-
-**Full Detection** (`languageDetectionMethod: "full"`):
-- Queries all labels across all concepts
-- Most accurate language counts
-- May timeout on very large endpoints (>100k concepts)
-
-**Sampled Detection** (`languageDetectionMethod: "sampled"`):
-- Fallback when full detection times out
-- Samples labels from a subset of concepts
-- Languages sorted alphabetically (no counts)
+Language detection queries all label predicates to find language tags used in the endpoint, returning languages with their approximate counts.
 
 ### Collection Counts
 

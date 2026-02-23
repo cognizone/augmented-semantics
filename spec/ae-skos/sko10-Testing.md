@@ -256,10 +256,13 @@ describe('URL State Sync', () => {
 
 | Category | Files | Tests (approx) |
 |----------|-------|----------------|
-| Composable tests | 40+ | ~1,000 |
-| Component tests | 5+ | ~100 |
-| Store tests | TBD | TBD |
-| **Total** | **47** | **~1,150** |
+| Composable tests | 25 | ~850 |
+| Component tests | 8 | ~200 |
+| Store tests | 6 | ~100 |
+| Service tests | 5 | ~100 |
+| Utils tests | 6 | ~100 |
+| Other (constants, App, views) | 3 | ~70 |
+| **Total** | **53** | **~1,420** |
 
 Run coverage report: `npm run test:coverage`
 

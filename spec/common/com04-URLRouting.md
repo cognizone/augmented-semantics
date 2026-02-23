@@ -151,7 +151,7 @@ async function restoreFromURL(): Promise<void> {
   }
 
   // 5. Restore search
-  const search = params.get('search');
+  const search = params.get('q');
   if (search) {
     dispatch({ type: 'SET_SEARCH_QUERY', payload: search });
     await executeSearch(search);
