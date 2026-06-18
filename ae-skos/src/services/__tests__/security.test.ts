@@ -4,6 +4,12 @@
  * Tests for SPARQL injection prevention, URI validation, HTML sanitization.
  * @see /spec/common/com06-Security.md
  * @see /spec/ae-skos/sko07-Testing.md
+ *
+ * Uses jsdom rather than the global happy-dom env: happy-dom (>=20.10) has a
+ * DOM-compliance bug that makes DOMPurify strip valid allowed tags (b, p, ul,
+ * a). jsdom matches real-browser behavior, so the sanitizeHtml assertions below
+ * reflect what ships. See dompurify bump to 3.4.x.
+ * @vitest-environment jsdom
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import {
