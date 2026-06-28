@@ -21,6 +21,23 @@ export interface ConfigEndpoint extends SuggestedEndpointSource {
   suggestedLanguagePriorities?: string[]
 }
 
+/** How a resource of a given type renders when it is the OBJECT of a triple. */
+export type TypeRender = 'link' | 'embed' | 'label'
+
+/** What the Types sidebar does with a type. */
+export type TypeSidebar = 'show' | 'hide' | 'pin'
+
+/**
+ * Per-type configuration (authored live, exported to app.json).
+ * `link` (default): clickable navigation chip.
+ * `embed`: value object — inline its properties (MonetaryAmount, coordinates).
+ * `label`: show identity only, no navigation.
+ */
+export interface TypeConfig {
+  render?: TypeRender
+  sidebar?: TypeSidebar
+}
+
 /**
  * External application configuration loaded from /config/app.json
  *
@@ -36,6 +53,8 @@ export interface AppConfig {
   documentationUrl?: string
   /** Pre-configured SPARQL endpoints (when set, disables user endpoint management) */
   endpoints?: ConfigEndpoint[]
+  /** Per-type display config, keyed by type IRI (authored live, see typeConfig store) */
+  types?: Record<string, TypeConfig>
 }
 
 /**

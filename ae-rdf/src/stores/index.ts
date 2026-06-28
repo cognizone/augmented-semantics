@@ -1,4 +1,5 @@
 export { useBrowseStore } from './browse'
+export { useTypeConfigStore } from './typeConfig'
 export { useEndpointStore } from './endpoint'
 export { useLanguageStore } from './language'
 export { useUIStore } from './ui'
