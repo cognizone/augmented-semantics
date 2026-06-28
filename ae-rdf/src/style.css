@@ -9,6 +9,13 @@
  * colors.
  */
 
+/* Tooltips: wide enough that typical URIs/qnames stay on one line */
+.p-tooltip .p-tooltip-text {
+  max-width: 40rem;
+  font-size: 0.75rem;
+  word-break: break-word;
+}
+
 /* Consistent fonts for menus, overlays and dialogs */
 .p-menu,
 .p-select-overlay,

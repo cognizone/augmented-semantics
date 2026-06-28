@@ -126,9 +126,11 @@ the pure helpers, unit-tested):
   (`MENV` → its `rdfs:label`), fetched in parallel with prefix resolution;
   fall back to the qname when an IRI has no label.
 - **Object type badges:** the same batch query (`buildLabelsQuery`) also returns
-  a sample `rdf:type` per object, shown as a trailing badge (`Title [Project]`);
-  a label-less object renders its type as the value itself (`[Beneficiary]`
-  instead of a UUID).
+  a sample `rdf:type` per object, shown as a trailing context badge
+  (`Title [Project]`). The object's own identity (label, else qname) is always
+  the primary text so repeated unlabeled objects stay distinct (a generic type
+  like `Concept` ×N as the value would be useless). Objects within a predicate
+  are sorted by display text.
 - **URI-display setting** (`settings.uriDisplay`, localStorage): `humanized`
   (default, friendly) / `prefixed` (`prefix:local` qnames) / `full` (raw IRIs).
   Centralized in `utils/format.ts` (`displayPredicate` / `displayObject` /

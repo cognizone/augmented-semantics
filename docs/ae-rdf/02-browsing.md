@@ -33,7 +33,7 @@ Within each section, properties are ordered by usefulness: labels and identifier
 
 ### Readable values
 
-Where a related resource has its own label, AE RDF shows it instead of an opaque code — so `MENV` reads as its full name when the endpoint provides one. A resource with **no** label shows its **type** instead (e.g. `[Beneficiary]`) rather than a bare UUID.
+Where a related resource has its own label, AE RDF shows it instead of an opaque code — so `MENV` reads as its full name when the endpoint provides one. A resource with **no** label shows its `prefix:LocalName` (distinct) plus a type badge, so several unlabeled links stay distinguishable. Objects under a predicate are sorted by their display text.
 
 Prefer raw URIs or prefixed qnames? Switch the **URI display** mode in [Settings](index.md#settings) — *Humanized names* (default), *Prefixed* (`skos:Concept`), or *Full URI*. It applies to predicates, links, and type names.
 

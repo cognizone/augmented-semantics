@@ -38,23 +38,23 @@ function predicateLabel(uri: string): string {
   return displayPredicate(uri, props.resolved, mode.value)
 }
 
-// When humanized + no label + a known type, the type IS the primary text
-// (a UUID reads as its type). Otherwise the type is a trailing badge.
-function objIsTypeFallback(uri: string): boolean {
-  return mode.value === 'humanized' && !props.labels?.get(uri) && !!props.objectTypes?.get(uri)
-}
-
-/** Primary text for an object URI. */
+// Always show the object's own identity (label, else qname — distinct) as the
+// primary text; the type is a context badge. (A generic type like "Concept"
+// repeated N times is useless as the value itself.)
 function objectText(uri: string): string {
-  if (objIsTypeFallback(uri)) return displayType(props.objectTypes!.get(uri)!, props.resolved, mode.value)
   return displayObject(uri, props.resolved, mode.value, props.labels?.get(uri))
 }
 
-/** Trailing type badge text (null when the type is already the primary text). */
+/** Type badge text for a linked resource (context), or null. */
 function objectBadge(uri: string): string | null {
-  if (objIsTypeFallback(uri)) return null
   const t = props.objectTypes?.get(uri)
   return t ? displayType(t, props.resolved, mode.value) : null
+}
+
+/** Objects of a predicate, sorted by display text (label/qname, else literal). */
+function sortedObjects(group: PropertyGroup): ResourceObject[] {
+  const key = (o: ResourceObject) => (o.termType === 'uri' ? objectText(o.value) : o.value).toLowerCase()
+  return [...group.objects].sort((a, b) => key(a).localeCompare(key(b)))
 }
 
 // Graphs are always KNOWN; this controls whether they're painted. Multi-graph
@@ -73,14 +73,13 @@ function graphTitle(o: ResourceObject): string {
   <table class="prop-table">
     <tbody>
       <tr v-for="group in groups" :key="group.predicate">
-        <th class="prop-key" v-tooltip.top="{ value: group.predicate, showDelay: 120 }">{{ predicateLabel(group.predicate) }}</th>
+        <th class="prop-key" v-tooltip.top="{ value: qname(group.predicate), showDelay: 120 }">{{ predicateLabel(group.predicate) }}</th>
         <td class="prop-values">
-          <div v-for="(o, i) in group.objects" :key="i" class="prop-value" :title="graphTitle(o)">
+          <div v-for="(o, i) in sortedObjects(group)" :key="i" class="prop-value" :title="graphTitle(o)">
             <!-- URI object: clickable -->
             <a
               v-if="o.termType === 'uri' && isNavigableIri(o.value)"
               class="uri-link"
-              :class="{ 'type-fallback': objIsTypeFallback(o.value) }"
               v-tooltip.top="{ value: o.value, showDelay: 120 }"
               @click="emit('navigate', o.value)"
             >{{ objectText(o.value) }}</a>
@@ -89,7 +88,6 @@ function graphTitle(o: ResourceObject): string {
             <span
               v-else-if="o.termType === 'uri'"
               class="uri-static"
-              :class="{ 'type-fallback': objIsTypeFallback(o.value) }"
               v-tooltip.top="{ value: o.value, showDelay: 120 }"
             >{{ objectText(o.value) }}</span>
 
@@ -225,9 +223,4 @@ function graphTitle(o: ResourceObject): string {
   color: var(--ae-text-secondary);
 }
 
-/* When a linked resource has no label, its type is shown as the value itself */
-.type-fallback {
-  font-style: italic;
-  color: var(--ae-text-secondary);
-}
 </style>
