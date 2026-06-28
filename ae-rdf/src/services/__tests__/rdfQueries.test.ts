@@ -13,6 +13,7 @@ import {
   buildInstanceCountQuery,
   buildInstanceListQuery,
   buildLabelsQuery,
+  buildEmbeddedTriplesQuery,
 } from '../rdfQueries'
 
 const RES = 'http://data.europa.eu/s66#endDate'
@@ -156,5 +157,20 @@ describe('buildLabelsQuery', () => {
     expect(q).toContain(`<${RES}>`)
     expect(q).not.toContain('INSERT')
     expect(q).not.toContain('x> }')
+  })
+})
+
+describe('buildEmbeddedTriplesQuery', () => {
+  it('batches subjects via VALUES and selects ?s ?p ?o', () => {
+    const q = buildEmbeddedTriplesQuery([RES, TYPE])
+    expect(q).toContain(`VALUES ?s { <${RES}> <${TYPE}> }`)
+    expect(q).toContain('SELECT ?s ?p ?o')
+    expect(q).toContain('?s ?p ?o')
+  })
+
+  it('skips unsafe IRIs', () => {
+    const q = buildEmbeddedTriplesQuery(['http://e.org/x> } DELETE', RES])
+    expect(q).toContain(`<${RES}>`)
+    expect(q).not.toContain('DELETE')
   })
 })

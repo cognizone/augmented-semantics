@@ -20,6 +20,8 @@ const props = defineProps<{
   labels?: Map<string, string>
   /** Object IRI → a type IRI, shown as a badge / fallback text. */
   objectTypes?: Map<string, string>
+  /** Object IRI → its triples, when its type is configured render:embed (depth-1). */
+  embedded?: Map<string, PropertyGroup[]>
   /** Reveal a graph chip on every triple. Multi-graph triples always show one. */
   showGraphs?: boolean
 }>()
@@ -76,9 +78,21 @@ function graphTitle(o: ResourceObject): string {
         <th class="prop-key" v-tooltip.top="{ value: qname(group.predicate), showDelay: 120 }">{{ predicateLabel(group.predicate) }}</th>
         <td class="prop-values">
           <div v-for="(o, i) in sortedObjects(group)" :key="i" class="prop-value" :title="graphTitle(o)">
+            <!-- Embedded value object (depth-1): inline its triples -->
+            <div v-if="o.termType === 'uri' && embedded?.get(o.value)" class="embed">
+              <span v-if="objectBadge(o.value)" class="tag type-badge">{{ objectBadge(o.value) }}</span>
+              <PropertyTable
+                class="embed-table"
+                :groups="embedded.get(o.value)!"
+                :resolved="resolved"
+                :labels="labels"
+                @navigate="emit('navigate', $event)"
+              />
+            </div>
+
             <!-- URI object: clickable -->
             <a
-              v-if="o.termType === 'uri' && isNavigableIri(o.value)"
+              v-else-if="o.termType === 'uri' && isNavigableIri(o.value)"
               class="uri-link"
               v-tooltip.top="{ value: o.value, showDelay: 120 }"
               @click="emit('navigate', o.value)"
@@ -101,8 +115,8 @@ function graphTitle(o: ResourceObject): string {
               <span v-else-if="o.datatype && o.datatype !== XSD_STRING" class="tag datatype-tag">{{ qname(o.datatype) }}</span>
             </span>
 
-            <!-- Type badge for a linked resource (when not already the primary text) -->
-            <span v-if="o.termType === 'uri' && objectBadge(o.value)" class="tag type-badge">{{ objectBadge(o.value) }}</span>
+            <!-- Type badge for a linked resource (embedded objects show it inside the embed) -->
+            <span v-if="o.termType === 'uri' && !embedded?.get(o.value) && objectBadge(o.value)" class="tag type-badge">{{ objectBadge(o.value) }}</span>
 
             <!-- Graph provenance (always known; shown per option a) -->
             <span v-if="showGraphsFor(o)" class="graph-tags">
@@ -221,6 +235,32 @@ function graphTitle(o: ResourceObject): string {
   border: 1px solid var(--ae-border-color);
   background: var(--ae-bg-elevated);
   color: var(--ae-text-secondary);
+}
+
+/* Inline-embedded value object (MonetaryAmount, coordinates) */
+.embed {
+  display: inline-block;
+  border-left: 2px solid var(--ae-border-color);
+  padding-left: 0.625rem;
+  margin: 0.125rem 0;
+}
+
+.embed .type-badge {
+  margin-left: 0;
+  margin-bottom: 0.125rem;
+}
+
+/* Compact the nested table */
+.embed-table :deep(.prop-key) {
+  padding: 0.125rem 0.75rem 0.125rem 0;
+}
+
+.embed-table :deep(.prop-values) {
+  padding: 0.125rem 0;
+}
+
+.embed-table :deep(tr) {
+  border-bottom: none;
 }
 
 </style>

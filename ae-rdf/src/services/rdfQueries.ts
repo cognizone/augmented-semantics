@@ -173,6 +173,20 @@ export function buildLabelsQuery(uris: string[]): string {
 } GROUP BY ?s`
 }
 
+/**
+ * Triples of several resources at once (batch), for inline embedding of value
+ * objects (MonetaryAmount, coordinates). Depth-1 — the caller does not recurse.
+ * Default-graph scoped (value objects are small, provenance isn't shown inline).
+ */
+export function buildEmbeddedTriplesQuery(uris: string[]): string {
+  const values = uris
+    .filter(isNavigableIri)
+    .slice(0, 64)
+    .map(u => `<${u}>`)
+    .join(' ')
+  return `SELECT ?s ?p ?o WHERE { VALUES ?s { ${values} } ?s ?p ?o } ORDER BY ?s ?p`
+}
+
 export function buildResourceTriplesQuery(resourceUri: string, graphMode: GraphMode = 'named'): string {
   const iri = sanitizeIri(resourceUri)
   if (graphMode === 'none') {

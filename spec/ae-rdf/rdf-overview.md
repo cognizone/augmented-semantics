@@ -138,6 +138,27 @@ the pure helpers, unit-tested):
 - **Fast tooltips:** resource-view hovers use the PrimeVue `v-tooltip` directive
   (short delay), not native `title` (whose ~1s delay felt slow).
 
+## Per-type config (live authoring)
+
+Types differ in how they should display: first-class entities (`Project`,
+`Organisation`) are navigation targets; **value objects** (`MonetaryAmount`,
+coordinates) are meaningless to navigate to — you want them inline. So each type
+carries a config, authored live and (eventually) exported to `app.json`.
+
+- **`TypeConfig`** (`types/config.ts`): `sidebar: show | hide | pin` and
+  `render: link | embed | label`. Stored in `stores/typeConfig.ts` (writable,
+  `ae-rdf-type-config`), seeded from deployed `app.json.types` then overlaid with
+  local edits.
+- **Authoring:** a per-type **gear** in `TypeList` sets both. `hide`/`pin` are
+  consumed there (filter + sort, with a "show N hidden" toggle).
+- **Embed (depth-1):** when an object's type is `render:embed`, `useResourceView`
+  batch-fetches those objects' triples (`buildEmbeddedTriplesQuery`) and
+  `PropertyTable` renders them inline (recursively, no further embed — depth-1),
+  with the type as a badge. `rdf:type` is dropped from the inline view (it's the
+  badge). `label` renders identity-only; `link` (default) is the clickable chip.
+- **Lifecycle:** author live → export `typeConfig` → `app.json.types` → config
+  mode (locked) for end users. *(Export is the remaining step.)*
+
 ## UI layout
 
 ```
