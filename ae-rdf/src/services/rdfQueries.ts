@@ -9,6 +9,7 @@
  * @see ae-rdf/PLAN.md (Query Library)
  */
 import { validateURI } from './security'
+import { withPrefixes } from './sparql'
 
 /**
  * Label predicates in display precedence (highest first). Used to derive a
@@ -51,12 +52,67 @@ export function isNavigableIri(uri: string): boolean {
 }
 
 /**
- * Type inventory: every rdf:type with its instance count, most common first.
- * ponytail: optimistic, no safe-mode gating. Add a chunked fallback only if a
- * real endpoint times out (CORDIS returns 61 types in ~0.3s).
+ * The `?s a <TYPE>` membership pattern, gated by graphMode (Option A).
+ * - 'named': scoped to named graphs (`GRAPH ?g { … }`).
+ * - 'none':  plain default-graph pattern.
+ *
+ * `<TYPE>` is interpolated raw — callers pass either a sanitized `<iri>` or the
+ * variable `?type`. COUNTs always use COUNT(DISTINCT ?s): on a quad store a
+ * subject is typed once per graph, so a non-distinct count is inflated by graph
+ * multiplicity (CORDIS: 580,939 raw vs 536,703 distinct).
+ *
+ * ponytail (Option A): on 'named' endpoints we count/list within named graphs
+ * and do NOT also union the default graph. Misses the rare case of triples that
+ * live ONLY in a separate default graph — that completeness pass is the parked
+ * endpoint-profiler's job. See ae-rdf/PLAN.md "Graph awareness".
  */
-export function buildTypeInventoryQuery(): string {
-  return `SELECT ?type (COUNT(?s) AS ?count) WHERE { ?s a ?type } GROUP BY ?type ORDER BY DESC(?count) LIMIT 500`
+function membership(typeTerm: string, graphMode: GraphMode): string {
+  return graphMode === 'named'
+    ? `GRAPH ?g { ?s a ${typeTerm} }`
+    : `?s a ${typeTerm}`
+}
+
+/**
+ * Type inventory: every rdf:type with its distinct-instance count, commonest
+ * first. graphMode-gated (see membership). ~5s on CORDIS for the distinct count.
+ */
+export function buildTypeInventoryQuery(graphMode: GraphMode = 'named'): string {
+  return `SELECT ?type (COUNT(DISTINCT ?s) AS ?count) WHERE { ${membership('?type', graphMode)} } GROUP BY ?type ORDER BY DESC(?count) LIMIT 500`
+}
+
+/** Total distinct instances of a type (for the instance-list header / paging). */
+export function buildInstanceCountQuery(typeUri: string, graphMode: GraphMode = 'named'): string {
+  const iri = sanitizeIri(typeUri)
+  return `SELECT (COUNT(DISTINCT ?s) AS ?total) WHERE { ${membership(`<${iri}>`, graphMode)} }`
+}
+
+/**
+ * One page of instances of a type, with a display label resolved by precedence
+ * (rdfs:label, skos:prefLabel, dct:title, else the URI). GROUP BY ?s + SAMPLE
+ * gives exactly one row per instance (so the page size = instance count, not
+ * inflated by multi-language labels or multi-graph membership). Label OPTIONALs
+ * read the default graph — fine for a navigation index; full graph-aware triples
+ * are one click away in the resource view.
+ */
+export function buildInstanceListQuery(
+  typeUri: string,
+  graphMode: GraphMode = 'named',
+  limit = 100,
+  offset = 0
+): string {
+  const iri = sanitizeIri(typeUri)
+  const lim = Math.max(1, Math.floor(limit))
+  const off = Math.max(0, Math.floor(offset))
+  return withPrefixes(`SELECT ?s (SAMPLE(?lbl) AS ?label) WHERE {
+  ${membership(`<${iri}>`, graphMode)}
+  OPTIONAL { ?s rdfs:label ?l1 }
+  OPTIONAL { ?s skos:prefLabel ?l2 }
+  OPTIONAL { ?s dct:title ?l3 }
+  BIND(COALESCE(?l1, ?l2, ?l3, STR(?s)) AS ?lbl)
+}
+GROUP BY ?s
+ORDER BY ?label
+LIMIT ${lim} OFFSET ${off}`)
 }
 
 /**

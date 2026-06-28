@@ -16,6 +16,7 @@ import { useEndpointStore, useBrowseStore } from '../stores'
 import { useGraphMode } from '../composables'
 import { URL_PARAMS } from '../router'
 import ResourceView from '../components/rdf/ResourceView.vue'
+import InstanceList from '../components/rdf/InstanceList.vue'
 import TypeList from '../components/rdf/TypeList.vue'
 
 const route = useRoute()
@@ -77,10 +78,12 @@ function go() {
 
         <ResourceView v-if="browseStore.currentResource" />
 
+        <InstanceList v-else-if="browseStore.currentType" />
+
         <div v-else class="empty-state">
           <span class="material-symbols-outlined empty-icon">travel_explore</span>
           <h2>Connected to {{ endpointStore.current?.name }}</h2>
-          <p>Paste a resource URI above to view its properties and walk its links.</p>
+          <p>Pick a type on the left, or paste a resource URI above.</p>
         </div>
       </div>
     </template>

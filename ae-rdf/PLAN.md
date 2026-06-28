@@ -45,11 +45,29 @@ Two distinct questions, kept separate:
   in the endpoint-profiler. The `NOT EXISTS` branch below makes us correct
   without it.
 
-**graphMode** (`'named' | 'none'`, in the browse store, set by `useGraphMode`)
-is an *optimization hint*, not a correctness switch — the `named` query is
-correct on every endpoint class, so callers default to `named` until detection
-completes (no race). `none` only lets us drop the GRAPH machinery once we know
-it's pointless.
+**graphMode** (`'named' | 'none'`, in the browse store, set by `useGraphMode`).
+For the *resource* query it's a pure optimization hint — the `named` query is a
+safe superset (correct on every class), so callers default to `named` until
+detection completes (no race). For the *discovery/list* queries (type inventory,
+instance list/count) it actually gates the shape (Option A — see below), so
+those composables (`useRdfTypes`, `useInstanceList`) **reload when graphMode
+changes** to re-run with the resolved shape.
+
+**Detecting graphMode — reuse SKOS first (one probe at most):**
+- Endpoints are shared across AE tools via the `ae-endpoints` localStorage key
+  (kept in T1). If AE SKOS already analysed the endpoint, `analysis
+  .supportsNamedGraphs` rides along on the endpoint object — `useGraphMode`
+  reuses it and skips the probe entirely.
+- Otherwise one cheap `detectGraphs` ASK per connect. (SKOS's other analysis —
+  languages/schemes/concept counts — is SKOS-shaped; nothing to reuse for
+  generic per-type counts.)
+
+**Option A (decided) for discovery/list queries:** on `named` endpoints, count
+and list *within named graphs* (`GRAPH ?g { ?s a <T> }`); do **not** also union
+the default graph. The fully-correct union form is ~8.5s on CORDIS (vs ~5s) and
+scales worse, and it only adds triples that live ONLY in a separate default
+graph — rare, and the parked endpoint-profiler's job. Responsiveness + consistent
+counts win; the completeness edge case is explicitly out of scope.
 
 **Model:** `useResourceView` dedupes objects by `(termType, value, lang,
 datatype)` and folds each result row's graph into a `graphs: string[]` set
@@ -113,25 +131,41 @@ Standard prefixes come from the lifted `SPARQL_PREFIXES` / `withPrefixes()`.
 General RDF has no single label predicate, so resolve labels by precedence:
 `rdfs:label`, `skos:prefLabel`, `dct:title`, `dc:title`, `foaf:name`, `schema:name`.
 
-**1. Type inventory** (sidebar):
+Discovery/list queries are **graphMode-gated (Option A)** and always use
+**`COUNT(DISTINCT ?s)`** — on a quad store a subject is typed once per graph, so
+a non-distinct count is inflated by graph multiplicity (CORDIS: 580,939 raw vs
+536,703 distinct). Membership = `GRAPH ?g { ?s a <T> }` on `named` endpoints,
+plain `?s a <T>` on `none`. Built in `services/rdfQueries.ts`.
+
+**1. Type inventory** (sidebar) — `buildTypeInventoryQuery(graphMode)`:
 ```sparql
-SELECT ?type (COUNT(?s) AS ?count)
-WHERE { ?s a ?type }
+# graphMode = 'named'        (plain ?s a ?type on 'none')
+SELECT ?type (COUNT(DISTINCT ?s) AS ?count)
+WHERE { GRAPH ?g { ?s a ?type } }
 GROUP BY ?type ORDER BY DESC(?count) LIMIT 500
 ```
-<!-- ponytail: optimistic, no safe-mode gating. Add chunked fallback only if a real endpoint times out. -->
+DISTINCT costs ~5s on CORDIS (full-dataset aggregate); the per-type count below
+is sub-second.
 
-**2. Instances of a type** (paged list):
+**2. Instances of a type** (paged list) — `buildInstanceListQuery(type, graphMode, limit, offset)`.
+GROUP BY ?s + SAMPLE gives exactly one row per instance (page size = instance
+count, not inflated by multi-language labels or multi-graph membership):
 ```sparql
-SELECT DISTINCT ?s ?label WHERE {
-  ?s a <TYPE_URI> .
+# graphMode = 'named'        (plain ?s a <TYPE_URI> on 'none')
+SELECT ?s (SAMPLE(?lbl) AS ?label) WHERE {
+  GRAPH ?g { ?s a <TYPE_URI> }
   OPTIONAL { ?s rdfs:label   ?l1 }
   OPTIONAL { ?s skos:prefLabel ?l2 }
   OPTIONAL { ?s dct:title    ?l3 }
-  BIND(COALESCE(?l1, ?l2, ?l3, STR(?s)) AS ?label)
-} ORDER BY ?label LIMIT 100 OFFSET <N>
+  BIND(COALESCE(?l1, ?l2, ?l3, STR(?s)) AS ?lbl)
+} GROUP BY ?s ORDER BY ?label LIMIT 100 OFFSET <N>
 ```
-Count (separate): `SELECT (COUNT(DISTINCT ?s) AS ?total) WHERE { ?s a <TYPE_URI> }`
+Count — `buildInstanceCountQuery(type, graphMode)`:
+`SELECT (COUNT(DISTINCT ?s) AS ?total) WHERE { GRAPH ?g { ?s a <TYPE_URI> } }`
+
+The instance list is a navigation index (not a triple display), so it is not
+per-row graph-aware; full graph provenance is one click away in the resource
+view. (Per-instance graph badges remain an easy future add.)
 
 **3. Resource detail — outgoing triples** (the core view), graph-aware. The
 `named` shape (default; correct on every endpoint class) carries graph

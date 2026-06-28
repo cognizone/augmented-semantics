@@ -8,8 +8,8 @@
  * @see /spec/ae-rdf
  * @see /spec/common/com02-StateManagement.md
  */
-import { ref, onMounted, onUnmounted, type Ref } from 'vue'
-import { useEndpointStore } from '../stores'
+import { ref, watch, onMounted, onUnmounted, type Ref } from 'vue'
+import { useEndpointStore, useBrowseStore } from '../stores'
 import { executeSparql, resolveUris, logger, eventBus, buildTypeInventoryQuery } from '../services'
 
 export interface RdfType {
@@ -21,6 +21,7 @@ type ResolvedMap = Map<string, { prefix: string; localName: string }>
 
 export function useRdfTypes() {
   const endpointStore = useEndpointStore()
+  const browseStore = useBrowseStore()
 
   const types: Ref<RdfType[]> = ref([])
   const loading = ref(false)
@@ -43,7 +44,7 @@ export function useRdfTypes() {
     logger.info('useRdfTypes', 'Loading type inventory', { endpoint: endpoint.url })
 
     try {
-      const results = await executeSparql(endpoint, buildTypeInventoryQuery(), { retries: 1 })
+      const results = await executeSparql(endpoint, buildTypeInventoryQuery(browseStore.graphMode), { retries: 1 })
       if (!isCurrent()) return
 
       const list: RdfType[] = results.results.bindings
@@ -68,6 +69,9 @@ export function useRdfTypes() {
   }
 
   const sub = eventBus.on('endpoint:changed', () => loadTypes())
+  // graphMode resolves async (probe or SKOS reuse); reload so a 'named'→'none'
+  // (or vice-versa) flip re-runs the inventory with the correct query shape.
+  watch(() => browseStore.graphMode, () => { if (endpointStore.current) loadTypes() })
   onMounted(() => {
     if (endpointStore.current) loadTypes()
   })

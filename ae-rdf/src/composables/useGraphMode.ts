@@ -20,8 +20,22 @@ export function useGraphMode() {
   async function detect(): Promise<void> {
     const endpoint = endpointStore.current
     if (!endpoint) return
-    // Reset to the safe superset before probing — the 'named' query is correct
-    // everywhere, so any in-flight resource load stays correct meanwhile.
+
+    // Reuse: endpoints are shared across AE tools via the `ae-endpoints` key, so
+    // if AE SKOS already analysed this endpoint, supportsNamedGraphs rides along
+    // on the endpoint object. Trust it and skip the probe.
+    const known = endpoint.analysis?.supportsNamedGraphs
+    if (known !== undefined && known !== null) {
+      browseStore.setGraphMode(known ? 'named' : 'none')
+      logger.info('useGraphMode', 'Reused supportsNamedGraphs from shared endpoint analysis', {
+        mode: browseStore.graphMode,
+        endpoint: endpoint.url,
+      })
+      return
+    }
+
+    // Reset to the safe superset before probing — the 'named' resource query is
+    // correct everywhere, so any in-flight resource load stays correct meanwhile.
     browseStore.setGraphMode('named')
     const endpointId = endpoint.id
     try {

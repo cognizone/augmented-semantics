@@ -7,13 +7,12 @@
  * @see /spec/ae-rdf
  */
 import { computed } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRouter } from 'vue-router'
 import ProgressSpinner from 'primevue/progressspinner'
 import { useBrowseStore } from '../../stores'
 import { useRdfTypes, useDelayedLoading } from '../../composables'
 import { URL_PARAMS } from '../../router'
 
-const route = useRoute()
 const router = useRouter()
 const browseStore = useBrowseStore()
 const { types, loading, error, resolved } = useRdfTypes()
@@ -33,7 +32,8 @@ function formatCount(n: number): string {
 }
 
 function selectType(uri: string) {
-  router.push({ query: { ...route.query, [URL_PARAMS.TYPE]: uri } })
+  // Drop ?resource so the instance list shows (resource view has precedence).
+  router.push({ query: { [URL_PARAMS.TYPE]: uri } })
 }
 </script>
 
