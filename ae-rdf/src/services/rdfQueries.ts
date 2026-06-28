@@ -51,6 +51,15 @@ export function isNavigableIri(uri: string): boolean {
 }
 
 /**
+ * Type inventory: every rdf:type with its instance count, most common first.
+ * ponytail: optimistic, no safe-mode gating. Add a chunked fallback only if a
+ * real endpoint times out (CORDIS returns 61 types in ~0.3s).
+ */
+export function buildTypeInventoryQuery(): string {
+  return `SELECT ?type (COUNT(?s) AS ?count) WHERE { ?s a ?type } GROUP BY ?type ORDER BY DESC(?count) LIMIT 500`
+}
+
+/**
  * Outgoing triples of a resource (the core resource-detail query).
  * The label is derived client-side from these triples (see LABEL_PREDICATES).
  */

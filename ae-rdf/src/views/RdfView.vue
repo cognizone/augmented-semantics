@@ -15,6 +15,7 @@ import Button from 'primevue/button'
 import { useEndpointStore, useBrowseStore } from '../stores'
 import { URL_PARAMS } from '../router'
 import ResourceView from '../components/rdf/ResourceView.vue'
+import TypeList from '../components/rdf/TypeList.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -24,7 +25,7 @@ const browseStore = useBrowseStore()
 const hasEndpoint = computed(() => !!endpointStore.current)
 const uriInput = ref('')
 
-// Keep the browse store in sync with the URL (?resource)
+// Keep the browse store in sync with the URL (?resource, ?type)
 watch(
   () => route.query[URL_PARAMS.RESOURCE],
   (r) => {
@@ -32,6 +33,12 @@ watch(
     browseStore.setResource(uri)
     if (uri) uriInput.value = uri
   },
+  { immediate: true }
+)
+
+watch(
+  () => route.query[URL_PARAMS.TYPE],
+  (t) => browseStore.setType(typeof t === 'string' ? t : null),
   { immediate: true }
 )
 
@@ -50,25 +57,29 @@ function go() {
       <p>Pick or add a SPARQL endpoint from the menu in the header to start browsing.</p>
     </div>
 
-    <div v-else class="browser">
-      <div class="uri-bar">
-        <InputText
-          v-model="uriInput"
-          class="uri-input"
-          placeholder="Enter a resource URI to inspect…"
-          @keyup.enter="go"
-        />
-        <Button label="Go" icon="pi pi-arrow-right" :disabled="!uriInput.trim()" @click="go" />
-      </div>
+    <template v-else>
+      <TypeList />
 
-      <ResourceView v-if="browseStore.currentResource" />
+      <div class="browser">
+        <div class="uri-bar">
+          <InputText
+            v-model="uriInput"
+            class="uri-input"
+            placeholder="Enter a resource URI to inspect…"
+            @keyup.enter="go"
+          />
+          <Button label="Go" icon="pi pi-arrow-right" :disabled="!uriInput.trim()" @click="go" />
+        </div>
 
-      <div v-else class="empty-state">
-        <span class="material-symbols-outlined empty-icon">travel_explore</span>
-        <h2>Connected to {{ endpointStore.current?.name }}</h2>
-        <p>Paste a resource URI above to view its properties and walk its links.</p>
+        <ResourceView v-if="browseStore.currentResource" />
+
+        <div v-else class="empty-state">
+          <span class="material-symbols-outlined empty-icon">travel_explore</span>
+          <h2>Connected to {{ endpointStore.current?.name }}</h2>
+          <p>Paste a resource URI above to view its properties and walk its links.</p>
+        </div>
       </div>
-    </div>
+    </template>
   </div>
 </template>
 
