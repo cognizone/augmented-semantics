@@ -49,9 +49,13 @@ export default defineConfig({
       ],
       '/ae-rdf/': [
         {
-          text: 'AE RDF',
+          text: 'User Guide',
           items: [
-            { text: 'Overview', link: '/ae-rdf/' }
+            { text: 'Overview', link: '/ae-rdf/' },
+            { text: '1. Managing Endpoints', link: '/ae-rdf/01-endpoints' },
+            { text: '2. Browsing', link: '/ae-rdf/02-browsing' },
+            { text: '3. Graphs', link: '/ae-rdf/03-graphs' },
+            { text: '4. Troubleshooting', link: '/ae-rdf/04-troubleshooting' }
           ]
         }
       ],

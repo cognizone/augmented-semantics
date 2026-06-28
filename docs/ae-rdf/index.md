@@ -1,39 +1,50 @@
-# AE RDF
+---
+outline: deep
+---
 
-::: warning Coming Soon
-AE RDF is currently in early development. Documentation will be available once the tool reaches beta.
+# AE RDF User Manual
+
+::: tip Try it now
+[Open AE RDF](https://cognizone.github.io/augmented-semantics/) in your browser — no installation required.
 :::
 
-## Overview
+A fast, browser-only explorer for **any** RDF dataset behind a SPARQL endpoint. Connect, see what types of things exist, drill into a type's instances, open any resource, and follow its links — all live, all in your browser. No backend, no precomputed indexes, no data leaves your machine.
 
-AE RDF is a browser-based tool for exploring RDF datasets. It provides intelligent property analysis, schema discovery, and data visualization capabilities.
+::: info Early days
+AE RDF is intentionally barebones: live queries only. Endpoint connection, type discovery, instance lists, and a graph-aware resource view work today. A raw SPARQL panel and incoming-link view are planned.
+:::
 
-## Planned Features
+> **Want your endpoint on the list?** If you maintain a public SPARQL endpoint and would like it included as a suggested endpoint, [open an issue on GitHub](https://github.com/cognizone/augmented-semantics/issues).
 
-- **Property Analysis** — Automatically detect and analyze property usage across datasets
-- **Schema Discovery** — Identify implicit schemas from RDF data
-- **Class Browser** — Navigate class hierarchies with instance counts
-- **SPARQL Query Builder** — Visual interface for constructing queries
-- **Data Preview** — View sample instances for any class or property
-- **Export Options** — Download results in various RDF formats
+## Getting Started
 
-## Development Status
+AE RDF connects directly to SPARQL endpoints from your browser — the endpoint must allow browser access ([CORS](04-troubleshooting.md#cors-the-endpoint-wont-load)).
 
-| Feature | Status |
-|---------|--------|
-| Property analysis | In progress |
-| Schema discovery | Planned |
-| Class browser | Planned |
-| Query builder | Planned |
+### Quick Start
 
-## Get Involved
+1. Open the endpoint menu in the header and pick a **suggested endpoint**, or choose **Add endpoint** for a custom URL.
+2. Once connected, the **Types** sidebar lists every `rdf:type` in the dataset with an instance count.
+3. Click a type to see its instances, then click an instance to open it.
+4. Or paste any **resource URI** into the bar at the top and press **Go**.
 
-Interested in AE RDF? You can:
+Endpoints are **shared with the other Augmented Semantics tools** (e.g. AE SKOS) — add one here and it's available there too, and vice versa.
 
-- [Watch the repository](https://github.com/cognizone/augmented-semantics) for updates
-- [Open an issue](https://github.com/cognizone/augmented-semantics/issues) with feature requests
-- Check the [spec/ae-rdf](https://github.com/cognizone/augmented-semantics/tree/main/spec/ae-rdf) folder for technical specifications
+### Header Toolbar
+
+| Button | | Description |
+|--------|---|-------------|
+| **Endpoint** | badge | Shows the active endpoint. Click to switch endpoints or open the [Endpoint Manager](01-endpoints.md). |
+| **Help** | <img src="./icons/icon-help.svg" height="16"> | Opens this user manual. |
+| **Dark mode** | <img src="./icons/icon-dark-mode.svg" height="16"> | Toggle light/dark theme. |
+| **Settings** | <img src="./icons/icon-settings.svg" height="16"> | Dark mode and build info. |
+
+## User Guide
+
+1. [Managing Endpoints](01-endpoints.md) — Add, test, switch, and remove SPARQL endpoints
+2. [Browsing](02-browsing.md) — Types, instances, the resource view, and walking links
+3. [Graphs](03-graphs.md) — How AE RDF shows which named graph each fact lives in
+4. [Troubleshooting](04-troubleshooting.md) — CORS, empty results, slow queries
 
 ---
 
-*Part of the [Augmented Semantics](/index) toolkit by [Cognizone](https://cogni.zone).*
+*AE RDF is part of the [Augmented Semantics](https://github.com/cognizone/augmented-semantics) toolkit by [Cognizone](https://cogni.zone).*
