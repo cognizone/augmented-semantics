@@ -7,7 +7,7 @@
  *
  * @see /spec/ae-rdf
  */
-import { computed, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ProgressSpinner from 'primevue/progressspinner'
 import { useBrowseStore } from '../../stores'
@@ -22,6 +22,27 @@ const { triples, label, loading, error, resolved, loadResource } = useResourceVi
 const showLoading = useDelayedLoading(loading)
 
 const uri = computed(() => browseStore.currentResource)
+const showGraphs = ref(false)
+
+function qname(u: string): string {
+  const r = resolved.value.get(u)
+  if (r && r.prefix) return `${r.prefix}:${r.localName}`
+  if (r && r.localName) return r.localName
+  return u
+}
+
+// Union of graphs the resource's triples assert in (provenance summary).
+const graphSummary = computed(() => {
+  const set = new Set<string>()
+  let hasDefault = false
+  for (const group of triples.value) {
+    for (const o of group.objects) {
+      if (o.graphs.length) o.graphs.forEach(g => set.add(g))
+      else hasDefault = true
+    }
+  }
+  return { graphs: [...set], hasDefault }
+})
 
 const localName = computed(() => {
   const u = uri.value
@@ -55,6 +76,21 @@ function navigate(target: string) {
           <span class="material-symbols-outlined">content_copy</span>
         </button>
       </div>
+
+      <!-- Graph provenance summary + per-triple reveal toggle -->
+      <div v-if="!showLoading && !error && triples.length" class="resource-graphs">
+        <span class="material-symbols-outlined graph-icon">hub</span>
+        <span class="graph-summary">
+          <template v-if="graphSummary.graphs.length">
+            <span v-for="g in graphSummary.graphs" :key="g" class="graph-chip" :title="g">{{ qname(g) }}</span>
+            <span v-if="graphSummary.hasDefault" class="graph-chip default">default graph</span>
+          </template>
+          <span v-else class="graph-chip default">default graph</span>
+        </span>
+        <button class="graph-toggle" :class="{ on: showGraphs }" @click="showGraphs = !showGraphs">
+          {{ showGraphs ? 'Hide graphs' : 'Show graphs' }}
+        </button>
+      </div>
     </header>
 
     <div v-if="showLoading" class="state">
@@ -70,7 +106,7 @@ function navigate(target: string) {
       <p>No outgoing triples for this resource.</p>
     </div>
 
-    <PropertyTable v-else :groups="triples" :resolved="resolved" @navigate="navigate" />
+    <PropertyTable v-else :groups="triples" :resolved="resolved" :show-graphs="showGraphs" @navigate="navigate" />
   </div>
 </template>
 
@@ -133,6 +169,57 @@ function navigate(target: string) {
 
 .copy-btn .material-symbols-outlined {
   font-size: 16px;
+}
+
+.resource-graphs {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-top: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.graph-icon {
+  font-size: 16px;
+  color: var(--ae-text-muted);
+}
+
+.graph-summary {
+  display: inline-flex;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+}
+
+.graph-chip {
+  font-family: var(--ae-font-mono);
+  font-size: 0.6875rem;
+  padding: 0.05rem 0.45rem;
+  border: 1px solid var(--ae-border-color);
+  border-radius: 10px;
+  color: var(--ae-text-secondary);
+}
+
+.graph-chip.default {
+  font-style: italic;
+}
+
+.graph-toggle {
+  margin-left: 0.25rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.6875rem;
+  color: var(--ae-accent);
+  padding: 0.1rem 0.25rem;
+  border-radius: 4px;
+}
+
+.graph-toggle:hover {
+  background: var(--ae-bg-hover);
+}
+
+.graph-toggle.on {
+  font-weight: 600;
 }
 
 .state {

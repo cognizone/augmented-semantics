@@ -8,10 +8,15 @@
  */
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import type { GraphMode } from '../services'
 
 export const useBrowseStore = defineStore('browse', () => {
   const currentResource = ref<string | null>(null)
   const currentType = ref<string | null>(null) // populated by T3/T5
+
+  // Graph awareness: whether the current endpoint uses named graphs. Defaults
+  // to the safe superset ('named') until detection completes — see GraphMode.
+  const graphMode = ref<GraphMode>('named')
 
   function setResource(uri: string | null) {
     currentResource.value = uri
@@ -21,5 +26,9 @@ export const useBrowseStore = defineStore('browse', () => {
     currentType.value = uri
   }
 
-  return { currentResource, currentType, setResource, setType }
+  function setGraphMode(mode: GraphMode) {
+    graphMode.value = mode
+  }
+
+  return { currentResource, currentType, graphMode, setResource, setType, setGraphMode }
 })

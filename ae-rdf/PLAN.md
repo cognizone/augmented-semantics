@@ -17,11 +17,48 @@ types exist, click into any resource and walk its links.
 **Non-goals (explicitly deferred):**
 - No precomputed analysis artifacts; everything is live, on-demand queries.
 - No capability-gating / optimistic-vs-safe machinery (that is the parked
-  pipeline). v1 issues straightforward queries; add a fallback only if a real
-  endpoint forces it.
+  pipeline) — **except** one cheap cached graph-mode probe per endpoint (see
+  Graph awareness below). v1 issues straightforward queries; add a fallback
+  only if a real endpoint forces it.
 - No OWL/SHACL/inheritance generation (belongs to AE OWL / AE SHACL).
-- No search box, no caching, no named-graph selection UI, no incoming-triple
-  view in v1 (union/default graph only).
+- No search box, no caching, no incoming-triple view in v1.
+- No named-graph *selection/filtering* UI in v1 (pick one graph, hide others).
+  **NOTE:** graph *awareness* is **not** deferred — it is core, see below. This
+  amends the earlier "union/default graph only" non-goal.
+
+## Graph awareness (core)
+
+Per a firm product decision (memory: `graph-provenance-is-core`): **for every
+triple we display we must always KNOW its full set of graphs.** A triple
+`(s,p,o)` can assert in several named graphs at once (plural). Awareness is
+mandatory and lives in the data model; *displaying* it is a separate, lighter
+choice (we default to quiet — see chrome below).
+
+Two distinct questions, kept separate:
+- **Q1 — is *this resource's* data in named graphs or the default graph?** The
+  per-resource query answers this itself; no detection needed for correctness.
+- **Q2a — does the endpoint use named graphs *at all*?** One cheap cached
+  `ASK { GRAPH ?g { ?s ?p ?o } }` (`detectGraphs`) per connect. Lets us pick the
+  lean query on triple-only endpoints. This is the *only* capability probe v1 does.
+- **Q2b — what *is* the default graph (union of all named / separate / empty)?**
+  A deployment config, **not** reliably introspectable via SPARQL. Stays parked
+  in the endpoint-profiler. The `NOT EXISTS` branch below makes us correct
+  without it.
+
+**graphMode** (`'named' | 'none'`, in the browse store, set by `useGraphMode`)
+is an *optimization hint*, not a correctness switch — the `named` query is
+correct on every endpoint class, so callers default to `named` until detection
+completes (no race). `none` only lets us drop the GRAPH machinery once we know
+it's pointless.
+
+**Model:** `useResourceView` dedupes objects by `(termType, value, lang,
+datatype)` and folds each result row's graph into a `graphs: string[]` set
+(empty = default graph). Threads `?g` through future queries too.
+
+**Chrome (option a — quiet):** graphs hidden per-triple by default; a "Show
+graphs" toggle reveals them; a triple spanning **>1 graph is always badged**
+(silence there would mislead); hover always reveals the graph(s); the subject
+header shows the union of graphs the resource appears in.
 
 ## Current state
 
@@ -96,10 +133,23 @@ SELECT DISTINCT ?s ?label WHERE {
 ```
 Count (separate): `SELECT (COUNT(DISTINCT ?s) AS ?total) WHERE { ?s a <TYPE_URI> }`
 
-**3. Resource detail — outgoing triples** (the core view):
+**3. Resource detail — outgoing triples** (the core view), graph-aware. The
+`named` shape (default; correct on every endpoint class) carries graph
+provenance; `none` (triple-only endpoints, per graphMode) uses the lean form:
 ```sparql
+# graphMode = 'named' (default / safe superset)
+SELECT ?g ?p ?o WHERE {
+  { GRAPH ?g { <RESOURCE_URI> ?p ?o } }
+  UNION
+  { <RESOURCE_URI> ?p ?o FILTER NOT EXISTS { GRAPH ?ng { <RESOURCE_URI> ?p ?o } } }
+} ORDER BY ?p
+
+# graphMode = 'none' (no named graphs on this endpoint)
 SELECT ?p ?o WHERE { <RESOURCE_URI> ?p ?o } ORDER BY ?p
 ```
+The same `(p,o)` returns once per graph it asserts in → folded into a `graphs[]`
+set. `?g` unbound ⇒ default graph. See "Graph awareness" above. Built by
+`services/rdfQueries.ts:buildResourceTriplesQuery(uri, graphMode)`.
 
 **4. Resource label** (header):
 ```sparql

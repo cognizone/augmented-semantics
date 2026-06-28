@@ -13,6 +13,7 @@ import { useRoute, useRouter } from 'vue-router'
 import InputText from 'primevue/inputtext'
 import Button from 'primevue/button'
 import { useEndpointStore, useBrowseStore } from '../stores'
+import { useGraphMode } from '../composables'
 import { URL_PARAMS } from '../router'
 import ResourceView from '../components/rdf/ResourceView.vue'
 import TypeList from '../components/rdf/TypeList.vue'
@@ -21,6 +22,9 @@ const route = useRoute()
 const router = useRouter()
 const endpointStore = useEndpointStore()
 const browseStore = useBrowseStore()
+
+// Detect once per endpoint whether it uses named graphs (gates query shape).
+useGraphMode()
 
 const hasEndpoint = computed(() => !!endpointStore.current)
 const uriInput = ref('')

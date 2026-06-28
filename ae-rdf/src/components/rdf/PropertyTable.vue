@@ -10,9 +10,13 @@
 import { isNavigableIri } from '../../services'
 import type { PropertyGroup } from '../../composables'
 
+import type { ResourceObject } from '../../composables'
+
 const props = defineProps<{
   groups: PropertyGroup[]
   resolved: Map<string, { prefix: string; localName: string }>
+  /** Reveal a graph chip on every triple. Multi-graph triples always show one. */
+  showGraphs?: boolean
 }>()
 
 const emit = defineEmits<{ navigate: [uri: string] }>()
@@ -29,6 +33,17 @@ function qname(uri: string): string {
 function datatypeLabel(uri: string): string {
   return qname(uri)
 }
+
+// Graphs are always KNOWN; this controls whether they're painted. Multi-graph
+// triples are always surfaced (silence there would mislead).
+function showGraphsFor(o: ResourceObject): boolean {
+  return !!props.showGraphs || o.graphs.length > 1
+}
+
+// Hover always reveals the graph(s), even when chips are hidden — aware always.
+function graphTitle(o: ResourceObject): string {
+  return o.graphs.length ? `Graph(s): ${o.graphs.map(qname).join(', ')}` : 'Default graph'
+}
 </script>
 
 <template>
@@ -37,7 +52,7 @@ function datatypeLabel(uri: string): string {
       <tr v-for="group in groups" :key="group.predicate">
         <th class="prop-key" :title="group.predicate">{{ qname(group.predicate) }}</th>
         <td class="prop-values">
-          <div v-for="(o, i) in group.objects" :key="i" class="prop-value">
+          <div v-for="(o, i) in group.objects" :key="i" class="prop-value" :title="graphTitle(o)">
             <!-- URI object: clickable -->
             <a
               v-if="o.termType === 'uri' && isNavigableIri(o.value)"
@@ -57,6 +72,20 @@ function datatypeLabel(uri: string): string {
               {{ o.value }}
               <span v-if="o.lang" class="tag lang-tag">@{{ o.lang }}</span>
               <span v-else-if="o.datatype && o.datatype !== XSD_STRING" class="tag datatype-tag">{{ datatypeLabel(o.datatype) }}</span>
+            </span>
+
+            <!-- Graph provenance (always known; shown per option a) -->
+            <span v-if="showGraphsFor(o)" class="graph-tags">
+              <template v-if="o.graphs.length">
+                <span
+                  v-for="g in o.graphs"
+                  :key="g"
+                  class="tag graph-tag"
+                  :class="{ multi: o.graphs.length > 1 }"
+                  :title="g"
+                >{{ qname(g) }}</span>
+              </template>
+              <span v-else class="tag graph-tag default" title="Default graph">default graph</span>
             </span>
           </div>
         </td>
@@ -134,5 +163,26 @@ function datatypeLabel(uri: string): string {
   background: var(--ae-bg-hover);
   color: var(--ae-text-secondary);
   vertical-align: middle;
+}
+
+.graph-tags {
+  display: inline-flex;
+  gap: 0.25rem;
+  vertical-align: middle;
+}
+
+.graph-tag {
+  border: 1px solid var(--ae-border-color);
+  background: transparent;
+}
+
+/* A triple in >1 graph is the case silence would hide — make it noticeable. */
+.graph-tag.multi {
+  border-color: var(--ae-accent);
+  color: var(--ae-accent);
+}
+
+.graph-tag.default {
+  font-style: italic;
 }
 </style>

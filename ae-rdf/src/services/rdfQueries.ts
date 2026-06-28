@@ -60,10 +60,48 @@ export function buildTypeInventoryQuery(): string {
 }
 
 /**
- * Outgoing triples of a resource (the core resource-detail query).
- * The label is derived client-side from these triples (see LABEL_PREDICATES).
+ * Whether the connected endpoint uses named graphs.
+ * - 'named': quad store — fetch with graph provenance (?g).
+ * - 'none':  triple/default-graph-only — lean query, every triple is "default".
+ *
+ * This is an OPTIMIZATION hint, not a correctness switch: the 'named' query is
+ * correct on every endpoint class (on a triple-only store its GRAPH branch is
+ * empty and the default branch returns everything). 'none' just lets us skip
+ * the GRAPH machinery once we know it's pointless. So callers may safely
+ * default to 'named' until detection completes.
+ *
+ * @see graph-provenance-is-core (memory) and ae-rdf/PLAN.md "Graph awareness"
  */
-export function buildResourceTriplesQuery(resourceUri: string): string {
+export type GraphMode = 'named' | 'none'
+
+/**
+ * Outgoing triples of a resource (the core resource-detail query), graph-aware.
+ *
+ * For every triple we display we must KNOW its full set of graphs — a triple
+ * `(s,p,o)` can assert in several graphs at once, so the 'named' query returns
+ * one row per (graph, p, o) and the caller folds them into a graphs[] set.
+ * The label is derived client-side from these triples (see LABEL_PREDICATES).
+ *
+ * The 'named' query:
+ *   - branch 1: triples inside named graphs, with ?g bound (provenance).
+ *   - branch 2: triples in the default graph that are in NO named graph
+ *     (?g unbound ⇒ "default graph"); FILTER NOT EXISTS stops double-counting
+ *     when the default graph is the union of all named graphs (e.g. Virtuoso).
+ *
+ * ponytail: we do NOT try to detect the default-graph *semantics* (union vs
+ * separate vs empty) — that's a deployment config, not reliably introspectable
+ * via SPARQL, and lives in the parked endpoint-profiler. The NOT EXISTS branch
+ * makes it correct regardless; detecting union-default to drop the branch is a
+ * perf nicety we skip.
+ */
+export function buildResourceTriplesQuery(resourceUri: string, graphMode: GraphMode = 'named'): string {
   const iri = sanitizeIri(resourceUri)
-  return `SELECT ?p ?o WHERE { <${iri}> ?p ?o } ORDER BY ?p`
+  if (graphMode === 'none') {
+    return `SELECT ?p ?o WHERE { <${iri}> ?p ?o } ORDER BY ?p`
+  }
+  return `SELECT ?g ?p ?o WHERE {
+  { GRAPH ?g { <${iri}> ?p ?o } }
+  UNION
+  { <${iri}> ?p ?o FILTER NOT EXISTS { GRAPH ?ng { <${iri}> ?p ?o } } }
+} ORDER BY ?p`
 }
