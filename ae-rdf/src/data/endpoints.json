@@ -1,1 +1,7 @@
-[]
+[
+  {
+    "name": "CORDIS",
+    "url": "https://cordis.europa.eu/datalab/sparql",
+    "description": "EU research projects and results (CORDIS)"
+  }
+]

@@ -89,6 +89,11 @@ function selectAndClose(id: string) {
   visible.value = false
 }
 
+function addSuggested(suggested: { name: string; url: string }) {
+  const created = endpointStore.addEndpoint({ name: suggested.name, url: suggested.url })
+  if (created) selectAndClose(created.id)
+}
+
 function doDelete(id: string) {
   endpointStore.removeEndpoint(id)
   pendingDelete.value = null
@@ -137,6 +142,23 @@ function statusClass(ep: SPARQLEndpoint): string {
           </div>
         </li>
       </ul>
+
+      <div v-if="endpointStore.availableSuggestedEndpoints.length" class="ep-suggested">
+        <span class="ep-suggested-title">Suggested</span>
+        <button
+          v-for="s in endpointStore.availableSuggestedEndpoints"
+          :key="s.url"
+          class="ep-suggested-item"
+          :title="s.url"
+          @click="addSuggested(s)"
+        >
+          <span class="material-symbols-outlined">add</span>
+          <span class="ep-text">
+            <span class="ep-name">{{ s.name }}</span>
+            <span class="ep-url">{{ s.description || s.url }}</span>
+          </span>
+        </button>
+      </div>
 
       <Button label="Add endpoint" icon="pi pi-plus" @click="openAdd" />
     </div>
@@ -295,6 +317,43 @@ function statusClass(ep: SPARQLEndpoint): string {
   align-items: center;
   gap: 0.25rem;
   flex-shrink: 0;
+}
+
+.ep-suggested {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  border-top: 1px solid var(--ae-border-color);
+  padding-top: 0.75rem;
+}
+
+.ep-suggested-title {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ae-text-secondary);
+}
+
+.ep-suggested-item {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  padding: 0.5rem;
+  border-radius: 8px;
+  color: var(--ae-text-secondary);
+}
+
+.ep-suggested-item:hover {
+  background: var(--ae-bg-hover);
+  color: var(--ae-text-primary);
+}
+
+.ep-suggested-item .material-symbols-outlined {
+  font-size: 18px;
 }
 
 .ep-form {

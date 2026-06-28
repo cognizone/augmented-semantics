@@ -11,7 +11,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { SPARQLEndpoint, EndpointStatus, AppError, SuggestedEndpoint } from '../types'
 import suggestedEndpointsData from '../data/endpoints.json'
-import { logger, isConfigMode, getConfig } from '../services'
+import { logger, isConfigMode, getConfig, eventBus } from '../services'
 
 const STORAGE_KEY = 'ae-endpoints'
 
@@ -229,7 +229,12 @@ export const useEndpointStore = defineStore('endpoint', () => {
           lastAccessedAt: new Date().toISOString(),
           accessCount: endpoint.accessCount + 1,
         })
+        status.value = 'connected'
+        // Notify consumers (type discovery in T3 subscribes to this).
+        void eventBus.emit('endpoint:changed', endpoint)
       }
+    } else {
+      status.value = 'disconnected'
     }
   }
 
