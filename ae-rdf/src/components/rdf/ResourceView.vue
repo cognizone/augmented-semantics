@@ -10,10 +10,10 @@
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ProgressSpinner from 'primevue/progressspinner'
-import { useBrowseStore } from '../../stores'
+import { useBrowseStore, useSettingsStore } from '../../stores'
 import { useResourceView, useClipboard, useDelayedLoading } from '../../composables'
 import { LABEL_PREDICATES } from '../../services'
-import { localName as localNameOf, humanizeLocalName, qname as toQname } from '../../utils/format'
+import { localName as localNameOf, humanizeLocalName, qname as toQname, displayType } from '../../utils/format'
 import { URL_PARAMS } from '../../router'
 import type { PropertyGroup } from '../../composables'
 import PropertyTable from './PropertyTable.vue'
@@ -21,18 +21,20 @@ import PropertyTable from './PropertyTable.vue'
 const route = useRoute()
 const router = useRouter()
 const browseStore = useBrowseStore()
+const settings = useSettingsStore()
 const { copyToClipboard } = useClipboard()
-const { triples, types, label, loading, error, resolved, objectLabels, loadResource } = useResourceView()
+const { triples, types, label, loading, error, resolved, objectLabels, objectTypes, loadResource } = useResourceView()
 const showLoading = useDelayedLoading(loading)
 
 const uri = computed(() => browseStore.currentResource)
 const showGraphs = ref(false)
+const mode = computed(() => settings.uriDisplay)
 
 const qname = (u: string) => toQname(u, resolved.value)
 
 // Subject type(s) as header chips; clicking one browses that type's instances.
 const typeChips = computed(() =>
-  types.value.filter(o => o.termType === 'uri').map(o => ({ uri: o.value, label: qname(o.value) }))
+  types.value.filter(o => o.termType === 'uri').map(o => ({ uri: o.value, label: displayType(o.value, resolved.value, mode.value) }))
 )
 
 // Priority within a section: labels → identifiers → dates → status → rest,
@@ -95,7 +97,7 @@ function navigate(target: string) {
     <header class="resource-header">
       <h2 class="resource-title">{{ heading }}</h2>
       <div class="resource-uri-row">
-        <a :href="uri" target="_blank" rel="noopener" class="resource-uri" :title="uri">{{ uri }}</a>
+        <a :href="uri" target="_blank" rel="noopener" class="resource-uri" v-tooltip.top="{ value: uri, showDelay: 120 }">{{ uri }}</a>
         <button class="copy-btn" aria-label="Copy URI" title="Copy URI" @click="copyToClipboard(uri, 'URI')">
           <span class="material-symbols-outlined">content_copy</span>
         </button>
@@ -107,7 +109,7 @@ function navigate(target: string) {
           v-for="t in typeChips"
           :key="t.uri"
           class="type-chip"
-          :title="`Browse all ${t.label}`"
+          v-tooltip.top="{ value: `Browse all ${t.label}`, showDelay: 120 }"
           @click="selectType(t.uri)"
         >{{ t.label }}</button>
       </div>
@@ -117,7 +119,7 @@ function navigate(target: string) {
         <span class="material-symbols-outlined graph-icon">hub</span>
         <span class="graph-summary">
           <template v-if="graphSummary.graphs.length">
-            <span v-for="g in graphSummary.graphs" :key="g" class="graph-chip" :title="g">{{ qname(g) }}</span>
+            <span v-for="g in graphSummary.graphs" :key="g" class="graph-chip" v-tooltip.top="{ value: g, showDelay: 120 }">{{ qname(g) }}</span>
             <span v-if="graphSummary.hasDefault" class="graph-chip default">default graph</span>
           </template>
           <span v-else class="graph-chip default">default graph</span>
@@ -144,12 +146,12 @@ function navigate(target: string) {
     <template v-else>
       <section v-if="attributes.length" class="prop-section">
         <h3 class="section-title">Attributes</h3>
-        <PropertyTable :groups="attributes" :resolved="resolved" :labels="objectLabels" :show-graphs="showGraphs" @navigate="navigate" />
+        <PropertyTable :groups="attributes" :resolved="resolved" :labels="objectLabels" :object-types="objectTypes" :show-graphs="showGraphs" @navigate="navigate" />
       </section>
 
       <section v-if="relationships.length" class="prop-section">
         <h3 class="section-title">Relationships</h3>
-        <PropertyTable :groups="relationships" :resolved="resolved" :labels="objectLabels" :show-graphs="showGraphs" @navigate="navigate" />
+        <PropertyTable :groups="relationships" :resolved="resolved" :labels="objectLabels" :object-types="objectTypes" :show-graphs="showGraphs" @navigate="navigate" />
       </section>
     </template>
   </div>

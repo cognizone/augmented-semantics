@@ -138,13 +138,17 @@ describe('buildInstanceListQuery', () => {
 })
 
 describe('buildLabelsQuery', () => {
-  it('builds a VALUES + UNION-over-label-predicates + GROUP BY query', () => {
+  it('fetches label (OPTIONAL) + a sample type per subject, grouped', () => {
     const q = buildLabelsQuery([RES, TYPE])
     expect(q).toContain(`VALUES ?s { <${RES}> <${TYPE}> }`)
     expect(q).toContain('SAMPLE(?lbl) AS ?label')
+    expect(q).toContain('SAMPLE(?t) AS ?type')
     expect(q).toContain('GROUP BY ?s')
-    // one UNION branch per label predicate
-    expect(q).toContain(`<${LABEL_PREDICATES[0]}> ?lbl`)
+    // label is OPTIONAL (so label-less subjects still return a type) over the predicates
+    expect(q).toContain('OPTIONAL { VALUES ?lp {')
+    expect(q).toContain(`<${LABEL_PREDICATES[0]}>`)
+    expect(q).toContain('?s ?lp ?lbl')
+    expect(q).toContain('OPTIONAL { ?s a ?t }')
   })
 
   it('skips unsafe IRIs rather than interpolating them', () => {

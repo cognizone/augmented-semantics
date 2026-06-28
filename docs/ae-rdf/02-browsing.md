@@ -27,13 +27,15 @@ Opening an instance — or pasting a URI in the top bar and pressing **Go** — 
 - **Header** — the resource's label (or local name if it has none), its full URI with a copy <img src="./icons/icon-copy.svg" height="14"> button and an external-link <img src="./icons/icon-open-in-new.svg" height="14"> to dereference it, plus its **type chips** and a [graph summary](03-graphs.md).
 - **Type chips** — the resource's `rdf:type`s, lifted out of the property list. Click a chip to browse all instances of that type.
 - **Attributes** — properties whose values are literals (dates, statuses, text), shown with language and datatype tags.
-- **Relationships** — properties whose values are other resources. These are **clickable links** <img src="./icons/icon-link.svg" height="14"> — click to walk to that resource.
+- **Relationships** — properties whose values are other resources. These are **clickable links** <img src="./icons/icon-link.svg" height="14"> — click to walk to that resource. Each link carries a small **type badge** (e.g. `Conservation of… [Project]`) so you can see *what* it points at.
 
 Within each section, properties are ordered by usefulness: labels and identifiers first, then dates, status, and the rest. Predicate names are humanized for readability (`dateEndApplicability` → "Date end applicability") — hover a predicate to see its real qname/URI.
 
 ### Readable values
 
-Where a related resource has its own label, AE RDF shows it instead of an opaque code — so `MENV` reads as its full name when the endpoint provides one. Codes without a label keep showing their `prefix:LocalName`.
+Where a related resource has its own label, AE RDF shows it instead of an opaque code — so `MENV` reads as its full name when the endpoint provides one. A resource with **no** label shows its **type** instead (e.g. `[Beneficiary]`) rather than a bare UUID.
+
+Prefer raw URIs or prefixed qnames? Switch the **URI display** mode in [Settings](index.md#settings) — *Humanized names* (default), *Prefixed* (`skos:Concept`), or *Full URI*. It applies to predicates, links, and type names.
 
 ## Walking links & deep-linking
 

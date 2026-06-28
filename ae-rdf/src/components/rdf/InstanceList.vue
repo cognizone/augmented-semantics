@@ -94,16 +94,20 @@ function onPage(e: { page: number }) {
 
 .il-title {
   margin: 0;
-  font-size: 1.125rem;
+  font-size: 1rem;
   font-weight: 700;
   font-family: var(--ae-font-mono);
   color: var(--ae-text-primary);
 }
 
 .il-range {
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   color: var(--ae-text-secondary);
   white-space: nowrap;
+  background: var(--ae-bg-elevated);
+  border: 1px solid var(--ae-border-color);
+  border-radius: 10px;
+  padding: 0.1rem 0.5rem;
 }
 
 .il-items {
@@ -123,23 +127,26 @@ function onPage(e: { page: number }) {
   border: none;
   cursor: pointer;
   text-align: left;
-  padding: 0.5rem 0.625rem;
+  padding: 0.5rem 0.75rem;
   border-radius: 6px;
+  transition: background-color 0.12s, box-shadow 0.12s;
 }
 
 .il-item:hover {
   background: var(--ae-bg-hover);
+  box-shadow: inset 2px 0 0 var(--ae-accent);
 }
 
 .il-label {
   font-size: 0.875rem;
   color: var(--ae-text-primary);
+  line-height: 1.35;
 }
 
 .il-uri {
   font-size: 0.6875rem;
   font-family: var(--ae-font-mono);
-  color: var(--ae-text-secondary);
+  color: var(--ae-text-muted);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

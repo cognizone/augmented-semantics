@@ -7,8 +7,10 @@
  *
  * @see /spec/ae-rdf
  */
+import { computed } from 'vue'
 import { isNavigableIri } from '../../services'
-import { humanizeLocalName, qname as toQname, type ResolvedMap } from '../../utils/format'
+import { useSettingsStore } from '../../stores'
+import { qname as toQname, displayPredicate, displayObject, displayType, type ResolvedMap } from '../../utils/format'
 import type { PropertyGroup, ResourceObject } from '../../composables'
 
 const props = defineProps<{
@@ -16,24 +18,43 @@ const props = defineProps<{
   resolved: ResolvedMap
   /** Object IRI → human label (Phase 2). Falls back to the qname when absent. */
   labels?: Map<string, string>
+  /** Object IRI → a type IRI, shown as a badge / fallback text. */
+  objectTypes?: Map<string, string>
   /** Reveal a graph chip on every triple. Multi-graph triples always show one. */
   showGraphs?: boolean
 }>()
 
 const emit = defineEmits<{ navigate: [uri: string] }>()
 
+const settings = useSettingsStore()
+const mode = computed(() => settings.uriDisplay)
+
 const XSD_STRING = 'http://www.w3.org/2001/XMLSchema#string'
 
 const qname = (uri: string) => toQname(uri, props.resolved)
 
-/** Human predicate label; the qname/URI stays on hover. */
+/** Predicate label, per the URI-display mode; qname/URI stays on hover. */
 function predicateLabel(uri: string): string {
-  return humanizeLocalName(uri)
+  return displayPredicate(uri, props.resolved, mode.value)
 }
 
-/** Object display: fetched label if any, else the qname. */
-function objectDisplay(uri: string): string {
-  return props.labels?.get(uri) || qname(uri)
+// When humanized + no label + a known type, the type IS the primary text
+// (a UUID reads as its type). Otherwise the type is a trailing badge.
+function objIsTypeFallback(uri: string): boolean {
+  return mode.value === 'humanized' && !props.labels?.get(uri) && !!props.objectTypes?.get(uri)
+}
+
+/** Primary text for an object URI. */
+function objectText(uri: string): string {
+  if (objIsTypeFallback(uri)) return displayType(props.objectTypes!.get(uri)!, props.resolved, mode.value)
+  return displayObject(uri, props.resolved, mode.value, props.labels?.get(uri))
+}
+
+/** Trailing type badge text (null when the type is already the primary text). */
+function objectBadge(uri: string): string | null {
+  if (objIsTypeFallback(uri)) return null
+  const t = props.objectTypes?.get(uri)
+  return t ? displayType(t, props.resolved, mode.value) : null
 }
 
 // Graphs are always KNOWN; this controls whether they're painted. Multi-graph
@@ -52,19 +73,25 @@ function graphTitle(o: ResourceObject): string {
   <table class="prop-table">
     <tbody>
       <tr v-for="group in groups" :key="group.predicate">
-        <th class="prop-key" :title="group.predicate">{{ predicateLabel(group.predicate) }}</th>
+        <th class="prop-key" v-tooltip.top="{ value: group.predicate, showDelay: 120 }">{{ predicateLabel(group.predicate) }}</th>
         <td class="prop-values">
           <div v-for="(o, i) in group.objects" :key="i" class="prop-value" :title="graphTitle(o)">
             <!-- URI object: clickable -->
             <a
               v-if="o.termType === 'uri' && isNavigableIri(o.value)"
               class="uri-link"
-              :title="o.value"
+              :class="{ 'type-fallback': objIsTypeFallback(o.value) }"
+              v-tooltip.top="{ value: o.value, showDelay: 120 }"
               @click="emit('navigate', o.value)"
-            >{{ objectDisplay(o.value) }}</a>
+            >{{ objectText(o.value) }}</a>
 
             <!-- URI we can't navigate to (e.g. mailto:) -->
-            <span v-else-if="o.termType === 'uri'" class="uri-static" :title="o.value">{{ objectDisplay(o.value) }}</span>
+            <span
+              v-else-if="o.termType === 'uri'"
+              class="uri-static"
+              :class="{ 'type-fallback': objIsTypeFallback(o.value) }"
+              v-tooltip.top="{ value: o.value, showDelay: 120 }"
+            >{{ objectText(o.value) }}</span>
 
             <!-- Blank node -->
             <span v-else-if="o.termType === 'bnode'" class="bnode">[ anonymous node ]</span>
@@ -75,6 +102,9 @@ function graphTitle(o: ResourceObject): string {
               <span v-if="o.lang" class="tag lang-tag">@{{ o.lang }}</span>
               <span v-else-if="o.datatype && o.datatype !== XSD_STRING" class="tag datatype-tag">{{ qname(o.datatype) }}</span>
             </span>
+
+            <!-- Type badge for a linked resource (when not already the primary text) -->
+            <span v-if="o.termType === 'uri' && objectBadge(o.value)" class="tag type-badge">{{ objectBadge(o.value) }}</span>
 
             <!-- Graph provenance (always known; shown per option a) -->
             <span v-if="showGraphsFor(o)" class="graph-tags">
@@ -186,5 +216,18 @@ function graphTitle(o: ResourceObject): string {
 
 .graph-tag.default {
   font-style: italic;
+}
+
+/* Type badge alongside a linked resource (e.g. "Conservation… [Project]") */
+.type-badge {
+  border: 1px solid var(--ae-border-color);
+  background: var(--ae-bg-elevated);
+  color: var(--ae-text-secondary);
+}
+
+/* When a linked resource has no label, its type is shown as the value itself */
+.type-fallback {
+  font-style: italic;
+  color: var(--ae-text-secondary);
 }
 </style>

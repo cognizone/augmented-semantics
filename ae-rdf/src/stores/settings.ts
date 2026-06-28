@@ -9,6 +9,7 @@
 import { defineStore } from 'pinia'
 import { ref, watch } from 'vue'
 import { logger, type LogLevel } from '../services'
+import type { UriDisplayMode } from '../utils/format'
 
 // ponytail: lifted from ae-skos verbatim; SKOS-only settings (deprecation rules,
 // orphan strategy, search-in-*) are dead state here but harmless. Prune when AE RDF
@@ -51,6 +52,7 @@ export const DEFAULT_DEPRECATION_RULES: DeprecationRule[] = [
 export interface AppSettings {
   // Display settings
   darkMode: boolean                   // Use dark color scheme
+  uriDisplay: UriDisplayMode          // How URIs render: humanized | prefixed | full
   showDatatypes: boolean              // Show datatype tags on property values
   showStringDatatypes: boolean        // Show xsd:string datatype tags
   showLanguageTags: boolean           // Show language tags on labels (when not current)
@@ -83,6 +85,7 @@ export interface AppSettings {
 
 const DEFAULT_SETTINGS: AppSettings = {
   darkMode: false,
+  uriDisplay: 'humanized',
   showDatatypes: true,
   showStringDatatypes: false,
   showLanguageTags: true,
@@ -106,6 +109,7 @@ const DEFAULT_SETTINGS: AppSettings = {
 export const useSettingsStore = defineStore('settings', () => {
   // State
   const darkMode = ref(DEFAULT_SETTINGS.darkMode)
+  const uriDisplay = ref<UriDisplayMode>(DEFAULT_SETTINGS.uriDisplay)
   const showDatatypes = ref(DEFAULT_SETTINGS.showDatatypes)
   const showStringDatatypes = ref(DEFAULT_SETTINGS.showStringDatatypes)
   const showLanguageTags = ref(DEFAULT_SETTINGS.showLanguageTags)
@@ -143,6 +147,9 @@ export const useSettingsStore = defineStore('settings', () => {
         if (settings.darkMode !== undefined) {
           darkMode.value = settings.darkMode
           applyDarkMode(settings.darkMode)
+        }
+        if (settings.uriDisplay !== undefined) {
+          uriDisplay.value = settings.uriDisplay
         }
         if (settings.showDatatypes !== undefined) {
           showDatatypes.value = settings.showDatatypes
@@ -210,6 +217,7 @@ export const useSettingsStore = defineStore('settings', () => {
     try {
       const settings: AppSettings = {
         darkMode: darkMode.value,
+        uriDisplay: uriDisplay.value,
         showDatatypes: showDatatypes.value,
         showStringDatatypes: showStringDatatypes.value,
         showLanguageTags: showLanguageTags.value,
@@ -291,6 +299,7 @@ export const useSettingsStore = defineStore('settings', () => {
   function resetToDefaults() {
     darkMode.value = DEFAULT_SETTINGS.darkMode
     applyDarkMode(DEFAULT_SETTINGS.darkMode)
+    uriDisplay.value = DEFAULT_SETTINGS.uriDisplay
     showDatatypes.value = DEFAULT_SETTINGS.showDatatypes
     showStringDatatypes.value = DEFAULT_SETTINGS.showStringDatatypes
     showLanguageTags.value = DEFAULT_SETTINGS.showLanguageTags
@@ -327,6 +336,7 @@ export const useSettingsStore = defineStore('settings', () => {
   // Auto-save on any change (alternative to manual save in each setter)
   watch(
     () => [
+      uriDisplay.value,
       showDatatypes.value,
       showStringDatatypes.value,
       showLanguageTags.value,
@@ -356,6 +366,7 @@ export const useSettingsStore = defineStore('settings', () => {
   return {
     // State
     darkMode,
+    uriDisplay,
     showDatatypes,
     showStringDatatypes,
     showLanguageTags,

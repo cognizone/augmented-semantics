@@ -36,7 +36,19 @@ Endpoints are **shared with the other Augmented Semantics tools** (e.g. AE SKOS)
 | **Endpoint** | badge | Shows the active endpoint. Click to switch endpoints or open the [Endpoint Manager](01-endpoints.md). |
 | **Help** | <img src="./icons/icon-help.svg" height="16"> | Opens this user manual. |
 | **Dark mode** | <img src="./icons/icon-dark-mode.svg" height="16"> | Toggle light/dark theme. |
-| **Settings** | <img src="./icons/icon-settings.svg" height="16"> | Dark mode and build info. |
+| **Settings** | <img src="./icons/icon-settings.svg" height="16"> | Dark mode, URI display, and build info. |
+
+## Settings
+
+Open the settings dialog from the <img src="./icons/icon-settings.svg" height="14"> button:
+
+- **Dark mode** — toggle light/dark theme.
+- **URI display** — how predicates, links, and type names render:
+  - *Humanized names* (default) — friendly labels (e.g. "Date end applicability").
+  - *Prefixed* — compact qnames (e.g. `skos:Concept`).
+  - *Full URI* — the raw IRI.
+
+Settings are saved in your browser (localStorage).
 
 ## User Guide
 

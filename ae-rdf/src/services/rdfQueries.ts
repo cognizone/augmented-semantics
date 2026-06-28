@@ -151,13 +151,13 @@ export type GraphMode = 'named' | 'none'
  * perf nicety we skip.
  */
 /**
- * Best label for each of a set of resource IRIs, by the LABEL_PREDICATES.
- * Used to turn opaque object localnames (e.g. `MENV`) into human labels
- * (`Ministère de l'Environnement`). Unsafe IRIs are skipped, not fatal; the
- * caller falls back to the qname for any IRI with no label.
+ * Best label AND a sample type for each of a set of resource IRIs.
+ * Turns opaque object localnames (e.g. `MENV`) into human labels, and gives a
+ * type to show as a badge — including for label-less resources (a UUID then
+ * reads as e.g. `[Beneficiary]`). Unsafe IRIs are skipped, not fatal.
  *
- * Default-graph scoped (labels usually live there); a missing label just means
- * the UI keeps showing the qname.
+ * The label match is OPTIONAL so a subject with no label still returns its type;
+ * `SAMPLE` collapses to one label and one type per subject. Default-graph scoped.
  */
 export function buildLabelsQuery(uris: string[]): string {
   const values = uris
@@ -165,10 +165,11 @@ export function buildLabelsQuery(uris: string[]): string {
     .slice(0, 256)
     .map(u => `<${u}>`)
     .join(' ')
-  const branches = LABEL_PREDICATES.map(p => `{ ?s <${p}> ?lbl }`).join(' UNION ')
-  return `SELECT ?s (SAMPLE(?lbl) AS ?label) WHERE {
+  const labelPreds = LABEL_PREDICATES.map(p => `<${p}>`).join(' ')
+  return `SELECT ?s (SAMPLE(?lbl) AS ?label) (SAMPLE(?t) AS ?type) WHERE {
   VALUES ?s { ${values} }
-  ${branches}
+  OPTIONAL { VALUES ?lp { ${labelPreds} } ?s ?lp ?lbl }
+  OPTIONAL { ?s a ?t }
 } GROUP BY ?s`
 }
 

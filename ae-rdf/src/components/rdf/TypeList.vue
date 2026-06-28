@@ -9,19 +9,20 @@
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import ProgressSpinner from 'primevue/progressspinner'
-import { useBrowseStore } from '../../stores'
+import { useBrowseStore, useSettingsStore } from '../../stores'
 import { useRdfTypes, useDelayedLoading } from '../../composables'
-import { qname as toQname } from '../../utils/format'
+import { displayType } from '../../utils/format'
 import { URL_PARAMS } from '../../router'
 
 const router = useRouter()
 const browseStore = useBrowseStore()
+const settings = useSettingsStore()
 const { types, loading, error, resolved } = useRdfTypes()
 const showLoading = useDelayedLoading(loading)
 
 const selected = computed(() => browseStore.currentType)
 
-const qname = (uri: string) => toQname(uri, resolved.value)
+const typeName = (uri: string) => displayType(uri, resolved.value, settings.uriDisplay)
 
 function formatCount(n: number): string {
   return n.toLocaleString('en-US')
@@ -56,7 +57,7 @@ function selectType(uri: string) {
           :title="t.uri"
           @click="selectType(t.uri)"
         >
-          <span class="type-name">{{ qname(t.uri) }}</span>
+          <span class="type-name">{{ typeName(t.uri) }}</span>
           <span class="type-count">{{ formatCount(t.count) }}</span>
         </button>
       </li>

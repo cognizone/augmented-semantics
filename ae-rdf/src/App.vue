@@ -13,6 +13,7 @@ import Toast from 'primevue/toast'
 import Button from 'primevue/button'
 import Dialog from 'primevue/dialog'
 import Checkbox from 'primevue/checkbox'
+import Select from 'primevue/select'
 import Menu from 'primevue/menu'
 import { useUIStore, useSettingsStore, useEndpointStore } from './stores'
 import { useConfig } from './services'
@@ -27,6 +28,12 @@ const config = useConfig()
 const showEndpointManager = ref(false)
 const showSettings = ref(false)
 const endpointMenu = ref()
+
+const uriDisplayOptions = [
+  { label: 'Humanized names', value: 'humanized' },
+  { label: 'Prefixed (skos:Concept)', value: 'prefixed' },
+  { label: 'Full URI', value: 'full' },
+]
 
 const appName = computed(() => config.value.config?.appName ?? 'AE RDF')
 watch(appName, (name) => { document.title = name }, { immediate: true })
@@ -161,6 +168,18 @@ onUnmounted(() => {
           <span class="checkbox-text">Dark mode</span>
         </label>
 
+        <div class="setting-field">
+          <span class="setting-label">URI display</span>
+          <Select
+            v-model="settingsStore.uriDisplay"
+            :options="uriDisplayOptions"
+            optionLabel="label"
+            optionValue="value"
+            class="full-width"
+          />
+          <small class="setting-hint">How predicates and resource links are shown.</small>
+        </div>
+
         <div class="about-info">
           <div class="about-row"><span class="about-label">Version</span><span class="about-value">{{ appVersion }}</span></div>
           <div class="about-row"><span class="about-label">Build</span><span class="about-value mono">{{ gitCommit }}</span></div>
@@ -289,6 +308,27 @@ onUnmounted(() => {
   align-items: center;
   gap: 0.625rem;
   cursor: pointer;
+}
+
+.setting-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.setting-label {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--ae-text-primary);
+}
+
+.setting-hint {
+  font-size: 0.75rem;
+  color: var(--ae-text-secondary);
+}
+
+.full-width {
+  width: 100%;
 }
 
 .checkbox-text {
