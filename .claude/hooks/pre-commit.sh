@@ -37,10 +37,16 @@ if ! pnpm --filter ae-rdf vue-tsc --noEmit 2>&1; then
   errors+=("ae-rdf type-check failed")
 fi
 
-# Unit tests for ae-skos (ae-rdf has no tests yet)
+# Unit tests for ae-skos
 echo "Running ae-skos tests..." >&2
 if ! pnpm --filter ae-skos test:run 2>&1; then
   errors+=("ae-skos tests failed")
+fi
+
+# Unit tests for ae-rdf
+echo "Running ae-rdf tests..." >&2
+if ! pnpm --filter ae-rdf test:run 2>&1; then
+  errors+=("ae-rdf tests failed")
 fi
 
 if [ ${#errors[@]} -gt 0 ]; then
