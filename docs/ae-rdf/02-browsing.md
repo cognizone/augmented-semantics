@@ -10,7 +10,9 @@ Once you're connected, AE RDF gives you two ways into the data: **browse by type
 
 The left sidebar lists every `rdf:type` in the dataset, most common first, with a **distinct-instance count** next to each. Names are shown as `prefix:LocalName` where the prefix is known (e.g. `skos:Concept`), otherwise the local name.
 
-Click a type to list its instances in the main pane. Hover a type for a **gear** to configure it: **pin** it to the top, **hide** it from the list (a "show N hidden" toggle brings hidden types back), or set how it renders when it's a *value* of another resource — **Link** (default), **Embed** (inline its properties — for value objects like amounts and coordinates), or **Label only**.
+Click a type to list its instances in the main pane. Configured types show small indicator icons (pinned, embedded, label).
+
+Turn on **Config authoring mode** in [Settings](index.md#settings) to reveal a per-type **gear**: **pin** it to the top, **hide** it from the list (a "show N hidden" toggle brings hidden types back), or set how it renders when it's a *value* of another resource — **Link** (default), **Embed** (inline its properties — for value objects like amounts and coordinates), or **Label only**. (Without authoring mode the sidebar is read-only; the configured effects still apply.)
 
 ::: tip Counts are distinct
 Counts are the number of *distinct* subjects of that type. On large datasets the sidebar may take a few seconds to compute — that's the price of a correct count rather than an inflated one.

@@ -193,7 +193,12 @@ onUnmounted(() => {
           <small class="setting-hint">How predicates and resource links are shown.</small>
         </div>
 
-        <div v-if="!config.configMode" class="setting-field">
+        <label v-if="!config.configMode" class="checkbox-label">
+          <Checkbox v-model="settingsStore.editMode" :binary="true" />
+          <span class="checkbox-text">Config authoring mode<small>Show per-type gears and the export button for building a deployment config</small></span>
+        </label>
+
+        <div v-if="!config.configMode && settingsStore.editMode" class="setting-field">
           <span class="setting-label">Deployment</span>
           <Button label="Export app.json" icon="pi pi-download" severity="secondary" outlined @click="exportConfig" />
           <small class="setting-hint">Download the current endpoints + per-type config as a locked deployment config. Credentials are never included.</small>
@@ -351,8 +356,20 @@ onUnmounted(() => {
 }
 
 .checkbox-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
   font-size: 0.8125rem;
   color: var(--ae-text-primary);
+}
+
+.checkbox-text small {
+  font-size: 0.75rem;
+  color: var(--ae-text-secondary);
+}
+
+.checkbox-label {
+  align-items: flex-start;
 }
 
 .about-info {

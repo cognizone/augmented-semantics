@@ -33,6 +33,8 @@ const menuType = ref<string | null>(null)
 const typeName = (uri: string) => displayType(uri, resolved.value, settings.uriDisplay)
 const cfg = (uri: string) => typeConfig.get(uri)
 const isHidden = (uri: string) => cfg(uri).sidebar === 'hide'
+const isPinned = (uri: string) => cfg(uri).sidebar === 'pin'
+const renderOf = (uri: string) => cfg(uri).render ?? 'link'
 
 function formatCount(n: number): string {
   return n.toLocaleString('en-US')
@@ -112,9 +114,14 @@ function selectType(uri: string) {
             @click="selectType(t.uri)"
           >
             <span class="type-name">{{ typeName(t.uri) }}</span>
+            <span class="type-ind">
+              <span v-if="isPinned(t.uri)" class="material-symbols-outlined ind" title="Pinned to top">push_pin</span>
+              <span v-if="renderOf(t.uri) === 'embed'" class="material-symbols-outlined ind" title="Embedded inline as a value">data_object</span>
+              <span v-if="renderOf(t.uri) === 'label'" class="material-symbols-outlined ind" title="Shown as a label (no link)">label</span>
+            </span>
             <span class="type-count">{{ formatCount(t.count) }}</span>
           </button>
-          <button class="type-gear" aria-label="Configure type" @click.stop="openMenu($event, t.uri)">
+          <button v-if="settings.editMode" class="type-gear" aria-label="Configure type" @click.stop="openMenu($event, t.uri)">
             <span class="material-symbols-outlined">tune</span>
           </button>
         </li>
@@ -194,11 +201,25 @@ function selectType(uri: string) {
 }
 
 .type-name {
+  flex: 1;
+  min-width: 0;
   font-family: var(--ae-font-mono);
   font-size: 0.8125rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.type-ind {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.125rem;
+  flex-shrink: 0;
+}
+
+.type-ind .ind {
+  font-size: 14px;
+  color: var(--ae-text-muted);
 }
 
 .type-count {
@@ -221,7 +242,7 @@ function selectType(uri: string) {
   padding: 0.25rem;
   margin-right: 0.125rem;
   border-radius: 4px;
-  opacity: 0;
+  opacity: 0.5;
   transition: opacity 0.12s, color 0.12s;
 }
 

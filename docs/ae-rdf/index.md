@@ -48,7 +48,8 @@ Open the settings dialog from the <img src="./icons/icon-settings.svg" height="1
   - *Prefixed* — compact qnames (e.g. `skos:Concept`).
   - *Full URI* — the raw IRI.
 
-- **Export app.json** (Deployment) — download the current endpoints + per-type config (sidebar visibility, embed/link/label) as a locked deployment config. Tweak everything live, export, drop the file at `config/app.json`, and end users get a pre-configured, locked AE RDF. Credentials are never included in the export.
+- **Config authoring mode** — off by default (clean, read-only browsing). Turn it on to reveal the per-type gears in the Types sidebar and the export button below. The configured effects (embed/hide/pin) apply either way; this just shows the editing tools.
+- **Export app.json** (Deployment, authoring mode only) — download the current endpoints + per-type config (sidebar visibility, embed/link/label) as a locked deployment config. Tweak everything live, export, drop the file at `config/app.json`, and end users get a pre-configured, locked AE RDF. Credentials are never included in the export.
 
 Settings are saved in your browser (localStorage).
 

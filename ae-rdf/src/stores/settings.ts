@@ -13,16 +13,19 @@ const STORAGE_KEY = 'ae-rdf-settings'
 export interface AppSettings {
   darkMode: boolean
   uriDisplay: UriDisplayMode // humanized | prefixed | full
+  editMode: boolean // config authoring mode: reveals per-type gears + export
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
   darkMode: false,
   uriDisplay: 'humanized',
+  editMode: false,
 }
 
 export const useSettingsStore = defineStore('settings', () => {
   const darkMode = ref(DEFAULT_SETTINGS.darkMode)
   const uriDisplay = ref<UriDisplayMode>(DEFAULT_SETTINGS.uriDisplay)
+  const editMode = ref(DEFAULT_SETTINGS.editMode)
 
   function applyDarkMode(isDark: boolean) {
     document.documentElement.classList.toggle('dark-mode', isDark)
@@ -38,6 +41,7 @@ export const useSettingsStore = defineStore('settings', () => {
         applyDarkMode(s.darkMode)
       }
       if (s.uriDisplay !== undefined) uriDisplay.value = s.uriDisplay
+      if (s.editMode !== undefined) editMode.value = s.editMode
     } catch (e) {
       logger.error('SettingsStore', 'Failed to load settings', { error: e })
     }
@@ -45,7 +49,7 @@ export const useSettingsStore = defineStore('settings', () => {
 
   function saveSettings() {
     try {
-      const settings: AppSettings = { darkMode: darkMode.value, uriDisplay: uriDisplay.value }
+      const settings: AppSettings = { darkMode: darkMode.value, uriDisplay: uriDisplay.value, editMode: editMode.value }
       localStorage.setItem(STORAGE_KEY, JSON.stringify(settings))
     } catch (e) {
       logger.error('SettingsStore', 'Failed to save settings', { error: e })
@@ -62,8 +66,9 @@ export const useSettingsStore = defineStore('settings', () => {
     saveSettings()
   })
   watch(uriDisplay, () => saveSettings())
+  watch(editMode, () => saveSettings())
 
   loadSettings()
 
-  return { darkMode, uriDisplay, setDarkMode }
+  return { darkMode, uriDisplay, editMode, setDarkMode }
 })

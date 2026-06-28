@@ -149,8 +149,13 @@ carries a config, authored live and (eventually) exported to `app.json`.
   `render: link | embed | label`. Stored in `stores/typeConfig.ts` (writable,
   `ae-rdf-type-config`), seeded from deployed `app.json.types` then overlaid with
   local edits.
-- **Authoring:** a per-type **gear** in `TypeList` sets both. `hide`/`pin` are
-  consumed there (filter + sort, with a "show N hidden" toggle).
+- **Authoring:** a per-type **gear** in `TypeList` sets both — gated behind
+  **Config authoring mode** (`settings.editMode`, off by default, hidden in
+  config mode), so end users get a clean read-only view. `hide`/`pin` are
+  consumed there (filter + sort, with a "show N hidden" toggle). Configured
+  types show inline indicator icons (pinned / embed / label) regardless of edit
+  mode. The configured *effects* (embed/hide/pin) always apply; only the gear +
+  export are gated.
 - **Embed (depth-1):** when an object's type is `render:embed`, `useResourceView`
   batch-fetches those objects' triples (`buildEmbeddedTriplesQuery`) and
   `PropertyTable` renders them inline (recursively, no further embed — depth-1),
