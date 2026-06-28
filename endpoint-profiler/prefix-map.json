@@ -1,0 +1,21 @@
+{
+  "http://www.w3.org/2001/XMLSchema#": "xsd",
+  "http://data.europa.eu/s66#": "eurio",
+  "http://data.europa.eu/s66/v#": "eurio-versioning",
+  "http://publications.europa.eu/ontology/euvoc#": "euvoc",
+  "http://purl.org/dc/elements/1.1/": "dc",
+  "http://purl.org/dc/terms/": "dct",
+  "http://purl.org/vocab/vann/": "vann",
+  "http://www.openlinksw.com/schemas/DAV#": "openlink-dav",
+  "http://www.openlinksw.com/schemas/virtrdf#": "openlink-virtrdf",
+  "http://www.w3.org/1999/02/22-rdf-syntax-ns#": "rdf",
+  "http://www.w3.org/2000/01/rdf-schema#": "rdfs",
+  "http://www.w3.org/2002/07/owl#": "owl",
+  "http://www.w3.org/2004/02/skos/core#": "skos",
+  "http://www.w3.org/2006/vcard/ns#": "vcard",
+  "http://www.w3.org/2008/05/skos-xl#": "skosxl",
+  "http://www.w3.org/ns/adms#": "adms",
+  "http://www.w3.org/ns/dcat#": "dcat",
+  "http://www.w3.org/ns/sparql-service-description#": "sd",
+  "http://xmlns.com/foaf/0.1/": "foaf"
+}

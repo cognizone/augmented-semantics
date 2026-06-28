@@ -1,0 +1,18 @@
+{
+  "name": "endpoint-profiler",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Parked offline SPARQL endpoint profiler + OWL/SHACL generator. Not part of any shipped tool; harvest into AE OWL when that tool starts. Run scripts with tsx.",
+  "scripts": {
+    "analyze": "tsx analyze-all.ts",
+    "merge": "tsx merge.ts"
+  },
+  "dependencies": {
+    "n3": "^2.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.2",
+    "tsx": "^4.21.0"
+  }
+}

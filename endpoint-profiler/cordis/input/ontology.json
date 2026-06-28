@@ -1,0 +1,54 @@
+{
+  "ontology": {
+    "file": "ontology.ttl",
+    "baseIri": "http://data.europa.eu/s66#",
+    "versionInfo": "generated-2026-02-05",
+    "reuseOutputAsBase": true
+  },
+  "scope": {
+    "classesFromEndpointOnly": true,
+    "propertiesFromEndpointOnly": true,
+    "includeNamespaces": [
+    ],
+    "excludeNamespaces": [
+      "http://www.openlinksw.com/schemas/virtrdf#",
+      "http://www.openlinksw.com/schemas/DAV#",
+      "http://www.w3.org/ns/ldp#",
+      "http://www.w3.org/ns/sparql-service-description#"
+    ],
+    "classAllowlist": [],
+    "classDenylist": [],
+    "propertyAllowlist": [],
+    "propertyDenylist": [],
+    "rootClasses": ["http://data.europa.eu/s66#Project"],
+    "includeSubclasses": true,
+    "includeSuperclasses": true,
+    "includeRelatedTypes": true,
+    "includeSuperproperties": true,
+    "includeInverseProperties": true
+  },
+  "inheritance": {
+    "mode": "ontology-only",
+    "manualEdges": {
+      "subClassOf": [],
+      "subPropertyOf": []
+    }
+  },
+  "generation": {
+    "emit": [
+      "rdfs:label",
+      "rdfs:comment",
+      "rdfs:isDefinedBy",
+      "skos:broadMatch",
+      "skos:closeMatch",
+      "skos:narrowMatch",
+      "owl:inverseOf"
+    ],
+    "domainRangePolicy": "unique",
+    "rangePolicy": "datatype-unique",
+    "policyNotes": true,
+    "policyNotePredicate": "vann:usageNote",
+    "policyNoteTag": "SEMIC",
+    "blankLineAfterDot": true
+  }
+}

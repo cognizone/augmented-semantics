@@ -1,5 +1,5 @@
 /**
- * Merge script to combine curated endpoint outputs into a single endpoints.json.
+ * Merge script to combine analyzed endpoint outputs into a single endpoints.json.
  *
  * @see /spec/ae-rdf/rdf00-EndpointAnalysis.md
  *
@@ -17,7 +17,7 @@ const REQUIRED_FIELDS = ['name', 'url', 'analysis'] as const
 
 type RequiredFields = (typeof REQUIRED_FIELDS)[number]
 
-interface CuratedEndpoint {
+interface AnalyzedEndpoint {
   name: string
   url: string
   description?: string
@@ -26,7 +26,7 @@ interface CuratedEndpoint {
 
 interface ValidationResult {
   valid: boolean
-  endpoint?: CuratedEndpoint
+  endpoint?: AnalyzedEndpoint
   errors: string[]
   warnings: string[]
 }
@@ -63,7 +63,7 @@ function validateEndpoint(data: unknown, filename: string): ValidationResult {
     return { valid: false, errors, warnings }
   }
 
-  const endpoint: CuratedEndpoint = {
+  const endpoint: AnalyzedEndpoint = {
     name: obj.name as string,
     url: obj.url as string,
     description: obj.description as string | undefined,
@@ -83,7 +83,7 @@ function listEndpointDirs(): string[] {
 
 function main(): void {
   const dirs = listEndpointDirs()
-  const endpoints: CuratedEndpoint[] = []
+  const endpoints: AnalyzedEndpoint[] = []
   const failures: string[] = []
 
   for (const dir of dirs) {

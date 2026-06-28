@@ -1,9 +1,9 @@
 /**
- * Curate all endpoints by running each endpoint's curate.ts script.
+ * Run analysis for all endpoints by running each endpoint's analyze.ts script.
  *
  * @see /spec/ae-rdf/rdf00-EndpointAnalysis.md
  *
- * Run with: npx tsx analysis/curate-all.ts
+ * Run with: npx tsx analysis/analyze-all.ts
  */
 
 import { readdirSync, statSync, existsSync } from 'fs'
@@ -27,20 +27,20 @@ function formatDuration(ms: number): string {
 }
 
 // =============================================================================
-// Run Individual Curate Script
+// Run Individual Analyze Script
 // =============================================================================
 
-interface CurationResult {
+interface AnalysisResult {
   name: string
   success: boolean
   durationMs: number
   error?: string
 }
 
-function runCurateScript(dir: string, index: number, total: number): Promise<CurationResult> {
+function runAnalyzeScript(dir: string, index: number, total: number): Promise<AnalysisResult> {
   return new Promise((resolve) => {
     const fullPath = join(analysisDir, dir)
-    const scriptPath = join(fullPath, 'curate.ts')
+    const scriptPath = join(fullPath, 'analyze.ts')
     const startTime = Date.now()
 
     if (!existsSync(scriptPath)) {
@@ -48,7 +48,7 @@ function runCurateScript(dir: string, index: number, total: number): Promise<Cur
         name: dir,
         success: false,
         durationMs: Date.now() - startTime,
-        error: 'No curate.ts found',
+        error: 'No analyze.ts found',
       })
       return
     }
@@ -100,10 +100,10 @@ async function main(): Promise<void> {
     return
   }
 
-  const results: CurationResult[] = []
+  const results: AnalysisResult[] = []
 
   for (let i = 0; i < dirs.length; i += 1) {
-    results.push(await runCurateScript(dirs[i], i + 1, dirs.length))
+    results.push(await runAnalyzeScript(dirs[i], i + 1, dirs.length))
   }
 
   console.log('')

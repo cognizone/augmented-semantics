@@ -1502,12 +1502,12 @@ eurio:IPR rdf:type owl:Class ;
           skos:narrowMatch patent:Record .
 
 ###  http://data.europa.eu/s66#BookChapter
-#eurio:BookChapter rdf:type owl:Class ;
-#                  rdfs:subClassOf eurio:ProjectPublication ;
-#                  rdfs:comment "A defined chapter of a book, usually with a separate title or number."@en ;
-#                  rdfs:isDefinedBy eurio: ;
-#                  rdfs:label "Book Chapter"@en ;
-#                  skos:broadMatch <http://purl.org/spar/fabio/BookChapter> .
+eurio:BookChapter rdf:type owl:Class ;
+                  rdfs:subClassOf eurio:ProjectPublication ;
+                  rdfs:comment "A defined chapter of a book, usually with a separate title or number."@en ;
+                  rdfs:isDefinedBy eurio: ;
+                  rdfs:label "Book Chapter"@en ;
+                  skos:broadMatch <http://purl.org/spar/fabio/BookChapter> .
 
 
 ###  http://data.europa.eu/s66#ConferencePaper

@@ -83,9 +83,11 @@ See `/packages/styles/DECISIONS.md` for what's shared vs app-specific.
 | Tool | Folder | Status | Description |
 |------|--------|--------|-------------|
 | AE SKOS | `ae-skos` | Spec ready | SKOS vocabulary browser |
-| AE RDF | `ae-rdf` | Barebones | RDF data browser |
+| AE RDF | `ae-rdf` | Barebones | RDF data browser — live SPARQL queries only, no precomputed analysis artifacts (mirror AE SKOS) |
 | AE OWL | `ae-owl` | Planned | OWL ontology viewer |
 | AE SHACL | `ae-shacl` | Planned | SHACL validation |
+
+> **`endpoint-profiler/`** (top-level, not a shipped tool, outside the pnpm workspace) is a *parked* offline experiment: a SPARQL endpoint profiler + OWL/SHACL generator. It is **not** an AE RDF dependency. Harvest from it when AE OWL / AE SHACL start; otherwise leave it untouched. Specs `rdf00`/`rdf02` describe this parked pipeline; `rdf01` (query patterns) may still inform the AE RDF live browser.
 
 ## Conventions
 
