@@ -48,6 +48,8 @@ Open the settings dialog from the <img src="./icons/icon-settings.svg" height="1
   - *Prefixed* — compact qnames (e.g. `skos:Concept`).
   - *Full URI* — the raw IRI.
 
+- **Export app.json** (Deployment) — download the current endpoints + per-type config (sidebar visibility, embed/link/label) as a locked deployment config. Tweak everything live, export, drop the file at `config/app.json`, and end users get a pre-configured, locked AE RDF. Credentials are never included in the export.
+
 Settings are saved in your browser (localStorage).
 
 ## User Guide

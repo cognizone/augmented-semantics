@@ -156,8 +156,10 @@ carries a config, authored live and (eventually) exported to `app.json`.
   `PropertyTable` renders them inline (recursively, no further embed — depth-1),
   with the type as a badge. `rdf:type` is dropped from the inline view (it's the
   badge). `label` renders identity-only; `link` (default) is the clickable chip.
-- **Lifecycle:** author live → export `typeConfig` → `app.json.types` → config
-  mode (locked) for end users. *(Export is the remaining step.)*
+- **Lifecycle:** author live → **Export app.json** (Settings → Deployment;
+  `utils/configExport.ts:buildAppConfig` serializes endpoints + `types`, then
+  `downloadJson`) → deploy as `config/app.json` → config mode (locked) for end
+  users. Credentials are never written into the export (auth `type` only).
 
 ## UI layout
 

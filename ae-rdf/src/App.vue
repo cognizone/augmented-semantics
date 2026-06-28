@@ -15,15 +15,28 @@ import Dialog from 'primevue/dialog'
 import Checkbox from 'primevue/checkbox'
 import Select from 'primevue/select'
 import Menu from 'primevue/menu'
-import { useUIStore, useSettingsStore, useEndpointStore } from './stores'
+import { useUIStore, useSettingsStore, useEndpointStore, useTypeConfigStore } from './stores'
 import { useConfig } from './services'
+import { buildAppConfig, downloadJson } from './utils/configExport'
 import EndpointManager from './components/common/EndpointManager.vue'
 import ErrorBoundary from './components/common/ErrorBoundary.vue'
 
 const uiStore = useUIStore()
 const settingsStore = useSettingsStore()
 const endpointStore = useEndpointStore()
+const typeConfigStore = useTypeConfigStore()
 const config = useConfig()
+
+function exportConfig() {
+  const appConfig = buildAppConfig({
+    endpoints: endpointStore.endpoints,
+    types: typeConfigStore.config,
+    appName: config.value.config?.appName,
+    logoUrl: config.value.config?.logoUrl,
+    documentationUrl: config.value.config?.documentationUrl,
+  })
+  downloadJson(appConfig, 'app.json')
+}
 
 const showEndpointManager = ref(false)
 const showSettings = ref(false)
@@ -178,6 +191,12 @@ onUnmounted(() => {
             class="full-width"
           />
           <small class="setting-hint">How predicates and resource links are shown.</small>
+        </div>
+
+        <div v-if="!config.configMode" class="setting-field">
+          <span class="setting-label">Deployment</span>
+          <Button label="Export app.json" icon="pi pi-download" severity="secondary" outlined @click="exportConfig" />
+          <small class="setting-hint">Download the current endpoints + per-type config as a locked deployment config. Credentials are never included.</small>
         </div>
 
         <div class="about-info">
