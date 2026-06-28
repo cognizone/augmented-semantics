@@ -11,6 +11,7 @@ import { useRouter } from 'vue-router'
 import ProgressSpinner from 'primevue/progressspinner'
 import { useBrowseStore } from '../../stores'
 import { useRdfTypes, useDelayedLoading } from '../../composables'
+import { qname as toQname } from '../../utils/format'
 import { URL_PARAMS } from '../../router'
 
 const router = useRouter()
@@ -20,12 +21,7 @@ const showLoading = useDelayedLoading(loading)
 
 const selected = computed(() => browseStore.currentType)
 
-function qname(uri: string): string {
-  const r = resolved.value.get(uri)
-  if (r && r.prefix) return `${r.prefix}:${r.localName}`
-  if (r && r.localName) return r.localName
-  return uri
-}
+const qname = (uri: string) => toQname(uri, resolved.value)
 
 function formatCount(n: number): string {
   return n.toLocaleString('en-US')

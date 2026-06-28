@@ -150,6 +150,28 @@ export type GraphMode = 'named' | 'none'
  * makes it correct regardless; detecting union-default to drop the branch is a
  * perf nicety we skip.
  */
+/**
+ * Best label for each of a set of resource IRIs, by the LABEL_PREDICATES.
+ * Used to turn opaque object localnames (e.g. `MENV`) into human labels
+ * (`Ministère de l'Environnement`). Unsafe IRIs are skipped, not fatal; the
+ * caller falls back to the qname for any IRI with no label.
+ *
+ * Default-graph scoped (labels usually live there); a missing label just means
+ * the UI keeps showing the qname.
+ */
+export function buildLabelsQuery(uris: string[]): string {
+  const values = uris
+    .filter(isNavigableIri)
+    .slice(0, 256)
+    .map(u => `<${u}>`)
+    .join(' ')
+  const branches = LABEL_PREDICATES.map(p => `{ ?s <${p}> ?lbl }`).join(' UNION ')
+  return `SELECT ?s (SAMPLE(?lbl) AS ?label) WHERE {
+  VALUES ?s { ${values} }
+  ${branches}
+} GROUP BY ?s`
+}
+
 export function buildResourceTriplesQuery(resourceUri: string, graphMode: GraphMode = 'named'): string {
   const iri = sanitizeIri(resourceUri)
   if (graphMode === 'none') {

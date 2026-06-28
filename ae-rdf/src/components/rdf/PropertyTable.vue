@@ -8,13 +8,14 @@
  * @see /spec/ae-rdf
  */
 import { isNavigableIri } from '../../services'
-import type { PropertyGroup } from '../../composables'
-
-import type { ResourceObject } from '../../composables'
+import { humanizeLocalName, qname as toQname, type ResolvedMap } from '../../utils/format'
+import type { PropertyGroup, ResourceObject } from '../../composables'
 
 const props = defineProps<{
   groups: PropertyGroup[]
-  resolved: Map<string, { prefix: string; localName: string }>
+  resolved: ResolvedMap
+  /** Object IRI → human label (Phase 2). Falls back to the qname when absent. */
+  labels?: Map<string, string>
   /** Reveal a graph chip on every triple. Multi-graph triples always show one. */
   showGraphs?: boolean
 }>()
@@ -23,15 +24,16 @@ const emit = defineEmits<{ navigate: [uri: string] }>()
 
 const XSD_STRING = 'http://www.w3.org/2001/XMLSchema#string'
 
-function qname(uri: string): string {
-  const r = props.resolved.get(uri)
-  if (r && r.prefix) return `${r.prefix}:${r.localName}`
-  if (r && r.localName) return r.localName
-  return uri
+const qname = (uri: string) => toQname(uri, props.resolved)
+
+/** Human predicate label; the qname/URI stays on hover. */
+function predicateLabel(uri: string): string {
+  return humanizeLocalName(uri)
 }
 
-function datatypeLabel(uri: string): string {
-  return qname(uri)
+/** Object display: fetched label if any, else the qname. */
+function objectDisplay(uri: string): string {
+  return props.labels?.get(uri) || qname(uri)
 }
 
 // Graphs are always KNOWN; this controls whether they're painted. Multi-graph
@@ -50,7 +52,7 @@ function graphTitle(o: ResourceObject): string {
   <table class="prop-table">
     <tbody>
       <tr v-for="group in groups" :key="group.predicate">
-        <th class="prop-key" :title="group.predicate">{{ qname(group.predicate) }}</th>
+        <th class="prop-key" :title="group.predicate">{{ predicateLabel(group.predicate) }}</th>
         <td class="prop-values">
           <div v-for="(o, i) in group.objects" :key="i" class="prop-value" :title="graphTitle(o)">
             <!-- URI object: clickable -->
@@ -59,10 +61,10 @@ function graphTitle(o: ResourceObject): string {
               class="uri-link"
               :title="o.value"
               @click="emit('navigate', o.value)"
-            >{{ qname(o.value) }}</a>
+            >{{ objectDisplay(o.value) }}</a>
 
             <!-- URI we can't navigate to (e.g. mailto:) -->
-            <span v-else-if="o.termType === 'uri'" class="uri-static" :title="o.value">{{ qname(o.value) }}</span>
+            <span v-else-if="o.termType === 'uri'" class="uri-static" :title="o.value">{{ objectDisplay(o.value) }}</span>
 
             <!-- Blank node -->
             <span v-else-if="o.termType === 'bnode'" class="bnode">[ anonymous node ]</span>
@@ -71,7 +73,7 @@ function graphTitle(o: ResourceObject): string {
             <span v-else class="literal">
               {{ o.value }}
               <span v-if="o.lang" class="tag lang-tag">@{{ o.lang }}</span>
-              <span v-else-if="o.datatype && o.datatype !== XSD_STRING" class="tag datatype-tag">{{ datatypeLabel(o.datatype) }}</span>
+              <span v-else-if="o.datatype && o.datatype !== XSD_STRING" class="tag datatype-tag">{{ qname(o.datatype) }}</span>
             </span>
 
             <!-- Graph provenance (always known; shown per option a) -->

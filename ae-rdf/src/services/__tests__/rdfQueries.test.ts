@@ -12,6 +12,7 @@ import {
   buildTypeInventoryQuery,
   buildInstanceCountQuery,
   buildInstanceListQuery,
+  buildLabelsQuery,
 } from '../rdfQueries'
 
 const RES = 'http://data.europa.eu/s66#endDate'
@@ -133,5 +134,23 @@ describe('buildInstanceListQuery', () => {
 
   it('computes a positive offset for later pages', () => {
     expect(buildInstanceListQuery(TYPE, 'none', 100, 200)).toContain('LIMIT 100 OFFSET 200')
+  })
+})
+
+describe('buildLabelsQuery', () => {
+  it('builds a VALUES + UNION-over-label-predicates + GROUP BY query', () => {
+    const q = buildLabelsQuery([RES, TYPE])
+    expect(q).toContain(`VALUES ?s { <${RES}> <${TYPE}> }`)
+    expect(q).toContain('SAMPLE(?lbl) AS ?label')
+    expect(q).toContain('GROUP BY ?s')
+    // one UNION branch per label predicate
+    expect(q).toContain(`<${LABEL_PREDICATES[0]}> ?lbl`)
+  })
+
+  it('skips unsafe IRIs rather than interpolating them', () => {
+    const q = buildLabelsQuery(['http://e.org/x> }', RES])
+    expect(q).toContain(`<${RES}>`)
+    expect(q).not.toContain('INSERT')
+    expect(q).not.toContain('x> }')
   })
 })

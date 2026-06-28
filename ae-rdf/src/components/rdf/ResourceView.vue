@@ -12,23 +12,54 @@ import { useRoute, useRouter } from 'vue-router'
 import ProgressSpinner from 'primevue/progressspinner'
 import { useBrowseStore } from '../../stores'
 import { useResourceView, useClipboard, useDelayedLoading } from '../../composables'
+import { LABEL_PREDICATES } from '../../services'
+import { localName as localNameOf, humanizeLocalName, qname as toQname } from '../../utils/format'
+import { URL_PARAMS } from '../../router'
+import type { PropertyGroup } from '../../composables'
 import PropertyTable from './PropertyTable.vue'
 
 const route = useRoute()
 const router = useRouter()
 const browseStore = useBrowseStore()
 const { copyToClipboard } = useClipboard()
-const { triples, label, loading, error, resolved, loadResource } = useResourceView()
+const { triples, types, label, loading, error, resolved, objectLabels, loadResource } = useResourceView()
 const showLoading = useDelayedLoading(loading)
 
 const uri = computed(() => browseStore.currentResource)
 const showGraphs = ref(false)
 
-function qname(u: string): string {
-  const r = resolved.value.get(u)
-  if (r && r.prefix) return `${r.prefix}:${r.localName}`
-  if (r && r.localName) return r.localName
-  return u
+const qname = (u: string) => toQname(u, resolved.value)
+
+// Subject type(s) as header chips; clicking one browses that type's instances.
+const typeChips = computed(() =>
+  types.value.filter(o => o.termType === 'uri').map(o => ({ uri: o.value, label: qname(o.value) }))
+)
+
+// Priority within a section: labels → identifiers → dates → status → rest,
+// then alphabetical by humanized name.
+function rank(predicate: string): number {
+  const ln = localNameOf(predicate).toLowerCase()
+  if ((LABEL_PREDICATES as readonly string[]).includes(predicate)) return 0
+  if (/identifier|notation|^id$/.test(ln)) return 1
+  if (/date|created|modified|issued|time/.test(ln)) return 2
+  if (/status|state/.test(ln)) return 3
+  return 4
+}
+function byPriority(a: PropertyGroup, b: PropertyGroup): number {
+  return rank(a.predicate) - rank(b.predicate)
+    || humanizeLocalName(a.predicate).localeCompare(humanizeLocalName(b.predicate))
+}
+
+// Split: Attributes = literal-valued predicates; Relationships = link-valued.
+const attributes = computed(() =>
+  triples.value.filter(g => g.objects.every(o => o.termType === 'literal')).sort(byPriority)
+)
+const relationships = computed(() =>
+  triples.value.filter(g => g.objects.some(o => o.termType !== 'literal')).sort(byPriority)
+)
+
+function selectType(typeUri: string) {
+  router.push({ query: { [URL_PARAMS.TYPE]: typeUri } })
 }
 
 // Union of graphs the resource's triples assert in (provenance summary).
@@ -44,14 +75,7 @@ const graphSummary = computed(() => {
   return { graphs: [...set], hasDefault }
 })
 
-const localName = computed(() => {
-  const u = uri.value
-  if (!u) return ''
-  const seg = u.split(/[#/]/).filter(Boolean).pop()
-  return seg || u
-})
-
-const heading = computed(() => label.value || localName.value)
+const heading = computed(() => label.value || (uri.value ? localNameOf(uri.value) : ''))
 
 watch(
   uri,
@@ -62,7 +86,7 @@ watch(
 )
 
 function navigate(target: string) {
-  router.push({ query: { ...route.query, resource: target } })
+  router.push({ query: { ...route.query, [URL_PARAMS.RESOURCE]: target } })
 }
 </script>
 
@@ -75,6 +99,17 @@ function navigate(target: string) {
         <button class="copy-btn" aria-label="Copy URI" title="Copy URI" @click="copyToClipboard(uri, 'URI')">
           <span class="material-symbols-outlined">content_copy</span>
         </button>
+      </div>
+
+      <!-- Subject type(s) — identity, lifted out of the property table -->
+      <div v-if="typeChips.length" class="resource-types">
+        <button
+          v-for="t in typeChips"
+          :key="t.uri"
+          class="type-chip"
+          :title="`Browse all ${t.label}`"
+          @click="selectType(t.uri)"
+        >{{ t.label }}</button>
       </div>
 
       <!-- Graph provenance summary + per-triple reveal toggle -->
@@ -106,7 +141,17 @@ function navigate(target: string) {
       <p>No outgoing triples for this resource.</p>
     </div>
 
-    <PropertyTable v-else :groups="triples" :resolved="resolved" :show-graphs="showGraphs" @navigate="navigate" />
+    <template v-else>
+      <section v-if="attributes.length" class="prop-section">
+        <h3 class="section-title">Attributes</h3>
+        <PropertyTable :groups="attributes" :resolved="resolved" :labels="objectLabels" :show-graphs="showGraphs" @navigate="navigate" />
+      </section>
+
+      <section v-if="relationships.length" class="prop-section">
+        <h3 class="section-title">Relationships</h3>
+        <PropertyTable :groups="relationships" :resolved="resolved" :labels="objectLabels" :show-graphs="showGraphs" @navigate="navigate" />
+      </section>
+    </template>
   </div>
 </template>
 
@@ -169,6 +214,42 @@ function navigate(target: string) {
 
 .copy-btn .material-symbols-outlined {
   font-size: 16px;
+}
+
+.resource-types {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  margin-top: 0.5rem;
+}
+
+.type-chip {
+  font-family: var(--ae-font-mono);
+  font-size: 0.6875rem;
+  padding: 0.1rem 0.5rem;
+  border: 1px solid var(--ae-border-color);
+  border-radius: 10px;
+  background: var(--ae-bg-elevated);
+  color: var(--ae-text-secondary);
+  cursor: pointer;
+}
+
+.type-chip:hover {
+  border-color: var(--ae-accent);
+  color: var(--ae-accent);
+}
+
+.prop-section {
+  margin-top: 1.25rem;
+}
+
+.section-title {
+  margin: 0 0 0.25rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ae-text-secondary);
 }
 
 .resource-graphs {
