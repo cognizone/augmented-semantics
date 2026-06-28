@@ -11,12 +11,15 @@
   "dependencies": {
     "@ae/styles": "workspace:*",
     "@primevue/themes": "^4.5.4",
+    "dompurify": "^3.4.11",
     "pinia": "^3.0.4",
     "primeicons": "^7.0.0",
     "primevue": "^4.5.5",
-    "vue": "^3.5.38"
+    "vue": "^3.5.38",
+    "vue-router": "^4.6.4"
   },
   "devDependencies": {
+    "@types/dompurify": "^3.2.0",
     "@types/node": "^24.13.2",
     "@vitejs/plugin-vue": "^6.0.7",
     "@vue/tsconfig": "^0.8.1",
