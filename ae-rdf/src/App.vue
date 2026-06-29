@@ -18,6 +18,7 @@ import Menu from 'primevue/menu'
 import { useUIStore, useSettingsStore, useEndpointStore, useTypeConfigStore, useBrowseStore } from './stores'
 import { useConfig } from './services'
 import { buildAppConfig, downloadJson } from './utils/configExport'
+import { getKnownPrefixes, getDisplayPrefixes } from './services'
 import EndpointManager from './components/common/EndpointManager.vue'
 import ErrorBoundary from './components/common/ErrorBoundary.vue'
 
@@ -33,11 +34,21 @@ function exportConfig() {
     endpoints: endpointStore.endpoints,
     types: typeConfigStore.config,
     typeInventory: browseStore.typeInventory,
+    prefixes: getKnownPrefixes(),
     appName: config.value.config?.appName,
     logoUrl: config.value.config?.logoUrl,
     documentationUrl: config.value.config?.documentationUrl,
   })
   downloadJson(appConfig, 'app.json')
+}
+
+const showPrefixes = ref(false)
+const prefixList = ref<{ prefix: string; namespace: string }[]>([])
+function openPrefixes() {
+  prefixList.value = Object.entries(getDisplayPrefixes())
+    .map(([prefix, namespace]) => ({ prefix, namespace }))
+    .sort((a, b) => a.prefix.localeCompare(b.prefix))
+  showPrefixes.value = true
 }
 
 const showEndpointManager = ref(false)
@@ -101,6 +112,7 @@ function handleKeydown(event: KeyboardEvent) {
   if (event.key === 'Escape') {
     if (showEndpointManager.value) showEndpointManager.value = false
     else if (showSettings.value) showSettings.value = false
+    else if (showPrefixes.value) showPrefixes.value = false
   }
 }
 
@@ -157,6 +169,9 @@ onUnmounted(() => {
             @click="settingsStore.setDarkMode(!settingsStore.darkMode)"
           >
             <span class="material-symbols-outlined">{{ settingsStore.darkMode ? 'light_mode' : 'dark_mode' }}</span>
+          </button>
+          <button class="header-icon-btn" aria-label="Prefixes" title="Prefixes" @click="openPrefixes">
+            <span class="material-symbols-outlined">sell</span>
           </button>
           <button class="header-icon-btn" aria-label="Settings" @click="showSettings = true">
             <span class="material-symbols-outlined">settings</span>
@@ -218,6 +233,22 @@ onUnmounted(() => {
       </div>
       <template #footer>
         <Button label="Close" @click="showSettings = false" />
+      </template>
+    </Dialog>
+
+    <!-- Prefixes legend -->
+    <Dialog v-model:visible="showPrefixes" header="Prefixes" :modal="true" :style="{ width: '560px' }" position="top">
+      <p class="prefixes-hint">Prefix → namespace mappings used to render qnames (built-in, config-declared, and resolved).</p>
+      <table class="prefixes-table">
+        <tbody>
+          <tr v-for="p in prefixList" :key="p.prefix + p.namespace">
+            <td class="prefix-key">{{ p.prefix }}</td>
+            <td class="prefix-ns">{{ p.namespace }}</td>
+          </tr>
+        </tbody>
+      </table>
+      <template #footer>
+        <Button label="Close" @click="showPrefixes = false" />
       </template>
     </Dialog>
 
@@ -372,6 +403,39 @@ onUnmounted(() => {
 
 .checkbox-label {
   align-items: flex-start;
+}
+
+.prefixes-hint {
+  margin: 0 0 0.75rem;
+  font-size: 0.75rem;
+  color: var(--ae-text-secondary);
+}
+
+.prefixes-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+.prefixes-table tr {
+  border-bottom: 1px solid var(--ae-border-color);
+}
+
+.prefix-key {
+  font-family: var(--ae-font-mono);
+  font-weight: 600;
+  color: var(--ae-accent);
+  padding: 0.3rem 1rem 0.3rem 0;
+  white-space: nowrap;
+  vertical-align: top;
+}
+
+.prefix-ns {
+  font-family: var(--ae-font-mono);
+  font-size: 0.75rem;
+  color: var(--ae-text-secondary);
+  word-break: break-all;
+  padding: 0.3rem 0;
 }
 
 .about-info {

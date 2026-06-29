@@ -183,10 +183,16 @@ carries a config, authored live and (eventually) exported to `app.json`.
   a value in >1 graph is badged), and the resource's "Show graphs" toggle reaches
   the embed. `rdf:type` is dropped from the inline view (it's the badge).
   `label` renders identity-only; `link` (default) is the clickable chip.
+- **Prefixes:** `AppConfig.prefixes` (prefix→namespace) is seeded into the prefix
+  service at boot (`setConfigPrefixes`, highest precedence over the built-in
+  common set and prefix.cc), so custom-vocab qnames render correctly and offline.
+  The export caches declared + prefix.cc-resolved prefixes (`getKnownPrefixes`); a
+  read-only **Prefixes** legend in the header lists the active mappings
+  (`getDisplayPrefixes`).
 - **Lifecycle:** author live → **Export app.json** (Settings → Deployment;
   `utils/configExport.ts:buildAppConfig` serializes endpoints (+ their `graph`
-  axes), `types`, and a cached **`typeInventory`** (uri+count), then
-  `downloadJson`) → deploy as `config/app.json` → config mode (locked) for end
+  axes), `types`, a cached **`typeInventory`** (uri+count), and **`prefixes`**,
+  then `downloadJson`) → deploy as `config/app.json` → config mode (locked) for end
   users. Credentials are never written into the export (auth `type` only). In
   config mode the cached `typeInventory` seeds the Types sidebar for the primary
   endpoint **with no discovery query** (`useRdfTypes` paints instantly; prefixes

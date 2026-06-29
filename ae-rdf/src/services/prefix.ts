@@ -72,6 +72,19 @@ interface ResolvedUri {
 let cache: PrefixCache = {}
 let cacheLoaded = false
 
+// Config-declared prefixes (namespace → prefix), highest precedence. Seeded from
+// app.json at boot (setConfigPrefixes), so deployments render custom-vocab qnames
+// correctly and without depending on prefix.cc at runtime.
+let configNsToPrefix: Record<string, string> = {}
+
+/** Seed config-declared prefixes (prefix → namespace) from app.json. */
+export function setConfigPrefixes(prefixToNs: Record<string, string> | undefined): void {
+  configNsToPrefix = {}
+  for (const [prefix, ns] of Object.entries(prefixToNs ?? {})) {
+    if (prefix && ns) configNsToPrefix[ns] = prefix
+  }
+}
+
 /**
  * Load cache from localStorage
  */
@@ -122,10 +135,11 @@ function extractNamespace(uri: string): { namespace: string; localName: string }
 }
 
 /**
- * Get prefix from common prefixes map
+ * Get a declared prefix for a namespace: config-declared (app.json) take
+ * precedence over the built-in common prefixes.
  */
 function getCommonPrefix(namespace: string): string | null {
-  return COMMON_PREFIXES[namespace] ?? null
+  return configNsToPrefix[namespace] ?? COMMON_PREFIXES[namespace] ?? null
 }
 
 /**
@@ -280,6 +294,30 @@ export function formatQualifiedName(resolved: ResolvedUri): string {
     return `${resolved.prefix}:${resolved.localName}`
   }
   return resolved.localName
+}
+
+/**
+ * Prefixes worth baking into an exported app.json: config-declared + the ones
+ * prefix.cc resolved (the "extras" beyond the built-in common set). Returned as
+ * prefix → namespace. The built-in common prefixes are intentionally omitted —
+ * a deployed app already has them.
+ */
+export function getKnownPrefixes(): Record<string, string> {
+  loadCache()
+  const out: Record<string, string> = {}
+  for (const [ns, p] of Object.entries(cache)) if (p) out[p] = ns
+  for (const [ns, p] of Object.entries(configNsToPrefix)) out[p] = ns // config wins
+  return out
+}
+
+/** All active prefix → namespace mappings (common + config + resolved), for the legend. */
+export function getDisplayPrefixes(): Record<string, string> {
+  loadCache()
+  const out: Record<string, string> = {}
+  for (const [ns, p] of Object.entries(COMMON_PREFIXES)) out[p] = ns
+  for (const [ns, p] of Object.entries(cache)) if (p) out[p] = ns
+  for (const [ns, p] of Object.entries(configNsToPrefix)) out[p] = ns
+  return out
 }
 
 /**

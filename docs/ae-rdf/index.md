@@ -35,6 +35,7 @@ Endpoints are **shared with the other Augmented Semantics tools** (e.g. AE SKOS)
 |--------|---|-------------|
 | **Endpoint** | badge | Shows the active endpoint. Click to switch endpoints or open the [Endpoint Manager](01-endpoints.md). |
 | **Help** | <img src="./icons/icon-help.svg" height="16"> | Opens this user manual. |
+| **Prefixes** | | The active `prefix → namespace` mappings used to render qnames. |
 | **Dark mode** | <img src="./icons/icon-dark-mode.svg" height="16"> | Toggle light/dark theme. |
 | **Settings** | <img src="./icons/icon-settings.svg" height="16"> | Dark mode, URI display, and build info. |
 
@@ -49,7 +50,7 @@ Open the settings dialog from the <img src="./icons/icon-settings.svg" height="1
   - *Full URI* — the raw IRI.
 
 - **Config authoring mode** — off by default (clean, read-only browsing). Turn it on to reveal the per-type gears in the Types sidebar and the export button below. The configured effects (embed/hide/pin) apply either way; this just shows the editing tools.
-- **Export app.json** (Deployment, authoring mode only) — download the current endpoints (incl. their graph behaviour), per-type config, and a cached snapshot of the type inventory (for an instant Types sidebar on deploy) (sidebar visibility, embed/link/label) as a locked deployment config. Tweak everything live, export, drop the file at `config/app.json`, and end users get a pre-configured, locked AE RDF. Credentials are never included in the export.
+- **Export app.json** (Deployment, authoring mode only) — download the current endpoints (incl. their graph behaviour), per-type config, a cached snapshot of the type inventory (for an instant Types sidebar on deploy), and the prefix mappings (so qnames render offline, without prefix.cc) (sidebar visibility, embed/link/label) as a locked deployment config. Tweak everything live, export, drop the file at `config/app.json`, and end users get a pre-configured, locked AE RDF. Credentials are never included in the export.
 
 Settings are saved in your browser (localStorage).
 

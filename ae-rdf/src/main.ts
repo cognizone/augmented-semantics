@@ -13,7 +13,7 @@ import Tooltip from 'primevue/tooltip'
 
 import router from './router'
 import App from './App.vue'
-import { logger, loadConfig } from './services'
+import { logger, loadConfig, getConfig, setConfigPrefixes } from './services'
 
 import 'primeicons/primeicons.css'
 import '@ae/styles'
@@ -22,6 +22,8 @@ import './style.css'
 async function bootstrap() {
   // Load optional external config before stores initialize (handles 404 gracefully)
   await loadConfig()
+  // Seed declared prefixes so qnames render from config (offline, no prefix.cc).
+  setConfigPrefixes(getConfig()?.prefixes)
 
   const app = createApp(App)
 

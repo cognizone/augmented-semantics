@@ -55,6 +55,12 @@ describe('buildAppConfig', () => {
     expect(buildAppConfig({ endpoints: [], types: {} }).typeInventory).toBeUndefined()
   })
 
+  it('includes prefixes when present, omits when empty', () => {
+    const p = { eurio: 'http://data.europa.eu/s66#' }
+    expect(buildAppConfig({ endpoints: [], types: {}, prefixes: p }).prefixes).toEqual(p)
+    expect(buildAppConfig({ endpoints: [], types: {}, prefixes: {} }).prefixes).toBeUndefined()
+  })
+
   it('includes app-level fields when present', () => {
     const config = buildAppConfig({ endpoints: [], types: {}, appName: 'My RDF', documentationUrl: 'https://d' })
     expect(config.appName).toBe('My RDF')

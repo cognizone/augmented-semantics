@@ -59,6 +59,8 @@ export interface AppConfig {
   types?: Record<string, TypeConfig>
   /** Cached type inventory (uri + count) for an instant Types sidebar on deploy. */
   typeInventory?: { uri: string; count: number }[]
+  /** Prefix → namespace map (declared + cached) so qnames render without prefix.cc. */
+  prefixes?: Record<string, string>
 }
 
 /**
