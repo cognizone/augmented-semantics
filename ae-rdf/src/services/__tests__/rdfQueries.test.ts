@@ -18,6 +18,8 @@ import {
   buildCompositionQuery,
   buildSubclassQuery,
   buildPathCountQuery,
+  buildIncomingCountQuery,
+  buildIncomingQuery,
 } from '../rdfQueries'
 
 const RES = 'http://data.europa.eu/s66#endDate'
@@ -249,5 +251,24 @@ describe('buildPathCountQuery', () => {
   it('returns empty for too-short chains or unsafe IRIs', () => {
     expect(buildPathCountQuery([C], DEFAULT)).toBe('')
     expect(buildPathCountQuery([C, 'http://e.org/x> } DROP'], DEFAULT)).toBe('')
+  })
+})
+
+describe('incoming (inverse) relations', () => {
+  it('count: distinct referencing subjects, graph-scoped per strategy', () => {
+    expect(buildIncomingCountQuery(RES, DEFAULT)).toBe(`SELECT (COUNT(DISTINCT ?s) AS ?n) WHERE { ?s ?p <${RES}> }`)
+    expect(buildIncomingCountQuery(RES, NAMED)).toContain(`GRAPH ?g { ?s ?p <${RES}> }`)
+    expect(buildIncomingCountQuery(RES, BOTH)).toContain('FILTER NOT EXISTS')
+    expect(() => buildIncomingCountQuery('http://e.org/x> } DROP', BOTH)).toThrow()
+  })
+  it('list: projects subject+predicate (+graph when named), capped', () => {
+    const named = buildIncomingQuery(RES, NAMED, 500)
+    expect(named).toContain('SELECT ?s ?g ?p')
+    expect(named).toContain(`GRAPH ?g { ?s ?p <${RES}> }`)
+    expect(named).toContain('LIMIT 500')
+    const def = buildIncomingQuery(RES, DEFAULT, 500)
+    expect(def).toContain('SELECT ?s ?p')
+    expect(def).not.toContain('GRAPH')
+    expect(buildIncomingQuery(RES, BOTH).split('LIMIT')[1].trim()).toBe('1000') // default cap
   })
 })

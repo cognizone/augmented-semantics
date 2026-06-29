@@ -11,7 +11,7 @@ import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ProgressSpinner from 'primevue/progressspinner'
 import { useBrowseStore, useSettingsStore } from '../../stores'
-import { useResourceView, useClipboard, useDelayedLoading } from '../../composables'
+import { useResourceView, useIncomingRelations, useClipboard, useDelayedLoading } from '../../composables'
 import { LABEL_PREDICATES } from '../../services'
 import { localName as localNameOf, humanizeLocalName, qname as toQname, displayType } from '../../utils/format'
 import { URL_PARAMS } from '../../router'
@@ -26,8 +26,30 @@ const { copyToClipboard } = useClipboard()
 const { triples, types, label, loading, error, resolved, objectLabels, objectTypes, embedded, loadResource } = useResourceView()
 const showLoading = useDelayedLoading(loading)
 
+// Inverse relations (who points at this resource) — loaded lazily on expand.
+const {
+  groups: incomingGroups,
+  count: incomingCount,
+  truncated: incomingTruncated,
+  loading: incomingLoading,
+  loaded: incomingLoaded,
+  error: incomingError,
+  resolved: incomingResolved,
+  objectLabels: incomingLabels,
+  objectTypes: incomingTypes,
+  load: loadIncoming,
+  reset: resetIncoming,
+} = useIncomingRelations()
+const incomingOpen = ref(false)
+const INCOMING_LIMIT = 1000
+
 const uri = computed(() => browseStore.currentResource)
 const showGraphs = ref(false)
+
+function toggleIncoming() {
+  incomingOpen.value = !incomingOpen.value
+  if (incomingOpen.value && !incomingLoaded.value && uri.value) loadIncoming(uri.value)
+}
 const mode = computed(() => settings.uriDisplay)
 
 const qname = (u: string) => toQname(u, resolved.value)
@@ -82,6 +104,8 @@ const heading = computed(() => label.value || (uri.value ? localNameOf(uri.value
 watch(
   uri,
   (u) => {
+    incomingOpen.value = false
+    resetIncoming()
     if (u) loadResource(u)
   },
   { immediate: true }
@@ -157,6 +181,31 @@ function navigate(target: string) {
         <PropertyTable :groups="relationships" :resolved="resolved" :labels="objectLabels" :object-types="objectTypes" :embedded="embedded" :show-graphs="showGraphs" @navigate="navigate" />
       </section>
     </template>
+
+    <!-- Inverse relations: who points at this resource. Lazily loaded on expand. -->
+    <section v-if="!showLoading && !error" class="prop-section incoming-section">
+      <button class="incoming-toggle" :aria-expanded="incomingOpen" @click="toggleIncoming">
+        <span class="material-symbols-outlined inc-chevron">{{ incomingOpen ? 'expand_more' : 'chevron_right' }}</span>
+        <span class="section-title inc-title">Referenced by</span>
+        <span v-if="incomingLoaded && incomingCount !== null" class="inc-count">{{ incomingCount.toLocaleString('en-US') }}</span>
+      </button>
+
+      <div v-if="incomingOpen" class="incoming-body">
+        <div v-if="incomingLoading" class="inc-state">
+          <ProgressSpinner style="width: 24px; height: 24px" strokeWidth="4" />
+        </div>
+        <div v-else-if="incomingError" class="inc-state error">{{ incomingError }}</div>
+        <template v-else-if="incomingLoaded">
+          <p v-if="!incomingGroups.length" class="inc-state">Nothing references this resource.</p>
+          <template v-else>
+            <PropertyTable :groups="incomingGroups" :resolved="incomingResolved" :labels="incomingLabels" :object-types="incomingTypes" :show-graphs="showGraphs" :incoming="true" @navigate="navigate" />
+            <p v-if="incomingTruncated" class="inc-truncated">
+              Showing the first {{ INCOMING_LIMIT.toLocaleString('en-US') }}{{ incomingCount !== null ? ` of ${incomingCount.toLocaleString('en-US')}` : '' }} — open a specific one to keep walking.
+            </p>
+          </template>
+        </template>
+      </div>
+    </section>
   </div>
 </template>
 
@@ -255,6 +304,64 @@ function navigate(target: string) {
 
 .prop-section {
   margin-top: 1.25rem;
+}
+
+.incoming-section {
+  border-top: 1px solid var(--ae-border-color);
+  padding-top: 0.75rem;
+}
+
+.incoming-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  color: var(--ae-text-secondary);
+}
+
+.incoming-toggle:hover .inc-title {
+  color: var(--ae-text-primary);
+}
+
+.inc-chevron {
+  font-size: 18px;
+  color: var(--ae-text-muted);
+}
+
+.inc-title {
+  margin: 0;
+}
+
+.inc-count {
+  font-size: 0.6875rem;
+  color: var(--ae-text-secondary);
+  background: var(--ae-bg-elevated);
+  border: 1px solid var(--ae-border-color);
+  border-radius: 10px;
+  padding: 0.05rem 0.45rem;
+}
+
+.incoming-body {
+  margin-top: 0.5rem;
+}
+
+.inc-state {
+  padding: 0.75rem 0;
+  font-size: 0.8125rem;
+  color: var(--ae-text-secondary);
+}
+
+.inc-state.error {
+  color: var(--ae-status-error);
+}
+
+.inc-truncated {
+  margin: 0.5rem 0 0;
+  font-size: 0.6875rem;
+  color: var(--ae-text-muted);
 }
 
 .section-title {

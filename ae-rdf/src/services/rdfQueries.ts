@@ -275,3 +275,33 @@ export function buildResourceTriplesQuery(resourceUri: string, s: GraphStrategy)
   }
   return `SELECT ?p ?o WHERE { <${iri}> ?p ?o } ORDER BY ?p`
 }
+
+/* ───────────────────────── Incoming (inverse) relations ───────────────────────── */
+
+/** Graph-aware `?s ?p <iri>` body — who references this resource. */
+function incomingPattern(iri: string, s: GraphStrategy): string {
+  if (s.useNamed && s.useDefault) {
+    return `{ GRAPH ?g { ?s ?p <${iri}> } } UNION { ?s ?p <${iri}> FILTER NOT EXISTS { GRAPH ?ng { ?s ?p <${iri}> } } }`
+  }
+  if (s.useNamed) return `GRAPH ?g { ?s ?p <${iri}> }`
+  return `?s ?p <${iri}>`
+}
+
+/** How many distinct resources reference this one (the "Referenced by" headline). */
+export function buildIncomingCountQuery(resourceUri: string, s: GraphStrategy): string {
+  const iri = sanitizeIri(resourceUri)
+  return `SELECT (COUNT(DISTINCT ?s) AS ?n) WHERE { ${incomingPattern(iri, s)} }`
+}
+
+/**
+ * Incoming triples (subject + predicate + graph), capped. The object is the
+ * fixed resource, so only ?s/?p/?g are projected; the caller groups by ?p and
+ * folds ?g for provenance. LIMIT bounds the fetch on hub nodes (the true total
+ * comes from buildIncomingCountQuery); the UI caps display per predicate too.
+ */
+export function buildIncomingQuery(resourceUri: string, s: GraphStrategy, limit = 1000): string {
+  const iri = sanitizeIri(resourceUri)
+  const lim = Math.max(1, Math.floor(limit))
+  const proj = s.useNamed ? '?s ?g ?p' : '?s ?p'
+  return `SELECT ${proj} WHERE { ${incomingPattern(iri, s)} } ORDER BY ?p ?s LIMIT ${lim}`
+}

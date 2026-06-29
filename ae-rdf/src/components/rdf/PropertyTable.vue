@@ -24,6 +24,8 @@ const props = defineProps<{
   embedded?: Map<string, PropertyGroup[]>
   /** Reveal a graph chip on every triple. Multi-graph triples always show one. */
   showGraphs?: boolean
+  /** Inverse relations (`?s ?p <this>`): mark predicates as inbound. */
+  incoming?: boolean
 }>()
 
 const emit = defineEmits<{ navigate: [uri: string] }>()
@@ -90,7 +92,7 @@ function graphTitle(o: ResourceObject): string {
   <table class="prop-table">
     <tbody>
       <tr v-for="group in groups" :key="group.predicate">
-        <th class="prop-key" v-tooltip.top="{ value: qname(group.predicate), showDelay: 120 }">{{ predicateLabel(group.predicate) }}</th>
+        <th class="prop-key" v-tooltip.top="{ value: qname(group.predicate), showDelay: 120 }"><span v-if="incoming" class="in-arrow" title="incoming — resources that link here">↤</span>{{ predicateLabel(group.predicate) }}</th>
         <td class="prop-values">
           <div v-for="(o, i) in shownObjects(group)" :key="i" class="prop-value" :title="graphTitle(o)">
             <!-- Embedded value object: inline its triples (recursively — an
@@ -200,6 +202,12 @@ function graphTitle(o: ResourceObject): string {
 .prop-value {
   padding: 0.125rem 0;
   word-break: break-word;
+}
+
+.in-arrow {
+  color: var(--ae-accent);
+  margin-right: 0.3rem;
+  font-weight: 600;
 }
 
 .prop-more {
