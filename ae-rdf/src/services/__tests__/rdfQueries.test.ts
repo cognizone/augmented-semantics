@@ -164,8 +164,7 @@ describe('buildEmbeddedTriplesQuery', () => {
   it('batches subjects via VALUES and selects ?s ?p ?o', () => {
     const q = buildEmbeddedTriplesQuery([RES, TYPE])
     expect(q).toContain(`VALUES ?s { <${RES}> <${TYPE}> }`)
-    expect(q).toContain('SELECT ?s ?p ?o')
-    expect(q).toContain('?s ?p ?o')
+    expect(q).toContain('SELECT DISTINCT ?s ?p ?o')
   })
 
   it('skips unsafe IRIs', () => {

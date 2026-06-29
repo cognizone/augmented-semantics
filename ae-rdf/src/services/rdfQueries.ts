@@ -184,7 +184,9 @@ export function buildEmbeddedTriplesQuery(uris: string[]): string {
     .slice(0, 64)
     .map(u => `<${u}>`)
     .join(' ')
-  return `SELECT ?s ?p ?o WHERE { VALUES ?s { ${values} } ?s ?p ?o } ORDER BY ?s ?p`
+  // DISTINCT: the default graph is often the union of named graphs (Virtuoso),
+  // so a plain query returns each triple once per graph — dedupe at the source.
+  return `SELECT DISTINCT ?s ?p ?o WHERE { VALUES ?s { ${values} } ?s ?p ?o } ORDER BY ?s ?p`
 }
 
 export function buildResourceTriplesQuery(resourceUri: string, graphMode: GraphMode = 'named'): string {
