@@ -42,6 +42,81 @@
         },
         "http://www.openlinksw.com/schemas/virtrdf#QuadStorage": {
           "sidebar": "hide"
+        },
+        "http://data.europa.eu/s66#Result": {
+          "sidebar": "pin"
+        },
+        "http://data.europa.eu/s66#Organisation": {
+          "sidebar": "pin"
+        },
+        "http://data.europa.eu/s66#Site": {
+          "render": "embed"
+        },
+        "http://www.w3.org/2002/07/owl#AllDisjointClasses": {
+          "group": "Ontology"
+        },
+        "http://www.w3.org/2002/07/owl#Ontology": {
+          "group": "Ontology"
+        },
+        "http://www.w3.org/ns/dcat#Distribution": {
+          "group": "Ontology"
+        },
+        "http://www.w3.org/ns/sparql-service-description#Service": {
+          "group": "Ontology"
+        },
+        "http://www.w3.org/ns/dcat#Dataset": {
+          "group": "Ontology"
+        },
+        "http://www.w3.org/2006/vcard/ns#Kind": {
+          "group": "Ontology"
+        },
+        "http://www.openlinksw.com/schemas/virtrdf#QuadMapATable": {
+          "sidebar": "hide"
+        },
+        "http://www.w3.org/ns/adms#Asset": {
+          "group": "Ontology"
+        },
+        "http://xmlns.com/foaf/0.1/Agent": {
+          "group": "Ontology"
+        },
+        "http://www.w3.org/2002/07/owl#SymmetricProperty": {
+          "group": "Ontology"
+        },
+        "http://www.w3.org/2000/01/rdf-schema#Datatype": {
+          "group": "Ontology"
+        },
+        "http://www.openlinksw.com/schemas/virtrdf#QuadMapFText": {
+          "sidebar": "hide"
+        },
+        "http://www.w3.org/2002/07/owl#FunctionalProperty": {
+          "group": "Ontology"
+        },
+        "http://data.europa.eu/s66#PublicBody": {
+          "sidebar": "hide"
+        },
+        "http://www.openlinksw.com/schemas/virtrdf#QuadMapColumn": {
+          "sidebar": "hide"
+        },
+        "http://www.openlinksw.com/schemas/virtrdf#QuadMapValue": {
+          "sidebar": "hide"
+        },
+        "http://www.openlinksw.com/schemas/virtrdf#array-of-QuadMapColumn": {
+          "sidebar": "hide"
+        },
+        "http://www.w3.org/2002/07/owl#AnnotationProperty": {
+          "group": "Ontology"
+        },
+        "http://www.w3.org/2002/07/owl#Class": {
+          "group": "Ontology"
+        },
+        "http://www.w3.org/2002/07/owl#DatatypeProperty": {
+          "group": "Ontology"
+        },
+        "http://www.w3.org/2002/07/owl#ObjectProperty": {
+          "group": "Ontology"
+        },
+        "http://www.w3.org/2002/07/owl#Restriction": {
+          "group": "Ontology"
         }
       },
       "typeInventory": [
