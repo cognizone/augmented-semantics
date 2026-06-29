@@ -117,6 +117,18 @@
         },
         "http://www.w3.org/2002/07/owl#Restriction": {
           "group": "Ontology"
+        },
+        "http://publications.europa.eu/ontology/euvoc#XlNotation": {
+          "render": "embed"
+        },
+        "http://www.w3.org/2008/05/skos-xl#Label": {
+          "render": "embed"
+        },
+        "http://www.w3.org/2006/vcard/ns#Organization": {
+          "group": "Ontology"
+        },
+        "http://data.europa.eu/s66#AdministrativeArea": {
+          "render": "embed"
         }
       },
       "typeInventory": [
