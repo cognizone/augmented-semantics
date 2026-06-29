@@ -10,7 +10,7 @@
  */
 import { ref, computed, watch, onMounted, onUnmounted, type Ref } from 'vue'
 import { useEndpointStore, useBrowseStore, useTypeConfigStore } from '../stores'
-import { executeSparql, resolveUris, logger, eventBus, buildTypeInventoryQuery, buildCompositionQuery, buildSubclassQuery, resolveGraphStrategy } from '../services'
+import { executeSparql, resolveUris, logger, eventBus, buildTypeInventoryQuery, buildCompositionQuery, buildSubclassQuery, buildPathCountQuery, resolveGraphStrategy } from '../services'
 
 export interface RdfType {
   uri: string
@@ -33,6 +33,9 @@ export function useRdfTypes() {
   const composition: Ref<Map<string, { uri: string; count: number }[]>> = ref(new Map())
   // Subclass hierarchy among listed types: superclass → its more-specific kinds.
   const subclasses: Ref<Map<string, string[]>> = ref(new Map())
+  // On-demand path-scoped counts for nested embeds, keyed by chain.join('>').
+  const pathCounts: Ref<Map<string, number>> = ref(new Map())
+  const pathInflight = new Set<string>()
   let requestId = 0
 
   // Types configured to render inline as values (per-endpoint config).
@@ -68,9 +71,35 @@ export function useRdfTypes() {
         map.set(c, arr)
       }
       composition.value = map
+      pathCounts.value = new Map() // tree changed → stale path counts
       logger.info('useRdfTypes', 'Loaded embed composition map', { parents: map.size })
     } catch (e: unknown) {
       logger.warn('useRdfTypes', 'Composition discovery failed', { error: e })
+    }
+  }
+
+  // Fetch (once) the path-scoped count for a nested-embed branch. `chain` is
+  // [rootClass, …embedTypes]. Result lands in pathCounts under chain.join('>').
+  async function requestPathCount(chain: string[]): Promise<void> {
+    const key = chain.join('>')
+    if (pathCounts.value.has(key) || pathInflight.has(key)) return
+    const endpoint = endpointStore.current
+    if (!endpoint) return
+    const query = buildPathCountQuery(chain, resolveGraphStrategy(browseStore.graph))
+    if (!query) return
+    pathInflight.add(key)
+    const endpointId = endpoint.id
+    try {
+      const res = await executeSparql(endpoint, query, { retries: 1 })
+      if (endpointStore.current?.id !== endpointId) return
+      const n = parseInt(res.results.bindings[0]?.n?.value ?? '0', 10)
+      const next = new Map(pathCounts.value)
+      next.set(key, n)
+      pathCounts.value = next
+    } catch (e: unknown) {
+      logger.warn('useRdfTypes', 'Path count failed', { chain, error: e })
+    } finally {
+      pathInflight.delete(key)
     }
   }
 
@@ -182,5 +211,5 @@ export function useRdfTypes() {
   })
   onUnmounted(() => sub.unsubscribe())
 
-  return { types, loading, error, resolved, composition, subclasses, loadTypes }
+  return { types, loading, error, resolved, composition, subclasses, pathCounts, requestPathCount, loadTypes }
 }

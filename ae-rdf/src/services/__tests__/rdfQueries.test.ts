@@ -17,6 +17,7 @@ import {
   buildEmbeddedTriplesQuery,
   buildCompositionQuery,
   buildSubclassQuery,
+  buildPathCountQuery,
 } from '../rdfQueries'
 
 const RES = 'http://data.europa.eu/s66#endDate'
@@ -225,5 +226,28 @@ describe('buildSubclassQuery', () => {
     const q = buildSubclassQuery(['http://e.org/x> } DROP', TYPE], BOTH)
     expect(q).toContain(`<${TYPE}>`)
     expect(q).not.toContain('DROP')
+  })
+})
+
+describe('buildPathCountQuery', () => {
+  const C = 'http://e.org/PublicBody'
+  const E1 = 'http://e.org/Site'
+  const E2 = 'http://e.org/PostalAddress'
+  it('chains class → embeds and counts the leaf; plain on default', () => {
+    const q = buildPathCountQuery([C, E1, E2], DEFAULT)
+    expect(q).toContain('SELECT (COUNT(DISTINCT ?x2) AS ?n)')
+    expect(q).toContain(`?x0 a <${C}>`)
+    expect(q).toContain(`?x0 ?p1 ?x1`)
+    expect(q).toContain(`?x1 a <${E1}>`)
+    expect(q).toContain(`?x1 ?p2 ?x2`)
+    expect(q).toContain(`?x2 a <${E2}>`)
+    expect(q).not.toContain('GRAPH')
+  })
+  it('merged (never default) wraps each statement in its own GRAPH', () => {
+    expect(buildPathCountQuery([C, E1], NAMED)).toContain(`GRAPH ?g0 { ?x0 a <${C}> }`)
+  })
+  it('returns empty for too-short chains or unsafe IRIs', () => {
+    expect(buildPathCountQuery([C], DEFAULT)).toBe('')
+    expect(buildPathCountQuery([C, 'http://e.org/x> } DROP'], DEFAULT)).toBe('')
   })
 })

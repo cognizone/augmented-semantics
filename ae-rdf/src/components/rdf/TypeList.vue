@@ -22,7 +22,7 @@ const router = useRouter()
 const browseStore = useBrowseStore()
 const settings = useSettingsStore()
 const typeConfig = useTypeConfigStore()
-const { types, loading, error, resolved, composition, subclasses } = useRdfTypes()
+const { types, loading, error, resolved, composition, subclasses, pathCounts, requestPathCount } = useRdfTypes()
 const showLoading = useDelayedLoading(loading)
 
 const selected = computed(() => browseStore.currentType)
@@ -66,14 +66,17 @@ const childrenOf = (parentUri: string): { uri: string; count: number }[] =>
 
 // Walk the composition tree depth-first so embeds-within-embeds nest too
 // (Organisation → Site → PostalAddress). Each row's count is relative to its
-// immediate parent. `seen` guards cycles and repeats.
-function embedRows(parentUri: string, depth = 1, seen = new Set<string>([parentUri])): { uri: string; depth: number; count: number }[] {
-  const rows: { uri: string; depth: number; count: number }[] = []
+// immediate parent; `path` is the embed chain to this row (for path-scoped
+// counts). `seen` guards cycles and repeats.
+interface EmbedRow { uri: string; depth: number; count: number; path: string[] }
+function embedRows(parentUri: string, depth = 1, seen = new Set<string>([parentUri]), trail: string[] = []): EmbedRow[] {
+  const rows: EmbedRow[] = []
   for (const c of childrenOf(parentUri)) {
     if (seen.has(c.uri)) continue
     seen.add(c.uri)
-    rows.push({ uri: c.uri, depth, count: c.count })
-    rows.push(...embedRows(c.uri, depth + 1, seen))
+    const path = [...trail, c.uri]
+    rows.push({ uri: c.uri, depth, count: c.count, path })
+    rows.push(...embedRows(c.uri, depth + 1, seen, path))
   }
   return rows
 }
@@ -140,7 +143,7 @@ const hasKids = (uri: string) => subChildren(uri).length > 0 || childrenOf(uri).
 // (a deeper embed's count is the global per-parent-type total), so we hide it
 // rather than show a misleading number. Path-scoped deep counts would cost a
 // chained COUNT query per path on every load — not worth it eagerly.
-interface Row { uri: string; depth: number; kind: 'class' | 'embed' | 'group'; count: number; group?: string; scoped?: boolean }
+interface Row { uri: string; depth: number; kind: 'class' | 'embed' | 'group'; count: number; group?: string; scoped?: boolean; chain?: string[] }
 
 // One flat, ordered render list: pinned, then ungrouped roots, then a
 // collapsible header per named group with its roots' subtrees. Each class is
@@ -163,8 +166,9 @@ const rows = computed<Row[]>(() => {
     }
     for (const e of embedRows(uri)) {
       // Only a direct embed child (e.depth === 1) has a count scoped to this
-      // class; deeper ones carry the global per-parent-type total → unscoped.
-      out.push({ uri: e.uri, depth: depth + e.depth, kind: 'embed', count: e.count, scoped: e.depth === 1 })
+      // class; deeper ones carry the global per-parent-type total → unscoped,
+      // resolved on demand via the [class, …embed chain].
+      out.push({ uri: e.uri, depth: depth + e.depth, kind: 'embed', count: e.count, scoped: e.depth === 1, chain: [uri, ...e.path] })
       emitted.add(e.uri)
     }
   }
@@ -184,6 +188,14 @@ const rows = computed<Row[]>(() => {
 })
 
 const hiddenCount = computed(() => types.value.filter(t => isHidden(t.uri) && !embedSet.value.has(t.uri)).length)
+
+// Nested-embed counts aren't path-scoped up front; fetch on hover, show once in.
+const pathKey = (row: Row) => (row.chain ?? []).join('>')
+function onEmbedEnter(row: Row) {
+  if (row.kind === 'embed' && row.scoped === false && row.chain) requestPathCount(row.chain)
+}
+const embedCount = (row: Row): number | null =>
+  row.scoped !== false ? row.count : (pathCounts.value.get(pathKey(row)) ?? null)
 
 const menuItems = computed(() => {
   const uri = menuType.value
@@ -308,13 +320,13 @@ function selectType(uri: string) {
           </button>
 
           <!-- Embed: a value object shown inline elsewhere — muted, not navigable.
-               Count shown only when scoped to this row's parent (direct child). -->
-          <div v-else class="type-item is-static" :style="{ paddingLeft: indent(row.depth) }" :title="row.uri">
+               Direct child → class-scoped count; nested → path count on hover. -->
+          <div v-else class="type-item is-static" :style="{ paddingLeft: indent(row.depth) }" :title="row.uri" @mouseenter="onEmbedEnter(row)">
             <span class="type-name">{{ typeName(row.uri) }}</span>
             <span class="type-ind">
               <span class="material-symbols-outlined ind" title="Embedded inline as a value">data_object</span>
             </span>
-            <span v-if="row.scoped !== false" class="type-count">{{ formatCount(row.count) }}</span>
+            <span v-if="embedCount(row) !== null" class="type-count">{{ formatCount(embedCount(row)!) }}</span>
           </div>
 
           <button v-if="settings.editMode && row.kind !== 'group'" class="type-gear" aria-label="Configure type" @click.stop="openMenu($event, row.uri)">

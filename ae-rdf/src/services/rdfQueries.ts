@@ -151,6 +151,28 @@ export function buildCompositionQuery(embedTypeUris: string[], s: GraphStrategy)
   return `SELECT ?c ?e (COUNT(DISTINCT ?o) AS ?n) WHERE { VALUES ?e { ${values} } ${body} FILTER(?c != ?e) } GROUP BY ?c ?e`
 }
 
+/**
+ * Path-scoped count for one branch of the embed tree. `chain` is [rootClass,
+ * embedType1, …, embedTypeN]; returns the number of distinct leaf instances
+ * reachable along that exact chain (e.g. PostalAddresses belonging to the Sites
+ * of PublicBodies). Computed on demand (one chained join), not eagerly — too
+ * costly to run for every nested embed on load.
+ *
+ * Returns '' if the chain is too short (<2) or any IRI is unsafe.
+ */
+export function buildPathCountQuery(chain: string[], s: GraphStrategy): string {
+  if (chain.length < 2 || chain.some(u => !isNavigableIri(u))) return ''
+  const hops = chain.length - 1
+  let gi = 0
+  const stmt = (pat: string) => (s.useDefault ? pat : `GRAPH ?g${gi++} { ${pat} }`)
+  const lines = [stmt(`?x0 a <${chain[0]}>`)]
+  for (let i = 1; i <= hops; i++) {
+    lines.push(stmt(`?x${i - 1} ?p${i} ?x${i}`))
+    lines.push(stmt(`?x${i} a <${chain[i]}>`))
+  }
+  return `SELECT (COUNT(DISTINCT ?x${hops}) AS ?n) WHERE { ${lines.join(' ')} }`
+}
+
 const SUBCLASS_OF = 'http://www.w3.org/2000/01/rdf-schema#subClassOf'
 
 /**
