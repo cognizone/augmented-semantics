@@ -15,7 +15,7 @@ import Dialog from 'primevue/dialog'
 import Checkbox from 'primevue/checkbox'
 import Select from 'primevue/select'
 import Menu from 'primevue/menu'
-import { useUIStore, useSettingsStore, useEndpointStore, useTypeConfigStore, useBrowseStore } from './stores'
+import { useUIStore, useSettingsStore, useEndpointStore } from './stores'
 import { useConfig } from './services'
 import { buildAppConfig, downloadJson } from './utils/configExport'
 import { getKnownPrefixes, getDisplayPrefixes } from './services'
@@ -25,15 +25,11 @@ import ErrorBoundary from './components/common/ErrorBoundary.vue'
 const uiStore = useUIStore()
 const settingsStore = useSettingsStore()
 const endpointStore = useEndpointStore()
-const typeConfigStore = useTypeConfigStore()
-const browseStore = useBrowseStore()
 const config = useConfig()
 
 function exportConfig() {
   const appConfig = buildAppConfig({
-    endpoints: endpointStore.endpoints,
-    types: typeConfigStore.config,
-    typeInventory: browseStore.typeInventory,
+    endpoints: endpointStore.endpoints, // each carries its own graph / types / typeInventory
     prefixes: getKnownPrefixes(),
     appName: config.value.config?.appName,
     logoUrl: config.value.config?.logoUrl,

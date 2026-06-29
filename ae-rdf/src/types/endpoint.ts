@@ -11,6 +11,8 @@ export interface SPARQLEndpoint {
   auth?: EndpointAuth
   analysis?: EndpointAnalysis
   graph?: EndpointGraph
+  types?: Record<string, TypeConfig>           // per-type display config, keyed by type IRI
+  typeInventory?: TypeCount[]                   // cached type inventory for instant sidebar
   selectedGraphs?: string[]
   languagePriorities?: string[]  // User-ordered language codes
   lastTestStatus?: 'success' | 'error' | 'testing'
@@ -19,6 +21,29 @@ export interface SPARQLEndpoint {
   createdAt: string
   lastAccessedAt?: string
   accessCount: number
+}
+
+/** How a resource of a given type renders when it is the OBJECT of a triple. */
+export type TypeRender = 'link' | 'embed' | 'label'
+
+/** What the Types sidebar does with a type. */
+export type TypeSidebar = 'show' | 'hide' | 'pin'
+
+/**
+ * Per-type configuration (authored live, exported per-endpoint to app.json).
+ * `link` (default): clickable navigation chip.
+ * `embed`: value object — inline its properties (MonetaryAmount, coordinates).
+ * `label`: show identity only, no navigation.
+ */
+export interface TypeConfig {
+  render?: TypeRender
+  sidebar?: TypeSidebar
+}
+
+/** A type IRI with its distinct-instance count (the cached inventory entry). */
+export interface TypeCount {
+  uri: string
+  count: number
 }
 
 /**

@@ -5,19 +5,18 @@
  *
  * @see /spec/ae-rdf/rdf-overview.md (Per-type config)
  */
-import type { AppConfig, ConfigEndpoint, SPARQLEndpoint, TypeConfig } from '../types'
+import type { AppConfig, ConfigEndpoint, SPARQLEndpoint } from '../types'
 
 export interface ExportInput {
   endpoints: SPARQLEndpoint[]
-  types: Record<string, TypeConfig>
-  typeInventory?: { uri: string; count: number }[]
+  /** Global prefix → namespace map (prefixes are shared, not per-endpoint). */
   prefixes?: Record<string, string>
   appName?: string
   logoUrl?: string
   documentationUrl?: string
 }
 
-/** Assemble an AppConfig, omitting empty sections. */
+/** Assemble an AppConfig from per-endpoint config, omitting empty sections. */
 export function buildAppConfig(input: ExportInput): AppConfig {
   const config: AppConfig = {}
   if (input.appName) config.appName = input.appName
@@ -31,12 +30,12 @@ export function buildAppConfig(input: ExportInput): AppConfig {
       // static file — the deployer supplies them at runtime.
       if (e.auth && e.auth.type !== 'none') ce.auth = { type: e.auth.type }
       if (e.graph && (e.graph.quads !== undefined || e.graph.defaultView !== undefined)) ce.graph = e.graph
+      if (e.types && Object.keys(e.types).length) ce.types = e.types
+      if (e.typeInventory?.length) ce.typeInventory = e.typeInventory
       return ce
     })
   }
 
-  if (Object.keys(input.types).length) config.types = input.types
-  if (input.typeInventory?.length) config.typeInventory = input.typeInventory
   if (input.prefixes && Object.keys(input.prefixes).length) config.prefixes = input.prefixes
   return config
 }

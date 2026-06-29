@@ -164,10 +164,12 @@ Types differ in how they should display: first-class entities (`Project`,
 coordinates) are meaningless to navigate to — you want them inline. So each type
 carries a config, authored live and (eventually) exported to `app.json`.
 
-- **`TypeConfig`** (`types/config.ts`): `sidebar: show | hide | pin` and
-  `render: link | embed | label`. Stored in `stores/typeConfig.ts` (writable,
-  `ae-rdf-type-config`), seeded from deployed `app.json.types` then overlaid with
-  local edits.
+- **`TypeConfig`** (`types/endpoint.ts`): `sidebar: show | hide | pin` and
+  `render: link | embed | label`. Stored **per-endpoint** on
+  `SPARQLEndpoint.types` (config travels with the endpoint that owns it, not the
+  app — easier to maintain across deployments). `stores/typeConfig.ts` is a thin
+  get/set facade over `endpointStore.current.types`; edits persist with the
+  endpoint (`ae-endpoints`).
 - **Authoring:** a per-type **gear** in `TypeList` sets both — gated behind
   **Config authoring mode** (`settings.editMode`, off by default, hidden in
   config mode), so end users get a clean read-only view. `hide`/`pin` are
@@ -190,13 +192,14 @@ carries a config, authored live and (eventually) exported to `app.json`.
   read-only **Prefixes** legend in the header lists the active mappings
   (`getDisplayPrefixes`).
 - **Lifecycle:** author live → **Export app.json** (Settings → Deployment;
-  `utils/configExport.ts:buildAppConfig` serializes endpoints (+ their `graph`
-  axes), `types`, a cached **`typeInventory`** (uri+count), and **`prefixes`**,
-  then `downloadJson`) → deploy as `config/app.json` → config mode (locked) for end
+  `utils/configExport.ts:buildAppConfig` serializes each endpoint with its own
+  `graph` axes, `types`, and cached **`typeInventory`** (uri+count), plus an
+  app-level **`prefixes`** map (prefixes are shared, not per-endpoint), then
+  `downloadJson`) → deploy as `config/app.json` → config mode (locked) for end
   users. Credentials are never written into the export (auth `type` only). In
-  config mode the cached `typeInventory` seeds the Types sidebar for the primary
-  endpoint **with no discovery query** (`useRdfTypes` paints instantly; prefixes
-  resolve in the background). Re-export to refresh the snapshot.
+  config mode each endpoint's cached `typeInventory` seeds the Types sidebar
+  **with no discovery query** (`useRdfTypes` paints instantly; prefixes resolve
+  in the background). Re-export to refresh the snapshot.
 
 ## UI layout
 

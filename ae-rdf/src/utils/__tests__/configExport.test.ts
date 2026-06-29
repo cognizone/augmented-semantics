@@ -8,61 +8,60 @@ function ep(overrides: Partial<SPARQLEndpoint> = {}): SPARQLEndpoint {
 
 describe('buildAppConfig', () => {
   it('omits empty sections', () => {
-    expect(buildAppConfig({ endpoints: [], types: {} })).toEqual({})
+    expect(buildAppConfig({ endpoints: [] })).toEqual({})
   })
 
-  it('maps endpoints to name+url and includes types', () => {
+  it('maps endpoints to name+url with per-endpoint types and inventory', () => {
     const config = buildAppConfig({
-      endpoints: [ep({ name: 'CORDIS', url: 'https://cordis/sparql' })],
-      types: { 'http://x#Amount': { render: 'embed' } },
+      endpoints: [
+        ep({
+          name: 'CORDIS',
+          url: 'https://cordis/sparql',
+          types: { 'http://x#Amount': { render: 'embed' } },
+          typeInventory: [{ uri: 'http://x#Project', count: 42 }],
+        }),
+      ],
     })
-    expect(config.endpoints).toEqual([{ name: 'CORDIS', url: 'https://cordis/sparql' }])
-    expect(config.types).toEqual({ 'http://x#Amount': { render: 'embed' } })
+    expect(config.endpoints![0]).toEqual({
+      name: 'CORDIS',
+      url: 'https://cordis/sparql',
+      types: { 'http://x#Amount': { render: 'embed' } },
+      typeInventory: [{ uri: 'http://x#Project', count: 42 }],
+    })
+    // no app-level types/typeInventory anymore
+    expect((config as Record<string, unknown>).types).toBeUndefined()
+    expect((config as Record<string, unknown>).typeInventory).toBeUndefined()
+  })
+
+  it('omits empty per-endpoint types / inventory', () => {
+    const config = buildAppConfig({ endpoints: [ep({ types: {}, typeInventory: [] })] })
+    expect(config.endpoints![0].types).toBeUndefined()
+    expect(config.endpoints![0].typeInventory).toBeUndefined()
   })
 
   it('exports auth type but NEVER credentials', () => {
     const config = buildAppConfig({
       endpoints: [ep({ auth: { type: 'basic', credentials: { username: 'u', password: 'p' } } })],
-      types: {},
     })
     expect(config.endpoints![0].auth).toEqual({ type: 'basic' })
     expect(JSON.stringify(config)).not.toContain('password')
     expect(JSON.stringify(config)).not.toContain('"u"')
   })
 
-  it('drops auth entirely when type is none', () => {
-    const config = buildAppConfig({ endpoints: [ep({ auth: { type: 'none' } })], types: {} })
-    expect(config.endpoints![0].auth).toBeUndefined()
+  it('exports the endpoint graph config, omitting when empty', () => {
+    expect(buildAppConfig({ endpoints: [ep({ graph: { quads: true, defaultView: 'merged' } })] }).endpoints![0].graph)
+      .toEqual({ quads: true, defaultView: 'merged' })
+    expect(buildAppConfig({ endpoints: [ep({ graph: {} })] }).endpoints![0].graph).toBeUndefined()
   })
 
-  it('exports the endpoint graph config when set', () => {
-    const config = buildAppConfig({
-      endpoints: [ep({ graph: { quads: true, defaultView: 'merged' } })],
-      types: {},
-    })
-    expect(config.endpoints![0].graph).toEqual({ quads: true, defaultView: 'merged' })
-  })
-
-  it('omits an empty graph config', () => {
-    const config = buildAppConfig({ endpoints: [ep({ graph: {} })], types: {} })
-    expect(config.endpoints![0].graph).toBeUndefined()
-  })
-
-  it('caches the type inventory when present, omits when empty', () => {
-    const inv = [{ uri: 'http://x#Project', count: 42 }]
-    expect(buildAppConfig({ endpoints: [], types: {}, typeInventory: inv }).typeInventory).toEqual(inv)
-    expect(buildAppConfig({ endpoints: [], types: {}, typeInventory: [] }).typeInventory).toBeUndefined()
-    expect(buildAppConfig({ endpoints: [], types: {} }).typeInventory).toBeUndefined()
-  })
-
-  it('includes prefixes when present, omits when empty', () => {
+  it('includes global prefixes when present, omits when empty', () => {
     const p = { eurio: 'http://data.europa.eu/s66#' }
-    expect(buildAppConfig({ endpoints: [], types: {}, prefixes: p }).prefixes).toEqual(p)
-    expect(buildAppConfig({ endpoints: [], types: {}, prefixes: {} }).prefixes).toBeUndefined()
+    expect(buildAppConfig({ endpoints: [], prefixes: p }).prefixes).toEqual(p)
+    expect(buildAppConfig({ endpoints: [], prefixes: {} }).prefixes).toBeUndefined()
   })
 
   it('includes app-level fields when present', () => {
-    const config = buildAppConfig({ endpoints: [], types: {}, appName: 'My RDF', documentationUrl: 'https://d' })
+    const config = buildAppConfig({ endpoints: [], appName: 'My RDF', documentationUrl: 'https://d' })
     expect(config.appName).toBe('My RDF')
     expect(config.documentationUrl).toBe('https://d')
   })

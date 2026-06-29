@@ -10,7 +10,7 @@
  */
 import { ref, watch, onMounted, onUnmounted, type Ref } from 'vue'
 import { useEndpointStore, useBrowseStore } from '../stores'
-import { executeSparql, resolveUris, logger, eventBus, buildTypeInventoryQuery, resolveGraphStrategy, getConfig } from '../services'
+import { executeSparql, resolveUris, logger, eventBus, buildTypeInventoryQuery, resolveGraphStrategy } from '../services'
 
 export interface RdfType {
   uri: string
@@ -29,33 +29,19 @@ export function useRdfTypes() {
   const resolved: Ref<ResolvedMap> = ref(new Map())
   let requestId = 0
 
-  // In config mode the deployed app.json caches the inventory for the primary
-  // endpoint — use it for an instant first paint (no discovery query).
-  function cachedInventory(endpointId: string): { uri: string; count: number }[] | null {
-    const cfg = getConfig()
-    if (
-      endpointStore.configMode &&
-      cfg?.typeInventory?.length &&
-      endpointId === endpointStore.endpoints[0]?.id
-    ) {
-      return cfg.typeInventory
-    }
-    return null
-  }
-
   async function loadTypes(): Promise<void> {
     const endpoint = endpointStore.current
     if (!endpoint) {
       types.value = []
-      browseStore.setTypeInventory([])
       return
     }
 
-    const cached = cachedInventory(endpoint.id)
-    if (cached) {
+    // Per-endpoint cached inventory (from config or a previous load) → instant
+    // first paint, no discovery query.
+    const cached = endpoint.typeInventory
+    if (cached?.length) {
       const list = cached.map(t => ({ uri: t.uri, count: t.count })).filter(t => t.uri)
       types.value = list
-      browseStore.setTypeInventory(list)
       error.value = null
       loading.value = false
       // Resolve prefixes in the background — local names paint instantly, qnames fill in.
@@ -63,7 +49,7 @@ export function useRdfTypes() {
       void resolveUris(list.map(t => t.uri)).then(m => {
         if (endpointStore.current?.id === epId) resolved.value = m
       })
-      logger.info('useRdfTypes', 'Seeded type inventory from config (no query)', { count: list.length })
+      logger.info('useRdfTypes', 'Seeded type inventory from endpoint cache (no query)', { count: list.length })
       return
     }
 
@@ -88,7 +74,8 @@ export function useRdfTypes() {
 
       types.value = list
       resolved.value = resolvedMap
-      browseStore.setTypeInventory(list) // cache for config export
+      // Cache the inventory on the endpoint (persisted + exported per-endpoint).
+      endpointStore.updateEndpoint(endpointId, { typeInventory: list })
       logger.info('useRdfTypes', 'Loaded type inventory', { count: list.length })
     } catch (e: unknown) {
       if (!isCurrent()) return
@@ -96,7 +83,6 @@ export function useRdfTypes() {
       logger.error('useRdfTypes', 'Failed to load type inventory', { error: e })
       error.value = `Failed to load types: ${msg}`
       types.value = []
-      browseStore.setTypeInventory([])
     } finally {
       if (isCurrent()) loading.value = false
     }

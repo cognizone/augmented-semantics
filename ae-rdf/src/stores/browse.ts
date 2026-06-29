@@ -19,10 +19,6 @@ export const useBrowseStore = defineStore('browse', () => {
   // builders treat it as the safe superset (see resolveGraphStrategy).
   const graph = ref<EndpointGraph>({})
 
-  // Last-loaded type inventory (uri + count), so the config exporter can cache
-  // it into app.json for a fast first paint on deploy.
-  const typeInventory = ref<{ uri: string; count: number }[]>([])
-
   function setResource(uri: string | null) {
     currentResource.value = uri
   }
@@ -35,9 +31,5 @@ export const useBrowseStore = defineStore('browse', () => {
     graph.value = g
   }
 
-  function setTypeInventory(list: { uri: string; count: number }[]) {
-    typeInventory.value = list
-  }
-
-  return { currentResource, currentType, graph, typeInventory, setResource, setType, setGraph, setTypeInventory }
+  return { currentResource, currentType, graph, setResource, setType, setGraph }
 })

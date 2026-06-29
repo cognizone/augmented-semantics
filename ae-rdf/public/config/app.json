@@ -2,7 +2,294 @@
   "endpoints": [
     {
       "name": "Cordis Datalab",
-      "url": "https://cordis.europa.eu/datalab/sparql"
+      "url": "https://cordis.europa.eu/datalab/sparql",
+      "types": {
+        "http://data.europa.eu/s66#Project": {
+          "sidebar": "pin"
+        },
+        "http://data.europa.eu/s66#MonetaryAmount": {
+          "render": "embed"
+        },
+        "http://data.europa.eu/s66#GrantPayment": {
+          "render": "link"
+        },
+        "http://data.europa.eu/s66#PostalAddress": {
+          "render": "embed"
+        },
+        "http://data.europa.eu/s66#Coordinates": {
+          "render": "embed"
+        },
+        "http://data.europa.eu/s66#Acronym": {
+          "render": "embed"
+        },
+        "http://www.openlinksw.com/schemas/virtrdf#array-of-string": {
+          "sidebar": "hide"
+        },
+        "http://www.openlinksw.com/schemas/virtrdf#QuadMap": {
+          "sidebar": "hide"
+        },
+        "http://www.openlinksw.com/schemas/virtrdf#array-of-QuadMapATable": {
+          "sidebar": "hide"
+        },
+        "http://www.openlinksw.com/schemas/virtrdf#array-of-QuadMap": {
+          "sidebar": "hide"
+        },
+        "http://www.openlinksw.com/schemas/virtrdf#QuadMapFormat": {
+          "sidebar": "hide"
+        },
+        "http://www.openlinksw.com/schemas/virtrdf#array-of-QuadMapFormat": {
+          "sidebar": "hide"
+        },
+        "http://www.openlinksw.com/schemas/virtrdf#QuadStorage": {
+          "sidebar": "hide"
+        }
+      },
+      "typeInventory": [
+        {
+          "uri": "http://data.europa.eu/s66#Result",
+          "count": 696156
+        },
+        {
+          "uri": "http://data.europa.eu/s66#MonetaryAmount",
+          "count": 536703
+        },
+        {
+          "uri": "http://data.europa.eu/s66#GrantPayment",
+          "count": 422007
+        },
+        {
+          "uri": "http://data.europa.eu/s66#ProjectPublication",
+          "count": 419740
+        },
+        {
+          "uri": "http://data.europa.eu/s66#OrganisationRole",
+          "count": 398584
+        },
+        {
+          "uri": "http://data.europa.eu/s66#JournalPaper",
+          "count": 283136
+        },
+        {
+          "uri": "http://data.europa.eu/s66#ProjectDeliverable",
+          "count": 211188
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#Concept",
+          "count": 207637
+        },
+        {
+          "uri": "http://data.europa.eu/s66#Acronym",
+          "count": 132239
+        },
+        {
+          "uri": "http://data.europa.eu/s66#ProceedingsPaper",
+          "count": 92480
+        },
+        {
+          "uri": "http://data.europa.eu/s66#Grant",
+          "count": 80222
+        },
+        {
+          "uri": "http://data.europa.eu/s66#Project",
+          "count": 80208
+        },
+        {
+          "uri": "http://data.europa.eu/s66#PostalAddress",
+          "count": 72769
+        },
+        {
+          "uri": "http://data.europa.eu/s66#Site",
+          "count": 72644
+        },
+        {
+          "uri": "http://data.europa.eu/s66#Organisation",
+          "count": 72534
+        },
+        {
+          "uri": "http://data.europa.eu/s66#ProjectReportSummary",
+          "count": 59393
+        },
+        {
+          "uri": "http://data.europa.eu/s66#Coordinates",
+          "count": 54540
+        },
+        {
+          "uri": "http://data.europa.eu/s66#ForProfitOrganisation",
+          "count": 48244
+        },
+        {
+          "uri": "http://data.europa.eu/s66#SME",
+          "count": 22499
+        },
+        {
+          "uri": "http://data.europa.eu/s66#FundingScheme",
+          "count": 13278
+        },
+        {
+          "uri": "http://www.w3.org/2008/05/skos-xl#Label",
+          "count": 9500
+        },
+        {
+          "uri": "http://data.europa.eu/s66#ResearchOrganisation",
+          "count": 5785
+        },
+        {
+          "uri": "http://data.europa.eu/s66#ThesisDissertation",
+          "count": 5701
+        },
+        {
+          "uri": "http://data.europa.eu/s66#PublicBody",
+          "count": 4803
+        },
+        {
+          "uri": "http://data.europa.eu/s66#HigherOrSecondaryEducation",
+          "count": 3868
+        },
+        {
+          "uri": "http://data.europa.eu/s66#Book",
+          "count": 3728
+        },
+        {
+          "uri": "http://data.europa.eu/s66#AdministrativeArea",
+          "count": 2070
+        },
+        {
+          "uri": "http://publications.europa.eu/ontology/euvoc#XlNotation",
+          "count": 1078
+        },
+        {
+          "uri": "http://data.europa.eu/s66#Country",
+          "count": 227
+        },
+        {
+          "uri": "http://data.europa.eu/s66#BookChapter",
+          "count": 161
+        },
+        {
+          "uri": "http://www.openlinksw.com/schemas/virtrdf#QuadMapFormat",
+          "count": 130
+        },
+        {
+          "uri": "http://www.openlinksw.com/schemas/virtrdf#array-of-QuadMapFormat",
+          "count": 98
+        },
+        {
+          "uri": "http://www.w3.org/2002/07/owl#Restriction",
+          "count": 75
+        },
+        {
+          "uri": "http://www.w3.org/2002/07/owl#ObjectProperty",
+          "count": 56
+        },
+        {
+          "uri": "http://www.w3.org/2002/07/owl#DatatypeProperty",
+          "count": 47
+        },
+        {
+          "uri": "http://www.w3.org/2002/07/owl#Class",
+          "count": 36
+        },
+        {
+          "uri": "http://www.w3.org/2002/07/owl#AnnotationProperty",
+          "count": 17
+        },
+        {
+          "uri": "http://www.openlinksw.com/schemas/virtrdf#array-of-QuadMapColumn",
+          "count": 8
+        },
+        {
+          "uri": "http://www.openlinksw.com/schemas/virtrdf#QuadMapColumn",
+          "count": 8
+        },
+        {
+          "uri": "http://www.openlinksw.com/schemas/virtrdf#QuadMapValue",
+          "count": 8
+        },
+        {
+          "uri": "http://www.w3.org/2002/07/owl#FunctionalProperty",
+          "count": 6
+        },
+        {
+          "uri": "http://www.openlinksw.com/schemas/virtrdf#QuadMapFText",
+          "count": 4
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#Datatype",
+          "count": 3
+        },
+        {
+          "uri": "http://www.openlinksw.com/schemas/virtrdf#QuadStorage",
+          "count": 3
+        },
+        {
+          "uri": "http://www.w3.org/2002/07/owl#AllDisjointClasses",
+          "count": 3
+        },
+        {
+          "uri": "http://www.openlinksw.com/schemas/virtrdf#array-of-QuadMap",
+          "count": 3
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#ConceptScheme",
+          "count": 2
+        },
+        {
+          "uri": "http://www.w3.org/2002/07/owl#SymmetricProperty",
+          "count": 2
+        },
+        {
+          "uri": "http://xmlns.com/foaf/0.1/Agent",
+          "count": 2
+        },
+        {
+          "uri": "http://www.openlinksw.com/schemas/virtrdf#QuadMapATable",
+          "count": 2
+        },
+        {
+          "uri": "http://www.openlinksw.com/schemas/virtrdf#QuadMap",
+          "count": 2
+        },
+        {
+          "uri": "http://www.openlinksw.com/schemas/virtrdf#array-of-QuadMapATable",
+          "count": 2
+        },
+        {
+          "uri": "http://www.openlinksw.com/schemas/virtrdf#array-of-string",
+          "count": 2
+        },
+        {
+          "uri": "http://www.w3.org/2006/vcard/ns#Kind",
+          "count": 1
+        },
+        {
+          "uri": "http://data.europa.eu/s66#FundingAgency",
+          "count": 1
+        },
+        {
+          "uri": "http://www.w3.org/ns/dcat#Dataset",
+          "count": 1
+        },
+        {
+          "uri": "http://www.w3.org/ns/sparql-service-description#Service",
+          "count": 1
+        },
+        {
+          "uri": "http://www.w3.org/ns/adms#Asset",
+          "count": 1
+        },
+        {
+          "uri": "http://www.w3.org/ns/dcat#Distribution",
+          "count": 1
+        },
+        {
+          "uri": "http://www.w3.org/2002/07/owl#Ontology",
+          "count": 1
+        },
+        {
+          "uri": "http://www.w3.org/2006/vcard/ns#Organization",
+          "count": 1
+        }
+      ]
     },
     {
       "name": "AgroPortal",
@@ -63,293 +350,6 @@
     {
       "name": "Getty Vocabularies",
       "url": "https://vocab.getty.edu/sparql"
-    }
-  ],
-  "types": {
-    "http://data.europa.eu/s66#Project": {
-      "sidebar": "pin"
-    },
-    "http://data.europa.eu/s66#MonetaryAmount": {
-      "render": "embed"
-    },
-    "http://data.europa.eu/s66#GrantPayment": {
-      "render": "link"
-    },
-    "http://data.europa.eu/s66#PostalAddress": {
-      "render": "embed"
-    },
-    "http://data.europa.eu/s66#Coordinates": {
-      "render": "embed"
-    },
-    "http://data.europa.eu/s66#Acronym": {
-      "render": "embed"
-    },
-    "http://www.openlinksw.com/schemas/virtrdf#array-of-string": {
-      "sidebar": "hide"
-    },
-    "http://www.openlinksw.com/schemas/virtrdf#QuadMap": {
-      "sidebar": "hide"
-    },
-    "http://www.openlinksw.com/schemas/virtrdf#array-of-QuadMapATable": {
-      "sidebar": "hide"
-    },
-    "http://www.openlinksw.com/schemas/virtrdf#array-of-QuadMap": {
-      "sidebar": "hide"
-    },
-    "http://www.openlinksw.com/schemas/virtrdf#QuadMapFormat": {
-      "sidebar": "hide"
-    },
-    "http://www.openlinksw.com/schemas/virtrdf#array-of-QuadMapFormat": {
-      "sidebar": "hide"
-    },
-    "http://www.openlinksw.com/schemas/virtrdf#QuadStorage": {
-      "sidebar": "hide"
-    }
-  },
-  "typeInventory": [
-    {
-      "uri": "http://data.europa.eu/s66#Result",
-      "count": 696156
-    },
-    {
-      "uri": "http://data.europa.eu/s66#MonetaryAmount",
-      "count": 536703
-    },
-    {
-      "uri": "http://data.europa.eu/s66#GrantPayment",
-      "count": 422007
-    },
-    {
-      "uri": "http://data.europa.eu/s66#ProjectPublication",
-      "count": 419740
-    },
-    {
-      "uri": "http://data.europa.eu/s66#OrganisationRole",
-      "count": 398584
-    },
-    {
-      "uri": "http://data.europa.eu/s66#JournalPaper",
-      "count": 283136
-    },
-    {
-      "uri": "http://data.europa.eu/s66#ProjectDeliverable",
-      "count": 211188
-    },
-    {
-      "uri": "http://www.w3.org/2004/02/skos/core#Concept",
-      "count": 207637
-    },
-    {
-      "uri": "http://data.europa.eu/s66#Acronym",
-      "count": 132239
-    },
-    {
-      "uri": "http://data.europa.eu/s66#ProceedingsPaper",
-      "count": 92480
-    },
-    {
-      "uri": "http://data.europa.eu/s66#Grant",
-      "count": 80222
-    },
-    {
-      "uri": "http://data.europa.eu/s66#Project",
-      "count": 80208
-    },
-    {
-      "uri": "http://data.europa.eu/s66#PostalAddress",
-      "count": 72769
-    },
-    {
-      "uri": "http://data.europa.eu/s66#Site",
-      "count": 72644
-    },
-    {
-      "uri": "http://data.europa.eu/s66#Organisation",
-      "count": 72534
-    },
-    {
-      "uri": "http://data.europa.eu/s66#ProjectReportSummary",
-      "count": 59393
-    },
-    {
-      "uri": "http://data.europa.eu/s66#Coordinates",
-      "count": 54540
-    },
-    {
-      "uri": "http://data.europa.eu/s66#ForProfitOrganisation",
-      "count": 48244
-    },
-    {
-      "uri": "http://data.europa.eu/s66#SME",
-      "count": 22499
-    },
-    {
-      "uri": "http://data.europa.eu/s66#FundingScheme",
-      "count": 13278
-    },
-    {
-      "uri": "http://www.w3.org/2008/05/skos-xl#Label",
-      "count": 9500
-    },
-    {
-      "uri": "http://data.europa.eu/s66#ResearchOrganisation",
-      "count": 5785
-    },
-    {
-      "uri": "http://data.europa.eu/s66#ThesisDissertation",
-      "count": 5701
-    },
-    {
-      "uri": "http://data.europa.eu/s66#PublicBody",
-      "count": 4803
-    },
-    {
-      "uri": "http://data.europa.eu/s66#HigherOrSecondaryEducation",
-      "count": 3868
-    },
-    {
-      "uri": "http://data.europa.eu/s66#Book",
-      "count": 3728
-    },
-    {
-      "uri": "http://data.europa.eu/s66#AdministrativeArea",
-      "count": 2070
-    },
-    {
-      "uri": "http://publications.europa.eu/ontology/euvoc#XlNotation",
-      "count": 1078
-    },
-    {
-      "uri": "http://data.europa.eu/s66#Country",
-      "count": 227
-    },
-    {
-      "uri": "http://data.europa.eu/s66#BookChapter",
-      "count": 161
-    },
-    {
-      "uri": "http://www.openlinksw.com/schemas/virtrdf#QuadMapFormat",
-      "count": 130
-    },
-    {
-      "uri": "http://www.openlinksw.com/schemas/virtrdf#array-of-QuadMapFormat",
-      "count": 98
-    },
-    {
-      "uri": "http://www.w3.org/2002/07/owl#Restriction",
-      "count": 75
-    },
-    {
-      "uri": "http://www.w3.org/2002/07/owl#ObjectProperty",
-      "count": 56
-    },
-    {
-      "uri": "http://www.w3.org/2002/07/owl#DatatypeProperty",
-      "count": 47
-    },
-    {
-      "uri": "http://www.w3.org/2002/07/owl#Class",
-      "count": 36
-    },
-    {
-      "uri": "http://www.w3.org/2002/07/owl#AnnotationProperty",
-      "count": 17
-    },
-    {
-      "uri": "http://www.openlinksw.com/schemas/virtrdf#array-of-QuadMapColumn",
-      "count": 8
-    },
-    {
-      "uri": "http://www.openlinksw.com/schemas/virtrdf#QuadMapColumn",
-      "count": 8
-    },
-    {
-      "uri": "http://www.openlinksw.com/schemas/virtrdf#QuadMapValue",
-      "count": 8
-    },
-    {
-      "uri": "http://www.w3.org/2002/07/owl#FunctionalProperty",
-      "count": 6
-    },
-    {
-      "uri": "http://www.openlinksw.com/schemas/virtrdf#QuadMapFText",
-      "count": 4
-    },
-    {
-      "uri": "http://www.w3.org/2000/01/rdf-schema#Datatype",
-      "count": 3
-    },
-    {
-      "uri": "http://www.openlinksw.com/schemas/virtrdf#QuadStorage",
-      "count": 3
-    },
-    {
-      "uri": "http://www.w3.org/2002/07/owl#AllDisjointClasses",
-      "count": 3
-    },
-    {
-      "uri": "http://www.openlinksw.com/schemas/virtrdf#array-of-QuadMap",
-      "count": 3
-    },
-    {
-      "uri": "http://www.w3.org/2004/02/skos/core#ConceptScheme",
-      "count": 2
-    },
-    {
-      "uri": "http://www.w3.org/2002/07/owl#SymmetricProperty",
-      "count": 2
-    },
-    {
-      "uri": "http://xmlns.com/foaf/0.1/Agent",
-      "count": 2
-    },
-    {
-      "uri": "http://www.openlinksw.com/schemas/virtrdf#QuadMapATable",
-      "count": 2
-    },
-    {
-      "uri": "http://www.openlinksw.com/schemas/virtrdf#QuadMap",
-      "count": 2
-    },
-    {
-      "uri": "http://www.openlinksw.com/schemas/virtrdf#array-of-QuadMapATable",
-      "count": 2
-    },
-    {
-      "uri": "http://www.openlinksw.com/schemas/virtrdf#array-of-string",
-      "count": 2
-    },
-    {
-      "uri": "http://www.w3.org/2006/vcard/ns#Kind",
-      "count": 1
-    },
-    {
-      "uri": "http://data.europa.eu/s66#FundingAgency",
-      "count": 1
-    },
-    {
-      "uri": "http://www.w3.org/ns/dcat#Dataset",
-      "count": 1
-    },
-    {
-      "uri": "http://www.w3.org/ns/sparql-service-description#Service",
-      "count": 1
-    },
-    {
-      "uri": "http://www.w3.org/ns/adms#Asset",
-      "count": 1
-    },
-    {
-      "uri": "http://www.w3.org/ns/dcat#Distribution",
-      "count": 1
-    },
-    {
-      "uri": "http://www.w3.org/2002/07/owl#Ontology",
-      "count": 1
-    },
-    {
-      "uri": "http://www.w3.org/2006/vcard/ns#Organization",
-      "count": 1
     }
   ],
   "prefixes": {

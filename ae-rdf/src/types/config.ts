@@ -6,11 +6,21 @@
  *
  * @see /spec/common/com01-EndpointManager.md
  */
-import type { EndpointAnalysis, EndpointAuth, EndpointGraph, SuggestedEndpointSource } from './endpoint'
+import type {
+  EndpointAnalysis,
+  EndpointAuth,
+  EndpointGraph,
+  TypeConfig,
+  TypeCount,
+  SuggestedEndpointSource,
+} from './endpoint'
+
+// Re-export so existing imports from '../types' keep working.
+export type { TypeConfig, TypeRender, TypeSidebar, TypeCount } from './endpoint'
 
 /**
- * Pre-configured endpoint from external config file.
- * Extends SuggestedEndpointSource with optional auth and analysis.
+ * Pre-configured endpoint from external config file. Carries its own per-endpoint
+ * config (graph, types, typeInventory) — config is per-endpoint, not app-level.
  */
 export interface ConfigEndpoint extends SuggestedEndpointSource {
   /** Authentication configuration for protected endpoints */
@@ -19,25 +29,12 @@ export interface ConfigEndpoint extends SuggestedEndpointSource {
   analysis?: EndpointAnalysis
   /** Graph behaviour axes (quads / defaultView) — drives query construction */
   graph?: EndpointGraph
+  /** Per-type display config, keyed by type IRI */
+  types?: Record<string, TypeConfig>
+  /** Cached type inventory (uri + count) for an instant Types sidebar on deploy */
+  typeInventory?: TypeCount[]
   /** Language priorities (same as SuggestedEndpoint) */
   suggestedLanguagePriorities?: string[]
-}
-
-/** How a resource of a given type renders when it is the OBJECT of a triple. */
-export type TypeRender = 'link' | 'embed' | 'label'
-
-/** What the Types sidebar does with a type. */
-export type TypeSidebar = 'show' | 'hide' | 'pin'
-
-/**
- * Per-type configuration (authored live, exported to app.json).
- * `link` (default): clickable navigation chip.
- * `embed`: value object — inline its properties (MonetaryAmount, coordinates).
- * `label`: show identity only, no navigation.
- */
-export interface TypeConfig {
-  render?: TypeRender
-  sidebar?: TypeSidebar
 }
 
 /**
@@ -53,13 +50,11 @@ export interface AppConfig {
   logoUrl?: string
   /** Link to documentation (replaces default GitHub docs link) */
   documentationUrl?: string
-  /** Pre-configured SPARQL endpoints (when set, disables user endpoint management) */
+  /** Pre-configured SPARQL endpoints (when set, disables user endpoint management).
+   *  Per-endpoint config (graph / types / typeInventory) lives on each entry. */
   endpoints?: ConfigEndpoint[]
-  /** Per-type display config, keyed by type IRI (authored live, see typeConfig store) */
-  types?: Record<string, TypeConfig>
-  /** Cached type inventory (uri + count) for an instant Types sidebar on deploy. */
-  typeInventory?: { uri: string; count: number }[]
-  /** Prefix → namespace map (declared + cached) so qnames render without prefix.cc. */
+  /** Global prefix → namespace map (a prefix is a global IRI-shortening, so it's
+   *  shared across endpoints, not per-endpoint). */
   prefixes?: Record<string, string>
 }
 
