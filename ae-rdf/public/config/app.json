@@ -351,5 +351,8 @@
       "uri": "http://www.w3.org/2006/vcard/ns#Organization",
       "count": 1
     }
-  ]
+  ],
+  "prefixes": {
+    "eurio": "http://data.europa.eu/s66#"
+  }
 }
