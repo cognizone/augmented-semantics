@@ -136,7 +136,11 @@ function toggleGroup(name: string) {
 
 const hasKids = (uri: string) => subChildren(uri).length > 0 || childrenOf(uri).length > 0
 
-interface Row { uri: string; depth: number; kind: 'class' | 'embed' | 'group'; count: number; group?: string }
+// scoped=false → the count exists but isn't relative to this row's ancestry
+// (a deeper embed's count is the global per-parent-type total), so we hide it
+// rather than show a misleading number. Path-scoped deep counts would cost a
+// chained COUNT query per path on every load — not worth it eagerly.
+interface Row { uri: string; depth: number; kind: 'class' | 'embed' | 'group'; count: number; group?: string; scoped?: boolean }
 
 // One flat, ordered render list: pinned, then ungrouped roots, then a
 // collapsible header per named group with its roots' subtrees. Each class is
@@ -158,7 +162,9 @@ const rows = computed<Row[]>(() => {
       visit(sub, depth + 1)
     }
     for (const e of embedRows(uri)) {
-      out.push({ uri: e.uri, depth: depth + e.depth, kind: 'embed', count: e.count })
+      // Only a direct embed child (e.depth === 1) has a count scoped to this
+      // class; deeper ones carry the global per-parent-type total → unscoped.
+      out.push({ uri: e.uri, depth: depth + e.depth, kind: 'embed', count: e.count, scoped: e.depth === 1 })
       emitted.add(e.uri)
     }
   }
@@ -301,13 +307,14 @@ function selectType(uri: string) {
             <span class="type-count">{{ formatCount(row.count) }}</span>
           </button>
 
-          <!-- Embed: a value object shown inline elsewhere — muted, not navigable. -->
+          <!-- Embed: a value object shown inline elsewhere — muted, not navigable.
+               Count shown only when scoped to this row's parent (direct child). -->
           <div v-else class="type-item is-static" :style="{ paddingLeft: indent(row.depth) }" :title="row.uri">
             <span class="type-name">{{ typeName(row.uri) }}</span>
             <span class="type-ind">
               <span class="material-symbols-outlined ind" title="Embedded inline as a value">data_object</span>
             </span>
-            <span class="type-count">{{ formatCount(row.count) }}</span>
+            <span v-if="row.scoped !== false" class="type-count">{{ formatCount(row.count) }}</span>
           </div>
 
           <button v-if="settings.editMode && row.kind !== 'group'" class="type-gear" aria-label="Configure type" @click.stop="openMenu($event, row.uri)">
