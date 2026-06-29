@@ -84,27 +84,62 @@ function embedRows(parentUri: string, depth = 1, seen = new Set<string>([parentU
 const baseTypes = computed(() =>
   (showHidden.value ? types.value : types.value.filter(t => !isHidden(t.uri))).filter(t => !embedSet.value.has(t.uri)),
 )
-// A type's subclasses that are themselves listed & navigable, commonest first.
+// Optional sidebar group a type is assigned to (trimmed; '' = none).
+const groupOf = (uri: string): string => (cfg(uri).group ?? '').trim()
+const isGrouped = (uri: string) => groupOf(uri) !== ''
+// A type's subclasses that are listed, navigable, and NOT pulled into a group,
+// commonest first. (A grouped type leaves its parent's subtree for its group.)
 const subChildren = (uri: string): string[] =>
   (subclasses.value.get(uri) ?? [])
-    .filter(s => !embedSet.value.has(s) && (showHidden.value || !isHidden(s)))
+    .filter(s => !embedSet.value.has(s) && !isGrouped(s) && (showHidden.value || !isHidden(s)))
     .sort((a, b) => countOf(b) - countOf(a))
-// Types that are a subclass of another listed type → they nest, never top-level.
+// Subclasses that nest under a parent → never top-level. Grouped types are
+// promoted to roots (shown under their group), so they're excluded here.
 const nestedSubs = computed(() => {
   const s = new Set<string>()
-  for (const [, subs] of subclasses.value) for (const sub of subs) if (!embedSet.value.has(sub)) s.add(sub)
+  for (const [, subs] of subclasses.value) for (const sub of subs) if (!embedSet.value.has(sub) && !isGrouped(sub)) s.add(sub)
   return s
 })
 const pinnedRoots = computed(() => baseTypes.value.filter(t => isPinned(t.uri)).map(t => t.uri))
+// Roots = top-level navigable types (not pinned, not nested under another).
 const normalRoots = computed(() =>
   baseTypes.value.filter(t => !isPinned(t.uri) && !nestedSubs.value.has(t.uri)).map(t => t.uri),
 )
+// Partition roots into named groups vs ungrouped.
+const ungroupedRoots = computed(() => normalRoots.value.filter(u => !isGrouped(u)))
+const groupedRoots = computed(() => {
+  const m = new Map<string, string[]>()
+  for (const u of normalRoots.value) {
+    const g = groupOf(u)
+    if (!g) continue
+    const arr = m.get(g) ?? []
+    arr.push(u)
+    m.set(g, arr)
+  }
+  return m
+})
+const groupNames = computed(() => [...groupedRoots.value.keys()].sort((a, b) => a.localeCompare(b)))
+// All group names currently in use (for the gear's "assign to group" menu).
+const existingGroups = computed(() => {
+  const s = new Set<string>()
+  for (const t of types.value) { const g = groupOf(t.uri); if (g) s.add(g) }
+  return [...s].sort((a, b) => a.localeCompare(b))
+})
+
+const collapsedGroups = ref<Set<string>>(new Set())
+const isGroupCollapsed = (name: string) => collapsedGroups.value.has(name)
+function toggleGroup(name: string) {
+  const next = new Set(collapsedGroups.value)
+  next.has(name) ? next.delete(name) : next.add(name)
+  collapsedGroups.value = next
+}
 
 const hasKids = (uri: string) => subChildren(uri).length > 0 || childrenOf(uri).length > 0
 
-interface Row { uri: string; depth: number; kind: 'class' | 'embed'; count: number }
+interface Row { uri: string; depth: number; kind: 'class' | 'embed' | 'group'; count: number; group?: string }
 
-// One flat, ordered render list: subclass tree (pinned first), each class
+// One flat, ordered render list: pinned, then ungrouped roots, then a
+// collapsible header per named group with its roots' subtrees. Each class is
 // followed by its embed descendants. A global `seen` makes a multi-parent
 // subclass show once (under its first parent) and guards cycles.
 const rows = computed<Row[]>(() => {
@@ -129,7 +164,12 @@ const rows = computed<Row[]>(() => {
   }
 
   for (const r of pinnedRoots.value) visit(r, 0)
-  for (const r of normalRoots.value) visit(r, 0)
+  for (const r of ungroupedRoots.value) visit(r, 0)
+  for (const name of groupNames.value) {
+    const members = groupedRoots.value.get(name)!
+    out.push({ uri: name, depth: 0, kind: 'group', count: members.length, group: name })
+    if (!isGroupCollapsed(name)) for (const r of members) visit(r, 1)
+  }
   // Edit mode: surface embed types that found no composing class, so they stay
   // configurable — but never re-show one already nested under a class. No
   // composing parent → fall back to the global type count.
@@ -165,8 +205,25 @@ const menuItems = computed(() => {
         { label: 'Label only', icon: check(render === 'label'), command: () => typeConfig.set(uri, { render: 'label' }) },
       ],
     },
+    {
+      label: 'Group',
+      items: [
+        ...existingGroups.value.map(g => ({ label: g, icon: check(groupOf(uri) === g), command: () => setGroup(uri, g) })),
+        ...(existingGroups.value.length ? [{ separator: true }] : []),
+        { label: 'New group…', icon: 'pi pi-plus', command: () => promptNewGroup(uri) },
+        ...(isGrouped(uri) ? [{ label: 'Remove from group', icon: 'pi pi-times', command: () => setGroup(uri, '') }] : []),
+      ],
+    },
   ]
 })
+
+function setGroup(uri: string, name: string) {
+  typeConfig.set(uri, { group: name.trim() || undefined })
+}
+function promptNewGroup(uri: string) {
+  const name = window.prompt('Group name (e.g. "Ontology")', groupOf(uri))
+  if (name !== null) setGroup(uri, name)
+}
 
 function openMenu(event: Event, uri: string) {
   menuType.value = uri
@@ -200,11 +257,19 @@ function selectType(uri: string) {
           v-for="(row, i) in rows"
           :key="i"
           class="type-row"
-          :class="{ 'is-hidden': isHidden(row.uri), 'type-child': row.kind === 'embed' }"
+          :class="{ 'is-hidden': row.kind !== 'group' && isHidden(row.uri), 'type-child': row.kind === 'embed', 'is-group': row.kind === 'group' }"
         >
-          <!-- Disclosure: collapse/expand a class that has subclasses or embeds. -->
+          <!-- Disclosure: collapse/expand a group, or a class with subclasses/embeds. -->
           <button
-            v-if="row.kind === 'class' && hasKids(row.uri)"
+            v-if="row.kind === 'group'"
+            class="type-disclosure"
+            :aria-label="isGroupCollapsed(row.group!) ? 'Expand group' : 'Collapse group'"
+            @click.stop="toggleGroup(row.group!)"
+          >
+            <span class="material-symbols-outlined">{{ isGroupCollapsed(row.group!) ? 'chevron_right' : 'expand_more' }}</span>
+          </button>
+          <button
+            v-else-if="row.kind === 'class' && hasKids(row.uri)"
             class="type-disclosure"
             :aria-label="isCollapsed(row.uri) ? 'Expand' : 'Collapse'"
             @click.stop="toggleCollapse(row.uri)"
@@ -213,9 +278,15 @@ function selectType(uri: string) {
           </button>
           <span v-else class="type-disclosure-spacer"></span>
 
+          <!-- Group header: collapsible bucket of classes. -->
+          <button v-if="row.kind === 'group'" class="type-item type-group-item" @click="toggleGroup(row.group!)">
+            <span class="type-name">{{ row.group }}</span>
+            <span class="type-count">{{ formatCount(row.count) }}</span>
+          </button>
+
           <!-- Class: a navigable type (click → instance list). -->
           <button
-            v-if="row.kind === 'class'"
+            v-else-if="row.kind === 'class'"
             class="type-item"
             :class="{ active: selected === row.uri }"
             :style="{ paddingLeft: indent(row.depth) }"
@@ -239,7 +310,7 @@ function selectType(uri: string) {
             <span class="type-count">{{ formatCount(row.count) }}</span>
           </div>
 
-          <button v-if="settings.editMode" class="type-gear" aria-label="Configure type" @click.stop="openMenu($event, row.uri)">
+          <button v-if="settings.editMode && row.kind !== 'group'" class="type-gear" aria-label="Configure type" @click.stop="openMenu($event, row.uri)">
             <span class="material-symbols-outlined">tune</span>
           </button>
         </li>
@@ -353,6 +424,24 @@ function selectType(uri: string) {
 
 .type-item.is-static {
   cursor: default;
+}
+
+/* Group header: a collapsible section divider, visually distinct from a type. */
+.type-row.is-group {
+  margin-top: 0.25rem;
+}
+
+.type-group-item {
+  cursor: pointer;
+}
+
+.type-group-item .type-name {
+  font-family: var(--ae-font-sans);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ae-text-secondary);
 }
 
 .type-name {

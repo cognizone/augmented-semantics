@@ -164,8 +164,10 @@ Types differ in how they should display: first-class entities (`Project`,
 coordinates) are meaningless to navigate to — you want them inline. So each type
 carries a config, authored live and (eventually) exported to `app.json`.
 
-- **`TypeConfig`** (`types/endpoint.ts`): `sidebar: show | hide | pin` and
-  `render: link | embed | label`. Stored **per-endpoint** on
+- **`TypeConfig`** (`types/endpoint.ts`): `sidebar: show | hide | pin`,
+  `render: link | embed | label`, and an optional `group` label (collects the
+  type under a collapsible sidebar group header, e.g. "Ontology"; a grouped type
+  is promoted to a root within its group, leaving any subclass nesting). Stored **per-endpoint** on
   `SPARQLEndpoint.types` (config travels with the endpoint that owns it, not the
   app — easier to maintain across deployments). `stores/typeConfig.ts` is a thin
   get/set facade over `endpointStore.current.types`; edits persist with the

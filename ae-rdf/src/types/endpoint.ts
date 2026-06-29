@@ -38,6 +38,9 @@ export type TypeSidebar = 'show' | 'hide' | 'pin'
 export interface TypeConfig {
   render?: TypeRender
   sidebar?: TypeSidebar
+  /** Optional sidebar group label (e.g. "Ontology") — collects this type under a
+   *  collapsible group header instead of the flat top level. */
+  group?: string
 }
 
 /** A type IRI with its distinct-instance count (the cached inventory entry). */
