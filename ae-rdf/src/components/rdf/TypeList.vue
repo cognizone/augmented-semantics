@@ -13,6 +13,9 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import ProgressSpinner from 'primevue/progressspinner'
 import Menu from 'primevue/menu'
+import Dialog from 'primevue/dialog'
+import InputText from 'primevue/inputtext'
+import Button from 'primevue/button'
 import { useBrowseStore, useSettingsStore, useTypeConfigStore } from '../../stores'
 import { useRdfTypes, useDelayedLoading } from '../../composables'
 import { displayType } from '../../utils/format'
@@ -28,6 +31,10 @@ const showLoading = useDelayedLoading(loading)
 const selected = computed(() => browseStore.currentType)
 const typeMenu = ref()
 const menuType = ref<string | null>(null)
+// New-group dialog state.
+const showGroupDialog = ref(false)
+const groupDialogUri = ref<string | null>(null)
+const groupNameInput = ref('')
 // Collapsed superclasses (default expanded). A Set, replaced wholesale to stay reactive.
 const collapsed = ref<Set<string>>(new Set())
 
@@ -254,8 +261,13 @@ function setGroup(uri: string, name: string) {
   typeConfig.set(uri, { group: name.trim() || undefined })
 }
 function promptNewGroup(uri: string) {
-  const name = window.prompt('Group name (e.g. "Ontology")', groupOf(uri))
-  if (name !== null) setGroup(uri, name)
+  groupDialogUri.value = uri
+  groupNameInput.value = groupOf(uri)
+  showGroupDialog.value = true
+}
+function confirmGroup() {
+  if (groupDialogUri.value) setGroup(groupDialogUri.value, groupNameInput.value)
+  showGroupDialog.value = false
 }
 
 function openMenu(event: Event, uri: string) {
@@ -360,6 +372,24 @@ function selectType(uri: string) {
     </template>
 
     <Menu ref="typeMenu" :model="menuItems" :popup="true" />
+
+    <Dialog v-model:visible="showGroupDialog" header="New group" :modal="true" :style="{ width: '360px' }" position="top">
+      <div class="group-dialog">
+        <label class="group-dialog-label" for="group-name">Group name</label>
+        <InputText
+          id="group-name"
+          v-model="groupNameInput"
+          placeholder="e.g. Ontology"
+          autofocus
+          @keyup.enter="confirmGroup"
+        />
+        <small class="group-dialog-hint">Classes sharing a name collect under one collapsible header.</small>
+      </div>
+      <template #footer>
+        <Button label="Cancel" text severity="secondary" @click="showGroupDialog = false" />
+        <Button label="Save" :disabled="!groupNameInput.trim()" @click="confirmGroup" />
+      </template>
+    </Dialog>
   </aside>
 </template>
 
@@ -468,6 +498,27 @@ function selectType(uri: string) {
 
 .type-group-item {
   cursor: pointer;
+}
+
+.group-dialog {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.group-dialog-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--ae-text-secondary);
+}
+
+.group-dialog :deep(.p-inputtext) {
+  width: 100%;
+}
+
+.group-dialog-hint {
+  font-size: 0.6875rem;
+  color: var(--ae-text-muted);
 }
 
 .type-group-item .type-name {
