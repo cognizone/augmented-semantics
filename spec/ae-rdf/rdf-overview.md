@@ -184,9 +184,10 @@ carries a config, authored live and (eventually) exported to `app.json`.
   `utils/configExport.ts:buildAppConfig` serializes endpoints (+ their `graph`
   axes), `types`, and a cached **`typeInventory`** (uri+count), then
   `downloadJson`) → deploy as `config/app.json` → config mode (locked) for end
-  users. Credentials are never written into the export (auth `type` only). The
-  cached `typeInventory` lets a deployed app paint the Types sidebar instantly
-  (load-on-boot is the remaining integration).
+  users. Credentials are never written into the export (auth `type` only). In
+  config mode the cached `typeInventory` seeds the Types sidebar for the primary
+  endpoint **with no discovery query** (`useRdfTypes` paints instantly; prefixes
+  resolve in the background). Re-export to refresh the snapshot.
 
 ## UI layout
 

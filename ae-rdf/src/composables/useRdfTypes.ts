@@ -10,7 +10,7 @@
  */
 import { ref, watch, onMounted, onUnmounted, type Ref } from 'vue'
 import { useEndpointStore, useBrowseStore } from '../stores'
-import { executeSparql, resolveUris, logger, eventBus, buildTypeInventoryQuery, resolveGraphStrategy } from '../services'
+import { executeSparql, resolveUris, logger, eventBus, buildTypeInventoryQuery, resolveGraphStrategy, getConfig } from '../services'
 
 export interface RdfType {
   uri: string
@@ -29,6 +29,20 @@ export function useRdfTypes() {
   const resolved: Ref<ResolvedMap> = ref(new Map())
   let requestId = 0
 
+  // In config mode the deployed app.json caches the inventory for the primary
+  // endpoint — use it for an instant first paint (no discovery query).
+  function cachedInventory(endpointId: string): { uri: string; count: number }[] | null {
+    const cfg = getConfig()
+    if (
+      endpointStore.configMode &&
+      cfg?.typeInventory?.length &&
+      endpointId === endpointStore.endpoints[0]?.id
+    ) {
+      return cfg.typeInventory
+    }
+    return null
+  }
+
   async function loadTypes(): Promise<void> {
     const endpoint = endpointStore.current
     if (!endpoint) {
@@ -36,6 +50,23 @@ export function useRdfTypes() {
       browseStore.setTypeInventory([])
       return
     }
+
+    const cached = cachedInventory(endpoint.id)
+    if (cached) {
+      const list = cached.map(t => ({ uri: t.uri, count: t.count })).filter(t => t.uri)
+      types.value = list
+      browseStore.setTypeInventory(list)
+      error.value = null
+      loading.value = false
+      // Resolve prefixes in the background — local names paint instantly, qnames fill in.
+      const epId = endpoint.id
+      void resolveUris(list.map(t => t.uri)).then(m => {
+        if (endpointStore.current?.id === epId) resolved.value = m
+      })
+      logger.info('useRdfTypes', 'Seeded type inventory from config (no query)', { count: list.length })
+      return
+    }
+
     const endpointId = endpoint.id
     const id = ++requestId
     const isCurrent = () => id === requestId && endpointStore.current?.id === endpointId
