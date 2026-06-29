@@ -39,6 +39,13 @@ describe('buildAppConfig', () => {
     expect(config.endpoints![0].typeInventory).toBeUndefined()
   })
 
+  it('preserves the sidebar group on a type', () => {
+    const config = buildAppConfig({
+      endpoints: [ep({ types: { 'http://x#Class': { group: 'Ontology', sidebar: 'hide' } } })],
+    })
+    expect(config.endpoints![0].types).toEqual({ 'http://x#Class': { group: 'Ontology', sidebar: 'hide' } })
+  })
+
   it('exports auth type but NEVER credentials', () => {
     const config = buildAppConfig({
       endpoints: [ep({ auth: { type: 'basic', credentials: { username: 'u', password: 'p' } } })],

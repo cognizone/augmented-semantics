@@ -122,8 +122,11 @@ IRIs pass `sanitizeIri` (SPARQL-injection guard). Counts always
 | Instance count | `buildInstanceCountQuery(type, strategy)` |
 | Instance page | `buildInstanceListQuery(type, strategy, limit, offset)` (GROUP BY ?s + SAMPLE) |
 | Resource triples | `buildResourceTriplesQuery(uri, strategy)` |
-| Object labels + type | `buildLabelsQuery(uris)` (VALUES + OPTIONAL label + `?s a ?t`) |
+| Object labels + most-specific type | `buildLabelsQuery(uris)` (label + the leaf `rdf:type` via `FILTER NOT EXISTS {?more rdfs:subClassOf+ ?t}`) |
 | Embedded triples | `buildEmbeddedTriplesQuery(uris, strategy)` (batch; caller folds `(p,o)`) |
+| Subclass hierarchy | `buildSubclassQuery(types, strategy)` (`rdfs:subClassOf` among listed types) |
+| Embed composition | `buildCompositionQuery(embedTypes, strategy)` (class → embed-type edges, count scoped to the class) |
+| Path-scoped embed count | `buildPathCountQuery(chain, strategy)` (count along `[class, …embedTypes]`; on demand) |
 
 Labels have no single predicate in general RDF; they are derived client-side by
 precedence: `rdfs:label`, `skos:prefLabel`, `dct:title`, `dc:title`, `foaf:name`,
@@ -145,11 +148,15 @@ the pure helpers, unit-tested):
   (`MENV` → its `rdfs:label`), fetched in parallel with prefix resolution;
   fall back to the qname when an IRI has no label.
 - **Object type badges:** the same batch query (`buildLabelsQuery`) also returns
-  a sample `rdf:type` per object, shown as a trailing context badge
-  (`Title [Project]`). The object's own identity (label, else qname) is always
+  the **most specific** `rdf:type` per object (the leaf — one with no more-specific
+  asserted type), shown as a trailing context badge (`Title [JournalPaper]`, not
+  the generic `[Result]`). The object's own identity (label, else qname) is always
   the primary text so repeated unlabeled objects stay distinct (a generic type
   like `Concept` ×N as the value would be useless). Objects within a predicate
   are sorted by display text.
+- **Capped object lists:** a predicate with many objects renders the first 100
+  with a "100 of N" line + **Show all / Show fewer** toggle (`PropertyTable`), so
+  a hub node (thousands of links) doesn't run forever.
 - **URI-display setting** (`settings.uriDisplay`, localStorage): `humanized`
   (default, friendly) / `prefixed` (`prefix:local` qnames) / `full` (raw IRIs).
   Centralized in `utils/format.ts` (`displayPredicate` / `displayObject` /
@@ -172,13 +179,13 @@ carries a config, authored live and (eventually) exported to `app.json`.
   app — easier to maintain across deployments). `stores/typeConfig.ts` is a thin
   get/set facade over `endpointStore.current.types`; edits persist with the
   endpoint (`ae-endpoints`).
-- **Authoring:** a per-type **gear** in `TypeList` sets both — gated behind
-  **Config authoring mode** (`settings.editMode`, off by default, hidden in
-  config mode), so end users get a clean read-only view. `hide`/`pin` are
-  consumed there (filter + sort, with a "show N hidden" toggle). Configured
-  types show inline indicator icons (pinned / embed / label) regardless of edit
-  mode. The configured *effects* (embed/hide/pin) always apply; only the gear +
-  export are gated.
+- **Authoring:** a per-type **gear** in `TypeList` sets all of these — gated
+  behind **Config authoring mode** (`settings.editMode`, off by default), so end
+  users get a clean read-only view. The gear + **Export app.json** stay available
+  even in config mode, so a deployer can load a deployed config, tweak, and
+  re-export. The configured *effects* (embed/hide/pin/group) always apply; only
+  the gear is gated. `pin` floats to the top; `hide` moves the type into the
+  collapsible **Hidden** system group.
 - **Embed (recursive):** when an object's type is `render:embed`, `useResourceView`
   batch-fetches those objects' triples (`buildEmbeddedTriplesQuery`, graph-aware)
   and follows embed-typed objects within them (BFS, depth-capped at 5 with a
@@ -204,6 +211,34 @@ carries a config, authored live and (eventually) exported to `app.json`.
   config mode each endpoint's cached `typeInventory` seeds the Types sidebar
   **with no discovery query** (`useRdfTypes` paints instantly; prefixes resolve
   in the background). Re-export to refresh the snapshot.
+
+## Types sidebar (tree)
+
+`TypeList` renders the inventory as one flat, ordered row list (`rows`) built
+from several overlaid structures; rows are keyed by position (the same embed
+type can appear under several parents, so identity keys would collide).
+
+- **Subclass nesting:** `buildSubclassQuery` discovers `rdfs:subClassOf` edges
+  among listed types; a more-specific kind tucks under its general type
+  (`Result → ProjectPublication → JournalPaper`), indented and collapsible. Only
+  asserted edges nest — if the data carries no `subClassOf`, the list stays flat.
+  Roots = types with no listed superclass; pinned float to a top section.
+- **Embed nesting:** `buildCompositionQuery` finds which classes compose which
+  `render:embed` types (a class instance has a property pointing to an instance
+  of that type), with a count **scoped to the class**. Embeds nest under their
+  composing class (recursively — `Site → PostalAddress`). A **direct** embed
+  child's count is class-scoped; a **deeper** one's isn't, so it's hidden until
+  hovered, when `buildPathCountQuery` resolves the true path-scoped count
+  (`[class, …embed chain]`), cached per chain.
+- **Groups:** a type's optional `group` collects it under a collapsible header
+  (promoted to a root within its group). Two auto **system groups** sit at the
+  bottom, collapsed by default: **Embedded** (every embed type, also shown nested
+  for consistency) and **Hidden** (every `hide` type). User groups render between
+  the ungrouped roots and the system groups.
+- **Navigation:** class rows and embed rows are both clickable → that type's
+  instance list (being `render:embed` only governs object rendering, not
+  browsability). Indent lives on the row, so a subclass's collapse chevron shifts
+  right with depth; depth is capped (~3 levels) for the narrow panel.
 
 ## UI layout
 
