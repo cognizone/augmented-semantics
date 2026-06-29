@@ -26,11 +26,14 @@ const { types, loading, error, resolved, composition, subclasses, pathCounts, re
 const showLoading = useDelayedLoading(loading)
 
 const selected = computed(() => browseStore.currentType)
-const showHidden = ref(false)
 const typeMenu = ref()
 const menuType = ref<string | null>(null)
 // Collapsed superclasses (default expanded). A Set, replaced wholesale to stay reactive.
 const collapsed = ref<Set<string>>(new Set())
+
+// Auto "system" groups at the bottom of the list (collapsed by default).
+const SYS_EMBEDDED = 'Embedded'
+const SYS_HIDDEN = 'Hidden'
 
 const typeName = (uri: string) => displayType(uri, resolved.value, settings.uriDisplay)
 const cfg = (uri: string) => typeConfig.get(uri)
@@ -83,9 +86,10 @@ function embedRows(parentUri: string, depth = 1, seen = new Set<string>([parentU
 
 /* ── Subclass nesting (more-specific kinds tucked under their general type) ── */
 
-// Navigable types we list (embeds are handled separately), respecting hide.
+// Navigable types in the main tree: not hidden, not embedded (those go to their
+// own system groups at the bottom).
 const baseTypes = computed(() =>
-  (showHidden.value ? types.value : types.value.filter(t => !isHidden(t.uri))).filter(t => !embedSet.value.has(t.uri)),
+  types.value.filter(t => !isHidden(t.uri) && !embedSet.value.has(t.uri)),
 )
 // Optional sidebar group a type is assigned to (trimmed; '' = none).
 const groupOf = (uri: string): string => (cfg(uri).group ?? '').trim()
@@ -94,7 +98,7 @@ const isGrouped = (uri: string) => groupOf(uri) !== ''
 // commonest first. (A grouped type leaves its parent's subtree for its group.)
 const subChildren = (uri: string): string[] =>
   (subclasses.value.get(uri) ?? [])
-    .filter(s => !embedSet.value.has(s) && !isGrouped(s) && (showHidden.value || !isHidden(s)))
+    .filter(s => !embedSet.value.has(s) && !isGrouped(s) && !isHidden(s))
     .sort((a, b) => countOf(b) - countOf(a))
 // Subclasses that nest under a parent → never top-level. Grouped types are
 // promoted to roots (shown under their group), so they're excluded here.
@@ -129,7 +133,16 @@ const existingGroups = computed(() => {
   return [...s].sort((a, b) => a.localeCompare(b))
 })
 
-const collapsedGroups = ref<Set<string>>(new Set())
+const collapsedGroups = ref<Set<string>>(new Set([SYS_EMBEDDED, SYS_HIDDEN]))
+
+// System-group members: every embed type (also nested under its classes — shown
+// here too for consistency) and every hidden navigable type.
+const embeddedGroupTypes = computed(() =>
+  types.value.filter(t => embedSet.value.has(t.uri)).map(t => t.uri).sort((a, b) => countOf(b) - countOf(a)),
+)
+const hiddenGroupTypes = computed(() =>
+  types.value.filter(t => isHidden(t.uri) && !embedSet.value.has(t.uri)).map(t => t.uri).sort((a, b) => countOf(b) - countOf(a)),
+)
 const isGroupCollapsed = (name: string) => collapsedGroups.value.has(name)
 function toggleGroup(name: string) {
   const next = new Set(collapsedGroups.value)
@@ -143,7 +156,7 @@ const hasKids = (uri: string) => subChildren(uri).length > 0 || childrenOf(uri).
 // (a deeper embed's count is the global per-parent-type total), so we hide it
 // rather than show a misleading number. Path-scoped deep counts would cost a
 // chained COUNT query per path on every load — not worth it eagerly.
-interface Row { uri: string; depth: number; kind: 'class' | 'embed' | 'group'; count: number; group?: string; scoped?: boolean; chain?: string[] }
+interface Row { uri: string; depth: number; kind: 'class' | 'embed' | 'group'; count: number; group?: string; scoped?: boolean; chain?: string[]; system?: boolean; leaf?: boolean }
 
 // One flat, ordered render list: pinned, then ungrouped roots, then a
 // collapsible header per named group with its roots' subtrees. Each class is
@@ -152,7 +165,6 @@ interface Row { uri: string; depth: number; kind: 'class' | 'embed' | 'group'; c
 const rows = computed<Row[]>(() => {
   const out: Row[] = []
   const seen = new Set<string>()
-  const emitted = new Set<string>() // embed URIs already shown under some class
   const pinned = new Set(pinnedRoots.value)
 
   function visit(uri: string, depth: number) {
@@ -169,7 +181,6 @@ const rows = computed<Row[]>(() => {
       // class; deeper ones carry the global per-parent-type total → unscoped,
       // resolved on demand via the [class, …embed chain].
       out.push({ uri: e.uri, depth: depth + e.depth, kind: 'embed', count: e.count, scoped: e.depth === 1, chain: [uri, ...e.path] })
-      emitted.add(e.uri)
     }
   }
 
@@ -180,14 +191,18 @@ const rows = computed<Row[]>(() => {
     out.push({ uri: name, depth: 0, kind: 'group', count: members.length, group: name })
     if (!isGroupCollapsed(name)) for (const r of members) visit(r, 1)
   }
-  // Edit mode: surface embed types that found no composing class, so they stay
-  // configurable — but never re-show one already nested under a class. No
-  // composing parent → fall back to the global type count.
-  if (settings.editMode) for (const e of embedSet.value) if (!emitted.has(e)) out.push({ uri: e, depth: 0, kind: 'embed', count: countOf(e) })
+  // System groups (collapsed by default): all embed types (also nested under
+  // their classes, listed here for consistency) and all hidden types.
+  if (embeddedGroupTypes.value.length) {
+    out.push({ uri: SYS_EMBEDDED, depth: 0, kind: 'group', count: embeddedGroupTypes.value.length, group: SYS_EMBEDDED, system: true })
+    if (!isGroupCollapsed(SYS_EMBEDDED)) for (const u of embeddedGroupTypes.value) out.push({ uri: u, depth: 1, kind: 'embed', count: countOf(u), scoped: true })
+  }
+  if (hiddenGroupTypes.value.length) {
+    out.push({ uri: SYS_HIDDEN, depth: 0, kind: 'group', count: hiddenGroupTypes.value.length, group: SYS_HIDDEN, system: true })
+    if (!isGroupCollapsed(SYS_HIDDEN)) for (const u of hiddenGroupTypes.value) out.push({ uri: u, depth: 1, kind: 'class', count: countOf(u), leaf: true })
+  }
   return out
 })
-
-const hiddenCount = computed(() => types.value.filter(t => isHidden(t.uri) && !embedSet.value.has(t.uri)).length)
 
 // Nested-embed counts aren't path-scoped up front; fetch on hover, show once in.
 const pathKey = (row: Row) => (row.chain ?? []).join('>')
@@ -275,7 +290,8 @@ function selectType(uri: string) {
           v-for="(row, i) in rows"
           :key="i"
           class="type-row"
-          :class="{ 'is-hidden': row.kind !== 'group' && isHidden(row.uri), 'type-child': row.kind === 'embed', 'is-group': row.kind === 'group' }"
+          :class="{ 'is-hidden': row.kind !== 'group' && !row.leaf && isHidden(row.uri), 'type-child': row.kind === 'embed', 'is-group': row.kind === 'group' }"
+          :style="{ paddingLeft: indent(row.depth) }"
         >
           <!-- Disclosure: collapse/expand a group, or a class with subclasses/embeds. -->
           <button
@@ -287,7 +303,7 @@ function selectType(uri: string) {
             <span class="material-symbols-outlined">{{ isGroupCollapsed(row.group!) ? 'chevron_right' : 'expand_more' }}</span>
           </button>
           <button
-            v-else-if="row.kind === 'class' && hasKids(row.uri)"
+            v-else-if="row.kind === 'class' && !row.leaf && hasKids(row.uri)"
             class="type-disclosure"
             :aria-label="isCollapsed(row.uri) ? 'Expand' : 'Collapse'"
             @click.stop="toggleCollapse(row.uri)"
@@ -307,7 +323,6 @@ function selectType(uri: string) {
             v-else-if="row.kind === 'class'"
             class="type-item"
             :class="{ active: selected === row.uri }"
-            :style="{ paddingLeft: indent(row.depth) }"
             :title="row.uri"
             @click="selectType(row.uri)"
           >
@@ -321,7 +336,7 @@ function selectType(uri: string) {
 
           <!-- Embed: a value object shown inline elsewhere — muted, not navigable.
                Direct child → class-scoped count; nested → path count on hover. -->
-          <div v-else class="type-item is-static" :style="{ paddingLeft: indent(row.depth) }" :title="row.uri" @mouseenter="onEmbedEnter(row)">
+          <div v-else class="type-item is-static" :title="row.uri" @mouseenter="onEmbedEnter(row)">
             <span class="type-name">{{ typeName(row.uri) }}</span>
             <span class="type-ind">
               <span class="material-symbols-outlined ind" title="Embedded inline as a value">data_object</span>
@@ -334,10 +349,6 @@ function selectType(uri: string) {
           </button>
         </li>
       </ul>
-
-      <button v-if="hiddenCount" class="show-hidden" @click="showHidden = !showHidden">
-        {{ showHidden ? 'Hide hidden types' : `Show ${hiddenCount} hidden` }}
-      </button>
     </template>
 
     <Menu ref="typeMenu" :model="menuItems" :popup="true" />
@@ -522,22 +533,6 @@ function selectType(uri: string) {
   font-size: 16px;
 }
 
-.show-hidden {
-  background: none;
-  border: none;
-  border-top: 1px solid var(--ae-border-color);
-  cursor: pointer;
-  font-size: 0.6875rem;
-  color: var(--ae-text-secondary);
-  padding: 0.5rem;
-  text-align: left;
-  flex-shrink: 0;
-}
-
-.show-hidden:hover {
-  color: var(--ae-text-primary);
-  background: var(--ae-bg-hover);
-}
 
 .state {
   display: flex;
