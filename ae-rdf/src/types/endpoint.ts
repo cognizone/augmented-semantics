@@ -10,6 +10,7 @@ export interface SPARQLEndpoint {
   url: string
   auth?: EndpointAuth
   analysis?: EndpointAnalysis
+  graph?: EndpointGraph
   selectedGraphs?: string[]
   languagePriorities?: string[]  // User-ordered language codes
   lastTestStatus?: 'success' | 'error' | 'testing'
@@ -18,6 +19,22 @@ export interface SPARQLEndpoint {
   createdAt: string
   lastAccessedAt?: string
   accessCount: number
+}
+
+/**
+ * How an endpoint exposes its data — two orthogonal axes. Either field unset
+ * means "unknown" (a connect-time probe fills a best guess; config overrides).
+ * See `resolveGraphStrategy` and /spec/ae-rdf/rdf-overview.md (Graph model).
+ */
+export interface EndpointGraph {
+  /** Does the endpoint expose named graphs (quad store)? */
+  quads?: boolean
+  /**
+   * The explicit (default, no-GRAPH) triple view:
+   * - 'own':    its own distinct triples → query it alongside the quads.
+   * - 'merged': just a merged view of the quads (bag-y, redundant) → never query it.
+   */
+  defaultView?: 'own' | 'merged'
 }
 
 export interface EndpointAuth {

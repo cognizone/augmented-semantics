@@ -10,7 +10,7 @@
  */
 import { ref, watch, onMounted, onUnmounted, type Ref } from 'vue'
 import { useEndpointStore, useBrowseStore } from '../stores'
-import { executeSparql, resolveUris, logger, eventBus, buildTypeInventoryQuery } from '../services'
+import { executeSparql, resolveUris, logger, eventBus, buildTypeInventoryQuery, resolveGraphStrategy } from '../services'
 
 export interface RdfType {
   uri: string
@@ -44,7 +44,7 @@ export function useRdfTypes() {
     logger.info('useRdfTypes', 'Loading type inventory', { endpoint: endpoint.url })
 
     try {
-      const results = await executeSparql(endpoint, buildTypeInventoryQuery(browseStore.graphMode), { retries: 1 })
+      const results = await executeSparql(endpoint, buildTypeInventoryQuery(resolveGraphStrategy(browseStore.graph)), { retries: 1 })
       if (!isCurrent()) return
 
       const list: RdfType[] = results.results.bindings
@@ -69,9 +69,9 @@ export function useRdfTypes() {
   }
 
   const sub = eventBus.on('endpoint:changed', () => loadTypes())
-  // graphMode resolves async (probe or SKOS reuse); reload so a 'named'→'none'
-  // (or vice-versa) flip re-runs the inventory with the correct query shape.
-  watch(() => browseStore.graphMode, () => { if (endpointStore.current) loadTypes() })
+  // graph axes resolve async (config / SKOS / probe); reload so the inventory
+  // re-runs with the correct scope once they're known.
+  watch(() => browseStore.graph, () => { if (endpointStore.current) loadTypes() })
   onMounted(() => {
     if (endpointStore.current) loadTypes()
   })

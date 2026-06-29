@@ -70,41 +70,60 @@ copied (trimmed) into `ae-rdf`. Only the RDF-browsing UI is built fresh. See
 Composables (each owns one query + a `requestId` race-guard + delayed loading):
 `useRdfTypes`, `useInstanceList`, `useResourceView`, `useGraphMode`.
 
-## Graph awareness (core)
+## Graph model (core)
 
-For every triple we display we must always **know its full set of graphs** — a
-triple `(s,p,o)` can assert in several named graphs at once. Awareness lives in
-the data model; *displaying* it is a separate, quiet choice.
+A triple `(s,p,o)` can assert in several named graphs at once, and we must always
+*know* its full set of graphs. How the endpoint stores data is captured per
+endpoint on **two orthogonal axes** (`EndpointGraph`, each field unset = unknown):
 
-- **Resource query** is the safe superset: `GRAPH ?g { … }` UNION the
-  default-graph triples (`FILTER NOT EXISTS` guards against union-default
-  double-counting). The same `(p,o)` returns once per graph → folded into a
-  `graphs: string[]` set (empty = default graph).
-- **Chrome:** per-triple graphs are hidden by default with a "Show graphs"
-  toggle; a triple in **>1 graph is always badged**; hover always reveals the
-  graph(s); the subject header shows the union of graphs.
-- **graphMode** (`'named' | 'none'`) gates the discovery/list query shape. It is
-  reused from `endpoint.analysis.supportsNamedGraphs` (shared with AE SKOS via
-  the `ae-endpoints` key) when present, else one `detectGraphs` ASK per connect.
-- **Out of scope (parked):** detecting default-graph *semantics* (union vs
-  separate) and a graph *filtering* UI.
+- **`quads`** — does it expose named graphs (quad store)?
+- **`defaultView`** — is the explicit (default, no-`GRAPH`) view the endpoint's
+  **own** distinct triples, or just a **merged** view of the quads?
+
+`resolveGraphStrategy(graph)` → `{ useNamed, useDefault }`:
+
+```
+useNamed   = quads !== false                          // query named graphs unless we KNOW there are none
+useDefault = quads === false || defaultView !== 'merged'   // merged ⇒ the default view is redundant/bag-y ⇒ never query it
+```
+
+| quads | defaultView | useNamed | useDefault | meaning |
+|-------|-------------|----------|------------|---------|
+| false | — | false | true | triple store: plain queries |
+| true | merged | true | false | quad store, default = merged quads → **`GRAPH ?g` only** |
+| true | own | true | true | quad store with own default triples → `GRAPH ?g` ∪ default |
+| unknown | — | true | true | safe superset (folding `(p,o)` dedups any merge) |
+
+Every builder takes this strategy. Cross-graph duplicates are removed by folding
+`(p,o)` client-side (resource + embed) or `COUNT(DISTINCT ?s)` / `GROUP BY ?s`
+(aggregates) — **never** ad-hoc `SELECT DISTINCT`. This is why a merged endpoint
+no longer doubles values: we don't query its bag-y default view, and we fold.
+
+**Resolution / authoring:** `quads` is resolved config → SKOS analysis
+(`supportsNamedGraphs`, shared `ae-endpoints`) → one `detectGraphs` ASK probe.
+`defaultView` is **config-declared** (the deployer knows their endpoint;
+auto-detecting merged-vs-own is the parked profiler's job) — unset behaves as the
+safe superset. Both axes live on the endpoint config (authored via an endpoint
+gear, exported to `app.json`).
+
+**Chrome:** per-triple graphs hidden by default with a "Show graphs" toggle; a
+triple in >1 graph is always badged; hover always reveals the graph(s); the
+subject header shows the union. Graph *filtering* UI stays out of scope.
 
 ## Query library
 
-All in `services/rdfQueries.ts`. Subject IRIs pass `sanitizeIri` (SPARQL-injection
-guard). Counts always use `COUNT(DISTINCT ?s)` (a subject is typed once per
-graph, so a non-distinct count is inflated by graph multiplicity). Discovery/list
-queries are graphMode-gated (Option A: on `named` endpoints scoped to
-`GRAPH ?g { ?s a <T> }`, not unioned with the default graph — responsiveness over
-the rare separate-default completeness gap).
+All in `services/rdfQueries.ts`; every builder takes a `GraphStrategy`. Subject
+IRIs pass `sanitizeIri` (SPARQL-injection guard). Counts always
+`COUNT(DISTINCT ?s)`.
 
 | Query | Builder |
 |-------|---------|
-| Type inventory | `buildTypeInventoryQuery(graphMode)` |
-| Instance count | `buildInstanceCountQuery(type, graphMode)` |
-| Instance page | `buildInstanceListQuery(type, graphMode, limit, offset)` (GROUP BY ?s + SAMPLE) |
-| Resource triples | `buildResourceTriplesQuery(uri, graphMode)` |
-| Object labels | `buildLabelsQuery(uris)` (batch; VALUES + UNION over LABEL_PREDICATES) |
+| Type inventory | `buildTypeInventoryQuery(strategy)` |
+| Instance count | `buildInstanceCountQuery(type, strategy)` |
+| Instance page | `buildInstanceListQuery(type, strategy, limit, offset)` (GROUP BY ?s + SAMPLE) |
+| Resource triples | `buildResourceTriplesQuery(uri, strategy)` |
+| Object labels + type | `buildLabelsQuery(uris)` (VALUES + OPTIONAL label + `?s a ?t`) |
+| Embedded triples | `buildEmbeddedTriplesQuery(uris, strategy)` (batch; caller folds `(p,o)`) |
 
 Labels have no single predicate in general RDF; they are derived client-side by
 precedence: `rdfs:label`, `skos:prefLabel`, `dct:title`, `dc:title`, `foaf:name`,

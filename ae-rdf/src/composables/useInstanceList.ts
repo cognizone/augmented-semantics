@@ -3,7 +3,7 @@
  *
  * Reads the selected type from the browse store, loads one page of instances
  * plus the total count, both graph-mode-gated and DISTINCT (see rdfQueries).
- * requestId race-guard per com02. Reloads on type, page, or graphMode change.
+ * requestId race-guard per com02. Reloads on type, page, or graph change.
  *
  * @see /spec/ae-rdf
  * @see /spec/common/com02-StateManagement.md
@@ -16,6 +16,7 @@ import {
   logger,
   buildInstanceListQuery,
   buildInstanceCountQuery,
+  resolveGraphStrategy,
 } from '../services'
 
 export interface Instance {
@@ -47,22 +48,22 @@ export function useInstanceList() {
       return
     }
     const endpointId = endpoint.id
-    const mode = browseStore.graphMode
+    const strategy = resolveGraphStrategy(browseStore.graph)
     const id = ++requestId
     const isCurrent = () => id === requestId && endpointStore.current?.id === endpointId
 
     loading.value = true
     error.value = null
-    const countKey = `${endpointId}|${mode}|${type}`
+    const countKey = `${endpointId}|${strategy.useNamed}${strategy.useDefault}|${type}`
     const needCount = countedFor !== countKey
 
-    logger.info('useInstanceList', 'Loading instances', { type, page: page.value, mode })
+    logger.info('useInstanceList', 'Loading instances', { type, page: page.value, strategy })
 
     try {
       const [listRes, countRes, typeResolved] = await Promise.all([
-        executeSparql(endpoint, buildInstanceListQuery(type, mode, PAGE_SIZE, page.value * PAGE_SIZE), { retries: 1 }),
+        executeSparql(endpoint, buildInstanceListQuery(type, strategy, PAGE_SIZE, page.value * PAGE_SIZE), { retries: 1 }),
         needCount
-          ? executeSparql(endpoint, buildInstanceCountQuery(type, mode), { retries: 1 })
+          ? executeSparql(endpoint, buildInstanceCountQuery(type, strategy), { retries: 1 })
           : Promise.resolve(null),
         resolveUris([type]),
       ])
@@ -92,7 +93,7 @@ export function useInstanceList() {
     }
   }
 
-  // New type → reset to page 0 and (re)load. Page / graphMode changes reload too.
+  // New type → reset to page 0 and (re)load. Page / graph changes reload too.
   watch(
     () => browseStore.currentType,
     (t) => {
@@ -104,7 +105,7 @@ export function useInstanceList() {
     { immediate: true }
   )
   watch(page, () => { if (browseStore.currentType) load() })
-  watch(() => browseStore.graphMode, () => { if (browseStore.currentType) load() })
+  watch(() => browseStore.graph, () => { if (browseStore.currentType) load() })
 
   function setPage(n: number) {
     page.value = n

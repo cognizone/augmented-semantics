@@ -1,20 +1,21 @@
 /**
- * RDF query builders for the live browser.
+ * RDF query builders for the live browser. Pure functions returning SPARQL.
  *
- * Pure functions returning SPARQL query strings. No prefixes are needed for
- * the resource-triples query (it uses full IRIs only), so callers don't wrap
- * with withPrefixes().
+ * Graph model (the source of truth is /spec/ae-rdf/rdf-overview.md "Graph model"):
+ * every builder takes a GraphStrategy derived from the endpoint's two axes
+ * (quads, defaultView) via resolveGraphStrategy. Cross-graph duplicates are
+ * removed by folding (p,o) client-side or COUNT(DISTINCT ?s)/GROUP BY ?s — never
+ * by ad-hoc SELECT DISTINCT.
  *
- * @see /spec/ae-rdf/rdf01-QueryLibrary.md
- * @see ae-rdf/PLAN.md (Query Library)
+ * @see /spec/ae-rdf/rdf-overview.md
  */
 import { validateURI } from './security'
 import { withPrefixes } from './sparql'
+import type { EndpointGraph } from '../types'
 
 /**
- * Label predicates in display precedence (highest first). Used to derive a
- * human label from a resource's outgoing triples — general RDF has no single
- * label predicate.
+ * Label predicates in display precedence (highest first). General RDF has no
+ * single label predicate, so labels are resolved by trying these in order.
  */
 export const LABEL_PREDICATES: readonly string[] = [
   'http://www.w3.org/2000/01/rdf-schema#label',
@@ -51,60 +52,73 @@ export function isNavigableIri(uri: string): boolean {
   }
 }
 
-/**
- * The `?s a <TYPE>` membership pattern, gated by graphMode (Option A).
- * - 'named': scoped to named graphs (`GRAPH ?g { … }`).
- * - 'none':  plain default-graph pattern.
- *
- * `<TYPE>` is interpolated raw — callers pass either a sanitized `<iri>` or the
- * variable `?type`. COUNTs always use COUNT(DISTINCT ?s): on a quad store a
- * subject is typed once per graph, so a non-distinct count is inflated by graph
- * multiplicity (CORDIS: 580,939 raw vs 536,703 distinct).
- *
- * ponytail (Option A): on 'named' endpoints we count/list within named graphs
- * and do NOT also union the default graph. Misses the rare case of triples that
- * live ONLY in a separate default graph — that completeness pass is the parked
- * endpoint-profiler's job. See ae-rdf/PLAN.md "Graph awareness".
- */
-function membership(typeTerm: string, graphMode: GraphMode): string {
-  return graphMode === 'named'
-    ? `GRAPH ?g { ?s a ${typeTerm} }`
-    : `?s a ${typeTerm}`
+/* ───────────────────────── Graph strategy ───────────────────────── */
+
+/** Which graph scopes a query should touch, derived from the endpoint axes. */
+export interface GraphStrategy {
+  /** Query named graphs (`GRAPH ?g { … }`). */
+  useNamed: boolean
+  /** Query the explicit default (no-GRAPH) view. */
+  useDefault: boolean
 }
+
+/**
+ * Resolve the query strategy from an endpoint's two graph axes.
+ *
+ *   useNamed   = quads !== false        (query named graphs unless we KNOW there are none)
+ *   useDefault = quads === false  ||  defaultView !== 'merged'
+ *
+ * Cases:
+ * - quads false (triple store)      → { named:false, default:true }  plain.
+ * - quads true,  defaultView merged → { named:true,  default:false } GRAPH only — the
+ *   default view is a redundant, bag-y merge of the quads, so never query it.
+ * - quads true,  defaultView own    → { named:true,  default:true }  GRAPH ∪ default.
+ * - anything unknown                → safe superset (query both; folding (p,o)
+ *   dedups any merge artefacts, so it's correct, just not optimised).
+ */
+export function resolveGraphStrategy(graph?: EndpointGraph): GraphStrategy {
+  const quads = graph?.quads
+  return {
+    useNamed: quads !== false,
+    useDefault: quads === false || graph?.defaultView !== 'merged',
+  }
+}
+
+/** `?s a <TYPE>` (or `?s a ?type`) scoped per strategy, for the aggregate queries. */
+function membership(typeTerm: string, s: GraphStrategy): string {
+  const named = `GRAPH ?g { ?s a ${typeTerm} }`
+  const def = `?s a ${typeTerm}`
+  if (s.useNamed && s.useDefault) return `{ ${named} } UNION { ${def} }`
+  return s.useNamed ? named : def
+}
+
+/* ───────────────────────── Discovery / list ───────────────────────── */
 
 /**
  * Type inventory: every rdf:type with its distinct-instance count, commonest
- * first. graphMode-gated (see membership). ~5s on CORDIS for the distinct count.
+ * first. COUNT(DISTINCT ?s) so cross-graph multiplicity never inflates counts.
  */
-export function buildTypeInventoryQuery(graphMode: GraphMode = 'named'): string {
-  return `SELECT ?type (COUNT(DISTINCT ?s) AS ?count) WHERE { ${membership('?type', graphMode)} } GROUP BY ?type ORDER BY DESC(?count) LIMIT 500`
+export function buildTypeInventoryQuery(s: GraphStrategy): string {
+  return `SELECT ?type (COUNT(DISTINCT ?s) AS ?count) WHERE { ${membership('?type', s)} } GROUP BY ?type ORDER BY DESC(?count) LIMIT 500`
 }
 
-/** Total distinct instances of a type (for the instance-list header / paging). */
-export function buildInstanceCountQuery(typeUri: string, graphMode: GraphMode = 'named'): string {
+/** Total distinct instances of a type (instance-list header / paging). */
+export function buildInstanceCountQuery(typeUri: string, s: GraphStrategy): string {
   const iri = sanitizeIri(typeUri)
-  return `SELECT (COUNT(DISTINCT ?s) AS ?total) WHERE { ${membership(`<${iri}>`, graphMode)} }`
+  return `SELECT (COUNT(DISTINCT ?s) AS ?total) WHERE { ${membership(`<${iri}>`, s)} }`
 }
 
 /**
- * One page of instances of a type, with a display label resolved by precedence
- * (rdfs:label, skos:prefLabel, dct:title, else the URI). GROUP BY ?s + SAMPLE
- * gives exactly one row per instance (so the page size = instance count, not
- * inflated by multi-language labels or multi-graph membership). Label OPTIONALs
- * read the default graph — fine for a navigation index; full graph-aware triples
- * are one click away in the resource view.
+ * One page of instances of a type. GROUP BY ?s + SAMPLE → exactly one row per
+ * instance. Label OPTIONALs read the default view (fine on merged/triple stores;
+ * a navigation index, full labels are one click away in the resource view).
  */
-export function buildInstanceListQuery(
-  typeUri: string,
-  graphMode: GraphMode = 'named',
-  limit = 100,
-  offset = 0
-): string {
+export function buildInstanceListQuery(typeUri: string, s: GraphStrategy, limit = 100, offset = 0): string {
   const iri = sanitizeIri(typeUri)
   const lim = Math.max(1, Math.floor(limit))
   const off = Math.max(0, Math.floor(offset))
   return withPrefixes(`SELECT ?s (SAMPLE(?lbl) AS ?label) WHERE {
-  ${membership(`<${iri}>`, graphMode)}
+  ${membership(`<${iri}>`, s)}
   OPTIONAL { ?s rdfs:label ?l1 }
   OPTIONAL { ?s skos:prefLabel ?l2 }
   OPTIONAL { ?s dct:title ?l3 }
@@ -115,49 +129,12 @@ ORDER BY ?label
 LIMIT ${lim} OFFSET ${off}`)
 }
 
-/**
- * Whether the connected endpoint uses named graphs.
- * - 'named': quad store — fetch with graph provenance (?g).
- * - 'none':  triple/default-graph-only — lean query, every triple is "default".
- *
- * This is an OPTIMIZATION hint, not a correctness switch: the 'named' query is
- * correct on every endpoint class (on a triple-only store its GRAPH branch is
- * empty and the default branch returns everything). 'none' just lets us skip
- * the GRAPH machinery once we know it's pointless. So callers may safely
- * default to 'named' until detection completes.
- *
- * @see graph-provenance-is-core (memory) and ae-rdf/PLAN.md "Graph awareness"
- */
-export type GraphMode = 'named' | 'none'
+/* ───────────────────────── Labels / embed ───────────────────────── */
 
 /**
- * Outgoing triples of a resource (the core resource-detail query), graph-aware.
- *
- * For every triple we display we must KNOW its full set of graphs — a triple
- * `(s,p,o)` can assert in several graphs at once, so the 'named' query returns
- * one row per (graph, p, o) and the caller folds them into a graphs[] set.
- * The label is derived client-side from these triples (see LABEL_PREDICATES).
- *
- * The 'named' query:
- *   - branch 1: triples inside named graphs, with ?g bound (provenance).
- *   - branch 2: triples in the default graph that are in NO named graph
- *     (?g unbound ⇒ "default graph"); FILTER NOT EXISTS stops double-counting
- *     when the default graph is the union of all named graphs (e.g. Virtuoso).
- *
- * ponytail: we do NOT try to detect the default-graph *semantics* (union vs
- * separate vs empty) — that's a deployment config, not reliably introspectable
- * via SPARQL, and lives in the parked endpoint-profiler. The NOT EXISTS branch
- * makes it correct regardless; detecting union-default to drop the branch is a
- * perf nicety we skip.
- */
-/**
- * Best label AND a sample type for each of a set of resource IRIs.
- * Turns opaque object localnames (e.g. `MENV`) into human labels, and gives a
- * type to show as a badge — including for label-less resources (a UUID then
- * reads as e.g. `[Beneficiary]`). Unsafe IRIs are skipped, not fatal.
- *
- * The label match is OPTIONAL so a subject with no label still returns its type;
- * `SAMPLE` collapses to one label and one type per subject. Default-graph scoped.
+ * Best label AND a sample type per IRI. OPTIONAL label so label-less subjects
+ * still return a type (badge / fallback). Default-view scoped (labels live there
+ * on merged/triple stores). Unsafe IRIs are skipped.
  */
 export function buildLabelsQuery(uris: string[]): string {
   const values = uris
@@ -175,28 +152,44 @@ export function buildLabelsQuery(uris: string[]): string {
 
 /**
  * Triples of several resources at once (batch), for inline embedding of value
- * objects (MonetaryAmount, coordinates). Depth-1 — the caller does not recurse.
- * Default-graph scoped (value objects are small, provenance isn't shown inline).
+ * objects. Depth-1. The caller folds (p,o) per subject, which dedups any
+ * cross-graph multiplicity — so no SELECT DISTINCT is needed.
  */
-export function buildEmbeddedTriplesQuery(uris: string[]): string {
+export function buildEmbeddedTriplesQuery(uris: string[], s: GraphStrategy): string {
   const values = uris
     .filter(isNavigableIri)
     .slice(0, 64)
     .map(u => `<${u}>`)
     .join(' ')
-  // DISTINCT: the default graph is often the union of named graphs (Virtuoso),
-  // so a plain query returns each triple once per graph — dedupe at the source.
-  return `SELECT DISTINCT ?s ?p ?o WHERE { VALUES ?s { ${values} } ?s ?p ?o } ORDER BY ?s ?p`
+  const named = `GRAPH ?g { ?s ?p ?o }`
+  const def = `?s ?p ?o`
+  const pattern = s.useNamed && s.useDefault ? `{ ${named} } UNION { ${def} }` : s.useNamed ? named : def
+  return `SELECT ?s ?p ?o WHERE { VALUES ?s { ${values} } ${pattern} } ORDER BY ?s ?p`
 }
 
-export function buildResourceTriplesQuery(resourceUri: string, graphMode: GraphMode = 'named'): string {
+/* ───────────────────────── Resource detail (core) ───────────────────────── */
+
+/**
+ * Outgoing triples of a resource, graph-aware. The same (p,o) can come back once
+ * per graph; the caller folds them into a graphs[] set (provenance + dedup).
+ *
+ * - both scopes (own / unknown): named graphs UNION the default-only triples
+ *   (FILTER NOT EXISTS keeps the default branch to genuinely default-only
+ *   triples, so a merged default doesn't mislabel named triples as "default").
+ * - named only (merged): `GRAPH ?g` alone — folding dedups cross-graph copies.
+ * - default only (no quads): plain.
+ */
+export function buildResourceTriplesQuery(resourceUri: string, s: GraphStrategy): string {
   const iri = sanitizeIri(resourceUri)
-  if (graphMode === 'none') {
-    return `SELECT ?p ?o WHERE { <${iri}> ?p ?o } ORDER BY ?p`
-  }
-  return `SELECT ?g ?p ?o WHERE {
+  if (s.useNamed && s.useDefault) {
+    return `SELECT ?g ?p ?o WHERE {
   { GRAPH ?g { <${iri}> ?p ?o } }
   UNION
   { <${iri}> ?p ?o FILTER NOT EXISTS { GRAPH ?ng { <${iri}> ?p ?o } } }
 } ORDER BY ?p`
+  }
+  if (s.useNamed) {
+    return `SELECT ?g ?p ?o WHERE { GRAPH ?g { <${iri}> ?p ?o } } ORDER BY ?p`
+  }
+  return `SELECT ?p ?o WHERE { <${iri}> ?p ?o } ORDER BY ?p`
 }

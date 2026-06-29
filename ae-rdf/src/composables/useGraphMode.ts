@@ -1,13 +1,15 @@
 /**
- * useGraphMode - detect once per endpoint whether it uses named graphs, and
- * cache it in the browse store so resource queries pick the right shape.
+ * useGraphMode - resolve the connected endpoint's graph axes into the browse
+ * store, so every query builder picks the right scope (see resolveGraphStrategy).
  *
- * One cheap ASK per connect (detectGraphs). Resets to the safe 'named' superset
- * on every endpoint change, then downgrades to 'none' only when the endpoint
- * has no named graphs at all — so correctness never waits on detection, it's
- * purely an optimization (see GraphMode / ae-rdf/PLAN.md "Graph awareness").
+ * Resolution per axis (config wins; unknown = safe superset):
+ * - quads: endpoint.graph.quads → SKOS analysis (shared `ae-endpoints`) → one
+ *   `detectGraphs` ASK probe.
+ * - defaultView: config-declared only ('own' | 'merged'). Unset → treated as
+ *   'own' (the safe superset; folding (p,o) dedups any merge). Auto-detecting
+ *   merged-vs-own is the parked endpoint-profiler's job; the deployer declares it.
  *
- * @see /spec/ae-rdf
+ * @see /spec/ae-rdf/rdf-overview.md (Graph model)
  */
 import { onMounted, onUnmounted } from 'vue'
 import { useEndpointStore, useBrowseStore } from '../stores'
@@ -20,32 +22,30 @@ export function useGraphMode() {
   async function detect(): Promise<void> {
     const endpoint = endpointStore.current
     if (!endpoint) return
+    const cfg = endpoint.graph ?? {}
 
-    // Reuse: endpoints are shared across AE tools via the `ae-endpoints` key, so
-    // if AE SKOS already analysed this endpoint, supportsNamedGraphs rides along
-    // on the endpoint object. Trust it and skip the probe.
-    const known = endpoint.analysis?.supportsNamedGraphs
-    if (known !== undefined && known !== null) {
-      browseStore.setGraphMode(known ? 'named' : 'none')
-      logger.info('useGraphMode', 'Reused supportsNamedGraphs from shared endpoint analysis', {
-        mode: browseStore.graphMode,
-        endpoint: endpoint.url,
-      })
-      return
+    // quads: config > SKOS analysis > unknown (probe below).
+    let quads: boolean | undefined = cfg.quads
+    if (quads === undefined) {
+      const skos = endpoint.analysis?.supportsNamedGraphs
+      if (skos === true || skos === false) quads = skos
     }
 
-    // Reset to the safe superset before probing — the 'named' resource query is
-    // correct everywhere, so any in-flight resource load stays correct meanwhile.
-    browseStore.setGraphMode('named')
-    const endpointId = endpoint.id
-    try {
-      const { supportsNamedGraphs } = await detectGraphs(endpoint)
-      if (endpointStore.current?.id !== endpointId) return // endpoint changed mid-probe
-      // false = no named graphs; null = GRAPH unsupported → treat both as 'none'.
-      browseStore.setGraphMode(supportsNamedGraphs === true ? 'named' : 'none')
-      logger.info('useGraphMode', 'Detected graph mode', { mode: browseStore.graphMode, endpoint: endpoint.url })
-    } catch (e) {
-      logger.warn('useGraphMode', 'Graph detection failed; keeping safe default', { error: e })
+    // Publish what we know now (defaultView is config-only); safe superset if unknown.
+    browseStore.setGraph({ quads, defaultView: cfg.defaultView })
+
+    // Probe quads only if still unknown.
+    if (quads === undefined) {
+      const endpointId = endpoint.id
+      try {
+        const { supportsNamedGraphs } = await detectGraphs(endpoint)
+        if (endpointStore.current?.id !== endpointId) return // endpoint changed mid-probe
+        const probed = supportsNamedGraphs === true ? true : supportsNamedGraphs === false ? false : undefined
+        browseStore.setGraph({ quads: probed, defaultView: cfg.defaultView })
+        logger.info('useGraphMode', 'Probed quad support', { quads: probed, endpoint: endpoint.url })
+      } catch (e) {
+        logger.warn('useGraphMode', 'Quad probe failed; using safe default', { error: e })
+      }
     }
   }
 

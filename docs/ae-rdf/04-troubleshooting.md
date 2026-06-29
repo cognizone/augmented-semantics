@@ -17,10 +17,11 @@ doesn't, queries fail with a **CORS** error and the Types sidebar stays empty.
 
 - **CORS / connection** — see above; check the browser console (F12) for a `CORS_BLOCKED` or network error.
 - **Authentication** — a protected endpoint needs credentials set on the endpoint ([Authentication](01-endpoints.md#authentication)).
-- **Data only in a separate default graph** — on a graph-using endpoint whose
-  data sits only in the default graph, the type list can come up short. Try
-  opening a known resource by URI in the top bar; if it shows triples, the data
-  is reachable even when the list isn't. See [Graphs](03-graphs.md#how-it-works-and-its-limits).
+- **Graph config mismatch** — if the endpoint's [graph config](03-graphs.md#how-it-works)
+  is wrong (e.g. its default view is declared *merged* but actually holds unique
+  triples), some items can be missed. Open a known resource by URI to confirm the
+  data is reachable, then correct the endpoint's graph setting. Left unset, AE RDF
+  queries everything and won't miss data.
 
 ## "No outgoing triples for this resource"
 

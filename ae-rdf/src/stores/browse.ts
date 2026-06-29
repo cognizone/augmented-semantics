@@ -1,22 +1,23 @@
 /**
- * Browse Store - current RDF browsing selection.
+ * Browse Store - current RDF browsing selection + the resolved endpoint graph.
  *
- * Holds what the user is looking at (resource, and later type). Kept in sync
- * with the URL (?resource, ?type) by RdfView for deep-linking per com04.
+ * Holds what the user is looking at (resource, type), kept in sync with the URL
+ * (?resource, ?type) by RdfView for deep-linking (com04), plus the effective
+ * graph axes for the connected endpoint (config + probe, see useGraphMode).
  *
  * @see /spec/ae-rdf
  */
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import type { GraphMode } from '../services'
+import type { EndpointGraph } from '../types'
 
 export const useBrowseStore = defineStore('browse', () => {
   const currentResource = ref<string | null>(null)
-  const currentType = ref<string | null>(null) // populated by T3/T5
+  const currentType = ref<string | null>(null)
 
-  // Graph awareness: whether the current endpoint uses named graphs. Defaults
-  // to the safe superset ('named') until detection completes — see GraphMode.
-  const graphMode = ref<GraphMode>('named')
+  // Effective graph axes for the current endpoint. Empty = unknown → query
+  // builders treat it as the safe superset (see resolveGraphStrategy).
+  const graph = ref<EndpointGraph>({})
 
   function setResource(uri: string | null) {
     currentResource.value = uri
@@ -26,9 +27,9 @@ export const useBrowseStore = defineStore('browse', () => {
     currentType.value = uri
   }
 
-  function setGraphMode(mode: GraphMode) {
-    graphMode.value = mode
+  function setGraph(g: EndpointGraph) {
+    graph.value = g
   }
 
-  return { currentResource, currentType, graphMode, setResource, setType, setGraphMode }
+  return { currentResource, currentType, graph, setResource, setType, setGraph }
 })

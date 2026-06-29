@@ -20,24 +20,26 @@ triple it shows you, even when it isn't painting them on screen.
   that would be misleading.
 - **Hover** — hovering any value shows its graph(s) regardless of the toggle.
 
-## How it works (and its limits)
+## How it works
 
-AE RDF detects once per endpoint whether it uses named graphs. If your endpoint
-was already analysed in **AE SKOS**, that information is reused (endpoints are
-shared) — otherwise a single quick probe runs on connect.
+AE RDF understands an endpoint on two simple axes, and builds every query from them:
 
-- The **resource view** fetches triples graph-aware and is correct on every kind
-  of endpoint, including those whose default graph is the union of all named
-  graphs (common with Virtuoso).
-- The **type and instance lists** count and list within named graphs on
-  graph-using endpoints. In the rare case where a dataset keeps some data *only*
-  in a separate default graph (not in any named graph), those particular items
-  may not appear in the lists — open them directly by URI to inspect them fully.
+- **Quads?** — does it use named graphs at all? Resolved automatically (reused
+  from AE SKOS if known, else a quick probe on connect), or set in config.
+- **The explicit (default) view** — is it the endpoint's *own* triples, or just a
+  *merged* view of the quads? When it's merely **merged** (common with Virtuoso,
+  e.g. CORDIS), that view is redundant and returns each fact once per graph — so
+  AE RDF **never queries it**, reading the named graphs directly and de-duplicating.
+  That's why values aren't doubled.
+
+The second axis isn't something a tool can reliably guess, so it's part of the
+**endpoint config** — declare it once (per deployment) and every query is correct
+and fast. Unset, AE RDF plays it safe (queries everything and de-duplicates).
 
 ## Not yet included
 
-- **Picking/filtering by graph** (show only one graph, hide others) is not in
-  this version — AE RDF shows provenance, it doesn't yet let you scope to a graph.
+- **Picking/filtering by graph** (show only one graph, hide others) — AE RDF
+  shows provenance, it doesn't yet let you scope *to* a graph.
 
 ---
 
