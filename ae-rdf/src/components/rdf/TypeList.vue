@@ -22,7 +22,7 @@ const router = useRouter()
 const browseStore = useBrowseStore()
 const settings = useSettingsStore()
 const typeConfig = useTypeConfigStore()
-const { types, loading, error, resolved } = useRdfTypes()
+const { types, loading, error, resolved, composition } = useRdfTypes()
 const showLoading = useDelayedLoading(loading)
 
 const selected = computed(() => browseStore.currentType)
@@ -40,14 +40,35 @@ function formatCount(n: number): string {
   return n.toLocaleString('en-US')
 }
 
-// Pinned first, hidden excluded unless revealed.
+const countOf = (uri: string) => types.value.find(t => t.uri === uri)?.count ?? 0
+
+// Embed types are shown nested under their composing class, never flat.
+const embedSet = computed(() => new Set(types.value.filter(t => renderOf(t.uri) === 'embed').map(t => t.uri)))
+
+// Embed types each composing class contains (only the ones relevant to it),
+// commonest first.
+const childrenOf = (parentUri: string): string[] =>
+  (composition.value.get(parentUri) ?? [])
+    .filter(e => embedSet.value.has(e))
+    .sort((a, b) => countOf(b) - countOf(a))
+
+// Embed types that found a parent — so they're not also shown flat.
+const placedEmbeds = computed(() => {
+  const placed = new Set<string>()
+  for (const [, kids] of composition.value) for (const k of kids) if (embedSet.value.has(k)) placed.add(k)
+  return placed
+})
+
+// Top level: non-embed types. An embed type with no discovered parent stays
+// flat in edit mode only, so it remains configurable (can be un-embedded).
 const visibleTypes = computed<RdfType[]>(() => {
-  const list = showHidden.value ? types.value : types.value.filter(t => !isHidden(t.uri))
-  const pinned = list.filter(t => cfg(t.uri).sidebar === 'pin')
-  const rest = list.filter(t => cfg(t.uri).sidebar !== 'pin')
+  const list = (showHidden.value ? types.value : types.value.filter(t => !isHidden(t.uri)))
+    .filter(t => !embedSet.value.has(t.uri) || (settings.editMode && !placedEmbeds.value.has(t.uri)))
+  const pinned = list.filter(t => isPinned(t.uri))
+  const rest = list.filter(t => !isPinned(t.uri))
   return [...pinned, ...rest]
 })
-const hiddenCount = computed(() => types.value.filter(t => isHidden(t.uri)).length)
+const hiddenCount = computed(() => types.value.filter(t => isHidden(t.uri) && !embedSet.value.has(t.uri)).length)
 
 const menuItems = computed(() => {
   const uri = menuType.value
@@ -106,25 +127,40 @@ function selectType(uri: string) {
 
     <template v-else>
       <ul class="type-items">
-        <li v-for="t in visibleTypes" :key="t.uri" class="type-row" :class="{ 'is-hidden': isHidden(t.uri) }">
-          <button
-            class="type-item"
-            :class="{ active: selected === t.uri }"
-            :title="t.uri"
-            @click="selectType(t.uri)"
-          >
-            <span class="type-name">{{ typeName(t.uri) }}</span>
-            <span class="type-ind">
-              <span v-if="isPinned(t.uri)" class="material-symbols-outlined ind" title="Pinned to top">push_pin</span>
-              <span v-if="renderOf(t.uri) === 'embed'" class="material-symbols-outlined ind" title="Embedded inline as a value">data_object</span>
-              <span v-if="renderOf(t.uri) === 'label'" class="material-symbols-outlined ind" title="Shown as a label (no link)">label</span>
-            </span>
-            <span class="type-count">{{ formatCount(t.count) }}</span>
-          </button>
-          <button v-if="settings.editMode" class="type-gear" aria-label="Configure type" @click.stop="openMenu($event, t.uri)">
-            <span class="material-symbols-outlined">tune</span>
-          </button>
-        </li>
+        <template v-for="t in visibleTypes" :key="t.uri">
+          <li class="type-row" :class="{ 'is-hidden': isHidden(t.uri) }">
+            <button
+              class="type-item"
+              :class="{ active: selected === t.uri }"
+              :title="t.uri"
+              @click="selectType(t.uri)"
+            >
+              <span class="type-name">{{ typeName(t.uri) }}</span>
+              <span class="type-ind">
+                <span v-if="isPinned(t.uri)" class="material-symbols-outlined ind" title="Pinned to top">push_pin</span>
+                <span v-if="renderOf(t.uri) === 'embed'" class="material-symbols-outlined ind" title="Embedded inline as a value">data_object</span>
+                <span v-if="renderOf(t.uri) === 'label'" class="material-symbols-outlined ind" title="Shown as a label (no link)">label</span>
+              </span>
+              <span class="type-count">{{ formatCount(t.count) }}</span>
+            </button>
+            <button v-if="settings.editMode" class="type-gear" aria-label="Configure type" @click.stop="openMenu($event, t.uri)">
+              <span class="material-symbols-outlined">tune</span>
+            </button>
+          </li>
+          <!-- Embed types nested under the class that composes them. -->
+          <li v-for="cu in childrenOf(t.uri)" :key="t.uri + '>' + cu" class="type-row type-child">
+            <div class="type-item is-static" :title="cu">
+              <span class="type-name">{{ typeName(cu) }}</span>
+              <span class="type-ind">
+                <span class="material-symbols-outlined ind" title="Embedded inline as a value">data_object</span>
+              </span>
+              <span class="type-count">{{ formatCount(countOf(cu)) }}</span>
+            </div>
+            <button v-if="settings.editMode" class="type-gear" aria-label="Configure type" @click.stop="openMenu($event, cu)">
+              <span class="material-symbols-outlined">tune</span>
+            </button>
+          </li>
+        </template>
       </ul>
 
       <button v-if="hiddenCount" class="show-hidden" @click="showHidden = !showHidden">
@@ -198,6 +234,20 @@ function selectType(uri: string) {
 
 .type-item.active {
   box-shadow: inset 2px 0 0 var(--ae-accent);
+}
+
+/* Embed types nested under their composing class: indented, muted, non-clickable. */
+.type-child .type-item {
+  padding-left: 1.5rem;
+}
+
+.type-child .type-name {
+  color: var(--ae-text-secondary);
+  font-size: 0.75rem;
+}
+
+.type-item.is-static {
+  cursor: default;
 }
 
 .type-name {

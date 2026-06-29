@@ -129,6 +129,25 @@ ORDER BY ?label
 LIMIT ${lim} OFFSET ${off}`)
 }
 
+/**
+ * Composition discovery: which classes embed which value-types. A class C
+ * "composes" embed-type E when some instance of C has a property whose object
+ * is an instance of E. Returns DISTINCT (?c, ?e) pairs — the result set is tiny
+ * (embed types are few, config-driven), so no count/paging.
+ *
+ * Scope: when a default/merged view is queryable (useDefault) we read it plain —
+ * the safe superset. Only in the never-touch-default case (merged quads) do we
+ * wrap each pattern in its own GRAPH so cross-graph composition still resolves.
+ * Provenance is irrelevant here — this is a structural map, not displayed triples.
+ */
+export function buildCompositionQuery(embedTypeUris: string[], s: GraphStrategy): string {
+  const values = embedTypeUris.filter(isNavigableIri).slice(0, 64).map(u => `<${u}>`).join(' ')
+  const body = s.useDefault
+    ? `?o a ?e . ?s ?p ?o . ?s a ?c .`
+    : `GRAPH ?ge { ?o a ?e } GRAPH ?gp { ?s ?p ?o } GRAPH ?gc { ?s a ?c }`
+  return `SELECT DISTINCT ?c ?e WHERE { VALUES ?e { ${values} } ${body} FILTER(?c != ?e) }`
+}
+
 /* ───────────────────────── Labels / embed ───────────────────────── */
 
 /**

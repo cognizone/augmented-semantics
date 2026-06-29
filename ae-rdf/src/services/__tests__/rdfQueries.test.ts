@@ -15,6 +15,7 @@ import {
   buildInstanceListQuery,
   buildLabelsQuery,
   buildEmbeddedTriplesQuery,
+  buildCompositionQuery,
 } from '../rdfQueries'
 
 const RES = 'http://data.europa.eu/s66#endDate'
@@ -177,5 +178,27 @@ describe('buildEmbeddedTriplesQuery', () => {
     const q = buildEmbeddedTriplesQuery(['http://e.org/x> } DELETE', RES], BOTH)
     expect(q).toContain(`<${RES}>`)
     expect(q).not.toContain('DELETE')
+  })
+})
+
+describe('buildCompositionQuery', () => {
+  it('finds DISTINCT (class, embed-type) pairs; plain when default queryable', () => {
+    const q = buildCompositionQuery([TYPE], DEFAULT)
+    expect(q).toContain('SELECT DISTINCT ?c ?e')
+    expect(q).toContain(`VALUES ?e { <${TYPE}> }`)
+    expect(q).toContain('?o a ?e . ?s ?p ?o . ?s a ?c .')
+    expect(q).toContain('FILTER(?c != ?e)')
+    expect(q).not.toContain('GRAPH')
+  })
+  it('merged (never default) wraps each pattern in its own GRAPH for cross-graph', () => {
+    const q = buildCompositionQuery([TYPE], NAMED)
+    expect(q).toContain('GRAPH ?ge { ?o a ?e }')
+    expect(q).toContain('GRAPH ?gp { ?s ?p ?o }')
+    expect(q).toContain('GRAPH ?gc { ?s a ?c }')
+  })
+  it('skips unsafe IRIs', () => {
+    const q = buildCompositionQuery(['http://e.org/x> } DROP', TYPE], BOTH)
+    expect(q).toContain(`<${TYPE}>`)
+    expect(q).not.toContain('DROP')
   })
 })

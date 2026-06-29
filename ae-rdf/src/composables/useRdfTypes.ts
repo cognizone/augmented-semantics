@@ -8,9 +8,9 @@
  * @see /spec/ae-rdf
  * @see /spec/common/com02-StateManagement.md
  */
-import { ref, watch, onMounted, onUnmounted, type Ref } from 'vue'
-import { useEndpointStore, useBrowseStore } from '../stores'
-import { executeSparql, resolveUris, logger, eventBus, buildTypeInventoryQuery, resolveGraphStrategy } from '../services'
+import { ref, computed, watch, onMounted, onUnmounted, type Ref } from 'vue'
+import { useEndpointStore, useBrowseStore, useTypeConfigStore } from '../stores'
+import { executeSparql, resolveUris, logger, eventBus, buildTypeInventoryQuery, buildCompositionQuery, resolveGraphStrategy } from '../services'
 
 export interface RdfType {
   uri: string
@@ -22,12 +22,53 @@ type ResolvedMap = Map<string, { prefix: string; localName: string }>
 export function useRdfTypes() {
   const endpointStore = useEndpointStore()
   const browseStore = useBrowseStore()
+  const typeConfig = useTypeConfigStore()
 
   const types: Ref<RdfType[]> = ref([])
   const loading = ref(false)
   const error = ref<string | null>(null)
   const resolved: Ref<ResolvedMap> = ref(new Map())
+  // Embed-type composition: composing class → embed types it contains inline.
+  const composition: Ref<Map<string, string[]>> = ref(new Map())
   let requestId = 0
+
+  // Types configured to render inline as values (per-endpoint config).
+  const embedTypes = computed(() =>
+    types.value.filter(t => typeConfig.get(t.uri).render === 'embed').map(t => t.uri),
+  )
+
+  // Find which classes compose each embed type so the sidebar can nest them
+  // under their parent (instead of listing them flat). Async, non-blocking —
+  // the flat list paints first; nested rows fill in like prefixes do.
+  async function loadComposition(): Promise<void> {
+    const endpoint = endpointStore.current
+    const embeds = embedTypes.value
+    if (!endpoint || !embeds.length) {
+      composition.value = new Map()
+      return
+    }
+    const endpointId = endpoint.id
+    try {
+      const res = await executeSparql(
+        endpoint,
+        buildCompositionQuery(embeds, resolveGraphStrategy(browseStore.graph)),
+        { retries: 1 },
+      )
+      if (endpointStore.current?.id !== endpointId) return
+      const map = new Map<string, string[]>()
+      for (const b of res.results.bindings) {
+        const c = b.c?.value, e = b.e?.value
+        if (!c || !e) continue
+        const arr = map.get(c) ?? []
+        if (!arr.includes(e)) arr.push(e)
+        map.set(c, arr)
+      }
+      composition.value = map
+      logger.info('useRdfTypes', 'Loaded embed composition map', { parents: map.size })
+    } catch (e: unknown) {
+      logger.warn('useRdfTypes', 'Composition discovery failed', { error: e })
+    }
+  }
 
   async function loadTypes(): Promise<void> {
     const endpoint = endpointStore.current
@@ -92,10 +133,13 @@ export function useRdfTypes() {
   // graph axes resolve async (config / SKOS / probe); reload so the inventory
   // re-runs with the correct scope once they're known.
   watch(() => browseStore.graph, () => { if (endpointStore.current) loadTypes() })
+  // Recompute composition when the embed set changes (types load or a live
+  // edit-mode toggle) or the graph scope changes.
+  watch([embedTypes, () => browseStore.graph], () => loadComposition())
   onMounted(() => {
     if (endpointStore.current) loadTypes()
   })
   onUnmounted(() => sub.unsubscribe())
 
-  return { types, loading, error, resolved, loadTypes }
+  return { types, loading, error, resolved, composition, loadTypes }
 }
