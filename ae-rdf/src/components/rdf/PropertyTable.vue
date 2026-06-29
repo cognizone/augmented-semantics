@@ -7,7 +7,7 @@
  *
  * @see /spec/ae-rdf
  */
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { isNavigableIri } from '../../services'
 import { useSettingsStore } from '../../stores'
 import { qname as toQname, displayPredicate, displayObject, displayType, type ResolvedMap } from '../../utils/format'
@@ -59,6 +59,21 @@ function sortedObjects(group: PropertyGroup): ResourceObject[] {
   return [...group.objects].sort((a, b) => key(a).localeCompare(key(b)))
 }
 
+// A predicate can have thousands of objects (e.g. a hub node disbursing every
+// grant). Cap the rendered list; the rest is one click away.
+const OBJECT_CAP = 100
+const expanded = ref<Set<string>>(new Set())
+const fmtN = (n: number) => n.toLocaleString('en-US')
+function shownObjects(group: PropertyGroup): ResourceObject[] {
+  const all = sortedObjects(group)
+  return expanded.value.has(group.predicate) ? all : all.slice(0, OBJECT_CAP)
+}
+function toggleExpand(predicate: string) {
+  const next = new Set(expanded.value)
+  next.has(predicate) ? next.delete(predicate) : next.add(predicate)
+  expanded.value = next
+}
+
 // Graphs are always KNOWN; this controls whether they're painted. Multi-graph
 // triples are always surfaced (silence there would mislead).
 function showGraphsFor(o: ResourceObject): boolean {
@@ -77,7 +92,7 @@ function graphTitle(o: ResourceObject): string {
       <tr v-for="group in groups" :key="group.predicate">
         <th class="prop-key" v-tooltip.top="{ value: qname(group.predicate), showDelay: 120 }">{{ predicateLabel(group.predicate) }}</th>
         <td class="prop-values">
-          <div v-for="(o, i) in sortedObjects(group)" :key="i" class="prop-value" :title="graphTitle(o)">
+          <div v-for="(o, i) in shownObjects(group)" :key="i" class="prop-value" :title="graphTitle(o)">
             <!-- Embedded value object: inline its triples (recursively — an
                  embedded object may itself embed more, e.g. Site → PostalAddress) -->
             <div v-if="o.termType === 'uri' && embedded?.get(o.value)" class="embed">
@@ -136,6 +151,16 @@ function graphTitle(o: ResourceObject): string {
               <span v-else class="tag graph-tag default" title="Default graph">default graph</span>
             </span>
           </div>
+
+          <!-- Cap long object lists; reveal the rest on demand. -->
+          <div v-if="group.objects.length > OBJECT_CAP" class="prop-more">
+            <span class="prop-more-count">
+              {{ expanded.has(group.predicate) ? `all ${fmtN(group.objects.length)}` : `${OBJECT_CAP} of ${fmtN(group.objects.length)}` }}
+            </span>
+            <a class="show-more" @click="toggleExpand(group.predicate)">
+              {{ expanded.has(group.predicate) ? 'Show fewer' : 'Show all' }}
+            </a>
+          </div>
         </td>
       </tr>
     </tbody>
@@ -175,6 +200,27 @@ function graphTitle(o: ResourceObject): string {
 .prop-value {
   padding: 0.125rem 0;
   word-break: break-word;
+}
+
+.prop-more {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.25rem 0;
+  font-size: 0.75rem;
+}
+
+.prop-more-count {
+  color: var(--ae-text-muted);
+}
+
+.show-more {
+  color: var(--ae-accent);
+  cursor: pointer;
+}
+
+.show-more:hover {
+  text-decoration: underline;
 }
 
 .uri-link {

@@ -145,15 +145,45 @@ export function buildCompositionQuery(embedTypeUris: string[], s: GraphStrategy)
   const body = s.useDefault
     ? `?o a ?e . ?s ?p ?o . ?s a ?c .`
     : `GRAPH ?ge { ?o a ?e } GRAPH ?gp { ?s ?p ?o } GRAPH ?gc { ?s a ?c }`
-  return `SELECT DISTINCT ?c ?e WHERE { VALUES ?e { ${values} } ${body} FILTER(?c != ?e) }`
+  // ?n = distinct embed-value instances reachable from instances of ?c, so a
+  // nested embed shows a count relative to its composing class, not the global
+  // type total (Acronym under PublicBody ≠ all Acronyms in the store).
+  return `SELECT ?c ?e (COUNT(DISTINCT ?o) AS ?n) WHERE { VALUES ?e { ${values} } ${body} FILTER(?c != ?e) } GROUP BY ?c ?e`
+}
+
+const SUBCLASS_OF = 'http://www.w3.org/2000/01/rdf-schema#subClassOf'
+
+/**
+ * Subclass discovery: which listed types are a more specific kind of another
+ * listed type (rdfs:subClassOf). VALUES bounds it to the inventory, so we never
+ * pull in superclasses that aren't even browsable (owl:Thing &c) — the caller
+ * still filters ?super to the inventory set. Returns DISTINCT (?sub, ?super).
+ *
+ * Scope: plain when a default/merged view is queryable (the safe superset),
+ * else GRAPH-wrapped for the never-touch-default (merged quads) case. The
+ * relationship is structural, so provenance doesn't matter here.
+ */
+export function buildSubclassQuery(typeUris: string[], s: GraphStrategy): string {
+  const values = typeUris.filter(isNavigableIri).slice(0, 500).map(u => `<${u}>`).join(' ')
+  const pred = `<${SUBCLASS_OF}>`
+  const body = s.useDefault
+    ? `?sub ${pred} ?super .`
+    : `GRAPH ?g { ?sub ${pred} ?super }`
+  return `SELECT DISTINCT ?sub ?super WHERE { VALUES ?sub { ${values} } ${body} FILTER(?sub != ?super) }`
 }
 
 /* ───────────────────────── Labels / embed ───────────────────────── */
 
 /**
- * Best label AND a sample type per IRI. OPTIONAL label so label-less subjects
- * still return a type (badge / fallback). Default-view scoped (labels live there
- * on merged/triple stores). Unsafe IRIs are skipped.
+ * Best label AND the MOST SPECIFIC type per IRI. OPTIONAL label so label-less
+ * subjects still return a type (badge / fallback). Default-view scoped (labels
+ * live there on merged/triple stores). Unsafe IRIs are skipped.
+ *
+ * Most-specific = a type the subject asserts that has no more-specific asserted
+ * type below it (no `?more rdfs:subClassOf+ ?t`). So an object typed Result →
+ * ProjectPublication → JournalPaper badges as "JournalPaper", not an arbitrary
+ * ancestor. Self-contained — the picking happens in the query, no client-side
+ * hierarchy needed. (SAMPLE breaks ties on genuine multiple inheritance.)
  */
 export function buildLabelsQuery(uris: string[]): string {
   const values = uris
@@ -162,10 +192,14 @@ export function buildLabelsQuery(uris: string[]): string {
     .map(u => `<${u}>`)
     .join(' ')
   const labelPreds = LABEL_PREDICATES.map(p => `<${p}>`).join(' ')
+  const subClassOf = `<${SUBCLASS_OF}>`
   return `SELECT ?s (SAMPLE(?lbl) AS ?label) (SAMPLE(?t) AS ?type) WHERE {
   VALUES ?s { ${values} }
   OPTIONAL { VALUES ?lp { ${labelPreds} } ?s ?lp ?lbl }
-  OPTIONAL { ?s a ?t }
+  OPTIONAL {
+    ?s a ?t .
+    FILTER NOT EXISTS { ?s a ?more . ?more ${subClassOf}+ ?t . FILTER(?more != ?t) }
+  }
 } GROUP BY ?s`
 }
 

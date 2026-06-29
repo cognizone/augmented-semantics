@@ -16,6 +16,7 @@ import {
   buildLabelsQuery,
   buildEmbeddedTriplesQuery,
   buildCompositionQuery,
+  buildSubclassQuery,
 } from '../rdfQueries'
 
 const RES = 'http://data.europa.eu/s66#endDate'
@@ -148,13 +149,16 @@ describe('buildInstanceListQuery', () => {
 })
 
 describe('buildLabelsQuery', () => {
-  it('OPTIONAL label + sample type per subject, grouped', () => {
+  it('OPTIONAL label + MOST SPECIFIC type per subject, grouped', () => {
     const q = buildLabelsQuery([RES, TYPE])
     expect(q).toContain(`VALUES ?s { <${RES}> <${TYPE}> }`)
     expect(q).toContain('SAMPLE(?lbl) AS ?label')
     expect(q).toContain('SAMPLE(?t) AS ?type')
     expect(q).toContain('OPTIONAL { VALUES ?lp {')
-    expect(q).toContain('OPTIONAL { ?s a ?t }')
+    expect(q).toContain('?s a ?t')
+    // leaf-type picker: exclude any type that has a more-specific asserted type
+    expect(q).toContain('FILTER NOT EXISTS')
+    expect(q).toContain('subClassOf')
     expect(q).toContain('GROUP BY ?s')
   })
   it('skips unsafe IRIs', () => {
@@ -182,9 +186,10 @@ describe('buildEmbeddedTriplesQuery', () => {
 })
 
 describe('buildCompositionQuery', () => {
-  it('finds DISTINCT (class, embed-type) pairs; plain when default queryable', () => {
+  it('counts embed values per (class, embed-type) edge; plain when default queryable', () => {
     const q = buildCompositionQuery([TYPE], DEFAULT)
-    expect(q).toContain('SELECT DISTINCT ?c ?e')
+    expect(q).toContain('SELECT ?c ?e (COUNT(DISTINCT ?o) AS ?n)')
+    expect(q).toContain('GROUP BY ?c ?e')
     expect(q).toContain(`VALUES ?e { <${TYPE}> }`)
     expect(q).toContain('?o a ?e . ?s ?p ?o . ?s a ?c .')
     expect(q).toContain('FILTER(?c != ?e)')
@@ -198,6 +203,26 @@ describe('buildCompositionQuery', () => {
   })
   it('skips unsafe IRIs', () => {
     const q = buildCompositionQuery(['http://e.org/x> } DROP', TYPE], BOTH)
+    expect(q).toContain(`<${TYPE}>`)
+    expect(q).not.toContain('DROP')
+  })
+})
+
+describe('buildSubclassQuery', () => {
+  const SUBCLASS = '<http://www.w3.org/2000/01/rdf-schema#subClassOf>'
+  it('finds DISTINCT (sub, super) pairs bounded to the inventory; plain on default', () => {
+    const q = buildSubclassQuery([TYPE], DEFAULT)
+    expect(q).toContain('SELECT DISTINCT ?sub ?super')
+    expect(q).toContain(`VALUES ?sub { <${TYPE}> }`)
+    expect(q).toContain(`?sub ${SUBCLASS} ?super`)
+    expect(q).toContain('FILTER(?sub != ?super)')
+    expect(q).not.toContain('GRAPH')
+  })
+  it('merged (never default) wraps in GRAPH', () => {
+    expect(buildSubclassQuery([TYPE], NAMED)).toContain(`GRAPH ?g { ?sub ${SUBCLASS} ?super }`)
+  })
+  it('skips unsafe IRIs', () => {
+    const q = buildSubclassQuery(['http://e.org/x> } DROP', TYPE], BOTH)
     expect(q).toContain(`<${TYPE}>`)
     expect(q).not.toContain('DROP')
   })

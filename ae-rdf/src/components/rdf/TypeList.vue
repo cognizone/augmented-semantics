@@ -14,7 +14,7 @@ import { useRouter } from 'vue-router'
 import ProgressSpinner from 'primevue/progressspinner'
 import Menu from 'primevue/menu'
 import { useBrowseStore, useSettingsStore, useTypeConfigStore } from '../../stores'
-import { useRdfTypes, useDelayedLoading, type RdfType } from '../../composables'
+import { useRdfTypes, useDelayedLoading } from '../../composables'
 import { displayType } from '../../utils/format'
 import { URL_PARAMS } from '../../router'
 
@@ -22,13 +22,15 @@ const router = useRouter()
 const browseStore = useBrowseStore()
 const settings = useSettingsStore()
 const typeConfig = useTypeConfigStore()
-const { types, loading, error, resolved, composition } = useRdfTypes()
+const { types, loading, error, resolved, composition, subclasses } = useRdfTypes()
 const showLoading = useDelayedLoading(loading)
 
 const selected = computed(() => browseStore.currentType)
 const showHidden = ref(false)
 const typeMenu = ref()
 const menuType = ref<string | null>(null)
+// Collapsed superclasses (default expanded). A Set, replaced wholesale to stay reactive.
+const collapsed = ref<Set<string>>(new Set())
 
 const typeName = (uri: string) => displayType(uri, resolved.value, settings.uriDisplay)
 const cfg = (uri: string) => typeConfig.get(uri)
@@ -41,46 +43,100 @@ function formatCount(n: number): string {
 }
 
 const countOf = (uri: string) => types.value.find(t => t.uri === uri)?.count ?? 0
+// Cap visual indent so deep trees never run off under the count badge (280px panel).
+const indent = (depth: number) => `${0.5 + Math.min(depth, 3) * 0.9}rem`
 
-// Embed types are shown nested under their composing class, never flat.
+const isCollapsed = (uri: string) => collapsed.value.has(uri)
+function toggleCollapse(uri: string) {
+  const next = new Set(collapsed.value)
+  next.has(uri) ? next.delete(uri) : next.add(uri)
+  collapsed.value = next
+}
+
+/* ── Embed nesting (value objects shown inline under their composing class) ── */
+
 const embedSet = computed(() => new Set(types.value.filter(t => renderOf(t.uri) === 'embed').map(t => t.uri)))
 
-// Embed types each composing class contains (only the ones relevant to it),
-// commonest first.
-const childrenOf = (parentUri: string): string[] =>
+// Embed children of a class, each with a count scoped to that class (not the
+// global type total), commonest first.
+const childrenOf = (parentUri: string): { uri: string; count: number }[] =>
   (composition.value.get(parentUri) ?? [])
-    .filter(e => embedSet.value.has(e))
-    .sort((a, b) => countOf(b) - countOf(a))
+    .filter(e => embedSet.value.has(e.uri))
+    .sort((a, b) => b.count - a.count)
 
 // Walk the composition tree depth-first so embeds-within-embeds nest too
-// (Organisation → Site → PostalAddress). `seen` guards cycles and repeats.
-function descendantRows(parentUri: string, depth = 1, seen = new Set<string>([parentUri])): { uri: string; depth: number }[] {
-  const rows: { uri: string; depth: number }[] = []
-  for (const cu of childrenOf(parentUri)) {
-    if (seen.has(cu)) continue
-    seen.add(cu)
-    rows.push({ uri: cu, depth })
-    rows.push(...descendantRows(cu, depth + 1, seen))
+// (Organisation → Site → PostalAddress). Each row's count is relative to its
+// immediate parent. `seen` guards cycles and repeats.
+function embedRows(parentUri: string, depth = 1, seen = new Set<string>([parentUri])): { uri: string; depth: number; count: number }[] {
+  const rows: { uri: string; depth: number; count: number }[] = []
+  for (const c of childrenOf(parentUri)) {
+    if (seen.has(c.uri)) continue
+    seen.add(c.uri)
+    rows.push({ uri: c.uri, depth, count: c.count })
+    rows.push(...embedRows(c.uri, depth + 1, seen))
   }
   return rows
 }
 
-// Embed types that found a parent — so they're not also shown flat.
-const placedEmbeds = computed(() => {
-  const placed = new Set<string>()
-  for (const [, kids] of composition.value) for (const k of kids) if (embedSet.value.has(k)) placed.add(k)
-  return placed
+/* ── Subclass nesting (more-specific kinds tucked under their general type) ── */
+
+// Navigable types we list (embeds are handled separately), respecting hide.
+const baseTypes = computed(() =>
+  (showHidden.value ? types.value : types.value.filter(t => !isHidden(t.uri))).filter(t => !embedSet.value.has(t.uri)),
+)
+// A type's subclasses that are themselves listed & navigable, commonest first.
+const subChildren = (uri: string): string[] =>
+  (subclasses.value.get(uri) ?? [])
+    .filter(s => !embedSet.value.has(s) && (showHidden.value || !isHidden(s)))
+    .sort((a, b) => countOf(b) - countOf(a))
+// Types that are a subclass of another listed type → they nest, never top-level.
+const nestedSubs = computed(() => {
+  const s = new Set<string>()
+  for (const [, subs] of subclasses.value) for (const sub of subs) if (!embedSet.value.has(sub)) s.add(sub)
+  return s
+})
+const pinnedRoots = computed(() => baseTypes.value.filter(t => isPinned(t.uri)).map(t => t.uri))
+const normalRoots = computed(() =>
+  baseTypes.value.filter(t => !isPinned(t.uri) && !nestedSubs.value.has(t.uri)).map(t => t.uri),
+)
+
+const hasKids = (uri: string) => subChildren(uri).length > 0 || childrenOf(uri).length > 0
+
+interface Row { uri: string; depth: number; kind: 'class' | 'embed'; count: number }
+
+// One flat, ordered render list: subclass tree (pinned first), each class
+// followed by its embed descendants. A global `seen` makes a multi-parent
+// subclass show once (under its first parent) and guards cycles.
+const rows = computed<Row[]>(() => {
+  const out: Row[] = []
+  const seen = new Set<string>()
+  const emitted = new Set<string>() // embed URIs already shown under some class
+  const pinned = new Set(pinnedRoots.value)
+
+  function visit(uri: string, depth: number) {
+    if (seen.has(uri)) return
+    seen.add(uri)
+    out.push({ uri, depth, kind: 'class', count: countOf(uri) })
+    if (isCollapsed(uri)) return
+    for (const sub of subChildren(uri)) {
+      if (pinned.has(sub)) continue // shown in the pinned section instead
+      visit(sub, depth + 1)
+    }
+    for (const e of embedRows(uri)) {
+      out.push({ uri: e.uri, depth: depth + e.depth, kind: 'embed', count: e.count })
+      emitted.add(e.uri)
+    }
+  }
+
+  for (const r of pinnedRoots.value) visit(r, 0)
+  for (const r of normalRoots.value) visit(r, 0)
+  // Edit mode: surface embed types that found no composing class, so they stay
+  // configurable — but never re-show one already nested under a class. No
+  // composing parent → fall back to the global type count.
+  if (settings.editMode) for (const e of embedSet.value) if (!emitted.has(e)) out.push({ uri: e, depth: 0, kind: 'embed', count: countOf(e) })
+  return out
 })
 
-// Top level: non-embed types. An embed type with no discovered parent stays
-// flat in edit mode only, so it remains configurable (can be un-embedded).
-const visibleTypes = computed<RdfType[]>(() => {
-  const list = (showHidden.value ? types.value : types.value.filter(t => !isHidden(t.uri)))
-    .filter(t => !embedSet.value.has(t.uri) || (settings.editMode && !placedEmbeds.value.has(t.uri)))
-  const pinned = list.filter(t => isPinned(t.uri))
-  const rest = list.filter(t => !isPinned(t.uri))
-  return [...pinned, ...rest]
-})
 const hiddenCount = computed(() => types.value.filter(t => isHidden(t.uri) && !embedSet.value.has(t.uri)).length)
 
 const menuItems = computed(() => {
@@ -140,40 +196,53 @@ function selectType(uri: string) {
 
     <template v-else>
       <ul class="type-items">
-        <template v-for="t in visibleTypes" :key="t.uri">
-          <li class="type-row" :class="{ 'is-hidden': isHidden(t.uri) }">
-            <button
-              class="type-item"
-              :class="{ active: selected === t.uri }"
-              :title="t.uri"
-              @click="selectType(t.uri)"
-            >
-              <span class="type-name">{{ typeName(t.uri) }}</span>
-              <span class="type-ind">
-                <span v-if="isPinned(t.uri)" class="material-symbols-outlined ind" title="Pinned to top">push_pin</span>
-                <span v-if="renderOf(t.uri) === 'embed'" class="material-symbols-outlined ind" title="Embedded inline as a value">data_object</span>
-                <span v-if="renderOf(t.uri) === 'label'" class="material-symbols-outlined ind" title="Shown as a label (no link)">label</span>
-              </span>
-              <span class="type-count">{{ formatCount(t.count) }}</span>
-            </button>
-            <button v-if="settings.editMode" class="type-gear" aria-label="Configure type" @click.stop="openMenu($event, t.uri)">
-              <span class="material-symbols-outlined">tune</span>
-            </button>
-          </li>
-          <!-- Embed types nested under the class that composes them (recursive). -->
-          <li v-for="row in descendantRows(t.uri)" :key="t.uri + '>' + row.uri + '@' + row.depth" class="type-row type-child">
-            <div class="type-item is-static" :title="row.uri" :style="{ paddingLeft: row.depth * 1.5 + 'rem' }">
-              <span class="type-name">{{ typeName(row.uri) }}</span>
-              <span class="type-ind">
-                <span class="material-symbols-outlined ind" title="Embedded inline as a value">data_object</span>
-              </span>
-              <span class="type-count">{{ formatCount(countOf(row.uri)) }}</span>
-            </div>
-            <button v-if="settings.editMode" class="type-gear" aria-label="Configure type" @click.stop="openMenu($event, row.uri)">
-              <span class="material-symbols-outlined">tune</span>
-            </button>
-          </li>
-        </template>
+        <li
+          v-for="row in rows"
+          :key="row.kind + ':' + row.uri + '@' + row.depth"
+          class="type-row"
+          :class="{ 'is-hidden': isHidden(row.uri), 'type-child': row.kind === 'embed' }"
+        >
+          <!-- Disclosure: collapse/expand a class that has subclasses or embeds. -->
+          <button
+            v-if="row.kind === 'class' && hasKids(row.uri)"
+            class="type-disclosure"
+            :aria-label="isCollapsed(row.uri) ? 'Expand' : 'Collapse'"
+            @click.stop="toggleCollapse(row.uri)"
+          >
+            <span class="material-symbols-outlined">{{ isCollapsed(row.uri) ? 'chevron_right' : 'expand_more' }}</span>
+          </button>
+          <span v-else class="type-disclosure-spacer"></span>
+
+          <!-- Class: a navigable type (click → instance list). -->
+          <button
+            v-if="row.kind === 'class'"
+            class="type-item"
+            :class="{ active: selected === row.uri }"
+            :style="{ paddingLeft: indent(row.depth) }"
+            :title="row.uri"
+            @click="selectType(row.uri)"
+          >
+            <span class="type-name">{{ typeName(row.uri) }}</span>
+            <span class="type-ind">
+              <span v-if="isPinned(row.uri)" class="material-symbols-outlined ind" title="Pinned to top">push_pin</span>
+              <span v-if="renderOf(row.uri) === 'label'" class="material-symbols-outlined ind" title="Shown as a label (no link)">label</span>
+            </span>
+            <span class="type-count">{{ formatCount(row.count) }}</span>
+          </button>
+
+          <!-- Embed: a value object shown inline elsewhere — muted, not navigable. -->
+          <div v-else class="type-item is-static" :style="{ paddingLeft: indent(row.depth) }" :title="row.uri">
+            <span class="type-name">{{ typeName(row.uri) }}</span>
+            <span class="type-ind">
+              <span class="material-symbols-outlined ind" title="Embedded inline as a value">data_object</span>
+            </span>
+            <span class="type-count">{{ formatCount(row.count) }}</span>
+          </div>
+
+          <button v-if="settings.editMode" class="type-gear" aria-label="Configure type" @click.stop="openMenu($event, row.uri)">
+            <span class="material-symbols-outlined">tune</span>
+          </button>
+        </li>
       </ul>
 
       <button v-if="hiddenCount" class="show-hidden" @click="showHidden = !showHidden">
@@ -247,6 +316,32 @@ function selectType(uri: string) {
 
 .type-item.active {
   box-shadow: inset 2px 0 0 var(--ae-accent);
+}
+
+/* Disclosure chevron (collapse/expand a superclass) + alignment spacer. */
+.type-disclosure,
+.type-disclosure-spacer {
+  flex-shrink: 0;
+  width: 18px;
+}
+
+.type-disclosure {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  color: var(--ae-text-muted);
+}
+
+.type-disclosure:hover {
+  color: var(--ae-text-primary);
+}
+
+.type-disclosure .material-symbols-outlined {
+  font-size: 18px;
 }
 
 /* Embed types nested under their composing class: muted, non-clickable.

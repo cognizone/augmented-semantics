@@ -10,7 +10,7 @@
  */
 import { ref, computed, watch, onMounted, onUnmounted, type Ref } from 'vue'
 import { useEndpointStore, useBrowseStore, useTypeConfigStore } from '../stores'
-import { executeSparql, resolveUris, logger, eventBus, buildTypeInventoryQuery, buildCompositionQuery, resolveGraphStrategy } from '../services'
+import { executeSparql, resolveUris, logger, eventBus, buildTypeInventoryQuery, buildCompositionQuery, buildSubclassQuery, resolveGraphStrategy } from '../services'
 
 export interface RdfType {
   uri: string
@@ -28,8 +28,11 @@ export function useRdfTypes() {
   const loading = ref(false)
   const error = ref<string | null>(null)
   const resolved: Ref<ResolvedMap> = ref(new Map())
-  // Embed-type composition: composing class → embed types it contains inline.
-  const composition: Ref<Map<string, string[]>> = ref(new Map())
+  // Embed-type composition: composing class → embed types it contains inline,
+  // each with a count scoped to that class (not the global type total).
+  const composition: Ref<Map<string, { uri: string; count: number }[]>> = ref(new Map())
+  // Subclass hierarchy among listed types: superclass → its more-specific kinds.
+  const subclasses: Ref<Map<string, string[]>> = ref(new Map())
   let requestId = 0
 
   // Types configured to render inline as values (per-endpoint config).
@@ -55,18 +58,53 @@ export function useRdfTypes() {
         { retries: 1 },
       )
       if (endpointStore.current?.id !== endpointId) return
-      const map = new Map<string, string[]>()
+      const map = new Map<string, { uri: string; count: number }[]>()
       for (const b of res.results.bindings) {
         const c = b.c?.value, e = b.e?.value
         if (!c || !e) continue
+        const count = parseInt(b.n?.value ?? '0', 10)
         const arr = map.get(c) ?? []
-        if (!arr.includes(e)) arr.push(e)
+        if (!arr.some(x => x.uri === e)) arr.push({ uri: e, count })
         map.set(c, arr)
       }
       composition.value = map
       logger.info('useRdfTypes', 'Loaded embed composition map', { parents: map.size })
     } catch (e: unknown) {
       logger.warn('useRdfTypes', 'Composition discovery failed', { error: e })
+    }
+  }
+
+  // Discover the subclass hierarchy (rdfs:subClassOf) among the listed types so
+  // the sidebar can tuck more-specific kinds under their general type. Async,
+  // non-blocking; if the data asserts no subClassOf, the list just stays flat.
+  async function loadSubclasses(): Promise<void> {
+    const endpoint = endpointStore.current
+    if (!endpoint || !types.value.length) {
+      subclasses.value = new Map()
+      return
+    }
+    const endpointId = endpoint.id
+    const inv = new Set(types.value.map(t => t.uri))
+    try {
+      const res = await executeSparql(
+        endpoint,
+        buildSubclassQuery([...inv], resolveGraphStrategy(browseStore.graph)),
+        { retries: 1 },
+      )
+      if (endpointStore.current?.id !== endpointId) return
+      const map = new Map<string, string[]>()
+      for (const b of res.results.bindings) {
+        const sub = b.sub?.value, sup = b.super?.value
+        // Both ends must be browsable types, else there's nothing to nest under.
+        if (!sub || !sup || !inv.has(sub) || !inv.has(sup)) continue
+        const arr = map.get(sup) ?? []
+        if (!arr.includes(sub)) arr.push(sub)
+        map.set(sup, arr)
+      }
+      subclasses.value = map
+      logger.info('useRdfTypes', 'Loaded subclass hierarchy', { supers: map.size })
+    } catch (e: unknown) {
+      logger.warn('useRdfTypes', 'Subclass discovery failed', { error: e })
     }
   }
 
@@ -136,10 +174,13 @@ export function useRdfTypes() {
   // Recompute composition when the embed set changes (types load or a live
   // edit-mode toggle) or the graph scope changes.
   watch([embedTypes, () => browseStore.graph], () => loadComposition())
+  // Rediscover the subclass hierarchy when the inventory or graph scope changes.
+  const inventoryKey = computed(() => types.value.map(t => t.uri).join('|'))
+  watch([inventoryKey, () => browseStore.graph], () => loadSubclasses())
   onMounted(() => {
     if (endpointStore.current) loadTypes()
   })
   onUnmounted(() => sub.unsubscribe())
 
-  return { types, loading, error, resolved, composition, loadTypes }
+  return { types, loading, error, resolved, composition, subclasses, loadTypes }
 }
