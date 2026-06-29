@@ -78,7 +78,8 @@ function graphTitle(o: ResourceObject): string {
         <th class="prop-key" v-tooltip.top="{ value: qname(group.predicate), showDelay: 120 }">{{ predicateLabel(group.predicate) }}</th>
         <td class="prop-values">
           <div v-for="(o, i) in sortedObjects(group)" :key="i" class="prop-value" :title="graphTitle(o)">
-            <!-- Embedded value object (depth-1): inline its triples -->
+            <!-- Embedded value object: inline its triples (recursively — an
+                 embedded object may itself embed more, e.g. Site → PostalAddress) -->
             <div v-if="o.termType === 'uri' && embedded?.get(o.value)" class="embed">
               <span v-if="objectBadge(o.value)" class="tag type-badge">{{ objectBadge(o.value) }}</span>
               <PropertyTable
@@ -86,6 +87,8 @@ function graphTitle(o: ResourceObject): string {
                 :groups="embedded.get(o.value)!"
                 :resolved="resolved"
                 :labels="labels"
+                :object-types="objectTypes"
+                :embedded="embedded"
                 :show-graphs="showGraphs"
                 @navigate="emit('navigate', $event)"
               />

@@ -52,6 +52,19 @@ const childrenOf = (parentUri: string): string[] =>
     .filter(e => embedSet.value.has(e))
     .sort((a, b) => countOf(b) - countOf(a))
 
+// Walk the composition tree depth-first so embeds-within-embeds nest too
+// (Organisation → Site → PostalAddress). `seen` guards cycles and repeats.
+function descendantRows(parentUri: string, depth = 1, seen = new Set<string>([parentUri])): { uri: string; depth: number }[] {
+  const rows: { uri: string; depth: number }[] = []
+  for (const cu of childrenOf(parentUri)) {
+    if (seen.has(cu)) continue
+    seen.add(cu)
+    rows.push({ uri: cu, depth })
+    rows.push(...descendantRows(cu, depth + 1, seen))
+  }
+  return rows
+}
+
 // Embed types that found a parent — so they're not also shown flat.
 const placedEmbeds = computed(() => {
   const placed = new Set<string>()
@@ -147,16 +160,16 @@ function selectType(uri: string) {
               <span class="material-symbols-outlined">tune</span>
             </button>
           </li>
-          <!-- Embed types nested under the class that composes them. -->
-          <li v-for="cu in childrenOf(t.uri)" :key="t.uri + '>' + cu" class="type-row type-child">
-            <div class="type-item is-static" :title="cu">
-              <span class="type-name">{{ typeName(cu) }}</span>
+          <!-- Embed types nested under the class that composes them (recursive). -->
+          <li v-for="row in descendantRows(t.uri)" :key="t.uri + '>' + row.uri + '@' + row.depth" class="type-row type-child">
+            <div class="type-item is-static" :title="row.uri" :style="{ paddingLeft: row.depth * 1.5 + 'rem' }">
+              <span class="type-name">{{ typeName(row.uri) }}</span>
               <span class="type-ind">
                 <span class="material-symbols-outlined ind" title="Embedded inline as a value">data_object</span>
               </span>
-              <span class="type-count">{{ formatCount(countOf(cu)) }}</span>
+              <span class="type-count">{{ formatCount(countOf(row.uri)) }}</span>
             </div>
-            <button v-if="settings.editMode" class="type-gear" aria-label="Configure type" @click.stop="openMenu($event, cu)">
+            <button v-if="settings.editMode" class="type-gear" aria-label="Configure type" @click.stop="openMenu($event, row.uri)">
               <span class="material-symbols-outlined">tune</span>
             </button>
           </li>
@@ -236,11 +249,8 @@ function selectType(uri: string) {
   box-shadow: inset 2px 0 0 var(--ae-accent);
 }
 
-/* Embed types nested under their composing class: indented, muted, non-clickable. */
-.type-child .type-item {
-  padding-left: 1.5rem;
-}
-
+/* Embed types nested under their composing class: muted, non-clickable.
+   Indent is depth-driven inline (padding-left) so embeds-within-embeds step in. */
 .type-child .type-name {
   color: var(--ae-text-secondary);
   font-size: 0.75rem;

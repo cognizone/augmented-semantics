@@ -177,10 +177,12 @@ carries a config, authored live and (eventually) exported to `app.json`.
   types show inline indicator icons (pinned / embed / label) regardless of edit
   mode. The configured *effects* (embed/hide/pin) always apply; only the gear +
   export are gated.
-- **Embed (depth-1):** when an object's type is `render:embed`, `useResourceView`
+- **Embed (recursive):** when an object's type is `render:embed`, `useResourceView`
   batch-fetches those objects' triples (`buildEmbeddedTriplesQuery`, graph-aware)
-  and `PropertyTable` renders them inline (recursively, no further embed —
-  depth-1), with the type as a badge. The inline triples are **also graph-aware**:
+  and follows embed-typed objects within them (BFS, depth-capped at 5 with a
+  `seen` cycle guard) so chains like `Organisation → Site → PostalAddress` inline
+  fully; `PropertyTable` renders them inline recursively (passing `embedded` +
+  `objectTypes` down), with each type as a badge. The inline triples are **also graph-aware**:
   each `(p,o)` is folded into a `graphs[]` set (provenance kept, not discarded —
   a value in >1 graph is badged), and the resource's "Show graphs" toggle reaches
   the embed. `rdf:type` is dropped from the inline view (it's the badge).
