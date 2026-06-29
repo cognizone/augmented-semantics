@@ -103,30 +103,33 @@ function navigate(target: string) {
         </button>
       </div>
 
-      <!-- Subject type(s) — identity, lifted out of the property table -->
-      <div v-if="typeChips.length" class="resource-types">
-        <button
-          v-for="t in typeChips"
-          :key="t.uri"
-          class="type-chip"
-          v-tooltip.top="{ value: `Browse all ${t.label}`, showDelay: 120 }"
-          @click="selectType(t.uri)"
-        >{{ t.label }}</button>
-      </div>
+      <!-- Type chips (left) + graph provenance (right) share one row to save space -->
+      <div v-if="typeChips.length || (!showLoading && !error && triples.length)" class="resource-meta">
+        <!-- Subject type(s) — identity, lifted out of the property table -->
+        <div v-if="typeChips.length" class="resource-types">
+          <button
+            v-for="t in typeChips"
+            :key="t.uri"
+            class="type-chip"
+            v-tooltip.top="{ value: `Browse all ${t.label}`, showDelay: 120 }"
+            @click="selectType(t.uri)"
+          >{{ t.label }}</button>
+        </div>
 
-      <!-- Graph provenance summary + per-triple reveal toggle -->
-      <div v-if="!showLoading && !error && triples.length" class="resource-graphs">
-        <span class="material-symbols-outlined graph-icon">hub</span>
-        <span class="graph-summary">
-          <template v-if="graphSummary.graphs.length">
-            <span v-for="g in graphSummary.graphs" :key="g" class="graph-chip" v-tooltip.top="{ value: g, showDelay: 120 }">{{ qname(g) }}</span>
-            <span v-if="graphSummary.hasDefault" class="graph-chip default">default graph</span>
-          </template>
-          <span v-else class="graph-chip default">default graph</span>
-        </span>
-        <button class="graph-toggle" :class="{ on: showGraphs }" @click="showGraphs = !showGraphs">
-          {{ showGraphs ? 'Hide graphs' : 'Show graphs' }}
-        </button>
+        <!-- Graph provenance summary + per-triple reveal toggle -->
+        <div v-if="!showLoading && !error && triples.length" class="resource-graphs">
+          <span class="material-symbols-outlined graph-icon">hub</span>
+          <span class="graph-summary">
+            <template v-if="graphSummary.graphs.length">
+              <span v-for="g in graphSummary.graphs" :key="g" class="graph-chip" v-tooltip.top="{ value: g, showDelay: 120 }">{{ qname(g) }}</span>
+              <span v-if="graphSummary.hasDefault" class="graph-chip default">default graph</span>
+            </template>
+            <span v-else class="graph-chip default">default graph</span>
+          </span>
+          <button class="graph-toggle" :class="{ on: showGraphs }" @click="showGraphs = !showGraphs">
+            {{ showGraphs ? 'Hide graphs' : 'Show graphs' }}
+          </button>
+        </div>
       </div>
     </header>
 
@@ -218,11 +221,20 @@ function navigate(target: string) {
   font-size: 16px;
 }
 
+/* Type chips + graph provenance on one row; graph block pushed to the right. */
+.resource-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  margin-top: 0.5rem;
+}
+
 .resource-types {
   display: flex;
   flex-wrap: wrap;
   gap: 0.375rem;
-  margin-top: 0.5rem;
 }
 
 .type-chip {
@@ -258,7 +270,7 @@ function navigate(target: string) {
   display: flex;
   align-items: center;
   gap: 0.375rem;
-  margin-top: 0.5rem;
+  margin-left: auto; /* keep it right-aligned even when there are no type chips */
   flex-wrap: wrap;
 }
 

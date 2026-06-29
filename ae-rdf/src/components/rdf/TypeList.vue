@@ -197,8 +197,8 @@ function selectType(uri: string) {
     <template v-else>
       <ul class="type-items">
         <li
-          v-for="row in rows"
-          :key="row.kind + ':' + row.uri + '@' + row.depth"
+          v-for="(row, i) in rows"
+          :key="i"
           class="type-row"
           :class="{ 'is-hidden': isHidden(row.uri), 'type-child': row.kind === 'embed' }"
         >
