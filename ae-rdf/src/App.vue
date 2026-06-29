@@ -206,12 +206,12 @@ onUnmounted(() => {
           <small class="setting-hint">How predicates and resource links are shown.</small>
         </div>
 
-        <label v-if="!config.configMode" class="checkbox-label">
+        <label class="checkbox-label">
           <Checkbox v-model="settingsStore.editMode" :binary="true" />
-          <span class="checkbox-text">Config authoring mode<small>Show per-type gears and the export button for building a deployment config</small></span>
+          <span class="checkbox-text">Config authoring mode<small>Show per-type gears and the export button — works even on a deployed config, so you can tweak and re-export</small></span>
         </label>
 
-        <div v-if="!config.configMode && settingsStore.editMode" class="setting-field">
+        <div v-if="settingsStore.editMode" class="setting-field">
           <span class="setting-label">Deployment</span>
           <Button label="Export app.json" icon="pi pi-download" severity="secondary" outlined @click="exportConfig" />
           <small class="setting-hint">Download the current endpoints + per-type config as a locked deployment config. Credentials are never included.</small>
