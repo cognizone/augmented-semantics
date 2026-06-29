@@ -57,6 +57,8 @@ export interface AppConfig {
   endpoints?: ConfigEndpoint[]
   /** Per-type display config, keyed by type IRI (authored live, see typeConfig store) */
   types?: Record<string, TypeConfig>
+  /** Cached type inventory (uri + count) for an instant Types sidebar on deploy. */
+  typeInventory?: { uri: string; count: number }[]
 }
 
 /**

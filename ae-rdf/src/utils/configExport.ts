@@ -10,6 +10,7 @@ import type { AppConfig, ConfigEndpoint, SPARQLEndpoint, TypeConfig } from '../t
 export interface ExportInput {
   endpoints: SPARQLEndpoint[]
   types: Record<string, TypeConfig>
+  typeInventory?: { uri: string; count: number }[]
   appName?: string
   logoUrl?: string
   documentationUrl?: string
@@ -34,6 +35,7 @@ export function buildAppConfig(input: ExportInput): AppConfig {
   }
 
   if (Object.keys(input.types).length) config.types = input.types
+  if (input.typeInventory?.length) config.typeInventory = input.typeInventory
   return config
 }
 

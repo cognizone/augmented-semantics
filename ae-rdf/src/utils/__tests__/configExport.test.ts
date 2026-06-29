@@ -48,6 +48,13 @@ describe('buildAppConfig', () => {
     expect(config.endpoints![0].graph).toBeUndefined()
   })
 
+  it('caches the type inventory when present, omits when empty', () => {
+    const inv = [{ uri: 'http://x#Project', count: 42 }]
+    expect(buildAppConfig({ endpoints: [], types: {}, typeInventory: inv }).typeInventory).toEqual(inv)
+    expect(buildAppConfig({ endpoints: [], types: {}, typeInventory: [] }).typeInventory).toBeUndefined()
+    expect(buildAppConfig({ endpoints: [], types: {} }).typeInventory).toBeUndefined()
+  })
+
   it('includes app-level fields when present', () => {
     const config = buildAppConfig({ endpoints: [], types: {}, appName: 'My RDF', documentationUrl: 'https://d' })
     expect(config.appName).toBe('My RDF')

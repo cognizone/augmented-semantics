@@ -181,9 +181,12 @@ carries a config, authored live and (eventually) exported to `app.json`.
   with the type as a badge. `rdf:type` is dropped from the inline view (it's the
   badge). `label` renders identity-only; `link` (default) is the clickable chip.
 - **Lifecycle:** author live → **Export app.json** (Settings → Deployment;
-  `utils/configExport.ts:buildAppConfig` serializes endpoints + `types`, then
+  `utils/configExport.ts:buildAppConfig` serializes endpoints (+ their `graph`
+  axes), `types`, and a cached **`typeInventory`** (uri+count), then
   `downloadJson`) → deploy as `config/app.json` → config mode (locked) for end
-  users. Credentials are never written into the export (auth `type` only).
+  users. Credentials are never written into the export (auth `type` only). The
+  cached `typeInventory` lets a deployed app paint the Types sidebar instantly
+  (load-on-boot is the remaining integration).
 
 ## UI layout
 

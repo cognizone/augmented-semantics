@@ -33,6 +33,7 @@ export function useRdfTypes() {
     const endpoint = endpointStore.current
     if (!endpoint) {
       types.value = []
+      browseStore.setTypeInventory([])
       return
     }
     const endpointId = endpoint.id
@@ -56,6 +57,7 @@ export function useRdfTypes() {
 
       types.value = list
       resolved.value = resolvedMap
+      browseStore.setTypeInventory(list) // cache for config export
       logger.info('useRdfTypes', 'Loaded type inventory', { count: list.length })
     } catch (e: unknown) {
       if (!isCurrent()) return
@@ -63,6 +65,7 @@ export function useRdfTypes() {
       logger.error('useRdfTypes', 'Failed to load type inventory', { error: e })
       error.value = `Failed to load types: ${msg}`
       types.value = []
+      browseStore.setTypeInventory([])
     } finally {
       if (isCurrent()) loading.value = false
     }
