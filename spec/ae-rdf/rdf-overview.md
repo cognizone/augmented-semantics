@@ -176,10 +176,13 @@ carries a config, authored live and (eventually) exported to `app.json`.
   mode. The configured *effects* (embed/hide/pin) always apply; only the gear +
   export are gated.
 - **Embed (depth-1):** when an object's type is `render:embed`, `useResourceView`
-  batch-fetches those objects' triples (`buildEmbeddedTriplesQuery`) and
-  `PropertyTable` renders them inline (recursively, no further embed — depth-1),
-  with the type as a badge. `rdf:type` is dropped from the inline view (it's the
-  badge). `label` renders identity-only; `link` (default) is the clickable chip.
+  batch-fetches those objects' triples (`buildEmbeddedTriplesQuery`, graph-aware)
+  and `PropertyTable` renders them inline (recursively, no further embed —
+  depth-1), with the type as a badge. The inline triples are **also graph-aware**:
+  each `(p,o)` is folded into a `graphs[]` set (provenance kept, not discarded —
+  a value in >1 graph is badged), and the resource's "Show graphs" toggle reaches
+  the embed. `rdf:type` is dropped from the inline view (it's the badge).
+  `label` renders identity-only; `link` (default) is the clickable chip.
 - **Lifecycle:** author live → **Export app.json** (Settings → Deployment;
   `utils/configExport.ts:buildAppConfig` serializes endpoints (+ their `graph`
   axes), `types`, and a cached **`typeInventory`** (uri+count), then

@@ -152,8 +152,10 @@ export function buildLabelsQuery(uris: string[]): string {
 
 /**
  * Triples of several resources at once (batch), for inline embedding of value
- * objects. Depth-1. The caller folds (p,o) per subject, which dedups any
- * cross-graph multiplicity — so no SELECT DISTINCT is needed.
+ * objects. Depth-1, and graph-aware: `?g` is projected so the caller folds each
+ * (p,o) into a graphs[] set — provenance is kept, not discarded (a value in two
+ * graphs shows a multi-graph badge, never silent dedup). Mirrors the resource
+ * query's branching per strategy.
  */
 export function buildEmbeddedTriplesQuery(uris: string[], s: GraphStrategy): string {
   const values = uris
@@ -161,10 +163,15 @@ export function buildEmbeddedTriplesQuery(uris: string[], s: GraphStrategy): str
     .slice(0, 64)
     .map(u => `<${u}>`)
     .join(' ')
-  const named = `GRAPH ?g { ?s ?p ?o }`
-  const def = `?s ?p ?o`
-  const pattern = s.useNamed && s.useDefault ? `{ ${named} } UNION { ${def} }` : s.useNamed ? named : def
-  return `SELECT ?s ?p ?o WHERE { VALUES ?s { ${values} } ${pattern} } ORDER BY ?s ?p`
+  let pattern: string
+  if (s.useNamed && s.useDefault) {
+    pattern = `{ GRAPH ?g { ?s ?p ?o } } UNION { ?s ?p ?o FILTER NOT EXISTS { GRAPH ?ng { ?s ?p ?o } } }`
+  } else if (s.useNamed) {
+    pattern = `GRAPH ?g { ?s ?p ?o }`
+  } else {
+    pattern = `?s ?p ?o`
+  }
+  return `SELECT ?s ?g ?p ?o WHERE { VALUES ?s { ${values} } ${pattern} } ORDER BY ?s ?p`
 }
 
 /* ───────────────────────── Resource detail (core) ───────────────────────── */

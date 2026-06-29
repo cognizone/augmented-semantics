@@ -86,6 +86,7 @@ function graphTitle(o: ResourceObject): string {
                 :groups="embedded.get(o.value)!"
                 :resolved="resolved"
                 :labels="labels"
+                :show-graphs="showGraphs"
                 @navigate="emit('navigate', $event)"
               />
             </div>

@@ -164,10 +164,11 @@ describe('buildLabelsQuery', () => {
 })
 
 describe('buildEmbeddedTriplesQuery', () => {
-  it('batches via VALUES, scoped per strategy, no SELECT DISTINCT (caller folds)', () => {
+  it('projects ?g (graph-aware) and is scoped per strategy; caller folds, no DISTINCT', () => {
+    expect(buildEmbeddedTriplesQuery([RES], NAMED)).toContain('SELECT ?s ?g ?p ?o')
     expect(buildEmbeddedTriplesQuery([RES], NAMED)).toContain('GRAPH ?g { ?s ?p ?o }')
     expect(buildEmbeddedTriplesQuery([RES], NAMED)).not.toContain('DISTINCT')
-    expect(buildEmbeddedTriplesQuery([RES], BOTH)).toContain('{ GRAPH ?g { ?s ?p ?o } } UNION { ?s ?p ?o }')
+    expect(buildEmbeddedTriplesQuery([RES], BOTH)).toContain('FILTER NOT EXISTS')
     const def = buildEmbeddedTriplesQuery([RES], DEFAULT)
     expect(def).toContain('VALUES ?s { <' + RES + '> }')
     expect(def).not.toContain('GRAPH')
