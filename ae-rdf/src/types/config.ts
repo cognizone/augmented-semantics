@@ -6,7 +6,7 @@
  *
  * @see /spec/common/com01-EndpointManager.md
  */
-import type { EndpointAnalysis, EndpointAuth, SuggestedEndpointSource } from './endpoint'
+import type { EndpointAnalysis, EndpointAuth, EndpointGraph, SuggestedEndpointSource } from './endpoint'
 
 /**
  * Pre-configured endpoint from external config file.
@@ -17,6 +17,8 @@ export interface ConfigEndpoint extends SuggestedEndpointSource {
   auth?: EndpointAuth
   /** Pre-calculated analysis (optional - runs on first connect if missing) */
   analysis?: EndpointAnalysis
+  /** Graph behaviour axes (quads / defaultView) — drives query construction */
+  graph?: EndpointGraph
   /** Language priorities (same as SuggestedEndpoint) */
   suggestedLanguagePriorities?: string[]
 }

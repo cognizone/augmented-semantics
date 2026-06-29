@@ -28,6 +28,7 @@ export function buildAppConfig(input: ExportInput): AppConfig {
       // Signal that auth is required, but NEVER bake credentials into a shared
       // static file — the deployer supplies them at runtime.
       if (e.auth && e.auth.type !== 'none') ce.auth = { type: e.auth.type }
+      if (e.graph && (e.graph.quads !== undefined || e.graph.defaultView !== undefined)) ce.graph = e.graph
       return ce
     })
   }

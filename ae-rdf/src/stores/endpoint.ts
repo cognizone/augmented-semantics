@@ -124,6 +124,7 @@ export const useEndpointStore = defineStore('endpoint', () => {
       url: ce.url,
       auth: ce.auth,
       analysis: ce.analysis,
+      graph: ce.graph,
       languagePriorities: ce.suggestedLanguagePriorities,
       createdAt: new Date().toISOString(),
       accessCount: 0,
@@ -194,6 +195,8 @@ export const useEndpointStore = defineStore('endpoint', () => {
       url: updates.url ?? existing.url,
       auth: updates.auth ?? existing.auth,
       analysis: updates.analysis ?? existing.analysis,
+      // 'graph' present (even undefined) overwrites, so it can be reset to auto.
+      graph: 'graph' in updates ? updates.graph : existing.graph,
       selectedGraphs: updates.selectedGraphs ?? existing.selectedGraphs,
       languagePriorities: updates.languagePriorities ?? existing.languagePriorities,
       lastTestStatus: updates.lastTestStatus ?? existing.lastTestStatus,

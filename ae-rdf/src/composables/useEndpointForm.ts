@@ -8,7 +8,12 @@
  */
 import { reactive, computed } from 'vue'
 import { isValidEndpointUrl, checkEndpointSecurity, assessEndpointTrust } from '../services/security'
-import type { SPARQLEndpoint, EndpointAuth } from '../types'
+import type { SPARQLEndpoint, EndpointAuth, EndpointGraph } from '../types'
+
+type GraphQuads = 'auto' | 'yes' | 'no'
+type GraphDefaultView = 'auto' | 'own' | 'merged'
+
+const quadsToForm = (q?: boolean): GraphQuads => (q === true ? 'yes' : q === false ? 'no' : 'auto')
 
 export function useEndpointForm(initialEndpoint?: SPARQLEndpoint) {
   const form = reactive({
@@ -20,6 +25,8 @@ export function useEndpointForm(initialEndpoint?: SPARQLEndpoint) {
     apiKey: initialEndpoint?.auth?.credentials?.apiKey || '',
     headerName: initialEndpoint?.auth?.credentials?.headerName || 'X-API-Key',
     token: initialEndpoint?.auth?.credentials?.token || '',
+    graphQuads: quadsToForm(initialEndpoint?.graph?.quads),
+    graphDefaultView: (initialEndpoint?.graph?.defaultView ?? 'auto') as GraphDefaultView,
   })
 
   const formValid = computed(() => {
@@ -55,6 +62,8 @@ export function useEndpointForm(initialEndpoint?: SPARQLEndpoint) {
     form.apiKey = ''
     form.headerName = 'X-API-Key'
     form.token = ''
+    form.graphQuads = 'auto'
+    form.graphDefaultView = 'auto'
   }
 
   /**
@@ -69,6 +78,8 @@ export function useEndpointForm(initialEndpoint?: SPARQLEndpoint) {
     form.apiKey = endpoint.auth?.credentials?.apiKey || ''
     form.headerName = endpoint.auth?.credentials?.headerName || 'X-API-Key'
     form.token = endpoint.auth?.credentials?.token || ''
+    form.graphQuads = quadsToForm(endpoint.graph?.quads)
+    form.graphDefaultView = endpoint.graph?.defaultView ?? 'auto'
   }
 
   /**
@@ -103,6 +114,15 @@ export function useEndpointForm(initialEndpoint?: SPARQLEndpoint) {
     return auth
   }
 
+  /** Build the per-endpoint graph config from the form (undefined when all auto). */
+  function buildGraph(): EndpointGraph | undefined {
+    const g: EndpointGraph = {}
+    if (form.graphQuads === 'yes') g.quads = true
+    else if (form.graphQuads === 'no') g.quads = false
+    if (form.graphDefaultView !== 'auto') g.defaultView = form.graphDefaultView
+    return Object.keys(g).length ? g : undefined
+  }
+
   /**
    * Build endpoint object from form
    */
@@ -126,6 +146,7 @@ export function useEndpointForm(initialEndpoint?: SPARQLEndpoint) {
     loadEndpoint,
     useExample,
     buildAuth,
+    buildGraph,
     buildEndpoint,
   }
 }

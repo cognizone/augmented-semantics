@@ -16,14 +16,15 @@ import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
 import Select from 'primevue/select'
 import Message from 'primevue/message'
-import { useEndpointStore } from '../../stores'
+import { useEndpointStore, useSettingsStore } from '../../stores'
 import { useEndpointForm, useEndpointTest } from '../../composables'
 import type { SPARQLEndpoint } from '../../types'
 
 const visible = defineModel<boolean>('visible', { required: true })
 
 const endpointStore = useEndpointStore()
-const { form, formValid, securityCheck, resetForm, loadEndpoint, buildAuth } = useEndpointForm()
+const settings = useSettingsStore()
+const { form, formValid, securityCheck, resetForm, loadEndpoint, buildAuth, buildGraph } = useEndpointForm()
 const { testing, testResult, testConnection, clearResult } = useEndpointTest()
 
 const mode = ref<'list' | 'form'>('list')
@@ -35,6 +36,18 @@ const authOptions = [
   { label: 'Basic', value: 'basic' },
   { label: 'API key', value: 'apikey' },
   { label: 'Bearer token', value: 'bearer' },
+]
+
+const quadsOptions = [
+  { label: 'Auto-detect', value: 'auto' },
+  { label: 'Yes (named graphs)', value: 'yes' },
+  { label: 'No (triple store)', value: 'no' },
+]
+
+const defaultViewOptions = [
+  { label: 'Auto (safe)', value: 'auto' },
+  { label: 'Own triples', value: 'own' },
+  { label: 'Merged view of quads', value: 'merged' },
 ]
 
 const formTitle = computed(() => (editingId.value ? 'Edit endpoint' : 'Add endpoint'))
@@ -61,7 +74,7 @@ function backToList() {
 
 function save() {
   if (!formValid.value) return
-  const payload = { name: form.name.trim(), url: form.url.trim(), auth: buildAuth() }
+  const payload = { name: form.name.trim(), url: form.url.trim(), auth: buildAuth(), graph: buildGraph() }
   if (editingId.value) {
     endpointStore.updateEndpoint(editingId.value, payload)
   } else {
@@ -212,6 +225,20 @@ function statusClass(ep: SPARQLEndpoint): string {
           <InputText v-model="form.token" type="password" />
         </label>
       </template>
+
+      <!-- Graph behaviour (deployer config — see resolveGraphStrategy) -->
+      <fieldset v-if="settings.editMode" class="graph-config">
+        <legend>Graph behaviour</legend>
+        <label class="field">
+          <span class="field-label">Named graphs (quads)</span>
+          <Select v-model="form.graphQuads" :options="quadsOptions" optionLabel="label" optionValue="value" />
+        </label>
+        <label class="field">
+          <span class="field-label">Default (no-GRAPH) view</span>
+          <Select v-model="form.graphDefaultView" :options="defaultViewOptions" optionLabel="label" optionValue="value" />
+          <small class="field-hint">"Merged" = a redundant view of the quads → AE RDF never queries it.</small>
+        </label>
+      </fieldset>
 
       <Message v-if="testResult" :severity="testResult.success ? 'success' : 'error'" :closable="false">
         {{ testResult.message }}
@@ -372,5 +399,29 @@ function statusClass(ep: SPARQLEndpoint): string {
   font-size: 0.8125rem;
   font-weight: 500;
   color: var(--ae-text-primary);
+}
+
+.field-hint {
+  font-size: 0.6875rem;
+  color: var(--ae-text-secondary);
+}
+
+.graph-config {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  border: 1px solid var(--ae-border-color);
+  border-radius: 8px;
+  padding: 0.75rem 0.875rem;
+  margin: 0;
+}
+
+.graph-config legend {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ae-text-secondary);
+  padding: 0 0.375rem;
 }
 </style>

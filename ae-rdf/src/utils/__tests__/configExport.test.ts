@@ -35,6 +35,19 @@ describe('buildAppConfig', () => {
     expect(config.endpoints![0].auth).toBeUndefined()
   })
 
+  it('exports the endpoint graph config when set', () => {
+    const config = buildAppConfig({
+      endpoints: [ep({ graph: { quads: true, defaultView: 'merged' } })],
+      types: {},
+    })
+    expect(config.endpoints![0].graph).toEqual({ quads: true, defaultView: 'merged' })
+  })
+
+  it('omits an empty graph config', () => {
+    const config = buildAppConfig({ endpoints: [ep({ graph: {} })], types: {} })
+    expect(config.endpoints![0].graph).toBeUndefined()
+  })
+
   it('includes app-level fields when present', () => {
     const config = buildAppConfig({ endpoints: [], types: {}, appName: 'My RDF', documentationUrl: 'https://d' })
     expect(config.appName).toBe('My RDF')
