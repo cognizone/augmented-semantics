@@ -334,15 +334,23 @@ function selectType(uri: string) {
             <span class="type-count">{{ formatCount(row.count) }}</span>
           </button>
 
-          <!-- Embed: a value object shown inline elsewhere — muted, not navigable.
-               Direct child → class-scoped count; nested → path count on hover. -->
-          <div v-else class="type-item is-static" :title="row.uri" @mouseenter="onEmbedEnter(row)">
+          <!-- Embed: a value object shown inline elsewhere — muted, but still
+               clickable to browse its instances. Direct child → class-scoped
+               count; nested → path count on hover. -->
+          <button
+            v-else
+            class="type-item"
+            :class="{ active: selected === row.uri }"
+            :title="row.uri"
+            @mouseenter="onEmbedEnter(row)"
+            @click="selectType(row.uri)"
+          >
             <span class="type-name">{{ typeName(row.uri) }}</span>
             <span class="type-ind">
-              <span class="material-symbols-outlined ind" title="Embedded inline as a value">data_object</span>
+              <span class="material-symbols-outlined ind" title="Embedded inline as a value — click to browse instances">data_object</span>
             </span>
             <span v-if="embedCount(row) !== null" class="type-count">{{ formatCount(embedCount(row)!) }}</span>
-          </div>
+          </button>
 
           <button v-if="settings.editMode && row.kind !== 'group'" class="type-gear" aria-label="Configure type" @click.stop="openMenu($event, row.uri)">
             <span class="material-symbols-outlined">tune</span>
@@ -452,9 +460,6 @@ function selectType(uri: string) {
   font-size: 0.75rem;
 }
 
-.type-item.is-static {
-  cursor: default;
-}
 
 /* Group header: a collapsible section divider, visually distinct from a type. */
 .type-row.is-group {
