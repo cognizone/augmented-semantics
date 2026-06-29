@@ -127,6 +127,7 @@ IRIs pass `sanitizeIri` (SPARQL-injection guard). Counts always
 | Subclass hierarchy | `buildSubclassQuery(types, strategy)` (`rdfs:subClassOf` among listed types) |
 | Embed composition | `buildCompositionQuery(embedTypes, strategy)` (class → embed-type edges, count scoped to the class) |
 | Path-scoped embed count | `buildPathCountQuery(chain, strategy)` (count along `[class, …embedTypes]`; on demand) |
+| Incoming count / list | `buildIncomingCountQuery(uri, strategy)` / `buildIncomingQuery(uri, strategy, limit)` (`?s ?p <uri>`, graph-aware, capped) |
 
 Labels have no single predicate in general RDF; they are derived client-side by
 precedence: `rdfs:label`, `skos:prefLabel`, `dct:title`, `dc:title`, `foaf:name`,
@@ -157,6 +158,12 @@ the pure helpers, unit-tested):
 - **Capped object lists:** a predicate with many objects renders the first 100
   with a "100 of N" line + **Show all / Show fewer** toggle (`PropertyTable`), so
   a hub node (thousands of links) doesn't run forever.
+- **Inverse relations ("Referenced by"):** a collapsible section shows who points
+  *at* the resource (`?s ?p <uri>`), so you can walk backwards. Loaded **lazily on
+  expand** (`useIncomingRelations`) — incoming is unbounded on hub nodes — fetching
+  a distinct-subject count + a `LIMIT`-capped list in parallel, grouped by
+  predicate (inbound ↤ marker), subjects resolved to labels + most-specific types,
+  graph-aware. Shown even when the resource has no outgoing triples.
 - **URI-display setting** (`settings.uriDisplay`, localStorage): `humanized`
   (default, friendly) / `prefixed` (`prefix:local` qnames) / `full` (raw IRIs).
   Centralized in `utils/format.ts` (`displayPredicate` / `displayObject` /

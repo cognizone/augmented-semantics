@@ -45,6 +45,10 @@ Opening an instance — or pasting a URI in the top bar and pressing **Go** — 
 
 A property with a huge number of values (say a hub node linking thousands of others) shows the first **100** with a *Show all / Show fewer* toggle, so the page stays manageable.
 
+### Referenced by (incoming links)
+
+Relationships above point *outward*. To see what points **at** this resource — which grants fund it, which organisations are involved, which results it produced — expand the **Referenced by** section at the bottom. It loads on demand (incoming links can be huge), shows how many resources reference this one, and lists them grouped by predicate with an inbound **↤** marker. Each is a clickable link, so you can walk the graph *backwards* too. Very heavily-referenced resources show the first 1,000.
+
 Within each section, properties are ordered by usefulness: labels and identifiers first, then dates, status, and the rest. Predicate names are humanized for readability (`dateEndApplicability` → "Date end applicability") — hover a predicate to see its real qname/URI.
 
 ### Readable values
