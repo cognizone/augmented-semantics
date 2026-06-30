@@ -48,8 +48,8 @@ ae-rdf/analysis/
 │   ├── output/
 │   │   ├── analysis.json        # full analysis artifact
 │   │   └── endpoint.json        # curated summary for app
-│   └── curate.ts                # per-endpoint entry script
-├── curate-all.ts                # run all endpoints
+│   └── analyze.ts               # per-endpoint entry script
+├── analyze-all.ts               # run all endpoints
 └── merge.ts                     # merge curated outputs for app
 ```
 

@@ -1,4 +1,7 @@
 packages:
-  - 'packages/*'
-  - 'ae-skos'
-  - 'ae-rdf'
+  - packages/*
+  - ae-skos
+  - ae-rdf
+
+onlyBuiltDependencies:
+  - esbuild
