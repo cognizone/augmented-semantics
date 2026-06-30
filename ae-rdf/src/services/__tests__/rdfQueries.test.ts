@@ -141,7 +141,8 @@ describe('buildInstanceListQuery', () => {
     expect(q).toContain('SAMPLE(?lbl) AS ?label')
     expect(q).toContain('GROUP BY ?s')
     expect(q).toContain('COALESCE(?l1, ?l2, ?l3, STR(?s))')
-    expect(q).toContain('LIMIT 100 OFFSET 0')
+    // The page is bounded BEFORE the label joins (subquery), not after.
+    expect(q).toContain(`{ SELECT DISTINCT ?s WHERE { GRAPH ?g { ?s a <${TYPE}> } } LIMIT 100 OFFSET 0 }`)
   })
   it('sanitizes limit/offset (no injection via paging)', () => {
     const q = buildInstanceListQuery(TYPE, DEFAULT, 100.9, -5)

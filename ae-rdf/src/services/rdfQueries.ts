@@ -109,27 +109,28 @@ export function buildInstanceCountQuery(typeUri: string, s: GraphStrategy): stri
 }
 
 /**
- * One page of instances of a type. GROUP BY ?s + SAMPLE → exactly one row per
- * instance. Label OPTIONALs read the default view (fine on merged/triple stores;
- * a navigation index, full labels are one click away in the resource view).
+ * One page of instances of a type. The page of distinct ?s is taken FIRST in a
+ * subquery (LIMIT/OFFSET), then the label OPTIONALs join only those rows — so
+ * the 3 OPTIONAL joins + GROUP BY touch ~100 instances, not the whole type.
+ * Joining labels before the LIMIT is what made this time out on large types
+ * (e.g. VehicleRegistrationCheck, 3.1M). GROUP BY ?s + SAMPLE → one row each.
  *
- * No ORDER BY: sorting by label forces the engine to materialize + sort the
- * whole instance set before LIMIT can apply — the dominant cost on large types.
- * We take the engine's natural order; this is a navigation index, not a report.
+ * No ORDER BY: sorting forces a full materialize + sort before LIMIT can apply.
+ * We take the engine's natural order; this is a navigation index, not a report
+ * (so paging is by the engine's order, not a stable key — acceptable here).
  */
 export function buildInstanceListQuery(typeUri: string, s: GraphStrategy, limit = 100, offset = 0): string {
   const iri = sanitizeIri(typeUri)
   const lim = Math.max(1, Math.floor(limit))
   const off = Math.max(0, Math.floor(offset))
   return withPrefixes(`SELECT ?s (SAMPLE(?lbl) AS ?label) WHERE {
-  ${membership(`<${iri}>`, s)}
+  { SELECT DISTINCT ?s WHERE { ${membership(`<${iri}>`, s)} } LIMIT ${lim} OFFSET ${off} }
   OPTIONAL { ?s rdfs:label ?l1 }
   OPTIONAL { ?s skos:prefLabel ?l2 }
   OPTIONAL { ?s dct:title ?l3 }
   BIND(COALESCE(?l1, ?l2, ?l3, STR(?s)) AS ?lbl)
 }
-GROUP BY ?s
-LIMIT ${lim} OFFSET ${off}`)
+GROUP BY ?s`)
 }
 
 /**
