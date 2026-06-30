@@ -279,15 +279,15 @@ describe('buildIncomingPredicatesQuery', () => {
   it('lists (predicate, source class) edges into a type with a distinct count; plain on default', () => {
     const q = buildIncomingPredicatesQuery(TYPE, DEFAULT)
     expect(q).toContain('SELECT ?p ?c (COUNT(DISTINCT ?o) AS ?n)')
-    expect(q).toContain(`?o a <${TYPE}> . ?s ?p ?o . ?s a ?c .`)
+    expect(q).toContain(`{ SELECT ?o WHERE { ?o a <${TYPE}> } LIMIT 2000 } ?s ?p ?o . ?s a ?c .`)
     expect(q).toContain(`FILTER(?c != <${TYPE}>)`)
     expect(q).toContain('GROUP BY ?p ?c')
     expect(q).toContain('ORDER BY DESC(?n)')
     expect(q).not.toContain('GRAPH')
   })
-  it('merged (never default) wraps each pattern in its own GRAPH', () => {
+  it('merged (never default) wraps each pattern in its own GRAPH and samples the type', () => {
     const q = buildIncomingPredicatesQuery(TYPE, NAMED)
-    expect(q).toContain(`GRAPH ?ge { ?o a <${TYPE}> }`)
+    expect(q).toContain(`{ SELECT ?o WHERE { GRAPH ?ge { ?o a <${TYPE}> } } LIMIT 2000 }`)
     expect(q).toContain('GRAPH ?gp { ?s ?p ?o }')
     expect(q).toContain('GRAPH ?gc { ?s a ?c }')
   })

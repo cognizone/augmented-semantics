@@ -162,11 +162,19 @@ export function buildCompositionQuery(embedTypeUris: string[], s: GraphStrategy)
  * every other type that merely references it. Same join as buildCompositionQuery,
  * just projecting the predicate and grouping by it too.
  */
+/** Sample cap on the type's instances when discovering its incoming predicates.
+ *  Walking every instance → every incoming edge → every owner type times out on
+ *  large endpoints; a bounded sample is enough to surface the owning predicates.
+ *  The count is exact when a type has ≤ this many instances, approximate above. */
+export const INCOMING_PREDICATES_SAMPLE = 2000
+
 export function buildIncomingPredicatesQuery(typeUri: string, s: GraphStrategy): string {
   const iri = sanitizeIri(typeUri)
+  // Bound the scan to a sample of the type's instances (the expensive part is
+  // the unbounded fan-out over every ?o), then find what points at them.
   const body = s.useDefault
-    ? `?o a <${iri}> . ?s ?p ?o . ?s a ?c .`
-    : `GRAPH ?ge { ?o a <${iri}> } GRAPH ?gp { ?s ?p ?o } GRAPH ?gc { ?s a ?c }`
+    ? `{ SELECT ?o WHERE { ?o a <${iri}> } LIMIT ${INCOMING_PREDICATES_SAMPLE} } ?s ?p ?o . ?s a ?c .`
+    : `{ SELECT ?o WHERE { GRAPH ?ge { ?o a <${iri}> } } LIMIT ${INCOMING_PREDICATES_SAMPLE} } GRAPH ?gp { ?s ?p ?o } GRAPH ?gc { ?s a ?c }`
   return `SELECT ?p ?c (COUNT(DISTINCT ?o) AS ?n) WHERE { ${body} FILTER(?c != <${iri}>) } GROUP BY ?p ?c ORDER BY DESC(?n)`
 }
 

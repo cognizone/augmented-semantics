@@ -18,6 +18,7 @@ import InputText from 'primevue/inputtext'
 import Button from 'primevue/button'
 import { useBrowseStore, useSettingsStore, useTypeConfigStore } from '../../stores'
 import { useRdfTypes, useDelayedLoading } from '../../composables'
+import { INCOMING_PREDICATES_SAMPLE } from '../../services'
 import { displayType, localName } from '../../utils/format'
 import { URL_PARAMS } from '../../router'
 
@@ -68,6 +69,8 @@ const embedDialogUri = ref<string | null>(null)
 const embedCandidates = ref<{ predicate: string; parentType: string; count: number }[]>([])
 const embedLoadingCands = ref(false)
 const embedSelected = ref('') // '' = any predicate (inline everywhere)
+// Discovery samples the type's instances, so counts are approximate above the cap.
+const embedSampled = computed(() => countOf(embedDialogUri.value ?? '') > INCOMING_PREDICATES_SAMPLE)
 // Collapsed superclasses (default expanded). A Set, replaced wholesale to stay reactive.
 const collapsed = ref<Set<string>>(new Set())
 
@@ -485,7 +488,7 @@ function selectType(uri: string) {
             <label class="embed-option">
               <input type="radio" :value="cand.predicate" v-model="embedSelected" />
               <span class="embed-option-pred" :title="cand.predicate">{{ predName(cand.predicate) }}</span>
-              <span class="embed-option-meta">← {{ predName(cand.parentType) }} · {{ formatCount(cand.count) }}</span>
+              <span class="embed-option-meta" :title="embedSampled ? `approximate — sampled ${formatCount(INCOMING_PREDICATES_SAMPLE)} of ${formatCount(countOf(embedDialogUri ?? ''))} instances` : undefined">← {{ predName(cand.parentType) }} · {{ embedSampled ? '~' : '' }}{{ formatCount(cand.count) }}</span>
             </label>
           </li>
           <li v-if="!embedCandidates.length" class="embed-empty">No incoming relationships found — only “Any” applies.</li>

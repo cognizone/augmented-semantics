@@ -25,11 +25,7 @@
       "name": "ERA Data Interop",
       "url": "https://data-interop.era.europa.eu/api/sparql"
     },
-    {
-      "name": "ERA EVR-KG (test)",
-      "url": "https://graph.tst.data.test-era.europa.eu/repositories/EVR-KG",
-      "auth": { "type": "basic" }
-    },
+    "era-evr-kg-test",
     {
       "name": "EU Publications Office",
       "url": "https://publications.europa.eu/webapi/rdf/sparql"
