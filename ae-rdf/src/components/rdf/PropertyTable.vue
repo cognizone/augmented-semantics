@@ -22,6 +22,10 @@ const props = defineProps<{
   objectTypes?: Map<string, string>
   /** Object IRI → its triples, when its type is configured render:embed (depth-1). */
   embedded?: Map<string, PropertyGroup[]>
+  /** IRIs already inlined on the path to here. An object that embeds a value
+   *  which is one of its own ancestors (a cycle, e.g. A→B→A) would recurse
+   *  forever, so such an object renders as a plain link instead. */
+  ancestors?: string[]
   /** Reveal a graph chip on every triple. Multi-graph triples always show one. */
   showGraphs?: boolean
   /** Inverse relations (`?s ?p <this>`): mark predicates as inbound. */
@@ -36,6 +40,16 @@ const mode = computed(() => settings.uriDisplay)
 const XSD_STRING = 'http://www.w3.org/2001/XMLSchema#string'
 
 const qname = (uri: string) => toQname(uri, props.resolved)
+
+// Triples to inline for a uri object, or null if it shouldn't be embedded here.
+// Guards cycles: an object already on the ancestor path renders as a link
+// (returns null) rather than recursing into itself forever.
+function embedGroups(o: ResourceObject): PropertyGroup[] | null {
+  if (o.termType !== 'uri') return null
+  const groups = props.embedded?.get(o.value)
+  if (!groups || (props.ancestors ?? []).includes(o.value)) return null
+  return groups
+}
 
 /** Predicate label, per the URI-display mode; qname/URI stays on hover. */
 function predicateLabel(uri: string): string {
@@ -97,15 +111,16 @@ function graphTitle(o: ResourceObject): string {
           <div v-for="(o, i) in shownObjects(group)" :key="i" class="prop-value" :title="graphTitle(o)">
             <!-- Embedded value object: inline its triples (recursively — an
                  embedded object may itself embed more, e.g. Site → PostalAddress) -->
-            <div v-if="o.termType === 'uri' && embedded?.get(o.value)" class="embed">
+            <div v-if="embedGroups(o)" class="embed">
               <span v-if="objectBadge(o.value)" class="tag type-badge">{{ objectBadge(o.value) }}</span>
               <PropertyTable
                 class="embed-table"
-                :groups="embedded.get(o.value)!"
+                :groups="embedGroups(o)!"
                 :resolved="resolved"
                 :labels="labels"
                 :object-types="objectTypes"
                 :embedded="embedded"
+                :ancestors="[...(ancestors ?? []), o.value]"
                 :show-graphs="showGraphs"
                 @navigate="emit('navigate', $event)"
               />

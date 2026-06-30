@@ -178,7 +178,7 @@ function navigate(target: string) {
 
       <section v-if="relationships.length" class="prop-section">
         <h3 class="section-title">Relationships</h3>
-        <PropertyTable :groups="relationships" :resolved="resolved" :labels="objectLabels" :object-types="objectTypes" :embedded="embedded" :show-graphs="showGraphs" @navigate="navigate" />
+        <PropertyTable :groups="relationships" :resolved="resolved" :labels="objectLabels" :object-types="objectTypes" :embedded="embedded" :ancestors="uri ? [uri] : []" :show-graphs="showGraphs" @navigate="navigate" />
       </section>
     </template>
 
