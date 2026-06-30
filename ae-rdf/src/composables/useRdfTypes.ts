@@ -10,7 +10,7 @@
  */
 import { ref, computed, watch, onMounted, onUnmounted, type Ref } from 'vue'
 import { useEndpointStore, useBrowseStore, useTypeConfigStore } from '../stores'
-import { executeSparql, resolveUris, logger, eventBus, buildTypeInventoryQuery, buildCompositionQuery, buildSubclassQuery, buildPathCountQuery, resolveGraphStrategy } from '../services'
+import { executeSparql, resolveUris, logger, eventBus, buildTypeInventoryQuery, buildCompositionQuery, buildSubclassQuery, buildPathCountQuery, buildIncomingPredicatesQuery, buildEmbedOrphanQuery, resolveGraphStrategy } from '../services'
 
 export interface RdfType {
   uri: string
@@ -36,6 +36,9 @@ export function useRdfTypes() {
   // On-demand path-scoped counts for nested embeds, keyed by chain.join('>').
   const pathCounts: Ref<Map<string, number>> = ref(new Map())
   const pathInflight = new Set<string>()
+  // Embed types that pin an owning predicate → count of instances with NO owner
+  // via it (type total − linked). Only entries with orphans > 0 are kept.
+  const orphanCounts: Ref<Map<string, number>> = ref(new Map())
   let requestId = 0
 
   // Types configured to render inline as values (per-endpoint config).
@@ -100,6 +103,55 @@ export function useRdfTypes() {
       logger.warn('useRdfTypes', 'Path count failed', { chain, error: e })
     } finally {
       pathInflight.delete(key)
+    }
+  }
+
+  // Incoming predicates for a type (embed "owning predicate" picker): which
+  // (predicate, source class) pairs point at instances of this type, commonest
+  // first. On demand — only when configuring a type — so no eager cost. [] on fail.
+  async function fetchIncomingPredicates(typeUri: string): Promise<{ predicate: string; parentType: string; count: number }[]> {
+    const endpoint = endpointStore.current
+    if (!endpoint) return []
+    try {
+      const res = await executeSparql(endpoint, buildIncomingPredicatesQuery(typeUri, resolveGraphStrategy(browseStore.graph)), { retries: 1 })
+      return res.results.bindings
+        .map(b => ({ predicate: b.p?.value ?? '', parentType: b.c?.value ?? '', count: parseInt(b.n?.value ?? '0', 10) }))
+        .filter(r => r.predicate)
+    } catch (e: unknown) {
+      logger.warn('useRdfTypes', 'Incoming-predicates fetch failed', { typeUri, error: e })
+      return []
+    }
+  }
+
+  // For embed types that pin an owning predicate (embedVia), probe how many
+  // instances have no owner via it — orphans that will only ever surface in the
+  // Embedded fallback group, never inlined. Background, like composition.
+  async function loadOrphanCounts(): Promise<void> {
+    const endpoint = endpointStore.current
+    const pairs = types.value
+      .map(t => ({ type: t.uri, via: typeConfig.get(t.uri).embedVia ?? '', total: t.count }))
+      .filter(p => p.via && typeConfig.get(p.type).render === 'embed')
+    if (!endpoint || !pairs.length) { orphanCounts.value = new Map(); return }
+    const query = buildEmbedOrphanQuery(pairs.map(p => ({ type: p.type, via: p.via })), resolveGraphStrategy(browseStore.graph))
+    if (!query) { orphanCounts.value = new Map(); return }
+    const endpointId = endpoint.id
+    try {
+      const res = await executeSparql(endpoint, query, { retries: 1 })
+      if (endpointStore.current?.id !== endpointId) return
+      const linked = new Map<string, number>()
+      for (const b of res.results.bindings) {
+        const e = b.e?.value
+        if (e) linked.set(e, parseInt(b.linked?.value ?? '0', 10))
+      }
+      const map = new Map<string, number>()
+      for (const p of pairs) {
+        const orphans = p.total - (linked.get(p.type) ?? 0)
+        if (orphans > 0) map.set(p.type, orphans)
+      }
+      orphanCounts.value = map
+      logger.info('useRdfTypes', 'Loaded embed orphan counts', { withOrphans: map.size })
+    } catch (e: unknown) {
+      logger.warn('useRdfTypes', 'Orphan-count load failed', { error: e })
     }
   }
 
@@ -203,6 +255,12 @@ export function useRdfTypes() {
   // Recompute composition when the embed set changes (types load or a live
   // edit-mode toggle) or the graph scope changes.
   watch([embedTypes, () => browseStore.graph], () => loadComposition())
+  // Re-probe orphans when the embed owner config (type → embedVia) or graph
+  // changes — embedTypes alone misses an embedVia edit on an already-embed type.
+  const embedOwnerKey = computed(() => types.value
+    .map(t => { const c = typeConfig.get(t.uri); return c.render === 'embed' && c.embedVia ? `${t.uri}=${c.embedVia}` : '' })
+    .filter(Boolean).join('|'))
+  watch([embedOwnerKey, () => browseStore.graph], () => loadOrphanCounts())
   // Rediscover the subclass hierarchy when the inventory or graph scope changes.
   const inventoryKey = computed(() => types.value.map(t => t.uri).join('|'))
   watch([inventoryKey, () => browseStore.graph], () => loadSubclasses())
@@ -211,5 +269,5 @@ export function useRdfTypes() {
   })
   onUnmounted(() => sub.unsubscribe())
 
-  return { types, loading, error, resolved, composition, subclasses, pathCounts, requestPathCount, loadTypes }
+  return { types, loading, error, resolved, composition, subclasses, pathCounts, orphanCounts, requestPathCount, fetchIncomingPredicates, loadTypes }
 }

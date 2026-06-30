@@ -112,6 +112,10 @@ export function buildInstanceCountQuery(typeUri: string, s: GraphStrategy): stri
  * One page of instances of a type. GROUP BY ?s + SAMPLE → exactly one row per
  * instance. Label OPTIONALs read the default view (fine on merged/triple stores;
  * a navigation index, full labels are one click away in the resource view).
+ *
+ * No ORDER BY: sorting by label forces the engine to materialize + sort the
+ * whole instance set before LIMIT can apply — the dominant cost on large types.
+ * We take the engine's natural order; this is a navigation index, not a report.
  */
 export function buildInstanceListQuery(typeUri: string, s: GraphStrategy, limit = 100, offset = 0): string {
   const iri = sanitizeIri(typeUri)
@@ -125,7 +129,6 @@ export function buildInstanceListQuery(typeUri: string, s: GraphStrategy, limit 
   BIND(COALESCE(?l1, ?l2, ?l3, STR(?s)) AS ?lbl)
 }
 GROUP BY ?s
-ORDER BY ?label
 LIMIT ${lim} OFFSET ${off}`)
 }
 
@@ -149,6 +152,42 @@ export function buildCompositionQuery(embedTypeUris: string[], s: GraphStrategy)
   // nested embed shows a count relative to its composing class, not the global
   // type total (Acronym under PublicBody ≠ all Acronyms in the store).
   return `SELECT ?c ?e (COUNT(DISTINCT ?o) AS ?n) WHERE { VALUES ?e { ${values} } ${body} FILTER(?c != ?e) } GROUP BY ?c ?e`
+}
+
+/**
+ * Incoming predicates for a type: which (predicate, source class) pairs point AT
+ * instances of `typeUri`, with a distinct-target count, commonest first. Powers
+ * the embed "owning predicate" picker — pick the relationship that should inline
+ * this value (e.g. Grant via isFundedBy ← Project), so it isn't embedded under
+ * every other type that merely references it. Same join as buildCompositionQuery,
+ * just projecting the predicate and grouping by it too.
+ */
+export function buildIncomingPredicatesQuery(typeUri: string, s: GraphStrategy): string {
+  const iri = sanitizeIri(typeUri)
+  const body = s.useDefault
+    ? `?o a <${iri}> . ?s ?p ?o . ?s a ?c .`
+    : `GRAPH ?ge { ?o a <${iri}> } GRAPH ?gp { ?s ?p ?o } GRAPH ?gc { ?s a ?c }`
+  return `SELECT ?p ?c (COUNT(DISTINCT ?o) AS ?n) WHERE { ${body} FILTER(?c != <${iri}>) } GROUP BY ?p ?c ORDER BY DESC(?n)`
+}
+
+/**
+ * For each (embed type, owning predicate) pair, count instances LINKED to an
+ * owner via that predicate. Orphans = the type's total − linked, computed by the
+ * caller (it has the inventory totals). Drives the sidebar's "not all owned"
+ * warning on embed types that pin an embedVia (e.g. the 14 grants with no
+ * Project). Paired VALUES + a variable predicate, one query for all such types.
+ * Returns '' when no pair has safe IRIs (caller skips an empty query).
+ */
+export function buildEmbedOrphanQuery(pairs: { type: string; via: string }[], s: GraphStrategy): string {
+  const values = pairs
+    .filter(p => isNavigableIri(p.type) && isNavigableIri(p.via))
+    .map(p => `(<${p.type}> <${p.via}>)`)
+    .join(' ')
+  if (!values) return ''
+  const body = s.useDefault
+    ? `?o a ?e . ?s ?via ?o .`
+    : `GRAPH ?ge { ?o a ?e } GRAPH ?gp { ?s ?via ?o }`
+  return `SELECT ?e (COUNT(DISTINCT ?o) AS ?linked) WHERE { VALUES (?e ?via) { ${values} } ${body} } GROUP BY ?e`
 }
 
 /**

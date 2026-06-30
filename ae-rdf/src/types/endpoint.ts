@@ -37,6 +37,12 @@ export type TypeSidebar = 'show' | 'hide' | 'pin'
  */
 export interface TypeConfig {
   render?: TypeRender
+  /** When `render` is `embed`, only inline this object where it is reached via
+   *  THIS predicate (its owning relationship). Unset = inline wherever the type
+   *  is an object — fine for pure value objects with a single owner, but set it
+   *  for entities referenced by several types (e.g. a Grant owned by its Project
+   *  via isFundedBy, not by every FundingAgency that disburses it). */
+  embedVia?: string
   sidebar?: TypeSidebar
   /** Optional sidebar group label (e.g. "Ontology") — collects this type under a
    *  collapsible group header instead of the flat top level. */

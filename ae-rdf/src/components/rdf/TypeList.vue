@@ -9,7 +9,7 @@
  *
  * @see /spec/ae-rdf
  */
-import { ref, computed } from 'vue'
+import { ref, computed, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import ProgressSpinner from 'primevue/progressspinner'
 import Menu from 'primevue/menu'
@@ -18,15 +18,42 @@ import InputText from 'primevue/inputtext'
 import Button from 'primevue/button'
 import { useBrowseStore, useSettingsStore, useTypeConfigStore } from '../../stores'
 import { useRdfTypes, useDelayedLoading } from '../../composables'
-import { displayType } from '../../utils/format'
+import { displayType, localName } from '../../utils/format'
 import { URL_PARAMS } from '../../router'
 
 const router = useRouter()
 const browseStore = useBrowseStore()
 const settings = useSettingsStore()
 const typeConfig = useTypeConfigStore()
-const { types, loading, error, resolved, composition, subclasses, pathCounts, requestPathCount } = useRdfTypes()
+const { types, loading, error, resolved, composition, subclasses, pathCounts, orphanCounts, requestPathCount, fetchIncomingPredicates } = useRdfTypes()
 const showLoading = useDelayedLoading(loading)
+
+// Draggable sidebar width, persisted. Pointer events + setPointerCapture so the
+// drag tracks reliably across mouse/trackpad and keeps firing even when the
+// pointer leaves the 6px handle or moves fast (raw window mousemove drops these).
+const SIDEBAR_WIDTH_KEY = 'ae-rdf-sidebar-width'
+const MIN_W = 200, MAX_W = 560
+const clampW = (w: number) => Math.min(MAX_W, Math.max(MIN_W, w))
+const sidebarWidth = ref(clampW(Number(localStorage.getItem(SIDEBAR_WIDTH_KEY)) || 280))
+const dragging = ref(false)
+let dragStartX = 0, dragStartW = 0
+function startDrag(e: PointerEvent) {
+  dragging.value = true
+  dragStartX = e.clientX
+  dragStartW = sidebarWidth.value
+  ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
+  document.body.style.userSelect = 'none'
+}
+function onDragMove(e: PointerEvent) {
+  if (dragging.value) sidebarWidth.value = clampW(dragStartW + e.clientX - dragStartX)
+}
+function endDrag() {
+  if (!dragging.value) return
+  dragging.value = false
+  document.body.style.userSelect = ''
+  localStorage.setItem(SIDEBAR_WIDTH_KEY, String(sidebarWidth.value))
+}
+onBeforeUnmount(() => { document.body.style.userSelect = '' })
 
 const selected = computed(() => browseStore.currentType)
 const typeMenu = ref()
@@ -35,6 +62,12 @@ const menuType = ref<string | null>(null)
 const showGroupDialog = ref(false)
 const groupDialogUri = ref<string | null>(null)
 const groupNameInput = ref('')
+// Embed "owning predicate" dialog state.
+const showEmbedDialog = ref(false)
+const embedDialogUri = ref<string | null>(null)
+const embedCandidates = ref<{ predicate: string; parentType: string; count: number }[]>([])
+const embedLoadingCands = ref(false)
+const embedSelected = ref('') // '' = any predicate (inline everywhere)
 // Collapsed superclasses (default expanded). A Set, replaced wholesale to stay reactive.
 const collapsed = ref<Set<string>>(new Set())
 
@@ -163,7 +196,7 @@ const hasKids = (uri: string) => subChildren(uri).length > 0 || childrenOf(uri).
 // (a deeper embed's count is the global per-parent-type total), so we hide it
 // rather than show a misleading number. Path-scoped deep counts would cost a
 // chained COUNT query per path on every load — not worth it eagerly.
-interface Row { uri: string; depth: number; kind: 'class' | 'embed' | 'group'; count: number; group?: string; scoped?: boolean; chain?: string[]; system?: boolean; leaf?: boolean }
+interface Row { uri: string; depth: number; kind: 'class' | 'embed' | 'group'; count: number; group?: string; scoped?: boolean; chain?: string[]; system?: boolean; leaf?: boolean; global?: boolean }
 
 // One flat, ordered render list: pinned, then ungrouped roots, then a
 // collapsible header per named group with its roots' subtrees. Each class is
@@ -202,7 +235,7 @@ const rows = computed<Row[]>(() => {
   // their classes, listed here for consistency) and all hidden types.
   if (embeddedGroupTypes.value.length) {
     out.push({ uri: SYS_EMBEDDED, depth: 0, kind: 'group', count: embeddedGroupTypes.value.length, group: SYS_EMBEDDED, system: true })
-    if (!isGroupCollapsed(SYS_EMBEDDED)) for (const u of embeddedGroupTypes.value) out.push({ uri: u, depth: 1, kind: 'embed', count: countOf(u), scoped: true })
+    if (!isGroupCollapsed(SYS_EMBEDDED)) for (const u of embeddedGroupTypes.value) out.push({ uri: u, depth: 1, kind: 'embed', count: countOf(u), scoped: true, global: true })
   }
   if (hiddenGroupTypes.value.length) {
     out.push({ uri: SYS_HIDDEN, depth: 0, kind: 'group', count: hiddenGroupTypes.value.length, group: SYS_HIDDEN, system: true })
@@ -218,6 +251,14 @@ function onEmbedEnter(row: Row) {
 }
 const embedCount = (row: Row): number | null =>
   row.scoped !== false ? row.count : (pathCounts.value.get(pathKey(row)) ?? null)
+
+// Embed orphans: instances of an embedVia type with no owner via that predicate.
+const orphansOf = (uri: string) => orphanCounts.value.get(uri) ?? 0
+const orphanTitle = (uri: string): string | undefined => {
+  const n = orphansOf(uri)
+  return n > 0 ? `${formatCount(n)} of ${formatCount(countOf(uri))} have no owner via ${predName(cfg(uri).embedVia ?? '')} — only reachable here` : undefined
+}
+const embeddedHasOrphans = computed(() => embeddedGroupTypes.value.some(u => orphansOf(u) > 0))
 
 const menuItems = computed(() => {
   const uri = menuType.value
@@ -240,9 +281,9 @@ const menuItems = computed(() => {
     {
       label: 'Render as object',
       items: [
-        { label: 'Link', icon: check(render === 'link'), command: () => typeConfig.set(uri, { render: 'link' }) },
-        { label: 'Embed', icon: check(render === 'embed'), command: () => typeConfig.set(uri, { render: 'embed' }) },
-        { label: 'Label only', icon: check(render === 'label'), command: () => typeConfig.set(uri, { render: 'label' }) },
+        { label: 'Link', icon: check(render === 'link'), command: () => typeConfig.set(uri, { render: 'link', embedVia: undefined }) },
+        { label: 'Embed…', icon: check(render === 'embed'), command: () => promptEmbed(uri) },
+        { label: 'Label only', icon: check(render === 'label'), command: () => typeConfig.set(uri, { render: 'label', embedVia: undefined }) },
       ],
     },
     {
@@ -270,6 +311,27 @@ function confirmGroup() {
   showGroupDialog.value = false
 }
 
+// Open the embed dialog and discover (on demand) the predicates that point at
+// this type, so the user can pin the one that OWNS it (e.g. isFundedBy ← Project).
+async function promptEmbed(uri: string) {
+  embedDialogUri.value = uri
+  embedSelected.value = cfg(uri).embedVia ?? ''
+  embedCandidates.value = []
+  showEmbedDialog.value = true
+  embedLoadingCands.value = true
+  try {
+    const cands = await fetchIncomingPredicates(uri)
+    if (embedDialogUri.value === uri) embedCandidates.value = cands
+  } finally {
+    if (embedDialogUri.value === uri) embedLoadingCands.value = false
+  }
+}
+function confirmEmbed() {
+  if (embedDialogUri.value) typeConfig.set(embedDialogUri.value, { render: 'embed', embedVia: embedSelected.value || undefined })
+  showEmbedDialog.value = false
+}
+const predName = (uri: string) => localName(uri)
+
 function openMenu(event: Event, uri: string) {
   menuType.value = uri
   typeMenu.value.toggle(event)
@@ -282,7 +344,7 @@ function selectType(uri: string) {
 </script>
 
 <template>
-  <aside class="type-list">
+  <aside class="type-list" :style="{ width: sidebarWidth + 'px' }">
     <div class="type-list-header">Types</div>
 
     <div v-if="showLoading" class="state">
@@ -327,6 +389,11 @@ function selectType(uri: string) {
           <!-- Group header: collapsible bucket of classes. -->
           <button v-if="row.kind === 'group'" class="type-item type-group-item" @click="toggleGroup(row.group!)">
             <span class="type-name">{{ row.group }}</span>
+            <span
+              v-if="row.group === SYS_EMBEDDED && embeddedHasOrphans"
+              class="material-symbols-outlined orphan-flag"
+              title="Some embedded types have instances with no owner — they only appear in this group, never inlined"
+            >warning</span>
             <span class="type-count">{{ formatCount(row.count) }}</span>
           </button>
 
@@ -361,7 +428,12 @@ function selectType(uri: string) {
             <span class="type-ind">
               <span class="material-symbols-outlined ind" title="Embedded inline as a value — click to browse instances">data_object</span>
             </span>
-            <span v-if="embedCount(row) !== null" class="type-count">{{ formatCount(embedCount(row)!) }}</span>
+            <span
+              v-if="embedCount(row) !== null"
+              class="type-count"
+              :class="{ 'count-orphan': row.global && orphansOf(row.uri) > 0 }"
+              :title="row.global ? orphanTitle(row.uri) : undefined"
+            >{{ formatCount(embedCount(row)!) }}</span>
           </button>
 
           <button v-if="settings.editMode && row.kind !== 'group'" class="type-gear" aria-label="Configure type" @click.stop="openMenu($event, row.uri)">
@@ -390,6 +462,50 @@ function selectType(uri: string) {
         <Button label="Save" :disabled="!groupNameInput.trim()" @click="confirmGroup" />
       </template>
     </Dialog>
+
+    <Dialog v-model:visible="showEmbedDialog" header="Embed via" :modal="true" :style="{ width: '460px' }" position="top">
+      <div class="embed-dialog">
+        <p class="embed-dialog-hint">
+          Inline this type only where it is reached via the chosen relationship. Pick
+          <strong>Any</strong> for a pure value object with a single owner (it then inlines wherever it appears).
+        </p>
+        <div v-if="embedLoadingCands" class="embed-dialog-loading">
+          <ProgressSpinner style="width: 22px; height: 22px" strokeWidth="4" />
+          <span>Finding relationships…</span>
+        </div>
+        <ul v-else class="embed-options">
+          <li>
+            <label class="embed-option">
+              <input type="radio" value="" v-model="embedSelected" />
+              <span class="embed-option-pred">Any predicate</span>
+              <span class="embed-option-meta">inline wherever it appears</span>
+            </label>
+          </li>
+          <li v-for="cand in embedCandidates" :key="cand.predicate + cand.parentType">
+            <label class="embed-option">
+              <input type="radio" :value="cand.predicate" v-model="embedSelected" />
+              <span class="embed-option-pred" :title="cand.predicate">{{ predName(cand.predicate) }}</span>
+              <span class="embed-option-meta">← {{ predName(cand.parentType) }} · {{ formatCount(cand.count) }}</span>
+            </label>
+          </li>
+          <li v-if="!embedCandidates.length" class="embed-empty">No incoming relationships found — only “Any” applies.</li>
+        </ul>
+      </div>
+      <template #footer>
+        <Button label="Cancel" text severity="secondary" @click="showEmbedDialog = false" />
+        <Button label="Save" @click="confirmEmbed" />
+      </template>
+    </Dialog>
+
+    <div
+      class="resize-handle"
+      :class="{ dragging }"
+      title="Drag to resize"
+      @pointerdown.prevent="startDrag"
+      @pointermove="onDragMove"
+      @pointerup="endDrag"
+      @pointercancel="endDrag"
+    ></div>
   </aside>
 </template>
 
@@ -397,11 +513,28 @@ function selectType(uri: string) {
 .type-list {
   display: flex;
   flex-direction: column;
-  width: 280px;
+  position: relative;
   flex-shrink: 0;
   border-right: 1px solid var(--ae-border-color);
   overflow: hidden;
   background: var(--ae-bg-elevated);
+}
+
+/* Full-height drag handle sitting on the right edge to resize the sidebar. */
+.resize-handle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 6px;
+  cursor: col-resize;
+  z-index: 5;
+}
+
+.resize-handle:hover,
+.resize-handle.dragging {
+  background: var(--ae-accent);
+  opacity: 0.4;
 }
 
 .type-list-header {
@@ -521,6 +654,69 @@ function selectType(uri: string) {
   color: var(--ae-text-muted);
 }
 
+.embed-dialog {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.embed-dialog-hint {
+  font-size: 0.75rem;
+  color: var(--ae-text-secondary);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.embed-dialog-loading {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  color: var(--ae-text-secondary);
+  padding: 0.5rem 0;
+}
+
+.embed-options {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 280px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.embed-option {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.4rem 0.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.embed-option:hover {
+  background: var(--ae-bg-hover);
+}
+
+.embed-option-pred {
+  font-family: var(--ae-font-mono);
+  font-size: 0.8125rem;
+  color: var(--ae-text-primary);
+}
+
+.embed-option-meta {
+  font-size: 0.6875rem;
+  color: var(--ae-text-muted);
+}
+
+.embed-empty {
+  font-size: 0.75rem;
+  color: var(--ae-text-muted);
+  padding: 0.4rem 0.5rem;
+}
+
 .type-group-item .type-name {
   font-family: var(--ae-font-sans);
   font-size: 0.7rem;
@@ -558,6 +754,18 @@ function selectType(uri: string) {
   background: var(--ae-bg-base);
   border-radius: 10px;
   padding: 0.05rem 0.45rem;
+  flex-shrink: 0;
+}
+
+/* Embed type with instances that have no owner via its embedVia — flagged red. */
+.type-count.count-orphan {
+  color: var(--ae-status-error);
+  font-weight: 600;
+}
+
+.orphan-flag {
+  font-size: 14px;
+  color: var(--ae-status-error);
   flex-shrink: 0;
 }
 

@@ -5,6 +5,14 @@
     "http://data.europa.eu/s66#Project": {
       "sidebar": "pin"
     },
+    "http://data.europa.eu/s66#Grant": {
+      "render": "embed",
+      "embedVia": "http://data.europa.eu/s66#isFundedBy"
+    },
+    "http://data.europa.eu/s66#OrganisationRole": {
+      "render": "embed",
+      "embedVia": "http://data.europa.eu/s66#hasInvolvedParty"
+    },
     "http://data.europa.eu/s66#MonetaryAmount": {
       "render": "embed"
     },

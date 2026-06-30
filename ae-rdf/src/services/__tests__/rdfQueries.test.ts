@@ -20,6 +20,8 @@ import {
   buildPathCountQuery,
   buildIncomingCountQuery,
   buildIncomingQuery,
+  buildIncomingPredicatesQuery,
+  buildEmbedOrphanQuery,
 } from '../rdfQueries'
 
 const RES = 'http://data.europa.eu/s66#endDate'
@@ -270,5 +272,45 @@ describe('incoming (inverse) relations', () => {
     expect(def).toContain('SELECT ?s ?p')
     expect(def).not.toContain('GRAPH')
     expect(buildIncomingQuery(RES, BOTH).split('LIMIT')[1].trim()).toBe('1000') // default cap
+  })
+})
+
+describe('buildIncomingPredicatesQuery', () => {
+  it('lists (predicate, source class) edges into a type with a distinct count; plain on default', () => {
+    const q = buildIncomingPredicatesQuery(TYPE, DEFAULT)
+    expect(q).toContain('SELECT ?p ?c (COUNT(DISTINCT ?o) AS ?n)')
+    expect(q).toContain(`?o a <${TYPE}> . ?s ?p ?o . ?s a ?c .`)
+    expect(q).toContain(`FILTER(?c != <${TYPE}>)`)
+    expect(q).toContain('GROUP BY ?p ?c')
+    expect(q).toContain('ORDER BY DESC(?n)')
+    expect(q).not.toContain('GRAPH')
+  })
+  it('merged (never default) wraps each pattern in its own GRAPH', () => {
+    const q = buildIncomingPredicatesQuery(TYPE, NAMED)
+    expect(q).toContain(`GRAPH ?ge { ?o a <${TYPE}> }`)
+    expect(q).toContain('GRAPH ?gp { ?s ?p ?o }')
+    expect(q).toContain('GRAPH ?gc { ?s a ?c }')
+  })
+  it('refuses an unsafe IRI', () => {
+    expect(() => buildIncomingPredicatesQuery('http://e.org/x> } DROP', BOTH)).toThrow()
+  })
+})
+
+describe('buildEmbedOrphanQuery', () => {
+  const VIA = 'http://data.europa.eu/s66#isFundedBy'
+  it('counts owner-linked instances per (type, predicate) pair; plain on default', () => {
+    const q = buildEmbedOrphanQuery([{ type: TYPE, via: VIA }], DEFAULT)
+    expect(q).toContain('SELECT ?e (COUNT(DISTINCT ?o) AS ?linked)')
+    expect(q).toContain(`VALUES (?e ?via) { (<${TYPE}> <${VIA}>) }`)
+    expect(q).toContain('?o a ?e . ?s ?via ?o .')
+    expect(q).toContain('GROUP BY ?e')
+    expect(q).not.toContain('GRAPH')
+  })
+  it('merged wraps the patterns in GRAPH', () => {
+    expect(buildEmbedOrphanQuery([{ type: TYPE, via: VIA }], NAMED)).toContain('GRAPH ?gp { ?s ?via ?o }')
+  })
+  it('returns empty when no pair has safe IRIs (caller skips it)', () => {
+    expect(buildEmbedOrphanQuery([{ type: 'http://e.org/x> }', via: VIA }], DEFAULT)).toBe('')
+    expect(buildEmbedOrphanQuery([], DEFAULT)).toBe('')
   })
 })
