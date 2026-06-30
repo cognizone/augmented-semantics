@@ -59,12 +59,14 @@ export function useInstanceList() {
 
     logger.info('useInstanceList', 'Loading instances', { type, page: page.value, strategy })
 
+    // Lazy count: the COUNT(DISTINCT) scans the whole type and is the slow part,
+    // so don't block the list on it — fire it separately and fill total in when
+    // it lands. Reset stale total now so the header doesn't show the old type's.
+    if (needCount) total.value = 0
+
     try {
-      const [listRes, countRes, typeResolved] = await Promise.all([
+      const [listRes, typeResolved] = await Promise.all([
         executeSparql(endpoint, buildInstanceListQuery(type, strategy, PAGE_SIZE, page.value * PAGE_SIZE), { retries: 1 }),
-        needCount
-          ? executeSparql(endpoint, buildInstanceCountQuery(type, strategy), { retries: 1 })
-          : Promise.resolve(null),
         resolveUris([type]),
       ])
       if (!isCurrent()) return
@@ -73,13 +75,18 @@ export function useInstanceList() {
         .map(b => ({ uri: b.s?.value ?? '', label: b.label?.value ?? b.s?.value ?? '' }))
         .filter(i => i.uri)
 
-      if (countRes) {
-        total.value = parseInt(countRes.results.bindings[0]?.total?.value ?? '0', 10)
-        countedFor = countKey
-      }
-
       const r = typeResolved.get(type)
       typeLabel.value = r?.prefix ? `${r.prefix}:${r.localName}` : (r?.localName ?? type)
+
+      if (needCount) {
+        executeSparql(endpoint, buildInstanceCountQuery(type, strategy), { retries: 1 })
+          .then(countRes => {
+            if (!isCurrent()) return
+            total.value = parseInt(countRes.results.bindings[0]?.total?.value ?? '0', 10)
+            countedFor = countKey
+          })
+          .catch(e => logger.warn('useInstanceList', 'Count failed', { type, error: e }))
+      }
 
       logger.info('useInstanceList', 'Loaded instances', { shown: instances.value.length, total: total.value })
     } catch (e: unknown) {
