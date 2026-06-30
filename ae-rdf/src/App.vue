@@ -20,6 +20,7 @@ import { useConfig } from './services'
 import { buildAppConfig, buildEndpointConfig, endpointSlug, downloadJson } from './utils/configExport'
 import { getKnownPrefixes, getDisplayPrefixes } from './services'
 import EndpointManager from './components/common/EndpointManager.vue'
+import CredentialsPrompt from './components/common/CredentialsPrompt.vue'
 import ErrorBoundary from './components/common/ErrorBoundary.vue'
 
 const uiStore = useUIStore()
@@ -191,6 +192,7 @@ onUnmounted(() => {
     <Toast />
 
     <EndpointManager v-if="!endpointStore.configMode" v-model:visible="showEndpointManager" />
+    <CredentialsPrompt />
 
     <!-- Settings (minimal: dark mode + build info) -->
     <Dialog v-model:visible="showSettings" header="Settings" :modal="true" :style="{ width: '420px' }" position="top">

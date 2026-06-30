@@ -33,10 +33,8 @@ export function useEndpointForm(initialEndpoint?: SPARQLEndpoint) {
     if (!form.name.trim() || !form.url.trim()) return false
     if (!isValidEndpointUrl(form.url)) return false
 
-    if (form.authType === 'basic' && (!form.username || !form.password)) return false
-    if (form.authType === 'apikey' && !form.apiKey) return false
-    if (form.authType === 'bearer' && !form.token) return false
-
+    // Credentials are optional at save time: they're never persisted, so a
+    // secured endpoint is saved with just its auth type and prompts on connect.
     return true
   })
 

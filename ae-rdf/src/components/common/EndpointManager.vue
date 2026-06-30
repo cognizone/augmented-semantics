@@ -195,6 +195,9 @@ function statusClass(ep: SPARQLEndpoint): string {
       <label class="field">
         <span class="field-label">Authentication</span>
         <Select v-model="form.authType" :options="authOptions" optionLabel="label" optionValue="value" />
+        <small v-if="form.authType !== 'none'" class="field-hint">
+          Credentials are never saved — leave blank and you'll be asked for them on connect.
+        </small>
       </label>
 
       <template v-if="form.authType === 'basic'">

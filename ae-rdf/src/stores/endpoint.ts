@@ -9,7 +9,7 @@
  */
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { SPARQLEndpoint, EndpointStatus, AppError, SuggestedEndpoint } from '../types'
+import type { SPARQLEndpoint, EndpointStatus, AppError, SuggestedEndpoint, EndpointAuth } from '../types'
 import suggestedEndpointsData from '../data/endpoints.json'
 import { logger, isConfigMode, getConfig, eventBus } from '../services'
 
@@ -18,6 +18,19 @@ const STORAGE_KEY = 'ae-endpoints'
 // Type assertion for imported JSON (plain array from merged curated files)
 const suggestedEndpoints = suggestedEndpointsData as SuggestedEndpoint[]
 
+/** Does this endpoint declare auth but lack the secret needed to connect?
+ *  Credentials are never persisted (see saveToStorage), so a secured endpoint
+ *  always needs them re-entered after a reload — we prompt on connect. */
+function needsCredentials(ep: SPARQLEndpoint): boolean {
+  const auth = ep.auth
+  if (!auth || auth.type === 'none') return false
+  const c = auth.credentials
+  if (auth.type === 'basic') return !(c?.username && c?.password)
+  if (auth.type === 'bearer') return !c?.token
+  if (auth.type === 'apikey') return !c?.apiKey
+  return false
+}
+
 export const useEndpointStore = defineStore('endpoint', () => {
   // State
   const endpoints = ref<SPARQLEndpoint[]>([])
@@ -25,10 +38,16 @@ export const useEndpointStore = defineStore('endpoint', () => {
   const status = ref<EndpointStatus>('disconnected')
   const error = ref<AppError | null>(null)
   const configMode = ref(false)
+  // Endpoint awaiting connect-time credentials (secured, none in memory yet).
+  const pendingCredentialsId = ref<string | null>(null)
 
   // Getters
   const current = computed(() =>
     endpoints.value.find(e => e.id === currentId.value) ?? null
+  )
+
+  const pendingCredentialsEndpoint = computed(() =>
+    endpoints.value.find(e => e.id === pendingCredentialsId.value) ?? null
   )
 
   const sortedEndpoints = computed(() =>
@@ -140,7 +159,12 @@ export const useEndpointStore = defineStore('endpoint', () => {
 
   function saveToStorage() {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(endpoints.value))
+      // Never persist credentials — keep the auth *type* so we know to prompt
+      // on connect, but the secret lives only in memory for the session.
+      const sanitized = endpoints.value.map(e =>
+        e.auth && e.auth.type !== 'none' ? { ...e, auth: { type: e.auth.type } } : e
+      )
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitized))
     } catch (e) {
       logger.error('EndpointStore', 'Failed to save endpoints to storage', { error: e })
     }
@@ -228,6 +252,14 @@ export const useEndpointStore = defineStore('endpoint', () => {
   }
 
   function selectEndpoint(id: string | null) {
+    if (id) {
+      const endpoint = endpoints.value.find(e => e.id === id)
+      // Secured endpoint with no in-memory credentials: prompt before connecting.
+      if (endpoint && needsCredentials(endpoint)) {
+        pendingCredentialsId.value = id
+        return
+      }
+    }
     currentId.value = id
     if (id) {
       const endpoint = endpoints.value.find(e => e.id === id)
@@ -243,6 +275,23 @@ export const useEndpointStore = defineStore('endpoint', () => {
     } else {
       status.value = 'disconnected'
     }
+  }
+
+  /** Apply connect-time credentials (held in memory only) and connect. */
+  function provideCredentials(credentials: NonNullable<EndpointAuth['credentials']>) {
+    const id = pendingCredentialsId.value
+    pendingCredentialsId.value = null
+    if (!id) return
+    const endpoint = endpoints.value.find(e => e.id === id)
+    if (endpoint?.auth) {
+      // Mutate in memory; saveToStorage strips it, so it never persists.
+      endpoint.auth.credentials = { ...endpoint.auth.credentials, ...credentials }
+    }
+    selectEndpoint(id)
+  }
+
+  function cancelCredentials() {
+    pendingCredentialsId.value = null
   }
 
   function setStatus(newStatus: EndpointStatus) {
@@ -267,8 +316,10 @@ export const useEndpointStore = defineStore('endpoint', () => {
     status,
     error,
     configMode,
+    pendingCredentialsId,
     // Getters
     current,
+    pendingCredentialsEndpoint,
     sortedEndpoints,
     availableSuggestedEndpoints,
     isSingleEndpoint,
@@ -279,6 +330,8 @@ export const useEndpointStore = defineStore('endpoint', () => {
     updateEndpoint,
     removeEndpoint,
     selectEndpoint,
+    provideCredentials,
+    cancelCredentials,
     setStatus,
     setError,
     clearError,
