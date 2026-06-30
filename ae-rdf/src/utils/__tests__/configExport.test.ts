@@ -1,10 +1,18 @@
 import { describe, it, expect } from 'vitest'
-import { buildAppConfig } from '../configExport'
+import { buildAppConfig, endpointSlug } from '../configExport'
 import type { SPARQLEndpoint } from '../../types'
 
 function ep(overrides: Partial<SPARQLEndpoint> = {}): SPARQLEndpoint {
   return { id: 'x', name: 'E', url: 'https://e.org/sparql', createdAt: '', accessCount: 0, ...overrides }
 }
+
+describe('endpointSlug', () => {
+  it('produces a filename-safe slug matching config/endpoints/<slug>.json', () => {
+    expect(endpointSlug('Cordis Datalab')).toBe('cordis-datalab')
+    expect(endpointSlug('Fedlex')).toBe('fedlex')
+    expect(endpointSlug('  data.europa.eu / SPARQL  ')).toBe('data-europa-eu-sparql')
+  })
+})
 
 describe('buildAppConfig', () => {
   it('omits empty sections', () => {

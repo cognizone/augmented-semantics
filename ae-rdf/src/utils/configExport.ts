@@ -16,6 +16,23 @@ export interface ExportInput {
   documentationUrl?: string
 }
 
+/** Filename-safe slug for an endpoint, matching config/endpoints/<slug>.json. */
+export function endpointSlug(name: string): string {
+  return name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+}
+
+/** Build one endpoint's deployable config, omitting empty sections. */
+export function buildEndpointConfig(e: SPARQLEndpoint): ConfigEndpoint {
+  const ce: ConfigEndpoint = { name: e.name, url: e.url }
+  // Signal that auth is required, but NEVER bake credentials into a shared
+  // static file — the deployer supplies them at runtime.
+  if (e.auth && e.auth.type !== 'none') ce.auth = { type: e.auth.type }
+  if (e.graph && (e.graph.quads !== undefined || e.graph.defaultView !== undefined)) ce.graph = e.graph
+  if (e.types && Object.keys(e.types).length) ce.types = e.types
+  if (e.typeInventory?.length) ce.typeInventory = e.typeInventory
+  return ce
+}
+
 /** Assemble an AppConfig from per-endpoint config, omitting empty sections. */
 export function buildAppConfig(input: ExportInput): AppConfig {
   const config: AppConfig = {}
@@ -24,16 +41,7 @@ export function buildAppConfig(input: ExportInput): AppConfig {
   if (input.documentationUrl) config.documentationUrl = input.documentationUrl
 
   if (input.endpoints.length) {
-    config.endpoints = input.endpoints.map(e => {
-      const ce: ConfigEndpoint = { name: e.name, url: e.url }
-      // Signal that auth is required, but NEVER bake credentials into a shared
-      // static file — the deployer supplies them at runtime.
-      if (e.auth && e.auth.type !== 'none') ce.auth = { type: e.auth.type }
-      if (e.graph && (e.graph.quads !== undefined || e.graph.defaultView !== undefined)) ce.graph = e.graph
-      if (e.types && Object.keys(e.types).length) ce.types = e.types
-      if (e.typeInventory?.length) ce.typeInventory = e.typeInventory
-      return ce
-    })
+    config.endpoints = input.endpoints.map(buildEndpointConfig)
   }
 
   if (input.prefixes && Object.keys(input.prefixes).length) config.prefixes = input.prefixes

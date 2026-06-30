@@ -7,11 +7,23 @@
  * @see /spec/common/com01-EndpointManager.md
  */
 import { ref, readonly } from 'vue'
-import type { AppConfig, ResolvedConfig } from '../types'
+import type { AppConfig, ConfigEndpoint, ResolvedConfig } from '../types'
 import { logger } from './logger'
 
 // Cache-bust with build timestamp to ensure fresh config after deployments
-const CONFIG_PATH = `${import.meta.env.BASE_URL}config/app.json?v=${__BUILD_DATE__}`
+const BASE_URL = import.meta.env.BASE_URL
+const CONFIG_PATH = `${BASE_URL}config/app.json?v=${__BUILD_DATE__}`
+
+/**
+ * On-disk manifest shape: an endpoint entry is either a full inline
+ * ConfigEndpoint or a string slug pointing at config/endpoints/<slug>.json.
+ * Slugs are resolved into ConfigEndpoint objects (resolveEndpointFiles) before
+ * the rest of the app sees the config, so adding an endpoint = one file + one
+ * slug in the manifest, with no monolithic app.json to edit.
+ */
+type RawAppConfig = Omit<AppConfig, 'endpoints'> & {
+  endpoints?: (ConfigEndpoint | string)[]
+}
 
 // Singleton state
 const state = ref<ResolvedConfig>({
@@ -64,10 +76,15 @@ export async function loadConfig(): Promise<ResolvedConfig> {
       return state.value
     }
 
-    const config: AppConfig = await response.json()
+    const raw: RawAppConfig = await response.json()
 
-    // Validate config structure
-    validateConfig(config)
+    // Validate config structure (allows string slug entries)
+    validateConfig(raw)
+
+    // Resolve slug entries into ConfigEndpoint objects; after this the config
+    // matches AppConfig (endpoints are all objects) for everything downstream.
+    await resolveEndpointFiles(raw)
+    const config = raw as AppConfig
 
     const hasConfigEndpoints = Array.isArray(config.endpoints) && config.endpoints.length > 0
 
@@ -96,12 +113,16 @@ export async function loadConfig(): Promise<ResolvedConfig> {
   return state.value
 }
 
-function validateConfig(config: AppConfig): void {
+function validateConfig(config: RawAppConfig): void {
   if (config.endpoints) {
     if (!Array.isArray(config.endpoints)) {
       throw new Error('Config endpoints must be an array')
     }
     for (const ep of config.endpoints) {
+      if (typeof ep === 'string') {
+        if (!ep) throw new Error('Endpoint slug must be a non-empty string')
+        continue // resolved later from config/endpoints/<slug>.json
+      }
       if (!ep.name || typeof ep.name !== 'string') {
         throw new Error('Each endpoint must have a name')
       }
@@ -110,6 +131,32 @@ function validateConfig(config: AppConfig): void {
       }
     }
   }
+}
+
+/**
+ * Replace string slug entries with the ConfigEndpoint loaded from
+ * config/endpoints/<slug>.json. Fetched in parallel; a slug whose file is
+ * missing or invalid is dropped (warned) rather than failing the whole app.
+ */
+async function resolveEndpointFiles(config: RawAppConfig): Promise<void> {
+  if (!Array.isArray(config.endpoints)) return
+  const resolved = await Promise.all(
+    config.endpoints.map(async (ep): Promise<ConfigEndpoint | null> => {
+      if (typeof ep !== 'string') return ep
+      try {
+        const res = await fetch(
+          `${BASE_URL}config/endpoints/${ep}.json?v=${__BUILD_DATE__}`,
+          { cache: 'no-store' },
+        )
+        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+        return (await res.json()) as ConfigEndpoint
+      } catch (err) {
+        logger.warn('ConfigService', `Skipping endpoint file '${ep}'`, { err })
+        return null
+      }
+    }),
+  )
+  config.endpoints = resolved.filter((e): e is ConfigEndpoint => e != null)
 }
 
 /**

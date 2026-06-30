@@ -17,7 +17,7 @@ import Select from 'primevue/select'
 import Menu from 'primevue/menu'
 import { useUIStore, useSettingsStore, useEndpointStore } from './stores'
 import { useConfig } from './services'
-import { buildAppConfig, downloadJson } from './utils/configExport'
+import { buildAppConfig, buildEndpointConfig, endpointSlug, downloadJson } from './utils/configExport'
 import { getKnownPrefixes, getDisplayPrefixes } from './services'
 import EndpointManager from './components/common/EndpointManager.vue'
 import ErrorBoundary from './components/common/ErrorBoundary.vue'
@@ -36,6 +36,12 @@ function exportConfig() {
     documentationUrl: config.value.config?.documentationUrl,
   })
   downloadJson(appConfig, 'app.json')
+}
+
+function exportEndpoint() {
+  const ep = endpointStore.current
+  if (!ep) return
+  downloadJson(buildEndpointConfig(ep), `${endpointSlug(ep.name)}.json`)
 }
 
 const showPrefixes = ref(false)
@@ -214,7 +220,8 @@ onUnmounted(() => {
         <div v-if="settingsStore.editMode" class="setting-field">
           <span class="setting-label">Deployment</span>
           <Button label="Export app.json" icon="pi pi-download" severity="secondary" outlined @click="exportConfig" />
-          <small class="setting-hint">Download the current endpoints + per-type config as a locked deployment config. Credentials are never included.</small>
+          <Button v-if="endpointStore.current" :label="`Export ${endpointStore.current.name} endpoint`" icon="pi pi-download" severity="secondary" outlined @click="exportEndpoint" />
+          <small class="setting-hint">Export app.json (the manifest) or a single endpoint file → drop it in <code>config/endpoints/</code> and add its slug to the manifest. Credentials are never included.</small>
         </div>
 
         <div class="about-info">
