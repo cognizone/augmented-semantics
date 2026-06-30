@@ -64,6 +64,27 @@
     },
     "http://www.w3.org/2002/07/owl#Thing": {
       "render": "embed"
+    },
+    "http://data.europa.eu/949/NationalRegistrationProperty": {
+      "render": "embed"
+    },
+    "http://data.europa.eu/949/VehicleRegistrationCheck": {
+      "render": "embed"
+    },
+    "http://www.w3.org/ns/prov#Activity": {
+      "render": "embed"
+    },
+    "http://www.w3.org/2002/07/owl#DatatypeProperty": {
+      "group": "Ontology"
+    },
+    "http://data.europa.eu/949/VehicleRegistration": {
+      "render": "embed"
+    },
+    "http://data.europa.eu/949/VehicleAuthorisation": {
+      "render": "embed"
+    },
+    "http://w3id.org/vpa#Permission": {
+      "render": "embed"
     }
   },
   "typeInventory": [
