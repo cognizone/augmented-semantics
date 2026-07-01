@@ -194,13 +194,19 @@
         "http://data.europa.eu/s66#author",
         "http://data.europa.eu/s66#journalTitle",
         "http://data.europa.eu/s66#journalNumber",
+        "http://data.europa.eu/s66#publishedPages",
+        "http://data.europa.eu/s66#issn",
+        "http://data.europa.eu/s66#doi",
+        "http://data.europa.eu/s66#publishedYear",
         "http://data.europa.eu/s66#publisher",
         "http://data.europa.eu/s66#language",
         "http://data.europa.eu/s66#identifier",
-        "http://data.europa.eu/s66#publishedYear",
         "http://data.europa.eu/s66#rcn",
         "http://www.w3.org/2000/01/rdf-schema#label",
         "http://data.europa.eu/s66#isResultOf"
+      ],
+      "hide": [
+        "http://www.w3.org/2000/01/rdf-schema#label"
       ]
     }
   },
