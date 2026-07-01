@@ -274,6 +274,18 @@ export function buildLabelsQuery(uris: string[]): string {
 }
 
 /**
+ * Raw values of specific predicates for specific subjects, for composing labels
+ * from a type's configured label fields. Returns (?s ?p ?v) rows. Empty string
+ * when there are no safe subjects/predicates (caller skips).
+ */
+export function buildValuesQuery(uris: string[], predicates: string[]): string {
+  const s = uris.filter(isNavigableIri).slice(0, 256).map(u => `<${u}>`).join(' ')
+  const p = predicates.filter(isNavigableIri).map(u => `<${u}>`).join(' ')
+  if (!s || !p) return ''
+  return `SELECT ?s ?p ?v WHERE { VALUES ?s { ${s} } VALUES ?p { ${p} } ?s ?p ?v }`
+}
+
+/**
  * Triples of several resources at once (batch), for inline embedding of value
  * objects. Depth-1, and graph-aware: `?g` is projected so the caller folds each
  * (p,o) into a graphs[] set — provenance is kept, not discarded (a value in two

@@ -14,6 +14,7 @@ import {
   buildInstanceCountQuery,
   buildInstanceListQuery,
   buildLabelsQuery,
+  buildValuesQuery,
   buildEmbeddedTriplesQuery,
   buildCompositionQuery,
   buildSubclassQuery,
@@ -31,6 +32,20 @@ const TYPE = 'http://data.europa.eu/s66#Acronym'
 const BOTH = { useNamed: true, useDefault: true } // own / unknown
 const NAMED = { useNamed: true, useDefault: false } // merged
 const DEFAULT = { useNamed: false, useDefault: true } // no quads
+
+describe('buildValuesQuery', () => {
+  it('selects the requested predicates for the requested subjects', () => {
+    const q = buildValuesQuery([RES], [TYPE])
+    expect(q).toContain(`VALUES ?s { <${RES}> }`)
+    expect(q).toContain(`VALUES ?p { <${TYPE}> }`)
+    expect(q).toContain('?s ?p ?v')
+  })
+  it('returns empty string when there are no safe subjects or predicates', () => {
+    expect(buildValuesQuery([], [TYPE])).toBe('')
+    expect(buildValuesQuery([RES], [])).toBe('')
+    expect(buildValuesQuery(['not an iri'], [TYPE])).toBe('')
+  })
+})
 
 describe('sanitizeIri', () => {
   it('accepts http/https/urn IRIs and trims', () => {
