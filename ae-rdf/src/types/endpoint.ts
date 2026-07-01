@@ -52,6 +52,9 @@ export interface TypeConfig {
    *  any not listed fall to the end in the default priority order. Attributes
    *  then relationships, concatenated. Authored by drag-reorder in edit mode. */
   order?: string[]
+  /** Predicate IRIs to hide from a resource of this type's detail view. Removed
+   *  entirely in normal mode; shown greyed in edit mode so they can be un-hidden. */
+  hide?: string[]
 }
 
 /** A type IRI with its distinct-instance count (the cached inventory entry). */

@@ -14,7 +14,7 @@ import { useBrowseStore, useSettingsStore, useTypeConfigStore } from '../../stor
 import { useResourceView, useIncomingRelations, useClipboard, useDelayedLoading } from '../../composables'
 import { LABEL_PREDICATES } from '../../services'
 import { localName as localNameOf, humanizeLocalName, qname as toQname, displayType } from '../../utils/format'
-import { orderedByConfig } from '../../utils/propertyOrder'
+import { orderedByConfig, toggleInList } from '../../utils/propertyOrder'
 import { URL_PARAMS } from '../../router'
 import type { PropertyGroup } from '../../composables'
 import PropertyTable from './PropertyTable.vue'
@@ -76,33 +76,45 @@ function byPriority(a: PropertyGroup, b: PropertyGroup): number {
     || humanizeLocalName(a.predicate).localeCompare(humanizeLocalName(b.predicate))
 }
 
-// Configurable field order, per type. A resource can have several types, so we
-// pick a deterministic one: the first (alphabetically) of its types that has an
-// order set, else the first type — so read and write target the same config.
-const orderType = computed<string | null>(() => {
+// Per-type field config (order + hide). A resource can have several types, so
+// pick a deterministic one: the first (alphabetically) of its types that has
+// any config, else the first type — so read and write target the same config.
+const cfgType = computed<string | null>(() => {
   const uris = typeChips.value.map(c => c.uri).sort()
-  return uris.find(u => (typeConfig.get(u).order?.length ?? 0) > 0) ?? uris[0] ?? null
+  return uris.find(u => {
+    const c = typeConfig.get(u)
+    return (c.order?.length ?? 0) > 0 || (c.hide?.length ?? 0) > 0
+  }) ?? uris[0] ?? null
 })
-const orderList = computed(() => (orderType.value ? typeConfig.get(orderType.value).order ?? [] : []))
-const canReorder = computed(() => settings.editMode && !!orderType.value)
+const orderList = computed(() => (cfgType.value ? typeConfig.get(cfgType.value).order ?? [] : []))
+const hideList = computed(() => (cfgType.value ? typeConfig.get(cfgType.value).hide ?? [] : []))
+const canEdit = computed(() => settings.editMode && !!cfgType.value)
 
-// Split: Attributes = literal-valued predicates; Relationships = link-valued.
-// Configured order wins; unlisted predicates fall back to the priority heuristic.
+// Hidden predicates are dropped in normal mode; kept (greyed) in edit mode so
+// they can be un-hidden. Configured order wins; the rest fall back to priority.
+const visible = (gs: PropertyGroup[]) =>
+  settings.editMode ? gs : gs.filter(g => !hideList.value.includes(g.predicate))
 const order = (gs: PropertyGroup[]) => orderedByConfig(gs, g => g.predicate, orderList.value, byPriority)
+// Split: Attributes = literal-valued predicates; Relationships = link-valued.
 const attributes = computed(() =>
-  order(triples.value.filter(g => g.objects.every(o => o.termType === 'literal')))
+  order(visible(triples.value.filter(g => g.objects.every(o => o.termType === 'literal'))))
 )
 const relationships = computed(() =>
-  order(triples.value.filter(g => g.objects.some(o => o.termType !== 'literal')))
+  order(visible(triples.value.filter(g => g.objects.some(o => o.termType !== 'literal'))))
 )
 
 // Persist a drag-reorder. The stored order is attributes then relationships, so
 // rebuild the full list from both sections (the dragged one uses the new seq).
 function onReorder(section: 'attr' | 'rel', predicates: string[]) {
-  if (!orderType.value) return
+  if (!cfgType.value) return
   const attrPreds = section === 'attr' ? predicates : attributes.value.map(g => g.predicate)
   const relPreds = section === 'rel' ? predicates : relationships.value.map(g => g.predicate)
-  typeConfig.set(orderType.value, { order: [...attrPreds, ...relPreds] })
+  typeConfig.set(cfgType.value, { order: [...attrPreds, ...relPreds] })
+}
+
+function onToggleHide(predicate: string) {
+  if (!cfgType.value) return
+  typeConfig.set(cfgType.value, { hide: toggleInList(typeConfig.get(cfgType.value).hide ?? [], predicate) })
 }
 
 function selectType(typeUri: string) {
@@ -196,12 +208,12 @@ function navigate(target: string) {
     <template v-else>
       <section v-if="attributes.length" class="prop-section">
         <h3 class="section-title">Attributes</h3>
-        <PropertyTable :groups="attributes" :resolved="resolved" :labels="objectLabels" :object-types="objectTypes" :show-graphs="showGraphs" :reorderable="canReorder" @navigate="navigate" @reorder="p => onReorder('attr', p)" />
+        <PropertyTable :groups="attributes" :resolved="resolved" :labels="objectLabels" :object-types="objectTypes" :show-graphs="showGraphs" :reorderable="canEdit" :hidden="hideList" @navigate="navigate" @reorder="p => onReorder('attr', p)" @toggle-hide="onToggleHide" />
       </section>
 
       <section v-if="relationships.length" class="prop-section">
         <h3 class="section-title">Relationships</h3>
-        <PropertyTable :groups="relationships" :resolved="resolved" :labels="objectLabels" :object-types="objectTypes" :embedded="embedded" :ancestors="uri ? [uri] : []" :show-graphs="showGraphs" :reorderable="canReorder" @navigate="navigate" @reorder="p => onReorder('rel', p)" />
+        <PropertyTable :groups="relationships" :resolved="resolved" :labels="objectLabels" :object-types="objectTypes" :embedded="embedded" :ancestors="uri ? [uri] : []" :show-graphs="showGraphs" :reorderable="canEdit" :hidden="hideList" @navigate="navigate" @reorder="p => onReorder('rel', p)" @toggle-hide="onToggleHide" />
       </section>
     </template>
 

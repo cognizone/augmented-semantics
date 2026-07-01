@@ -11,7 +11,7 @@ import { computed, ref } from 'vue'
 import { isNavigableIri } from '../../services'
 import { useSettingsStore, useTypeConfigStore } from '../../stores'
 import { qname as toQname, displayPredicate, displayObject, displayType, type ResolvedMap } from '../../utils/format'
-import { moveInOrder, orderedByConfig } from '../../utils/propertyOrder'
+import { moveInOrder, orderedByConfig, toggleInList } from '../../utils/propertyOrder'
 import type { PropertyGroup, ResourceObject } from '../../composables'
 
 const props = defineProps<{
@@ -31,12 +31,17 @@ const props = defineProps<{
   showGraphs?: boolean
   /** Inverse relations (`?s ?p <this>`): mark predicates as inbound. */
   incoming?: boolean
-  /** Edit mode: rows get a drag handle to reorder predicates. Emits `reorder`
-   *  with the new predicate sequence; the parent persists it to the type config. */
+  /** Edit mode: rows get a drag handle to reorder predicates + a hide toggle.
+   *  Emits `reorder` / `toggle-hide`; the parent persists to the type config. */
   reorderable?: boolean
+  /** Predicates hidden for this table's type. In edit mode they're greyed with
+   *  the toggle "on"; in normal mode the parent has already filtered them out. */
+  hidden?: string[]
 }>()
 
-const emit = defineEmits<{ navigate: [uri: string]; reorder: [predicates: string[]] }>()
+const emit = defineEmits<{ navigate: [uri: string]; reorder: [predicates: string[]]; toggleHide: [predicate: string] }>()
+
+const isHidden = (predicate: string) => props.hidden?.includes(predicate) ?? false
 
 // Drag-to-reorder (only when reorderable). The handle is the drag source; the
 // whole row is the drop target.
@@ -84,21 +89,33 @@ function embedGroups(o: ResourceObject, viaPredicate: string): PropertyGroup[] |
   const type = embedType(o)
   const cfg = type ? typeConfig.get(type) : {}
   if (cfg.embedVia && cfg.embedVia !== viaPredicate) return null
+  // Hidden predicates: dropped in normal mode, kept (greyed) in edit mode.
+  const hide = cfg.hide ?? []
+  let gs = !settings.editMode && hide.length ? groups.filter(g => !hide.includes(g.predicate)) : groups
   // Honor the embed type's configured field order, so ordering a type applies
   // wherever it renders — standalone or inlined. Unlisted keep insertion order.
   const order = cfg.order ?? []
-  return order.length ? orderedByConfig(groups, g => g.predicate, order, () => 0) : groups
+  if (order.length) gs = orderedByConfig(gs, g => g.predicate, order, () => 0)
+  return gs
 }
 
-/** The type an embedded object is rendered as (drives its order config). */
+/** The type an embedded object is rendered as (drives its order/hide config). */
 function embedType(o: ResourceObject): string | undefined {
   return props.objectTypes?.get(o.value)
 }
+
+const embedHidden = (o: ResourceObject) => (embedType(o) ? typeConfig.get(embedType(o)!).hide ?? [] : [])
 
 /** Persist a drag-reorder inside an embed to that object's type config. */
 function onEmbedReorder(o: ResourceObject, predicates: string[]) {
   const type = embedType(o)
   if (type) typeConfig.set(type, { order: predicates })
+}
+
+/** Toggle-hide a predicate inside an embed, on that object's type config. */
+function onEmbedToggleHide(o: ResourceObject, predicate: string) {
+  const type = embedType(o)
+  if (type) typeConfig.set(type, { hide: toggleInList(typeConfig.get(type).hide ?? [], predicate) })
 }
 
 /** Predicate label, per the URI-display mode; qname/URI stays on hover. */
@@ -158,7 +175,7 @@ function graphTitle(o: ResourceObject): string {
       <tr
         v-for="(group, gi) in groups"
         :key="group.predicate"
-        :class="{ 'drag-over': reorderable && overIndex === gi && dragIndex !== gi, dragging: reorderable && dragIndex === gi }"
+        :class="{ 'drag-over': reorderable && overIndex === gi && dragIndex !== gi, dragging: reorderable && dragIndex === gi, 'prop-hidden': reorderable && isHidden(group.predicate) }"
         @dragover.prevent="reorderable && onDragOver(gi)"
         @drop="reorderable && onDrop(gi)"
         @dragend="onDragEnd"
@@ -170,7 +187,12 @@ function graphTitle(o: ResourceObject): string {
             draggable="true"
             title="Drag to reorder"
             @dragstart="onDragStart(gi, $event)"
-          >drag_indicator</span><span v-if="incoming" class="in-arrow" title="incoming — resources that link here">↤</span>{{ predicateLabel(group.predicate) }}</th>
+          >drag_indicator</span><button
+            v-if="reorderable"
+            class="hide-toggle material-symbols-outlined"
+            :title="isHidden(group.predicate) ? 'Hidden — click to show' : 'Hide this property'"
+            @click="emit('toggleHide', group.predicate)"
+          >{{ isHidden(group.predicate) ? 'visibility_off' : 'visibility' }}</button><span v-if="incoming" class="in-arrow" title="incoming — resources that link here">↤</span>{{ predicateLabel(group.predicate) }}</th>
         <td class="prop-values">
           <div v-for="(o, i) in shownObjects(group)" :key="i" class="prop-value" :title="graphTitle(o)">
             <!-- Embedded value object: inline its triples (recursively — an
@@ -187,8 +209,10 @@ function graphTitle(o: ResourceObject): string {
                 :ancestors="[...(ancestors ?? []), o.value]"
                 :show-graphs="showGraphs"
                 :reorderable="reorderable"
+                :hidden="embedHidden(o)"
                 @navigate="emit('navigate', $event)"
                 @reorder="p => onEmbedReorder(o, p)"
+                @toggle-hide="p => onEmbedToggleHide(o, p)"
               />
             </div>
 
@@ -310,6 +334,26 @@ function graphTitle(o: ResourceObject): string {
 
 .prop-table tr.drag-over {
   border-top: 2px solid var(--ae-accent);
+}
+
+.hide-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-size: 15px;
+  vertical-align: middle;
+  margin-right: 0.25rem;
+  color: var(--ae-text-muted);
+}
+
+.hide-toggle:hover {
+  color: var(--ae-text-primary);
+}
+
+/* A hidden property, shown only in edit mode so it can be un-hidden. */
+.prop-table tr.prop-hidden {
+  opacity: 0.45;
 }
 
 .prop-more {

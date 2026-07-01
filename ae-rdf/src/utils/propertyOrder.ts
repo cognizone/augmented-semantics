@@ -25,6 +25,11 @@ export function orderedByConfig<T>(
   return [...items].sort((a, b) => idx(a) - idx(b) || fallback(a, b))
 }
 
+/** Add `item` to `list` if absent, else remove it. Returns a new array. */
+export function toggleInList(list: string[], item: string): string[] {
+  return list.includes(item) ? list.filter(x => x !== item) : [...list, item]
+}
+
 /** Move the key at `from` to `to`, returning a new array (input untouched). */
 export function moveInOrder(keys: string[], from: number, to: number): string[] {
   if (from === to || from < 0 || to < 0 || from >= keys.length || to >= keys.length) return keys

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { orderedByConfig, moveInOrder } from '../propertyOrder'
+import { orderedByConfig, moveInOrder, toggleInList } from '../propertyOrder'
 
 const id = (s: string) => s
 // fallback: plain alphabetical, to prove unlisted items keep a stable order
@@ -24,6 +24,15 @@ describe('orderedByConfig', () => {
     const items = ['b', 'a']
     orderedByConfig(items, id, ['a'], alpha)
     expect(items).toEqual(['b', 'a'])
+  })
+})
+
+describe('toggleInList', () => {
+  it('adds when absent, removes when present, without mutating', () => {
+    const list = ['a']
+    expect(toggleInList(list, 'b')).toEqual(['a', 'b'])
+    expect(toggleInList(list, 'a')).toEqual([])
+    expect(list).toEqual(['a'])
   })
 })
 
