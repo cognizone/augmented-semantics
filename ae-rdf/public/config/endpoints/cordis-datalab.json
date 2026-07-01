@@ -20,11 +20,25 @@
         "http://data.europa.eu/s66#hasInvolvedParty",
         "http://data.europa.eu/s66#hasTotalCost",
         "http://data.europa.eu/s66#isFundedBy"
+      ],
+      "hide": [
+        "http://www.w3.org/2000/01/rdf-schema#label"
       ]
     },
     "http://data.europa.eu/s66#Grant": {
       "render": "embed",
-      "embedVia": "http://data.europa.eu/s66#isFundedBy"
+      "embedVia": "http://data.europa.eu/s66#isFundedBy",
+      "order": [
+        "http://data.europa.eu/s66#hasBeneficiary",
+        "http://data.europa.eu/s66#startDate",
+        "http://data.europa.eu/s66#endDate",
+        "http://data.europa.eu/s66#duration",
+        "http://data.europa.eu/s66/v#hasShaclError"
+      ],
+      "hide": [
+        "http://data.europa.eu/s66#duration",
+        "http://data.europa.eu/s66/v#hasShaclError"
+      ]
     },
     "http://data.europa.eu/s66#OrganisationRole": {
       "render": "embed",
@@ -42,7 +56,11 @@
       ]
     },
     "http://data.europa.eu/s66#MonetaryAmount": {
-      "render": "embed"
+      "render": "embed",
+      "hide": [
+        "http://data.europa.eu/s66#currency",
+        "http://data.europa.eu/s66#value"
+      ]
     },
     "http://data.europa.eu/s66#GrantPayment": {
       "render": "embed",
@@ -58,6 +76,11 @@
       "render": "embed",
       "order": [
         "http://data.europa.eu/s66#shortForm",
+        "http://data.europa.eu/s66#definition",
+        "http://www.w3.org/2000/01/rdf-schema#label",
+        "http://data.europa.eu/s66#isAcronymOf"
+      ],
+      "hide": [
         "http://data.europa.eu/s66#definition",
         "http://www.w3.org/2000/01/rdf-schema#label",
         "http://data.europa.eu/s66#isAcronymOf"
