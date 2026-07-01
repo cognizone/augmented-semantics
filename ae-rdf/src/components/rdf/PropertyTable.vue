@@ -71,16 +71,22 @@ const XSD_STRING = 'http://www.w3.org/2001/XMLSchema#string'
 
 const qname = (uri: string) => toQname(uri, props.resolved)
 
-// Triples to inline for a uri object, or null if it shouldn't be embedded here.
-// Guards cycles: an object already on the ancestor path renders as a link
-// (returns null) rather than recursing into itself forever.
-function embedGroups(o: ResourceObject): PropertyGroup[] | null {
+// Triples to inline for a uri object under `viaPredicate`, or null if it should
+// render as a link here. Guards cycles (an object on the ancestor path renders
+// as a link, not recursing into itself), AND enforces embedVia PER EDGE: a type
+// that pins an owning predicate only inlines under that predicate, so an inverse
+// back-reference (e.g. Grant reached via isBeneficiaryOf, not its isFundedBy
+// owner) renders as a link even though the object is in the embed map.
+function embedGroups(o: ResourceObject, viaPredicate: string): PropertyGroup[] | null {
   if (o.termType !== 'uri') return null
   const groups = props.embedded?.get(o.value)
   if (!groups || (props.ancestors ?? []).includes(o.value)) return null
+  const type = embedType(o)
+  const cfg = type ? typeConfig.get(type) : {}
+  if (cfg.embedVia && cfg.embedVia !== viaPredicate) return null
   // Honor the embed type's configured field order, so ordering a type applies
   // wherever it renders — standalone or inlined. Unlisted keep insertion order.
-  const order = embedType(o) ? typeConfig.get(embedType(o)!).order ?? [] : []
+  const order = cfg.order ?? []
   return order.length ? orderedByConfig(groups, g => g.predicate, order, () => 0) : groups
 }
 
@@ -169,11 +175,11 @@ function graphTitle(o: ResourceObject): string {
           <div v-for="(o, i) in shownObjects(group)" :key="i" class="prop-value" :title="graphTitle(o)">
             <!-- Embedded value object: inline its triples (recursively — an
                  embedded object may itself embed more, e.g. Site → PostalAddress) -->
-            <div v-if="embedGroups(o)" class="embed">
+            <div v-if="embedGroups(o, group.predicate)" class="embed">
               <span v-if="objectBadge(o.value)" class="tag type-badge">{{ objectBadge(o.value) }}</span>
               <PropertyTable
                 class="embed-table"
-                :groups="embedGroups(o)!"
+                :groups="embedGroups(o, group.predicate)!"
                 :resolved="resolved"
                 :labels="labels"
                 :object-types="objectTypes"
