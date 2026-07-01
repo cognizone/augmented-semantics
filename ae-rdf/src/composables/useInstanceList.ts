@@ -27,7 +27,7 @@ export interface Instance {
   label: string
 }
 
-export const PAGE_SIZE = 100
+export const PAGE_SIZE = 25
 
 export function useInstanceList() {
   const endpointStore = useEndpointStore()

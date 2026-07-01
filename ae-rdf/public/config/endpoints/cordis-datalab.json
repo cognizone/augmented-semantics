@@ -88,7 +88,25 @@
       "sidebar": "pin"
     },
     "http://data.europa.eu/s66#Organisation": {
-      "sidebar": "pin"
+      "sidebar": "pin",
+      "label": [
+        "http://data.europa.eu/s66#legalName",
+        "http://data.europa.eu/s66#vatNumber"
+      ],
+      "order": [
+        "http://data.europa.eu/s66#legalName",
+        "http://data.europa.eu/s66#vatNumber",
+        "http://data.europa.eu/s66#url",
+        "http://data.europa.eu/s66#identifier",
+        "http://data.europa.eu/s66#rcn",
+        "http://www.w3.org/2000/01/rdf-schema#label",
+        "http://data.europa.eu/s66#hasAcronym",
+        "http://data.europa.eu/s66#hasRole",
+        "http://data.europa.eu/s66#hasSite"
+      ],
+      "hide": [
+        "http://www.w3.org/2000/01/rdf-schema#label"
+      ]
     },
     "http://data.europa.eu/s66#Site": {
       "render": "embed"
@@ -204,6 +222,56 @@
         "http://data.europa.eu/s66#rcn",
         "http://www.w3.org/2000/01/rdf-schema#label",
         "http://data.europa.eu/s66#isResultOf"
+      ],
+      "hide": [
+        "http://www.w3.org/2000/01/rdf-schema#label"
+      ]
+    },
+    "http://data.europa.eu/s66#ProjectReportSummary": {
+      "label": [
+        "http://data.europa.eu/s66#title",
+        "http://data.europa.eu/s66#periodFrom",
+        "http://data.europa.eu/s66#periodTo"
+      ],
+      "order": [
+        "http://data.europa.eu/s66#title",
+        "http://data.europa.eu/s66#periodFrom",
+        "http://data.europa.eu/s66#periodTo",
+        "http://data.europa.eu/s66#abstract",
+        "http://data.europa.eu/s66#finalResults",
+        "http://data.europa.eu/s66#workPerformed",
+        "http://data.europa.eu/s66#language",
+        "http://data.europa.eu/s66#description",
+        "http://data.europa.eu/s66#identifier",
+        "http://data.europa.eu/s66#rcn",
+        "http://data.europa.eu/s66#periodNumber",
+        "http://www.w3.org/2000/01/rdf-schema#label",
+        "http://data.europa.eu/s66#isResultOf"
+      ],
+      "hide": [
+        "http://www.w3.org/2000/01/rdf-schema#label"
+      ]
+    },
+    "http://www.w3.org/2004/02/skos/core#Concept": {
+      "label": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ]
+    },
+    "http://data.europa.eu/s66#FundingScheme": {
+      "label": [
+        "http://data.europa.eu/s66#identifier",
+        "http://data.europa.eu/s66#title"
+      ],
+      "order": [
+        "http://data.europa.eu/s66#title",
+        "http://data.europa.eu/s66#code",
+        "http://data.europa.eu/s66#identifier",
+        "http://data.europa.eu/s66#rcn",
+        "http://www.w3.org/2000/01/rdf-schema#label",
+        "http://data.europa.eu/s66#hasFundingSchemeCategory",
+        "http://data.europa.eu/s66#hasGrant",
+        "http://data.europa.eu/s66#isImplementedBy",
+        "http://data.europa.eu/s66#isSubSchemeOf"
       ],
       "hide": [
         "http://www.w3.org/2000/01/rdf-schema#label"
