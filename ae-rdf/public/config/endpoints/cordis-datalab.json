@@ -3,7 +3,24 @@
   "url": "https://cordis.europa.eu/datalab/sparql",
   "types": {
     "http://data.europa.eu/s66#Project": {
-      "sidebar": "pin"
+      "sidebar": "pin",
+      "order": [
+        "http://data.europa.eu/s66#title",
+        "http://data.europa.eu/s66#identifier",
+        "http://data.europa.eu/s66#projectStatus",
+        "http://data.europa.eu/s66#signatureDate",
+        "http://data.europa.eu/s66#startDate",
+        "http://data.europa.eu/s66#endDate",
+        "http://data.europa.eu/s66#abstract",
+        "http://data.europa.eu/s66#keyword",
+        "http://data.europa.eu/s66#duration",
+        "http://data.europa.eu/s66#rcn",
+        "http://www.w3.org/2000/01/rdf-schema#label",
+        "http://data.europa.eu/s66#hasAcronym",
+        "http://data.europa.eu/s66#hasInvolvedParty",
+        "http://data.europa.eu/s66#hasTotalCost",
+        "http://data.europa.eu/s66#isFundedBy"
+      ]
     },
     "http://data.europa.eu/s66#Grant": {
       "render": "embed",
@@ -11,13 +28,25 @@
     },
     "http://data.europa.eu/s66#OrganisationRole": {
       "render": "embed",
-      "embedVia": "http://data.europa.eu/s66#hasInvolvedParty"
+      "embedVia": "http://data.europa.eu/s66#hasInvolvedParty",
+      "order": [
+        "http://data.europa.eu/s66#isRoleOf",
+        "http://data.europa.eu/s66#isBeneficiaryOf",
+        "http://data.europa.eu/s66#isRecipientOf",
+        "http://data.europa.eu/s66#startDate",
+        "http://data.europa.eu/s66#endDate",
+        "http://data.europa.eu/s66#isInvolvedIn",
+        "http://www.w3.org/2000/01/rdf-schema#label",
+        "http://data.europa.eu/s66#roleLabel",
+        "http://data.europa.eu/s66#order"
+      ]
     },
     "http://data.europa.eu/s66#MonetaryAmount": {
       "render": "embed"
     },
     "http://data.europa.eu/s66#GrantPayment": {
-      "render": "link"
+      "render": "embed",
+      "embedVia": "http://data.europa.eu/s66#isRecipientOf"
     },
     "http://data.europa.eu/s66#PostalAddress": {
       "render": "embed"
@@ -26,7 +55,13 @@
       "render": "embed"
     },
     "http://data.europa.eu/s66#Acronym": {
-      "render": "embed"
+      "render": "embed",
+      "order": [
+        "http://data.europa.eu/s66#shortForm",
+        "http://data.europa.eu/s66#definition",
+        "http://www.w3.org/2000/01/rdf-schema#label",
+        "http://data.europa.eu/s66#isAcronymOf"
+      ]
     },
     "http://www.openlinksw.com/schemas/virtrdf#array-of-string": {
       "sidebar": "hide"
@@ -135,6 +170,35 @@
     },
     "http://data.europa.eu/s66#AdministrativeArea": {
       "render": "embed"
+    },
+    "http://data.europa.eu/s66#Book": {
+      "order": [
+        "http://data.europa.eu/s66#title",
+        "http://data.europa.eu/s66#author",
+        "http://data.europa.eu/s66#publishedYear",
+        "http://data.europa.eu/s66#isbn",
+        "http://data.europa.eu/s66#publisher",
+        "http://data.europa.eu/s66#language",
+        "http://data.europa.eu/s66#identifier",
+        "http://data.europa.eu/s66#rcn",
+        "http://www.w3.org/2000/01/rdf-schema#label",
+        "http://data.europa.eu/s66#isResultOf"
+      ]
+    },
+    "http://data.europa.eu/s66#ProjectPublication": {
+      "order": [
+        "http://data.europa.eu/s66#title",
+        "http://data.europa.eu/s66#author",
+        "http://data.europa.eu/s66#journalTitle",
+        "http://data.europa.eu/s66#journalNumber",
+        "http://data.europa.eu/s66#publisher",
+        "http://data.europa.eu/s66#language",
+        "http://data.europa.eu/s66#identifier",
+        "http://data.europa.eu/s66#publishedYear",
+        "http://data.europa.eu/s66#rcn",
+        "http://www.w3.org/2000/01/rdf-schema#label",
+        "http://data.europa.eu/s66#isResultOf"
+      ]
     }
   },
   "typeInventory": [
