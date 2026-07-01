@@ -9,8 +9,9 @@
  */
 import { computed, ref } from 'vue'
 import { isNavigableIri } from '../../services'
-import { useSettingsStore } from '../../stores'
+import { useSettingsStore, useTypeConfigStore } from '../../stores'
 import { qname as toQname, displayPredicate, displayObject, displayType, type ResolvedMap } from '../../utils/format'
+import { moveInOrder, orderedByConfig } from '../../utils/propertyOrder'
 import type { PropertyGroup, ResourceObject } from '../../composables'
 
 const props = defineProps<{
@@ -30,11 +31,40 @@ const props = defineProps<{
   showGraphs?: boolean
   /** Inverse relations (`?s ?p <this>`): mark predicates as inbound. */
   incoming?: boolean
+  /** Edit mode: rows get a drag handle to reorder predicates. Emits `reorder`
+   *  with the new predicate sequence; the parent persists it to the type config. */
+  reorderable?: boolean
 }>()
 
-const emit = defineEmits<{ navigate: [uri: string] }>()
+const emit = defineEmits<{ navigate: [uri: string]; reorder: [predicates: string[]] }>()
+
+// Drag-to-reorder (only when reorderable). The handle is the drag source; the
+// whole row is the drop target.
+const dragIndex = ref<number | null>(null)
+const overIndex = ref<number | null>(null)
+function onDragStart(i: number, e: DragEvent) {
+  dragIndex.value = i
+  if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move'
+}
+function onDragOver(i: number) {
+  if (dragIndex.value !== null) overIndex.value = i
+}
+function onDrop(to: number) {
+  const from = dragIndex.value
+  dragIndex.value = null
+  overIndex.value = null
+  if (from === null) return
+  const preds = props.groups.map(g => g.predicate)
+  const next = moveInOrder(preds, from, to)
+  if (next !== preds) emit('reorder', next) // moveInOrder returns the same ref on no-op
+}
+function onDragEnd() {
+  dragIndex.value = null
+  overIndex.value = null
+}
 
 const settings = useSettingsStore()
+const typeConfig = useTypeConfigStore()
 const mode = computed(() => settings.uriDisplay)
 
 const XSD_STRING = 'http://www.w3.org/2001/XMLSchema#string'
@@ -48,7 +78,21 @@ function embedGroups(o: ResourceObject): PropertyGroup[] | null {
   if (o.termType !== 'uri') return null
   const groups = props.embedded?.get(o.value)
   if (!groups || (props.ancestors ?? []).includes(o.value)) return null
-  return groups
+  // Honor the embed type's configured field order, so ordering a type applies
+  // wherever it renders — standalone or inlined. Unlisted keep insertion order.
+  const order = embedType(o) ? typeConfig.get(embedType(o)!).order ?? [] : []
+  return order.length ? orderedByConfig(groups, g => g.predicate, order, () => 0) : groups
+}
+
+/** The type an embedded object is rendered as (drives its order config). */
+function embedType(o: ResourceObject): string | undefined {
+  return props.objectTypes?.get(o.value)
+}
+
+/** Persist a drag-reorder inside an embed to that object's type config. */
+function onEmbedReorder(o: ResourceObject, predicates: string[]) {
+  const type = embedType(o)
+  if (type) typeConfig.set(type, { order: predicates })
 }
 
 /** Predicate label, per the URI-display mode; qname/URI stays on hover. */
@@ -105,8 +149,22 @@ function graphTitle(o: ResourceObject): string {
 <template>
   <table class="prop-table">
     <tbody>
-      <tr v-for="group in groups" :key="group.predicate">
-        <th class="prop-key" v-tooltip.top="{ value: qname(group.predicate), showDelay: 120 }"><span v-if="incoming" class="in-arrow" title="incoming — resources that link here">↤</span>{{ predicateLabel(group.predicate) }}</th>
+      <tr
+        v-for="(group, gi) in groups"
+        :key="group.predicate"
+        :class="{ 'drag-over': reorderable && overIndex === gi && dragIndex !== gi, dragging: reorderable && dragIndex === gi }"
+        @dragover.prevent="reorderable && onDragOver(gi)"
+        @drop="reorderable && onDrop(gi)"
+        @dragend="onDragEnd"
+      >
+        <th class="prop-key" v-tooltip.top="{ value: qname(group.predicate), showDelay: 120 }">
+          <span
+            v-if="reorderable"
+            class="drag-handle material-symbols-outlined"
+            draggable="true"
+            title="Drag to reorder"
+            @dragstart="onDragStart(gi, $event)"
+          >drag_indicator</span><span v-if="incoming" class="in-arrow" title="incoming — resources that link here">↤</span>{{ predicateLabel(group.predicate) }}</th>
         <td class="prop-values">
           <div v-for="(o, i) in shownObjects(group)" :key="i" class="prop-value" :title="graphTitle(o)">
             <!-- Embedded value object: inline its triples (recursively — an
@@ -122,7 +180,9 @@ function graphTitle(o: ResourceObject): string {
                 :embedded="embedded"
                 :ancestors="[...(ancestors ?? []), o.value]"
                 :show-graphs="showGraphs"
+                :reorderable="reorderable"
                 @navigate="emit('navigate', $event)"
+                @reorder="p => onEmbedReorder(o, p)"
               />
             </div>
 
@@ -223,6 +283,27 @@ function graphTitle(o: ResourceObject): string {
   color: var(--ae-accent);
   margin-right: 0.3rem;
   font-weight: 600;
+}
+
+/* Drag-to-reorder (edit mode) */
+.drag-handle {
+  font-size: 16px;
+  vertical-align: middle;
+  margin-right: 0.25rem;
+  color: var(--ae-text-muted);
+  cursor: grab;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+.prop-table tr.dragging {
+  opacity: 0.5;
+}
+
+.prop-table tr.drag-over {
+  border-top: 2px solid var(--ae-accent);
 }
 
 .prop-more {

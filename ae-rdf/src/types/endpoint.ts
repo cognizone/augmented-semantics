@@ -47,6 +47,11 @@ export interface TypeConfig {
   /** Optional sidebar group label (e.g. "Ontology") — collects this type under a
    *  collapsible group header instead of the flat top level. */
   group?: string
+  /** Field display order for a resource of this type: predicate IRIs, in the
+   *  order they should appear. Listed predicates come first (in this order);
+   *  any not listed fall to the end in the default priority order. Attributes
+   *  then relationships, concatenated. Authored by drag-reorder in edit mode. */
+  order?: string[]
 }
 
 /** A type IRI with its distinct-instance count (the cached inventory entry). */

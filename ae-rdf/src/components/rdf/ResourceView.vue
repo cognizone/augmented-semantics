@@ -10,10 +10,11 @@
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ProgressSpinner from 'primevue/progressspinner'
-import { useBrowseStore, useSettingsStore } from '../../stores'
+import { useBrowseStore, useSettingsStore, useTypeConfigStore } from '../../stores'
 import { useResourceView, useIncomingRelations, useClipboard, useDelayedLoading } from '../../composables'
 import { LABEL_PREDICATES } from '../../services'
 import { localName as localNameOf, humanizeLocalName, qname as toQname, displayType } from '../../utils/format'
+import { orderedByConfig } from '../../utils/propertyOrder'
 import { URL_PARAMS } from '../../router'
 import type { PropertyGroup } from '../../composables'
 import PropertyTable from './PropertyTable.vue'
@@ -22,6 +23,7 @@ const route = useRoute()
 const router = useRouter()
 const browseStore = useBrowseStore()
 const settings = useSettingsStore()
+const typeConfig = useTypeConfigStore()
 const { copyToClipboard } = useClipboard()
 const { triples, types, label, loading, error, resolved, objectLabels, objectTypes, embedded, loadResource } = useResourceView()
 const showLoading = useDelayedLoading(loading)
@@ -74,13 +76,34 @@ function byPriority(a: PropertyGroup, b: PropertyGroup): number {
     || humanizeLocalName(a.predicate).localeCompare(humanizeLocalName(b.predicate))
 }
 
+// Configurable field order, per type. A resource can have several types, so we
+// pick a deterministic one: the first (alphabetically) of its types that has an
+// order set, else the first type — so read and write target the same config.
+const orderType = computed<string | null>(() => {
+  const uris = typeChips.value.map(c => c.uri).sort()
+  return uris.find(u => (typeConfig.get(u).order?.length ?? 0) > 0) ?? uris[0] ?? null
+})
+const orderList = computed(() => (orderType.value ? typeConfig.get(orderType.value).order ?? [] : []))
+const canReorder = computed(() => settings.editMode && !!orderType.value)
+
 // Split: Attributes = literal-valued predicates; Relationships = link-valued.
+// Configured order wins; unlisted predicates fall back to the priority heuristic.
+const order = (gs: PropertyGroup[]) => orderedByConfig(gs, g => g.predicate, orderList.value, byPriority)
 const attributes = computed(() =>
-  triples.value.filter(g => g.objects.every(o => o.termType === 'literal')).sort(byPriority)
+  order(triples.value.filter(g => g.objects.every(o => o.termType === 'literal')))
 )
 const relationships = computed(() =>
-  triples.value.filter(g => g.objects.some(o => o.termType !== 'literal')).sort(byPriority)
+  order(triples.value.filter(g => g.objects.some(o => o.termType !== 'literal')))
 )
+
+// Persist a drag-reorder. The stored order is attributes then relationships, so
+// rebuild the full list from both sections (the dragged one uses the new seq).
+function onReorder(section: 'attr' | 'rel', predicates: string[]) {
+  if (!orderType.value) return
+  const attrPreds = section === 'attr' ? predicates : attributes.value.map(g => g.predicate)
+  const relPreds = section === 'rel' ? predicates : relationships.value.map(g => g.predicate)
+  typeConfig.set(orderType.value, { order: [...attrPreds, ...relPreds] })
+}
 
 function selectType(typeUri: string) {
   router.push({ query: { [URL_PARAMS.TYPE]: typeUri } })
@@ -173,12 +196,12 @@ function navigate(target: string) {
     <template v-else>
       <section v-if="attributes.length" class="prop-section">
         <h3 class="section-title">Attributes</h3>
-        <PropertyTable :groups="attributes" :resolved="resolved" :labels="objectLabels" :object-types="objectTypes" :show-graphs="showGraphs" @navigate="navigate" />
+        <PropertyTable :groups="attributes" :resolved="resolved" :labels="objectLabels" :object-types="objectTypes" :show-graphs="showGraphs" :reorderable="canReorder" @navigate="navigate" @reorder="p => onReorder('attr', p)" />
       </section>
 
       <section v-if="relationships.length" class="prop-section">
         <h3 class="section-title">Relationships</h3>
-        <PropertyTable :groups="relationships" :resolved="resolved" :labels="objectLabels" :object-types="objectTypes" :embedded="embedded" :ancestors="uri ? [uri] : []" :show-graphs="showGraphs" @navigate="navigate" />
+        <PropertyTable :groups="relationships" :resolved="resolved" :labels="objectLabels" :object-types="objectTypes" :embedded="embedded" :ancestors="uri ? [uri] : []" :show-graphs="showGraphs" :reorderable="canReorder" @navigate="navigate" @reorder="p => onReorder('rel', p)" />
       </section>
     </template>
 
