@@ -44,28 +44,34 @@ const emit = defineEmits<{ navigate: [uri: string]; reorder: [predicates: string
 const isHidden = (predicate: string) => props.hidden?.includes(predicate) ?? false
 
 // Drag-to-reorder (only when reorderable). The handle is the drag source; the
-// whole row is the drop target.
+// whole row is the drop target. We record the drop target on `drop` but apply
+// the reorder on `dragend` — reordering the list on `drop` replaces the dragged
+// DOM node before the native drag finishes, which leaves some browsers in a
+// stuck-drag state that swallows the next clicks (looks like the app hangs).
 const dragIndex = ref<number | null>(null)
 const overIndex = ref<number | null>(null)
+let dropTarget: number | null = null
 function onDragStart(i: number, e: DragEvent) {
   dragIndex.value = i
+  dropTarget = null
   if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move'
 }
 function onDragOver(i: number) {
   if (dragIndex.value !== null) overIndex.value = i
 }
 function onDrop(to: number) {
+  if (dragIndex.value !== null) dropTarget = to // apply on dragend, not now
+}
+function onDragEnd() {
   const from = dragIndex.value
+  const to = dropTarget
   dragIndex.value = null
   overIndex.value = null
-  if (from === null) return
+  dropTarget = null
+  if (from === null || to === null) return
   const preds = props.groups.map(g => g.predicate)
   const next = moveInOrder(preds, from, to)
   if (next !== preds) emit('reorder', next) // moveInOrder returns the same ref on no-op
-}
-function onDragEnd() {
-  dragIndex.value = null
-  overIndex.value = null
 }
 
 const settings = useSettingsStore()
