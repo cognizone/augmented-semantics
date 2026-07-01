@@ -220,6 +220,19 @@ export function useResourceView() {
       const embToResolve = new Set<string>()
       const seen = new Set<string>([uri])
       const MAX_EMBED_DEPTH = 5
+      // ponytail: cap total inlined objects (breadth), not just depth. Without
+      // this, configuring a high-cardinality type (e.g. a 3M-row entity) to embed
+      // makes a resource inline hundreds/thousands of objects recursively and the
+      // load hangs. Beyond the cap, objects fall through to plain links.
+      const MAX_EMBED_TOTAL = 150
+      let embedBudget = MAX_EMBED_TOTAL
+      const capFrontier = (f: string[]) => {
+        if (f.length <= embedBudget) return f
+        logger.warn('useResourceView', 'Embed breadth cap hit — remaining objects shown as links', {
+          cap: MAX_EMBED_TOTAL, dropped: f.length - embedBudget,
+        })
+        return f.slice(0, embedBudget)
+      }
       // Embed an object when its TYPE is render:embed AND — if that type pins an
       // owning predicate (embedVia) — it was reached via that predicate. This is
       // what stops a multiply-referenced entity (e.g. a Grant, linked from Project,
@@ -233,11 +246,12 @@ export function useResourceView() {
       // so embedVia can gate on the predicate.
       const embedFrontier = (pairs: { uri: string; via: string }[]) =>
         [...new Set(pairs.filter(x => !seen.has(x.uri) && isEmbed(x.uri, x.via)).map(x => x.uri))]
-      let frontier = embedFrontier(
+      let frontier = capFrontier(embedFrontier(
         propGroups.flatMap(g => g.objects.filter(o => o.termType === 'uri').map(o => ({ uri: o.value, via: g.predicate }))),
-      )
+      ))
 
       for (let depth = 0; depth < MAX_EMBED_DEPTH && frontier.length; depth++) {
+        embedBudget -= frontier.length
         frontier.forEach(u => seen.add(u))
         const embRes = await executeSparql(endpoint, buildEmbeddedTriplesQuery(frontier, strategy), { retries: 1 }).catch(() => null)
         if (!isCurrent()) return
@@ -296,7 +310,7 @@ export function useResourceView() {
           }
         }
 
-        frontier = embedFrontier(nestedPairs)
+        frontier = embedBudget > 0 ? capFrontier(embedFrontier(nestedPairs)) : []
       }
 
       // Composed labels for objects whose type configures one: fetch the label
