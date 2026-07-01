@@ -25,6 +25,22 @@ export function orderedByConfig<T>(
   return [...items].sort((a, b) => idx(a) - idx(b) || fallback(a, b))
 }
 
+/**
+ * Compose a label from `labelPreds` in order: look up each predicate's value,
+ * drop blanks, and join. Returns '' when nothing resolves (caller falls back to
+ * the default label). `valueOf` returns the display value for a predicate.
+ */
+export function composeLabel(
+  labelPreds: string[],
+  valueOf: (predicate: string) => string | undefined,
+  separator = ' · ',
+): string {
+  return labelPreds
+    .map(valueOf)
+    .filter((v): v is string => !!v && v.trim().length > 0)
+    .join(separator)
+}
+
 /** Add `item` to `list` if absent, else remove it. Returns a new array. */
 export function toggleInList(list: string[], item: string): string[] {
   return list.includes(item) ? list.filter(x => x !== item) : [...list, item]

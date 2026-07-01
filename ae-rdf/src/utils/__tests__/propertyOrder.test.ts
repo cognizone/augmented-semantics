@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { orderedByConfig, moveInOrder, toggleInList } from '../propertyOrder'
+import { orderedByConfig, moveInOrder, toggleInList, composeLabel } from '../propertyOrder'
 
 const id = (s: string) => s
 // fallback: plain alphabetical, to prove unlisted items keep a stable order
@@ -24,6 +24,19 @@ describe('orderedByConfig', () => {
     const items = ['b', 'a']
     orderedByConfig(items, id, ['a'], alpha)
     expect(items).toEqual(['b', 'a'])
+  })
+})
+
+describe('composeLabel', () => {
+  const vals: Record<string, string> = { org: 'CHALMERS', role: 'associatedPartner', proj: '' }
+  it('joins values in predicate order, skipping blanks', () => {
+    expect(composeLabel(['org', 'role', 'proj'], p => vals[p])).toBe('CHALMERS · associatedPartner')
+  })
+  it('respects the given order', () => {
+    expect(composeLabel(['role', 'org'], p => vals[p])).toBe('associatedPartner · CHALMERS')
+  })
+  it('returns empty string when nothing resolves', () => {
+    expect(composeLabel(['proj', 'missing'], p => vals[p])).toBe('')
   })
 })
 

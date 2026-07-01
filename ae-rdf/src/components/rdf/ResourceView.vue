@@ -83,11 +83,12 @@ const cfgType = computed<string | null>(() => {
   const uris = typeChips.value.map(c => c.uri).sort()
   return uris.find(u => {
     const c = typeConfig.get(u)
-    return (c.order?.length ?? 0) > 0 || (c.hide?.length ?? 0) > 0
+    return (c.order?.length ?? 0) > 0 || (c.hide?.length ?? 0) > 0 || (c.label?.length ?? 0) > 0
   }) ?? uris[0] ?? null
 })
 const orderList = computed(() => (cfgType.value ? typeConfig.get(cfgType.value).order ?? [] : []))
 const hideList = computed(() => (cfgType.value ? typeConfig.get(cfgType.value).hide ?? [] : []))
+const labelList = computed(() => (cfgType.value ? typeConfig.get(cfgType.value).label ?? [] : []))
 const canEdit = computed(() => settings.editMode && !!cfgType.value)
 
 // Hidden predicates are dropped in normal mode; kept (greyed) in edit mode so
@@ -115,6 +116,11 @@ function onReorder(section: 'attr' | 'rel', predicates: string[]) {
 function onToggleHide(predicate: string) {
   if (!cfgType.value) return
   typeConfig.set(cfgType.value, { hide: toggleInList(typeConfig.get(cfgType.value).hide ?? [], predicate) })
+}
+
+function onToggleLabel(predicate: string) {
+  if (!cfgType.value) return
+  typeConfig.set(cfgType.value, { label: toggleInList(typeConfig.get(cfgType.value).label ?? [], predicate) })
 }
 
 function selectType(typeUri: string) {
@@ -208,12 +214,12 @@ function navigate(target: string) {
     <template v-else>
       <section v-if="attributes.length" class="prop-section">
         <h3 class="section-title">Attributes</h3>
-        <PropertyTable :groups="attributes" :resolved="resolved" :labels="objectLabels" :object-types="objectTypes" :show-graphs="showGraphs" :reorderable="canEdit" :hidden="hideList" @navigate="navigate" @reorder="p => onReorder('attr', p)" @toggle-hide="onToggleHide" />
+        <PropertyTable :groups="attributes" :resolved="resolved" :labels="objectLabels" :object-types="objectTypes" :show-graphs="showGraphs" :reorderable="canEdit" :hidden="hideList" :label-parts="labelList" @navigate="navigate" @reorder="p => onReorder('attr', p)" @toggle-hide="onToggleHide" @toggle-label="onToggleLabel" />
       </section>
 
       <section v-if="relationships.length" class="prop-section">
         <h3 class="section-title">Relationships</h3>
-        <PropertyTable :groups="relationships" :resolved="resolved" :labels="objectLabels" :object-types="objectTypes" :embedded="embedded" :ancestors="uri ? [uri] : []" :show-graphs="showGraphs" :reorderable="canEdit" :hidden="hideList" @navigate="navigate" @reorder="p => onReorder('rel', p)" @toggle-hide="onToggleHide" />
+        <PropertyTable :groups="relationships" :resolved="resolved" :labels="objectLabels" :object-types="objectTypes" :embedded="embedded" :ancestors="uri ? [uri] : []" :show-graphs="showGraphs" :reorderable="canEdit" :hidden="hideList" :label-parts="labelList" @navigate="navigate" @reorder="p => onReorder('rel', p)" @toggle-hide="onToggleHide" @toggle-label="onToggleLabel" />
       </section>
     </template>
 

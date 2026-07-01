@@ -37,11 +37,19 @@ const props = defineProps<{
   /** Predicates hidden for this table's type. In edit mode they're greyed with
    *  the toggle "on"; in normal mode the parent has already filtered them out. */
   hidden?: string[]
+  /** Predicates that compose this table's type's label (highlighted in edit mode). */
+  labelParts?: string[]
 }>()
 
-const emit = defineEmits<{ navigate: [uri: string]; reorder: [predicates: string[]]; toggleHide: [predicate: string] }>()
+const emit = defineEmits<{
+  navigate: [uri: string]
+  reorder: [predicates: string[]]
+  toggleHide: [predicate: string]
+  toggleLabel: [predicate: string]
+}>()
 
 const isHidden = (predicate: string) => props.hidden?.includes(predicate) ?? false
+const isLabelPart = (predicate: string) => props.labelParts?.includes(predicate) ?? false
 
 // Drag-to-reorder (only when reorderable). The handle is the drag source; the
 // whole row is the drop target. We record the drop target on `drop` but apply
@@ -111,6 +119,7 @@ function embedType(o: ResourceObject): string | undefined {
 }
 
 const embedHidden = (o: ResourceObject) => (embedType(o) ? typeConfig.get(embedType(o)!).hide ?? [] : [])
+const embedLabelParts = (o: ResourceObject) => (embedType(o) ? typeConfig.get(embedType(o)!).label ?? [] : [])
 
 /** Persist a drag-reorder inside an embed to that object's type config. */
 function onEmbedReorder(o: ResourceObject, predicates: string[]) {
@@ -122,6 +131,12 @@ function onEmbedReorder(o: ResourceObject, predicates: string[]) {
 function onEmbedToggleHide(o: ResourceObject, predicate: string) {
   const type = embedType(o)
   if (type) typeConfig.set(type, { hide: toggleInList(typeConfig.get(type).hide ?? [], predicate) })
+}
+
+/** Toggle a predicate as a label part inside an embed, on that object's type. */
+function onEmbedToggleLabel(o: ResourceObject, predicate: string) {
+  const type = embedType(o)
+  if (type) typeConfig.set(type, { label: toggleInList(typeConfig.get(type).label ?? [], predicate) })
 }
 
 /** Predicate label, per the URI-display mode; qname/URI stays on hover. */
@@ -198,7 +213,13 @@ function graphTitle(o: ResourceObject): string {
             class="hide-toggle material-symbols-outlined"
             :title="isHidden(group.predicate) ? 'Hidden — click to show' : 'Hide this property'"
             @click="emit('toggleHide', group.predicate)"
-          >{{ isHidden(group.predicate) ? 'visibility_off' : 'visibility' }}</button><span v-if="incoming" class="in-arrow" title="incoming — resources that link here">↤</span>{{ predicateLabel(group.predicate) }}</th>
+          >{{ isHidden(group.predicate) ? 'visibility_off' : 'visibility' }}</button><button
+            v-if="reorderable"
+            class="label-toggle material-symbols-outlined"
+            :class="{ on: isLabelPart(group.predicate) }"
+            :title="isLabelPart(group.predicate) ? 'Part of the label — click to remove' : 'Add to the label'"
+            @click="emit('toggleLabel', group.predicate)"
+          >title</button><span v-if="incoming" class="in-arrow" title="incoming — resources that link here">↤</span>{{ predicateLabel(group.predicate) }}</th>
         <td class="prop-values">
           <div v-for="(o, i) in shownObjects(group)" :key="i" class="prop-value" :title="graphTitle(o)">
             <!-- Embedded value object: inline its triples (recursively — an
@@ -216,9 +237,11 @@ function graphTitle(o: ResourceObject): string {
                 :show-graphs="showGraphs"
                 :reorderable="reorderable"
                 :hidden="embedHidden(o)"
+                :label-parts="embedLabelParts(o)"
                 @navigate="emit('navigate', $event)"
                 @reorder="p => onEmbedReorder(o, p)"
                 @toggle-hide="p => onEmbedToggleHide(o, p)"
+                @toggle-label="p => onEmbedToggleLabel(o, p)"
               />
             </div>
 
@@ -355,6 +378,25 @@ function graphTitle(o: ResourceObject): string {
 
 .hide-toggle:hover {
   color: var(--ae-text-primary);
+}
+
+.label-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-size: 15px;
+  vertical-align: middle;
+  margin-right: 0.25rem;
+  color: var(--ae-text-muted);
+}
+
+.label-toggle:hover {
+  color: var(--ae-text-primary);
+}
+
+.label-toggle.on {
+  color: var(--ae-accent);
 }
 
 /* A hidden property, shown only in edit mode so it can be un-hidden. */

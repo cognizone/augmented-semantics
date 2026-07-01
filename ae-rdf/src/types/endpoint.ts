@@ -55,6 +55,10 @@ export interface TypeConfig {
   /** Predicate IRIs to hide from a resource of this type's detail view. Removed
    *  entirely in normal mode; shown greyed in edit mode so they can be un-hidden. */
   hide?: string[]
+  /** Predicate IRIs whose values compose the display label for a resource of
+   *  this type (joined, in property-display order). Empty/unset → the default
+   *  label heuristic (prefLabel → title → rdfs:label → …). */
+  label?: string[]
 }
 
 /** A type IRI with its distinct-instance count (the cached inventory entry). */
