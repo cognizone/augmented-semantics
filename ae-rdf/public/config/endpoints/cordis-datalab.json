@@ -172,11 +172,14 @@
       "render": "embed"
     },
     "http://data.europa.eu/s66#Book": {
+      "hide": [
+        "http://www.w3.org/2000/01/rdf-schema#label"
+      ],
       "order": [
         "http://data.europa.eu/s66#title",
         "http://data.europa.eu/s66#author",
-        "http://data.europa.eu/s66#publishedYear",
         "http://data.europa.eu/s66#isbn",
+        "http://data.europa.eu/s66#publishedYear",
         "http://data.europa.eu/s66#publisher",
         "http://data.europa.eu/s66#language",
         "http://data.europa.eu/s66#identifier",
