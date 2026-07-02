@@ -86,6 +86,7 @@
     },
     "http://data.europa.eu/s66#MonetaryAmount": {
       "render": "label",
+      "sidebar": "hide",
       "label": [
         "http://data.europa.eu/s66#value",
         "http://data.europa.eu/s66#currency"
