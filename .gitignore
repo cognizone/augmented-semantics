@@ -23,3 +23,10 @@ src/**/*.js
 
 # Sandbox (local experimentation)
 sandbox/
+
+# Video-skill tooling + artifacts (hyperframes skills, /brag output) — installed
+# locally by the skills system, not part of this project. Keep out of git.
+.agents/
+agent/
+brag-output/
+skills-lock.json
