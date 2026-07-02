@@ -7,7 +7,7 @@
  *
  * @see /spec/ae-rdf
  */
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ProgressSpinner from 'primevue/progressspinner'
 import { useBrowseStore, useSettingsStore, useTypeConfigStore } from '../../stores'
@@ -162,22 +162,21 @@ watch(
 function navigate(target: string) {
   router.push({ query: { ...route.query, [URL_PARAMS.RESOURCE]: target } })
 }
+
+// Sticky header shrinks once the body scrolls (compact only when scrolling).
+const scrollEl = ref<HTMLElement | null>(null)
+const stuck = ref(false)
+function onScroll() { stuck.value = (scrollEl.value?.scrollTop ?? 0) > 4 }
+onMounted(() => scrollEl.value?.addEventListener('scroll', onScroll, { passive: true }))
+onUnmounted(() => scrollEl.value?.removeEventListener('scroll', onScroll))
 </script>
 
 <template>
-  <div v-if="uri" class="resource-view">
-    <header class="resource-header">
-      <h2 class="resource-title">{{ heading }}</h2>
-      <div class="resource-uri-row">
-        <a :href="uri" target="_blank" rel="noopener" class="resource-uri" v-tooltip.top="{ value: uri, showDelay: 120 }">{{ uri }}</a>
-        <button class="copy-btn" aria-label="Copy URI" title="Copy URI" @click="copyToClipboard(uri, 'URI')">
-          <span class="material-symbols-outlined">content_copy</span>
-        </button>
-      </div>
-
-      <!-- Type chips (left) + graph provenance (right) share one row to save space -->
-      <div v-if="typeChips.length || (!showLoading && !error && triples.length)" class="resource-meta">
-        <!-- Subject type(s) — identity, lifted out of the property table -->
+  <div v-if="uri" class="resource-view" ref="scrollEl">
+    <header class="resource-header" :class="{ stuck }">
+      <!-- Title + type chip(s) on one line -->
+      <div class="rh-title-row">
+        <h2 class="resource-title">{{ heading }}</h2>
         <div v-if="typeChips.length" class="resource-types">
           <button
             v-for="t in typeChips"
@@ -187,8 +186,14 @@ function navigate(target: string) {
             @click="selectType(t.uri)"
           >{{ t.label }}</button>
         </div>
+      </div>
 
-        <!-- Graph provenance summary + per-triple reveal toggle -->
+      <!-- URI + copy (left) share a row with graph provenance (right) -->
+      <div class="rh-sub-row">
+        <a :href="uri" target="_blank" rel="noopener" class="resource-uri" v-tooltip.top="{ value: uri, showDelay: 120 }">{{ uri }}</a>
+        <button class="copy-btn" aria-label="Copy URI" title="Copy URI" @click="copyToClipboard(uri, 'URI')">
+          <span class="material-symbols-outlined">content_copy</span>
+        </button>
         <div v-if="!showLoading && !error && triples.length" class="resource-graphs">
           <span class="material-symbols-outlined graph-icon">hub</span>
           <span class="graph-summary">
@@ -261,26 +266,61 @@ function navigate(target: string) {
 .resource-view {
   flex: 1;
   overflow: auto;
-  padding: 1.25rem 1.5rem;
+  padding: 0 1.5rem 1.25rem;
 }
 
+/* Sticky, full-bleed header: cancel the scroll container's padding so the
+   background + divider span edge to edge, and pin it while the body scrolls. */
 .resource-header {
-  margin-bottom: 1rem;
-  padding-bottom: 0.75rem;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  margin: 0 -1.5rem 1rem;
+  padding: 1rem 1.5rem 0.85rem;
+  background: var(--ae-bg-base);
   border-bottom: 1px solid var(--ae-border-color);
+  transition: padding 0.16s ease, box-shadow 0.16s ease;
+}
+
+/* Once the body scrolls: tighter padding, smaller title, elevated, URI tucked. */
+.resource-header.stuck {
+  padding: 0.4rem 1.5rem;
+  box-shadow: 0 4px 10px -6px rgba(0, 0, 0, 0.5);
+}
+
+.resource-header.stuck .resource-title {
+  font-size: 0.95rem;
+}
+
+.resource-header.stuck .rh-sub-row {
+  display: none;
+}
+
+.rh-title-row {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.625rem;
 }
 
 .resource-title {
-  margin: 0 0 0.25rem;
+  margin: 0;
   font-size: 1.125rem;
   font-weight: 700;
   color: var(--ae-text-primary);
+  transition: font-size 0.16s ease;
 }
 
-.resource-uri-row {
+.rh-sub-row {
   display: flex;
   align-items: center;
   gap: 0.375rem;
+  margin-top: 0.2rem;
+}
+
+/* Graph provenance pushed to the right of the URI row. */
+.rh-sub-row .resource-graphs {
+  margin-left: auto;
 }
 
 .resource-uri {
@@ -291,6 +331,8 @@ function navigate(target: string) {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  flex: 0 1 auto;
+  min-width: 0;
 }
 
 .resource-uri:hover {
@@ -316,16 +358,6 @@ function navigate(target: string) {
 
 .copy-btn .material-symbols-outlined {
   font-size: 16px;
-}
-
-/* Type chips + graph provenance on one row; graph block pushed to the right. */
-.resource-meta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 0.5rem 0.75rem;
-  margin-top: 0.5rem;
 }
 
 .resource-types {
