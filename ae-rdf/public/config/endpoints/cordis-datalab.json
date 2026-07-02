@@ -9,26 +9,22 @@
       ],
       "order": [
         "http://data.europa.eu/s66#title",
-        "http://data.europa.eu/s66#hasAcronym",
         "http://data.europa.eu/s66#abstract",
         "http://data.europa.eu/s66#keyword",
         "http://data.europa.eu/s66#projectStatus",
-        "http://data.europa.eu/s66#hasEuroSciVocClassification",
         "http://data.europa.eu/s66#signatureDate",
         "http://data.europa.eu/s66#startDate",
         "http://data.europa.eu/s66#endDate",
-        "http://data.europa.eu/s66#terminationDate",
         "http://data.europa.eu/s66#duration",
         "http://data.europa.eu/s66#doi",
-        "http://data.europa.eu/s66#hasTotalCost",
-        "http://data.europa.eu/s66#hasInvolvedParty",
-        "http://data.europa.eu/s66#hasResult",
-        "http://data.europa.eu/s66#isFundedBy",
         "http://data.europa.eu/s66#identifier",
         "http://data.europa.eu/s66#rcn",
-        "http://data.europa.eu/s66#url",
         "http://www.w3.org/2000/01/rdf-schema#label",
-        "http://data.europa.eu/s66/v#hasShaclError"
+        "http://data.europa.eu/s66#hasAcronym",
+        "http://data.europa.eu/s66#hasTotalCost",
+        "http://data.europa.eu/s66#hasResult",
+        "http://data.europa.eu/s66#isFundedBy",
+        "http://data.europa.eu/s66#hasInvolvedParty"
       ],
       "hide": [
         "http://www.w3.org/2000/01/rdf-schema#label",
@@ -38,7 +34,7 @@
     "http://data.europa.eu/s66#Grant": {
       "render": "embed",
       "embedVia": "http://data.europa.eu/s66#isFundedBy",
-      "foldAfter": "http://data.europa.eu/s66#hasFundingAmount",
+      "foldAfter": "http://data.europa.eu/s66#funds",
       "order": [
         "http://data.europa.eu/s66#hasFundingSchemeType",
         "http://data.europa.eu/s66#hasFundingSchemeProgramme",
@@ -80,7 +76,8 @@
       "hide": [
         "http://www.w3.org/2000/01/rdf-schema#label",
         "http://data.europa.eu/s66/v#hasShaclError"
-      ]
+      ],
+      "foldAfter": "http://data.europa.eu/s66#isRecipientOf"
     },
     "http://data.europa.eu/s66#MonetaryAmount": {
       "render": "label",
@@ -100,7 +97,8 @@
       ],
       "hide": [
         "http://www.w3.org/2000/01/rdf-schema#label"
-      ]
+      ],
+      "foldAfter": "http://data.europa.eu/s66#hasPaymentAmount"
     },
     "http://data.europa.eu/s66#PostalAddress": {
       "render": "embed",
