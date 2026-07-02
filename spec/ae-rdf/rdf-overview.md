@@ -15,6 +15,10 @@ are no precomputed analysis artifacts and no backend server.
 > endpoint-profiler + OWL/SHACL generator (now at top-level `endpoint-profiler/`,
 > outside the workspace). They are **not** part of this tool — harvest from them
 > when AE OWL / AE SHACL start. See `/CLAUDE.md` and `ae-rdf/PLAN.md`.
+>
+> The **config JSON format** (`app.json` + per-endpoint files, `TypeConfig`,
+> profiling cache) is specified separately in
+> [`rdf03-ConfigFormat`](./rdf03-ConfigFormat.md).
 
 ## Architecture
 
@@ -203,6 +207,20 @@ carries a config, authored live and (eventually) exported to `app.json`.
   a value in >1 graph is badged), and the resource's "Show graphs" toggle reaches
   the embed. `rdf:type` is dropped from the inline view (it's the badge).
   `label` renders identity-only; `link` (default) is the clickable chip.
+- **Composed labels (multi-hop):** `label` lists the predicates whose values
+  compose a type's display label (joined ` · `). A URI-valued field resolves to
+  the referent's own (possibly composed) label; `useResourceView` walks that
+  label graph up to 3 hops (`GrantPayment → hasRecipient → OrganisationRole →
+  isRoleOf → Organisation`), fetching labels for referents reached only via label
+  fields so a **linked** (non-embedded) object doesn't collapse to its literal
+  parts. `foldAfter` folds an embed's rows after a predicate; `groupByType` lists
+  predicates whose object lists render **grouped by object type** (subheading +
+  count) — for long mixed-type relations like `Project → hasResult`. Full field
+  reference: [`rdf03-ConfigFormat`](./rdf03-ConfigFormat.md).
+- **Long object lists:** a relation with >100 objects starts collapsed to a count
+  (`N values → Show first 100`) and never renders >100 rows (the tail is walked
+  by opening an object); the "Referenced by" (inverse) section shows its count
+  upfront via a cheap `COUNT` and loads the list on expand.
 - **Prefixes:** `AppConfig.prefixes` (prefix→namespace) is seeded into the prefix
   service at boot (`setConfigPrefixes`, highest precedence over the built-in
   common set and prefix.cc), so custom-vocab qnames render correctly and offline.
