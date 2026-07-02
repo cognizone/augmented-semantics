@@ -34,6 +34,7 @@ export function buildEndpointConfig(e: SPARQLEndpoint): ConfigEndpoint {
   if (e.subclasses && Object.keys(e.subclasses).length) ce.subclasses = e.subclasses
   if (e.composition && Object.keys(e.composition).length) ce.composition = e.composition
   if (e.orphanCounts && Object.keys(e.orphanCounts).length) ce.orphanCounts = e.orphanCounts
+  if (e.languagePriorities?.length) ce.suggestedLanguagePriorities = e.languagePriorities
   if (e.profiledAt) ce.profiledAt = e.profiledAt
   return ce
 }

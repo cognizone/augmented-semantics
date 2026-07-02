@@ -268,6 +268,10 @@ export function buildLabelsQuery(uris: string[]): string {
     .join(' ')
   const labelPreds = LABEL_PREDICATES.map(p => `<${p}>`).join(' ')
   const subClassOf = `<${SUBCLASS_OF}>`
+  // A direct label literal, else the SKOS-XL literalForm (one hop). Both feed
+  // ?lbl; SAMPLE picks one. Language preference for the SKOS-XL hop is applied
+  // separately (buildSkosxlLabelsQuery) — Virtuoso's planner can't handle a
+  // language FILTER on this shared-var OPTIONAL shape without exploding.
   return `SELECT ?s (SAMPLE(?lbl) AS ?label) (SAMPLE(?t) AS ?type) WHERE {
   VALUES ?s { ${values} }
   OPTIONAL { VALUES ?lp { ${labelPreds} } ?s ?lp ?lbl }

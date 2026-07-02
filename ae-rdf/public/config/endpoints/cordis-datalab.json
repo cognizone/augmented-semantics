@@ -1,6 +1,7 @@
 {
   "name": "Cordis Datalab",
   "url": "https://cordis.europa.eu/datalab/sparql",
+  "suggestedLanguagePriorities": ["en"],
   "types": {
     "http://data.europa.eu/s66#Project": {
       "sidebar": "pin",

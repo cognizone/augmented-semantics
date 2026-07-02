@@ -60,6 +60,21 @@ export function useResourceView() {
     ),
   )
 
+  // Label language priority for the CURRENT endpoint: its configured
+  // languagePriorities (from the endpoint JSON), else the user's global
+  // preference, always ending in 'en' as a universal fallback. The first entry
+  // drives single-language label queries (buildLabelsQuery).
+  function labelLangs(): string[] {
+    const cfg = endpointStore.current?.languagePriorities?.filter(Boolean) ?? []
+    const base = cfg.length ? cfg : [languageStore.preferred]
+    return [...new Set([...base, 'en'].filter(Boolean))]
+  }
+  /** Pick the best candidate by language priority, then untagged, then first. */
+  function pickByLangs<T extends { lang?: string }>(cands: T[], langs: string[]): T | undefined {
+    for (const l of langs) { const m = cands.find(c => c.lang === l); if (m) return m }
+    return cands.find(c => !c.lang) ?? cands[0]
+  }
+
   /** Preferred-language literal value for a predicate group, or a URI object's
    *  fetched label / local name. Undefined when the group has no usable value. */
   function groupValue(
@@ -67,16 +82,8 @@ export function useResourceView() {
     objLabels: Map<string, string>,
   ): string | undefined {
     if (!group?.objects.length) return undefined
-    const preferred = languageStore.preferred
     const lits = group.objects.filter(o => o.termType === 'literal')
-    if (lits.length) {
-      return (
-        lits.find(o => o.lang === preferred)?.value ??
-        lits.find(o => o.lang === 'en')?.value ??
-        lits.find(o => !o.lang)?.value ??
-        lits[0]!.value
-      )
-    }
+    if (lits.length) return pickByLangs(lits, labelLangs())?.value
     const o = group.objects[0]!
     return objLabels.get(o.value) ?? localNameOf(o.value)
   }
@@ -91,18 +98,13 @@ export function useResourceView() {
       if (composed) return composed
     }
 
-    const preferred = languageStore.preferred
+    const langs = labelLangs()
     for (const pred of LABEL_PREDICATES) {
       const group = groups.find(g => g.predicate === pred)
       if (!group) continue
       const literals = group.objects.filter(o => o.termType === 'literal')
       if (!literals.length) continue
-      return (
-        literals.find(o => o.lang === preferred)?.value ??
-        literals.find(o => o.lang === 'en')?.value ??
-        literals.find(o => !o.lang)?.value ??
-        literals[0]!.value
-      )
+      return pickByLangs(literals, langs)?.value ?? literals[0]!.value
     }
     return null
   }
@@ -325,7 +327,7 @@ export function useResourceView() {
         if (q) {
           const vr = await executeSparql(endpoint, q, { retries: 1 }).catch(() => null)
           if (!isCurrent()) return
-          const pref = languageStore.preferred
+          const langs = labelLangs()
           // s → p → ALL values [{v, uri, lang}] (kept so we can pick by language).
           const valByS = new Map<string, Map<string, { v: string; uri: boolean; lang?: string }[]>>()
           for (const b of vr?.results.bindings ?? []) {
@@ -337,9 +339,7 @@ export function useResourceView() {
             arr.push({ v: o.value, uri: o.type === 'uri', lang: o['xml:lang'] })
             m.set(p, arr)
           }
-          // Language priority: preferred → en → untagged → first.
-          const pickByLang = <T extends { lang?: string }>(cands: T[]): T | undefined =>
-            cands.find(c => c.lang === pref) ?? cands.find(c => c.lang === 'en') ?? cands.find(c => !c.lang) ?? cands[0]
+          const pickByLang = <T extends { lang?: string }>(cands: T[]): T | undefined => pickByLangs(cands, langs)
           // A label field resolves to {text, lang}: a literal picked by language,
           // or — one hop — a referenced resource's own composed label. When a field
           // has several URI targets (SKOS-XL prefLabel → one Label per language),
