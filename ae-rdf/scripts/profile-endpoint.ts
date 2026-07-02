@@ -55,6 +55,10 @@ const subclassQuery = (uris: string[]) =>
 // Which classes ?c compose each embed value-type ?e (count scoped to the class).
 const compositionQuery = (embeds: string[]) =>
   `SELECT ?c ?e (COUNT(DISTINCT ?o) AS ?n) WHERE { VALUES ?e { ${values(embeds)} } ?o a ?e . ?s ?p ?o . ?s a ?c . FILTER(?c != ?e) } GROUP BY ?c ?e`
+// How many instances of each embed type ARE linked via their owning predicate
+// (orphans = type total − this).
+const orphanLinkedQuery = (pairs: { type: string; via: string }[]) =>
+  `SELECT ?e (COUNT(DISTINCT ?o) AS ?linked) WHERE { VALUES (?e ?via) { ${pairs.map(p => `(<${p.type}> <${p.via}>)`).join(' ')} } ?o a ?e . ?s ?via ?o . } GROUP BY ?e`
 
 async function sparql(url: string, query: string): Promise<Record<string, { value: string }>[]> {
   let lastErr: unknown
@@ -136,6 +140,25 @@ async function profileComposition(url: string, embeds: string[]): Promise<Record
   }
 }
 
+/** Embed-orphan counts: embed type → instances with NO owner via its embedVia. */
+async function profileOrphanCounts(url: string, pairs: { type: string; via: string; total: number }[]): Promise<Record<string, number> | null> {
+  if (!pairs.length) return {}
+  try {
+    const rows = await sparql(url, orphanLinkedQuery(pairs))
+    const linked: Record<string, number> = {}
+    for (const b of rows) { const e = b.e?.value; if (e) linked[e] = parseInt(b.linked?.value ?? '0', 10) }
+    const out: Record<string, number> = {}
+    for (const p of pairs) {
+      const orphans = p.total - (linked[p.type] ?? 0)
+      if (orphans > 0) out[p.type] = orphans // only types that actually have orphans
+    }
+    return out
+  } catch (e) {
+    console.error(`  ✗ orphanCounts — ${(e as Error).message}`)
+    return null
+  }
+}
+
 async function main() {
   const path = resolve(process.cwd(), process.argv[2] ?? DEFAULT_CONFIG)
   const cfg = JSON.parse(await readFile(path, 'utf8'))
@@ -176,6 +199,15 @@ async function main() {
     .map(([uri]) => uri)
   const comp = await profileComposition(url, embeds)
   if (comp) { cfg.composition = comp; console.error(`Composition: ${embeds.length} embed types → ${Object.keys(comp).length} composing classes`) }
+
+  // Embed-orphan counts — embed types that pin an owning predicate (embedVia).
+  const totals: Record<string, number> = {}
+  for (const t of (cfg.typeInventory ?? []) as { uri: string; count: number }[]) totals[t.uri] = t.count
+  const orphanPairs = Object.entries(cfg.types ?? {})
+    .filter(([, c]) => (c as { render?: string; embedVia?: string }).render === 'embed' && (c as { embedVia?: string }).embedVia)
+    .map(([uri, c]) => ({ type: uri, via: (c as { embedVia: string }).embedVia, total: totals[uri] ?? 0 }))
+  const orphans = await profileOrphanCounts(url, orphanPairs)
+  if (orphans) { cfg.orphanCounts = orphans; console.error(`Orphan counts: ${Object.keys(orphans).length} embed types with orphans`) }
 
   cfg.profiledAt = new Date().toISOString()
   await writeFile(path, JSON.stringify(cfg, null, 2) + '\n')

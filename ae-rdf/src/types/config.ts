@@ -44,6 +44,9 @@ export interface ConfigEndpoint extends SuggestedEndpointSource {
   /** Cached embed composition: composing class IRI → embed types it contains
    *  inline (with per-class counts). When present the app skips the live query. */
   composition?: Record<string, CompositionEntry[]>
+  /** Cached embed-orphan counts: embed type IRI → number of instances with no
+   *  owner via its embedVia predicate. When present the app skips the query. */
+  orphanCounts?: Record<string, number>
   /** ISO timestamp of the last profiling run. */
   profiledAt?: string
   /** Language priorities (same as SuggestedEndpoint) */

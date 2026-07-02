@@ -83,6 +83,10 @@
     },
     "http://data.europa.eu/s66#MonetaryAmount": {
       "render": "embed",
+      "label": [
+        "http://data.europa.eu/s66#value",
+        "http://data.europa.eu/s66#currency"
+      ],
       "hide": [
         "http://data.europa.eu/s66#currency",
         "http://data.europa.eu/s66#value",
@@ -3642,7 +3646,7 @@
       ]
     }
   },
-  "profiledAt": "2026-07-02T06:59:24.290Z",
+  "profiledAt": "2026-07-02T07:25:17.408Z",
   "subclasses": {
     "http://data.europa.eu/s66#Organisation": [
       "http://data.europa.eu/s66#SME",
@@ -3854,5 +3858,10 @@
         "count": 1078
       }
     ]
+  },
+  "orphanCounts": {
+    "http://data.europa.eu/s66#Grant": 14,
+    "http://data.europa.eu/s66#OrganisationRole": 89,
+    "http://data.europa.eu/s66#GrantPayment": 29106
   }
 }

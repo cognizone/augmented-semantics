@@ -139,6 +139,12 @@ export function useRdfTypes() {
       .map(t => ({ type: t.uri, via: typeConfig.get(t.uri).embedVia ?? '', total: t.count }))
       .filter(p => p.via && typeConfig.get(p.type).render === 'embed')
     if (!endpoint || !pairs.length) { orphanCounts.value = new Map(); return }
+    // Cached in config (baked offline by profile-endpoint.ts) → seed, no query.
+    if (endpoint.orphanCounts && Object.keys(endpoint.orphanCounts).length) {
+      orphanCounts.value = new Map(Object.entries(endpoint.orphanCounts))
+      logger.info('useRdfTypes', 'Seeded embed-orphan counts from config (no query)', { withOrphans: orphanCounts.value.size })
+      return
+    }
     const query = buildEmbedOrphanQuery(pairs.map(p => ({ type: p.type, via: p.via })), resolveGraphStrategy(browseStore.graph))
     if (!query) { orphanCounts.value = new Map(); return }
     const endpointId = endpoint.id
