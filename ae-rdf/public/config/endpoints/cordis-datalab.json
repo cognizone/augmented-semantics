@@ -59,6 +59,7 @@
       "render": "embed",
       "embedVia": "http://data.europa.eu/s66#hasInvolvedParty",
       "label": [
+        "http://data.europa.eu/s66#isRoleOf",
         "http://data.europa.eu/s66#roleLabel"
       ],
       "order": [

@@ -325,18 +325,29 @@ export function useResourceView() {
         if (q) {
           const vr = await executeSparql(endpoint, q, { retries: 1 }).catch(() => null)
           if (!isCurrent()) return
-          const valByS = new Map<string, Map<string, string>>() // s → (p → display value), first wins
+          const valByS = new Map<string, Map<string, { v: string; uri: boolean }>>() // s → (p → raw value), first wins
           for (const b of vr?.results.bindings ?? []) {
             const s = b.s?.value, p = b.p?.value, o = b.v
             if (!s || !p || !o?.value) continue
-            const disp = o.type === 'uri' ? localNameOf(o.value) : o.value
             let m = valByS.get(s)
             if (!m) { m = new Map(); valByS.set(s, m) }
-            if (!m.has(p)) m.set(p, disp)
+            if (!m.has(p)) m.set(p, { v: o.value, uri: o.type === 'uri' })
           }
-          for (const [s, t] of toCompose) {
-            const composed = composeLabel(typeConfig.get(t).label ?? [], p => valByS.get(s)?.get(p))
-            if (composed) labelMap.set(s, composed)
+          // A URI-valued label field resolves to the referent's OWN label (one
+          // hop) — its composed/generic label from labelMap, else its local name.
+          // e.g. an OrganisationRole labelled by isRoleOf shows the Organisation's
+          // name, not a UUID. Two passes so a referent composed here is available
+          // to its referrer regardless of iteration order.
+          const resolve = (s: string, p: string): string | undefined => {
+            const c = valByS.get(s)?.get(p)
+            if (!c) return undefined
+            return c.uri ? (labelMap.get(c.v) ?? localNameOf(c.v)) : c.v
+          }
+          for (let pass = 0; pass < 2; pass++) {
+            for (const [s, t] of toCompose) {
+              const composed = composeLabel(typeConfig.get(t).label ?? [], p => resolve(s, p))
+              if (composed) labelMap.set(s, composed)
+            }
           }
         }
       }
