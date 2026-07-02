@@ -284,6 +284,20 @@ export function buildLabelsQuery(uris: string[]): string {
 }
 
 /**
+ * SKOS-XL labels for a set of subjects: (?s ?lf) rows where ?lf is the
+ * literalForm (lang-tagged) reached via skosxl:prefLabel. Plain required
+ * patterns — fast, and returns nothing for non-SKOS-XL subjects. The caller
+ * picks the best language client-side (Virtuoso can't do the language
+ * preference in buildLabelsQuery's shared-var OPTIONAL shape). Empty when no
+ * safe subjects.
+ */
+export function buildSkosxlLabelsQuery(uris: string[]): string {
+  const s = uris.filter(isNavigableIri).slice(0, 256).map(u => `<${u}>`).join(' ')
+  if (!s) return ''
+  return `SELECT ?s ?lf WHERE { VALUES ?s { ${s} } ?s <${SKOSXL_PREFLABEL}> ?l . ?l <${SKOSXL_LITERALFORM}> ?lf }`
+}
+
+/**
  * Raw values of specific predicates for specific subjects, for composing labels
  * from a type's configured label fields. Returns (?s ?p ?v) rows. Empty string
  * when there are no safe subjects/predicates (caller skips).

@@ -11,7 +11,7 @@
  */
 import { ref, computed, type Ref } from 'vue'
 import { useEndpointStore, useLanguageStore, useBrowseStore, useTypeConfigStore } from '../stores'
-import { executeSparql, resolveUris, logger, buildResourceTriplesQuery, buildLabelsQuery, buildValuesQuery, buildEmbeddedTriplesQuery, resolveGraphStrategy, LABEL_PREDICATES } from '../services'
+import { executeSparql, resolveUris, logger, buildResourceTriplesQuery, buildLabelsQuery, buildSkosxlLabelsQuery, buildValuesQuery, buildEmbeddedTriplesQuery, resolveGraphStrategy, LABEL_PREDICATES } from '../services'
 import { composeLabel } from '../utils/propertyOrder'
 import { localName as localNameOf } from '../utils/format'
 
@@ -188,10 +188,16 @@ export function useResourceView() {
       }
 
       // Resolve prefixes and fetch object labels in parallel (Phase 2 readability).
-      const [resolvedMap, labelResults] = await Promise.all([
+      // A separate SKOS-XL query resolves reified labels with language (kept out
+      // of buildLabelsQuery, whose shared-var shape can't carry a language FILTER).
+      const skosxlQ = objectIris.size ? buildSkosxlLabelsQuery([...objectIris]) : ''
+      const [resolvedMap, labelResults, skosxlResults] = await Promise.all([
         resolveUris([...toResolve]),
         objectIris.size
           ? executeSparql(endpoint, buildLabelsQuery([...objectIris]), { retries: 1 }).catch(() => null)
+          : Promise.resolve(null),
+        skosxlQ
+          ? executeSparql(endpoint, skosxlQ, { retries: 1 }).catch(() => null)
           : Promise.resolve(null),
       ])
       if (!isCurrent()) return
@@ -203,6 +209,22 @@ export function useResourceView() {
         if (!s) continue
         if (b.label?.value) labelMap.set(s, b.label.value)
         if (b.type?.value) typeMap.set(s, b.type.value)
+      }
+      // SKOS-XL: override with the best-language literalForm per subject (a
+      // Concept labelled skosxl:prefLabel → its English literalForm, not a UUID
+      // or an arbitrary language).
+      const xlLangs = labelLangs()
+      const xlBySubj = new Map<string, { v: string; lang?: string }[]>()
+      for (const b of skosxlResults?.results.bindings ?? []) {
+        const s = b.s?.value, lf = b.lf
+        if (!s || !lf?.value) continue
+        const arr = xlBySubj.get(s) ?? []
+        arr.push({ v: lf.value, lang: lf['xml:lang'] })
+        xlBySubj.set(s, arr)
+      }
+      for (const [s, cands] of xlBySubj) {
+        const best = pickByLangs(cands, xlLangs)
+        if (best) labelMap.set(s, best.v)
       }
 
       // Resolve prefixes for the object types too (needed for the 'prefixed'
