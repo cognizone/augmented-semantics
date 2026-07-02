@@ -64,10 +64,11 @@ export interface TypeConfig {
    *  this type (joined, in property-display order). Empty/unset → the default
    *  label heuristic (prefLabel → title → rdfs:label → …). */
   label?: string[]
-  /** When this type is inlined (render:embed), show only the first N (visible,
-   *  ordered) properties and fold the rest behind a "Show more" toggle. Unset =
-   *  show all. Ignored in edit mode so every property stays configurable. */
-  previewCount?: number
+  /** When this type is inlined (render:embed), show properties up to and
+   *  including this predicate, and fold everything after it behind a "Show more"
+   *  toggle. Unset = show all. Set via the per-row "fold here" toggle in edit
+   *  mode; ignored in edit mode so every property stays configurable. */
+  foldAfter?: string
 }
 
 /** A type IRI with its distinct-instance count (the cached inventory entry). */

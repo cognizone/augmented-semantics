@@ -39,9 +39,11 @@ const props = defineProps<{
   hidden?: string[]
   /** Predicates that compose this table's type's label (highlighted in edit mode). */
   labelParts?: string[]
-  /** Embed-only: show the first N rows, fold the rest behind a toggle. Unset =
-   *  show all. Ignored while reorderable (edit mode) so all rows configure. */
-  previewCount?: number
+  /** Predicate to fold after: rows past it collapse behind a toggle. Only folds
+   *  when `embed` and not reorderable (edit mode). Unset = show all. */
+  foldAfter?: string
+  /** True when this table is an inlined embed (enables fold behavior). */
+  embed?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -49,19 +51,24 @@ const emit = defineEmits<{
   reorder: [predicates: string[]]
   toggleHide: [predicate: string]
   toggleLabel: [predicate: string]
+  toggleFold: [predicate: string]
 }>()
 
 const isHidden = (predicate: string) => props.hidden?.includes(predicate) ?? false
 const isLabelPart = (predicate: string) => props.labelParts?.includes(predicate) ?? false
+const isFoldBoundary = (predicate: string) => props.foldAfter === predicate
 
-// Embed row-fold: show the first `previewCount` rows, reveal the rest on demand.
-// Off in edit mode (reorderable) so every row stays configurable.
+// Embed row-fold: show rows through `foldAfter`, reveal the rest on demand. Only
+// when inlined (embed) and not editing — edit mode shows all rows to configure.
 const rowsExpanded = ref(false)
-const foldable = computed(() =>
-  props.previewCount != null && !props.reorderable && props.previewCount < props.groups.length,
-)
+const foldIndex = computed(() => {
+  if (!props.embed || !props.foldAfter || props.reorderable) return -1
+  const i = props.groups.findIndex(g => g.predicate === props.foldAfter)
+  return i >= 0 && i < props.groups.length - 1 ? i : -1 // nothing to fold if it's last
+})
+const foldable = computed(() => foldIndex.value >= 0)
 const shownGroups = computed(() =>
-  foldable.value && !rowsExpanded.value ? props.groups.slice(0, props.previewCount) : props.groups,
+  foldable.value && !rowsExpanded.value ? props.groups.slice(0, foldIndex.value + 1) : props.groups,
 )
 
 // Drag-to-reorder (only when reorderable). The handle is the drag source; the
@@ -133,7 +140,15 @@ function embedType(o: ResourceObject): string | undefined {
 
 const embedHidden = (o: ResourceObject) => (embedType(o) ? typeConfig.get(embedType(o)!).hide ?? [] : [])
 const embedLabelParts = (o: ResourceObject) => (embedType(o) ? typeConfig.get(embedType(o)!).label ?? [] : [])
-const embedPreviewCount = (o: ResourceObject) => (embedType(o) ? typeConfig.get(embedType(o)!).previewCount : undefined)
+const embedFoldAfter = (o: ResourceObject) => (embedType(o) ? typeConfig.get(embedType(o)!).foldAfter : undefined)
+
+/** Toggle the fold boundary inside an embed (set to this predicate, or clear). */
+function onEmbedToggleFold(o: ResourceObject, predicate: string) {
+  const type = embedType(o)
+  if (!type) return
+  const cur = typeConfig.get(type).foldAfter
+  typeConfig.set(type, { foldAfter: cur === predicate ? undefined : predicate })
+}
 
 /** Persist a drag-reorder inside an embed to that object's type config. */
 function onEmbedReorder(o: ResourceObject, predicates: string[]) {
@@ -233,7 +248,13 @@ function graphTitle(o: ResourceObject): string {
             :class="{ on: isLabelPart(group.predicate) }"
             :title="isLabelPart(group.predicate) ? 'Part of the label — click to remove' : 'Add to the label'"
             @click="emit('toggleLabel', group.predicate)"
-          >title</button><span v-if="incoming" class="in-arrow" title="incoming — resources that link here">↤</span>{{ predicateLabel(group.predicate) }}</th>
+          >title</button><button
+            v-if="reorderable"
+            class="fold-toggle material-symbols-outlined"
+            :class="{ on: isFoldBoundary(group.predicate) }"
+            :title="isFoldBoundary(group.predicate) ? 'Fold boundary — click to clear' : 'Fold here: collapse the rows after this one when inlined'"
+            @click="emit('toggleFold', group.predicate)"
+          >{{ isFoldBoundary(group.predicate) ? 'unfold_less' : 'unfold_more' }}</button><span v-if="incoming" class="in-arrow" title="incoming — resources that link here">↤</span>{{ predicateLabel(group.predicate) }}</th>
         <td class="prop-values">
           <div v-for="(o, i) in shownObjects(group)" :key="i" class="prop-value" :title="graphTitle(o)">
             <!-- Embedded value object: inline its triples (recursively — an
@@ -252,11 +273,13 @@ function graphTitle(o: ResourceObject): string {
                 :reorderable="reorderable"
                 :hidden="embedHidden(o)"
                 :label-parts="embedLabelParts(o)"
-                :preview-count="embedPreviewCount(o)"
+                :fold-after="embedFoldAfter(o)"
+                :embed="true"
                 @navigate="emit('navigate', $event)"
                 @reorder="p => onEmbedReorder(o, p)"
                 @toggle-hide="p => onEmbedToggleHide(o, p)"
                 @toggle-label="p => onEmbedToggleLabel(o, p)"
+                @toggle-fold="p => onEmbedToggleFold(o, p)"
               />
             </div>
 
@@ -319,7 +342,7 @@ function graphTitle(o: ResourceObject): string {
       <tr v-if="foldable" class="rows-more-row">
         <td colspan="2" class="rows-more">
           <a class="show-more" @click="rowsExpanded = !rowsExpanded">
-            {{ rowsExpanded ? 'Show fewer' : `Show ${groups.length - previewCount!} more` }}
+            {{ rowsExpanded ? 'Show fewer' : `Show ${groups.length - foldIndex - 1} more` }}
           </a>
         </td>
       </tr>
@@ -404,7 +427,8 @@ function graphTitle(o: ResourceObject): string {
   color: var(--ae-text-primary);
 }
 
-.label-toggle {
+.label-toggle,
+.fold-toggle {
   background: none;
   border: none;
   cursor: pointer;
@@ -415,11 +439,13 @@ function graphTitle(o: ResourceObject): string {
   color: var(--ae-text-muted);
 }
 
-.label-toggle:hover {
+.label-toggle:hover,
+.fold-toggle:hover {
   color: var(--ae-text-primary);
 }
 
-.label-toggle.on {
+.label-toggle.on,
+.fold-toggle.on {
   color: var(--ae-accent);
 }
 
