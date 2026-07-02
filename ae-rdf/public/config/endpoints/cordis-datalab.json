@@ -35,6 +35,10 @@
       "render": "embed",
       "embedVia": "http://data.europa.eu/s66#isFundedBy",
       "foldAfter": "http://data.europa.eu/s66#funds",
+      "label": [
+        "http://data.europa.eu/s66#funds",
+        "http://data.europa.eu/s66#hasFundingAmount"
+      ],
       "order": [
         "http://data.europa.eu/s66#hasFundingSchemeType",
         "http://data.europa.eu/s66#hasFundingSchemeProgramme",
