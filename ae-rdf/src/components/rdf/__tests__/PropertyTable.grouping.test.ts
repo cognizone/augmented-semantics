@@ -35,14 +35,17 @@ describe('PropertyTable groupByType', () => {
     expect(text.some(t => t.includes('Paper') && t.includes('2'))).toBe(true)
     expect(text.some(t => t.includes('Dataset') && t.includes('1'))).toBe(true)
     expect(wrapper.findAll('.uri-link')).toHaveLength(3) // all three still rendered
+    // The heading conveys the type, so per-row type badges are suppressed.
+    expect(wrapper.findAll('.type-badge')).toHaveLength(0)
   })
 
-  it('renders a flat list (no subheadings) when not grouped', () => {
+  it('renders a flat list (no subheadings, per-row type badges) when not grouped', () => {
     const wrapper = mount(PropertyTable, {
       props: { groups, resolved: new Map(), objectTypes },
       global: { plugins: [PrimeVue], directives: { tooltip: Tooltip } },
     })
     expect(wrapper.findAll('.type-subheading')).toHaveLength(0)
     expect(wrapper.findAll('.uri-link')).toHaveLength(3)
+    expect(wrapper.findAll('.type-badge')).toHaveLength(3) // each row badged
   })
 })

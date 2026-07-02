@@ -409,8 +409,9 @@ function graphTitle(o: ResourceObject): string {
                 title="No data — this reference points to a resource with no properties"
               >warning</span>
 
-              <!-- Type badge for a linked resource (embedded objects show it inside the embed) -->
-              <span v-if="row.o.termType === 'uri' && !embedded?.get(row.o.value) && objectBadge(row.o.value)" class="tag type-badge">{{ objectBadge(row.o.value) }}</span>
+              <!-- Type badge for a linked resource (embedded objects show it inside
+                   the embed; grouped lists show the type as the section heading). -->
+              <span v-if="row.o.termType === 'uri' && !embedded?.get(row.o.value) && !isGrouped(group.predicate) && objectBadge(row.o.value)" class="tag type-badge">{{ objectBadge(row.o.value) }}</span>
 
               <!-- Graph provenance (always known; shown per option a) -->
               <span v-if="showGraphsFor(row.o)" class="graph-tags">
