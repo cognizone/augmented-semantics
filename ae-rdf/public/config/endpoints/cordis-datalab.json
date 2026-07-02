@@ -83,20 +83,10 @@
       ]
     },
     "http://data.europa.eu/s66#MonetaryAmount": {
-      "render": "embed",
+      "render": "label",
       "label": [
         "http://data.europa.eu/s66#value",
         "http://data.europa.eu/s66#currency"
-      ],
-      "hide": [
-        "http://data.europa.eu/s66#currency",
-        "http://data.europa.eu/s66#value",
-        "http://www.w3.org/2000/01/rdf-schema#label"
-      ],
-      "order": [
-        "http://data.europa.eu/s66#value",
-        "http://data.europa.eu/s66#currency",
-        "http://www.w3.org/2000/01/rdf-schema#label"
       ]
     },
     "http://data.europa.eu/s66#GrantPayment": {
@@ -3647,7 +3637,7 @@
       ]
     }
   },
-  "profiledAt": "2026-07-02T07:25:17.408Z",
+  "profiledAt": "2026-07-02T08:45:58.355Z",
   "subclasses": {
     "http://data.europa.eu/s66#Organisation": [
       "http://data.europa.eu/s66#SME",
@@ -3691,10 +3681,6 @@
       {
         "uri": "http://data.europa.eu/s66#OrganisationRole",
         "count": 398577
-      },
-      {
-        "uri": "http://data.europa.eu/s66#MonetaryAmount",
-        "count": 78727
       }
     ],
     "http://data.europa.eu/s66#SME": [
@@ -3729,10 +3715,6 @@
       {
         "uri": "http://data.europa.eu/s66#Grant",
         "count": 80208
-      },
-      {
-        "uri": "http://data.europa.eu/s66#MonetaryAmount",
-        "count": 80205
       },
       {
         "uri": "http://data.europa.eu/s66#OrganisationRole",
@@ -3775,10 +3757,6 @@
       {
         "uri": "http://data.europa.eu/s66#Grant",
         "count": 78726
-      },
-      {
-        "uri": "http://data.europa.eu/s66#MonetaryAmount",
-        "count": 1
       }
     ],
     "http://data.europa.eu/s66#ForProfitOrganisation": [
@@ -3829,10 +3807,6 @@
       {
         "uri": "http://data.europa.eu/s66#OrganisationRole",
         "count": 392931
-      },
-      {
-        "uri": "http://data.europa.eu/s66#MonetaryAmount",
-        "count": 422006
       }
     ],
     "http://data.europa.eu/s66#PublicBody": [
