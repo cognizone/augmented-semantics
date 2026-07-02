@@ -319,7 +319,11 @@
       ]
     },
     "http://www.w3.org/2008/05/skos-xl#Label": {
-      "render": "embed",
+      "render": "label",
+      "sidebar": "hide",
+      "label": [
+        "http://www.w3.org/2008/05/skos-xl#literalForm"
+      ],
       "order": [
         "http://www.w3.org/2008/05/skos-xl#literalForm",
         "http://publications.europa.eu/ontology/euvoc#startDate",
@@ -425,7 +429,8 @@
     },
     "http://www.w3.org/2004/02/skos/core#Concept": {
       "label": [
-        "http://www.w3.org/2004/02/skos/core#prefLabel"
+        "http://www.w3.org/2004/02/skos/core#prefLabel",
+        "http://www.w3.org/2008/05/skos-xl#prefLabel"
       ],
       "order": [
         "http://www.w3.org/2004/02/skos/core#prefLabel",
