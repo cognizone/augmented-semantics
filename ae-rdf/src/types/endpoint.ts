@@ -14,6 +14,8 @@ export interface SPARQLEndpoint {
   types?: Record<string, TypeConfig>           // per-type display config, keyed by type IRI
   typeInventory?: TypeCount[]                   // cached type inventory for instant sidebar
   typeProperties?: Record<string, TypeProfile> // discovered per-type property schema (script-generated)
+  subclasses?: Record<string, string[]>         // cached rdfs:subClassOf hierarchy: superclass IRI → subtype IRIs
+  composition?: Record<string, CompositionEntry[]> // cached embed composition: class IRI → embed types it contains
   profiledAt?: string                           // ISO timestamp of the last property-profiling run
   selectedGraphs?: string[]
   languagePriorities?: string[]  // User-ordered language codes
@@ -93,6 +95,12 @@ export interface TypeProfile {
   ok: boolean
   sampled?: boolean
   properties: TypeProperty[]
+}
+
+/** One embed type composed by a class, with a count scoped to that class. */
+export interface CompositionEntry {
+  uri: string
+  count: number
 }
 
 /**

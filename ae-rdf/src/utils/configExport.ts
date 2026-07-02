@@ -31,6 +31,8 @@ export function buildEndpointConfig(e: SPARQLEndpoint): ConfigEndpoint {
   if (e.types && Object.keys(e.types).length) ce.types = e.types
   if (e.typeInventory?.length) ce.typeInventory = e.typeInventory
   if (e.typeProperties && Object.keys(e.typeProperties).length) ce.typeProperties = e.typeProperties
+  if (e.subclasses && Object.keys(e.subclasses).length) ce.subclasses = e.subclasses
+  if (e.composition && Object.keys(e.composition).length) ce.composition = e.composition
   if (e.profiledAt) ce.profiledAt = e.profiledAt
   return ce
 }

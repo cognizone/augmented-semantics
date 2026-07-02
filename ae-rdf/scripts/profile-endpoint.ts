@@ -1,21 +1,24 @@
 /**
- * profile-properties.ts — offline endpoint property profiler.
+ * profile-endpoint.ts — offline endpoint schema profiler.
  *
- * Runs LOCALLY (Node CLI), never in the browser app. Per-type "distinct
- * properties" queries are too unreliable to run at runtime, so we run them once
- * here — with timeouts, retries and a sampled fallback — and bake the result
- * into the endpoint config JSON under `typeProperties` (+ a `profiledAt` stamp).
- * The app then reads that instead of querying; if it's missing/`ok:false` for a
- * type, the app falls back to its normal live behaviour.
+ * Runs LOCALLY (Node CLI), never in the browser app. Several schema-discovery
+ * queries are too unreliable to run at runtime, so we run them once here — with
+ * timeouts, retries and a sampled fallback — and bake the result into the
+ * endpoint config JSON so the app reads it instead of querying:
+ *   - `typeProperties` — distinct properties per type (+ `ok`/`sampled` flags)
+ *   - `subclasses`     — rdfs:subClassOf hierarchy among inventory types
+ *   - `composition`    — which classes embed which value-types (+ counts)
+ * Plus a `profiledAt` stamp. If a section is missing the app falls back to its
+ * normal live behaviour.
  *
- * SAFE BY DESIGN: only `typeProperties` and `profiledAt` are (re)written. Your
- * hand-authored `types` / `typeInventory` / everything else is preserved. A type
- * whose query fails keeps its previously-profiled entry (if any) rather than
- * being downgraded, so a flaky run never destroys good data.
+ * SAFE BY DESIGN: only `typeProperties`, `subclasses`, `composition` and
+ * `profiledAt` are (re)written. Hand-authored `types` / `typeInventory` /
+ * everything else is preserved. A per-type property query that fails keeps its
+ * previously-profiled entry, so a flaky run never destroys good data.
  *
  * Usage:
- *   node scripts/profile-properties.ts [path-to-endpoint.json]
- *   node scripts/profile-properties.ts                      # defaults to cordis
+ *   node scripts/profile-endpoint.ts [path-to-endpoint.json]
+ *   node scripts/profile-endpoint.ts                      # defaults to cordis
  * Node 23.6+ runs .ts directly (type stripping) — no build step.
  *
  * @see /spec/ae-rdf  — mirrors the typeInventory caching pattern (useRdfTypes.ts)
@@ -33,6 +36,10 @@ const SAMPLE_SIZE = 2000 // fallback when the full scan times out / errors
 
 interface PropEntry { uri: string; count: number }
 interface TypeProfile { ok: boolean; sampled?: boolean; properties: PropEntry[] }
+interface CompEntry { uri: string; count: number }
+
+const RDFS_SUBCLASS = 'http://www.w3.org/2000/01/rdf-schema#subClassOf'
+const values = (uris: string[]) => uris.map(u => `<${u}>`).join(' ')
 
 // ponytail: default-graph triples only (`?s a <T> . ?s ?p ?o`) — matches what
 // this app's target endpoints expose. A quad-only store would need GRAPH
@@ -42,6 +49,12 @@ const fullQuery = (t: string) =>
 const sampledQuery = (t: string) =>
   `SELECT ?p (COUNT(*) AS ?n) WHERE { { SELECT ?s WHERE { ?s a <${t}> } LIMIT ${SAMPLE_SIZE} } ?s ?p ?o } GROUP BY ?p ORDER BY DESC(?n)`
 const typesQuery = () => `SELECT DISTINCT ?t WHERE { ?s a ?t }`
+// subClassOf among inventory types (both ends filtered to the inventory below).
+const subclassQuery = (uris: string[]) =>
+  `SELECT DISTINCT ?sub ?super WHERE { VALUES ?sub { ${values(uris)} } ?sub <${RDFS_SUBCLASS}> ?super . FILTER(?sub != ?super) }`
+// Which classes ?c compose each embed value-type ?e (count scoped to the class).
+const compositionQuery = (embeds: string[]) =>
+  `SELECT ?c ?e (COUNT(DISTINCT ?o) AS ?n) WHERE { VALUES ?e { ${values(embeds)} } ?o a ?e . ?s ?p ?o . ?s a ?c . FILTER(?c != ?e) } GROUP BY ?c ?e`
 
 async function sparql(url: string, query: string): Promise<Record<string, { value: string }>[]> {
   let lastErr: unknown
@@ -86,6 +99,43 @@ async function profileType(url: string, type: string): Promise<TypeProfile | nul
   }
 }
 
+/** rdfs:subClassOf hierarchy among the inventory types → { super: [subs] }. */
+async function profileSubclasses(url: string, typeUris: string[]): Promise<Record<string, string[]> | null> {
+  const inv = new Set(typeUris)
+  try {
+    const rows = await sparql(url, subclassQuery(typeUris))
+    const map: Record<string, string[]> = {}
+    for (const b of rows) {
+      const sub = b.sub?.value, sup = b.super?.value
+      if (!sub || !sup || !inv.has(sub) || !inv.has(sup)) continue // both ends must be browsable
+      ;(map[sup] ??= []).includes(sub) || map[sup].push(sub)
+    }
+    return map
+  } catch (e) {
+    console.error(`  ✗ subclasses — ${(e as Error).message}`)
+    return null
+  }
+}
+
+/** Embed composition: composing class → embed types it contains, with counts. */
+async function profileComposition(url: string, embeds: string[]): Promise<Record<string, CompEntry[]> | null> {
+  if (!embeds.length) return {}
+  try {
+    const rows = await sparql(url, compositionQuery(embeds))
+    const map: Record<string, CompEntry[]> = {}
+    for (const b of rows) {
+      const c = b.c?.value, e = b.e?.value
+      if (!c || !e) continue
+      const arr = (map[c] ??= [])
+      if (!arr.some(x => x.uri === e)) arr.push({ uri: e, count: parseInt(b.n?.value ?? '0', 10) })
+    }
+    return map
+  } catch (e) {
+    console.error(`  ✗ composition — ${(e as Error).message}`)
+    return null
+  }
+}
+
 async function main() {
   const path = resolve(process.cwd(), process.argv[2] ?? DEFAULT_CONFIG)
   const cfg = JSON.parse(await readFile(path, 'utf8'))
@@ -115,9 +165,21 @@ async function main() {
   }
 
   cfg.typeProperties = out
+
+  // Subclass hierarchy (for the nested sidebar tree).
+  const subs = await profileSubclasses(url, typeUris)
+  if (subs) { cfg.subclasses = subs; console.error(`Subclasses: ${Object.keys(subs).length} superclasses`) }
+
+  // Embed composition — only over types configured as render:embed.
+  const embeds = Object.entries(cfg.types ?? {})
+    .filter(([, c]) => (c as { render?: string }).render === 'embed')
+    .map(([uri]) => uri)
+  const comp = await profileComposition(url, embeds)
+  if (comp) { cfg.composition = comp; console.error(`Composition: ${embeds.length} embed types → ${Object.keys(comp).length} composing classes`) }
+
   cfg.profiledAt = new Date().toISOString()
   await writeFile(path, JSON.stringify(cfg, null, 2) + '\n')
-  console.error(`\nDone: ${okCount}/${typeUris.length} profiled OK → ${path}`)
+  console.error(`\nDone: ${okCount}/${typeUris.length} types profiled OK → ${path}`)
 }
 
 main().catch(e => { console.error(e); process.exit(1) })

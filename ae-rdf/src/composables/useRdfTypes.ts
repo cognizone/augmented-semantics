@@ -56,6 +56,13 @@ export function useRdfTypes() {
       composition.value = new Map()
       return
     }
+    // Cached in config (baked offline by profile-endpoint.ts) → seed, no query.
+    if (endpoint.composition && Object.keys(endpoint.composition).length) {
+      composition.value = new Map(Object.entries(endpoint.composition))
+      pathCounts.value = new Map()
+      logger.info('useRdfTypes', 'Seeded embed composition from config (no query)', { parents: composition.value.size })
+      return
+    }
     const endpointId = endpoint.id
     try {
       const res = await executeSparql(
@@ -162,6 +169,12 @@ export function useRdfTypes() {
     const endpoint = endpointStore.current
     if (!endpoint || !types.value.length) {
       subclasses.value = new Map()
+      return
+    }
+    // Cached in config (baked offline by profile-endpoint.ts) → seed, no query.
+    if (endpoint.subclasses && Object.keys(endpoint.subclasses).length) {
+      subclasses.value = new Map(Object.entries(endpoint.subclasses))
+      logger.info('useRdfTypes', 'Seeded subclass hierarchy from config (no query)', { supers: subclasses.value.size })
       return
     }
     const endpointId = endpoint.id

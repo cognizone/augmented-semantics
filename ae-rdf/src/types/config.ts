@@ -13,11 +13,12 @@ import type {
   TypeConfig,
   TypeCount,
   TypeProfile,
+  CompositionEntry,
   SuggestedEndpointSource,
 } from './endpoint'
 
 // Re-export so existing imports from '../types' keep working.
-export type { TypeConfig, TypeRender, TypeSidebar, TypeCount, TypeProperty, TypeProfile } from './endpoint'
+export type { TypeConfig, TypeRender, TypeSidebar, TypeCount, TypeProperty, TypeProfile, CompositionEntry } from './endpoint'
 
 /**
  * Pre-configured endpoint from external config file. Carries its own per-endpoint
@@ -35,9 +36,15 @@ export interface ConfigEndpoint extends SuggestedEndpointSource {
   /** Cached type inventory (uri + count) for an instant Types sidebar on deploy */
   typeInventory?: TypeCount[]
   /** Discovered per-type property schema (generated offline by
-   *  scripts/profile-properties.ts). Keyed by type IRI. */
+   *  scripts/profile-endpoint.ts). Keyed by type IRI. */
   typeProperties?: Record<string, TypeProfile>
-  /** ISO timestamp of the last property-profiling run. */
+  /** Cached rdfs:subClassOf hierarchy: superclass IRI → subtype IRIs. When
+   *  present the app seeds the sidebar tree from it instead of querying. */
+  subclasses?: Record<string, string[]>
+  /** Cached embed composition: composing class IRI → embed types it contains
+   *  inline (with per-class counts). When present the app skips the live query. */
+  composition?: Record<string, CompositionEntry[]>
+  /** ISO timestamp of the last profiling run. */
   profiledAt?: string
   /** Language priorities (same as SuggestedEndpoint) */
   suggestedLanguagePriorities?: string[]

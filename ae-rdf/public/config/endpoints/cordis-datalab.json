@@ -3642,5 +3642,217 @@
       ]
     }
   },
-  "profiledAt": "2026-07-02T06:31:33.453Z"
+  "profiledAt": "2026-07-02T06:59:24.290Z",
+  "subclasses": {
+    "http://data.europa.eu/s66#Organisation": [
+      "http://data.europa.eu/s66#SME",
+      "http://data.europa.eu/s66#ForProfitOrganisation",
+      "http://data.europa.eu/s66#HigherOrSecondaryEducation",
+      "http://data.europa.eu/s66#PublicBody",
+      "http://data.europa.eu/s66#ResearchOrganisation",
+      "http://data.europa.eu/s66#FundingAgency"
+    ],
+    "http://data.europa.eu/s66#AdministrativeArea": [
+      "http://data.europa.eu/s66#Country"
+    ],
+    "http://data.europa.eu/s66#ProjectPublication": [
+      "http://data.europa.eu/s66#Book",
+      "http://data.europa.eu/s66#JournalPaper",
+      "http://data.europa.eu/s66#ProceedingsPaper",
+      "http://data.europa.eu/s66#ThesisDissertation"
+    ],
+    "http://data.europa.eu/s66#Result": [
+      "http://data.europa.eu/s66#ProjectPublication",
+      "http://data.europa.eu/s66#ProjectReportSummary",
+      "http://data.europa.eu/s66#ProjectDeliverable"
+    ]
+  },
+  "composition": {
+    "http://data.europa.eu/s66#OrganisationRole": [
+      {
+        "uri": "http://data.europa.eu/s66#GrantPayment",
+        "count": 392901
+      },
+      {
+        "uri": "http://data.europa.eu/s66#Grant",
+        "count": 78323
+      }
+    ],
+    "http://data.europa.eu/s66#Grant": [
+      {
+        "uri": "http://data.europa.eu/s66#GrantPayment",
+        "count": 422007
+      },
+      {
+        "uri": "http://data.europa.eu/s66#OrganisationRole",
+        "count": 398577
+      },
+      {
+        "uri": "http://data.europa.eu/s66#MonetaryAmount",
+        "count": 78727
+      }
+    ],
+    "http://data.europa.eu/s66#SME": [
+      {
+        "uri": "http://data.europa.eu/s66#OrganisationRole",
+        "count": 78501
+      },
+      {
+        "uri": "http://data.europa.eu/s66#Acronym",
+        "count": 14738
+      },
+      {
+        "uri": "http://data.europa.eu/s66#Site",
+        "count": 22534
+      }
+    ],
+    "http://data.europa.eu/s66#Organisation": [
+      {
+        "uri": "http://data.europa.eu/s66#Acronym",
+        "count": 52457
+      },
+      {
+        "uri": "http://data.europa.eu/s66#Site",
+        "count": 72644
+      },
+      {
+        "uri": "http://data.europa.eu/s66#OrganisationRole",
+        "count": 382572
+      }
+    ],
+    "http://data.europa.eu/s66#Project": [
+      {
+        "uri": "http://data.europa.eu/s66#Grant",
+        "count": 80208
+      },
+      {
+        "uri": "http://data.europa.eu/s66#MonetaryAmount",
+        "count": 80205
+      },
+      {
+        "uri": "http://data.europa.eu/s66#OrganisationRole",
+        "count": 398495
+      },
+      {
+        "uri": "http://data.europa.eu/s66#Acronym",
+        "count": 79784
+      }
+    ],
+    "http://data.europa.eu/s66#ResearchOrganisation": [
+      {
+        "uri": "http://data.europa.eu/s66#OrganisationRole",
+        "count": 80330
+      },
+      {
+        "uri": "http://data.europa.eu/s66#Site",
+        "count": 5795
+      },
+      {
+        "uri": "http://data.europa.eu/s66#Acronym",
+        "count": 4786
+      }
+    ],
+    "http://data.europa.eu/s66#HigherOrSecondaryEducation": [
+      {
+        "uri": "http://data.europa.eu/s66#OrganisationRole",
+        "count": 133326
+      },
+      {
+        "uri": "http://data.europa.eu/s66#Acronym",
+        "count": 3059
+      },
+      {
+        "uri": "http://data.europa.eu/s66#Site",
+        "count": 3876
+      }
+    ],
+    "http://data.europa.eu/s66#FundingScheme": [
+      {
+        "uri": "http://data.europa.eu/s66#Grant",
+        "count": 78726
+      },
+      {
+        "uri": "http://data.europa.eu/s66#MonetaryAmount",
+        "count": 1
+      }
+    ],
+    "http://data.europa.eu/s66#ForProfitOrganisation": [
+      {
+        "uri": "http://data.europa.eu/s66#Site",
+        "count": 48304
+      },
+      {
+        "uri": "http://data.europa.eu/s66#Acronym",
+        "count": 33909
+      },
+      {
+        "uri": "http://data.europa.eu/s66#OrganisationRole",
+        "count": 124190
+      }
+    ],
+    "http://data.europa.eu/s66#FundingAgency": [
+      {
+        "uri": "http://data.europa.eu/s66#Grant",
+        "count": 78726
+      }
+    ],
+    "http://data.europa.eu/s66#Site": [
+      {
+        "uri": "http://data.europa.eu/s66#Coordinates",
+        "count": 54540
+      },
+      {
+        "uri": "http://data.europa.eu/s66#AdministrativeArea",
+        "count": 2070
+      },
+      {
+        "uri": "http://data.europa.eu/s66#PostalAddress",
+        "count": 72769
+      }
+    ],
+    "http://www.w3.org/2004/02/skos/core#ConceptScheme": [
+      {
+        "uri": "http://www.w3.org/2008/05/skos-xl#Label",
+        "count": 1
+      }
+    ],
+    "http://data.europa.eu/s66#GrantPayment": [
+      {
+        "uri": "http://data.europa.eu/s66#Grant",
+        "count": 78411
+      },
+      {
+        "uri": "http://data.europa.eu/s66#OrganisationRole",
+        "count": 392931
+      },
+      {
+        "uri": "http://data.europa.eu/s66#MonetaryAmount",
+        "count": 422006
+      }
+    ],
+    "http://data.europa.eu/s66#PublicBody": [
+      {
+        "uri": "http://data.europa.eu/s66#OrganisationRole",
+        "count": 18733
+      },
+      {
+        "uri": "http://data.europa.eu/s66#Acronym",
+        "count": 3655
+      },
+      {
+        "uri": "http://data.europa.eu/s66#Site",
+        "count": 4821
+      }
+    ],
+    "http://www.w3.org/2004/02/skos/core#Concept": [
+      {
+        "uri": "http://www.w3.org/2008/05/skos-xl#Label",
+        "count": 9499
+      },
+      {
+        "uri": "http://publications.europa.eu/ontology/euvoc#XlNotation",
+        "count": 1078
+      }
+    ]
+  }
 }
