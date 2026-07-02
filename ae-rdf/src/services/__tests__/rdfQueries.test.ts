@@ -181,6 +181,10 @@ describe('buildLabelsQuery', () => {
     expect(q).toContain('FILTER NOT EXISTS')
     expect(q).toContain('subClassOf')
     expect(q).toContain('GROUP BY ?s')
+    // The reified SKOS-XL OPTIONAL must NOT live here — sharing ?lbl with the
+    // type FILTER NOT EXISTS blows Virtuoso's exec-time limit. It has its own
+    // query (buildSkosxlLabelsQuery).
+    expect(q).not.toContain('skos-xl#literalForm')
   })
   it('skips unsafe IRIs', () => {
     const q = buildLabelsQuery(['http://e.org/x> }', RES])

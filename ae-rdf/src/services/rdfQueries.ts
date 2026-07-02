@@ -268,14 +268,14 @@ export function buildLabelsQuery(uris: string[]): string {
     .join(' ')
   const labelPreds = LABEL_PREDICATES.map(p => `<${p}>`).join(' ')
   const subClassOf = `<${SUBCLASS_OF}>`
-  // A direct label literal, else the SKOS-XL literalForm (one hop). Both feed
-  // ?lbl; SAMPLE picks one. Language preference for the SKOS-XL hop is applied
-  // separately (buildSkosxlLabelsQuery) — Virtuoso's planner can't handle a
-  // language FILTER on this shared-var OPTIONAL shape without exploding.
+  // Direct label literal only. SKOS-XL labels are resolved by a SEPARATE query
+  // (buildSkosxlLabelsQuery) — adding the reified skos-xl OPTIONAL here (sharing
+  // ?lbl) alongside the most-specific-type FILTER NOT EXISTS makes Virtuoso's
+  // planner blow its execution-time limit (observed: 680s > 400s → the whole
+  // query 500s, so labels/types silently vanish and objects look dangling).
   return `SELECT ?s (SAMPLE(?lbl) AS ?label) (SAMPLE(?t) AS ?type) WHERE {
   VALUES ?s { ${values} }
   OPTIONAL { VALUES ?lp { ${labelPreds} } ?s ?lp ?lbl }
-  OPTIONAL { ?s <${SKOSXL_PREFLABEL}> ?xl . ?xl <${SKOSXL_LITERALFORM}> ?lbl }
   OPTIONAL {
     ?s a ?t .
     FILTER NOT EXISTS { ?s a ?more . ?more ${subClassOf}+ ?t . FILTER(?more != ?t) }

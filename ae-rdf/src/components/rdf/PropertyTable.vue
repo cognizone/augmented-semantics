@@ -202,6 +202,10 @@ function objectBadge(uri: string): string | null {
 // with no data (a dangling reference) — flag it so it's clearly problematic,
 // not mistaken for an unlabelled-but-real resource.
 function isDangling(uri: string): boolean {
+  // Incoming subjects provably exist (they assert the triple pointing here), so
+  // a missing label/type there means the label query didn't resolve one — NOT a
+  // dangling reference. Only outgoing objects can genuinely point at nothing.
+  if (props.incoming) return false
   return (
     isNavigableIri(uri) &&
     !props.embedded?.get(uri) &&
