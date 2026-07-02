@@ -26,6 +26,11 @@ export const LABEL_PREDICATES: readonly string[] = [
   'http://schema.org/name',
 ]
 
+// SKOS-XL reifies labels: ?s skosxl:prefLabel ?label . ?label skosxl:literalForm "…".
+// The text is one hop away, so generic label resolution must follow it.
+const SKOSXL_PREFLABEL = 'http://www.w3.org/2008/05/skos-xl#prefLabel'
+const SKOSXL_LITERALFORM = 'http://www.w3.org/2008/05/skos-xl#literalForm'
+
 // Characters that must never appear unescaped inside a SPARQL <IRI> — guards
 // against query injection via a crafted resource URI.
 const UNSAFE_IRI = /[\s<>"{}|\\^`]/
@@ -266,6 +271,7 @@ export function buildLabelsQuery(uris: string[]): string {
   return `SELECT ?s (SAMPLE(?lbl) AS ?label) (SAMPLE(?t) AS ?type) WHERE {
   VALUES ?s { ${values} }
   OPTIONAL { VALUES ?lp { ${labelPreds} } ?s ?lp ?lbl }
+  OPTIONAL { ?s <${SKOSXL_PREFLABEL}> ?xl . ?xl <${SKOSXL_LITERALFORM}> ?lbl }
   OPTIONAL {
     ?s a ?t .
     FILTER NOT EXISTS { ?s a ?more . ?more ${subClassOf}+ ?t . FILTER(?more != ?t) }

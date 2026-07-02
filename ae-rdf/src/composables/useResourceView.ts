@@ -351,8 +351,11 @@ export function useResourceView() {
             if (!arr?.length) return undefined
             const lits = arr.filter(x => !x.uri)
             if (lits.length) return pickByLang(lits.map(x => ({ v: x.v, lang: x.lang })))
-            const targets = arr.map(x => ({ v: labelMap.get(x.v) ?? localNameOf(x.v), lang: labelLang.get(x.v) }))
-            return pickByLang(targets)
+            // Only targets whose label is actually known — never emit a raw UUID,
+            // which would clobber a generic label already resolved (e.g. a Concept
+            // whose SKOS-XL label is 2 hops away and out of this pass's reach).
+            const targets = arr.filter(x => labelMap.has(x.v)).map(x => ({ v: labelMap.get(x.v)!, lang: labelLang.get(x.v) }))
+            return targets.length ? pickByLang(targets) : undefined
           }
           // Two passes so a referent composed here is available to its referrer
           // (e.g. an OrganisationRole labelled by its Organisation), regardless of order.
