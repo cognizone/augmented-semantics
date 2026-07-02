@@ -98,8 +98,7 @@
       ]
     },
     "http://data.europa.eu/s66#GrantPayment": {
-      "render": "embed",
-      "embedVia": "http://data.europa.eu/s66#isRecipientOf",
+      "render": "label",
       "label": [
         "http://www.w3.org/2000/01/rdf-schema#label",
         "http://data.europa.eu/s66#hasRecipient"

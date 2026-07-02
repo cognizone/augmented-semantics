@@ -409,9 +409,12 @@ function graphTitle(o: ResourceObject): string {
                 title="No data — this reference points to a resource with no properties"
               >warning</span>
 
-              <!-- Type badge for a linked resource (embedded objects show it inside
-                   the embed; grouped lists show the type as the section heading). -->
-              <span v-if="row.o.termType === 'uri' && !embedded?.get(row.o.value) && !isGrouped(group.predicate) && objectBadge(row.o.value)" class="tag type-badge">{{ objectBadge(row.o.value) }}</span>
+              <!-- Type badge for a linked resource. Suppressed only when THIS
+                   predicate inlines the object (the embed shows its own badge) —
+                   NOT merely because the object is embedded elsewhere in the
+                   resource; a link still needs its badge. Grouped lists show the
+                   type as the section heading, so no per-row badge there. -->
+              <span v-if="row.o.termType === 'uri' && !embedGroups(row.o, group.predicate) && !isGrouped(group.predicate) && objectBadge(row.o.value)" class="tag type-badge">{{ objectBadge(row.o.value) }}</span>
 
               <!-- Graph provenance (always known; shown per option a) -->
               <span v-if="showGraphsFor(row.o)" class="graph-tags">
@@ -699,7 +702,10 @@ function graphTitle(o: ResourceObject): string {
   margin: 0.125rem 0;
 }
 
-.embed .type-badge {
+/* Only the embed's OWN header badge sits flush-left; a `.embed .type-badge`
+   descendant rule would bleed into nested embed-tables (PropertyTable is
+   recursive → shared scope id) and zero the margin on badges inside them. */
+.embed > .type-badge {
   margin-left: 0;
   margin-bottom: 0.125rem;
 }
