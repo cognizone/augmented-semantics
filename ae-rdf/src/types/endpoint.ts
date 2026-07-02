@@ -13,6 +13,8 @@ export interface SPARQLEndpoint {
   graph?: EndpointGraph
   types?: Record<string, TypeConfig>           // per-type display config, keyed by type IRI
   typeInventory?: TypeCount[]                   // cached type inventory for instant sidebar
+  typeProperties?: Record<string, TypeProfile> // discovered per-type property schema (script-generated)
+  profiledAt?: string                           // ISO timestamp of the last property-profiling run
   selectedGraphs?: string[]
   languagePriorities?: string[]  // User-ordered language codes
   lastTestStatus?: 'success' | 'error' | 'testing'
@@ -65,6 +67,32 @@ export interface TypeConfig {
 export interface TypeCount {
   uri: string
   count: number
+}
+
+/**
+ * One discovered property of a type: the predicate IRI and how often it occurs
+ * across that type's instances. Intentionally an open object — more per-property
+ * metadata (datatype, object-vs-literal, ranges) can be added later.
+ */
+export interface TypeProperty {
+  uri: string
+  count: number
+}
+
+/**
+ * Discovered schema for one type, generated offline by
+ * `scripts/profile-properties.ts` (per-type property queries are unreliable at
+ * runtime). Carries provenance so a consumer knows whether to trust it or fall
+ * back to live behaviour:
+ * - `ok`:      the profiling query for this type succeeded.
+ * - `sampled`: derived from a sample (LIMIT) rather than a full scan, so the
+ *              property list may be incomplete / counts are of the sample.
+ * Kept as an object (not a bare array) so more metadata can be added later.
+ */
+export interface TypeProfile {
+  ok: boolean
+  sampled?: boolean
+  properties: TypeProperty[]
 }
 
 /**

@@ -12,11 +12,12 @@ import type {
   EndpointGraph,
   TypeConfig,
   TypeCount,
+  TypeProfile,
   SuggestedEndpointSource,
 } from './endpoint'
 
 // Re-export so existing imports from '../types' keep working.
-export type { TypeConfig, TypeRender, TypeSidebar, TypeCount } from './endpoint'
+export type { TypeConfig, TypeRender, TypeSidebar, TypeCount, TypeProperty, TypeProfile } from './endpoint'
 
 /**
  * Pre-configured endpoint from external config file. Carries its own per-endpoint
@@ -33,6 +34,11 @@ export interface ConfigEndpoint extends SuggestedEndpointSource {
   types?: Record<string, TypeConfig>
   /** Cached type inventory (uri + count) for an instant Types sidebar on deploy */
   typeInventory?: TypeCount[]
+  /** Discovered per-type property schema (generated offline by
+   *  scripts/profile-properties.ts). Keyed by type IRI. */
+  typeProperties?: Record<string, TypeProfile>
+  /** ISO timestamp of the last property-profiling run. */
+  profiledAt?: string
   /** Language priorities (same as SuggestedEndpoint) */
   suggestedLanguagePriorities?: string[]
 }
