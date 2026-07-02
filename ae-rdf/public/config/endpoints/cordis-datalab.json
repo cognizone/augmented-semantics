@@ -22,6 +22,7 @@
         "http://www.w3.org/2000/01/rdf-schema#label",
         "http://data.europa.eu/s66#hasAcronym",
         "http://data.europa.eu/s66#hasTotalCost",
+        "http://data.europa.eu/s66#hasEuroSciVocClassification",
         "http://data.europa.eu/s66#hasResult",
         "http://data.europa.eu/s66#isFundedBy",
         "http://data.europa.eu/s66#hasInvolvedParty"
@@ -133,22 +134,10 @@
       ]
     },
     "http://data.europa.eu/s66#Acronym": {
-      "render": "embed",
+      "render": "label",
+      "sidebar": "hide",
       "label": [
         "http://data.europa.eu/s66#shortForm"
-      ],
-      "order": [
-        "http://data.europa.eu/s66#shortForm",
-        "http://data.europa.eu/s66#definition",
-        "http://data.europa.eu/s66#isAcronymOf",
-        "http://www.w3.org/2000/01/rdf-schema#label",
-        "http://data.europa.eu/s66/v#hasShaclError"
-      ],
-      "hide": [
-        "http://data.europa.eu/s66#definition",
-        "http://www.w3.org/2000/01/rdf-schema#label",
-        "http://data.europa.eu/s66#isAcronymOf",
-        "http://data.europa.eu/s66/v#hasShaclError"
       ]
     },
     "http://www.openlinksw.com/schemas/virtrdf#array-of-string": {
