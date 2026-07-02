@@ -36,7 +36,7 @@
     "http://data.europa.eu/s66#Grant": {
       "render": "embed",
       "embedVia": "http://data.europa.eu/s66#isFundedBy",
-      "foldAfter": "http://data.europa.eu/s66#funds",
+      "foldAfter": "http://data.europa.eu/s66#hasFundingAmount",
       "label": [
         "http://data.europa.eu/s66#funds",
         "http://data.europa.eu/s66#hasFundingAmount"
