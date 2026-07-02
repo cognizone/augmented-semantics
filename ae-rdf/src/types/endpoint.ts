@@ -69,6 +69,11 @@ export interface TypeConfig {
    *  toggle. Unset = show all. Set via the per-row "fold here" toggle in edit
    *  mode; ignored in edit mode so every property stays configurable. */
   foldAfter?: string
+  /** Predicate IRIs whose object lists should be grouped by the object's type
+   *  (a subheading + count per type) instead of a flat list — for long, mixed-
+   *  type relations (e.g. hasResult → publications, datasets, software). Set via
+   *  the per-row "group by type" toggle in edit mode. */
+  groupByType?: string[]
 }
 
 /** A type IRI with its distinct-instance count (the cached inventory entry). */

@@ -44,6 +44,9 @@ const props = defineProps<{
   foldAfter?: string
   /** True when this table is an inlined embed (enables fold behavior). */
   embed?: boolean
+  /** Predicates whose object lists render grouped by the object's type (a
+   *  subheading + count per type) instead of a flat list. */
+  groupByType?: string[]
 }>()
 
 const emit = defineEmits<{
@@ -52,11 +55,13 @@ const emit = defineEmits<{
   toggleHide: [predicate: string]
   toggleLabel: [predicate: string]
   toggleFold: [predicate: string]
+  toggleGroupByType: [predicate: string]
 }>()
 
 const isHidden = (predicate: string) => props.hidden?.includes(predicate) ?? false
 const isLabelPart = (predicate: string) => props.labelParts?.includes(predicate) ?? false
 const isFoldBoundary = (predicate: string) => props.foldAfter === predicate
+const isGrouped = (predicate: string) => props.groupByType?.includes(predicate) ?? false
 
 // Embed row-fold: show rows through `foldAfter`, reveal the rest on demand. Only
 // when inlined (embed) and not editing — edit mode shows all rows to configure.
@@ -141,6 +146,7 @@ function embedType(o: ResourceObject): string | undefined {
 const embedHidden = (o: ResourceObject) => (embedType(o) ? typeConfig.get(embedType(o)!).hide ?? [] : [])
 const embedLabelParts = (o: ResourceObject) => (embedType(o) ? typeConfig.get(embedType(o)!).label ?? [] : [])
 const embedFoldAfter = (o: ResourceObject) => (embedType(o) ? typeConfig.get(embedType(o)!).foldAfter : undefined)
+const embedGroupByType = (o: ResourceObject) => (embedType(o) ? typeConfig.get(embedType(o)!).groupByType ?? [] : [])
 
 /** Toggle the fold boundary inside an embed (set to this predicate, or clear). */
 function onEmbedToggleFold(o: ResourceObject, predicate: string) {
@@ -148,6 +154,12 @@ function onEmbedToggleFold(o: ResourceObject, predicate: string) {
   if (!type) return
   const cur = typeConfig.get(type).foldAfter
   typeConfig.set(type, { foldAfter: cur === predicate ? undefined : predicate })
+}
+
+/** Toggle group-by-type for a predicate inside an embed, on that object's type. */
+function onEmbedToggleGroupByType(o: ResourceObject, predicate: string) {
+  const type = embedType(o)
+  if (type) typeConfig.set(type, { groupByType: toggleInList(typeConfig.get(type).groupByType ?? [], predicate) })
 }
 
 /** Persist a drag-reorder inside an embed to that object's type config. */
@@ -225,6 +237,47 @@ function toggleExpand(predicate: string) {
   expanded.value = next
 }
 
+// A rendered row is either a value (`o`), a type subheading (grouped mode), or a
+// truncation note. One flat list so the value cell renders headers + values with
+// a single v-for (no duplicated value template).
+interface DisplayRow {
+  o?: ResourceObject
+  header?: string // type subheading label ('' key ⇒ present, so check `header !== undefined`)
+  count?: number
+  note?: string
+}
+const groupKeyOf = (o: ResourceObject) =>
+  (o.termType === 'uri' ? props.objectTypes?.get(o.value) : undefined) ?? ''
+const typeLabelOf = (typeIri: string) => (typeIri ? displayType(typeIri, props.resolved, mode.value) : 'Other')
+
+function displayRows(group: PropertyGroup): DisplayRow[] {
+  // Grouped: partition objects by their type, each a subheading + count, capped
+  // per section (grouping is for navigation — a huge section still walks by URI).
+  if (isGrouped(group.predicate)) {
+    const byType = new Map<string, ResourceObject[]>()
+    for (const o of sortedObjects(group)) {
+      const k = groupKeyOf(o)
+      const arr = byType.get(k)
+      if (arr) arr.push(o)
+      else byType.set(k, [o])
+    }
+    const sections = [...byType.entries()]
+      .map(([type, objects]) => ({ type, label: typeLabelOf(type), objects }))
+      .sort((a, b) => Number(!a.type) - Number(!b.type) || a.label.localeCompare(b.label)) // typed first, "Other" last
+    const rows: DisplayRow[] = []
+    for (const s of sections) {
+      rows.push({ header: s.label, count: s.objects.length })
+      for (const o of s.objects.slice(0, OBJECT_CAP)) rows.push({ o })
+      if (s.objects.length > OBJECT_CAP)
+        rows.push({ note: `first ${fmtN(OBJECT_CAP)} of ${fmtN(s.objects.length)} — open one to keep walking` })
+    }
+    return rows
+  }
+  // Flat: collapsed big lists render no values (the count row handles them).
+  if (isCollapsed(group)) return []
+  return shownObjects(group).map(o => ({ o }))
+}
+
 // Graphs are always KNOWN; this controls whether they're painted. Multi-graph
 // triples are always surfaced (silence there would mislead).
 function showGraphsFor(o: ResourceObject): boolean {
@@ -272,89 +325,111 @@ function graphTitle(o: ResourceObject): string {
             :class="{ on: isFoldBoundary(group.predicate) }"
             :title="isFoldBoundary(group.predicate) ? 'Fold boundary — click to clear' : 'Fold here: collapse the rows after this one when inlined'"
             @click="emit('toggleFold', group.predicate)"
-          >{{ isFoldBoundary(group.predicate) ? 'unfold_less' : 'unfold_more' }}</button><span v-if="incoming" class="in-arrow" title="incoming — resources that link here">↤</span>{{ predicateLabel(group.predicate) }}</th>
+          >{{ isFoldBoundary(group.predicate) ? 'unfold_less' : 'unfold_more' }}</button><button
+            v-if="reorderable"
+            class="fold-toggle material-symbols-outlined"
+            :class="{ on: isGrouped(group.predicate) }"
+            :title="isGrouped(group.predicate) ? 'Grouped by type — click to ungroup' : 'Group this list by object type'"
+            @click="emit('toggleGroupByType', group.predicate)"
+          >category</button><span v-if="incoming" class="in-arrow" title="incoming — resources that link here">↤</span>{{ predicateLabel(group.predicate) }}</th>
         <td class="prop-values">
-          <div v-for="(o, i) in shownObjects(group)" :key="i" class="prop-value" :title="graphTitle(o)">
-            <!-- Embedded value object: inline its triples (recursively — an
-                 embedded object may itself embed more, e.g. Site → PostalAddress) -->
-            <div v-if="embedGroups(o, group.predicate)" class="embed">
-              <span v-if="objectBadge(o.value)" class="tag type-badge">{{ objectBadge(o.value) }}</span>
-              <PropertyTable
-                class="embed-table"
-                :groups="embedGroups(o, group.predicate)!"
-                :resolved="resolved"
-                :labels="labels"
-                :object-types="objectTypes"
-                :embedded="embedded"
-                :ancestors="[...(ancestors ?? []), o.value]"
-                :show-graphs="showGraphs"
-                :reorderable="reorderable"
-                :hidden="embedHidden(o)"
-                :label-parts="embedLabelParts(o)"
-                :fold-after="embedFoldAfter(o)"
-                :embed="true"
-                @navigate="emit('navigate', $event)"
-                @reorder="p => onEmbedReorder(o, p)"
-                @toggle-hide="p => onEmbedToggleHide(o, p)"
-                @toggle-label="p => onEmbedToggleLabel(o, p)"
-                @toggle-fold="p => onEmbedToggleFold(o, p)"
-              />
+          <template v-for="(row, ri) in displayRows(group)" :key="ri">
+            <!-- Type subheading (grouped mode) -->
+            <div v-if="row.header !== undefined" class="type-subheading">
+              <span class="type-subheading-label">{{ row.header }}</span>
+              <span class="sec-count">{{ fmtN(row.count ?? 0) }}</span>
             </div>
 
-            <!-- URI object: clickable -->
-            <a
-              v-else-if="o.termType === 'uri' && isNavigableIri(o.value)"
-              class="uri-link"
-              :class="{ dangling: isDangling(o.value) }"
-              v-tooltip.top="{ value: isDangling(o.value) ? `${o.value}\n⚠ No data — this reference points to a resource with no properties` : o.value, showDelay: 120 }"
-              @click="emit('navigate', o.value)"
-            >{{ objectText(o.value) }}</a>
+            <!-- Per-section truncation note (grouped mode) -->
+            <div v-else-if="row.note" class="prop-more">
+              <span class="prop-more-count">{{ row.note }}</span>
+            </div>
 
-            <!-- URI we can't navigate to (e.g. mailto:) -->
-            <span
-              v-else-if="o.termType === 'uri'"
-              class="uri-static"
-              v-tooltip.top="{ value: o.value, showDelay: 120 }"
-            >{{ objectText(o.value) }}</span>
+            <!-- A value -->
+            <div v-else-if="row.o" class="prop-value" :title="graphTitle(row.o)">
+              <!-- Embedded value object: inline its triples (recursively — an
+                   embedded object may itself embed more, e.g. Site → PostalAddress) -->
+              <div v-if="embedGroups(row.o, group.predicate)" class="embed">
+                <span v-if="objectBadge(row.o.value)" class="tag type-badge">{{ objectBadge(row.o.value) }}</span>
+                <PropertyTable
+                  class="embed-table"
+                  :groups="embedGroups(row.o, group.predicate)!"
+                  :resolved="resolved"
+                  :labels="labels"
+                  :object-types="objectTypes"
+                  :embedded="embedded"
+                  :ancestors="[...(ancestors ?? []), row.o.value]"
+                  :show-graphs="showGraphs"
+                  :reorderable="reorderable"
+                  :hidden="embedHidden(row.o)"
+                  :label-parts="embedLabelParts(row.o)"
+                  :fold-after="embedFoldAfter(row.o)"
+                  :group-by-type="embedGroupByType(row.o)"
+                  :embed="true"
+                  @navigate="emit('navigate', $event)"
+                  @reorder="p => onEmbedReorder(row.o!, p)"
+                  @toggle-hide="p => onEmbedToggleHide(row.o!, p)"
+                  @toggle-label="p => onEmbedToggleLabel(row.o!, p)"
+                  @toggle-fold="p => onEmbedToggleFold(row.o!, p)"
+                  @toggle-group-by-type="p => onEmbedToggleGroupByType(row.o!, p)"
+                />
+              </div>
 
-            <!-- Blank node -->
-            <span v-else-if="o.termType === 'bnode'" class="bnode">[ anonymous node ]</span>
+              <!-- URI object: clickable -->
+              <a
+                v-else-if="row.o.termType === 'uri' && isNavigableIri(row.o.value)"
+                class="uri-link"
+                :class="{ dangling: isDangling(row.o.value) }"
+                v-tooltip.top="{ value: isDangling(row.o.value) ? `${row.o.value}\n⚠ No data — this reference points to a resource with no properties` : row.o.value, showDelay: 120 }"
+                @click="emit('navigate', row.o.value)"
+              >{{ objectText(row.o.value) }}</a>
 
-            <!-- Literal -->
-            <span v-else class="literal">
-              {{ o.value }}
-              <span v-if="o.lang" class="tag lang-tag">@{{ o.lang }}</span>
-              <span v-else-if="o.datatype && o.datatype !== XSD_STRING" class="tag datatype-tag">{{ qname(o.datatype) }}</span>
-            </span>
+              <!-- URI we can't navigate to (e.g. mailto:) -->
+              <span
+                v-else-if="row.o.termType === 'uri'"
+                class="uri-static"
+                v-tooltip.top="{ value: row.o.value, showDelay: 120 }"
+              >{{ objectText(row.o.value) }}</span>
 
-            <!-- Dangling reference marker (kept out of the v-if chain above so it
-                 doesn't split it — a mid-chain v-if detaches the following v-else-if). -->
-            <span
-              v-if="o.termType === 'uri' && isDangling(o.value)"
-              class="dangling-icon material-symbols-outlined"
-              title="No data — this reference points to a resource with no properties"
-            >warning</span>
+              <!-- Blank node -->
+              <span v-else-if="row.o.termType === 'bnode'" class="bnode">[ anonymous node ]</span>
 
-            <!-- Type badge for a linked resource (embedded objects show it inside the embed) -->
-            <span v-if="o.termType === 'uri' && !embedded?.get(o.value) && objectBadge(o.value)" class="tag type-badge">{{ objectBadge(o.value) }}</span>
+              <!-- Literal -->
+              <span v-else class="literal">
+                {{ row.o.value }}
+                <span v-if="row.o.lang" class="tag lang-tag">@{{ row.o.lang }}</span>
+                <span v-else-if="row.o.datatype && row.o.datatype !== XSD_STRING" class="tag datatype-tag">{{ qname(row.o.datatype) }}</span>
+              </span>
 
-            <!-- Graph provenance (always known; shown per option a) -->
-            <span v-if="showGraphsFor(o)" class="graph-tags">
-              <template v-if="o.graphs.length">
-                <span
-                  v-for="g in o.graphs"
-                  :key="g"
-                  class="tag graph-tag"
-                  :class="{ multi: o.graphs.length > 1 }"
-                  :title="g"
-                >{{ qname(g) }}</span>
-              </template>
-              <span v-else class="tag graph-tag default" title="Default graph">default graph</span>
-            </span>
-          </div>
+              <!-- Dangling reference marker (kept out of the v-if chain above so it
+                   doesn't split it — a mid-chain v-if detaches the following v-else-if). -->
+              <span
+                v-if="row.o.termType === 'uri' && isDangling(row.o.value)"
+                class="dangling-icon material-symbols-outlined"
+                title="No data — this reference points to a resource with no properties"
+              >warning</span>
 
-          <!-- Long lists: collapsed to a count (lazy), revealed capped on demand. -->
-          <div v-if="isBig(group)" class="prop-more">
+              <!-- Type badge for a linked resource (embedded objects show it inside the embed) -->
+              <span v-if="row.o.termType === 'uri' && !embedded?.get(row.o.value) && objectBadge(row.o.value)" class="tag type-badge">{{ objectBadge(row.o.value) }}</span>
+
+              <!-- Graph provenance (always known; shown per option a) -->
+              <span v-if="showGraphsFor(row.o)" class="graph-tags">
+                <template v-if="row.o.graphs.length">
+                  <span
+                    v-for="g in row.o.graphs"
+                    :key="g"
+                    class="tag graph-tag"
+                    :class="{ multi: row.o.graphs.length > 1 }"
+                    :title="g"
+                  >{{ qname(g) }}</span>
+                </template>
+                <span v-else class="tag graph-tag default" title="Default graph">default graph</span>
+              </span>
+            </div>
+          </template>
+
+          <!-- Flat long lists: collapsed to a count (lazy), revealed capped on demand. -->
+          <div v-if="!isGrouped(group.predicate) && isBig(group)" class="prop-more">
             <template v-if="isCollapsed(group)">
               <span class="prop-more-count">{{ fmtN(group.objects.length) }} values</span>
               <a class="show-more" @click="toggleExpand(group.predicate)">Show first {{ fmtN(OBJECT_CAP) }}</a>
@@ -493,6 +568,33 @@ function graphTitle(o: ResourceObject): string {
 
 .prop-more-count {
   color: var(--ae-text-muted);
+}
+
+/* Type subheading in grouped object lists (hasResult → JournalPaper, Dataset …) */
+.type-subheading {
+  display: flex;
+  align-items: baseline;
+  gap: 0.375rem;
+  margin: 0.5rem 0 0.125rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ae-text-secondary);
+}
+
+.type-subheading:first-child {
+  margin-top: 0;
+}
+
+.type-subheading .sec-count {
+  font-weight: 500;
+  color: var(--ae-text-muted);
+  background: var(--ae-bg-elevated);
+  border: 1px solid var(--ae-border-color);
+  border-radius: 10px;
+  padding: 0 0.4rem;
+  letter-spacing: 0;
 }
 
 .show-more {

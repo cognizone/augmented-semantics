@@ -8,6 +8,9 @@
       "label": [
         "http://data.europa.eu/s66#title"
       ],
+      "groupByType": [
+        "http://data.europa.eu/s66#hasResult"
+      ],
       "order": [
         "http://data.europa.eu/s66#title",
         "http://data.europa.eu/s66#abstract",
@@ -97,6 +100,10 @@
     "http://data.europa.eu/s66#GrantPayment": {
       "render": "embed",
       "embedVia": "http://data.europa.eu/s66#isRecipientOf",
+      "label": [
+        "http://www.w3.org/2000/01/rdf-schema#label",
+        "http://data.europa.eu/s66#hasRecipient"
+      ],
       "order": [
         "http://data.europa.eu/s66#hasPaymentAmount",
         "http://data.europa.eu/s66#isPaymentOf",

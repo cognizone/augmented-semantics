@@ -30,6 +30,7 @@ export function useIncomingRelations() {
   const objectLabels: Ref<Map<string, string>> = ref(new Map())
   const objectTypes: Ref<Map<string, string>> = ref(new Map())
   let requestId = 0
+  let countReqId = 0
 
   function reset() {
     groups.value = []
@@ -39,6 +40,26 @@ export function useIncomingRelations() {
     error.value = null
     objectLabels.value = new Map()
     objectTypes.value = new Map()
+    countReqId++ // invalidate any in-flight eager count
+  }
+
+  /** Cheap COUNT only — populate the "Referenced by (N)" headline without
+   *  fetching the (potentially huge) list. Runs eagerly on resource load. */
+  async function loadCount(uri: string): Promise<void> {
+    const endpoint = endpointStore.current
+    if (!endpoint || !uri) return
+    const endpointId = endpoint.id
+    const id = ++countReqId
+    const ok = () => id === countReqId && endpointStore.current?.id === endpointId
+    let q: string
+    try {
+      q = buildIncomingCountQuery(uri, resolveGraphStrategy(browseStore.graph))
+    } catch {
+      return // unsafe URI — the full load() surfaces the error
+    }
+    const res = await executeSparql(endpoint, q, { retries: 1 }).catch(() => null)
+    if (!ok() || !res) return
+    count.value = parseInt(res.results.bindings[0]?.n?.value ?? '0', 10)
   }
 
   async function load(uri: string): Promise<void> {
@@ -141,5 +162,5 @@ export function useIncomingRelations() {
     }
   }
 
-  return { groups, count, truncated, loading, loaded, error, resolved, objectLabels, objectTypes, load, reset }
+  return { groups, count, truncated, loading, loaded, error, resolved, objectLabels, objectTypes, load, loadCount, reset }
 }

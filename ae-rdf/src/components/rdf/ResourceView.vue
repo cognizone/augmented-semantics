@@ -40,6 +40,7 @@ const {
   objectLabels: incomingLabels,
   objectTypes: incomingTypes,
   load: loadIncoming,
+  loadCount: loadIncomingCount,
   reset: resetIncoming,
 } = useIncomingRelations()
 const incomingOpen = ref(false)
@@ -90,6 +91,7 @@ const orderList = computed(() => (cfgType.value ? typeConfig.get(cfgType.value).
 const hideList = computed(() => (cfgType.value ? typeConfig.get(cfgType.value).hide ?? [] : []))
 const labelList = computed(() => (cfgType.value ? typeConfig.get(cfgType.value).label ?? [] : []))
 const foldAfterVal = computed(() => (cfgType.value ? typeConfig.get(cfgType.value).foldAfter : undefined))
+const groupByTypeList = computed(() => (cfgType.value ? typeConfig.get(cfgType.value).groupByType ?? [] : []))
 const canEdit = computed(() => settings.editMode && !!cfgType.value)
 
 // Hidden predicates are dropped in normal mode; kept (greyed) in edit mode so
@@ -130,6 +132,11 @@ function onToggleFold(predicate: string) {
   typeConfig.set(cfgType.value, { foldAfter: cur === predicate ? undefined : predicate })
 }
 
+function onToggleGroupByType(predicate: string) {
+  if (!cfgType.value) return
+  typeConfig.set(cfgType.value, { groupByType: toggleInList(typeConfig.get(cfgType.value).groupByType ?? [], predicate) })
+}
+
 function selectType(typeUri: string) {
   router.push({ query: { [URL_PARAMS.TYPE]: typeUri } })
 }
@@ -154,7 +161,10 @@ watch(
   (u) => {
     incomingOpen.value = false
     resetIncoming()
-    if (u) loadResource(u)
+    if (u) {
+      loadResource(u)
+      loadIncomingCount(u) // cheap COUNT so "Referenced by (N)" shows without expanding
+    }
   },
   { immediate: true }
 )
@@ -226,12 +236,12 @@ onUnmounted(() => scrollEl.value?.removeEventListener('scroll', onScroll))
     <template v-else>
       <section v-if="attributes.length" class="prop-section">
         <h3 class="section-title">Attributes</h3>
-        <PropertyTable :groups="attributes" :resolved="resolved" :labels="objectLabels" :object-types="objectTypes" :show-graphs="showGraphs" :reorderable="canEdit" :hidden="hideList" :label-parts="labelList" :fold-after="foldAfterVal" @navigate="navigate" @reorder="p => onReorder('attr', p)" @toggle-hide="onToggleHide" @toggle-label="onToggleLabel" @toggle-fold="onToggleFold" />
+        <PropertyTable :groups="attributes" :resolved="resolved" :labels="objectLabels" :object-types="objectTypes" :show-graphs="showGraphs" :reorderable="canEdit" :hidden="hideList" :label-parts="labelList" :fold-after="foldAfterVal" :group-by-type="groupByTypeList" @navigate="navigate" @reorder="p => onReorder('attr', p)" @toggle-hide="onToggleHide" @toggle-label="onToggleLabel" @toggle-fold="onToggleFold" @toggle-group-by-type="onToggleGroupByType" />
       </section>
 
       <section v-if="relationships.length" class="prop-section">
         <h3 class="section-title">Relationships</h3>
-        <PropertyTable :groups="relationships" :resolved="resolved" :labels="objectLabels" :object-types="objectTypes" :embedded="embedded" :ancestors="uri ? [uri] : []" :show-graphs="showGraphs" :reorderable="canEdit" :hidden="hideList" :label-parts="labelList" :fold-after="foldAfterVal" @navigate="navigate" @reorder="p => onReorder('rel', p)" @toggle-hide="onToggleHide" @toggle-label="onToggleLabel" @toggle-fold="onToggleFold" />
+        <PropertyTable :groups="relationships" :resolved="resolved" :labels="objectLabels" :object-types="objectTypes" :embedded="embedded" :ancestors="uri ? [uri] : []" :show-graphs="showGraphs" :reorderable="canEdit" :hidden="hideList" :label-parts="labelList" :fold-after="foldAfterVal" :group-by-type="groupByTypeList" @navigate="navigate" @reorder="p => onReorder('rel', p)" @toggle-hide="onToggleHide" @toggle-label="onToggleLabel" @toggle-fold="onToggleFold" @toggle-group-by-type="onToggleGroupByType" />
       </section>
     </template>
 
@@ -240,7 +250,7 @@ onUnmounted(() => scrollEl.value?.removeEventListener('scroll', onScroll))
       <button class="incoming-toggle" :aria-expanded="incomingOpen" @click="toggleIncoming">
         <span class="material-symbols-outlined inc-chevron">{{ incomingOpen ? 'expand_more' : 'chevron_right' }}</span>
         <span class="section-title inc-title">Referenced by</span>
-        <span v-if="incomingLoaded && incomingCount !== null" class="inc-count">{{ incomingCount.toLocaleString('en-US') }}</span>
+        <span v-if="incomingCount !== null" class="inc-count">{{ incomingCount.toLocaleString('en-US') }}</span>
       </button>
 
       <div v-if="incomingOpen" class="incoming-body">
