@@ -39,6 +39,9 @@ const props = defineProps<{
   hidden?: string[]
   /** Predicates that compose this table's type's label (highlighted in edit mode). */
   labelParts?: string[]
+  /** Embed-only: show the first N rows, fold the rest behind a toggle. Unset =
+   *  show all. Ignored while reorderable (edit mode) so all rows configure. */
+  previewCount?: number
 }>()
 
 const emit = defineEmits<{
@@ -50,6 +53,16 @@ const emit = defineEmits<{
 
 const isHidden = (predicate: string) => props.hidden?.includes(predicate) ?? false
 const isLabelPart = (predicate: string) => props.labelParts?.includes(predicate) ?? false
+
+// Embed row-fold: show the first `previewCount` rows, reveal the rest on demand.
+// Off in edit mode (reorderable) so every row stays configurable.
+const rowsExpanded = ref(false)
+const foldable = computed(() =>
+  props.previewCount != null && !props.reorderable && props.previewCount < props.groups.length,
+)
+const shownGroups = computed(() =>
+  foldable.value && !rowsExpanded.value ? props.groups.slice(0, props.previewCount) : props.groups,
+)
 
 // Drag-to-reorder (only when reorderable). The handle is the drag source; the
 // whole row is the drop target. We record the drop target on `drop` but apply
@@ -120,6 +133,7 @@ function embedType(o: ResourceObject): string | undefined {
 
 const embedHidden = (o: ResourceObject) => (embedType(o) ? typeConfig.get(embedType(o)!).hide ?? [] : [])
 const embedLabelParts = (o: ResourceObject) => (embedType(o) ? typeConfig.get(embedType(o)!).label ?? [] : [])
+const embedPreviewCount = (o: ResourceObject) => (embedType(o) ? typeConfig.get(embedType(o)!).previewCount : undefined)
 
 /** Persist a drag-reorder inside an embed to that object's type config. */
 function onEmbedReorder(o: ResourceObject, predicates: string[]) {
@@ -194,7 +208,7 @@ function graphTitle(o: ResourceObject): string {
   <table class="prop-table">
     <tbody>
       <tr
-        v-for="(group, gi) in groups"
+        v-for="(group, gi) in shownGroups"
         :key="group.predicate"
         :class="{ 'drag-over': reorderable && overIndex === gi && dragIndex !== gi, dragging: reorderable && dragIndex === gi, 'prop-hidden': reorderable && isHidden(group.predicate) }"
         @dragover.prevent="reorderable && onDragOver(gi)"
@@ -238,6 +252,7 @@ function graphTitle(o: ResourceObject): string {
                 :reorderable="reorderable"
                 :hidden="embedHidden(o)"
                 :label-parts="embedLabelParts(o)"
+                :preview-count="embedPreviewCount(o)"
                 @navigate="emit('navigate', $event)"
                 @reorder="p => onEmbedReorder(o, p)"
                 @toggle-hide="p => onEmbedToggleHide(o, p)"
@@ -297,6 +312,15 @@ function graphTitle(o: ResourceObject): string {
               {{ expanded.has(group.predicate) ? 'Show fewer' : 'Show all' }}
             </a>
           </div>
+        </td>
+      </tr>
+
+      <!-- Embed fold: reveal the remaining rows on demand. -->
+      <tr v-if="foldable" class="rows-more-row">
+        <td colspan="2" class="rows-more">
+          <a class="show-more" @click="rowsExpanded = !rowsExpanded">
+            {{ rowsExpanded ? 'Show fewer' : `Show ${groups.length - previewCount!} more` }}
+          </a>
         </td>
       </tr>
     </tbody>
@@ -423,6 +447,12 @@ function graphTitle(o: ResourceObject): string {
 
 .show-more:hover {
   text-decoration: underline;
+}
+
+/* Embed fold toggle row */
+.rows-more {
+  padding: 0.35rem 0;
+  font-size: 0.75rem;
 }
 
 .uri-link {

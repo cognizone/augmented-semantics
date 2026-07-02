@@ -64,6 +64,10 @@ export interface TypeConfig {
    *  this type (joined, in property-display order). Empty/unset → the default
    *  label heuristic (prefLabel → title → rdfs:label → …). */
   label?: string[]
+  /** When this type is inlined (render:embed), show only the first N (visible,
+   *  ordered) properties and fold the rest behind a "Show more" toggle. Unset =
+   *  show all. Ignored in edit mode so every property stays configurable. */
+  previewCount?: number
 }
 
 /** A type IRI with its distinct-instance count (the cached inventory entry). */
