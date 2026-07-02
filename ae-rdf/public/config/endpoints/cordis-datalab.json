@@ -4,6 +4,9 @@
   "types": {
     "http://data.europa.eu/s66#Project": {
       "sidebar": "pin",
+      "label": [
+        "http://data.europa.eu/s66#title"
+      ],
       "order": [
         "http://data.europa.eu/s66#title",
         "http://data.europa.eu/s66#identifier",
@@ -43,6 +46,9 @@
     "http://data.europa.eu/s66#OrganisationRole": {
       "render": "embed",
       "embedVia": "http://data.europa.eu/s66#hasInvolvedParty",
+      "label": [
+        "http://data.europa.eu/s66#roleLabel"
+      ],
       "order": [
         "http://data.europa.eu/s66#isRoleOf",
         "http://data.europa.eu/s66#isBeneficiaryOf",
@@ -74,6 +80,9 @@
     },
     "http://data.europa.eu/s66#Acronym": {
       "render": "embed",
+      "label": [
+        "http://data.europa.eu/s66#shortForm"
+      ],
       "order": [
         "http://data.europa.eu/s66#shortForm",
         "http://data.europa.eu/s66#definition",
@@ -108,7 +117,10 @@
       "sidebar": "hide"
     },
     "http://data.europa.eu/s66#Result": {
-      "sidebar": "pin"
+      "sidebar": "pin",
+      "label": [
+        "http://data.europa.eu/s66#title"
+      ]
     },
     "http://data.europa.eu/s66#Organisation": {
       "sidebar": "pin",
@@ -213,6 +225,9 @@
       "render": "embed"
     },
     "http://data.europa.eu/s66#Book": {
+      "label": [
+        "http://data.europa.eu/s66#title"
+      ],
       "hide": [
         "http://www.w3.org/2000/01/rdf-schema#label"
       ],
@@ -230,6 +245,9 @@
       ]
     },
     "http://data.europa.eu/s66#ProjectPublication": {
+      "label": [
+        "http://data.europa.eu/s66#title"
+      ],
       "order": [
         "http://data.europa.eu/s66#title",
         "http://data.europa.eu/s66#author",
@@ -298,6 +316,55 @@
       ],
       "hide": [
         "http://www.w3.org/2000/01/rdf-schema#label"
+      ]
+    },
+    "http://data.europa.eu/s66#JournalPaper": {
+      "label": [
+        "http://data.europa.eu/s66#title"
+      ]
+    },
+    "http://data.europa.eu/s66#ProjectDeliverable": {
+      "label": [
+        "http://data.europa.eu/s66#title"
+      ]
+    },
+    "http://data.europa.eu/s66#ProceedingsPaper": {
+      "label": [
+        "http://data.europa.eu/s66#title"
+      ]
+    },
+    "http://data.europa.eu/s66#ThesisDissertation": {
+      "label": [
+        "http://data.europa.eu/s66#title"
+      ]
+    },
+    "http://data.europa.eu/s66#BookChapter": {
+      "label": [
+        "http://data.europa.eu/s66#title"
+      ]
+    },
+    "http://data.europa.eu/s66#ForProfitOrganisation": {
+      "label": [
+        "http://data.europa.eu/s66#legalName",
+        "http://data.europa.eu/s66#vatNumber"
+      ]
+    },
+    "http://data.europa.eu/s66#SME": {
+      "label": [
+        "http://data.europa.eu/s66#legalName",
+        "http://data.europa.eu/s66#vatNumber"
+      ]
+    },
+    "http://data.europa.eu/s66#ResearchOrganisation": {
+      "label": [
+        "http://data.europa.eu/s66#legalName",
+        "http://data.europa.eu/s66#vatNumber"
+      ]
+    },
+    "http://data.europa.eu/s66#HigherOrSecondaryEducation": {
+      "label": [
+        "http://data.europa.eu/s66#legalName",
+        "http://data.europa.eu/s66#vatNumber"
       ]
     }
   },
