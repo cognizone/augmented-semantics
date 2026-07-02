@@ -125,7 +125,7 @@ function embedGroups(o: ResourceObject, viaPredicate: string): PropertyGroup[] |
   if (cfg.embedVia && cfg.embedVia !== viaPredicate) return null
   // Hidden predicates: dropped in normal mode, kept (greyed) in edit mode.
   const hide = cfg.hide ?? []
-  let gs = !settings.editMode && hide.length ? groups.filter(g => !hide.includes(g.predicate)) : groups
+  let gs = !settings.editMode && !settings.showHidden && hide.length ? groups.filter(g => !hide.includes(g.predicate)) : groups
   // Honor the embed type's configured field order, so ordering a type applies
   // wherever it renders — standalone or inlined. Unlisted keep insertion order.
   const order = cfg.order ?? []
@@ -225,7 +225,7 @@ function graphTitle(o: ResourceObject): string {
       <tr
         v-for="(group, gi) in shownGroups"
         :key="group.predicate"
-        :class="{ 'drag-over': reorderable && overIndex === gi && dragIndex !== gi, dragging: reorderable && dragIndex === gi, 'prop-hidden': reorderable && isHidden(group.predicate) }"
+        :class="{ 'drag-over': reorderable && overIndex === gi && dragIndex !== gi, dragging: reorderable && dragIndex === gi, 'prop-hidden': isHidden(group.predicate) }"
         @dragover.prevent="reorderable && onDragOver(gi)"
         @drop="reorderable && onDrop(gi)"
         @dragend="onDragEnd"

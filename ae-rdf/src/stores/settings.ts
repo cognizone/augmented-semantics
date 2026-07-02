@@ -14,18 +14,21 @@ export interface AppSettings {
   darkMode: boolean
   uriDisplay: UriDisplayMode // humanized | prefixed | full
   editMode: boolean // config authoring mode: reveals per-type gears + export
+  showHidden: boolean // reveal fields hidden by per-type config (greyed), without editing
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
   darkMode: false,
   uriDisplay: 'humanized',
   editMode: false,
+  showHidden: false,
 }
 
 export const useSettingsStore = defineStore('settings', () => {
   const darkMode = ref(DEFAULT_SETTINGS.darkMode)
   const uriDisplay = ref<UriDisplayMode>(DEFAULT_SETTINGS.uriDisplay)
   const editMode = ref(DEFAULT_SETTINGS.editMode)
+  const showHidden = ref(DEFAULT_SETTINGS.showHidden)
 
   function applyDarkMode(isDark: boolean) {
     document.documentElement.classList.toggle('dark-mode', isDark)
@@ -42,6 +45,7 @@ export const useSettingsStore = defineStore('settings', () => {
       }
       if (s.uriDisplay !== undefined) uriDisplay.value = s.uriDisplay
       if (s.editMode !== undefined) editMode.value = s.editMode
+      if (s.showHidden !== undefined) showHidden.value = s.showHidden
     } catch (e) {
       logger.error('SettingsStore', 'Failed to load settings', { error: e })
     }
@@ -49,7 +53,7 @@ export const useSettingsStore = defineStore('settings', () => {
 
   function saveSettings() {
     try {
-      const settings: AppSettings = { darkMode: darkMode.value, uriDisplay: uriDisplay.value, editMode: editMode.value }
+      const settings: AppSettings = { darkMode: darkMode.value, uriDisplay: uriDisplay.value, editMode: editMode.value, showHidden: showHidden.value }
       localStorage.setItem(STORAGE_KEY, JSON.stringify(settings))
     } catch (e) {
       logger.error('SettingsStore', 'Failed to save settings', { error: e })
@@ -67,8 +71,9 @@ export const useSettingsStore = defineStore('settings', () => {
   })
   watch(uriDisplay, () => saveSettings())
   watch(editMode, () => saveSettings())
+  watch(showHidden, () => saveSettings())
 
   loadSettings()
 
-  return { darkMode, uriDisplay, editMode, setDarkMode }
+  return { darkMode, uriDisplay, editMode, showHidden, setDarkMode }
 })

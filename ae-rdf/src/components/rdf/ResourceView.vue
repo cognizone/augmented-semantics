@@ -95,7 +95,7 @@ const canEdit = computed(() => settings.editMode && !!cfgType.value)
 // Hidden predicates are dropped in normal mode; kept (greyed) in edit mode so
 // they can be un-hidden. Configured order wins; the rest fall back to priority.
 const visible = (gs: PropertyGroup[]) =>
-  settings.editMode ? gs : gs.filter(g => !hideList.value.includes(g.predicate))
+  settings.editMode || settings.showHidden ? gs : gs.filter(g => !hideList.value.includes(g.predicate))
 const order = (gs: PropertyGroup[]) => orderedByConfig(gs, g => g.predicate, orderList.value, byPriority)
 // Split: Attributes = literal-valued predicates; Relationships = link-valued.
 const attributes = computed(() =>

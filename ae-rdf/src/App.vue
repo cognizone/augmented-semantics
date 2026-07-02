@@ -215,6 +215,11 @@ onUnmounted(() => {
         </div>
 
         <label class="checkbox-label">
+          <Checkbox v-model="settingsStore.showHidden" :binary="true" />
+          <span class="checkbox-text">Show hidden fields<small>Reveal properties hidden by the endpoint config (greyed), without entering edit mode</small></span>
+        </label>
+
+        <label class="checkbox-label">
           <Checkbox v-model="settingsStore.editMode" :binary="true" />
           <span class="checkbox-text">Config authoring mode<small>Show per-type gears and the export button — works even on a deployed config, so you can tweak and re-export</small></span>
         </label>
