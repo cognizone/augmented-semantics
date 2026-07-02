@@ -204,14 +204,20 @@ function sortedObjects(group: PropertyGroup): ResourceObject[] {
   return [...group.objects].sort((a, b) => key(a).localeCompare(key(b)))
 }
 
-// A predicate can have thousands of objects (e.g. a hub node disbursing every
-// grant). Cap the rendered list; the rest is one click away.
+// A predicate can have thousands of objects (a hub node linking every grant).
+// Long lists start collapsed to just their count (lazy — no rows render until
+// asked), and even when revealed we cap the rows, so a hub resource never
+// materializes tens of thousands of DOM nodes. The rest is reached by opening a
+// specific one, like the "Referenced by" section.
 const OBJECT_CAP = 100
 const expanded = ref<Set<string>>(new Set())
 const fmtN = (n: number) => n.toLocaleString('en-US')
+const isBig = (group: PropertyGroup) => group.objects.length > OBJECT_CAP
+const isCollapsed = (group: PropertyGroup) => isBig(group) && !expanded.value.has(group.predicate)
 function shownObjects(group: PropertyGroup): ResourceObject[] {
+  if (isCollapsed(group)) return []
   const all = sortedObjects(group)
-  return expanded.value.has(group.predicate) ? all : all.slice(0, OBJECT_CAP)
+  return isBig(group) ? all.slice(0, OBJECT_CAP) : all
 }
 function toggleExpand(predicate: string) {
   const next = new Set(expanded.value)
@@ -302,11 +308,7 @@ function graphTitle(o: ResourceObject): string {
               :class="{ dangling: isDangling(o.value) }"
               v-tooltip.top="{ value: isDangling(o.value) ? `${o.value}\n⚠ No data — this reference points to a resource with no properties` : o.value, showDelay: 120 }"
               @click="emit('navigate', o.value)"
-            >{{ objectText(o.value) }}</a><span
-              v-if="o.termType === 'uri' && isDangling(o.value)"
-              class="dangling-icon material-symbols-outlined"
-              title="No data — this reference points to a resource with no properties"
-            >warning</span>
+            >{{ objectText(o.value) }}</a>
 
             <!-- URI we can't navigate to (e.g. mailto:) -->
             <span
@@ -324,6 +326,14 @@ function graphTitle(o: ResourceObject): string {
               <span v-if="o.lang" class="tag lang-tag">@{{ o.lang }}</span>
               <span v-else-if="o.datatype && o.datatype !== XSD_STRING" class="tag datatype-tag">{{ qname(o.datatype) }}</span>
             </span>
+
+            <!-- Dangling reference marker (kept out of the v-if chain above so it
+                 doesn't split it — a mid-chain v-if detaches the following v-else-if). -->
+            <span
+              v-if="o.termType === 'uri' && isDangling(o.value)"
+              class="dangling-icon material-symbols-outlined"
+              title="No data — this reference points to a resource with no properties"
+            >warning</span>
 
             <!-- Type badge for a linked resource (embedded objects show it inside the embed) -->
             <span v-if="o.termType === 'uri' && !embedded?.get(o.value) && objectBadge(o.value)" class="tag type-badge">{{ objectBadge(o.value) }}</span>
@@ -343,14 +353,16 @@ function graphTitle(o: ResourceObject): string {
             </span>
           </div>
 
-          <!-- Cap long object lists; reveal the rest on demand. -->
-          <div v-if="group.objects.length > OBJECT_CAP" class="prop-more">
-            <span class="prop-more-count">
-              {{ expanded.has(group.predicate) ? `all ${fmtN(group.objects.length)}` : `${OBJECT_CAP} of ${fmtN(group.objects.length)}` }}
-            </span>
-            <a class="show-more" @click="toggleExpand(group.predicate)">
-              {{ expanded.has(group.predicate) ? 'Show fewer' : 'Show all' }}
-            </a>
+          <!-- Long lists: collapsed to a count (lazy), revealed capped on demand. -->
+          <div v-if="isBig(group)" class="prop-more">
+            <template v-if="isCollapsed(group)">
+              <span class="prop-more-count">{{ fmtN(group.objects.length) }} values</span>
+              <a class="show-more" @click="toggleExpand(group.predicate)">Show first {{ fmtN(OBJECT_CAP) }}</a>
+            </template>
+            <template v-else>
+              <span class="prop-more-count">first {{ fmtN(OBJECT_CAP) }} of {{ fmtN(group.objects.length) }} — open one to keep walking</span>
+              <a class="show-more" @click="toggleExpand(group.predicate)">Hide</a>
+            </template>
           </div>
         </td>
       </tr>
