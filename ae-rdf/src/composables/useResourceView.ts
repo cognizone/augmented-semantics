@@ -325,28 +325,45 @@ export function useResourceView() {
         if (q) {
           const vr = await executeSparql(endpoint, q, { retries: 1 }).catch(() => null)
           if (!isCurrent()) return
-          const valByS = new Map<string, Map<string, { v: string; uri: boolean }>>() // s → (p → raw value), first wins
+          const pref = languageStore.preferred
+          // s → p → ALL values [{v, uri, lang}] (kept so we can pick by language).
+          const valByS = new Map<string, Map<string, { v: string; uri: boolean; lang?: string }[]>>()
           for (const b of vr?.results.bindings ?? []) {
             const s = b.s?.value, p = b.p?.value, o = b.v
             if (!s || !p || !o?.value) continue
             let m = valByS.get(s)
             if (!m) { m = new Map(); valByS.set(s, m) }
-            if (!m.has(p)) m.set(p, { v: o.value, uri: o.type === 'uri' })
+            const arr = m.get(p) ?? []
+            arr.push({ v: o.value, uri: o.type === 'uri', lang: o['xml:lang'] })
+            m.set(p, arr)
           }
-          // A URI-valued label field resolves to the referent's OWN label (one
-          // hop) — its composed/generic label from labelMap, else its local name.
-          // e.g. an OrganisationRole labelled by isRoleOf shows the Organisation's
-          // name, not a UUID. Two passes so a referent composed here is available
-          // to its referrer regardless of iteration order.
-          const resolve = (s: string, p: string): string | undefined => {
-            const c = valByS.get(s)?.get(p)
-            if (!c) return undefined
-            return c.uri ? (labelMap.get(c.v) ?? localNameOf(c.v)) : c.v
+          // Language priority: preferred → en → untagged → first.
+          const pickByLang = <T extends { lang?: string }>(cands: T[]): T | undefined =>
+            cands.find(c => c.lang === pref) ?? cands.find(c => c.lang === 'en') ?? cands.find(c => !c.lang) ?? cands[0]
+          // A label field resolves to {text, lang}: a literal picked by language,
+          // or — one hop — a referenced resource's own composed label. When a field
+          // has several URI targets (SKOS-XL prefLabel → one Label per language),
+          // pick the target whose label matches the language priority. labelLang
+          // carries each subject's chosen language so referrers can select.
+          const labelLang = new Map<string, string | undefined>()
+          const resolve = (s: string, p: string): { v: string; lang?: string } | undefined => {
+            const arr = valByS.get(s)?.get(p)
+            if (!arr?.length) return undefined
+            const lits = arr.filter(x => !x.uri)
+            if (lits.length) return pickByLang(lits.map(x => ({ v: x.v, lang: x.lang })))
+            const targets = arr.map(x => ({ v: labelMap.get(x.v) ?? localNameOf(x.v), lang: labelLang.get(x.v) }))
+            return pickByLang(targets)
           }
+          // Two passes so a referent composed here is available to its referrer
+          // (e.g. an OrganisationRole labelled by its Organisation), regardless of order.
           for (let pass = 0; pass < 2; pass++) {
             for (const [s, t] of toCompose) {
-              const composed = composeLabel(typeConfig.get(t).label ?? [], p => resolve(s, p))
-              if (composed) labelMap.set(s, composed)
+              const preds = typeConfig.get(t).label ?? []
+              const parts = preds.map(p => resolve(s, p)).filter((c): c is { v: string; lang?: string } => !!c?.v)
+              if (parts.length) {
+                labelMap.set(s, parts.map(c => c.v).join(' · '))
+                labelLang.set(s, parts[0]!.lang)
+              }
             }
           }
         }
