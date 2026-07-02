@@ -186,6 +186,18 @@ function objectBadge(uri: string): string | null {
   return t ? displayType(t, props.resolved, mode.value) : null
 }
 
+// A reference that resolved to NEITHER a label NOR a type points at a resource
+// with no data (a dangling reference) — flag it so it's clearly problematic,
+// not mistaken for an unlabelled-but-real resource.
+function isDangling(uri: string): boolean {
+  return (
+    isNavigableIri(uri) &&
+    !props.embedded?.get(uri) &&
+    !props.labels?.get(uri) &&
+    !props.objectTypes?.get(uri)
+  )
+}
+
 /** Objects of a predicate, sorted by display text (label/qname, else literal). */
 function sortedObjects(group: PropertyGroup): ResourceObject[] {
   const key = (o: ResourceObject) => (o.termType === 'uri' ? objectText(o.value) : o.value).toLowerCase()
@@ -287,9 +299,14 @@ function graphTitle(o: ResourceObject): string {
             <a
               v-else-if="o.termType === 'uri' && isNavigableIri(o.value)"
               class="uri-link"
-              v-tooltip.top="{ value: o.value, showDelay: 120 }"
+              :class="{ dangling: isDangling(o.value) }"
+              v-tooltip.top="{ value: isDangling(o.value) ? `${o.value}\n⚠ No data — this reference points to a resource with no properties` : o.value, showDelay: 120 }"
               @click="emit('navigate', o.value)"
-            >{{ objectText(o.value) }}</a>
+            >{{ objectText(o.value) }}</a><span
+              v-if="o.termType === 'uri' && isDangling(o.value)"
+              class="dangling-icon material-symbols-outlined"
+              title="No data — this reference points to a resource with no properties"
+            >warning</span>
 
             <!-- URI we can't navigate to (e.g. mailto:) -->
             <span
@@ -489,6 +506,20 @@ function graphTitle(o: ResourceObject): string {
 
 .uri-link:hover {
   text-decoration: underline;
+}
+
+/* Dangling reference: points at a resource with no data. */
+.uri-link.dangling {
+  color: var(--ae-text-muted);
+  font-style: italic;
+}
+
+.dangling-icon {
+  font-size: 14px;
+  vertical-align: middle;
+  margin-left: 0.25rem;
+  color: var(--ae-status-warning);
+  cursor: help;
 }
 
 .uri-static {
