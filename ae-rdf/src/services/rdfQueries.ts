@@ -10,7 +10,7 @@
  * @see /spec/ae-rdf/rdf-overview.md
  */
 import { validateURI } from './security'
-import type { EndpointGraph } from '../types'
+import type { EndpointGraph, TypeConfig, TypeProfile } from '../types'
 
 /**
  * Label predicates in display precedence (highest first). General RDF has no
@@ -124,23 +124,31 @@ function scoped(body: string, s: GraphStrategy, gvar: string): string {
 
 /**
  * WHERE body for a type's instances, optionally narrowed to those whose URI OR
- * any LABEL_PREDICATES label CONTAINS `filter` (case-insensitive, both sides
- * LCASE'd). Shared by the list and count builders so they scope IDENTICALLY —
- * a filtered list paged against an unfiltered count would run past a wrong total.
+ * any `predicates` label CONTAINS `filter` (case-insensitive, both sides LCASE'd).
+ * Shared by the list and count builders so they scope IDENTICALLY — a filtered
+ * list paged against an unfiltered count would run past a wrong total.
  *
- * The label test is an EXISTS (not a join) so a resource with several matching
- * labels still counts once. URI matching keeps unlabeled resources findable.
- * ponytail: matches the 6 direct label predicates + URI, NOT SKOS-XL reified
- * labels (kept out for the same Virtuoso planner reason as buildLabelsQuery) —
- * add a skosxl branch to the EXISTS if SKOS-XL-only resources must be findable.
+ * `predicates` defaults to the 6 LABEL_PREDICATES; callers pass the union with a
+ * type's configured label fields so search matches the curator's chosen name
+ * field (e.g. Cordis `s66#title`, which isn't one of the 6). Config-sourced, so
+ * sanitized here.
+ *
+ * `isLiteral(?lbl)` — match only a field's DIRECT literal value. A composed label
+ * predicate (a URI hop, e.g. Grant→funds) yields a URI here and is dropped, so
+ * adding such a predicate is inert until multi-hop resolution exists. The label
+ * test is an EXISTS (not a join) so several matching labels still count once;
+ * URI matching keeps unlabeled resources findable.
+ * ponytail: no SKOS-XL reified labels and no multi-hop composed labels — direct
+ * literals + URI only, to start with.
  */
-function instanceMatch(iri: string, s: GraphStrategy, filter?: string): string {
+function instanceMatch(iri: string, s: GraphStrategy, filter?: string, predicates: readonly string[] = LABEL_PREDICATES): string {
   const base = membership(`<${iri}>`, s)
   const term = (filter ?? '').trim().slice(0, 200)
   if (!term) return base
   const t = sparqlString(term)
-  const labelValues = LABEL_PREDICATES.map(p => `<${p}>`).join(' ')
-  const labelMatch = `EXISTS { VALUES ?lp { ${labelValues} } ${scoped('?s ?lp ?lbl', s, '?lg')} FILTER(CONTAINS(LCASE(STR(?lbl)), LCASE("${t}"))) }`
+  const preds = predicates.filter(isNavigableIri)
+  const labelValues = (preds.length ? preds : LABEL_PREDICATES).map(p => `<${p}>`).join(' ')
+  const labelMatch = `EXISTS { VALUES ?lp { ${labelValues} } ${scoped('?s ?lp ?lbl', s, '?lg')} FILTER(isLiteral(?lbl) && CONTAINS(LCASE(STR(?lbl)), LCASE("${t}"))) }`
   return `${base} FILTER( CONTAINS(LCASE(STR(?s)), LCASE("${t}")) || ${labelMatch} )`
 }
 
@@ -154,11 +162,34 @@ export function buildTypeInventoryQuery(s: GraphStrategy): string {
   return `SELECT ?type (COUNT(DISTINCT ?s) AS ?count) WHERE { ${membership('?type', s)} } GROUP BY ?type ORDER BY DESC(?count) LIMIT 500`
 }
 
+/**
+ * Which predicates the instance-list text filter matches for a type, in
+ * precedence:
+ *   1. explicit `search` config — the curator's exact choice;
+ *   2. `label` fields — search what NAMES the type (and skips the default-set
+ *      redundancy, e.g. Cordis `label:[title]` when title == rdfs:label);
+ *   3. the 6 defaults, trimmed to a COMPLETE profile's present predicates — a
+ *      sampled profile may omit a real one, so it isn't trusted to trim.
+ * Values are matched literally (isLiteral) at query time, so a composed URI-hop
+ * field listed here is simply inert. Result feeds buildInstance*Query's
+ * `predicates` (which sanitizes).
+ */
+export function resolveSearchPredicates(cfg: TypeConfig, profile?: TypeProfile): readonly string[] {
+  if (cfg.search?.length) return cfg.search
+  if (cfg.label?.length) return cfg.label
+  if (profile?.ok && !profile.sampled) {
+    const present = new Set(profile.properties.map(p => p.uri))
+    const trimmed = LABEL_PREDICATES.filter(p => present.has(p))
+    if (trimmed.length) return trimmed
+  }
+  return LABEL_PREDICATES
+}
+
 /** Total distinct instances of a type (instance-list header / paging), optionally
- *  narrowed by the same label/URI filter the list uses. */
-export function buildInstanceCountQuery(typeUri: string, s: GraphStrategy, filter?: string): string {
+ *  narrowed by the same label/URI filter (and predicate set) the list uses. */
+export function buildInstanceCountQuery(typeUri: string, s: GraphStrategy, filter?: string, predicates?: readonly string[]): string {
   const iri = sanitizeIri(typeUri)
-  return `SELECT (COUNT(DISTINCT ?s) AS ?total) WHERE { ${instanceMatch(iri, s, filter)} }`
+  return `SELECT (COUNT(DISTINCT ?s) AS ?total) WHERE { ${instanceMatch(iri, s, filter, predicates)} }`
 }
 
 /**
@@ -174,11 +205,11 @@ export function buildInstanceCountQuery(typeUri: string, s: GraphStrategy, filte
  * We take the engine's natural order; this is a navigation index, not a report
  * (so paging is by the engine's order, not a stable key — acceptable here).
  */
-export function buildInstanceListQuery(typeUri: string, s: GraphStrategy, limit = 100, offset = 0, filter?: string): string {
+export function buildInstanceListQuery(typeUri: string, s: GraphStrategy, limit = 100, offset = 0, filter?: string, predicates?: readonly string[]): string {
   const iri = sanitizeIri(typeUri)
   const lim = Math.max(1, Math.floor(limit))
   const off = Math.max(0, Math.floor(offset))
-  return `SELECT DISTINCT ?s WHERE { ${instanceMatch(iri, s, filter)} } LIMIT ${lim} OFFSET ${off}`
+  return `SELECT DISTINCT ?s WHERE { ${instanceMatch(iri, s, filter, predicates)} } LIMIT ${lim} OFFSET ${off}`
 }
 
 /**

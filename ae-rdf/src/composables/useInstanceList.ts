@@ -17,6 +17,7 @@ import {
   buildInstanceListQuery,
   buildInstanceCountQuery,
   resolveGraphStrategy,
+  resolveSearchPredicates,
 } from '../services'
 import { composeLabels, resolveLabels } from './composeLabels'
 import { labelLangs } from '../utils/labelLang'
@@ -60,7 +61,11 @@ export function useInstanceList() {
     loading.value = true
     error.value = null
     const term = filter.value.trim()
-    const countKey = `${endpointId}|${strategy.useNamed}${strategy.useDefault}|${type}|${term}`
+    // Fields the text filter matches: explicit `search` → `label` → trimmed
+    // defaults (see resolveSearchPredicates). Folded into countKey so the count
+    // tracks the filtered set (and any config change to the searchable fields).
+    const searchPredicates = resolveSearchPredicates(typeConfig.get(type), endpoint.typeProperties?.[type])
+    const countKey = `${endpointId}|${strategy.useNamed}${strategy.useDefault}|${type}|${term}|${searchPredicates.join(',')}`
     const needCount = countedFor !== countKey
 
     logger.info('useInstanceList', 'Loading instances', { type, page: page.value, strategy })
@@ -72,7 +77,7 @@ export function useInstanceList() {
 
     try {
       const [listRes, typeResolved] = await Promise.all([
-        executeSparql(endpoint, buildInstanceListQuery(type, strategy, PAGE_SIZE, page.value * PAGE_SIZE, term), { retries: 1 }),
+        executeSparql(endpoint, buildInstanceListQuery(type, strategy, PAGE_SIZE, page.value * PAGE_SIZE, term, searchPredicates), { retries: 1 }),
         resolveUris([type]),
       ])
       if (!isCurrent()) return
@@ -100,7 +105,7 @@ export function useInstanceList() {
       instances.value = uris.map(u => ({ uri: u, label: labelMap.get(u) ?? u }))
 
       if (needCount) {
-        executeSparql(endpoint, buildInstanceCountQuery(type, strategy, term), { retries: 1 })
+        executeSparql(endpoint, buildInstanceCountQuery(type, strategy, term, searchPredicates), { retries: 1 })
           .then(countRes => {
             if (!isCurrent()) return
             total.value = parseInt(countRes.results.bindings[0]?.total?.value ?? '0', 10)

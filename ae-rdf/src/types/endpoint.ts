@@ -64,6 +64,11 @@ export interface TypeConfig {
    *  this type (joined, in property-display order). Empty/unset → the default
    *  label heuristic (prefLabel → title → rdfs:label → …). */
   label?: string[]
+  /** Predicate IRIs whose (literal) values the instance-list text filter matches
+   *  for this type. Unset → the type's `label` fields, else the 6 default label
+   *  predicates. Lets search target the right fields and skip redundant ones
+   *  (e.g. on Cordis `title` == `rdfs:label` — list just one). */
+  search?: string[]
   /** When this type is inlined (render:embed), show properties up to and
    *  including this predicate, and fold everything after it behind a "Show more"
    *  toggle. Unset = show all. Set via the per-row "fold here" toggle in edit

@@ -13,6 +13,7 @@ import {
   buildTypeInventoryQuery,
   buildInstanceCountQuery,
   buildInstanceListQuery,
+  resolveSearchPredicates,
   buildLabelsQuery,
   buildValuesQuery,
   buildEmbeddedTriplesQuery,
@@ -206,6 +207,49 @@ describe('instance filter (label OR URI)', () => {
     expect(q).toContain('x\\") } UNION { ?s ?p ?o } #') // quote escaped in place
     expect(q).not.toContain('x") } UNION')              // ...so no unescaped breakout survives
     expect(buildInstanceListQuery(TYPE, DEFAULT, 25, 0, 'back\\slash')).toContain('back\\\\slash')
+  })
+
+  it('matches only LITERAL label values (isLiteral) so composed URI hops fall out', () => {
+    expect(buildInstanceListQuery(TYPE, DEFAULT, 25, 0, 'x'))
+      .toContain('FILTER(isLiteral(?lbl) && CONTAINS(LCASE(STR(?lbl)), LCASE("x")))')
+  })
+
+  it('appends caller predicates (a type’s configured label field) to the VALUES', () => {
+    const TITLE = 'http://data.europa.eu/s66#title'
+    const q = buildInstanceListQuery(TYPE, DEFAULT, 25, 0, 'x', [...LABEL_PREDICATES, TITLE])
+    expect(q).toContain(`VALUES ?lp { ${labelValues} <${TITLE}> }`)
+    // list and count still agree with the custom predicate set
+    expect(bodyOf(q)).toBe(bodyOf(buildInstanceCountQuery(TYPE, DEFAULT, 'x', [...LABEL_PREDICATES, TITLE])))
+  })
+
+  it('sanitizes caller predicates and falls back to the 6 defaults if none are valid', () => {
+    const q = buildInstanceListQuery(TYPE, DEFAULT, 25, 0, 'x', ['not a safe iri > }'])
+    expect(q).toContain(`VALUES ?lp { ${labelValues} }`)
+  })
+})
+
+describe('resolveSearchPredicates', () => {
+  const TITLE = 'http://data.europa.eu/s66#title'
+  const RL = 'http://www.w3.org/2000/01/rdf-schema#label'
+  const profile = (uris: string[], extra = {}) => ({ ok: true, properties: uris.map(u => ({ uri: u, count: 1 })), ...extra })
+
+  it('explicit search list wins over label and defaults', () => {
+    expect(resolveSearchPredicates({ search: [TITLE], label: [RL] }, profile([RL]))).toEqual([TITLE])
+  })
+  it('falls back to label fields — one field, no default-set redundancy', () => {
+    expect(resolveSearchPredicates({ label: [TITLE] }, profile([TITLE, RL]))).toEqual([TITLE])
+  })
+  it('no config → the 6 defaults trimmed to a COMPLETE profile', () => {
+    expect(resolveSearchPredicates({}, profile([RL, 'http://data.europa.eu/s66#rcn']))).toEqual([RL])
+  })
+  it('does NOT trim by a sampled profile (may omit a present predicate)', () => {
+    expect(resolveSearchPredicates({}, profile([RL], { sampled: true }))).toEqual(LABEL_PREDICATES)
+  })
+  it('no profile → all 6 defaults', () => {
+    expect(resolveSearchPredicates({}, undefined)).toEqual(LABEL_PREDICATES)
+  })
+  it('complete profile with none of the 6 present → falls back to all 6 (not empty)', () => {
+    expect(resolveSearchPredicates({}, profile(['http://data.europa.eu/s66#rcn']))).toEqual(LABEL_PREDICATES)
   })
 })
 

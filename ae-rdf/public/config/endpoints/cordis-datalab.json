@@ -4,6 +4,12 @@
   "suggestedLanguagePriorities": ["en"],
   "types": {
     "http://data.europa.eu/s66#Project": {
+      "search": [
+        "http://data.europa.eu/s66#title",
+        "http://data.europa.eu/s66#identifier",
+        "http://data.europa.eu/s66#rcn",
+        "http://data.europa.eu/s66#doi"
+      ],
       "sidebar": "pin",
       "label": [
         "http://data.europa.eu/s66#title"
@@ -170,6 +176,13 @@
       "sidebar": "hide"
     },
     "http://data.europa.eu/s66#Result": {
+      "search": [
+        "http://data.europa.eu/s66#title",
+        "http://data.europa.eu/s66#author",
+        "http://data.europa.eu/s66#doi",
+        "http://data.europa.eu/s66#identifier",
+        "http://data.europa.eu/s66#rcn"
+      ],
       "sidebar": "pin",
       "label": [
         "http://data.europa.eu/s66#title"
@@ -205,6 +218,12 @@
       ]
     },
     "http://data.europa.eu/s66#Organisation": {
+      "search": [
+        "http://data.europa.eu/s66#legalName",
+        "http://data.europa.eu/s66#vatNumber",
+        "http://data.europa.eu/s66#identifier",
+        "http://data.europa.eu/s66#rcn"
+      ],
       "sidebar": "pin",
       "label": [
         "http://data.europa.eu/s66#legalName"
@@ -349,6 +368,13 @@
       ]
     },
     "http://data.europa.eu/s66#Book": {
+      "search": [
+        "http://data.europa.eu/s66#title",
+        "http://data.europa.eu/s66#author",
+        "http://data.europa.eu/s66#doi",
+        "http://data.europa.eu/s66#identifier",
+        "http://data.europa.eu/s66#rcn"
+      ],
       "label": [
         "http://data.europa.eu/s66#title"
       ],
@@ -374,6 +400,13 @@
       ]
     },
     "http://data.europa.eu/s66#ProjectPublication": {
+      "search": [
+        "http://data.europa.eu/s66#title",
+        "http://data.europa.eu/s66#author",
+        "http://data.europa.eu/s66#doi",
+        "http://data.europa.eu/s66#identifier",
+        "http://data.europa.eu/s66#rcn"
+      ],
       "label": [
         "http://data.europa.eu/s66#title"
       ],
@@ -399,6 +432,11 @@
       ]
     },
     "http://data.europa.eu/s66#ProjectReportSummary": {
+      "search": [
+        "http://data.europa.eu/s66#title",
+        "http://data.europa.eu/s66#identifier",
+        "http://data.europa.eu/s66#rcn"
+      ],
       "label": [
         "http://data.europa.eu/s66#title",
         "http://data.europa.eu/s66#periodFrom",
@@ -424,6 +462,10 @@
       ]
     },
     "http://www.w3.org/2004/02/skos/core#Concept": {
+      "search": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel",
+        "http://www.w3.org/2004/02/skos/core#notation"
+      ],
       "label": [
         "http://www.w3.org/2004/02/skos/core#prefLabel",
         "http://www.w3.org/2008/05/skos-xl#prefLabel"
@@ -450,6 +492,12 @@
       ]
     },
     "http://data.europa.eu/s66#FundingScheme": {
+      "search": [
+        "http://data.europa.eu/s66#title",
+        "http://data.europa.eu/s66#identifier",
+        "http://data.europa.eu/s66#rcn",
+        "http://data.europa.eu/s66#code"
+      ],
       "label": [
         "http://data.europa.eu/s66#identifier",
         "http://data.europa.eu/s66#title"
@@ -478,6 +526,13 @@
       ]
     },
     "http://data.europa.eu/s66#JournalPaper": {
+      "search": [
+        "http://data.europa.eu/s66#title",
+        "http://data.europa.eu/s66#author",
+        "http://data.europa.eu/s66#doi",
+        "http://data.europa.eu/s66#identifier",
+        "http://data.europa.eu/s66#rcn"
+      ],
       "label": [
         "http://data.europa.eu/s66#title"
       ],
@@ -503,6 +558,11 @@
       ]
     },
     "http://data.europa.eu/s66#ProjectDeliverable": {
+      "search": [
+        "http://data.europa.eu/s66#title",
+        "http://data.europa.eu/s66#identifier",
+        "http://data.europa.eu/s66#rcn"
+      ],
       "label": [
         "http://data.europa.eu/s66#title"
       ],
@@ -522,6 +582,13 @@
       ]
     },
     "http://data.europa.eu/s66#ProceedingsPaper": {
+      "search": [
+        "http://data.europa.eu/s66#title",
+        "http://data.europa.eu/s66#author",
+        "http://data.europa.eu/s66#doi",
+        "http://data.europa.eu/s66#identifier",
+        "http://data.europa.eu/s66#rcn"
+      ],
       "label": [
         "http://data.europa.eu/s66#title"
       ],
@@ -547,6 +614,13 @@
       ]
     },
     "http://data.europa.eu/s66#ThesisDissertation": {
+      "search": [
+        "http://data.europa.eu/s66#title",
+        "http://data.europa.eu/s66#author",
+        "http://data.europa.eu/s66#doi",
+        "http://data.europa.eu/s66#identifier",
+        "http://data.europa.eu/s66#rcn"
+      ],
       "label": [
         "http://data.europa.eu/s66#title"
       ],
@@ -572,6 +646,13 @@
       ]
     },
     "http://data.europa.eu/s66#BookChapter": {
+      "search": [
+        "http://data.europa.eu/s66#title",
+        "http://data.europa.eu/s66#author",
+        "http://data.europa.eu/s66#doi",
+        "http://data.europa.eu/s66#identifier",
+        "http://data.europa.eu/s66#rcn"
+      ],
       "label": [
         "http://data.europa.eu/s66#title"
       ],
@@ -596,6 +677,12 @@
       ]
     },
     "http://data.europa.eu/s66#ForProfitOrganisation": {
+      "search": [
+        "http://data.europa.eu/s66#legalName",
+        "http://data.europa.eu/s66#vatNumber",
+        "http://data.europa.eu/s66#identifier",
+        "http://data.europa.eu/s66#rcn"
+      ],
       "label": [
         "http://data.europa.eu/s66#legalName"
       ],
@@ -617,6 +704,12 @@
       ]
     },
     "http://data.europa.eu/s66#SME": {
+      "search": [
+        "http://data.europa.eu/s66#legalName",
+        "http://data.europa.eu/s66#vatNumber",
+        "http://data.europa.eu/s66#identifier",
+        "http://data.europa.eu/s66#rcn"
+      ],
       "label": [
         "http://data.europa.eu/s66#legalName"
       ],
@@ -638,6 +731,12 @@
       ]
     },
     "http://data.europa.eu/s66#ResearchOrganisation": {
+      "search": [
+        "http://data.europa.eu/s66#legalName",
+        "http://data.europa.eu/s66#vatNumber",
+        "http://data.europa.eu/s66#identifier",
+        "http://data.europa.eu/s66#rcn"
+      ],
       "label": [
         "http://data.europa.eu/s66#legalName"
       ],
@@ -659,6 +758,12 @@
       ]
     },
     "http://data.europa.eu/s66#HigherOrSecondaryEducation": {
+      "search": [
+        "http://data.europa.eu/s66#legalName",
+        "http://data.europa.eu/s66#vatNumber",
+        "http://data.europa.eu/s66#identifier",
+        "http://data.europa.eu/s66#rcn"
+      ],
       "label": [
         "http://data.europa.eu/s66#legalName"
       ],
