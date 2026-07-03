@@ -45,8 +45,12 @@ const HERE = dirname(fileURLToPath(import.meta.url))
 const DEFAULT_CONFIG = resolve(HERE, '../public/config/endpoints/cordis-datalab.json')
 
 const TIMEOUT_MS = 90_000 // per request; a full GROUP BY over a big type is slow
+// The property listing now walks DISTINCT subjects, so it's fast unless a type has
+// genuinely huge DISTINCT-subject count (millions). Give it a short leash and fall
+// back to a distinct-subject sample rather than waiting out the full TIMEOUT_MS.
+const LIST_TIMEOUT_MS = 30_000
 const RETRIES = 2
-const SAMPLE_SIZE = 2000 // instance cap when the full property LISTING times out
+const SAMPLE_SIZE = 2000 // distinct-subject cap when the full listing times out
 
 interface PropEntry { uri: string; count: number; min?: number; max?: number }
 interface TypeProfile { ok: boolean; sampled?: boolean; properties: PropEntry[] }
@@ -71,24 +75,29 @@ const namedGraphAsk = () => `ASK { GRAPH ?g { ?s ?p ?o } }`
 const defaultViewAsk = (n: number) =>
   `ASK { { SELECT ?s ?p ?o WHERE { ?s ?p ?o } LIMIT ${n} } FILTER NOT EXISTS { GRAPH ?g { ?s ?p ?o } } }`
 
-// ponytail: default-graph triples only (`?s a <T> . ?s ?p ?o`) — matches what
-// this app's target endpoints expose. A quad-only store would need GRAPH
-// wrapping; add that (reading cfg.graph) if/when such an endpoint needs it.
+// QUAD-SAFE. These endpoints are merged quad stores: the same triple is asserted
+// in many named graphs, so a flat `?s a <T> . ?s ?p ?o` matches once PER GRAPH —
+// e.g. Fedlex's ~126 Language resources show as 157k rows. That both explodes the
+// query (a 126-instance type took 587s from the graph-multiplied join) and would
+// inflate cardinality (a value in N graphs counted N times). The fix, everywhere:
+//   - collapse to DISTINCT ?s in a subquery FIRST, then fetch props — turns the
+//     quadratic graph-multiplied join into a linear walk over the real subjects
+//     (587s → 0.9s), and forces a sane plan for the unbound-?p listing;
+//   - COUNT(DISTINCT ?o) so a value repeated across graphs counts once.
 //
-// A type is profiled PER PROPERTY: first list its distinct predicates, then
-// measure each one separately. That's what powers the "property N/total"
-// progress, and each small query is likelier to succeed (and steadier) than one
-// giant nested aggregation over the whole type.
+// A type is profiled PER PROPERTY (list distinct predicates, then measure each) —
+// that powers the "property N/total" progress and keeps each query small.
 const propListQuery = (t: string) =>
-  `SELECT DISTINCT ?p WHERE { ?s a <${t}> . ?s ?p ?o }`
+  `SELECT DISTINCT ?p WHERE { { SELECT DISTINCT ?s WHERE { ?s a <${t}> } } ?s ?p ?o }`
 const sampledPropListQuery = (t: string) =>
-  `SELECT DISTINCT ?p WHERE { { SELECT ?s WHERE { ?s a <${t}> } LIMIT ${SAMPLE_SIZE} } ?s ?p ?o }`
-// Per-property cardinality: inner counts ?p-values per instance → ?c; outer rolls up:
+  `SELECT DISTINCT ?p WHERE { { SELECT DISTINCT ?s WHERE { ?s a <${t}> } LIMIT ${SAMPLE_SIZE} } ?s ?p ?o }`
+// Per-property cardinality: inner counts DISTINCT ?p-values per instance → ?c;
+// outer rolls up:
 //   ?n      = SUM(?c)   total occurrences   ?havers = COUNT(?s) instances that have ?p
 //   ?lo/?hi = MIN/MAX(?c) per-instance range (≥1, over havers)
 // min = havers < typeTotal ? 0 : lo (some instance lacks it ⇒ optional); max = hi.
 const propCardQuery = (t: string, p: string) =>
-  `SELECT (SUM(?c) AS ?n) (COUNT(?s) AS ?havers) (MIN(?c) AS ?lo) (MAX(?c) AS ?hi) WHERE { SELECT ?s (COUNT(?o) AS ?c) WHERE { ?s a <${t}> . ?s <${p}> ?o } GROUP BY ?s }`
+  `SELECT (SUM(?c) AS ?n) (COUNT(?s) AS ?havers) (MIN(?c) AS ?lo) (MAX(?c) AS ?hi) WHERE { SELECT ?s (COUNT(DISTINCT ?o) AS ?c) WHERE { { SELECT DISTINCT ?s WHERE { ?s a <${t}> } } ?s <${p}> ?o } GROUP BY ?s }`
 const typesQuery = () => `SELECT DISTINCT ?t WHERE { ?s a ?t }`
 // subClassOf among inventory types (both ends filtered to the inventory below).
 const subclassQuery = (uris: string[]) =>
@@ -101,11 +110,12 @@ const compositionQuery = (embeds: string[]) =>
 const orphanLinkedQuery = (pairs: { type: string; via: string }[]) =>
   `SELECT ?e (COUNT(DISTINCT ?o) AS ?linked) WHERE { VALUES (?e ?via) { ${pairs.map(p => `(<${p.type}> <${p.via}>)`).join(' ')} } ?o a ?e . ?s ?via ?o . } GROUP BY ?e`
 
-async function sparql(url: string, query: string): Promise<Record<string, { value: string }>[]> {
+async function sparql(url: string, query: string, retries = RETRIES, timeoutMs = TIMEOUT_MS): Promise<Record<string, { value: string }>[]> {
   let lastErr: unknown
-  for (let attempt = 0; attempt <= RETRIES; attempt++) {
+  for (let attempt = 0; attempt <= retries; attempt++) {
     const ctrl = new AbortController()
-    const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS)
+    let timedOut = false
+    const timer = setTimeout(() => { timedOut = true; ctrl.abort() }, timeoutMs)
     try {
       const res = await fetch(`${url}?query=${encodeURIComponent(query)}`, {
         headers: { Accept: 'application/sparql-results+json' },
@@ -116,7 +126,11 @@ async function sparql(url: string, query: string): Promise<Record<string, { valu
       return json.results?.bindings ?? []
     } catch (e) {
       lastErr = e
-      if (attempt < RETRIES) await new Promise(r => setTimeout(r, 1000 * (attempt + 1)))
+      // A timeout means the query is too expensive — retrying just burns another
+      // TIMEOUT_MS to fail identically. Stop and let the caller fall back (e.g. to
+      // a sample). Transient errors (HTTP 5xx, connection reset) still retry.
+      if (timedOut) break
+      if (attempt < retries) await new Promise(r => setTimeout(r, 1000 * (attempt + 1)))
     } finally {
       clearTimeout(timer)
     }
@@ -128,7 +142,8 @@ async function sparql(url: string, query: string): Promise<Record<string, { valu
 async function ask(url: string, query: string): Promise<boolean | undefined> {
   for (let attempt = 0; attempt <= RETRIES; attempt++) {
     const ctrl = new AbortController()
-    const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS)
+    let timedOut = false
+    const timer = setTimeout(() => { timedOut = true; ctrl.abort() }, TIMEOUT_MS)
     try {
       const res = await fetch(`${url}?query=${encodeURIComponent(query)}`, {
         headers: { Accept: 'application/sparql-results+json' },
@@ -138,6 +153,7 @@ async function ask(url: string, query: string): Promise<boolean | undefined> {
       const json = await res.json()
       return typeof json.boolean === 'boolean' ? json.boolean : undefined
     } catch {
+      if (timedOut) break // a timeout won't finish on retry
       if (attempt < RETRIES) await new Promise(r => setTimeout(r, 1000 * (attempt + 1)))
     } finally {
       clearTimeout(timer)
@@ -177,14 +193,18 @@ const safeIri = (u: string) => /^https?:\/\/[^\s<>"{}|\\^`]+$/.test(u)
  * and `property k/N: <name>` as each is measured.
  */
 async function profileType(url: string, type: string, total: number, onStep?: (step: string) => void): Promise<TypeProfile | null> {
-  // 1. List the type's distinct properties (full scan → sampled fallback).
+  // 1. List the type's distinct properties (over DISTINCT subjects — quad-safe).
+  // Fast unless the type has a genuinely huge distinct-subject count, so give it a
+  // short leash (no retry, LIST_TIMEOUT_MS) and fall back to a distinct-subject
+  // sample rather than waiting out the full timeout ×3.
   onStep?.('listing properties')
   let sampled = false
-  let props: string[]
+  let props: string[] = []
   try {
-    props = (await sparql(url, propListQuery(type))).map(b => b.p?.value ?? '')
-  } catch {
-    onStep?.('sampled property list') // full listing failed (big type) — sample it
+    props = (await sparql(url, propListQuery(type), 0, LIST_TIMEOUT_MS)).map(b => b.p?.value ?? '')
+  } catch { /* too big / slow to list fully — fall back to the sample below */ }
+  if (!props.length) {
+    onStep?.('sampled property list')
     try {
       props = (await sparql(url, sampledPropListQuery(type))).map(b => b.p?.value ?? '')
       sampled = true // list may be incomplete (rare properties missed)

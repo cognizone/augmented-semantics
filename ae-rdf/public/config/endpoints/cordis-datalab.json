@@ -1060,31 +1060,31 @@
       "properties": [
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#label",
-          "count": 132353,
-          "max": 4,
+          "count": 132349,
+          "max": 2,
           "min": 1
         },
         {
           "uri": "http://data.europa.eu/s66#shortForm",
-          "count": 132312,
-          "max": 4,
+          "count": 132306,
+          "max": 2,
           "min": 1
         },
         {
           "uri": "http://data.europa.eu/s66#definition",
-          "count": 132290,
-          "max": 4,
+          "count": 132286,
+          "max": 2,
           "min": 1
         },
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 132245,
-          "max": 4,
+          "count": 132239,
+          "max": 1,
           "min": 1
         },
         {
           "uri": "http://data.europa.eu/s66#isAcronymOf",
-          "count": 132101,
+          "count": 132097,
           "max": 5,
           "min": 0
         },
@@ -1977,26 +1977,26 @@
       "properties": [
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 669411,
-          "max": 4,
+          "count": 536703,
+          "max": 1,
           "min": 1
         },
         {
           "uri": "http://data.europa.eu/s66#currency",
-          "count": 669411,
-          "max": 4,
+          "count": 536703,
+          "max": 1,
           "min": 1
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#label",
-          "count": 664311,
-          "max": 4,
+          "count": 531603,
+          "max": 1,
           "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#value",
-          "count": 664311,
-          "max": 4,
+          "count": 531603,
+          "max": 1,
           "min": 0
         }
       ]
@@ -2094,6 +2094,24 @@
           "min": 0
         },
         {
+          "uri": "http://data.europa.eu/s66#endDate",
+          "count": 398625,
+          "max": 2,
+          "min": 1
+        },
+        {
+          "uri": "http://data.europa.eu/s66#isBeneficiaryOf",
+          "count": 398599,
+          "max": 5,
+          "min": 1
+        },
+        {
+          "uri": "http://data.europa.eu/s66#isInvolvedIn",
+          "count": 398587,
+          "max": 2,
+          "min": 1
+        },
+        {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
           "count": 398584,
           "max": 1,
@@ -2112,26 +2130,8 @@
           "min": 1
         },
         {
-          "uri": "http://data.europa.eu/s66#endDate",
-          "count": 292267,
-          "max": 2,
-          "min": 0
-        },
-        {
           "uri": "http://data.europa.eu/s66#isRecipientOf",
-          "count": 291164,
-          "max": 2,
-          "min": 0
-        },
-        {
-          "uri": "http://data.europa.eu/s66#isBeneficiaryOf",
-          "count": 202789,
-          "max": 5,
-          "min": 0
-        },
-        {
-          "uri": "http://data.europa.eu/s66#isInvolvedIn",
-          "count": 101792,
+          "count": 395546,
           "max": 2,
           "min": 0
         },
@@ -4943,7 +4943,7 @@
       ]
     }
   },
-  "profiledAt": "2026-07-03T21:22:18.001Z",
+  "profiledAt": "2026-07-03T22:58:08.356Z",
   "subclasses": {
     "http://data.europa.eu/s66#AdministrativeArea": [
       "http://data.europa.eu/s66#Country"
