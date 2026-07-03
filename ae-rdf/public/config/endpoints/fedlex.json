@@ -91,6 +91,9 @@
       ]
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#DraftRelatedDocument": {
+      "render": "embed",
+      "embedVia": "http://data.legilux.public.lu/resource/ontology/jolux#opinionHasDraftRelatedDocument",
+      "foldAfter": "http://data.legilux.public.lu/resource/ontology/jolux#title",
       "label": [
         "http://data.legilux.public.lu/resource/ontology/jolux#title"
       ],
@@ -661,6 +664,24 @@
       "search": [
         "http://data.legilux.public.lu/resource/ontology/jolux#streetAddress",
         "http://data.legilux.public.lu/resource/ontology/jolux#email"
+      ]
+    },
+    "http://data.legilux.public.lu/resource/ontology/jolux#PostalAddress": {
+      "render": "embed",
+      "embedVia": "http://data.legilux.public.lu/resource/ontology/jolux#address",
+      "label": [
+        "http://data.legilux.public.lu/resource/ontology/jolux#streetAddress"
+      ],
+      "search": [
+        "http://data.legilux.public.lu/resource/ontology/jolux#streetAddress",
+        "http://data.legilux.public.lu/resource/ontology/jolux#email"
+      ]
+    },
+    "http://data.legilux.public.lu/resource/ontology/jolux#MigrationDraftStage": {
+      "render": "embed",
+      "embedVia": "http://data.legilux.public.lu/resource/ontology/jolux#draftHasStage",
+      "label": [
+        "http://data.legilux.public.lu/resource/ontology/jolux#migrationDraftStageType"
       ]
     }
   },
