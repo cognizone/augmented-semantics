@@ -41,9 +41,11 @@ export function useIncomingRelations() {
     count.value = null
     truncated.value = false
     loaded.value = false
+    loading.value = false
     error.value = null
     objectLabels.value = new Map()
     objectTypes.value = new Map()
+    requestId++ // invalidate any in-flight list load() — else it paints the previous resource's data (isCurrent stays true)
     countReqId++ // invalidate any in-flight eager count
   }
 

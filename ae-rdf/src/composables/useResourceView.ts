@@ -128,6 +128,16 @@ export function useResourceView() {
 
     loading.value = true
     error.value = null
+    // Clear derived state up-front. The header (title, type chips, graph chips)
+    // renders even while loading, so leaving the previous resource's values here
+    // shows them against the new URI — and a stale type chip navigates to the
+    // wrong type — until the query resolves. See ae-rdf/CLAUDE.md (reset-on-switch).
+    triples.value = []
+    types.value = []
+    objectLabels.value = new Map()
+    objectTypes.value = new Map()
+    embedded.value = new Map()
+    resolved.value = new Map()
 
     const strategy = resolveGraphStrategy(browseStore.graph)
     let query: string

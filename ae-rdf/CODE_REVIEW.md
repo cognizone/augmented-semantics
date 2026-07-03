@@ -43,16 +43,16 @@ Check a box when the issue is fixed.
 
 ## 🟠 Stale data across navigation
 
-- [ ] **R10 · `src/composables/useIncomingRelations.ts:39`** — `CONFIRMED`
+- [x] **R10 · `src/composables/useIncomingRelations.ts:39`** — `CONFIRMED`
   `reset()` bumps `countReqId` but **not `requestId`**, so an in-flight `load()` for the previous resource is never invalidated. Navigating A→B before A's list query returns makes `isCurrent()` still true → B's "Referenced by" **paints resource A's relations and count**, never querying B.
 
-- [ ] **R11 · `src/components/rdf/ResourceView.vue:61`** — `CONFIRMED`
+- [x] **R11 · `src/components/rdf/ResourceView.vue:61`** — `CONFIRMED`
   The always-rendered header reads `label`/`types`/`triples`, cleared only *after* the new load resolves. During navigation the header shows the **previous resource's title, type chips, and graph chips** next to the new URI (seconds on slow Virtuoso); clicking a stale type chip navigates to the **wrong type**. Violates graph-provenance-is-core mid-load.
 
-- [ ] **R12 · `src/components/rdf/PropertyTable.vue:229`** — `CONFIRMED`
+- [x] **R12 · `src/components/rdf/PropertyTable.vue:229`** — `CONFIRMED`
   `expanded` Set / `rowsExpanded` never reset on `props.groups` change, and the top-level tables (`ResourceView.vue:239/244`) aren't `:key`ed by URI → Vue reuses the instance and **resource B renders A's rows already expanded** (materializes up to 100 rows unasked).
 
-- [ ] **R13 · `src/composables/useInstanceList.ts:130`** — `CONFIRMED`
+- [x] **R13 · `src/composables/useInstanceList.ts:130`** — `CONFIRMED`
   The graph-change watcher reloads but **never resets `page`** → `OFFSET` lands past the smaller new result set → empty "No instances of this type" even though instances exist in the new scope.
 
 ## 🟡 Label / rendering correctness

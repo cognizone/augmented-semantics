@@ -127,7 +127,15 @@ export function useInstanceList() {
     { immediate: true }
   )
   watch(page, () => { if (browseStore.currentType) load() })
-  watch(() => browseStore.graph, () => { if (browseStore.currentType) load() })
+  // Graph scope changed → the result set differs, so return to page 0; a deep
+  // OFFSET would otherwise land past the new (smaller) total and show an empty
+  // page. Already on page 0 → load() directly; else let the page watcher fire
+  // (setting page here reloads via that watcher — avoids a double load).
+  watch(() => browseStore.graph, () => {
+    if (!browseStore.currentType) return
+    if (page.value === 0) load()
+    else page.value = 0
+  })
 
   function setPage(n: number) {
     page.value = n

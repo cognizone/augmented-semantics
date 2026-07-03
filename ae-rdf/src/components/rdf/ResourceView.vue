@@ -229,19 +229,19 @@ onUnmounted(() => scrollEl.value?.removeEventListener('scroll', onScroll))
       <p>{{ error }}</p>
     </div>
 
-    <div v-else-if="!triples.length" class="state">
+    <div v-else-if="!loading && !triples.length" class="state">
       <p>No outgoing triples for this resource.</p>
     </div>
 
     <template v-else>
       <section v-if="attributes.length" class="prop-section">
         <h3 class="section-title">Attributes</h3>
-        <PropertyTable :groups="attributes" :resolved="resolved" :labels="objectLabels" :object-types="objectTypes" :show-graphs="showGraphs" :reorderable="canEdit" :hidden="hideList" :label-parts="labelList" :fold-after="foldAfterVal" :group-by-type="groupByTypeList" @navigate="navigate" @reorder="p => onReorder('attr', p)" @toggle-hide="onToggleHide" @toggle-label="onToggleLabel" @toggle-fold="onToggleFold" @toggle-group-by-type="onToggleGroupByType" />
+        <PropertyTable :key="'attr:' + uri" :groups="attributes" :resolved="resolved" :labels="objectLabels" :object-types="objectTypes" :show-graphs="showGraphs" :reorderable="canEdit" :hidden="hideList" :label-parts="labelList" :fold-after="foldAfterVal" :group-by-type="groupByTypeList" @navigate="navigate" @reorder="p => onReorder('attr', p)" @toggle-hide="onToggleHide" @toggle-label="onToggleLabel" @toggle-fold="onToggleFold" @toggle-group-by-type="onToggleGroupByType" />
       </section>
 
       <section v-if="relationships.length" class="prop-section">
         <h3 class="section-title">Relationships</h3>
-        <PropertyTable :groups="relationships" :resolved="resolved" :labels="objectLabels" :object-types="objectTypes" :embedded="embedded" :ancestors="uri ? [uri] : []" :show-graphs="showGraphs" :reorderable="canEdit" :hidden="hideList" :label-parts="labelList" :fold-after="foldAfterVal" :group-by-type="groupByTypeList" @navigate="navigate" @reorder="p => onReorder('rel', p)" @toggle-hide="onToggleHide" @toggle-label="onToggleLabel" @toggle-fold="onToggleFold" @toggle-group-by-type="onToggleGroupByType" />
+        <PropertyTable :key="'rel:' + uri" :groups="relationships" :resolved="resolved" :labels="objectLabels" :object-types="objectTypes" :embedded="embedded" :ancestors="uri ? [uri] : []" :show-graphs="showGraphs" :reorderable="canEdit" :hidden="hideList" :label-parts="labelList" :fold-after="foldAfterVal" :group-by-type="groupByTypeList" @navigate="navigate" @reorder="p => onReorder('rel', p)" @toggle-hide="onToggleHide" @toggle-label="onToggleLabel" @toggle-fold="onToggleFold" @toggle-group-by-type="onToggleGroupByType" />
       </section>
     </template>
 
