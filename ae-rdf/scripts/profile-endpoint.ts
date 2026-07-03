@@ -313,6 +313,9 @@ async function main() {
     console.error('No typeInventory — discovering types live…')
     typeUris = (await sparql(url, typesQuery())).map(b => b.t?.value ?? '').filter(Boolean)
   }
+  // Process in URI order (namespace-grouped) so the live [N/total] log reads in the
+  // same order as the sorted typeProperties keys on disk — scannable, not count-desc.
+  typeUris.sort()
   // Distinct-instance total per type (from the inventory) — needed to derive
   // min=0 (some instance lacks the property) from the per-instance cardinality.
   const totals: Record<string, number> = {}
