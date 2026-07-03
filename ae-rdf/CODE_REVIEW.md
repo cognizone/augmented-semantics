@@ -334,23 +334,24 @@ Largely AE SKOS copy-paste carry-over: unused exports, duplicated types/helpers,
   URL_PARAMS.ENDPOINT is exported and documented as a deep-linking key but is never read or written anywhere in the app.
   _Impact:_ Dead code + misleading documentation: the file header (lines 4-6) promises `?endpoint` deep-linking ("endpoint: SPARQL endpoint URL") per com04, but grepping the whole ae-rdf/src shows only URL_PARAMS.RESOURCE and URL_PARAMS.TYPE are ever consumed (RdfView.vue, TypeList.vue, InstanceList.vue, ResourceView.vue); ENDPOINT has zero consumers. A maintainer reading this believes endpoint state is shareable via URL and may build on a param that nothing populates. Remove the ENDPOINT key and the stale doc line, or implement the feature.
 
-- [ ] **R80 · `src/services/sparql.ts:743`** — `CONFIRMED`
+- [x] **R80 · `src/services/sparql.ts:743`** — `CONFIRMED`
   The parseExists helper for EXISTS results is defined twice, verbatim, in detectLabelPredicates (738) and analyzeEndpoint (849).
   _Impact:_ Identical `const parseExists = (value?: string): boolean => { if (!value) return false; return value === 'true' || value === '1' }` is duplicated at lines 738-741 and 849-852. If endpoints appear that encode EXISTS as e.g. `"1"^^xsd:boolean` or uppercase `TRUE`, the fix must be applied in two places and one will drift. Hoist a single module-level `parseExists` (or export from a shared util) and call it from both.
 
-- [ ] **R81 · `src/types/endpoint.ts:80`** — `CONFIRMED`
+- [x] **R81 · `src/types/endpoint.ts:80`** — `CONFIRMED`
   TypeCount, TypeProperty, and CompositionEntry are three structurally identical `{ uri: string; count: number }` interfaces.
   _Impact:_ TypeCount (l.80), TypeProperty (l.90), and CompositionEntry (l.112) all declare exactly `{ uri: string; count: number }`. Three separate declarations of the same shape (plus their re-exports in config.ts) triple the maintenance surface for what is one `{uri,count}` pair; a shared base like `interface UriCount { uri: string; count: number }` that the three extend/alias would remove the duplication while keeping the distinct names.
 
-- [ ] **R82 · `src/types/config.ts:21`** — `CONFIRMED`
+- [x] **R82 · `src/types/config.ts:21`** — `CONFIRMED`
   config.ts re-exports endpoint types that index.ts already surfaces via `export * from './endpoint'`.
   _Impact:_ index.ts does `export * from './endpoint'` and `export * from './config'`, and this line re-exports TypeConfig/TypeRender/TypeSidebar/TypeCount/TypeProperty/TypeProfile/CompositionEntry from './endpoint' again. Every one of these names is thus surfaced through '../types' twice; the re-export list must be kept in sync by hand whenever an endpoint type is added/removed, for no functional gain (the `export *` already covers it). It is redundant boilerplate that can be deleted.
 
-- [ ] **R83 · `src/services/prefix.ts:205`** — `CONFIRMED`
+- [ ] **R83 · `src/services/prefix.ts:205`** — `CONFIRMED` · ⚠️ **WON'T FIX (false positive)**
   resolveUri's `prefix === null || prefix === undefined` check duplicates the cache-miss vs stored-null distinction the `namespace in cache` guard on L203 already established, making the undefined branch unreachable.
   _Impact:_ Minor over-complication: line 203 only enters when `namespace in cache`, and the cache only ever stores string|null (fetchPrefix result), so `=== undefined` can never be true here — a redundant condition that obscures the intended null-sentinel semantics. Simplify to `if (prefix === null)`. (Low priority; compounds the fact that this whole function is unused.)
+  _Correction (verified):_ `@vue/tsconfig` sets `noUncheckedIndexedAccess`, so `cache[namespace]` is typed `string | null | undefined` and TS's `in` operator does not narrow index-access. The `=== undefined` branch is load-bearing for the `string` return type — removing it fails `vue-tsc`. Left as-is. (The real fix is R75: delete the whole unused `resolveUri`.)
 
-- [ ] **R84 · `src/components/rdf/__tests__/PropertyTable.grouping.test.ts:15`** — `CONFIRMED`
+- [x] **R84 · `src/components/rdf/__tests__/PropertyTable.grouping.test.ts:15`** — `CONFIRMED`
   The `link` object-factory and the identical `global: { plugins: [PrimeVue], directives: { tooltip: Tooltip } }` mount config are copy-pasted across all four PropertyTable test files.
   _Impact:_ `const link = (v) => ({ termType: 'uri', value: v, graphs: [] })` is duplicated verbatim in PropertyTable.cycle.test.ts:18, PropertyTable.embedVia.test.ts:22, and PropertyTable.grouping.test.ts:15, and the PrimeVue+Tooltip mount options appear in every mount() call across the four files. A change to ResourceObject's shape (e.g. a new required field) or to the required global plugins must be edited in 4+ places. Extract a shared test-utils helper (e.g. src/test-utils/propertyTable.ts exporting `link`, `lit`, and a `mountPropertyTable(props)` wrapper) and import it.
 

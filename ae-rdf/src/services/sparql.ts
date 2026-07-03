@@ -704,6 +704,12 @@ export async function detectLanguages(
   }
 }
 
+/** Parse an EXISTS-probe binding value — some endpoints return "true"/"false", others "1"/"0". */
+function parseExists(value?: string): boolean {
+  if (!value) return false
+  return value === 'true' || value === '1'
+}
+
 /**
  * Detect which label predicates exist for each resource type (Concept, ConceptScheme, Collection).
  * Uses EXISTS queries to efficiently check predicate availability.
@@ -735,11 +741,6 @@ export async function detectLabelPredicates(
       const binding = results.results.bindings[0]
 
       if (binding) {
-        const parseExists = (value?: string): boolean => {
-          if (!value) return false
-          return value === 'true' || value === '1'
-        }
-
         const capabilities: LabelPredicateCapabilities = {}
 
         if (parseExists(binding.hasPrefLabel?.value)) capabilities.prefLabel = true
@@ -845,12 +846,6 @@ export async function analyzeEndpoint(
     const relResult = await executeSparql(endpoint, relQuery, { retries: 1 })
     const binding = relResult.results.bindings[0]
     if (binding) {
-      // Helper to parse EXISTS results - some endpoints return "true"/"false", others return "1"/"0"
-      const parseExists = (value?: string): boolean => {
-        if (!value) return false
-        return value === 'true' || value === '1'
-      }
-
       relationships = {
         hasInScheme: parseExists(binding.hasInScheme?.value),
         hasTopConceptOf: parseExists(binding.hasTopConceptOf?.value),

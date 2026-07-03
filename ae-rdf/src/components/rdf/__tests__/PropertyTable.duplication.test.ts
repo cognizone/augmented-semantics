@@ -5,10 +5,7 @@
  * span (black) — the "weird duplications" bug.
  */
 import { describe, it, expect } from 'vitest'
-import { mount } from '@vue/test-utils'
-import PrimeVue from 'primevue/config'
-import Tooltip from 'primevue/tooltip'
-import PropertyTable from '../PropertyTable.vue'
+import { link, mountPropertyTable } from '../../../test-utils/propertyTable'
 import type { PropertyGroup } from '../../../composables'
 
 const REL = 'http://ex/rel'
@@ -16,14 +13,11 @@ const OBJ = 'http://ex/thing'
 
 describe('PropertyTable value duplication', () => {
   it('renders a navigable URI label once — link only, no static twin', () => {
-    const groups: PropertyGroup[] = [{ predicate: REL, objects: [{ termType: 'uri', value: OBJ, graphs: [] }] }]
-    const wrapper = mount(PropertyTable, {
-      props: {
-        groups,
-        resolved: new Map(),
-        labels: new Map([[OBJ, 'Research and Innovation action']]), // has a label ⇒ not dangling
-      },
-      global: { plugins: [PrimeVue], directives: { tooltip: Tooltip } },
+    const groups: PropertyGroup[] = [{ predicate: REL, objects: [link(OBJ)] }]
+    const wrapper = mountPropertyTable({
+      groups,
+      resolved: new Map(),
+      labels: new Map([[OBJ, 'Research and Innovation action']]), // has a label ⇒ not dangling
     })
 
     expect(wrapper.findAll('.uri-link')).toHaveLength(1)
@@ -34,12 +28,9 @@ describe('PropertyTable value duplication', () => {
   })
 
   it('dangling URI still gets its warning marker (and no duplicate)', () => {
-    const groups: PropertyGroup[] = [{ predicate: REL, objects: [{ termType: 'uri', value: OBJ, graphs: [] }] }]
-    const wrapper = mount(PropertyTable, {
-      // no labels / objectTypes / embedded ⇒ dangling
-      props: { groups, resolved: new Map() },
-      global: { plugins: [PrimeVue], directives: { tooltip: Tooltip } },
-    })
+    const groups: PropertyGroup[] = [{ predicate: REL, objects: [link(OBJ)] }]
+    // no labels / objectTypes / embedded ⇒ dangling
+    const wrapper = mountPropertyTable({ groups, resolved: new Map() })
 
     expect(wrapper.findAll('.uri-link')).toHaveLength(1)
     expect(wrapper.findAll('.uri-static')).toHaveLength(0)

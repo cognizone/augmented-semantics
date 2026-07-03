@@ -17,9 +17,6 @@ import type {
   SuggestedEndpointSource,
 } from './endpoint'
 
-// Re-export so existing imports from '../types' keep working.
-export type { TypeConfig, TypeRender, TypeSidebar, TypeCount, TypeProperty, TypeProfile, CompositionEntry } from './endpoint'
-
 /**
  * Pre-configured endpoint from external config file. Carries its own per-endpoint
  * config (graph, types, typeInventory) — config is per-endpoint, not app-level.

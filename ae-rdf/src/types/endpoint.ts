@@ -76,21 +76,21 @@ export interface TypeConfig {
   groupByType?: string[]
 }
 
-/** A type IRI with its distinct-instance count (the cached inventory entry). */
-export interface TypeCount {
+/** A URI paired with a count — the shared shape behind the cached inventory,
+ *  per-type property, and embed-composition entries. */
+export interface UriCount {
   uri: string
   count: number
 }
 
+/** A type IRI with its distinct-instance count (the cached inventory entry). */
+export type TypeCount = UriCount
+
 /**
  * One discovered property of a type: the predicate IRI and how often it occurs
- * across that type's instances. Intentionally an open object — more per-property
- * metadata (datatype, object-vs-literal, ranges) can be added later.
+ * across that type's instances.
  */
-export interface TypeProperty {
-  uri: string
-  count: number
-}
+export type TypeProperty = UriCount
 
 /**
  * Discovered schema for one type, generated offline by
@@ -109,10 +109,7 @@ export interface TypeProfile {
 }
 
 /** One embed type composed by a class, with a count scoped to that class. */
-export interface CompositionEntry {
-  uri: string
-  count: number
-}
+export type CompositionEntry = UriCount
 
 /**
  * How an endpoint exposes its data — two orthogonal axes. Either field unset

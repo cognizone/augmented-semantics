@@ -5,11 +5,8 @@
  * though the object is present in the embed map (fetched via its owner).
  */
 import { describe, it, expect, beforeEach } from 'vitest'
-import { mount } from '@vue/test-utils'
 import { setActivePinia, createPinia } from 'pinia'
-import PrimeVue from 'primevue/config'
-import Tooltip from 'primevue/tooltip'
-import PropertyTable from '../PropertyTable.vue'
+import { link, lit, mountPropertyTable } from '../../../test-utils/propertyTable'
 import { useEndpointStore, useTypeConfigStore } from '../../../stores'
 import type { PropertyGroup } from '../../../composables'
 
@@ -18,9 +15,6 @@ const TYPE = 'http://ex/Grant'
 const OWNS = 'http://ex/isFundedBy' // Grant's owning predicate
 const INVERSE = 'http://ex/isBeneficiaryOf' // an inverse back-reference
 const LEAF = 'http://ex/duration'
-
-const link = (v: string) => ({ termType: 'uri' as const, value: v, graphs: [] })
-const lit = (v: string) => ({ termType: 'literal' as const, value: v, graphs: [] })
 
 describe('PropertyTable embedVia per-edge gating', () => {
   beforeEach(() => {
@@ -40,10 +34,7 @@ describe('PropertyTable embedVia per-edge gating', () => {
       { predicate: OWNS, objects: [link(GRANT)] },
       { predicate: INVERSE, objects: [link(GRANT)] },
     ]
-    const wrapper = mount(PropertyTable, {
-      props: { groups, resolved: new Map(), embedded, objectTypes: new Map([[GRANT, TYPE]]), ancestors: [] },
-      global: { plugins: [PrimeVue], directives: { tooltip: Tooltip } },
-    })
+    const wrapper = mountPropertyTable({ groups, resolved: new Map(), embedded, objectTypes: new Map([[GRANT, TYPE]]), ancestors: [] })
 
     // Embedded exactly once (under OWNS), and rendered as a link at least once (under INVERSE).
     expect(wrapper.findAll('.embed-table').length).toBe(1)

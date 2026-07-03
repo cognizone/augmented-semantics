@@ -4,14 +4,10 @@
  * of a flat list (for long, mixed-type relations like Project → hasResult).
  */
 import { describe, it, expect } from 'vitest'
-import { mount } from '@vue/test-utils'
-import PrimeVue from 'primevue/config'
-import Tooltip from 'primevue/tooltip'
-import PropertyTable from '../PropertyTable.vue'
+import { link, mountPropertyTable } from '../../../test-utils/propertyTable'
 import type { PropertyGroup } from '../../../composables'
 
 const REL = 'http://ex/hasResult'
-const link = (v: string) => ({ termType: 'uri' as const, value: v, graphs: [] })
 
 describe('PropertyTable groupByType', () => {
   const groups: PropertyGroup[] = [{ predicate: REL, objects: [link('http://ex/a'), link('http://ex/b'), link('http://ex/c')] }]
@@ -22,10 +18,7 @@ describe('PropertyTable groupByType', () => {
   ])
 
   it('groups objects under per-type subheadings with counts', () => {
-    const wrapper = mount(PropertyTable, {
-      props: { groups, resolved: new Map(), objectTypes, groupByType: [REL] },
-      global: { plugins: [PrimeVue], directives: { tooltip: Tooltip } },
-    })
+    const wrapper = mountPropertyTable({ groups, resolved: new Map(), objectTypes, groupByType: [REL] })
     const headings = wrapper.findAll('.type-subheading')
     expect(headings).toHaveLength(2) // Paper, Dataset
     const text = headings.map(h => h.text())
@@ -37,10 +30,7 @@ describe('PropertyTable groupByType', () => {
   })
 
   it('renders a flat list (no subheadings, per-row type badges) when not grouped', () => {
-    const wrapper = mount(PropertyTable, {
-      props: { groups, resolved: new Map(), objectTypes },
-      global: { plugins: [PrimeVue], directives: { tooltip: Tooltip } },
-    })
+    const wrapper = mountPropertyTable({ groups, resolved: new Map(), objectTypes })
     expect(wrapper.findAll('.type-subheading')).toHaveLength(0)
     expect(wrapper.findAll('.uri-link')).toHaveLength(3)
     expect(wrapper.findAll('.type-badge')).toHaveLength(3) // each row badged
