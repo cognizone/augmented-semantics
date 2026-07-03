@@ -1,8 +1,13 @@
 {
   "name": "Cordis Datalab",
   "url": "https://cordis.europa.eu/datalab/sparql",
-  "suggestedLanguagePriorities": ["en"],
-  "graph": { "quads": true, "defaultView": "merged" },
+  "suggestedLanguagePriorities": [
+    "en"
+  ],
+  "graph": {
+    "quads": true,
+    "defaultView": "merged"
+  },
   "types": {
     "http://data.europa.eu/s66#Project": {
       "search": [
@@ -1055,103 +1060,141 @@
       "properties": [
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 1771683
+          "count": 1112204,
+          "max": 3,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#rcn",
-          "count": 696156
+          "count": 696156,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://data.europa.eu/s66#identifier",
-          "count": 696155
-        },
-        {
-          "uri": "http://data.europa.eu/s66#title",
-          "count": 696150
-        },
-        {
-          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
-          "count": 696150
+          "count": 696155,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#isResultOf",
-          "count": 671655
+          "count": 671655,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#language",
-          "count": 671655
+          "count": 671655,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 645731,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://data.europa.eu/s66#title",
+          "count": 610631,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#publishedYear",
-          "count": 419687
+          "count": 419687,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#author",
-          "count": 419663
+          "count": 419663,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#publisher",
-          "count": 419305
+          "count": 419305,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#journalTitle",
-          "count": 386537
+          "count": 386537,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#doi",
-          "count": 337811
+          "count": 337811,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#issn",
-          "count": 273537
+          "count": 273537,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#description",
-          "count": 257503
+          "count": 257503,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#journalNumber",
-          "count": 250059
+          "count": 250059,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#url",
-          "count": 211091
+          "count": 211091,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#hasResultType",
-          "count": 206547
+          "count": 206547,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#publishedPages",
-          "count": 197666
+          "count": 197666,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#abstract",
-          "count": 58456
-        },
-        {
-          "uri": "http://data.europa.eu/s66#isbn",
-          "count": 40761
+          "count": 58456,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#periodTo",
-          "count": 37018
+          "count": 37018,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#periodFrom",
-          "count": 37018
+          "count": 37018,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#periodNumber",
-          "count": 37018
+          "count": 37018,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#workPerformed",
-          "count": 35886
-        },
-        {
-          "uri": "http://data.europa.eu/s66#finalResults",
-          "count": 35857
+          "count": 35886,
+          "max": 1,
+          "min": 0
         }
       ]
     },
@@ -1159,20 +1202,28 @@
       "ok": true,
       "properties": [
         {
-          "uri": "http://data.europa.eu/s66#currency",
-          "count": 669411
+          "uri": "http://data.europa.eu/s66#value",
+          "count": 664311,
+          "max": 4,
+          "min": 0
         },
         {
-          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 669411
+          "uri": "http://data.europa.eu/s66#currency",
+          "count": 622058,
+          "max": 4,
+          "min": 0
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#label",
-          "count": 664311
+          "count": 503895,
+          "max": 4,
+          "min": 0
         },
         {
-          "uri": "http://data.europa.eu/s66#value",
-          "count": 664311
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 462941,
+          "max": 4,
+          "min": 0
         }
       ]
     },
@@ -1180,24 +1231,34 @@
       "ok": true,
       "properties": [
         {
-          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 422007
-        },
-        {
           "uri": "http://data.europa.eu/s66#isPaymentOf",
-          "count": 422006
+          "count": 422006,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#hasPaymentAmount",
-          "count": 422006
-        },
-        {
-          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
-          "count": 416906
+          "count": 422006,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#hasRecipient",
-          "count": 393063
+          "count": 393063,
+          "max": 2,
+          "min": 0
+        },
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 150774,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 132665,
+          "max": 1,
+          "min": 0
         }
       ]
     },
@@ -1206,67 +1267,99 @@
       "properties": [
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 1224685
-        },
-        {
-          "uri": "http://data.europa.eu/s66#identifier",
-          "count": 419740
-        },
-        {
-          "uri": "http://data.europa.eu/s66#rcn",
-          "count": 419740
-        },
-        {
-          "uri": "http://data.europa.eu/s66#title",
-          "count": 419735
-        },
-        {
-          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
-          "count": 419735
-        },
-        {
-          "uri": "http://data.europa.eu/s66#publishedYear",
-          "count": 419686
+          "count": 678155,
+          "max": 4,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#author",
-          "count": 419662
-        },
-        {
-          "uri": "http://data.europa.eu/s66#publisher",
-          "count": 419304
-        },
-        {
-          "uri": "http://data.europa.eu/s66#isResultOf",
-          "count": 412951
+          "count": 324943,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#language",
-          "count": 412951
-        },
-        {
-          "uri": "http://data.europa.eu/s66#journalTitle",
-          "count": 386536
+          "count": 318272,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#doi",
-          "count": 337810
+          "count": 254503,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://data.europa.eu/s66#publishedYear",
+          "count": 254120,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://data.europa.eu/s66#isResultOf",
+          "count": 247553,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://data.europa.eu/s66#title",
+          "count": 235158,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://data.europa.eu/s66#identifier",
+          "count": 232259,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://data.europa.eu/s66#rcn",
+          "count": 232256,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 232247,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://data.europa.eu/s66#publisher",
+          "count": 231918,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://data.europa.eu/s66#journalTitle",
+          "count": 214343,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#issn",
-          "count": 273536
+          "count": 212225,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#journalNumber",
-          "count": 250058
+          "count": 195558,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#publishedPages",
-          "count": 197666
+          "count": 154441,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#isbn",
-          "count": 40761
+          "count": 32623,
+          "max": 1,
+          "min": 0
         }
       ]
     },
@@ -1274,48 +1367,70 @@
       "ok": true,
       "properties": [
         {
-          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
-          "count": 399304
-        },
-        {
-          "uri": "http://data.europa.eu/s66#isRoleOf",
-          "count": 398792
-        },
-        {
           "uri": "http://data.europa.eu/s66#order",
-          "count": 398780
-        },
-        {
-          "uri": "http://data.europa.eu/s66#endDate",
-          "count": 398625
-        },
-        {
-          "uri": "http://data.europa.eu/s66#isBeneficiaryOf",
-          "count": 398599
-        },
-        {
-          "uri": "http://data.europa.eu/s66#isInvolvedIn",
-          "count": 398587
+          "count": 354712,
+          "max": 5,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#roleLabel",
-          "count": 398584
+          "count": 354545,
+          "max": 1,
+          "min": 0
         },
         {
-          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 398584
+          "uri": "http://data.europa.eu/s66#isRoleOf",
+          "count": 327618,
+          "max": 2,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#startDate",
-          "count": 398584
+          "count": 295832,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://data.europa.eu/s66#isInvolvedIn",
+          "count": 293485,
+          "max": 2,
+          "min": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 289085,
+          "max": 5,
+          "min": 0
+        },
+        {
+          "uri": "http://data.europa.eu/s66#endDate",
+          "count": 288527,
+          "max": 2,
+          "min": 0
+        },
+        {
+          "uri": "http://data.europa.eu/s66#isBeneficiaryOf",
+          "count": 288502,
+          "max": 5,
+          "min": 0
+        },
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 288495,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#isRecipientOf",
-          "count": 395546
+          "count": 286390,
+          "max": 2,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66/v#hasShaclError",
-          "count": 179
+          "count": 141,
+          "max": 6,
+          "min": 0
         }
       ]
     },
@@ -1324,67 +1439,99 @@
       "properties": [
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 849408
-        },
-        {
-          "uri": "http://data.europa.eu/s66#identifier",
-          "count": 283136
-        },
-        {
-          "uri": "http://data.europa.eu/s66#rcn",
-          "count": 283136
-        },
-        {
-          "uri": "http://data.europa.eu/s66#title",
-          "count": 283131
-        },
-        {
-          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
-          "count": 283131
-        },
-        {
-          "uri": "http://data.europa.eu/s66#publishedYear",
-          "count": 283116
-        },
-        {
-          "uri": "http://data.europa.eu/s66#publisher",
-          "count": 283114
+          "count": 637515,
+          "max": 4,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#author",
-          "count": 283105
-        },
-        {
-          "uri": "http://data.europa.eu/s66#journalTitle",
-          "count": 282392
-        },
-        {
-          "uri": "http://data.europa.eu/s66#isResultOf",
-          "count": 278599
-        },
-        {
-          "uri": "http://data.europa.eu/s66#language",
-          "count": 278599
+          "count": 250890,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#issn",
-          "count": 267228
+          "count": 237004,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://data.europa.eu/s66#language",
+          "count": 227246,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://data.europa.eu/s66#publishedYear",
+          "count": 217360,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://data.europa.eu/s66#rcn",
+          "count": 212502,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://data.europa.eu/s66#identifier",
+          "count": 212501,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://data.europa.eu/s66#title",
+          "count": 212500,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 212500,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://data.europa.eu/s66#publisher",
+          "count": 212486,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://data.europa.eu/s66#isResultOf",
+          "count": 211989,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://data.europa.eu/s66#journalTitle",
+          "count": 211933,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#doi",
-          "count": 267024
+          "count": 208737,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#journalNumber",
-          "count": 213114
+          "count": 189757,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#publishedPages",
-          "count": 158899
+          "count": 141513,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#isbn",
-          "count": 10093
+          "count": 9026,
+          "max": 1,
+          "min": 0
         }
       ]
     },
@@ -1393,43 +1540,63 @@
       "properties": [
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 422376
-        },
-        {
-          "uri": "http://data.europa.eu/s66#identifier",
-          "count": 211188
-        },
-        {
-          "uri": "http://data.europa.eu/s66#title",
-          "count": 211188
-        },
-        {
-          "uri": "http://data.europa.eu/s66#rcn",
-          "count": 211188
-        },
-        {
-          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
-          "count": 211188
-        },
-        {
-          "uri": "http://data.europa.eu/s66#url",
-          "count": 211091
-        },
-        {
-          "uri": "http://data.europa.eu/s66#description",
-          "count": 210089
-        },
-        {
-          "uri": "http://data.europa.eu/s66#hasResultType",
-          "count": 206547
+          "count": 276514,
+          "max": 2,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#isResultOf",
-          "count": 200248
+          "count": 157032,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#language",
-          "count": 200248
+          "count": 157032,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://data.europa.eu/s66#title",
+          "count": 156602,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://data.europa.eu/s66#rcn",
+          "count": 141488,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://data.europa.eu/s66#identifier",
+          "count": 139923,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 138257,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://data.europa.eu/s66#url",
+          "count": 138200,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://data.europa.eu/s66#description",
+          "count": 137539,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://data.europa.eu/s66#hasResultType",
+          "count": 134875,
+          "max": 1,
+          "min": 0
         }
       ]
     },
@@ -1438,79 +1605,117 @@
       "properties": [
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 207637
+          "count": 207637,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#prefLabel",
-          "count": 206583
+          "count": 206583,
+          "max": 6,
+          "min": 0
         },
         {
           "uri": "http://www.w3.org/2008/05/skos-xl#prefLabel",
-          "count": 6398
+          "count": 6398,
+          "max": 6,
+          "min": 0
         },
         {
           "uri": "http://www.w3.org/2008/05/skos-xl#altLabel",
-          "count": 3101
+          "count": 3101,
+          "max": 27,
+          "min": 0
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#inScheme",
-          "count": 1083
+          "count": 1083,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://purl.org/dc/terms/created",
-          "count": 1078
+          "count": 1078,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://publications.europa.eu/ontology/euvoc#status",
-          "count": 1078
+          "count": 1078,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#notation",
-          "count": 1078
-        },
-        {
-          "uri": "http://purl.org/dc/terms/modified",
-          "count": 1078
-        },
-        {
-          "uri": "http://www.w3.org/2002/07/owl#versionInfo",
-          "count": 1078
+          "count": 1078,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://publications.europa.eu/ontology/euvoc#xlNotation",
-          "count": 1078
+          "count": 1078,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://www.w3.org/2002/07/owl#versionInfo",
+          "count": 1078,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/modified",
+          "count": 1078,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.w3.org/2002/07/owl#deprecated",
-          "count": 1078
+          "count": 1078,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://purl.org/dc/elements/1.1/identifier",
-          "count": 1078
+          "count": 1078,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://publications.europa.eu/ontology/euvoc#startDate",
-          "count": 1078
+          "count": 1078,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#broader",
-          "count": 1072
+          "count": 1072,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://purl.org/dc/terms/identifier",
-          "count": 10
+          "count": 10,
+          "max": 2,
+          "min": 0
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#topConceptOf",
-          "count": 6
+          "count": 6,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://purl.org/dc/terms/title",
-          "count": 5
+          "count": 5,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://publications.europa.eu/ontology/euvoc#endDate",
-          "count": 1
+          "count": 1,
+          "max": 1,
+          "min": 0
         }
       ]
     },
@@ -1519,27 +1724,39 @@
       "properties": [
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#label",
-          "count": 132353
+          "count": 132353,
+          "max": 4,
+          "min": 1
         },
         {
           "uri": "http://data.europa.eu/s66#shortForm",
-          "count": 132312
+          "count": 132312,
+          "max": 4,
+          "min": 1
         },
         {
           "uri": "http://data.europa.eu/s66#definition",
-          "count": 132290
+          "count": 132290,
+          "max": 4,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 132245
+          "count": 132245,
+          "max": 4,
+          "min": 1
         },
         {
           "uri": "http://data.europa.eu/s66#isAcronymOf",
-          "count": 132101
+          "count": 132101,
+          "max": 5,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66/v#hasShaclError",
-          "count": 45
+          "count": 45,
+          "max": 2,
+          "min": 0
         }
       ]
     },
@@ -1548,67 +1765,99 @@
       "properties": [
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 277441
-        },
-        {
-          "uri": "http://data.europa.eu/s66#identifier",
-          "count": 92480
-        },
-        {
-          "uri": "http://data.europa.eu/s66#title",
-          "count": 92480
-        },
-        {
-          "uri": "http://data.europa.eu/s66#rcn",
-          "count": 92480
-        },
-        {
-          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
-          "count": 92480
+          "count": 70717,
+          "max": 4,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#author",
-          "count": 92466
-        },
-        {
-          "uri": "http://data.europa.eu/s66#publishedYear",
-          "count": 92455
-        },
-        {
-          "uri": "http://data.europa.eu/s66#publisher",
-          "count": 92262
-        },
-        {
-          "uri": "http://data.europa.eu/s66#isResultOf",
-          "count": 91026
+          "count": 25183,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#language",
-          "count": 91026
+          "count": 25168,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://data.europa.eu/s66#publishedYear",
+          "count": 24555,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://data.europa.eu/s66#title",
+          "count": 23574,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://data.europa.eu/s66#identifier",
+          "count": 23573,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://data.europa.eu/s66#rcn",
+          "count": 23573,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 23573,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://data.europa.eu/s66#isResultOf",
+          "count": 23552,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://data.europa.eu/s66#publisher",
+          "count": 23448,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#journalTitle",
-          "count": 81502
+          "count": 20758,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#doi",
-          "count": 53582
+          "count": 14331,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#publishedPages",
-          "count": 35019
+          "count": 9334,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#isbn",
-          "count": 27485
+          "count": 6975,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#journalNumber",
-          "count": 25418
+          "count": 5523,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#issn",
-          "count": 4225
+          "count": 1421,
+          "max": 1,
+          "min": 0
         }
       ]
     },
@@ -1617,59 +1866,87 @@
       "properties": [
         {
           "uri": "http://data.europa.eu/s66#hasPayment",
-          "count": 422007
+          "count": 422007,
+          "max": 208,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#hasBeneficiary",
-          "count": 399349
-        },
-        {
-          "uri": "http://data.europa.eu/s66#hasFundingSchemeProgramme",
-          "count": 114530
-        },
-        {
-          "uri": "http://data.europa.eu/s66#hasFundingSchemeCall",
-          "count": 91949
-        },
-        {
-          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 80222
-        },
-        {
-          "uri": "http://data.europa.eu/s66#duration",
-          "count": 80053
-        },
-        {
-          "uri": "http://data.europa.eu/s66#endDate",
-          "count": 79257
+          "count": 222068,
+          "max": 208,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#startDate",
-          "count": 79257
-        },
-        {
-          "uri": "http://data.europa.eu/s66#hasFundingAmount",
-          "count": 78727
+          "count": 73368,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#funds",
-          "count": 78727
-        },
-        {
-          "uri": "http://data.europa.eu/s66#isDisbursedBy",
-          "count": 78727
+          "count": 72870,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#hasFundingSchemeType",
-          "count": 78725
+          "count": 72818,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://data.europa.eu/s66#hasFundingSchemeProgramme",
+          "count": 71141,
+          "max": 10,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#hasFundingSchemeTopic",
-          "count": 78722
+          "count": 56467,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://data.europa.eu/s66#hasFundingSchemeCall",
+          "count": 53632,
+          "max": 2,
+          "min": 0
+        },
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 44796,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://data.europa.eu/s66#duration",
+          "count": 44670,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://data.europa.eu/s66#endDate",
+          "count": 43873,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://data.europa.eu/s66#hasFundingAmount",
+          "count": 43299,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://data.europa.eu/s66#isDisbursedBy",
+          "count": 43299,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66/v#hasShaclError",
-          "count": 7987
+          "count": 7987,
+          "max": 10,
+          "min": 0
         }
       ]
     },
@@ -1678,91 +1955,135 @@
       "properties": [
         {
           "uri": "http://data.europa.eu/s66#hasResult",
-          "count": 757443
+          "count": 570490,
+          "max": 7479,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#hasInvolvedParty",
-          "count": 399227
-        },
-        {
-          "uri": "http://data.europa.eu/s66#keyword",
-          "count": 233638
+          "count": 236815,
+          "max": 208,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#hasEuroSciVocClassification",
-          "count": 214596
+          "count": 128613,
+          "max": 8,
+          "min": 0
         },
         {
-          "uri": "http://data.europa.eu/s66#identifier",
-          "count": 80208
-        },
-        {
-          "uri": "http://data.europa.eu/s66#title",
-          "count": 80208
-        },
-        {
-          "uri": "http://data.europa.eu/s66#isFundedBy",
-          "count": 80208
-        },
-        {
-          "uri": "http://data.europa.eu/s66#hasTotalCost",
-          "count": 80208
-        },
-        {
-          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 80208
-        },
-        {
-          "uri": "http://data.europa.eu/s66#rcn",
-          "count": 80208
-        },
-        {
-          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
-          "count": 80208
-        },
-        {
-          "uri": "http://data.europa.eu/s66#hasAcronym",
-          "count": 80207
+          "uri": "http://data.europa.eu/s66#keyword",
+          "count": 83848,
+          "max": 30,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#abstract",
-          "count": 80206
+          "count": 61490,
+          "max": 2,
+          "min": 0
         },
         {
-          "uri": "http://data.europa.eu/s66#projectStatus",
-          "count": 80191
-        },
-        {
-          "uri": "http://data.europa.eu/s66#duration",
-          "count": 80039
-        },
-        {
-          "uri": "http://data.europa.eu/s66#endDate",
-          "count": 79246
-        },
-        {
-          "uri": "http://data.europa.eu/s66#startDate",
-          "count": 79246
+          "uri": "http://data.europa.eu/s66#hasAcronym",
+          "count": 47838,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#signatureDate",
-          "count": 53572
+          "count": 41795,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://data.europa.eu/s66#identifier",
+          "count": 34145,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://data.europa.eu/s66#rcn",
+          "count": 34145,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://data.europa.eu/s66#title",
+          "count": 34144,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://data.europa.eu/s66#hasTotalCost",
+          "count": 34144,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://data.europa.eu/s66#isFundedBy",
+          "count": 34144,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 34143,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 34143,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://data.europa.eu/s66#projectStatus",
+          "count": 34135,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://data.europa.eu/s66#duration",
+          "count": 34076,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://data.europa.eu/s66#startDate",
+          "count": 33756,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://data.europa.eu/s66#endDate",
+          "count": 33754,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#doi",
-          "count": 53028
+          "count": 29486,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#url",
-          "count": 7105
+          "count": 3284,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66/v#hasShaclError",
-          "count": 2605
+          "count": 1043,
+          "max": 4,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#terminationDate",
-          "count": 1760
+          "count": 666,
+          "max": 1,
+          "min": 0
         }
       ]
     },
@@ -1770,36 +2091,52 @@
       "ok": true,
       "properties": [
         {
-          "uri": "http://data.europa.eu/s66#fullAddress",
-          "count": 72795
-        },
-        {
-          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
-          "count": 72792
-        },
-        {
-          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 72769
-        },
-        {
           "uri": "http://data.europa.eu/s66#addressCountry",
-          "count": 72767
+          "count": 27208,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#addressLocality",
-          "count": 72070
+          "count": 26878,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://data.europa.eu/s66#fullAddress",
+          "count": 26255,
+          "max": 2,
+          "min": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 25775,
+          "max": 2,
+          "min": 0
+        },
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 25770,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#streetAddress",
-          "count": 71359
+          "count": 24973,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#postalCode",
-          "count": 70034
+          "count": 24534,
+          "max": 2,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#postOfficeBoxNumber",
-          "count": 4899
+          "count": 1508,
+          "max": 1,
+          "min": 0
         }
       ]
     },
@@ -1808,35 +2145,51 @@
       "properties": [
         {
           "uri": "http://data.europa.eu/s66#hasGeographicalLocation",
-          "count": 206043
-        },
-        {
-          "uri": "http://data.europa.eu/s66#name",
-          "count": 73098
-        },
-        {
-          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
-          "count": 73098
-        },
-        {
-          "uri": "http://data.europa.eu/s66#hasAddress",
-          "count": 72769
-        },
-        {
-          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 72644
+          "count": 124171,
+          "max": 5,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#isSiteOf",
-          "count": 72644
+          "count": 44432,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 41775,
+          "max": 3,
+          "min": 0
+        },
+        {
+          "uri": "http://data.europa.eu/s66#name",
+          "count": 41774,
+          "max": 3,
+          "min": 0
+        },
+        {
+          "uri": "http://data.europa.eu/s66#hasAddress",
+          "count": 41560,
+          "max": 2,
+          "min": 0
+        },
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 41489,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#hasCoordinates",
-          "count": 54541
+          "count": 31146,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66/v#hasShaclError",
-          "count": 675
+          "count": 416,
+          "max": 5,
+          "min": 0
         }
       ]
     },
@@ -1845,47 +2198,69 @@
       "properties": [
         {
           "uri": "http://data.europa.eu/s66#hasRole",
-          "count": 382630
+          "count": 300953,
+          "max": 4334,
+          "min": 0
         },
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 157733
-        },
-        {
-          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
-          "count": 73087
-        },
-        {
-          "uri": "http://data.europa.eu/s66#legalName",
-          "count": 73078
+          "count": 64462,
+          "max": 3,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#hasSite",
-          "count": 72726
+          "count": 45303,
+          "max": 3,
+          "min": 0
+        },
+        {
+          "uri": "http://data.europa.eu/s66#legalName",
+          "count": 38776,
+          "max": 2,
+          "min": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 33859,
+          "max": 2,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#rcn",
-          "count": 72477
+          "count": 33605,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#identifier",
-          "count": 72219
+          "count": 33347,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#hasAcronym",
-          "count": 52475
+          "count": 25319,
+          "max": 2,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#vatNumber",
-          "count": 42912
+          "count": 21576,
+          "max": 2,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#url",
-          "count": 21069
+          "count": 12586,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66/v#hasShaclError",
-          "count": 535
+          "count": 211,
+          "max": 3,
+          "min": 0
         }
       ]
     },
@@ -1894,59 +2269,87 @@
       "properties": [
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 118786
-        },
-        {
-          "uri": "http://data.europa.eu/s66#identifier",
-          "count": 59393
-        },
-        {
-          "uri": "http://data.europa.eu/s66#title",
-          "count": 59393
-        },
-        {
-          "uri": "http://data.europa.eu/s66#rcn",
-          "count": 59393
-        },
-        {
-          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
-          "count": 59393
-        },
-        {
-          "uri": "http://data.europa.eu/s66#isResultOf",
-          "count": 58456
+          "count": 69130,
+          "max": 2,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#language",
-          "count": 58456
+          "count": 41297,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#abstract",
-          "count": 58456
+          "count": 41297,
+          "max": 1,
+          "min": 0
         },
         {
-          "uri": "http://data.europa.eu/s66#description",
-          "count": 47414
-        },
-        {
-          "uri": "http://data.europa.eu/s66#periodTo",
-          "count": 37018
+          "uri": "http://data.europa.eu/s66#isResultOf",
+          "count": 39200,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#periodFrom",
-          "count": 37018
-        },
-        {
-          "uri": "http://data.europa.eu/s66#periodNumber",
-          "count": 37018
-        },
-        {
-          "uri": "http://data.europa.eu/s66#workPerformed",
-          "count": 35886
+          "count": 37018,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#finalResults",
-          "count": 35857
+          "count": 35857,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://data.europa.eu/s66#title",
+          "count": 34566,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://data.europa.eu/s66#rcn",
+          "count": 34566,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 34566,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://data.europa.eu/s66#identifier",
+          "count": 34565,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://data.europa.eu/s66#description",
+          "count": 32079,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://data.europa.eu/s66#periodTo",
+          "count": 29894,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://data.europa.eu/s66#periodNumber",
+          "count": 29894,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://data.europa.eu/s66#workPerformed",
+          "count": 28935,
+          "max": 1,
+          "min": 0
         }
       ]
     },
@@ -1955,19 +2358,27 @@
       "properties": [
         {
           "uri": "http://data.europa.eu/s66#latitude",
-          "count": 54540
-        },
-        {
-          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 54540
+          "count": 54540,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://data.europa.eu/s66#longitude",
-          "count": 54540
+          "count": 54540,
+          "max": 1,
+          "min": 1
+        },
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 54540,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#label",
-          "count": 54540
+          "count": 54540,
+          "max": 1,
+          "min": 1
         }
       ]
     },
@@ -1976,47 +2387,69 @@
       "properties": [
         {
           "uri": "http://data.europa.eu/s66#hasRole",
-          "count": 124205
+          "count": 65095,
+          "max": 320,
+          "min": 0
         },
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 116880
-        },
-        {
-          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
-          "count": 48585
-        },
-        {
-          "uri": "http://data.europa.eu/s66#legalName",
-          "count": 48581
+          "count": 54549,
+          "max": 4,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#hasSite",
-          "count": 48307
+          "count": 30243,
+          "max": 2,
+          "min": 0
+        },
+        {
+          "uri": "http://data.europa.eu/s66#legalName",
+          "count": 24271,
+          "max": 2,
+          "min": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 22864,
+          "max": 2,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#rcn",
-          "count": 48202
+          "count": 22670,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#identifier",
-          "count": 48186
+          "count": 22662,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#hasAcronym",
-          "count": 33912
+          "count": 16109,
+          "max": 2,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#vatNumber",
-          "count": 31411
+          "count": 15852,
+          "max": 2,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#url",
-          "count": 12966
+          "count": 6603,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66/v#hasShaclError",
-          "count": 362
+          "count": 171,
+          "max": 3,
+          "min": 0
         }
       ]
     },
@@ -2025,47 +2458,69 @@
       "properties": [
         {
           "uri": "http://data.europa.eu/s66#hasRole",
-          "count": 78507
+          "count": 78507,
+          "max": 1648,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 66101
+          "count": 66101,
+          "max": 4,
+          "min": 2
         },
         {
           "uri": "http://data.europa.eu/s66#legalName",
-          "count": 22660
+          "count": 22660,
+          "max": 2,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#label",
-          "count": 22660
+          "count": 22660,
+          "max": 2,
+          "min": 1
         },
         {
           "uri": "http://data.europa.eu/s66#hasSite",
-          "count": 22537
+          "count": 22537,
+          "max": 2,
+          "min": 1
         },
         {
           "uri": "http://data.europa.eu/s66#identifier",
-          "count": 22499
+          "count": 22499,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://data.europa.eu/s66#rcn",
-          "count": 22476
+          "count": 22476,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#vatNumber",
-          "count": 20538
+          "count": 20538,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#hasAcronym",
-          "count": 14738
+          "count": 14738,
+          "max": 2,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#url",
-          "count": 3320
+          "count": 3320,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66/v#hasShaclError",
-          "count": 177
+          "count": 177,
+          "max": 3,
+          "min": 0
         }
       ]
     },
@@ -2074,75 +2529,111 @@
       "properties": [
         {
           "uri": "http://data.europa.eu/s66#hasGrant",
-          "count": 217211
+          "count": 217211,
+          "max": 6331,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#keyword",
-          "count": 24028
+          "count": 24028,
+          "max": 549,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#hasFundingSchemeCategory",
-          "count": 13811
+          "count": 13811,
+          "max": 2,
+          "min": 1
         },
         {
           "uri": "http://data.europa.eu/s66#isImplementedBy",
-          "count": 13278
+          "count": 13278,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 13278
+          "count": 13278,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://data.europa.eu/s66#identifier",
-          "count": 13149
+          "count": 13149,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#rcn",
-          "count": 13149
+          "count": 13149,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#title",
-          "count": 12909
+          "count": 12909,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#label",
-          "count": 12909
+          "count": 12909,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#code",
-          "count": 11709
+          "count": 11709,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#isSubSchemeOf",
-          "count": 9306
+          "count": 9306,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#hasRelatedScheme",
-          "count": 8496
+          "count": 8496,
+          "max": 10,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#description",
-          "count": 4521
+          "count": 4521,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#hasSubScheme",
-          "count": 152
+          "count": 152,
+          "max": 29,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#endDate",
-          "count": 2
+          "count": 2,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#startDate",
-          "count": 2
+          "count": 2,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#duration",
-          "count": 2
+          "count": 2,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#hasFundingAmount",
-          "count": 1
+          "count": 1,
+          "max": 1,
+          "min": 0
         }
       ]
     },
@@ -2151,19 +2642,27 @@
       "properties": [
         {
           "uri": "http://www.w3.org/2008/05/skos-xl#literalForm",
-          "count": 9500
+          "count": 9500,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 9500
+          "count": 9500,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/2002/07/owl#versionInfo",
-          "count": 9487
+          "count": 9487,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://publications.europa.eu/ontology/euvoc#startDate",
-          "count": 9487
+          "count": 9487,
+          "max": 1,
+          "min": 0
         }
       ]
     },
@@ -2172,47 +2671,69 @@
       "properties": [
         {
           "uri": "http://data.europa.eu/s66#hasRole",
-          "count": 80334
+          "count": 80334,
+          "max": 4334,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 12124
+          "count": 12124,
+          "max": 3,
+          "min": 2
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#label",
-          "count": 5848
+          "count": 5848,
+          "max": 2,
+          "min": 1
         },
         {
           "uri": "http://data.europa.eu/s66#legalName",
-          "count": 5847
+          "count": 5847,
+          "max": 2,
+          "min": 1
         },
         {
           "uri": "http://data.europa.eu/s66#hasSite",
-          "count": 5819
+          "count": 5819,
+          "max": 2,
+          "min": 1
         },
         {
           "uri": "http://data.europa.eu/s66#rcn",
-          "count": 5779
+          "count": 5779,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#identifier",
-          "count": 5777
+          "count": 5777,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#hasAcronym",
-          "count": 4787
+          "count": 4787,
+          "max": 2,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#url",
-          "count": 2838
+          "count": 2838,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#vatNumber",
-          "count": 2761
+          "count": 2761,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66/v#hasShaclError",
-          "count": 52
+          "count": 52,
+          "max": 3,
+          "min": 0
         }
       ]
     },
@@ -2221,67 +2742,99 @@
       "properties": [
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 17103
+          "count": 17103,
+          "max": 3,
+          "min": 3
         },
         {
           "uri": "http://data.europa.eu/s66#identifier",
-          "count": 5701
+          "count": 5701,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://data.europa.eu/s66#title",
-          "count": 5701
+          "count": 5701,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://data.europa.eu/s66#author",
-          "count": 5701
+          "count": 5701,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://data.europa.eu/s66#rcn",
-          "count": 5701
+          "count": 5701,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#label",
-          "count": 5701
+          "count": 5701,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://data.europa.eu/s66#publishedYear",
-          "count": 5701
+          "count": 5701,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://data.europa.eu/s66#publisher",
-          "count": 5695
+          "count": 5695,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#language",
-          "count": 5639
+          "count": 5639,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#isResultOf",
-          "count": 5639
+          "count": 5639,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#journalTitle",
-          "count": 1538
+          "count": 1538,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#doi",
-          "count": 874
+          "count": 874,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#journalNumber",
-          "count": 836
+          "count": 836,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#isbn",
-          "count": 347
+          "count": 347,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#publishedPages",
-          "count": 256
+          "count": 256,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#issn",
-          "count": 44
+          "count": 44,
+          "max": 1,
+          "min": 0
         }
       ]
     },
@@ -2290,47 +2843,69 @@
       "properties": [
         {
           "uri": "http://data.europa.eu/s66#hasRole",
-          "count": 18736
+          "count": 18736,
+          "max": 189,
+          "min": 0
         },
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 9670
+          "count": 9670,
+          "max": 4,
+          "min": 2
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#label",
-          "count": 4863
+          "count": 4863,
+          "max": 2,
+          "min": 1
         },
         {
           "uri": "http://data.europa.eu/s66#legalName",
-          "count": 4858
+          "count": 4858,
+          "max": 2,
+          "min": 1
         },
         {
           "uri": "http://data.europa.eu/s66#hasSite",
-          "count": 4828
+          "count": 4828,
+          "max": 2,
+          "min": 1
         },
         {
           "uri": "http://data.europa.eu/s66#rcn",
-          "count": 4801
+          "count": 4801,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#identifier",
-          "count": 4799
+          "count": 4799,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#hasAcronym",
-          "count": 3656
+          "count": 3656,
+          "max": 2,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#vatNumber",
-          "count": 2252
+          "count": 2252,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#url",
-          "count": 1198
+          "count": 1198,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66/v#hasShaclError",
-          "count": 57
+          "count": 57,
+          "max": 3,
+          "min": 0
         }
       ]
     },
@@ -2339,47 +2914,69 @@
       "properties": [
         {
           "uri": "http://data.europa.eu/s66#hasRole",
-          "count": 133347
+          "count": 133347,
+          "max": 1727,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 7837
+          "count": 7837,
+          "max": 3,
+          "min": 2
         },
         {
           "uri": "http://data.europa.eu/s66#hasSite",
-          "count": 3921
+          "count": 3921,
+          "max": 3,
+          "min": 1
         },
         {
           "uri": "http://data.europa.eu/s66#legalName",
-          "count": 3900
+          "count": 3900,
+          "max": 2,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#label",
-          "count": 3900
+          "count": 3900,
+          "max": 2,
+          "min": 1
         },
         {
           "uri": "http://data.europa.eu/s66#identifier",
-          "count": 3865
+          "count": 3865,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#rcn",
-          "count": 3865
+          "count": 3865,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#hasAcronym",
-          "count": 3060
+          "count": 3060,
+          "max": 2,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#url",
-          "count": 1954
+          "count": 1954,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#vatNumber",
-          "count": 1751
+          "count": 1751,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66/v#hasShaclError",
-          "count": 28
+          "count": 28,
+          "max": 3,
+          "min": 0
         }
       ]
     },
@@ -2388,67 +2985,99 @@
       "properties": [
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 11184
+          "count": 11184,
+          "max": 3,
+          "min": 3
         },
         {
           "uri": "http://data.europa.eu/s66#identifier",
-          "count": 3728
+          "count": 3728,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://data.europa.eu/s66#title",
-          "count": 3728
+          "count": 3728,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://data.europa.eu/s66#publisher",
-          "count": 3728
+          "count": 3728,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://data.europa.eu/s66#rcn",
-          "count": 3728
+          "count": 3728,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#label",
-          "count": 3728
+          "count": 3728,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://data.europa.eu/s66#publishedYear",
-          "count": 3727
+          "count": 3727,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#author",
-          "count": 3719
+          "count": 3719,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#language",
-          "count": 3678
+          "count": 3678,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#isResultOf",
-          "count": 3678
+          "count": 3678,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#isbn",
-          "count": 2180
+          "count": 2180,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#doi",
-          "count": 1672
+          "count": 1672,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#journalTitle",
-          "count": 1657
+          "count": 1657,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#journalNumber",
-          "count": 867
+          "count": 867,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#publishedPages",
-          "count": 734
+          "count": 734,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#issn",
-          "count": 136
+          "count": 136,
+          "max": 1,
+          "min": 0
         }
       ]
     },
@@ -2457,47 +3086,69 @@
       "properties": [
         {
           "uri": "http://data.europa.eu/s66#hasNUTS3code",
-          "count": 2645
+          "count": 2645,
+          "max": 1262,
+          "min": 0
         },
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 2297
+          "count": 2297,
+          "max": 2,
+          "min": 1
         },
         {
           "uri": "http://data.europa.eu/s66#name",
-          "count": 2063
+          "count": 2063,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#label",
-          "count": 2063
+          "count": 2063,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#hasNUTS0code",
-          "count": 404
+          "count": 404,
+          "max": 178,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#hasEUCountryCode",
-          "count": 404
+          "count": 404,
+          "max": 178,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#hasNUTS2code",
-          "count": 330
+          "count": 330,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#hasISOCountryCode",
-          "count": 225
+          "count": 225,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66/v#hasShaclError",
-          "count": 204
+          "count": 204,
+          "max": 204,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#hasNUTS1code",
-          "count": 125
+          "count": 125,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#hasNUTS-2code",
-          "count": 1
+          "count": 1,
+          "max": 1,
+          "min": 0
         }
       ]
     },
@@ -2506,11 +3157,15 @@
       "properties": [
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 1078
+          "count": 1078,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#value",
-          "count": 1078
+          "count": 1078,
+          "max": 1,
+          "min": 1
         }
       ]
     },
@@ -2519,43 +3174,63 @@
       "properties": [
         {
           "uri": "http://data.europa.eu/s66#hasNUTS3code",
-          "count": 1262
+          "count": 1262,
+          "max": 1262,
+          "min": 0
         },
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 454
+          "count": 454,
+          "max": 2,
+          "min": 2
         },
         {
           "uri": "http://data.europa.eu/s66#hasNUTS0code",
-          "count": 404
+          "count": 404,
+          "max": 178,
+          "min": 1
         },
         {
           "uri": "http://data.europa.eu/s66#hasEUCountryCode",
-          "count": 404
+          "count": 404,
+          "max": 178,
+          "min": 1
         },
         {
           "uri": "http://data.europa.eu/s66#name",
-          "count": 226
+          "count": 226,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#label",
-          "count": 226
+          "count": 226,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#hasISOCountryCode",
-          "count": 225
+          "count": 225,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66/v#hasShaclError",
-          "count": 204
+          "count": 204,
+          "max": 204,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#hasNUTS2code",
-          "count": 1
+          "count": 1,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#hasNUTS-2code",
-          "count": 1
+          "count": 1,
+          "max": 1,
+          "min": 0
         }
       ]
     },
@@ -2564,63 +3239,93 @@
       "properties": [
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 483
+          "count": 483,
+          "max": 3,
+          "min": 3
         },
         {
           "uri": "http://data.europa.eu/s66#journalTitle",
-          "count": 161
+          "count": 161,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://data.europa.eu/s66#identifier",
-          "count": 161
+          "count": 161,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://data.europa.eu/s66#title",
-          "count": 161
+          "count": 161,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://data.europa.eu/s66#author",
-          "count": 161
+          "count": 161,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://data.europa.eu/s66#publisher",
-          "count": 161
+          "count": 161,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://data.europa.eu/s66#rcn",
-          "count": 161
+          "count": 161,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#label",
-          "count": 161
+          "count": 161,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://data.europa.eu/s66#publishedYear",
-          "count": 161
+          "count": 161,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://data.europa.eu/s66#isResultOf",
-          "count": 158
+          "count": 158,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#language",
-          "count": 158
+          "count": 158,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#publishedPages",
-          "count": 91
+          "count": 91,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#isbn",
-          "count": 83
+          "count": 83,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#doi",
-          "count": 80
+          "count": 80,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/s66#issn",
-          "count": 2
+          "count": 2,
+          "max": 1,
+          "min": 0
         }
       ]
     },
@@ -2629,231 +3334,345 @@
       "properties": [
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qmfValRange-rvrRestrictions",
-          "count": 172
+          "count": 172,
+          "max": 4,
+          "min": 0
         },
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 130
+          "count": 130,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qmfName",
-          "count": 130
+          "count": 130,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#inheritFrom",
-          "count": 99
+          "count": 99,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qmfSuperFormats",
-          "count": 98
+          "count": 98,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qmfIidOfShortTmpl",
-          "count": 57
+          "count": 57,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#noInherit",
-          "count": 56
+          "count": 56,
+          "max": 2,
+          "min": 0
         },
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qmfSqlvalTmpl",
-          "count": 53
+          "count": 53,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qmfSqlvalOfShortTmpl",
-          "count": 53
+          "count": 53,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qmfStrsqlvalOfShortTmpl",
-          "count": 53
+          "count": 53,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qmfBoolOfShortTmpl",
-          "count": 47
+          "count": 47,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qmfIsStable",
-          "count": 47
+          "count": 47,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qmfIsBijection",
-          "count": 47
+          "count": 47,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qmfUriOfShortTmpl",
-          "count": 45
+          "count": 45,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qmfLongOfShortTmpl",
-          "count": 45
+          "count": 45,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qmfLongTmpl",
-          "count": 45
+          "count": 45,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qmfBoolTmpl",
-          "count": 42
+          "count": 42,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qmfMapsOnlyNullToNull",
-          "count": 40
+          "count": 40,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qmfTypemaxTmpl",
-          "count": 39
+          "count": 39,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qmfUriIdOffset",
-          "count": 39
+          "count": 39,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qmfCmpFuncName",
-          "count": 39
+          "count": 39,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qmfTypeminTmpl",
-          "count": 39
+          "count": 39,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qmfSparqlEbvOfShortTmpl",
-          "count": 37
+          "count": 37,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qmfIslitOfShortTmpl",
-          "count": 31
+          "count": 31,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qmfShortOfTypedsqlvalTmpl",
-          "count": 31
+          "count": 31,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qmfIsrefOfShortTmpl",
-          "count": 31
-        },
-        {
-          "uri": "http://www.openlinksw.com/schemas/virtrdf#qmfShortOfLongTmpl",
-          "count": 31
+          "count": 31,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qmfColumnCount",
-          "count": 31
+          "count": 31,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://www.openlinksw.com/schemas/virtrdf#qmfShortOfLongTmpl",
+          "count": 31,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qmfDatatypeOfShortTmpl",
-          "count": 31
+          "count": 31,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qmfLanguageOfShortTmpl",
-          "count": 31
+          "count": 31,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qmfShortOfUriTmpl",
-          "count": 31
+          "count": 31,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qmfShortTmpl",
-          "count": 31
+          "count": 31,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qmfIsuriOfShortTmpl",
-          "count": 31
-        },
-        {
-          "uri": "http://www.openlinksw.com/schemas/virtrdf#qmfShortOfSqlvalTmpl",
-          "count": 31
+          "count": 31,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qmfOkForAnySqlvalue",
-          "count": 31
+          "count": 31,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://www.openlinksw.com/schemas/virtrdf#qmfShortOfSqlvalTmpl",
+          "count": 31,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qmfIsblankOfShortTmpl",
-          "count": 31
+          "count": 31,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qmfSparqlEbvTmpl",
-          "count": 29
+          "count": 29,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qmfHasCheapSqlval",
-          "count": 22
+          "count": 22,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qmfIsnumericOfShortTmpl",
-          "count": 19
+          "count": 19,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qmfCustomString1",
-          "count": 12
+          "count": 12,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qmfIsSubformatOfLong",
-          "count": 8
+          "count": 8,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qmfValRange-rvrDatatype",
-          "count": 7
-        },
-        {
-          "uri": "http://www.openlinksw.com/schemas/virtrdf#qmfShortOfNiceSqlvalTmpl",
-          "count": 6
+          "count": 7,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qmfDtpOfNiceSqlval",
-          "count": 6
+          "count": 6,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://www.openlinksw.com/schemas/virtrdf#qmfShortOfNiceSqlvalTmpl",
+          "count": 6,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qmfIsSubformatOfLongWhenRef",
-          "count": 4
+          "count": 4,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qmfLanguageTmpl",
-          "count": 4
+          "count": 4,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qmfExistingShortOfUriTmpl",
-          "count": 2
+          "count": 2,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qmfExistingShortOfLongTmpl",
-          "count": 2
+          "count": 2,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qmfSubFormatForRefs",
-          "count": 2
+          "count": 2,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qmf01blankOfShortTmpl",
-          "count": 2
+          "count": 2,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qmfExistingShortOfTypedsqlvalTmpl",
-          "count": 2
+          "count": 2,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qmf01uriOfShortTmpl",
-          "count": 2
+          "count": 2,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qmfWrapDistinct",
-          "count": 2
+          "count": 2,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qmfIsSubformatOfLongWhenEqToSql",
-          "count": 2
-        },
-        {
-          "uri": "http://www.openlinksw.com/schemas/virtrdf#qmfExistingShortOfSqlvalTmpl",
-          "count": 2
+          "count": 2,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qmfDatatypeTmpl",
-          "count": 2
+          "count": 2,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://www.openlinksw.com/schemas/virtrdf#qmfExistingShortOfSqlvalTmpl",
+          "count": 2,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qmfValRange-rvrLanguage",
-          "count": 1
+          "count": 1,
+          "max": 1,
+          "min": 0
         }
       ]
     },
@@ -2862,27 +3681,39 @@
       "properties": [
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 98
+          "count": 98,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#_1",
-          "count": 56
+          "count": 56,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#_2",
-          "count": 13
+          "count": 13,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#_3",
-          "count": 10
+          "count": 10,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#_4",
-          "count": 3
+          "count": 3,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#_5",
-          "count": 3
+          "count": 3,
+          "max": 1,
+          "min": 0
         }
       ]
     },
@@ -2891,31 +3722,45 @@
       "properties": [
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 75
+          "count": 75,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/2002/07/owl#onProperty",
-          "count": 75
+          "count": 75,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/2002/07/owl#cardinality",
-          "count": 50
+          "count": 50,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.w3.org/2002/07/owl#maxCardinality",
-          "count": 12
+          "count": 12,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.w3.org/2002/07/owl#minCardinality",
-          "count": 9
+          "count": 9,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.w3.org/2002/07/owl#allValuesFrom",
-          "count": 3
+          "count": 3,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.w3.org/2002/07/owl#someValuesFrom",
-          "count": 1
+          "count": 1,
+          "max": 1,
+          "min": 0
         }
       ]
     },
@@ -2924,35 +3769,51 @@
       "properties": [
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 58
+          "count": 58,
+          "max": 2,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#isDefinedBy",
-          "count": 56
+          "count": 56,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#comment",
-          "count": 56
+          "count": 56,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#label",
-          "count": 56
+          "count": 56,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#range",
-          "count": 54
+          "count": 54,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#domain",
-          "count": 54
+          "count": 54,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.w3.org/2002/07/owl#inverseOf",
-          "count": 14
+          "count": 14,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#subPropertyOf",
-          "count": 8
+          "count": 8,
+          "max": 1,
+          "min": 0
         }
       ]
     },
@@ -2961,31 +3822,45 @@
       "properties": [
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 53
+          "count": 53,
+          "max": 2,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#range",
-          "count": 47
+          "count": 47,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#isDefinedBy",
-          "count": 46
+          "count": 46,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#comment",
-          "count": 46
+          "count": 46,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#label",
-          "count": 46
+          "count": 46,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#domain",
-          "count": 30
+          "count": 30,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#subPropertyOf",
-          "count": 4
+          "count": 4,
+          "max": 1,
+          "min": 0
         }
       ]
     },
@@ -2994,39 +3869,57 @@
       "properties": [
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
-          "count": 93
+          "count": 93,
+          "max": 14,
+          "min": 0
         },
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 36
+          "count": 36,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#isDefinedBy",
-          "count": 32
+          "count": 32,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#comment",
-          "count": 32
+          "count": 32,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#label",
-          "count": 32
+          "count": 32,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#broadMatch",
-          "count": 30
+          "count": 30,
+          "max": 2,
+          "min": 0
         },
         {
           "uri": "http://www.w3.org/2002/07/owl#unionOf",
-          "count": 3
+          "count": 3,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#closeMatch",
-          "count": 3
+          "count": 3,
+          "max": 2,
+          "min": 0
         },
         {
           "uri": "http://www.w3.org/2002/07/owl#disjointWith",
-          "count": 1
+          "count": 1,
+          "max": 1,
+          "min": 0
         }
       ]
     },
@@ -3035,7 +3928,9 @@
       "properties": [
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 17
+          "count": 17,
+          "max": 1,
+          "min": 1
         }
       ]
     },
@@ -3044,11 +3939,15 @@
       "properties": [
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#_1",
-          "count": 8
+          "count": 8,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 8
+          "count": 8,
+          "max": 1,
+          "min": 1
         }
       ]
     },
@@ -3057,15 +3956,21 @@
       "properties": [
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qmvcColumnName",
-          "count": 8
+          "count": 8,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qmvcAlias",
-          "count": 8
+          "count": 8,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 8
+          "count": 8,
+          "max": 1,
+          "min": 1
         }
       ]
     },
@@ -3073,36 +3978,52 @@
       "ok": true,
       "properties": [
         {
-          "uri": "http://www.openlinksw.com/schemas/virtrdf#qmvTableName",
-          "count": 8
+          "uri": "http://www.openlinksw.com/schemas/virtrdf#qmvFormat",
+          "count": 8,
+          "max": 1,
+          "min": 1
         },
         {
-          "uri": "http://www.openlinksw.com/schemas/virtrdf#qmvFormat",
-          "count": 8
+          "uri": "http://www.openlinksw.com/schemas/virtrdf#qmvTableName",
+          "count": 8,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qmvATables",
-          "count": 8
+          "count": 8,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 8
+          "count": 8,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qmvColumnsFormKey",
-          "count": 8
+          "count": 8,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qmvColumns",
-          "count": 8
+          "count": 8,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qmvFText",
-          "count": 2
+          "count": 2,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qmvGeo",
-          "count": 2
+          "count": 2,
+          "max": 1,
+          "min": 0
         }
       ]
     },
@@ -3111,27 +4032,39 @@
       "properties": [
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 12
+          "count": 12,
+          "max": 2,
+          "min": 2
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#isDefinedBy",
-          "count": 6
+          "count": 6,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#range",
-          "count": 6
+          "count": 6,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#comment",
-          "count": 6
+          "count": 6,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#label",
-          "count": 6
+          "count": 6,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#domain",
-          "count": 3
+          "count": 3,
+          "max": 1,
+          "min": 0
         }
       ]
     },
@@ -3140,27 +4073,39 @@
       "properties": [
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 4
+          "count": 4,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qmvftColumnName",
-          "count": 4
+          "count": 4,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qmvftXmlIndex",
-          "count": 3
+          "count": 3,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qmvftAlias",
-          "count": 2
+          "count": 2,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qmvftConds",
-          "count": 2
+          "count": 2,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qmvftTableName",
-          "count": 2
+          "count": 2,
+          "max": 1,
+          "min": 0
         }
       ]
     },
@@ -3169,11 +4114,15 @@
       "properties": [
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 3
+          "count": 3,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/2002/07/owl#oneOf",
-          "count": 2
+          "count": 2,
+          "max": 1,
+          "min": 0
         }
       ]
     },
@@ -3182,19 +4131,27 @@
       "properties": [
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qsUserMaps",
-          "count": 3
+          "count": 3,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 3
+          "count": 3,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qsMatchingFlags",
-          "count": 2
+          "count": 2,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qsDefaultMap",
-          "count": 2
+          "count": 2,
+          "max": 1,
+          "min": 0
         }
       ]
     },
@@ -3203,11 +4160,15 @@
       "properties": [
         {
           "uri": "http://www.w3.org/2002/07/owl#members",
-          "count": 3
+          "count": 3,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 3
+          "count": 3,
+          "max": 1,
+          "min": 1
         }
       ]
     },
@@ -3216,7 +4177,9 @@
       "properties": [
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 3
+          "count": 3,
+          "max": 1,
+          "min": 1
         }
       ]
     },
@@ -3225,31 +4188,45 @@
       "properties": [
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 2
+          "count": 2,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://purl.org/dc/terms/title",
-          "count": 1
+          "count": 1,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.w3.org/2008/05/skos-xl#prefLabel",
-          "count": 1
+          "count": 1,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://purl.org/dc/terms/created",
-          "count": 1
-        },
-        {
-          "uri": "http://purl.org/dc/terms/modified",
-          "count": 1
+          "count": 1,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.w3.org/2002/07/owl#versionInfo",
-          "count": 1
+          "count": 1,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/modified",
+          "count": 1,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://publications.europa.eu/ontology/euvoc#startDate",
-          "count": 1
+          "count": 1,
+          "max": 1,
+          "min": 0
         }
       ]
     },
@@ -3258,27 +4235,39 @@
       "properties": [
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 4
+          "count": 4,
+          "max": 2,
+          "min": 2
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#isDefinedBy",
-          "count": 2
+          "count": 2,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#range",
-          "count": 2
+          "count": 2,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#comment",
-          "count": 2
+          "count": 2,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#domain",
-          "count": 2
+          "count": 2,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#label",
-          "count": 2
+          "count": 2,
+          "max": 1,
+          "min": 1
         }
       ]
     },
@@ -3287,11 +4276,15 @@
       "properties": [
         {
           "uri": "http://xmlns.com/foaf/0.1/name",
-          "count": 2
+          "count": 2,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 2
+          "count": 2,
+          "max": 1,
+          "min": 1
         }
       ]
     },
@@ -3300,15 +4293,21 @@
       "properties": [
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qmvaAlias",
-          "count": 2
+          "count": 2,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 2
+          "count": 2,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qmvaTableName",
-          "count": 2
+          "count": 2,
+          "max": 1,
+          "min": 1
         }
       ]
     },
@@ -3317,31 +4316,45 @@
       "properties": [
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qmTableName",
-          "count": 2
-        },
-        {
-          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 2
+          "count": 2,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qmPredicateMap",
-          "count": 2
+          "count": 2,
+          "max": 1,
+          "min": 1
         },
         {
-          "uri": "http://www.openlinksw.com/schemas/virtrdf#qmGraphMap",
-          "count": 2
-        },
-        {
-          "uri": "http://www.openlinksw.com/schemas/virtrdf#qmObjectMap",
-          "count": 2
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 2,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qmMatchingFlags",
-          "count": 2
+          "count": 2,
+          "max": 1,
+          "min": 1
+        },
+        {
+          "uri": "http://www.openlinksw.com/schemas/virtrdf#qmObjectMap",
+          "count": 2,
+          "max": 1,
+          "min": 1
+        },
+        {
+          "uri": "http://www.openlinksw.com/schemas/virtrdf#qmGraphMap",
+          "count": 2,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.openlinksw.com/schemas/virtrdf#qmSubjectMap",
-          "count": 2
+          "count": 2,
+          "max": 1,
+          "min": 1
         }
       ]
     },
@@ -3350,11 +4363,15 @@
       "properties": [
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#_1",
-          "count": 2
+          "count": 2,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 2
+          "count": 2,
+          "max": 1,
+          "min": 1
         }
       ]
     },
@@ -3363,7 +4380,9 @@
       "properties": [
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 2
+          "count": 2,
+          "max": 1,
+          "min": 1
         }
       ]
     },
@@ -3372,15 +4391,21 @@
       "properties": [
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 2
+          "count": 2,
+          "max": 2,
+          "min": 2
         },
         {
           "uri": "http://www.w3.org/2006/vcard/ns#hasEmail",
-          "count": 1
+          "count": 1,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/2006/vcard/ns#fn",
-          "count": 1
+          "count": 1,
+          "max": 1,
+          "min": 1
         }
       ]
     },
@@ -3389,23 +4414,33 @@
       "properties": [
         {
           "uri": "http://data.europa.eu/s66#disburses",
-          "count": 78726
+          "count": 78726,
+          "max": 78726,
+          "min": 78726
         },
         {
           "uri": "http://data.europa.eu/s66#implements",
-          "count": 11043
+          "count": 11043,
+          "max": 11043,
+          "min": 11043
         },
         {
           "uri": "http://data.europa.eu/s66#legalName",
-          "count": 1
+          "count": 1,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 1
+          "count": 1,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#label",
-          "count": 1
+          "count": 1,
+          "max": 1,
+          "min": 1
         }
       ]
     },
@@ -3414,87 +4449,129 @@
       "properties": [
         {
           "uri": "http://www.w3.org/ns/dcat#keyword",
-          "count": 3
+          "count": 3,
+          "max": 3,
+          "min": 3
         },
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 3
-        },
-        {
-          "uri": "http://purl.org/dc/terms/license",
-          "count": 1
+          "count": 3,
+          "max": 3,
+          "min": 3
         },
         {
           "uri": "http://purl.org/dc/terms/title",
-          "count": 1
+          "count": 1,
+          "max": 1,
+          "min": 1
+        },
+        {
+          "uri": "http://purl.org/dc/terms/license",
+          "count": 1,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/ns/adms#versionNotes",
-          "count": 1
+          "count": 1,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://purl.org/dc/terms/language",
-          "count": 1
+          "count": 1,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://purl.org/dc/terms/type",
-          "count": 1
-        },
-        {
-          "uri": "http://purl.org/dc/terms/creator",
-          "count": 1
+          "count": 1,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/ns/dcat#contactPoint",
-          "count": 1
+          "count": 1,
+          "max": 1,
+          "min": 1
         },
         {
-          "uri": "http://purl.org/dc/terms/issued",
-          "count": 1
+          "uri": "http://purl.org/dc/terms/creator",
+          "count": 1,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/ns/adms#status",
-          "count": 1
+          "count": 1,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/ns/dcat#theme",
-          "count": 1
+          "count": 1,
+          "max": 1,
+          "min": 1
         },
         {
-          "uri": "http://www.w3.org/2000/01/rdf-schema#comment",
-          "count": 1
+          "uri": "http://purl.org/dc/terms/issued",
+          "count": 1,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://purl.org/vocab/vann/preferredNamespacePrefix",
-          "count": 1
+          "count": 1,
+          "max": 1,
+          "min": 1
         },
         {
-          "uri": "http://purl.org/dc/terms/modified",
-          "count": 1
+          "uri": "http://www.w3.org/2000/01/rdf-schema#comment",
+          "count": 1,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/2002/07/owl#versionInfo",
-          "count": 1
+          "count": 1,
+          "max": 1,
+          "min": 1
+        },
+        {
+          "uri": "http://purl.org/dc/terms/modified",
+          "count": 1,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/ns/dcat#contributor",
-          "count": 1
-        },
-        {
-          "uri": "http://www.w3.org/2002/07/owl#versionIRI",
-          "count": 1
-        },
-        {
-          "uri": "http://purl.org/dc/terms/description",
-          "count": 1
+          "count": 1,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://purl.org/dc/terms/publisher",
-          "count": 1
+          "count": 1,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/ns/dcat#distribution",
-          "count": 1
+          "count": 1,
+          "max": 1,
+          "min": 1
+        },
+        {
+          "uri": "http://purl.org/dc/terms/description",
+          "count": 1,
+          "max": 1,
+          "min": 1
+        },
+        {
+          "uri": "http://www.w3.org/2002/07/owl#versionIRI",
+          "count": 1,
+          "max": 1,
+          "min": 1
         }
       ]
     },
@@ -3503,27 +4580,39 @@
       "properties": [
         {
           "uri": "http://www.w3.org/ns/sparql-service-description#resultFormat",
-          "count": 8
+          "count": 8,
+          "max": 8,
+          "min": 8
         },
         {
           "uri": "http://www.w3.org/ns/sparql-service-description#feature",
-          "count": 2
+          "count": 2,
+          "max": 2,
+          "min": 2
         },
         {
           "uri": "http://www.w3.org/ns/sparql-service-description#supportedLanguage",
-          "count": 1
+          "count": 1,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 1
+          "count": 1,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/ns/sparql-service-description#endpoint",
-          "count": 1
+          "count": 1,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/ns/sparql-service-description#url",
-          "count": 1
+          "count": 1,
+          "max": 1,
+          "min": 1
         }
       ]
     },
@@ -3532,87 +4621,129 @@
       "properties": [
         {
           "uri": "http://www.w3.org/ns/dcat#keyword",
-          "count": 3
+          "count": 3,
+          "max": 3,
+          "min": 3
         },
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 3
-        },
-        {
-          "uri": "http://purl.org/dc/terms/license",
-          "count": 1
+          "count": 3,
+          "max": 3,
+          "min": 3
         },
         {
           "uri": "http://purl.org/dc/terms/title",
-          "count": 1
+          "count": 1,
+          "max": 1,
+          "min": 1
+        },
+        {
+          "uri": "http://purl.org/dc/terms/license",
+          "count": 1,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/ns/adms#versionNotes",
-          "count": 1
+          "count": 1,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://purl.org/dc/terms/language",
-          "count": 1
+          "count": 1,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://purl.org/dc/terms/type",
-          "count": 1
-        },
-        {
-          "uri": "http://purl.org/dc/terms/creator",
-          "count": 1
+          "count": 1,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/ns/dcat#contactPoint",
-          "count": 1
+          "count": 1,
+          "max": 1,
+          "min": 1
         },
         {
-          "uri": "http://purl.org/dc/terms/issued",
-          "count": 1
+          "uri": "http://purl.org/dc/terms/creator",
+          "count": 1,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/ns/adms#status",
-          "count": 1
+          "count": 1,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/ns/dcat#theme",
-          "count": 1
+          "count": 1,
+          "max": 1,
+          "min": 1
         },
         {
-          "uri": "http://www.w3.org/2000/01/rdf-schema#comment",
-          "count": 1
+          "uri": "http://purl.org/dc/terms/issued",
+          "count": 1,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://purl.org/vocab/vann/preferredNamespacePrefix",
-          "count": 1
+          "count": 1,
+          "max": 1,
+          "min": 1
         },
         {
-          "uri": "http://purl.org/dc/terms/modified",
-          "count": 1
+          "uri": "http://www.w3.org/2000/01/rdf-schema#comment",
+          "count": 1,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/2002/07/owl#versionInfo",
-          "count": 1
+          "count": 1,
+          "max": 1,
+          "min": 1
+        },
+        {
+          "uri": "http://purl.org/dc/terms/modified",
+          "count": 1,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/ns/dcat#contributor",
-          "count": 1
-        },
-        {
-          "uri": "http://www.w3.org/2002/07/owl#versionIRI",
-          "count": 1
-        },
-        {
-          "uri": "http://purl.org/dc/terms/description",
-          "count": 1
+          "count": 1,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://purl.org/dc/terms/publisher",
-          "count": 1
+          "count": 1,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/ns/dcat#distribution",
-          "count": 1
+          "count": 1,
+          "max": 1,
+          "min": 1
+        },
+        {
+          "uri": "http://purl.org/dc/terms/description",
+          "count": 1,
+          "max": 1,
+          "min": 1
+        },
+        {
+          "uri": "http://www.w3.org/2002/07/owl#versionIRI",
+          "count": 1,
+          "max": 1,
+          "min": 1
         }
       ]
     },
@@ -3621,19 +4752,27 @@
       "properties": [
         {
           "uri": "http://purl.org/dc/terms/license",
-          "count": 1
+          "count": 1,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://purl.org/dc/terms/downloadURL",
-          "count": 1
+          "count": 1,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/ns/dcat#accessURL",
-          "count": 1
+          "count": 1,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 1
+          "count": 1,
+          "max": 1,
+          "min": 1
         }
       ]
     },
@@ -3642,87 +4781,129 @@
       "properties": [
         {
           "uri": "http://www.w3.org/ns/dcat#keyword",
-          "count": 3
+          "count": 3,
+          "max": 3,
+          "min": 3
         },
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 3
-        },
-        {
-          "uri": "http://purl.org/dc/terms/license",
-          "count": 1
+          "count": 3,
+          "max": 3,
+          "min": 3
         },
         {
           "uri": "http://purl.org/dc/terms/title",
-          "count": 1
+          "count": 1,
+          "max": 1,
+          "min": 1
+        },
+        {
+          "uri": "http://purl.org/dc/terms/license",
+          "count": 1,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/ns/adms#versionNotes",
-          "count": 1
+          "count": 1,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://purl.org/dc/terms/language",
-          "count": 1
+          "count": 1,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://purl.org/dc/terms/type",
-          "count": 1
-        },
-        {
-          "uri": "http://purl.org/dc/terms/creator",
-          "count": 1
+          "count": 1,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/ns/dcat#contactPoint",
-          "count": 1
+          "count": 1,
+          "max": 1,
+          "min": 1
         },
         {
-          "uri": "http://purl.org/dc/terms/issued",
-          "count": 1
+          "uri": "http://purl.org/dc/terms/creator",
+          "count": 1,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/ns/adms#status",
-          "count": 1
+          "count": 1,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/ns/dcat#theme",
-          "count": 1
+          "count": 1,
+          "max": 1,
+          "min": 1
         },
         {
-          "uri": "http://www.w3.org/2000/01/rdf-schema#comment",
-          "count": 1
+          "uri": "http://purl.org/dc/terms/issued",
+          "count": 1,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://purl.org/vocab/vann/preferredNamespacePrefix",
-          "count": 1
+          "count": 1,
+          "max": 1,
+          "min": 1
         },
         {
-          "uri": "http://purl.org/dc/terms/modified",
-          "count": 1
+          "uri": "http://www.w3.org/2000/01/rdf-schema#comment",
+          "count": 1,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/2002/07/owl#versionInfo",
-          "count": 1
+          "count": 1,
+          "max": 1,
+          "min": 1
+        },
+        {
+          "uri": "http://purl.org/dc/terms/modified",
+          "count": 1,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/ns/dcat#contributor",
-          "count": 1
-        },
-        {
-          "uri": "http://www.w3.org/2002/07/owl#versionIRI",
-          "count": 1
-        },
-        {
-          "uri": "http://purl.org/dc/terms/description",
-          "count": 1
+          "count": 1,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://purl.org/dc/terms/publisher",
-          "count": 1
+          "count": 1,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/ns/dcat#distribution",
-          "count": 1
+          "count": 1,
+          "max": 1,
+          "min": 1
+        },
+        {
+          "uri": "http://purl.org/dc/terms/description",
+          "count": 1,
+          "max": 1,
+          "min": 1
+        },
+        {
+          "uri": "http://www.w3.org/2002/07/owl#versionIRI",
+          "count": 1,
+          "max": 1,
+          "min": 1
         }
       ]
     },
@@ -3731,20 +4912,26 @@
       "properties": [
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 2
+          "count": 2,
+          "max": 2,
+          "min": 2
         },
         {
           "uri": "http://www.w3.org/2006/vcard/ns#hasEmail",
-          "count": 1
+          "count": 1,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/2006/vcard/ns#fn",
-          "count": 1
+          "count": 1,
+          "max": 1,
+          "min": 1
         }
       ]
     }
   },
-  "profiledAt": "2026-07-02T08:45:58.355Z",
+  "profiledAt": "2026-07-03T18:36:03.306Z",
   "subclasses": {
     "http://data.europa.eu/s66#Organisation": [
       "http://data.europa.eu/s66#SME",
@@ -3770,52 +4957,14 @@
     ]
   },
   "composition": {
-    "http://data.europa.eu/s66#OrganisationRole": [
-      {
-        "uri": "http://data.europa.eu/s66#GrantPayment",
-        "count": 392901
-      },
-      {
-        "uri": "http://data.europa.eu/s66#Grant",
-        "count": 78323
-      }
-    ],
-    "http://data.europa.eu/s66#Grant": [
-      {
-        "uri": "http://data.europa.eu/s66#GrantPayment",
-        "count": 422007
-      },
-      {
-        "uri": "http://data.europa.eu/s66#OrganisationRole",
-        "count": 398577
-      }
-    ],
     "http://data.europa.eu/s66#SME": [
       {
         "uri": "http://data.europa.eu/s66#OrganisationRole",
         "count": 78501
       },
       {
-        "uri": "http://data.europa.eu/s66#Acronym",
-        "count": 14738
-      },
-      {
         "uri": "http://data.europa.eu/s66#Site",
         "count": 22534
-      }
-    ],
-    "http://data.europa.eu/s66#Organisation": [
-      {
-        "uri": "http://data.europa.eu/s66#Acronym",
-        "count": 52457
-      },
-      {
-        "uri": "http://data.europa.eu/s66#Site",
-        "count": 72644
-      },
-      {
-        "uri": "http://data.europa.eu/s66#OrganisationRole",
-        "count": 382572
       }
     ],
     "http://data.europa.eu/s66#Project": [
@@ -3826,10 +4975,6 @@
       {
         "uri": "http://data.europa.eu/s66#OrganisationRole",
         "count": 398495
-      },
-      {
-        "uri": "http://data.europa.eu/s66#Acronym",
-        "count": 79784
       }
     ],
     "http://data.europa.eu/s66#ResearchOrganisation": [
@@ -3840,10 +4985,6 @@
       {
         "uri": "http://data.europa.eu/s66#Site",
         "count": 5795
-      },
-      {
-        "uri": "http://data.europa.eu/s66#Acronym",
-        "count": 4786
       }
     ],
     "http://data.europa.eu/s66#HigherOrSecondaryEducation": [
@@ -3852,12 +4993,14 @@
         "count": 133326
       },
       {
-        "uri": "http://data.europa.eu/s66#Acronym",
-        "count": 3059
-      },
-      {
         "uri": "http://data.europa.eu/s66#Site",
         "count": 3876
+      }
+    ],
+    "http://data.europa.eu/s66#OrganisationRole": [
+      {
+        "uri": "http://data.europa.eu/s66#Grant",
+        "count": 78323
       }
     ],
     "http://data.europa.eu/s66#FundingScheme": [
@@ -3866,14 +5009,16 @@
         "count": 78726
       }
     ],
+    "http://data.europa.eu/s66#Grant": [
+      {
+        "uri": "http://data.europa.eu/s66#OrganisationRole",
+        "count": 398577
+      }
+    ],
     "http://data.europa.eu/s66#ForProfitOrganisation": [
       {
         "uri": "http://data.europa.eu/s66#Site",
         "count": 48304
-      },
-      {
-        "uri": "http://data.europa.eu/s66#Acronym",
-        "count": 33909
       },
       {
         "uri": "http://data.europa.eu/s66#OrganisationRole",
@@ -3900,12 +5045,6 @@
         "count": 72769
       }
     ],
-    "http://www.w3.org/2004/02/skos/core#ConceptScheme": [
-      {
-        "uri": "http://www.w3.org/2008/05/skos-xl#Label",
-        "count": 1
-      }
-    ],
     "http://data.europa.eu/s66#GrantPayment": [
       {
         "uri": "http://data.europa.eu/s66#Grant",
@@ -3922,19 +5061,21 @@
         "count": 18733
       },
       {
-        "uri": "http://data.europa.eu/s66#Acronym",
-        "count": 3655
-      },
-      {
         "uri": "http://data.europa.eu/s66#Site",
         "count": 4821
       }
     ],
-    "http://www.w3.org/2004/02/skos/core#Concept": [
+    "http://data.europa.eu/s66#Organisation": [
       {
-        "uri": "http://www.w3.org/2008/05/skos-xl#Label",
-        "count": 9499
+        "uri": "http://data.europa.eu/s66#Site",
+        "count": 72644
       },
+      {
+        "uri": "http://data.europa.eu/s66#OrganisationRole",
+        "count": 382572
+      }
+    ],
+    "http://www.w3.org/2004/02/skos/core#Concept": [
       {
         "uri": "http://publications.europa.eu/ontology/euvoc#XlNotation",
         "count": 1078
@@ -3943,7 +5084,6 @@
   },
   "orphanCounts": {
     "http://data.europa.eu/s66#Grant": 14,
-    "http://data.europa.eu/s66#OrganisationRole": 89,
-    "http://data.europa.eu/s66#GrantPayment": 29106
+    "http://data.europa.eu/s66#OrganisationRole": 89
   }
 }
