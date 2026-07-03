@@ -167,6 +167,48 @@ describe('buildInstanceListQuery', () => {
   })
 })
 
+describe('instance filter (label OR URI)', () => {
+  const labelValues = LABEL_PREDICATES.map(p => `<${p}>`).join(' ')
+  // WHERE body between `WHERE { ` and the final ` }` — the shared instanceMatch output.
+  const bodyOf = (q: string) => q.substring(q.indexOf('WHERE { ') + 8, q.lastIndexOf(' }'))
+
+  it('empty / whitespace / omitted filter leaves the plain membership query', () => {
+    const plain = buildInstanceListQuery(TYPE, NAMED, 25, 0)
+    expect(buildInstanceListQuery(TYPE, NAMED, 25, 0, '')).toBe(plain)
+    expect(buildInstanceListQuery(TYPE, NAMED, 25, 0, '   ')).toBe(plain)
+    expect(plain).not.toContain('FILTER')
+    expect(buildInstanceCountQuery(TYPE, NAMED, '  ')).toBe(buildInstanceCountQuery(TYPE, NAMED))
+  })
+
+  it('matches URI OR every LABEL_PREDICATES label, both sides LCASE (case-insensitive)', () => {
+    const q = buildInstanceListQuery(TYPE, DEFAULT, 25, 0, 'smith')
+    expect(q).toContain('CONTAINS(LCASE(STR(?s)), LCASE("smith"))')
+    expect(q).toContain(`EXISTS { VALUES ?lp { ${labelValues} }`)
+    expect(q).toContain('CONTAINS(LCASE(STR(?lbl)), LCASE("smith"))')
+  })
+
+  it('list and count apply the IDENTICAL filtered body (no paging past a stale total)', () => {
+    expect(bodyOf(buildInstanceListQuery(TYPE, BOTH, 25, 0, 'acme')))
+      .toBe(bodyOf(buildInstanceCountQuery(TYPE, BOTH, 'acme')))
+  })
+
+  it('scopes the label triple with a DISTINCT graph var per strategy (not ?g)', () => {
+    expect(buildInstanceListQuery(TYPE, NAMED, 25, 0, 'x')).toContain('GRAPH ?lg { ?s ?lp ?lbl }')
+    const def = buildInstanceListQuery(TYPE, DEFAULT, 25, 0, 'x')
+    expect(def).toContain('?s ?lp ?lbl')
+    expect(def).not.toContain('GRAPH ?lg')
+    expect(buildInstanceListQuery(TYPE, BOTH, 25, 0, 'x'))
+      .toContain('{ GRAPH ?lg { ?s ?lp ?lbl } } UNION { ?s ?lp ?lbl }')
+  })
+
+  it('escapes the term so a crafted string cannot break out of the literal (injection)', () => {
+    const q = buildInstanceListQuery(TYPE, DEFAULT, 25, 0, 'x") } UNION { ?s ?p ?o } #')
+    expect(q).toContain('x\\") } UNION { ?s ?p ?o } #') // quote escaped in place
+    expect(q).not.toContain('x") } UNION')              // ...so no unescaped breakout survives
+    expect(buildInstanceListQuery(TYPE, DEFAULT, 25, 0, 'back\\slash')).toContain('back\\\\slash')
+  })
+})
+
 describe('buildLabelsQuery', () => {
   it('label by LABEL_PREDICATES precedence (COALESCE, not VALUES+SAMPLE) + MOST SPECIFIC type', () => {
     const q = buildLabelsQuery([RES, TYPE])

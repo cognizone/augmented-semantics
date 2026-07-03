@@ -56,6 +56,21 @@ export function isNavigableIri(uri: string): boolean {
   }
 }
 
+/**
+ * Escape a user string for safe interpolation inside a SPARQL `"..."` literal.
+ * Backslash FIRST, then the quote and control chars — an unescaped `"` or `\`
+ * in a filter term would otherwise break out of the literal or inject query
+ * syntax (the string-literal counterpart to sanitizeIri for `<...>`).
+ */
+export function sparqlString(term: string): string {
+  return term
+    .replace(/\\/g, '\\\\')
+    .replace(/"/g, '\\"')
+    .replace(/\n/g, '\\n')
+    .replace(/\r/g, '\\r')
+    .replace(/\t/g, '\\t')
+}
+
 /* ───────────────────────── Graph strategy ───────────────────────── */
 
 /** Which graph scopes a query should touch, derived from the endpoint axes. */
@@ -96,6 +111,39 @@ function membership(typeTerm: string, s: GraphStrategy): string {
   return s.useNamed ? named : def
 }
 
+/**
+ * Scope an arbitrary triple pattern per strategy, using a caller-supplied graph
+ * var so it can sit next to the type-membership pattern without colliding on ?g
+ * (a resource's label may live in a different named graph than its type triple).
+ */
+function scoped(body: string, s: GraphStrategy, gvar: string): string {
+  const named = `GRAPH ${gvar} { ${body} }`
+  if (s.useNamed && s.useDefault) return `{ ${named} } UNION { ${body} }`
+  return s.useNamed ? named : body
+}
+
+/**
+ * WHERE body for a type's instances, optionally narrowed to those whose URI OR
+ * any LABEL_PREDICATES label CONTAINS `filter` (case-insensitive, both sides
+ * LCASE'd). Shared by the list and count builders so they scope IDENTICALLY —
+ * a filtered list paged against an unfiltered count would run past a wrong total.
+ *
+ * The label test is an EXISTS (not a join) so a resource with several matching
+ * labels still counts once. URI matching keeps unlabeled resources findable.
+ * ponytail: matches the 6 direct label predicates + URI, NOT SKOS-XL reified
+ * labels (kept out for the same Virtuoso planner reason as buildLabelsQuery) —
+ * add a skosxl branch to the EXISTS if SKOS-XL-only resources must be findable.
+ */
+function instanceMatch(iri: string, s: GraphStrategy, filter?: string): string {
+  const base = membership(`<${iri}>`, s)
+  const term = (filter ?? '').trim().slice(0, 200)
+  if (!term) return base
+  const t = sparqlString(term)
+  const labelValues = LABEL_PREDICATES.map(p => `<${p}>`).join(' ')
+  const labelMatch = `EXISTS { VALUES ?lp { ${labelValues} } ${scoped('?s ?lp ?lbl', s, '?lg')} FILTER(CONTAINS(LCASE(STR(?lbl)), LCASE("${t}"))) }`
+  return `${base} FILTER( CONTAINS(LCASE(STR(?s)), LCASE("${t}")) || ${labelMatch} )`
+}
+
 /* ───────────────────────── Discovery / list ───────────────────────── */
 
 /**
@@ -106,10 +154,11 @@ export function buildTypeInventoryQuery(s: GraphStrategy): string {
   return `SELECT ?type (COUNT(DISTINCT ?s) AS ?count) WHERE { ${membership('?type', s)} } GROUP BY ?type ORDER BY DESC(?count) LIMIT 500`
 }
 
-/** Total distinct instances of a type (instance-list header / paging). */
-export function buildInstanceCountQuery(typeUri: string, s: GraphStrategy): string {
+/** Total distinct instances of a type (instance-list header / paging), optionally
+ *  narrowed by the same label/URI filter the list uses. */
+export function buildInstanceCountQuery(typeUri: string, s: GraphStrategy, filter?: string): string {
   const iri = sanitizeIri(typeUri)
-  return `SELECT (COUNT(DISTINCT ?s) AS ?total) WHERE { ${membership(`<${iri}>`, s)} }`
+  return `SELECT (COUNT(DISTINCT ?s) AS ?total) WHERE { ${instanceMatch(iri, s, filter)} }`
 }
 
 /**
@@ -125,11 +174,11 @@ export function buildInstanceCountQuery(typeUri: string, s: GraphStrategy): stri
  * We take the engine's natural order; this is a navigation index, not a report
  * (so paging is by the engine's order, not a stable key — acceptable here).
  */
-export function buildInstanceListQuery(typeUri: string, s: GraphStrategy, limit = 100, offset = 0): string {
+export function buildInstanceListQuery(typeUri: string, s: GraphStrategy, limit = 100, offset = 0, filter?: string): string {
   const iri = sanitizeIri(typeUri)
   const lim = Math.max(1, Math.floor(limit))
   const off = Math.max(0, Math.floor(offset))
-  return `SELECT DISTINCT ?s WHERE { ${membership(`<${iri}>`, s)} } LIMIT ${lim} OFFSET ${off}`
+  return `SELECT DISTINCT ?s WHERE { ${instanceMatch(iri, s, filter)} } LIMIT ${lim} OFFSET ${off}`
 }
 
 /**

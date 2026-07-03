@@ -8,7 +8,7 @@
  * @see /spec/ae-rdf
  * @see /spec/common/com02-StateManagement.md
  */
-import { ref, watch, type Ref } from 'vue'
+import { ref, watch, onScopeDispose, type Ref } from 'vue'
 import { useEndpointStore, useBrowseStore, useTypeConfigStore, useLanguageStore } from '../stores'
 import {
   executeSparql,
@@ -40,8 +40,9 @@ export function useInstanceList() {
   const error = ref<string | null>(null)
   const page = ref(0)
   const typeLabel = ref('')
+  const filter = ref('') // label/URI substring; empty = unfiltered
   let requestId = 0
-  let countedFor: string | null = null // `${endpointId}|${type}` the total is valid for
+  let countedFor: string | null = null // `${endpointId}|${type}|${filter}` the total is valid for
 
   async function load(): Promise<void> {
     const type = browseStore.currentType
@@ -58,7 +59,8 @@ export function useInstanceList() {
 
     loading.value = true
     error.value = null
-    const countKey = `${endpointId}|${strategy.useNamed}${strategy.useDefault}|${type}`
+    const term = filter.value.trim()
+    const countKey = `${endpointId}|${strategy.useNamed}${strategy.useDefault}|${type}|${term}`
     const needCount = countedFor !== countKey
 
     logger.info('useInstanceList', 'Loading instances', { type, page: page.value, strategy })
@@ -70,7 +72,7 @@ export function useInstanceList() {
 
     try {
       const [listRes, typeResolved] = await Promise.all([
-        executeSparql(endpoint, buildInstanceListQuery(type, strategy, PAGE_SIZE, page.value * PAGE_SIZE), { retries: 1 }),
+        executeSparql(endpoint, buildInstanceListQuery(type, strategy, PAGE_SIZE, page.value * PAGE_SIZE, term), { retries: 1 }),
         resolveUris([type]),
       ])
       if (!isCurrent()) return
@@ -98,7 +100,7 @@ export function useInstanceList() {
       instances.value = uris.map(u => ({ uri: u, label: labelMap.get(u) ?? u }))
 
       if (needCount) {
-        executeSparql(endpoint, buildInstanceCountQuery(type, strategy), { retries: 1 })
+        executeSparql(endpoint, buildInstanceCountQuery(type, strategy, term), { retries: 1 })
           .then(countRes => {
             if (!isCurrent()) return
             total.value = parseInt(countRes.results.bindings[0]?.total?.value ?? '0', 10)
@@ -141,9 +143,26 @@ export function useInstanceList() {
     else page.value = 0
   })
 
+  // Filter changed → debounce (no query per keystroke), then reset to page 0 and
+  // reload. The new term makes a new result set AND a new count (countKey folds
+  // the term in, so needCount re-fires). load()'s requestId guard drops any
+  // in-flight page load, so a fast typist never lands stale rows on a new term.
+  // Filter is kept across type changes — the box stays visible so it's not a
+  // hidden constraint, and the type watcher's load() already picks up the term.
+  let filterTimer: ReturnType<typeof setTimeout> | undefined
+  watch(filter, () => {
+    clearTimeout(filterTimer)
+    filterTimer = setTimeout(() => {
+      if (!browseStore.currentType) return
+      if (page.value === 0) load()
+      else page.value = 0 // page watcher reloads
+    }, 300)
+  })
+  onScopeDispose(() => clearTimeout(filterTimer))
+
   function setPage(n: number) {
     page.value = n
   }
 
-  return { instances, total, loading, error, page, pageSize: PAGE_SIZE, typeLabel, setPage }
+  return { instances, total, loading, error, page, pageSize: PAGE_SIZE, typeLabel, filter, setPage }
 }

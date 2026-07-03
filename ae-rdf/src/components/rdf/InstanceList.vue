@@ -11,12 +11,13 @@ import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ProgressSpinner from 'primevue/progressspinner'
 import Paginator from 'primevue/paginator'
+import InputText from 'primevue/inputtext'
 import { useInstanceList, useDelayedLoading } from '../../composables'
 import { URL_PARAMS } from '../../router'
 
 const route = useRoute()
 const router = useRouter()
-const { instances, total, loading, error, page, pageSize, typeLabel, setPage } = useInstanceList()
+const { instances, total, loading, error, page, pageSize, typeLabel, filter, setPage } = useInstanceList()
 const showLoading = useDelayedLoading(loading)
 
 const rangeLabel = computed(() => {
@@ -24,6 +25,15 @@ const rangeLabel = computed(() => {
   const from = page.value * pageSize + 1
   const to = Math.min((page.value + 1) * pageSize, total.value)
   return `${from.toLocaleString('en-US')}–${to.toLocaleString('en-US')} of ${total.value.toLocaleString('en-US')}`
+})
+
+// The COUNT is lazy and can fail (swallowed with a warn), leaving total=0. Fall
+// back to what we've paged through so the paginator still renders and later
+// pages stay reachable; a full page implies at least one more.
+const effectiveTotal = computed(() => {
+  if (total.value) return total.value
+  const seen = page.value * pageSize + instances.value.length
+  return instances.value.length >= pageSize ? seen + 1 : seen
 })
 
 function open(uri: string) {
@@ -39,6 +49,23 @@ function onPage(e: { page: number }) {
   <div class="instance-list">
     <header class="il-header">
       <h2 class="il-title">{{ typeLabel }}</h2>
+      <div class="il-filter-wrap">
+        <InputText
+          v-model="filter"
+          class="il-filter"
+          placeholder="Filter by name or URI…"
+          aria-label="Filter instances by name or URI"
+          @keyup.escape="filter = ''"
+        />
+        <button
+          v-if="filter"
+          class="il-filter-clear"
+          aria-label="Clear filter"
+          @click="filter = ''"
+        >
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
       <span class="il-range">{{ rangeLabel }}</span>
     </header>
 
@@ -51,10 +78,8 @@ function onPage(e: { page: number }) {
       <p>{{ error }}</p>
     </div>
 
-    <p v-else-if="!instances.length" class="state">No instances of this type.</p>
-
     <template v-else>
-      <ul class="il-items">
+      <ul v-if="instances.length" class="il-items">
         <li v-for="inst in instances" :key="inst.uri">
           <button class="il-item" :title="inst.uri" @click="open(inst.uri)">
             <span class="il-label">{{ inst.label }}</span>
@@ -63,10 +88,14 @@ function onPage(e: { page: number }) {
         </li>
       </ul>
 
+      <p v-else class="state">
+        {{ filter.trim() ? `No instances match “${filter.trim()}”.` : 'No instances of this type.' }}
+      </p>
+
       <Paginator
-        v-if="total > pageSize"
+        v-if="effectiveTotal > pageSize"
         :rows="pageSize"
-        :totalRecords="total"
+        :totalRecords="effectiveTotal"
         :first="page * pageSize"
         @page="onPage"
       />
@@ -84,12 +113,51 @@ function onPage(e: { page: number }) {
 
 .il-header {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 1rem;
   padding: 1rem 1.5rem 0.75rem;
   border-bottom: 1px solid var(--ae-border-color);
   flex-shrink: 0;
+}
+
+.il-filter-wrap {
+  position: relative;
+  display: flex;
+  flex: 1;
+  max-width: 340px;
+}
+
+.il-filter {
+  flex: 1;
+  font-size: 0.8125rem;
+  padding-right: 2rem; /* room for the clear button */
+}
+
+.il-filter-clear {
+  position: absolute;
+  right: 0.25rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--ae-text-secondary);
+}
+
+.il-filter-clear:hover {
+  color: var(--ae-text-primary);
+}
+
+.il-filter-clear .material-symbols-outlined {
+  font-size: 16px;
 }
 
 .il-title {

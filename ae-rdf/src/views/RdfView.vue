@@ -70,7 +70,11 @@ function go() {
       <TypeList />
 
       <div class="browser">
-        <div class="uri-bar">
+        <!-- Jump-to-URI: relevant on the landing screen and when viewing a
+             resource (hop to another). Hidden while browsing an instance list —
+             the list's own filter is the search there, and two stacked boxes
+             read as "which do I type in?". -->
+        <div v-if="browseStore.currentResource || !browseStore.currentType" class="uri-bar">
           <InputText
             v-model="uriInput"
             class="uri-input"
