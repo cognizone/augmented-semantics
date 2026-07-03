@@ -3,9 +3,8 @@
  * forever. The cycling object renders as a link instead of overflowing the
  * stack. Reproduces the JournalPaper "Maximum call stack size exceeded" crash.
  */
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
-import { setActivePinia, createPinia } from 'pinia'
 import PrimeVue from 'primevue/config'
 import Tooltip from 'primevue/tooltip'
 import PropertyTable from '../PropertyTable.vue'
@@ -18,8 +17,6 @@ const REL = 'http://ex/rel'
 const link = (v: string) => ({ termType: 'uri' as const, value: v, graphs: [] })
 
 describe('PropertyTable embed cycles', () => {
-  beforeEach(() => setActivePinia(createPinia()))
-
   it('does not overflow the stack when embeds form a cycle', () => {
     // A → rel → B (embedded), B → rel → A (embedded): a 2-node cycle.
     const embedded = new Map<string, PropertyGroup[]>([
@@ -33,7 +30,9 @@ describe('PropertyTable embed cycles', () => {
       props: { groups, resolved: new Map(), embedded, ancestors: [] },
       global: { plugins: [PrimeVue], directives: { tooltip: Tooltip } },
     })
-    // A and B both inline once; the cycle back to A falls through to a link.
-    expect(wrapper.findAll('.uri-link').length).toBeGreaterThan(0)
+    // A and B each inline exactly once (2 embed tables); the cycle back to A
+    // falls through to a single link instead of inlining a third time.
+    expect(wrapper.findAll('.embed-table')).toHaveLength(2)
+    expect(wrapper.findAll('.uri-link')).toHaveLength(1)
   })
 })

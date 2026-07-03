@@ -85,7 +85,7 @@ function save() {
 }
 
 function runTest() {
-  endpointStore.clearError?.()
+  endpointStore.clearError()
   // Build a throwaway endpoint from the current form to test before saving.
   void testConnection({
     id: 'test',

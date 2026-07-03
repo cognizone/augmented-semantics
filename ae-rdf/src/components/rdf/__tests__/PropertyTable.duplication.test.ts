@@ -4,9 +4,8 @@
  * `v-else-if`, so every normal URI rendered as both a link (blue) AND a static
  * span (black) — the "weird duplications" bug.
  */
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
-import { setActivePinia, createPinia } from 'pinia'
 import PrimeVue from 'primevue/config'
 import Tooltip from 'primevue/tooltip'
 import PropertyTable from '../PropertyTable.vue'
@@ -16,8 +15,6 @@ const REL = 'http://ex/rel'
 const OBJ = 'http://ex/thing'
 
 describe('PropertyTable value duplication', () => {
-  beforeEach(() => setActivePinia(createPinia()))
-
   it('renders a navigable URI label once — link only, no static twin', () => {
     const groups: PropertyGroup[] = [{ predicate: REL, objects: [{ termType: 'uri', value: OBJ, graphs: [] }] }]
     const wrapper = mount(PropertyTable, {

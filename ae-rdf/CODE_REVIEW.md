@@ -354,14 +354,14 @@ Largely AE SKOS copy-paste carry-over: unused exports, duplicated types/helpers,
   The `link` object-factory and the identical `global: { plugins: [PrimeVue], directives: { tooltip: Tooltip } }` mount config are copy-pasted across all four PropertyTable test files.
   _Impact:_ `const link = (v) => ({ termType: 'uri', value: v, graphs: [] })` is duplicated verbatim in PropertyTable.cycle.test.ts:18, PropertyTable.embedVia.test.ts:22, and PropertyTable.grouping.test.ts:15, and the PrimeVue+Tooltip mount options appear in every mount() call across the four files. A change to ResourceObject's shape (e.g. a new required field) or to the required global plugins must be edited in 4+ places. Extract a shared test-utils helper (e.g. src/test-utils/propertyTable.ts exporting `link`, `lit`, and a `mountPropertyTable(props)` wrapper) and import it.
 
-- [ ] **R85 · `src/components/rdf/__tests__/PropertyTable.grouping.test.ts:18`** — `CONFIRMED`
+- [x] **R85 · `src/components/rdf/__tests__/PropertyTable.grouping.test.ts:18`** — `CONFIRMED`
   beforeEach(() => setActivePinia(createPinia())) is redundant — setup.ts already calls setActivePinia(createPinia()) in a global beforeEach for every test.
   _Impact:_ Duplicated Pinia setup: src/test-utils/setup.ts (the configured setupFile) runs setActivePinia(createPinia()) before every test, so the identical line here (and in PropertyTable.cycle.test.ts:21 and PropertyTable.duplication.test.ts:19) is dead boilerplate. It costs an extra Pinia instance per test and misleads readers into thinking these files need bespoke store setup. Delete the three lines and rely on setup.ts.
 
-- [ ] **R86 · `src/components/rdf/__tests__/PropertyTable.cycle.test.ts:37`** — `CONFIRMED`
+- [x] **R86 · `src/components/rdf/__tests__/PropertyTable.cycle.test.ts:37`** — `CONFIRMED`
   The cycle test's only assertion (`.uri-link` count > 0) is too weak to prove the cycle was broken correctly; the real check is the absence of a thrown stack overflow.
   _Impact:_ expect(findAll('.uri-link').length).toBeGreaterThan(0) passes for almost any render outcome — it cannot distinguish 'A and B each inlined once, the back-edge to A rendered as a link' (the intended behavior) from a degenerate render that inlines nothing or inlines the wrong node. The test's actual guarantee comes solely from mount() not throwing 'Maximum call stack size exceeded'. Strengthen it by asserting the expected structure (e.g. exactly one .embed-table for B under A, and a .uri-link whose text resolves to A on the back-edge) so a future regression that breaks the cycle differently is caught.
 
-- [ ] **R87 · `src/components/common/EndpointManager.vue:88`** — `CONFIRMED`
+- [x] **R87 · `src/components/common/EndpointManager.vue:88`** — `CONFIRMED`
   runTest() calls `endpointStore.clearError?.()` with optional chaining, but clearError is an unconditional method on the store — the `?.` is dead defensiveness that suggests the method might be absent.
   _Impact:_ clearError is always defined and exported by useEndpointStore (see stores/endpoint.ts return object). The optional-chaining call `clearError?.()` can never short-circuit, so it only adds misleading noise implying the method is optional; a maintainer may waste time reasoning about when the store lacks clearError. Replace with `endpointStore.clearError()`.

@@ -3,9 +3,8 @@
  * partitioned by the object's type — one subheading + count per type — instead
  * of a flat list (for long, mixed-type relations like Project → hasResult).
  */
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
-import { setActivePinia, createPinia } from 'pinia'
 import PrimeVue from 'primevue/config'
 import Tooltip from 'primevue/tooltip'
 import PropertyTable from '../PropertyTable.vue'
@@ -15,8 +14,6 @@ const REL = 'http://ex/hasResult'
 const link = (v: string) => ({ termType: 'uri' as const, value: v, graphs: [] })
 
 describe('PropertyTable groupByType', () => {
-  beforeEach(() => setActivePinia(createPinia()))
-
   const groups: PropertyGroup[] = [{ predicate: REL, objects: [link('http://ex/a'), link('http://ex/b'), link('http://ex/c')] }]
   const objectTypes = new Map([
     ['http://ex/a', 'http://ex/Paper'],
