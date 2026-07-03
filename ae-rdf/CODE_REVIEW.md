@@ -60,22 +60,22 @@ Check a box when the issue is fixed.
 
 ## 🟡 Label / rendering correctness
 
-- [ ] **R14 · `src/services/rdfQueries.ts:278`** — `CONFIRMED`
+- [x] **R14 · `src/services/rdfQueries.ts:278`** — `CONFIRMED`
   `buildLabelsQuery` collapses all 6 label predicates into one `?lbl` via `VALUES` + `SAMPLE`, **discarding `LABEL_PREDICATES` precedence** → picks the wrong label (e.g. `dc:title` "DOC-123" over `rdfs:label` "Annual Report"), nondeterministically. Fix: per-predicate `COALESCE` like `buildInstanceListQuery`.
 
-- [ ] **R15 · `src/services/rdfQueries.ts:136`** — `CONFIRMED`
+- [x] **R15 · `src/services/rdfQueries.ts:136`** — `CONFIRMED`
   `buildInstanceListQuery` resolves labels from only 3 of 6 `LABEL_PREDICATES` (`SAMPLE`, no SKOS-XL, arbitrary language) → the **instance list label differs from the detail-heading label** for the same resource (e.g. `foaf:name`/`schema:name`-only resources fall back to the raw URI).
 
-- [ ] **R16 · `src/composables/useResourceView.ts:81`** — `CONFIRMED`
+- [x] **R16 · `src/composables/useResourceView.ts:81`** — `CONFIRMED`
   Heading `groupValue` picks `objects[0]` arbitrarily and falls back to `localNameOf` for a URI-valued label field, diverging from `composeLabels` (which language-picks and drops unlabeled URIs) → the **same resource shows two different composed labels** in heading vs link/embed.
 
-- [ ] **R17 · `src/composables/composeLabels.ts:103`** — `CONFIRMED`
+- [x] **R17 · `src/composables/composeLabels.ts:103`** — `CONFIRMED`
   `resolve()` keeps any URI target where `labelMap.has(x.v)`, so a referent with only an **opaque raw `rdfs:label` (e.g. a UUID)** and no composed type gets joined into the parent's label → UUIDs surface in headings and every link.
 
-- [ ] **R18 · `src/composables/useResourceView.ts:271`** — `CONFIRMED`
+- [x] **R18 · `src/composables/useResourceView.ts:271`** — `CONFIRMED`
   A frontier of up to `MAX_EMBED_TOTAL` (150) is all marked `seen` and charged to `embedBudget`, but `buildEmbeddedTriplesQuery` slices `uris` to **64** (`rdfQueries.ts:322`). Objects 65–150 are marked seen but never fetched → they **silently render as plain links** with breadth budget unspent.
 
-- [ ] **R19 · `src/composables/useResourceView.ts:318`** — `PLAUSIBLE`
+- [x] **R19 · `src/composables/useResourceView.ts:318`** — `PLAUSIBLE`
   `newIris` filters `!labelMap.has(u) && !typeMap.has(u)` — should be `||`. An object with a label but **no type** (reachable: the SKOS-XL pass sets `labelMap` without `typeMap`) is never refetched → missing type badge, and a `render:embed` type renders as a plain link. Sibling `composeLabels.ts:69` correctly uses `||`.
 
 ## 🟡 Graph provenance / type sidebar (core invariants)

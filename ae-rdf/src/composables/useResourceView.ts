@@ -11,10 +11,9 @@
  */
 import { ref, computed, type Ref } from 'vue'
 import { useEndpointStore, useLanguageStore, useBrowseStore, useTypeConfigStore } from '../stores'
-import { executeSparql, resolveUris, logger, buildResourceTriplesQuery, buildLabelsQuery, buildSkosxlLabelsQuery, buildEmbeddedTriplesQuery, resolveGraphStrategy, LABEL_PREDICATES } from '../services'
+import { executeSparql, resolveUris, logger, buildResourceTriplesQuery, buildLabelsQuery, buildEmbeddedTriplesQuery, resolveGraphStrategy, LABEL_PREDICATES, EMBED_BATCH } from '../services'
 import { labelLangs as computeLabelLangs, pickByLangs } from '../utils/labelLang'
-import { composeLabels } from './composeLabels'
-import { localName as localNameOf } from '../utils/format'
+import { composeLabels, resolveLabels } from './composeLabels'
 
 const RDF_TYPE = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'
 
@@ -76,8 +75,12 @@ export function useResourceView() {
     if (!group?.objects.length) return undefined
     const lits = group.objects.filter(o => o.termType === 'literal')
     if (lits.length) return pickByLangs(lits, labelLangs())?.value
-    const o = group.objects[0]!
-    return objLabels.get(o.value) ?? localNameOf(o.value)
+    // URI-valued label field: use the referent's resolved (possibly composed)
+    // label. Drop referents with no known label instead of showing a raw local
+    // name — composeLabels drops them too, so the heading matches the link/embed
+    // label for the same referent (rather than "AnnualReport" here / dropped there).
+    const labeled = group.objects.find(o => objLabels.has(o.value))
+    return labeled ? objLabels.get(labeled.value) : undefined
   }
 
   /** Pick a display label: a per-type composed label if configured, else the
@@ -207,45 +210,16 @@ export function useResourceView() {
         }
       }
 
-      // Resolve prefixes and fetch object labels in parallel (Phase 2 readability).
-      // A separate SKOS-XL query resolves reified labels with language (kept out
-      // of buildLabelsQuery, whose shared-var shape can't carry a language FILTER).
-      const skosxlQ = objectIris.size ? buildSkosxlLabelsQuery([...objectIris]) : ''
-      const [resolvedMap, labelResults, skosxlResults] = await Promise.all([
-        resolveUris([...toResolve]),
-        objectIris.size
-          ? executeSparql(endpoint, buildLabelsQuery([...objectIris]), { retries: 1 }).catch(() => null)
-          : Promise.resolve(null),
-        skosxlQ
-          ? executeSparql(endpoint, skosxlQ, { retries: 1 }).catch(() => null)
-          : Promise.resolve(null),
-      ])
-      if (!isCurrent()) return
-
+      // Resolve prefixes and canonical object labels in parallel (Phase 2). The
+      // shared resolver does the 6-predicate precedence label + SKOS-XL language
+      // pick, so heading / list / link / embed all agree on a resource's label.
       const labelMap = new Map<string, string>()
       const typeMap = new Map<string, string>()
-      for (const b of labelResults?.results.bindings ?? []) {
-        const s = b.s?.value
-        if (!s) continue
-        if (b.label?.value) labelMap.set(s, b.label.value)
-        if (b.type?.value) typeMap.set(s, b.type.value)
-      }
-      // SKOS-XL: override with the best-language literalForm per subject (a
-      // Concept labelled skosxl:prefLabel → its English literalForm, not a UUID
-      // or an arbitrary language).
-      const xlLangs = labelLangs()
-      const xlBySubj = new Map<string, { v: string; lang?: string }[]>()
-      for (const b of skosxlResults?.results.bindings ?? []) {
-        const s = b.s?.value, lf = b.lf
-        if (!s || !lf?.value) continue
-        const arr = xlBySubj.get(s) ?? []
-        arr.push({ v: lf.value, lang: lf['xml:lang'] })
-        xlBySubj.set(s, arr)
-      }
-      for (const [s, cands] of xlBySubj) {
-        const best = pickByLangs(cands, xlLangs)
-        if (best) labelMap.set(s, best.v)
-      }
+      const [resolvedMap] = await Promise.all([
+        resolveUris([...toResolve]),
+        resolveLabels(endpoint, [...objectIris], labelLangs(), labelMap, typeMap, isCurrent),
+      ])
+      if (!isCurrent()) return
 
       // Resolve prefixes for the object types too (needed for the 'prefixed'
       // URI-display mode); resolveUris is cached so this is cheap.
@@ -297,8 +271,17 @@ export function useResourceView() {
       for (let depth = 0; depth < MAX_EMBED_DEPTH && frontier.length; depth++) {
         embedBudget -= frontier.length
         frontier.forEach(u => seen.add(u))
-        const embRes = await executeSparql(endpoint, buildEmbeddedTriplesQuery(frontier, strategy), { retries: 1 }).catch(() => null)
+        // buildEmbeddedTriplesQuery caps its VALUES list at EMBED_BATCH; the
+        // frontier can be up to MAX_EMBED_TOTAL, so fetch in batches and concat —
+        // else objects past the cap are marked seen (and charged to embedBudget)
+        // but never fetched, silently rendering as plain links with breadth unspent.
+        const batches: string[][] = []
+        for (let i = 0; i < frontier.length; i += EMBED_BATCH) batches.push(frontier.slice(i, i + EMBED_BATCH))
+        const embResults = await Promise.all(
+          batches.map(b => executeSparql(endpoint, buildEmbeddedTriplesQuery(b, strategy), { retries: 1 }).catch(() => null)),
+        )
         if (!isCurrent()) return
+        const embBindings = embResults.flatMap(r => r?.results.bindings ?? [])
 
         // Fold (s,p,o) across graphs into a graphs[] set — keep provenance, don't
         // discard it (a value in 2 graphs gets a multi-graph badge, not silent
@@ -306,7 +289,7 @@ export function useResourceView() {
         const nestedIris = new Set<string>()
         const nestedPairs: { uri: string; via: string }[] = []
         const embObjByKey = new Map<string, ResourceObject>()
-        for (const b of embRes?.results.bindings ?? []) {
+        for (const b of embBindings) {
           const s = b.s?.value
           const p = b.p?.value
           const o = b.o
@@ -342,15 +325,20 @@ export function useResourceView() {
 
         // Labels + types for the nested objects, so they render with a label and
         // we can tell which to embed at the next level.
-        const newIris = [...nestedIris].filter(u => !labelMap.has(u) && !typeMap.has(u))
+        // Refetch when EITHER label OR type is missing (not both): an object with
+        // a label but no type (e.g. a SKOS-XL-labelled object whose type the first
+        // pass missed) still needs its type for the badge and the embed decision.
+        // `&&` skipped it. Guard the sets so filling the missing one never clobbers
+        // an already-resolved label/type. Matches composeLabels' sibling filter.
+        const newIris = [...nestedIris].filter(u => !labelMap.has(u) || !typeMap.has(u))
         if (newIris.length) {
           const lr = await executeSparql(endpoint, buildLabelsQuery(newIris), { retries: 1 }).catch(() => null)
           if (!isCurrent()) return
           for (const b of lr?.results.bindings ?? []) {
             const s = b.s?.value
             if (!s) continue
-            if (b.label?.value) labelMap.set(s, b.label.value)
-            if (b.type?.value) typeMap.set(s, b.type.value)
+            if (b.label?.value && !labelMap.has(s)) labelMap.set(s, b.label.value)
+            if (b.type?.value && !typeMap.has(s)) typeMap.set(s, b.type.value)
           }
         }
 

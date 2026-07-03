@@ -10,7 +10,6 @@
  * @see /spec/ae-rdf/rdf-overview.md
  */
 import { validateURI } from './security'
-import { withPrefixes } from './sparql'
 import type { EndpointGraph } from '../types'
 
 /**
@@ -114,11 +113,13 @@ export function buildInstanceCountQuery(typeUri: string, s: GraphStrategy): stri
 }
 
 /**
- * One page of instances of a type. The page of distinct ?s is taken FIRST in a
- * subquery (LIMIT/OFFSET), then the label OPTIONALs join only those rows — so
- * the 3 OPTIONAL joins + GROUP BY touch ~100 instances, not the whole type.
- * Joining labels before the LIMIT is what made this time out on large types
- * (e.g. VehicleRegistrationCheck, 3.1M). GROUP BY ?s + SAMPLE → one row each.
+ * One page of DISTINCT instances of a type (the ?s only). Labels are resolved
+ * SEPARATELY by the caller via the canonical resolver (resolveLabels →
+ * buildLabelsQuery precedence + SKOS-XL + language pick), on the bounded page of
+ * ~25 URIs — so the instance-list label matches the detail-heading label for the
+ * same resource. Resolving labels here hand-rolled a 3-of-6-predicate subset with
+ * no SKOS-XL / language, which drifted from the heading (e.g. foaf:name-only
+ * resources fell back to the raw URI).
  *
  * No ORDER BY: sorting forces a full materialize + sort before LIMIT can apply.
  * We take the engine's natural order; this is a navigation index, not a report
@@ -128,14 +129,7 @@ export function buildInstanceListQuery(typeUri: string, s: GraphStrategy, limit 
   const iri = sanitizeIri(typeUri)
   const lim = Math.max(1, Math.floor(limit))
   const off = Math.max(0, Math.floor(offset))
-  return withPrefixes(`SELECT ?s (SAMPLE(?lbl) AS ?label) WHERE {
-  { SELECT DISTINCT ?s WHERE { ${membership(`<${iri}>`, s)} } LIMIT ${lim} OFFSET ${off} }
-  OPTIONAL { ?s rdfs:label ?l1 }
-  OPTIONAL { ?s skos:prefLabel ?l2 }
-  OPTIONAL { ?s dct:title ?l3 }
-  BIND(COALESCE(?l1, ?l2, ?l3, STR(?s)) AS ?lbl)
-}
-GROUP BY ?s`)
+  return `SELECT DISTINCT ?s WHERE { ${membership(`<${iri}>`, s)} } LIMIT ${lim} OFFSET ${off}`
 }
 
 /**
@@ -266,16 +260,20 @@ export function buildLabelsQuery(uris: string[]): string {
     .slice(0, 256)
     .map(u => `<${u}>`)
     .join(' ')
-  const labelPreds = LABEL_PREDICATES.map(p => `<${p}>`).join(' ')
   const subClassOf = `<${SUBCLASS_OF}>`
-  // Direct label literal only. SKOS-XL labels are resolved by a SEPARATE query
-  // (buildSkosxlLabelsQuery) — adding the reified skos-xl OPTIONAL here (sharing
-  // ?lbl) alongside the most-specific-type FILTER NOT EXISTS makes Virtuoso's
-  // planner blow its execution-time limit (observed: 680s > 400s → the whole
-  // query 500s, so labels/types silently vanish and objects look dangling).
-  return `SELECT ?s (SAMPLE(?lbl) AS ?label) (SAMPLE(?t) AS ?type) WHERE {
+  // Per-predicate OPTIONAL + COALESCE in LABEL_PREDICATES precedence order — a
+  // single VALUES ?lp + SAMPLE(?lbl) picks arbitrarily and IGNORES precedence
+  // (dc:title over rdfs:label). Direct label literal only: SKOS-XL labels are
+  // resolved by a SEPARATE query (buildSkosxlLabelsQuery) — adding the reified
+  // skos-xl OPTIONAL here alongside the most-specific-type FILTER NOT EXISTS
+  // makes Virtuoso's planner blow its execution-time limit (observed: 680s >
+  // 400s → the whole query 500s, so labels/types silently vanish and objects
+  // look dangling).
+  const labelOptionals = LABEL_PREDICATES.map((p, i) => `  OPTIONAL { ?s <${p}> ?l${i} }`).join('\n')
+  const coalesce = `COALESCE(${LABEL_PREDICATES.map((_, i) => `?l${i}`).join(', ')})`
+  return `SELECT ?s (SAMPLE(${coalesce}) AS ?label) (SAMPLE(?t) AS ?type) WHERE {
   VALUES ?s { ${values} }
-  OPTIONAL { VALUES ?lp { ${labelPreds} } ?s ?lp ?lbl }
+${labelOptionals}
   OPTIONAL {
     ?s a ?t .
     FILTER NOT EXISTS { ?s a ?more . ?more ${subClassOf}+ ?t . FILTER(?more != ?t) }
@@ -315,11 +313,17 @@ export function buildValuesQuery(uris: string[], predicates: string[]): string {
  * (p,o) into a graphs[] set — provenance is kept, not discarded (a value in two
  * graphs shows a multi-graph badge, never silent dedup). Mirrors the resource
  * query's branching per strategy.
+ *
+ * The VALUES list is capped at EMBED_BATCH: a caller with more URIs than this
+ * MUST chunk into batches of EMBED_BATCH and union the results, or objects past
+ * the cap are silently never fetched (marked seen but rendered as plain links).
  */
+export const EMBED_BATCH = 64
+
 export function buildEmbeddedTriplesQuery(uris: string[], s: GraphStrategy): string {
   const values = uris
     .filter(isNavigableIri)
-    .slice(0, 64)
+    .slice(0, EMBED_BATCH)
     .map(u => `<${u}>`)
     .join(' ')
   let pattern: string

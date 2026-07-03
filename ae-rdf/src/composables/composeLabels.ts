@@ -18,13 +18,61 @@
  *
  * @see /spec/ae-rdf
  */
-import { executeSparql, buildValuesQuery, buildLabelsQuery } from '../services'
+import { executeSparql, buildValuesQuery, buildLabelsQuery, buildSkosxlLabelsQuery } from '../services'
 import { useTypeConfigStore } from '../stores'
 import { pickByLangs } from '../utils/labelLang'
 import type { SPARQLEndpoint } from '../types/endpoint'
 
 // ponytail: cap the label graph walk at 3 hops (payment→role→org is 2).
 const MAX_LABEL_HOPS = 3
+
+/**
+ * THE base label + most-specific-type resolver for a set of URIs — the shared
+ * seed every label path uses (heading, instance list, links, embeds): the
+ * 6-predicate precedence label (buildLabelsQuery) with the SKOS-XL literalForm
+ * override picked by language. Fills `labelMap`/`typeMap` in place, never
+ * overwriting an entry the caller pre-seeded. composeLabels runs ON TOP of this
+ * for types that configure a composed label. Hand-rolling a predicate subset
+ * anywhere is exactly how the list / heading / link labels drifted apart.
+ */
+export async function resolveLabels(
+  endpoint: SPARQLEndpoint,
+  uris: string[],
+  langs: string[],
+  labelMap: Map<string, string>,
+  typeMap: Map<string, string>,
+  isCurrent: () => boolean,
+): Promise<void> {
+  if (!uris.length) return
+  const skosxlQ = buildSkosxlLabelsQuery(uris)
+  const [labelRes, skosxlRes] = await Promise.all([
+    executeSparql(endpoint, buildLabelsQuery(uris), { retries: 1 }).catch(() => null),
+    skosxlQ ? executeSparql(endpoint, skosxlQ, { retries: 1 }).catch(() => null) : Promise.resolve(null),
+  ])
+  if (!isCurrent()) return
+  for (const b of labelRes?.results.bindings ?? []) {
+    const s = b.s?.value
+    if (!s) continue
+    if (b.label?.value && !labelMap.has(s)) labelMap.set(s, b.label.value)
+    if (b.type?.value && !typeMap.has(s)) typeMap.set(s, b.type.value)
+  }
+  // SKOS-XL: override with the best-language literalForm per subject (a Concept
+  // labelled skosxl:prefLabel → its English literalForm, not a UUID or arbitrary
+  // language). buildLabelsQuery's shared-var OPTIONAL shape can't carry the
+  // language FILTER, so it's a separate query picked client-side here.
+  const xlBySubj = new Map<string, { v: string; lang?: string }[]>()
+  for (const b of skosxlRes?.results.bindings ?? []) {
+    const s = b.s?.value, lf = b.lf
+    if (!s || !lf?.value) continue
+    const arr = xlBySubj.get(s) ?? []
+    arr.push({ v: lf.value, lang: lf['xml:lang'] })
+    xlBySubj.set(s, arr)
+  }
+  for (const [s, cands] of xlBySubj) {
+    const best = pickByLangs(cands, langs)
+    if (best) labelMap.set(s, best.v)
+  }
+}
 
 export async function composeLabels(
   endpoint: SPARQLEndpoint,
@@ -97,10 +145,13 @@ export async function composeLabels(
     const lits = arr.filter(x => !x.uri)
     if (lits.length) return pickByLang(lits.map(x => ({ v: x.v, lang: x.lang })))
     // URI fields: drop the self-reference (never repeat the viewed resource), and
-    // only emit targets whose label is known — never a raw UUID (which would
-    // clobber a generic/SKOS-XL label resolved elsewhere).
+    // only emit targets that are THEMSELVES a composed-label type. `labelMap.has`
+    // alone let through a referent whose only label is an opaque raw rdfs:label
+    // (e.g. a UUID) with no composed type — surfacing UUIDs in headings/links.
+    // URI label fields are configured to point at composed entities (role → org,
+    // role → project); a non-composed referent renders as a link, not inlined.
     const targets = arr
-      .filter(x => x.v !== selfUri && labelMap.has(x.v))
+      .filter(x => x.v !== selfUri && composeType.has(x.v) && labelMap.has(x.v))
       .map(x => ({ v: labelMap.get(x.v)!, lang: labelLang.get(x.v) }))
     return targets.length ? pickByLang(targets) : undefined
   }

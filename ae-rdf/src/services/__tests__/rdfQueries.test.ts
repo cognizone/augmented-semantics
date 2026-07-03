@@ -149,15 +149,13 @@ describe('membership-driven aggregates always COUNT(DISTINCT ?s)', () => {
 })
 
 describe('buildInstanceListQuery', () => {
-  it('one row per instance (GROUP BY ?s + SAMPLE) with prefixes + label precedence', () => {
+  it('one distinct instance per row, page-bounded — labels resolved separately', () => {
     const q = buildInstanceListQuery(TYPE, NAMED, 100, 0)
-    expect(q).toContain('PREFIX rdfs:')
-    expect(q).toContain(`GRAPH ?g { ?s a <${TYPE}> }`)
-    expect(q).toContain('SAMPLE(?lbl) AS ?label')
-    expect(q).toContain('GROUP BY ?s')
-    expect(q).toContain('COALESCE(?l1, ?l2, ?l3, STR(?s))')
-    // The page is bounded BEFORE the label joins (subquery), not after.
-    expect(q).toContain(`{ SELECT DISTINCT ?s WHERE { GRAPH ?g { ?s a <${TYPE}> } } LIMIT 100 OFFSET 0 }`)
+    expect(q).toContain(`SELECT DISTINCT ?s WHERE { GRAPH ?g { ?s a <${TYPE}> } } LIMIT 100 OFFSET 0`)
+    // Labels are NOT hand-rolled here anymore — the caller resolves them via the
+    // shared resolveLabels (precedence + SKOS-XL + language) so they match the heading.
+    expect(q).not.toContain('SAMPLE')
+    expect(q).not.toContain('COALESCE')
   })
   it('sanitizes limit/offset (no injection via paging)', () => {
     const q = buildInstanceListQuery(TYPE, DEFAULT, 100.9, -5)
@@ -170,12 +168,16 @@ describe('buildInstanceListQuery', () => {
 })
 
 describe('buildLabelsQuery', () => {
-  it('OPTIONAL label + MOST SPECIFIC type per subject, grouped', () => {
+  it('label by LABEL_PREDICATES precedence (COALESCE, not VALUES+SAMPLE) + MOST SPECIFIC type', () => {
     const q = buildLabelsQuery([RES, TYPE])
     expect(q).toContain(`VALUES ?s { <${RES}> <${TYPE}> }`)
-    expect(q).toContain('SAMPLE(?lbl) AS ?label')
+    // per-predicate OPTIONAL + COALESCE preserves precedence (rdfs:label over dc:title);
+    // a single VALUES ?lp + SAMPLE would pick arbitrarily.
+    expect(q).toContain('OPTIONAL { ?s <http://www.w3.org/2000/01/rdf-schema#label> ?l0 }')
+    expect(q).toContain('COALESCE(?l0, ?l1, ?l2, ?l3, ?l4, ?l5)')
+    expect(q).toContain('AS ?label')
     expect(q).toContain('SAMPLE(?t) AS ?type')
-    expect(q).toContain('OPTIONAL { VALUES ?lp {')
+    expect(q).not.toContain('VALUES ?lp')
     expect(q).toContain('?s a ?t')
     // leaf-type picker: exclude any type that has a more-specific asserted type
     expect(q).toContain('FILTER NOT EXISTS')

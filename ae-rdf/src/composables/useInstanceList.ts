@@ -18,7 +18,7 @@ import {
   buildInstanceCountQuery,
   resolveGraphStrategy,
 } from '../services'
-import { composeLabels } from './composeLabels'
+import { composeLabels, resolveLabels } from './composeLabels'
 import { labelLangs } from '../utils/labelLang'
 
 export interface Instance {
@@ -75,23 +75,27 @@ export function useInstanceList() {
       ])
       if (!isCurrent()) return
 
-      instances.value = listRes.results.bindings
-        .map(b => ({ uri: b.s?.value ?? '', label: b.label?.value ?? b.s?.value ?? '' }))
-        .filter(i => i.uri)
+      const uris = listRes.results.bindings.map(b => b.s?.value ?? '').filter(Boolean)
 
       const r = typeResolved.get(type)
       typeLabel.value = r?.prefix ? `${r.prefix}:${r.localName}` : (r?.localName ?? type)
 
-      // Composed label: if the browsed type configures one, override the standard
-      // label via the shared resolver (matches the heading / chip labels, and
-      // resolves URI label fields to the referent's own label, not a raw UUID).
-      if ((typeConfig.get(type).label?.length ?? 0) && instances.value.length) {
-        const labelMap = new Map(instances.value.map(i => [i.uri, i.label]))
-        const typeMap = new Map(instances.value.map(i => [i.uri, type]))
-        await composeLabels(endpoint, labelMap, typeMap, typeConfig, labelLangs(endpoint.languagePriorities, languageStore.preferred), '', isCurrent)
+      // Canonical labels for the page via the SHARED resolver (6-predicate
+      // precedence + SKOS-XL + language) — the same one the detail heading and
+      // links use, so a resource reads identically in the list and on its own
+      // page (hand-rolling a subset in the list query is what drifted them apart).
+      // Then the per-type composed label on top when the browsed type configures
+      // one (resolves URI label fields to the referent's own label, not a UUID).
+      const langs = labelLangs(endpoint.languagePriorities, languageStore.preferred)
+      const labelMap = new Map<string, string>()
+      const typeMap = new Map(uris.map(u => [u, type]))
+      await resolveLabels(endpoint, uris, langs, labelMap, typeMap, isCurrent)
+      if (!isCurrent()) return
+      if ((typeConfig.get(type).label?.length ?? 0) && uris.length) {
+        await composeLabels(endpoint, labelMap, typeMap, typeConfig, langs, '', isCurrent)
         if (!isCurrent()) return
-        instances.value = instances.value.map(i => ({ ...i, label: labelMap.get(i.uri) ?? i.label }))
       }
+      instances.value = uris.map(u => ({ uri: u, label: labelMap.get(u) ?? u }))
 
       if (needCount) {
         executeSparql(endpoint, buildInstanceCountQuery(type, strategy), { retries: 1 })
