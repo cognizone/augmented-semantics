@@ -53,6 +53,10 @@ interface CompEntry { uri: string; count: number }
 const RDFS_SUBCLASS = 'http://www.w3.org/2000/01/rdf-schema#subClassOf'
 const values = (uris: string[]) => uris.map(u => `<${u}>`).join(' ')
 
+/** Re-key an object with its keys sorted — deterministic order for clean diffs. */
+const sortKeys = <T,>(o: Record<string, T>): Record<string, T> =>
+  Object.fromEntries(Object.keys(o).sort().map(k => [k, o[k]]))
+
 // Graph-shape probes — the same two the app runs at connect (sparql.ts
 // detectGraphs / detectDefaultView), baked here so the app reads cfg.graph and
 // skips the runtime probes.
@@ -162,7 +166,7 @@ async function profileGraph(url: string): Promise<{ quads?: boolean; defaultView
  * some instance lacks it" from "min≥1, every instance has it". 0/unknown ⇒ skip
  * the min derivation (leave min undefined rather than assert a wrong required-ness).
  */
-async function profileType(url: string, type: string, total: number): Promise<TypeProfile | null> {
+async function profileType(url: string, type: string, total: number, onStep?: (step: string) => void): Promise<TypeProfile | null> {
   // Sampled rows: occurrence count only (no cardinality — a sample can't prove min=0).
   const sampledEntries = (rows: Record<string, { value: string }>[]): PropEntry[] =>
     rows.map(b => ({ uri: b.p?.value ?? '', count: parseInt(b.n?.value ?? '0', 10) }))
@@ -183,6 +187,7 @@ async function profileType(url: string, type: string, total: number): Promise<Ty
   } catch {
     // full scan failed (usually a server-side timeout) — try a sample
   }
+  onStep?.('sampled fallback')
   try {
     return { ok: true, sampled: true, properties: sampledEntries(await sparql(url, sampledQuery(type))) }
   } catch (e) {
@@ -251,6 +256,8 @@ async function profileOrphanCounts(url: string, pairs: { type: string; via: stri
 const t0 = Date.now()
 const secs = (from: number) => `${((Date.now() - from) / 1000).toFixed(1)}s`
 const phase = (label: string) => { console.error(`\n▸ ${label}  (+${secs(t0)})`); return Date.now() }
+const isTTY = process.stderr.isTTY // live heartbeat only on a terminal, not a redirected log
+const CLEAR = '\r\x1b[2K' // carriage-return + erase-line, to overwrite the heartbeat
 
 async function main() {
   const path = resolve(process.cwd(), process.argv[2] ?? DEFAULT_CONFIG)
@@ -285,25 +292,43 @@ async function main() {
   let okCount = 0, sampledCount = 0
   for (const [i, type] of typeUris.entries()) {
     const tt = Date.now()
-    const profile = await profileType(url, type, totals[type] ?? 0)
+    const tag = `[${i + 1}/${typeUris.length}]`
+    const short = type.replace(/^.*[#/]/, '') || type
+    // Live progress: on a TTY, tick the elapsed time + current step in place so a
+    // slow type (a big full scan) isn't a silent 30s gap. Off a TTY (redirected to
+    // a file) we skip the heartbeat — \r would just spam lines — and only note the
+    // sampled fallback, keeping the log to one line per type.
+    let step = 'full scan'
+    const beat = () => process.stderr.write(`${CLEAR}  ${tag} ⏳ ${short} — ${step} (${secs(tt)})`)
+    let timer: ReturnType<typeof setInterval> | undefined
+    if (isTTY) { beat(); timer = setInterval(beat, 1000) }
+    const profile = await profileType(url, type, totals[type] ?? 0, (s) => {
+      step = s
+      if (isTTY) beat()
+      else console.error(`  ${tag}   ↳ ${short}: ${s}`)
+    })
+    if (timer) clearInterval(timer)
+    if (isTTY) process.stderr.write(CLEAR) // wipe the heartbeat before the result line
     if (profile) {
       out[type] = profile
       okCount++
       if (profile.sampled) sampledCount++
       const card = profile.properties.some(pr => pr.max !== undefined) ? ', card' : ''
-      console.error(`  [${i + 1}/${typeUris.length}] ${profile.sampled ? '~' : '✓'} ${type} (${profile.properties.length} props${card}, ${secs(tt)})`)
+      console.error(`  ${tag} ${profile.sampled ? '~' : '✓'} ${type} (${profile.properties.length} props${card}, ${secs(tt)})`)
     } else if (!out[type]) {
       // keep any prior good entry; only record a failure if we have nothing
       out[type] = { ok: false, properties: [] }
     }
   }
-  cfg.typeProperties = out
+  // Sort by type URI so key order is deterministic — clean git diffs across
+  // runs, instead of tracking typeInventory's count-order (which drifts).
+  cfg.typeProperties = sortKeys(out)
   console.error(`  → ${okCount}/${typeUris.length} OK (${sampledCount} sampled, no cardinality) in ${secs(p)}`)
 
   // ── Subclass hierarchy (for the nested sidebar tree) ───────────────────
   p = phase('Subclasses')
   const subs = await profileSubclasses(url, typeUris)
-  if (subs) { cfg.subclasses = subs; console.error(`  → ${Object.keys(subs).length} superclasses in ${secs(p)}`) }
+  if (subs) { cfg.subclasses = sortKeys(subs); console.error(`  → ${Object.keys(subs).length} superclasses in ${secs(p)}`) }
 
   // ── Embed composition — only over types configured as render:embed ─────
   const embeds = Object.entries(cfg.types ?? {})
@@ -311,7 +336,7 @@ async function main() {
     .map(([uri]) => uri)
   p = phase(`Composition — ${embeds.length} embed types`)
   const comp = await profileComposition(url, embeds)
-  if (comp) { cfg.composition = comp; console.error(`  → ${Object.keys(comp).length} composing classes in ${secs(p)}`) }
+  if (comp) { cfg.composition = sortKeys(comp); console.error(`  → ${Object.keys(comp).length} composing classes in ${secs(p)}`) }
 
   // ── Embed-orphan counts — embed types that pin an owning predicate ─────
   const orphanPairs = Object.entries(cfg.types ?? {})
@@ -319,7 +344,7 @@ async function main() {
     .map(([uri, c]) => ({ type: uri, via: (c as { embedVia: string }).embedVia, total: totals[uri] ?? 0 }))
   p = phase(`Orphan counts — ${orphanPairs.length} pinned embed types`)
   const orphans = await profileOrphanCounts(url, orphanPairs)
-  if (orphans) { cfg.orphanCounts = orphans; console.error(`  → ${Object.keys(orphans).length} types with orphans in ${secs(p)}`) }
+  if (orphans) { cfg.orphanCounts = sortKeys(orphans); console.error(`  → ${Object.keys(orphans).length} types with orphans in ${secs(p)}`) }
 
   cfg.profiledAt = new Date().toISOString()
   await writeFile(path, JSON.stringify(cfg, null, 2) + '\n')
