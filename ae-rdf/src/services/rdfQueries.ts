@@ -297,7 +297,9 @@ export function buildPathCountQuery(chain: string[], s: GraphStrategy): string {
     lines.push(stmt(`?x${i - 1} ?p${i} ?x${i}`))
     lines.push(stmt(`?x${i} a <${chain[i]}>`))
   }
-  return `SELECT (COUNT(DISTINCT ?x${hops}) AS ?n) WHERE { ${lines.join(' ')} }`
+  // Join with ' . ': bare triple patterns (useDefault) REQUIRE a dot separator,
+  // and a dot after a GRAPH{…} block is also valid, so it works for both shapes.
+  return `SELECT (COUNT(DISTINCT ?x${hops}) AS ?n) WHERE { ${lines.join(' . ')} }`
 }
 
 const SUBCLASS_OF = 'http://www.w3.org/2000/01/rdf-schema#subClassOf'

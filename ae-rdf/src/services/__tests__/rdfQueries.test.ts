@@ -345,18 +345,17 @@ describe('buildPathCountQuery', () => {
   const C = 'http://e.org/PublicBody'
   const E1 = 'http://e.org/Site'
   const E2 = 'http://e.org/PostalAddress'
-  it('chains class → embeds and counts the leaf; plain on default', () => {
+  it('chains class → embeds and counts the leaf; plain on default, DOT-separated', () => {
     const q = buildPathCountQuery([C, E1, E2], DEFAULT)
     expect(q).toContain('SELECT (COUNT(DISTINCT ?x2) AS ?n)')
-    expect(q).toContain(`?x0 a <${C}>`)
-    expect(q).toContain(`?x0 ?p1 ?x1`)
-    expect(q).toContain(`?x1 a <${E1}>`)
-    expect(q).toContain(`?x1 ?p2 ?x2`)
-    expect(q).toContain(`?x2 a <${E2}>`)
+    // Bare triples MUST be dot-separated or Virtuoso rejects the query
+    // (SP030 syntax error) — assert the full joined body, not each triple alone.
+    expect(q).toContain(`?x0 a <${C}> . ?x0 ?p1 ?x1 . ?x1 a <${E1}> . ?x1 ?p2 ?x2 . ?x2 a <${E2}>`)
     expect(q).not.toContain('GRAPH')
   })
-  it('merged (never default) wraps each statement in its own GRAPH', () => {
-    expect(buildPathCountQuery([C, E1], NAMED)).toContain(`GRAPH ?g0 { ?x0 a <${C}> }`)
+  it('merged (never default) wraps each statement in its own GRAPH, dot-separated', () => {
+    expect(buildPathCountQuery([C, E1], NAMED))
+      .toContain(`GRAPH ?g0 { ?x0 a <${C}> } . GRAPH ?g1 { ?x0 ?p1 ?x1 } . GRAPH ?g2 { ?x1 a <${E1}> }`)
   })
   it('returns empty for too-short chains or unsafe IRIs', () => {
     expect(buildPathCountQuery([C], DEFAULT)).toBe('')
