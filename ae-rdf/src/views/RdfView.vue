@@ -36,14 +36,18 @@ watch(
   (r) => {
     const uri = typeof r === 'string' ? r : null
     browseStore.setResource(uri)
-    if (uri) uriInput.value = uri
+    uriInput.value = uri ?? '' // clear stale input when ?resource is dropped (R34)
   },
   { immediate: true }
 )
 
 watch(
   () => route.query[URL_PARAMS.TYPE],
-  (t) => browseStore.setType(typeof t === 'string' ? t : null),
+  (t) => {
+    const type = typeof t === 'string' ? t : null
+    browseStore.setType(type)
+    if (type) browseStore.setResource(null) // ?type wins over a leftover ?resource (R33)
+  },
   { immediate: true }
 )
 

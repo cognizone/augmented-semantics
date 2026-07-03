@@ -12,7 +12,7 @@ import { useRoute, useRouter } from 'vue-router'
 import ProgressSpinner from 'primevue/progressspinner'
 import { useBrowseStore, useSettingsStore, useTypeConfigStore } from '../../stores'
 import { useResourceView, useIncomingRelations, useClipboard, useDelayedLoading } from '../../composables'
-import { LABEL_PREDICATES } from '../../services'
+import { LABEL_PREDICATES, validateURI } from '../../services'
 import { localName as localNameOf, humanizeLocalName, qname as toQname, displayType } from '../../utils/format'
 import { orderedByConfig, toggleInList } from '../../utils/propertyOrder'
 import { URL_PARAMS } from '../../router'
@@ -47,6 +47,9 @@ const incomingOpen = ref(false)
 const INCOMING_LIMIT = 1000
 
 const uri = computed(() => browseStore.currentResource)
+// Protocol-check before it hits the href sink — a ?resource=javascript:… deep
+// link would otherwise be a clickable script sink in the app origin (R01).
+const safeHref = computed(() => validateURI(uri.value ?? '') ?? undefined)
 const showGraphs = ref(false)
 
 function toggleIncoming() {
@@ -113,7 +116,11 @@ function onReorder(section: 'attr' | 'rel', predicates: string[]) {
   if (!cfgType.value) return
   const attrPreds = section === 'attr' ? predicates : attributes.value.map(g => g.predicate)
   const relPreds = section === 'rel' ? predicates : relationships.value.map(g => g.predicate)
-  typeConfig.set(cfgType.value, { order: [...attrPreds, ...relPreds] })
+  const seq = [...attrPreds, ...relPreds]
+  // Preserve predicates configured on this type but absent from the current
+  // (sparse) instance — otherwise dragging here erases them for every instance (R04).
+  const preserved = orderList.value.filter(p => !seq.includes(p))
+  typeConfig.set(cfgType.value, { order: [...seq, ...preserved] })
 }
 
 function onToggleHide(predicate: string) {
@@ -200,7 +207,7 @@ onUnmounted(() => scrollEl.value?.removeEventListener('scroll', onScroll))
 
       <!-- URI + copy (left) share a row with graph provenance (right) -->
       <div class="rh-sub-row">
-        <a :href="uri" target="_blank" rel="noopener" class="resource-uri" v-tooltip.top="{ value: uri, showDelay: 120 }">{{ uri }}</a>
+        <a :href="safeHref" target="_blank" rel="noopener" class="resource-uri" v-tooltip.top="{ value: uri, showDelay: 120 }">{{ uri }}</a>
         <button class="copy-btn" aria-label="Copy URI" title="Copy URI" @click="copyToClipboard(uri, 'URI')">
           <span class="material-symbols-outlined">content_copy</span>
         </button>

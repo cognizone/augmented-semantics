@@ -163,6 +163,10 @@ export const useEndpointStore = defineStore('endpoint', () => {
   }
 
   function saveToStorage() {
+    // Config endpoints are never user-managed and are re-loaded from the config
+    // file each start; persisting them to ae-endpoints only creates ghost
+    // endpoints if the config later goes missing (R05).
+    if (configMode.value) return
     try {
       // Never persist credentials — keep the auth *type* so we know to prompt
       // on connect, but the secret lives only in memory for the session.
@@ -224,7 +228,8 @@ export const useEndpointStore = defineStore('endpoint', () => {
       id: existing.id,
       name: updates.name ?? existing.name,
       url: updates.url ?? existing.url,
-      auth: updates.auth ?? existing.auth,
+      // 'auth' present (even undefined) overwrites, so it can be reset to None (R06).
+      auth: 'auth' in updates ? updates.auth : existing.auth,
       analysis: updates.analysis ?? existing.analysis,
       // 'graph' present (even undefined) overwrites, so it can be reset to auto.
       graph: 'graph' in updates ? updates.graph : existing.graph,

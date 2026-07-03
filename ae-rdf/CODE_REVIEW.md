@@ -12,24 +12,25 @@ Check a box when the issue is fixed.
 
 ## 🔴 Security
 
-- [ ] **R01 · `src/components/rdf/ResourceView.vue:203`** (also `views/RdfView.vue:51`, `App.vue:165`) — `CONFIRMED`
+- [x] **R01 · `src/components/rdf/ResourceView.vue:203`** (also `views/RdfView.vue:51`, `App.vue:165`) — `CONFIRMED`
+  _Fixed:_ `?resource` href sink now protocol-checked via `validateURI` (`safeHref`). The `App.vue:165` `docsUrl` sink is a config-sourced variant tracked separately under R26/R50 — still open.
   Untrusted `?resource` deep-link param is bound into `<a :href="uri">` with no protocol validation. `sanitizeIri` only gates the SPARQL query, never this DOM sink → a `#/?resource=javascript:…` link is a **reflected XSS** executing in the app origin (holds endpoint creds in memory/localStorage).
 
-- [ ] **R02 · `src/services/sparql.ts:76`** — `CONFIRMED`
+- [x] **R02 · `src/services/sparql.ts:76`** — `CONFIRMED`
   `getAuthHeaders` injects the API key under a header name taken verbatim from `credentials.headerName` with no validation. A CRLF/illegal name makes the `Headers` constructor throw a `TypeError`, which the catch at `:367` **misclassifies as a retriable NETWORK_ERROR** → burns 3 retries, real misconfig never surfaces.
 
-- [ ] **R03 · `src/services/sparql.ts:288`** — `PLAUSIBLE`
+- [x] **R03 · `src/services/sparql.ts:288`** — `PLAUSIBLE`
   `fetch` uses default `redirect:'follow'`. A cross-origin 3xx redirect **re-sends app-set custom headers** (e.g. `X-API-Key`) to the redirect target per the Fetch spec (`Authorization` is stripped, custom headers are not) → API key leaked. No `redirect:'error'`/manual guard in `executeSparql` or `fetchRawRdf`.
 
 ## 🟠 Silent data corruption / config integrity
 
-- [ ] **R04 · `src/components/rdf/ResourceView.vue:116`** — `CONFIRMED`
+- [x] **R04 · `src/components/rdf/ResourceView.vue:116`** — `CONFIRMED`
   `onReorder` rebuilds the persisted `order` from only the predicates present on the current instance; `typeConfig.set` replaces the whole array. Dragging on a **sparse instance permanently erases** configured predicates it lacks — for every instance of that type.
 
-- [ ] **R05 · `src/stores/endpoint.ts:218`** — `CONFIRMED`
+- [x] **R05 · `src/stores/endpoint.ts:218`** — `CONFIRMED`
   `updateEndpoint` has no config-mode guard (unlike `add`/`remove`). Selecting a config endpoint (updates `lastAccessedAt`/`accessCount` → `saveToStorage`) **writes `config-*` endpoints into `ae-endpoints` localStorage** → ghost endpoints if the config is later absent or fails to load.
 
-- [ ] **R06 · `src/stores/endpoint.ts:227`** — `CONFIRMED`
+- [x] **R06 · `src/stores/endpoint.ts:227`** — `CONFIRMED`
   `auth: updates.auth ?? existing.auth` ignores `auth:undefined`. Switching an endpoint to "None" is silently dropped → **can't remove auth**; app keeps sending old credentials. Needs the `'auth' in updates` reset pattern used for `graph` two lines above.
 
 - [ ] **R07 · `src/components/common/CredentialsPrompt.vue:29`** — `CONFIRMED`
@@ -142,11 +143,11 @@ Ranked below R01–R25 by the review (mostly `PLAUSIBLE`, plus a few `CONFIRMED`
   rangeLabel returns '0' whenever `total` is 0, but the list still renders a full page of instances during (and after a failed) lazy count.
   _Impact:_ On every fresh type selection useInstanceList resets `total` to 0 and fills it in only when the count lands. During that window (and permanently if the count query fails) the header badge shows '0' even though 25 instance rows are visibly listed below it, so the count badge contradicts the visible list.
 
-- [ ] **R33 · `src/views/RdfView.vue:44`** — `PLAUSIBLE`
+- [x] **R33 · `src/views/RdfView.vue:44`** — `PLAUSIBLE`
   The ?type watcher sets browseStore.currentType but never clears currentResource; combined with ResourceView taking template precedence over InstanceList, selecting a type via a URL that still carries ?resource keeps showing the old resource instead of the newly selected type's instance list.
   _Impact:_ URL is ?resource=X (ResourceView showing X). A deep link or history entry navigates to ?type=T&resource=X (both params present). The ?type watcher sets currentType=T, but currentResource stays X because nothing cleared it; RdfView's v-if chain renders ResourceView (currentResource truthy) so the user sees resource X, not T's instance list, despite having 'selected' type T.
 
-- [ ] **R34 · `src/views/RdfView.vue:39`** — `CONFIRMED`
+- [x] **R34 · `src/views/RdfView.vue:39`** — `CONFIRMED`
   The ?resource watcher sets uriInput when a resource is present but never clears it when the resource is dropped from the URL.
   _Impact:_ User inspects resource X (URI bar shows X), then clicks a type in the sidebar; selectType pushes only ?type, dropping ?resource. The resource watcher fires with r=null and skips the assignment (guarded by `if (uri)`), so the URI input keeps displaying the previously-viewed resource X while the instance list is shown — a stale, misleading input value.
 

@@ -95,6 +95,16 @@ function getAuthHeaders(endpoint: SPARQLEndpoint): HeadersInit {
     case 'apikey':
       if (credentials?.apiKey) {
         const headerName = credentials.headerName || 'X-API-Key'
+        // Must be a valid HTTP field-name token; otherwise the Headers/fetch
+        // constructor throws a TypeError that the catch below misreads as a
+        // retriable network error, burning retries and hiding the misconfig (R02).
+        if (!/^[A-Za-z0-9!#$%&'*+.^_`|~-]+$/.test(headerName)) {
+          throw createError(
+            'AUTH_FAILED',
+            'Invalid API key header name',
+            `"${headerName}" is not a valid HTTP header name`
+          )
+        }
         return { [headerName]: credentials.apiKey }
       }
       break
@@ -294,6 +304,9 @@ export async function executeSparql(
         },
         body: `query=${encodeURIComponent(query)}`,
         signal: controller.signal,
+        // Don't follow cross-origin redirects: fetch would re-send our custom
+        // auth headers (e.g. X-API-Key) to the redirect target (R03).
+        redirect: 'error',
       })
 
       clearTimeout(timeoutId)
@@ -935,6 +948,7 @@ export async function fetchRawRdf(
       },
       body: `query=${encodeURIComponent(query)}`,
       signal: controller.signal,
+      redirect: 'error', // don't leak auth headers to a redirect target (R03)
     })
 
     clearTimeout(timeoutId)
