@@ -81,24 +81,32 @@ export async function loadConfig(): Promise<ResolvedConfig> {
     // Validate config structure (allows string slug entries)
     validateConfig(raw)
 
+    // A deployment that *declares* endpoints is locked, even if some slug files
+    // fail to resolve below — otherwise all-failed resolution silently reverts a
+    // locked deployment to the full user-managed manager (R09).
+    const declaredEndpoints = Array.isArray(raw.endpoints) && raw.endpoints.length > 0
+
     // Resolve slug entries into ConfigEndpoint objects; after this the config
     // matches AppConfig (endpoints are all objects) for everything downstream.
     await resolveEndpointFiles(raw)
     const config = raw as AppConfig
 
-    const hasConfigEndpoints = Array.isArray(config.endpoints) && config.endpoints.length > 0
+    const resolvedCount = config.endpoints?.length ?? 0
 
     logger.info('ConfigService', 'Config loaded successfully', {
-      configMode: hasConfigEndpoints,
-      endpointCount: config.endpoints?.length ?? 0,
+      configMode: declaredEndpoints,
+      endpointCount: resolvedCount,
       appName: config.appName,
     })
 
     state.value = {
-      configMode: hasConfigEndpoints,
+      configMode: declaredEndpoints,
       config,
       loaded: true,
-      error: null,
+      error:
+        declaredEndpoints && resolvedCount === 0
+          ? 'All configured endpoints failed to load'
+          : null,
     }
   } catch (error) {
     logger.error('ConfigService', 'Failed to load config', { error })
@@ -113,6 +121,15 @@ export async function loadConfig(): Promise<ResolvedConfig> {
   return state.value
 }
 
+function assertValidEndpoint(ep: ConfigEndpoint): void {
+  if (!ep?.name || typeof ep.name !== 'string') {
+    throw new Error('Each endpoint must have a name')
+  }
+  if (!ep.url || typeof ep.url !== 'string') {
+    throw new Error('Each endpoint must have a url')
+  }
+}
+
 function validateConfig(config: RawAppConfig): void {
   if (config.endpoints) {
     if (!Array.isArray(config.endpoints)) {
@@ -123,12 +140,7 @@ function validateConfig(config: RawAppConfig): void {
         if (!ep) throw new Error('Endpoint slug must be a non-empty string')
         continue // resolved later from config/endpoints/<slug>.json
       }
-      if (!ep.name || typeof ep.name !== 'string') {
-        throw new Error('Each endpoint must have a name')
-      }
-      if (!ep.url || typeof ep.url !== 'string') {
-        throw new Error('Each endpoint must have a url')
-      }
+      assertValidEndpoint(ep)
     }
   }
 }
@@ -149,7 +161,9 @@ async function resolveEndpointFiles(config: RawAppConfig): Promise<void> {
           { cache: 'no-store' },
         )
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
-        return (await res.json()) as ConfigEndpoint
+        const data = (await res.json()) as ConfigEndpoint
+        assertValidEndpoint(data) // slug files are otherwise unvalidated (R08)
+        return data
       } catch (err) {
         logger.warn('ConfigService', `Skipping endpoint file '${ep}'`, { err })
         return null

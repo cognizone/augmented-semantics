@@ -169,10 +169,17 @@ export const useEndpointStore = defineStore('endpoint', () => {
     if (configMode.value) return
     try {
       // Never persist credentials — keep the auth *type* so we know to prompt
-      // on connect, but the secret lives only in memory for the session.
-      const sanitized = endpoints.value.map(e =>
-        e.auth && e.auth.type !== 'none' ? { ...e, auth: { type: e.auth.type } } : e
-      )
+      // on connect, but the secret lives only in memory for the session. The
+      // apikey header *name* is not a secret and must survive reload, else the
+      // prompt falls back to X-API-Key and the key is sent under it (R07).
+      const sanitized = endpoints.value.map(e => {
+        if (!e.auth || e.auth.type === 'none') return e
+        const headerName = e.auth.credentials?.headerName
+        return {
+          ...e,
+          auth: { type: e.auth.type, ...(headerName ? { credentials: { headerName } } : {}) },
+        }
+      })
       localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitized))
     } catch (e) {
       logger.error('EndpointStore', 'Failed to save endpoints to storage', { error: e })

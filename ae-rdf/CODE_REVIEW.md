@@ -33,13 +33,15 @@ Check a box when the issue is fixed.
 - [x] **R06 · `src/stores/endpoint.ts:227`** — `CONFIRMED`
   `auth: updates.auth ?? existing.auth` ignores `auth:undefined`. Switching an endpoint to "None" is silently dropped → **can't remove auth**; app keeps sending old credentials. Needs the `'auth' in updates` reset pattern used for `graph` two lines above.
 
-- [ ] **R07 · `src/components/common/CredentialsPrompt.vue:29`** — `CONFIRMED`
+- [x] **R07 · `src/components/common/CredentialsPrompt.vue:29`** — `CONFIRMED`
+  _Fixed:_ root cause was `saveToStorage` (`stores/endpoint.ts`) stripping the whole `credentials` object; it now retains the non-secret `headerName`.
   Store strips the entire `credentials` object (incl. the non-secret `headerName`) in `saveToStorage`. After reload the prompt falls back to `'X-API-Key'` → API key sent under the **wrong header**, auth fails with no indication the name was reset.
 
-- [ ] **R08 · `src/services/config.ts:152`** — `CONFIRMED`
+- [x] **R08 · `src/services/config.ts:152`** — `CONFIRMED`
   Slug-resolved endpoint files are cast to `ConfigEndpoint` with **no validation** (`validateConfig` only ran on the inline manifest at `:82`). A slug file missing `url` maps to `{url: undefined}` and reaches `fetch` → confusing 404/parse error instead of a clear validation message.
 
-- [ ] **R09 · `src/services/config.ts:89`** — `CONFIRMED`
+- [x] **R09 · `src/services/config.ts:89`** — `CONFIRMED`
+  _Fixed:_ config mode now keys off *declared* endpoints, so an all-failed resolution stays locked (+ sets `error`) instead of reverting. Follow-up: `App.vue` doesn't yet render `config.error`, so the failure is logged but not shown as a banner.
   If every configured endpoint is a slug and all slug files fail to load, `config.endpoints === []` → `hasConfigEndpoints` false → `configMode` false → a **"locked" deployment silently reverts** to the full user-managed endpoint manager.
 
 ## 🟠 Stale data across navigation
