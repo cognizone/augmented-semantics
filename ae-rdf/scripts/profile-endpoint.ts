@@ -5,6 +5,9 @@
  * queries are too unreliable to run at runtime, so we run them once here — with
  * timeouts, retries and a sampled fallback — and bake the result into the
  * endpoint config JSON so the app reads it instead of querying:
+ *   - `graph`          — endpoint graph shape (`quads`, `defaultView`) via the
+ *                        same probes the app runs at connect, baked so the app
+ *                        skips them
  *   - `typeProperties` — distinct properties per type (+ `ok`/`sampled` flags),
  *                        each with per-instance `min`/`max` cardinality on a full
  *                        (non-sampled) scan
@@ -19,10 +22,11 @@
  *   - Auto-suggesting `search`/`label` fields (prefer single-valued required text).
  *   - PropertyTable rendering hints: max=1 → single value, max>1 → list.
  *
- * SAFE BY DESIGN: only `typeProperties`, `subclasses`, `composition` and
- * `profiledAt` are (re)written. Hand-authored `types` / `typeInventory` /
- * everything else is preserved. A per-type property query that fails keeps its
- * previously-profiled entry, so a flaky run never destroys good data.
+ * SAFE BY DESIGN: only `graph`, `typeProperties`, `subclasses`, `composition`,
+ * `orphanCounts` and `profiledAt` are (re)written. Hand-authored `types` /
+ * `typeInventory` / everything else is preserved. A per-type property query that
+ * fails keeps its previously-profiled entry, and an inconclusive graph probe
+ * keeps that axis' prior value — so a flaky run never destroys good data.
  *
  * Usage:
  *   node scripts/profile-endpoint.ts [path-to-endpoint.json]
@@ -48,6 +52,18 @@ interface CompEntry { uri: string; count: number }
 
 const RDFS_SUBCLASS = 'http://www.w3.org/2000/01/rdf-schema#subClassOf'
 const values = (uris: string[]) => uris.map(u => `<${u}>`).join(' ')
+
+// Graph-shape probes — the same two the app runs at connect (sparql.ts
+// detectGraphs / detectDefaultView), baked here so the app reads cfg.graph and
+// skips the runtime probes.
+//   1. named graphs present at all? → quads
+//   2. is the default graph a redundant MERGE of the named graphs? Sample up to
+//      DEFAULT_VIEW_SAMPLE default triples; ANY absent from every named graph ⇒
+//      the default has its own data ('own'), else it's a merge ('merged').
+const DEFAULT_VIEW_SAMPLE = 20000
+const namedGraphAsk = () => `ASK { GRAPH ?g { ?s ?p ?o } }`
+const defaultViewAsk = (n: number) =>
+  `ASK { { SELECT ?s ?p ?o WHERE { ?s ?p ?o } LIMIT ${n} } FILTER NOT EXISTS { GRAPH ?g { ?s ?p ?o } } }`
 
 // ponytail: default-graph triples only (`?s a <T> . ?s ?p ?o`) — matches what
 // this app's target endpoints expose. A quad-only store would need GRAPH
@@ -99,6 +115,45 @@ async function sparql(url: string, query: string): Promise<Record<string, { valu
     }
   }
   throw lastErr
+}
+
+/** Run an ASK; returns the boolean, or undefined on error / non-boolean body. */
+async function ask(url: string, query: string): Promise<boolean | undefined> {
+  for (let attempt = 0; attempt <= RETRIES; attempt++) {
+    const ctrl = new AbortController()
+    const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS)
+    try {
+      const res = await fetch(`${url}?query=${encodeURIComponent(query)}`, {
+        headers: { Accept: 'application/sparql-results+json' },
+        signal: ctrl.signal,
+      })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const json = await res.json()
+      return typeof json.boolean === 'boolean' ? json.boolean : undefined
+    } catch {
+      if (attempt < RETRIES) await new Promise(r => setTimeout(r, 1000 * (attempt + 1)))
+    } finally {
+      clearTimeout(timer)
+    }
+  }
+  return undefined
+}
+
+/**
+ * Detect the endpoint's graph shape: whether named graphs exist (`quads`) and,
+ * if so, whether the default graph is a redundant merge (`defaultView`). Either
+ * axis is left undefined when its probe errors/is inconclusive, so the caller
+ * keeps a hand-authored value rather than clobbering it.
+ */
+async function profileGraph(url: string): Promise<{ quads?: boolean; defaultView?: 'merged' | 'own' }> {
+  const quads = await ask(url, namedGraphAsk())
+  let defaultView: 'merged' | 'own' | undefined
+  if (quads === true) {
+    const someOwn = await ask(url, defaultViewAsk(DEFAULT_VIEW_SAMPLE))
+    if (someOwn === false) defaultView = 'merged'
+    else if (someOwn === true) defaultView = 'own'
+  }
+  return { quads, defaultView }
 }
 
 /**
@@ -215,8 +270,17 @@ async function main() {
   for (const t of (cfg.typeInventory ?? []) as { uri: string; count: number }[]) totals[t.uri] = t.count
   console.error(`Endpoint: ${url}\nTypes: ${typeUris.length}`)
 
+  // ── Graph shape (named graphs? merged default?) ────────────────────────
+  let p = phase('Graph shape')
+  const g = await profileGraph(url)
+  const graph: { quads?: boolean; defaultView?: 'merged' | 'own' } = { ...(cfg.graph ?? {}) }
+  if (g.quads !== undefined) graph.quads = g.quads
+  if (g.defaultView) graph.defaultView = g.defaultView // only a confident merged/own
+  cfg.graph = graph
+  console.error(`  → quads=${graph.quads ?? '?'} defaultView=${graph.defaultView ?? '?'} in ${secs(p)}`)
+
   // ── Properties + per-instance cardinality ──────────────────────────────
-  let p = phase(`Properties + cardinality — ${typeUris.length} types`)
+  p = phase(`Properties + cardinality — ${typeUris.length} types`)
   const out: Record<string, TypeProfile> = { ...(cfg.typeProperties ?? {}) }
   let okCount = 0, sampledCount = 0
   for (const [i, type] of typeUris.entries()) {
