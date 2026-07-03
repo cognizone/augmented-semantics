@@ -69,7 +69,8 @@
       "embedVia": "http://data.europa.eu/s66#hasInvolvedParty",
       "label": [
         "http://data.europa.eu/s66#isRoleOf",
-        "http://data.europa.eu/s66#roleLabel"
+        "http://data.europa.eu/s66#roleLabel",
+        "http://data.europa.eu/s66#isInvolvedIn"
       ],
       "order": [
         "http://data.europa.eu/s66#roleLabel",
@@ -206,8 +207,7 @@
     "http://data.europa.eu/s66#Organisation": {
       "sidebar": "pin",
       "label": [
-        "http://data.europa.eu/s66#legalName",
-        "http://data.europa.eu/s66#vatNumber"
+        "http://data.europa.eu/s66#legalName"
       ],
       "order": [
         "http://data.europa.eu/s66#legalName",
@@ -597,8 +597,7 @@
     },
     "http://data.europa.eu/s66#ForProfitOrganisation": {
       "label": [
-        "http://data.europa.eu/s66#legalName",
-        "http://data.europa.eu/s66#vatNumber"
+        "http://data.europa.eu/s66#legalName"
       ],
       "order": [
         "http://data.europa.eu/s66#legalName",
@@ -619,8 +618,7 @@
     },
     "http://data.europa.eu/s66#SME": {
       "label": [
-        "http://data.europa.eu/s66#legalName",
-        "http://data.europa.eu/s66#vatNumber"
+        "http://data.europa.eu/s66#legalName"
       ],
       "order": [
         "http://data.europa.eu/s66#legalName",
@@ -641,8 +639,7 @@
     },
     "http://data.europa.eu/s66#ResearchOrganisation": {
       "label": [
-        "http://data.europa.eu/s66#legalName",
-        "http://data.europa.eu/s66#vatNumber"
+        "http://data.europa.eu/s66#legalName"
       ],
       "order": [
         "http://data.europa.eu/s66#legalName",
@@ -663,8 +660,7 @@
     },
     "http://data.europa.eu/s66#HigherOrSecondaryEducation": {
       "label": [
-        "http://data.europa.eu/s66#legalName",
-        "http://data.europa.eu/s66#vatNumber"
+        "http://data.europa.eu/s66#legalName"
       ],
       "order": [
         "http://data.europa.eu/s66#legalName",

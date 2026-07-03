@@ -11,8 +11,9 @@
  */
 import { ref, computed, type Ref } from 'vue'
 import { useEndpointStore, useLanguageStore, useBrowseStore, useTypeConfigStore } from '../stores'
-import { executeSparql, resolveUris, logger, buildResourceTriplesQuery, buildLabelsQuery, buildSkosxlLabelsQuery, buildValuesQuery, buildEmbeddedTriplesQuery, resolveGraphStrategy, LABEL_PREDICATES } from '../services'
-import { composeLabel } from '../utils/propertyOrder'
+import { executeSparql, resolveUris, logger, buildResourceTriplesQuery, buildLabelsQuery, buildSkosxlLabelsQuery, buildEmbeddedTriplesQuery, resolveGraphStrategy, LABEL_PREDICATES } from '../services'
+import { labelLangs as computeLabelLangs, pickByLangs } from '../utils/labelLang'
+import { composeLabels } from './composeLabels'
 import { localName as localNameOf } from '../utils/format'
 
 const RDF_TYPE = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'
@@ -64,16 +65,7 @@ export function useResourceView() {
   // languagePriorities (from the endpoint JSON), else the user's global
   // preference, always ending in 'en' as a universal fallback. The first entry
   // drives single-language label queries (buildLabelsQuery).
-  function labelLangs(): string[] {
-    const cfg = endpointStore.current?.languagePriorities?.filter(Boolean) ?? []
-    const base = cfg.length ? cfg : [languageStore.preferred]
-    return [...new Set([...base, 'en'].filter(Boolean))]
-  }
-  /** Pick the best candidate by language priority, then untagged, then first. */
-  function pickByLangs<T extends { lang?: string }>(cands: T[], langs: string[]): T | undefined {
-    for (const l of langs) { const m = cands.find(c => c.lang === l); if (m) return m }
-    return cands.find(c => !c.lang) ?? cands[0]
-  }
+  const labelLangs = () => computeLabelLangs(endpointStore.current?.languagePriorities, languageStore.preferred)
 
   /** Preferred-language literal value for a predicate group, or a URI object's
    *  fetched label / local name. Undefined when the group has no usable value. */
@@ -94,8 +86,26 @@ export function useResourceView() {
     const labelType = [...typeUris].sort().find(u => (typeConfig.get(u).label?.length ?? 0) > 0)
     if (labelType) {
       const preds = typeConfig.get(labelType).label!
-      const composed = composeLabel(preds, p => groupValue(groups.find(g => g.predicate === p), objLabels))
-      if (composed) return composed
+      // On the resource's OWN page there is no relation context to trim against
+      // (composeLabels' selfUri drop only fires for embeds/links), so the full
+      // composed identity would headline every linked entity — org · role ·
+      // project. Keep all literal parts + the FIRST linked entity, drop the rest:
+      // the others are already listed below as relations. All-literal labels
+      // (Organisation, MonetaryAmount) are untouched.
+      let sawLinked = false
+      const parts: string[] = []
+      for (const p of preds) {
+        const group = groups.find(g => g.predicate === p)
+        const value = groupValue(group, objLabels)
+        if (!value) continue
+        const linked = !group?.objects.some(o => o.termType === 'literal')
+        if (linked) {
+          if (sawLinked) continue
+          sawLinked = true
+        }
+        parts.push(value)
+      }
+      if (parts.length) return parts.join(' · ')
     }
 
     const langs = labelLangs()
@@ -337,94 +347,12 @@ export function useResourceView() {
         frontier = embedBudget > 0 ? capFrontier(embedFrontier(nestedPairs)) : []
       }
 
-      // Composed labels: for objects whose type configures a `label`, join the
-      // label fields' values (in order) into the display label, overriding the
-      // generic one. A URI-valued field resolves to the REFERENT's own label —
-      // and that referent may itself be composed — so we walk the label graph a
-      // few hops (GrantPayment → hasRecipient → OrganisationRole → isRoleOf →
-      // Organisation) rather than one. Referents reached ONLY via label fields
-      // (not embedded, not direct objects) get their labels fetched here too —
-      // otherwise a linked object's composed label collapses to its literal parts.
-      const composeType = new Map<string, string>() // subject → its label-configured type
-      for (const [s, t] of typeMap) if ((typeConfig.get(t).label?.length ?? 0) > 0) composeType.set(s, t)
-      if (composeType.size) {
-        const langs = labelLangs()
-        // s → p → ALL values [{v, uri, lang}] (kept so we pick by language),
-        // accumulated across hops.
-        const valByS = new Map<string, Map<string, { v: string; uri: boolean; lang?: string }[]>>()
-        // ponytail: cap the label graph walk at 3 hops (payment→role→org is 2).
-        const MAX_LABEL_HOPS = 3
-        let frontier = [...composeType.keys()] // subjects whose fields we still need
-        for (let hop = 0; hop < MAX_LABEL_HOPS && frontier.length; hop++) {
-          const preds = [...new Set(frontier.flatMap(s => typeConfig.get(composeType.get(s)!).label ?? []))]
-          const q = buildValuesQuery(frontier, preds)
-          if (!q) break
-          const vr = await executeSparql(endpoint, q, { retries: 1 }).catch(() => null)
-          if (!isCurrent()) return
-          const targets = new Set<string>()
-          for (const b of vr?.results.bindings ?? []) {
-            const s = b.s?.value, p = b.p?.value, o = b.v
-            if (!s || !p || !o?.value) continue
-            let m = valByS.get(s)
-            if (!m) { m = new Map(); valByS.set(s, m) }
-            const arr = m.get(p) ?? []
-            arr.push({ v: o.value, uri: o.type === 'uri', lang: o['xml:lang'] })
-            m.set(p, arr)
-            if (o.type === 'uri') targets.add(o.value)
-          }
-          // Fetch label + type for referents we don't know yet, so a URI field
-          // resolves to a real label — and a referent that is ITSELF label-
-          // configured becomes the next hop.
-          const unknown = [...targets].filter(u => !labelMap.has(u) || !typeMap.has(u))
-          if (unknown.length) {
-            const tr = await executeSparql(endpoint, buildLabelsQuery(unknown), { retries: 1 }).catch(() => null)
-            if (!isCurrent()) return
-            for (const b of tr?.results.bindings ?? []) {
-              const s = b.s?.value
-              if (!s) continue
-              if (b.label?.value && !labelMap.has(s)) labelMap.set(s, b.label.value)
-              if (b.type?.value && !typeMap.has(s)) typeMap.set(s, b.type.value)
-            }
-          }
-          const next: string[] = []
-          for (const u of targets) {
-            const t = typeMap.get(u)
-            if (t && (typeConfig.get(t).label?.length ?? 0) > 0 && !composeType.has(u)) {
-              composeType.set(u, t)
-              next.push(u)
-            }
-          }
-          frontier = next
-        }
-
-        const pickByLang = <T extends { lang?: string }>(cands: T[]): T | undefined => pickByLangs(cands, langs)
-        // A label field resolves to {text, lang}: a literal picked by language, or
-        // a referenced resource's own (possibly composed) label. labelLang carries
-        // each subject's chosen language so referrers can select consistently.
-        const labelLang = new Map<string, string | undefined>()
-        const resolve = (s: string, p: string): { v: string; lang?: string } | undefined => {
-          const arr = valByS.get(s)?.get(p)
-          if (!arr?.length) return undefined
-          const lits = arr.filter(x => !x.uri)
-          if (lits.length) return pickByLang(lits.map(x => ({ v: x.v, lang: x.lang })))
-          // Only targets whose label is known — never emit a raw UUID (which would
-          // clobber a generic/SKOS-XL label resolved elsewhere).
-          const targets = arr.filter(x => labelMap.has(x.v)).map(x => ({ v: labelMap.get(x.v)!, lang: labelLang.get(x.v) }))
-          return targets.length ? pickByLang(targets) : undefined
-        }
-        // Resolve bottom-up: enough passes for the deepest chain to settle
-        // (payment ← role ← org). Each pass composes over referents resolved so far.
-        for (let pass = 0; pass < MAX_LABEL_HOPS; pass++) {
-          for (const [s, t] of composeType) {
-            const preds = typeConfig.get(t).label ?? []
-            const parts = preds.map(p => resolve(s, p)).filter((c): c is { v: string; lang?: string } => !!c?.v)
-            if (parts.length) {
-              labelMap.set(s, parts.map(c => c.v).join(' · '))
-              labelLang.set(s, parts[0]!.lang)
-            }
-          }
-        }
-      }
+      // Composed labels: override standard labels with the per-type composed label
+      // (label graph walk), for the heading, embedded objects, and every linked
+      // object. `uri` is the viewed resource, so a role's redundant back-reference
+      // to it is dropped from the composed label. See composeLabels.
+      await composeLabels(endpoint, labelMap, typeMap, typeConfig, labelLangs(), uri, isCurrent)
+      if (!isCurrent()) return
 
       // Resolve prefixes for everything the embeds introduced (predicates, object
       // IRIs, datatypes, graphs) plus all object types (badges). resolveUris is

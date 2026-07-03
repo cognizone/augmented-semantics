@@ -9,18 +9,17 @@
  * @see /spec/common/com02-StateManagement.md
  */
 import { ref, watch, type Ref } from 'vue'
-import { useEndpointStore, useBrowseStore, useTypeConfigStore } from '../stores'
+import { useEndpointStore, useBrowseStore, useTypeConfigStore, useLanguageStore } from '../stores'
 import {
   executeSparql,
   resolveUris,
   logger,
   buildInstanceListQuery,
   buildInstanceCountQuery,
-  buildValuesQuery,
   resolveGraphStrategy,
 } from '../services'
-import { composeLabel } from '../utils/propertyOrder'
-import { localName as localNameOf } from '../utils/format'
+import { composeLabels } from './composeLabels'
+import { labelLangs } from '../utils/labelLang'
 
 export interface Instance {
   uri: string
@@ -33,6 +32,7 @@ export function useInstanceList() {
   const endpointStore = useEndpointStore()
   const browseStore = useBrowseStore()
   const typeConfig = useTypeConfigStore()
+  const languageStore = useLanguageStore()
 
   const instances: Ref<Instance[]> = ref([])
   const total = ref(0)
@@ -82,29 +82,15 @@ export function useInstanceList() {
       const r = typeResolved.get(type)
       typeLabel.value = r?.prefix ? `${r.prefix}:${r.localName}` : (r?.localName ?? type)
 
-      // Composed label: if the browsed type configures one, fetch its label
-      // fields for this page and override the standard label (matches the
-      // heading / chip labels). One extra query, only when configured.
-      const labelPreds = typeConfig.get(type).label ?? []
-      if (labelPreds.length && instances.value.length) {
-        const q = buildValuesQuery(instances.value.map(i => i.uri), labelPreds)
-        const vr = q ? await executeSparql(endpoint, q, { retries: 1 }).catch(() => null) : null
+      // Composed label: if the browsed type configures one, override the standard
+      // label via the shared resolver (matches the heading / chip labels, and
+      // resolves URI label fields to the referent's own label, not a raw UUID).
+      if ((typeConfig.get(type).label?.length ?? 0) && instances.value.length) {
+        const labelMap = new Map(instances.value.map(i => [i.uri, i.label]))
+        const typeMap = new Map(instances.value.map(i => [i.uri, type]))
+        await composeLabels(endpoint, labelMap, typeMap, typeConfig, labelLangs(endpoint.languagePriorities, languageStore.preferred), '', isCurrent)
         if (!isCurrent()) return
-        if (vr) {
-          const valByS = new Map<string, Map<string, string>>()
-          for (const b of vr.results.bindings) {
-            const s = b.s?.value, p = b.p?.value, o = b.v
-            if (!s || !p || !o?.value) continue
-            const disp = o.type === 'uri' ? localNameOf(o.value) : o.value
-            let m = valByS.get(s)
-            if (!m) { m = new Map(); valByS.set(s, m) }
-            if (!m.has(p)) m.set(p, disp)
-          }
-          instances.value = instances.value.map(i => {
-            const composed = composeLabel(labelPreds, p => valByS.get(i.uri)?.get(p))
-            return composed ? { ...i, label: composed } : i
-          })
-        }
+        instances.value = instances.value.map(i => ({ ...i, label: labelMap.get(i.uri) ?? i.label }))
       }
 
       if (needCount) {

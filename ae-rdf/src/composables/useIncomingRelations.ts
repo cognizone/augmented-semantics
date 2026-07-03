@@ -8,8 +8,10 @@
  * @see /spec/common/com02-StateManagement.md
  */
 import { ref, type Ref } from 'vue'
-import { useEndpointStore, useBrowseStore } from '../stores'
+import { useEndpointStore, useBrowseStore, useLanguageStore, useTypeConfigStore } from '../stores'
 import { executeSparql, resolveUris, logger, buildIncomingQuery, buildIncomingCountQuery, buildLabelsQuery, resolveGraphStrategy } from '../services'
+import { composeLabels } from './composeLabels'
+import { labelLangs } from '../utils/labelLang'
 import type { PropertyGroup, ResourceObject } from './useResourceView'
 
 const INCOMING_LIMIT = 1000
@@ -19,6 +21,8 @@ type ResolvedMap = Map<string, { prefix: string; localName: string }>
 export function useIncomingRelations() {
   const endpointStore = useEndpointStore()
   const browseStore = useBrowseStore()
+  const languageStore = useLanguageStore()
+  const typeConfig = useTypeConfigStore()
 
   const groups: Ref<PropertyGroup[]> = ref([]) // predicate → referencing subjects
   const count = ref<number | null>(null) // distinct referencing resources (null = unknown)
@@ -140,7 +144,13 @@ export function useIncomingRelations() {
         if (b.label?.value) labelMap.set(s, b.label.value)
         if (b.type?.value) typeMap.set(s, b.type.value)
       }
-      for (const t of typeMap.values()) toResolve.add(t)
+
+      // Compose per-type labels (same resolver as the resource view), so a
+      // referencing Grant reads "project · amount" not its UUID, and an
+      // OrganisationRole reads "org · role" not its verbose raw rdfs:label.
+      await composeLabels(endpoint, labelMap, typeMap, typeConfig, labelLangs(endpoint.languagePriorities, languageStore.preferred), uri, isCurrent)
+      if (!isCurrent()) return
+      for (const t of typeMap.values()) toResolve.add(t) // incl. referent types the walk found
 
       const resolvedMap = await resolveUris([...toResolve])
       if (!isCurrent()) return
