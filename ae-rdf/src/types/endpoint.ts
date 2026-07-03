@@ -109,12 +109,13 @@ export interface TypeProperty extends UriCount {
 
 /**
  * Discovered schema for one type, generated offline by
- * `scripts/profile-properties.ts` (per-type property queries are unreliable at
+ * `scripts/profile-endpoint.ts` (per-type property queries are unreliable at
  * runtime). Carries provenance so a consumer knows whether to trust it or fall
  * back to live behaviour:
  * - `ok`:      the profiling query for this type succeeded.
- * - `sampled`: derived from a sample (LIMIT) rather than a full scan, so the
- *              property list may be incomplete / counts are of the sample.
+ * - `sampled`: the property LIST fell back to a sample (LIMIT), so it may be
+ *              missing rare predicates. Each listed property's counts/cardinality
+ *              are still measured over the full type.
  * Kept as an object (not a bare array) so more metadata can be added later.
  */
 export interface TypeProfile {

@@ -9,8 +9,10 @@
  *                        same probes the app runs at connect, baked so the app
  *                        skips them
  *   - `typeProperties` — distinct properties per type (+ `ok`/`sampled` flags),
- *                        each with per-instance `min`/`max` cardinality on a full
- *                        (non-sampled) scan
+ *                        each measured individually for its occurrence count and
+ *                        per-instance `min`/`max` cardinality (`sampled` means the
+ *                        property LIST fell back to a sample, so it may be missing
+ *                        rare predicates — the measured counts are still full)
  *   - `subclasses`     — rdfs:subClassOf hierarchy among inventory types
  *   - `composition`    — which classes embed which value-types (+ counts)
  * Plus a `profiledAt` stamp. If a section is missing the app falls back to its
@@ -44,7 +46,7 @@ const DEFAULT_CONFIG = resolve(HERE, '../public/config/endpoints/cordis-datalab.
 
 const TIMEOUT_MS = 90_000 // per request; a full GROUP BY over a big type is slow
 const RETRIES = 2
-const SAMPLE_SIZE = 2000 // fallback when the full scan times out / errors
+const SAMPLE_SIZE = 2000 // instance cap when the full property LISTING times out
 
 interface PropEntry { uri: string; count: number; min?: number; max?: number }
 interface TypeProfile { ok: boolean; sampled?: boolean; properties: PropEntry[] }
@@ -73,19 +75,20 @@ const defaultViewAsk = (n: number) =>
 // this app's target endpoints expose. A quad-only store would need GRAPH
 // wrapping; add that (reading cfg.graph) if/when such an endpoint needs it.
 //
-// Full scan: nested aggregation gives BOTH the occurrence count and per-instance
-// cardinality in one query. Inner groups per (?s ?p) → ?c = how many times ?s has
-// ?p; outer rolls up per ?p:
-//   ?n      = SUM(?c)      total occurrences (== the old COUNT(*))
-//   ?havers = COUNT(?s)    distinct instances that have ?p at least once
-//   ?lo/?hi = MIN/MAX(?c)  per-instance occurrence range (both ≥1, over havers)
-// min cardinality = havers < typeTotal ? 0 : lo (some instance lacks ?p ⇒ optional);
-// max cardinality = hi. Heavier than a flat GROUP BY, so it's the full path only —
-// the sampled fallback stays cheap and omits cardinality (a sample can't prove min=0).
-const fullQuery = (t: string) =>
-  `SELECT ?p (SUM(?c) AS ?n) (COUNT(?s) AS ?havers) (MIN(?c) AS ?lo) (MAX(?c) AS ?hi) WHERE { SELECT ?s ?p (COUNT(?o) AS ?c) WHERE { ?s a <${t}> . ?s ?p ?o } GROUP BY ?s ?p } GROUP BY ?p ORDER BY DESC(?n)`
-const sampledQuery = (t: string) =>
-  `SELECT ?p (COUNT(*) AS ?n) WHERE { { SELECT ?s WHERE { ?s a <${t}> } LIMIT ${SAMPLE_SIZE} } ?s ?p ?o } GROUP BY ?p ORDER BY DESC(?n)`
+// A type is profiled PER PROPERTY: first list its distinct predicates, then
+// measure each one separately. That's what powers the "property N/total"
+// progress, and each small query is likelier to succeed (and steadier) than one
+// giant nested aggregation over the whole type.
+const propListQuery = (t: string) =>
+  `SELECT DISTINCT ?p WHERE { ?s a <${t}> . ?s ?p ?o }`
+const sampledPropListQuery = (t: string) =>
+  `SELECT DISTINCT ?p WHERE { { SELECT ?s WHERE { ?s a <${t}> } LIMIT ${SAMPLE_SIZE} } ?s ?p ?o }`
+// Per-property cardinality: inner counts ?p-values per instance → ?c; outer rolls up:
+//   ?n      = SUM(?c)   total occurrences   ?havers = COUNT(?s) instances that have ?p
+//   ?lo/?hi = MIN/MAX(?c) per-instance range (≥1, over havers)
+// min = havers < typeTotal ? 0 : lo (some instance lacks it ⇒ optional); max = hi.
+const propCardQuery = (t: string, p: string) =>
+  `SELECT (SUM(?c) AS ?n) (COUNT(?s) AS ?havers) (MIN(?c) AS ?lo) (MAX(?c) AS ?hi) WHERE { SELECT ?s (COUNT(?o) AS ?c) WHERE { ?s a <${t}> . ?s <${p}> ?o } GROUP BY ?s }`
 const typesQuery = () => `SELECT DISTINCT ?t WHERE { ?s a ?t }`
 // subClassOf among inventory types (both ends filtered to the inventory below).
 const subclassQuery = (uris: string[]) =>
@@ -160,40 +163,59 @@ async function profileGraph(url: string): Promise<{ quads?: boolean; defaultView
   return { quads, defaultView }
 }
 
+const shortIri = (u: string) => u.replace(/^.*[#/]/, '') || u
+// Property IRIs come from live results (untrusted) — only interpolate ones that
+// are plainly safe (http(s), no SPARQL/IRI metachars). Skips blank nodes & junk.
+const safeIri = (u: string) => /^https?:\/\/[^\s<>"{}|\\^`]+$/.test(u)
+
 /**
- * Profile one type: full scan first, sampled fallback on failure. `total` is the
- * type's distinct-instance count (from the inventory) — needed to tell "min=0,
- * some instance lacks it" from "min≥1, every instance has it". 0/unknown ⇒ skip
- * the min derivation (leave min undefined rather than assert a wrong required-ness).
+ * Profile one type PER PROPERTY: list its predicates, then measure each — so the
+ * caller can tick "property N/total". `total` is the type's distinct-instance
+ * count (from the inventory), needed to tell min=0 (some instance lacks it) from
+ * min≥1 (every instance has it); 0/unknown ⇒ leave min undefined. `onStep` is
+ * called with 'listing properties', 'sampled property list' (on list fallback),
+ * and `property k/N: <name>` as each is measured.
  */
 async function profileType(url: string, type: string, total: number, onStep?: (step: string) => void): Promise<TypeProfile | null> {
-  // Sampled rows: occurrence count only (no cardinality — a sample can't prove min=0).
-  const sampledEntries = (rows: Record<string, { value: string }>[]): PropEntry[] =>
-    rows.map(b => ({ uri: b.p?.value ?? '', count: parseInt(b.n?.value ?? '0', 10) }))
-      .filter(e => e.uri).sort((a, b) => b.count - a.count)
-  // Full rows: also carry per-instance cardinality (havers/lo/hi → min/max).
-  const fullEntries = (rows: Record<string, { value: string }>[]): PropEntry[] =>
-    rows.map(b => {
+  // 1. List the type's distinct properties (full scan → sampled fallback).
+  onStep?.('listing properties')
+  let sampled = false
+  let props: string[]
+  try {
+    props = (await sparql(url, propListQuery(type))).map(b => b.p?.value ?? '')
+  } catch {
+    onStep?.('sampled property list') // full listing failed (big type) — sample it
+    try {
+      props = (await sparql(url, sampledPropListQuery(type))).map(b => b.p?.value ?? '')
+      sampled = true // list may be incomplete (rare properties missed)
+    } catch (e) {
+      console.error(`  ✗ ${type} — ${(e as Error).message}`)
+      return null
+    }
+  }
+  props = props.filter(safeIri)
+
+  // 2. Measure each property: occurrence count + per-instance min/max cardinality.
+  const entries: PropEntry[] = []
+  for (let i = 0; i < props.length; i++) {
+    const p = props[i]
+    onStep?.(`property ${i + 1}/${props.length}: ${shortIri(p)}`)
+    const e: PropEntry = { uri: p, count: 0 }
+    try {
+      const b = (await sparql(url, propCardQuery(type, p)))[0] ?? {}
       const havers = parseInt(b.havers?.value ?? '0', 10)
       const lo = parseInt(b.lo?.value ?? '0', 10)
       const hi = parseInt(b.hi?.value ?? '0', 10)
-      const e: PropEntry = { uri: b.p?.value ?? '', count: parseInt(b.n?.value ?? '0', 10) }
+      e.count = parseInt(b.n?.value ?? '0', 10)
       if (hi > 0) e.max = hi
       if (total > 0 && havers > 0) e.min = havers < total ? 0 : lo
-      return e
-    }).filter(e => e.uri).sort((a, b) => b.count - a.count)
-  try {
-    return { ok: true, properties: fullEntries(await sparql(url, fullQuery(type))) }
-  } catch {
-    // full scan failed (usually a server-side timeout) — try a sample
+    } catch {
+      // one property's measurement failed — keep it (uri only), don't fail the type
+    }
+    entries.push(e)
   }
-  onStep?.('sampled fallback')
-  try {
-    return { ok: true, sampled: true, properties: sampledEntries(await sparql(url, sampledQuery(type))) }
-  } catch (e) {
-    console.error(`  ✗ ${type} — ${(e as Error).message}`)
-    return null
-  }
+  entries.sort((a, b) => b.count - a.count)
+  return { ok: true, sampled: sampled || undefined, properties: entries }
 }
 
 /** rdfs:subClassOf hierarchy among the inventory types → { super: [subs] }. */
@@ -294,18 +316,19 @@ async function main() {
     const tt = Date.now()
     const tag = `[${i + 1}/${typeUris.length}]`
     const short = type.replace(/^.*[#/]/, '') || type
-    // Live progress: on a TTY, tick the elapsed time + current step in place so a
-    // slow type (a big full scan) isn't a silent 30s gap. Off a TTY (redirected to
-    // a file) we skip the heartbeat — \r would just spam lines — and only note the
-    // sampled fallback, keeping the log to one line per type.
-    let step = 'full scan'
+    // Live progress: on a TTY, tick elapsed + current step (which property is
+    // being measured) in place so a slow type isn't a silent gap. Off a TTY
+    // (redirected to a file) the \r heartbeat would just spam lines, so we skip
+    // the per-property ticks and only note the sampled-list fallback — one line
+    // per type on the happy path.
+    let step = 'listing properties'
     const beat = () => process.stderr.write(`${CLEAR}  ${tag} ⏳ ${short} — ${step} (${secs(tt)})`)
     let timer: ReturnType<typeof setInterval> | undefined
     if (isTTY) { beat(); timer = setInterval(beat, 1000) }
     const profile = await profileType(url, type, totals[type] ?? 0, (s) => {
       step = s
       if (isTTY) beat()
-      else console.error(`  ${tag}   ↳ ${short}: ${s}`)
+      else if (s === 'sampled property list') console.error(`  ${tag}   ↳ ${short}: ${s}`)
     })
     if (timer) clearInterval(timer)
     if (isTTY) process.stderr.write(CLEAR) // wipe the heartbeat before the result line
