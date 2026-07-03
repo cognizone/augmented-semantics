@@ -16,7 +16,7 @@ import Checkbox from 'primevue/checkbox'
 import Select from 'primevue/select'
 import Menu from 'primevue/menu'
 import { useUIStore, useSettingsStore, useEndpointStore } from './stores'
-import { useConfig } from './services'
+import { useConfig, validateURI } from './services'
 import { buildAppConfig, buildEndpointConfig, endpointSlug, downloadJson } from './utils/configExport'
 import { getKnownPrefixes, getDisplayPrefixes } from './services'
 import EndpointManager from './components/common/EndpointManager.vue'
@@ -67,11 +67,18 @@ const uriDisplayOptions = [
 const appName = computed(() => config.value.config?.appName ?? 'AE RDF')
 watch(appName, (name) => { document.title = name }, { immediate: true })
 
+// Config values reach DOM URL sinks (<a href>, <img src>); a hostile/misconfigured
+// config could inject a `javascript:` URL. Vet absolute URLs via validateURI; pass
+// relative paths through (same-origin, e.g. the default config/logo.png). (R26)
+function safeConfigUrl(u?: string | null): string | null {
+  if (!u) return null
+  return /^[a-z][a-z0-9+.-]*:/i.test(u) ? validateURI(u) : u
+}
 const logoUrl = computed(() =>
-  config.value.config?.logoUrl ?? (config.value.configMode ? `${import.meta.env.BASE_URL}config/logo.png` : null)
+  safeConfigUrl(config.value.config?.logoUrl) ?? (config.value.configMode ? `${import.meta.env.BASE_URL}config/logo.png` : null)
 )
 const docsUrl = computed(() =>
-  config.value.config?.documentationUrl ??
+  safeConfigUrl(config.value.config?.documentationUrl) ??
   'https://github.com/cognizone/augmented-semantics/tree/main/ae-rdf'
 )
 
@@ -217,6 +224,11 @@ onUnmounted(() => {
         <label class="checkbox-label">
           <Checkbox v-model="settingsStore.showHidden" :binary="true" />
           <span class="checkbox-text">Show hidden fields<small>Reveal properties hidden by the endpoint config (greyed), without entering edit mode</small></span>
+        </label>
+
+        <label class="checkbox-label">
+          <Checkbox v-model="settingsStore.groupsCollapsed" :binary="true" />
+          <span class="checkbox-text">Collapse groups by default<small>Named sidebar groups (e.g. Ontology) start collapsed. “Hidden” always starts collapsed, “Embedded” expanded.</small></span>
         </label>
 
         <label class="checkbox-label">

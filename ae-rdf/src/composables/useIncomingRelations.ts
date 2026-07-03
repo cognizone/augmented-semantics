@@ -162,7 +162,10 @@ export function useIncomingRelations() {
       objectLabels.value = labelMap
       objectTypes.value = typeMap
       resolved.value = resolvedMap
-      count.value = countRes ? parseInt(countRes.results.bindings[0]?.n?.value ?? '0', 10) : null
+      // Only overwrite on success: a failed list-time count must NOT erase the
+      // value the eager loadCount() already put in the headline (R27). count stays
+      // whatever it was (loadCount's number, or null if that hadn't landed either).
+      if (countRes) count.value = parseInt(countRes.results.bindings[0]?.n?.value ?? '0', 10)
       // The list query projects raw ?s ?g ?p (no DISTINCT), so a quad store
       // multiplies rows per graph — hitting the row cap does NOT mean 1,000
       // distinct subjects. Report the real count assembled, and only flag

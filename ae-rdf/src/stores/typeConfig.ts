@@ -19,6 +19,20 @@ export const useTypeConfigStore = defineStore('typeConfig', () => {
     return endpointStore.current?.types?.[typeUri] ?? {}
   }
 
+  /** The one type whose config governs a multi-typed resource: the first (sorted)
+   *  of `typeUris` carrying any order/hide/label config, else the first type.
+   *  ONE rule so the heading's composed label (useResourceView.deriveLabel) and
+   *  the edit-panel toggles (ResourceView.cfgType) act on the SAME config — picked
+   *  independently they drifted, so toggling a label wrote a type the heading
+   *  didn't read from. (R28) */
+  function configType(typeUris: string[]): string | null {
+    const sorted = [...typeUris].sort()
+    return sorted.find(u => {
+      const c = get(u)
+      return (c.order?.length ?? 0) > 0 || (c.hide?.length ?? 0) > 0 || (c.label?.length ?? 0) > 0
+    }) ?? sorted[0] ?? null
+  }
+
   /** Merge a patch into a type's config on the current endpoint; prune empties. */
   function set(typeUri: string, patch: Partial<TypeConfig>) {
     const ep = endpointStore.current
@@ -33,5 +47,5 @@ export const useTypeConfigStore = defineStore('typeConfig', () => {
     endpointStore.updateEndpoint(ep.id, { types: Object.keys(all).length ? all : undefined })
   }
 
-  return { get, set }
+  return { get, set, configType }
 })

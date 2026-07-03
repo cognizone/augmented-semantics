@@ -181,11 +181,19 @@ describe('instance filter (label OR URI)', () => {
     expect(buildInstanceCountQuery(TYPE, NAMED, '  ')).toBe(buildInstanceCountQuery(TYPE, NAMED))
   })
 
-  it('matches URI OR every LABEL_PREDICATES label, both sides LCASE (case-insensitive)', () => {
+  it('matches URI OR every LABEL_PREDICATES label via a JOIN (no correlated EXISTS)', () => {
     const q = buildInstanceListQuery(TYPE, DEFAULT, 25, 0, 'smith')
-    expect(q).toContain('CONTAINS(LCASE(STR(?s)), LCASE("smith"))')
-    expect(q).toContain(`EXISTS { VALUES ?lp { ${labelValues} }`)
-    expect(q).toContain('CONTAINS(LCASE(STR(?lbl)), LCASE("smith"))')
+    expect(q).toContain('CONTAINS(LCASE(STR(?s)), LCASE("smith"))')   // URI branch
+    expect(q).toContain(`VALUES ?lp { ${labelValues} }`)              // label branch, joined
+    expect(q).toContain('CONTAINS(LCASE(STR(?lbl)), LCASE("smith"))') // label branch
+    expect(q).toContain('} UNION {')                                  // two branches...
+    expect(q).not.toContain('EXISTS')                                 // ...not a correlated EXISTS
+  })
+
+  it('AND-of-tokens: a multi-word term requires every word in the same value', () => {
+    const q = buildInstanceListQuery(TYPE, DEFAULT, 25, 0, '  noise   emer ')
+    expect(q).toContain('CONTAINS(LCASE(STR(?lbl)), LCASE("noise")) && CONTAINS(LCASE(STR(?lbl)), LCASE("emer"))')
+    expect(q).toContain('CONTAINS(LCASE(STR(?s)), LCASE("noise")) && CONTAINS(LCASE(STR(?s)), LCASE("emer"))')
   })
 
   it('list and count apply the IDENTICAL filtered body (no paging past a stale total)', () => {
@@ -202,10 +210,11 @@ describe('instance filter (label OR URI)', () => {
       .toContain('{ GRAPH ?lg { ?s ?lp ?lbl } } UNION { ?s ?lp ?lbl }')
   })
 
-  it('escapes the term so a crafted string cannot break out of the literal (injection)', () => {
-    const q = buildInstanceListQuery(TYPE, DEFAULT, 25, 0, 'x") } UNION { ?s ?p ?o } #')
-    expect(q).toContain('x\\") } UNION { ?s ?p ?o } #') // quote escaped in place
-    expect(q).not.toContain('x") } UNION')              // ...so no unescaped breakout survives
+  it('escapes each token so a crafted string cannot break out of the literal (injection)', () => {
+    // no spaces → stays one token (the tokenizer splits on whitespace)
+    const q = buildInstanceListQuery(TYPE, DEFAULT, 25, 0, 'x")}UNION{?s?p?o}')
+    expect(q).toContain('x\\")}UNION{?s?p?o}') // quote escaped in place
+    expect(q).not.toContain('x")}UNION')       // ...so no unescaped breakout survives
     expect(buildInstanceListQuery(TYPE, DEFAULT, 25, 0, 'back\\slash')).toContain('back\\\\slash')
   })
 
@@ -225,6 +234,34 @@ describe('instance filter (label OR URI)', () => {
   it('sanitizes caller predicates and falls back to the 6 defaults if none are valid', () => {
     const q = buildInstanceListQuery(TYPE, DEFAULT, 25, 0, 'x', ['not a safe iri > }'])
     expect(q).toContain(`VALUES ?lp { ${labelValues} }`)
+  })
+})
+
+describe('orphan filter (unreferenced-only)', () => {
+  const VIA = 'http://data.europa.eu/s66#isFundedBy'
+  const bodyOf = (q: string) => q.substring(q.indexOf('WHERE { ') + 8, q.lastIndexOf(' }'))
+
+  it('adds FILTER NOT EXISTS { ?owner <via> ?s } when an orphanVia is given', () => {
+    const q = buildInstanceListQuery(TYPE, DEFAULT, 25, 0, undefined, undefined, VIA)
+    expect(q).toContain(`FILTER NOT EXISTS { ?owner <${VIA}> ?s }`)
+  })
+
+  it('omits the orphan filter when no via (or an unsafe one) is given', () => {
+    expect(buildInstanceListQuery(TYPE, DEFAULT, 25, 0)).not.toContain('?owner')
+    expect(buildInstanceListQuery(TYPE, DEFAULT, 25, 0, undefined, undefined, 'not safe > }')).not.toContain('?owner')
+  })
+
+  it('scopes the owner triple per strategy and applies over a filtered union too', () => {
+    // BOTH: owner triple gets its own graph var, and the orphan FILTER wraps the
+    // search union so it applies to every branch.
+    const q = buildInstanceListQuery(TYPE, BOTH, 25, 0, 'acme', undefined, VIA)
+    expect(q).toContain(`{ GRAPH ?og { ?owner <${VIA}> ?s } } UNION { ?owner <${VIA}> ?s }`)
+    expect(q).toContain('} UNION {') // the search branches survive inside the wrap
+  })
+
+  it('list and count apply the IDENTICAL orphan body', () => {
+    expect(bodyOf(buildInstanceListQuery(TYPE, BOTH, 25, 0, 'acme', undefined, VIA)))
+      .toBe(bodyOf(buildInstanceCountQuery(TYPE, BOTH, 'acme', undefined, VIA)))
   })
 })
 
@@ -278,6 +315,11 @@ describe('buildLabelsQuery', () => {
     const q = buildLabelsQuery(['http://e.org/x> }', RES])
     expect(q).toContain(`<${RES}>`)
     expect(q).not.toContain('x> }')
+  })
+  it('trims whitespace-padded IRIs — emits <trimmed>, not a malformed <  iri  > (R29)', () => {
+    const q = buildLabelsQuery([`  ${RES}  `])
+    expect(q).toContain(`<${RES}>`)
+    expect(q).not.toContain(`<  ${RES}`)
   })
 })
 

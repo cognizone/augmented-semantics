@@ -80,7 +80,8 @@ Check a box when the issue is fixed.
 
 ## 🟡 Graph provenance / type sidebar (core invariants)
 
-- [ ] **R20 · `src/components/rdf/ResourceView.vue:148`** — `CONFIRMED`
+- [x] **R20 · `src/components/rdf/ResourceView.vue:148`** — `CONFIRMED`
+  _Fixed:_ `graphSummary` now folds in the `types.value` graphs, and the graph block renders when `triples.length || types.length` — so a type-only resource shows the named graph its `rdf:type` lives in instead of hiding provenance entirely.
   The header graph summary iterates only `triples.value` (which excludes `rdf:type`) and never `types.value` → the named graph a resource's **type** lives in is dropped. A type-only resource (`triples.length===0`) hides the whole graph block despite rendering type chips → provenance shown nowhere.
 
 - [x] **R21 · `src/components/rdf/TypeList.vue:150`** — `CONFIRMED`
@@ -122,31 +123,38 @@ Recorded so they aren't re-investigated:
 
 Ranked below R01–R25 by the review (mostly `PLAUSIBLE`, plus a few `CONFIRMED` that fell outside the original 25-cap). Same severity scale.
 
-- [ ] **R26 · `src/App.vue:165`** — `PLAUSIBLE`
+- [x] **R26 · `src/App.vue:165`** — `PLAUSIBLE`
+  _Fixed:_ config `logoUrl`/`documentationUrl` now go through `safeConfigUrl` (absolute URLs vetted by `validateURI`; relative same-origin paths passed through) before the `<img src>` / `<a href>` sinks, so a `javascript:` config value is dropped to the safe default. (R50 — `rel="noopener"` on this same anchor — remains open.)
   `documentationUrl` from the loaded config is bound to `<a :href="docsUrl" target="_blank">` (and logoUrl to `:src` at line 143) with no validateURI/protocol check, so a config served to the app can inject a `javascript:` href — config values reach a DOM URL sink un-vetted even though validateURI exists for exactly this.
   _Impact:_ A deployment (or a config file served from a location an attacker can influence, e.g. a shared/static host) sets `documentationUrl: "javascript:alert(document.cookie)"`. config.ts loads it unvalidated (ConfigEndpoint/AppConfig strings are never protocol-checked), App.vue renders `<a href="javascript:...">`; clicking the docs icon runs script in the app origin.
 
-- [ ] **R27 · `src/composables/useIncomingRelations.ts:162`** — `CONFIRMED`
+- [x] **R27 · `src/composables/useIncomingRelations.ts:162`** — `CONFIRMED`
+  _Fixed:_ `load()` now overwrites `count` only when its count query succeeds; a failed list-time COUNT leaves the value `loadCount()` already populated intact, so the "Referenced by (N)" headline keeps its number.
   When the incoming list query succeeds but its parallel count query fails (countRes===null), load() sets count.value=null at the end, erasing a correct value that the eager loadCount() had already populated — the 'Referenced by (N)' headline loses its number after the user expands the section.
   _Impact:_ On resource load, loadCount() runs and sets count.value=12000 (headline shows 'Referenced by 12,000'). User clicks to expand; load() runs, listRes succeeds but the COUNT(DISTINCT) query times out and is caught to null. Line 162 executes count.value = countRes ? … : null, so count becomes null and the headline collapses to just 'Referenced by' with no count, even though a valid count was on screen a moment earlier.
 
-- [ ] **R28 · `src/composables/useResourceView.ts:87`** — `CONFIRMED`
+- [x] **R28 · `src/composables/useResourceView.ts:87`** — `CONFIRMED`
+  _Fixed:_ extracted one rule — `typeConfig.configType(typeUris)` (first sorted type with order/hide/label, else first type) — now used by both `deriveLabel` (heading) and `cfgType` (edit panel), so the composed heading and the label toggles act on the same type config.
   The heading's composed-label type (deriveLabel: first type alphabetically that has a label config) is picked by a different rule than ResourceView's cfgType (first type with order OR hide OR label config), so on a multi-typed resource the heading and the edit-panel label toggles operate on different type configs.
   _Impact:_ A resource has rdf:types A and B (A sorts before B). Type A is configured only { hide:[...] }; type B only { label:[somePred] }. useResourceView.deriveLabel picks labelType=B and renders B's composed label in the heading, but ResourceView.cfgType picks A (it has hide config), so labelList=A.label=[] . Clicking the 'title' toggle in the edit panel writes to A's config and the heading (driven by B) never changes; the highlighted label predicates in the panel also don't match the ones actually composing the heading.
 
-- [ ] **R29 · `src/services/rdfQueries.ts:267`** — `CONFIRMED`
+- [x] **R29 · `src/services/rdfQueries.ts:267`** — `CONFIRMED`
+  _Fixed:_ new `iriValues()` helper sanitizes (trims+validates) at the interpolation point, and every VALUES/paired/chain builder (`buildLabelsQuery`, `buildSkosxlLabelsQuery`, `buildValuesQuery`, `buildEmbeddedTriplesQuery`, `buildCompositionQuery`, `buildSubclassQuery`, `buildEmbedOrphanQuery`, `buildPathCountQuery`) routes through it/`sanitizeIri`, including `instanceMatch`'s configured search predicates. Guard test added.
   VALUES-list builders filter with isNavigableIri(u) (which trims before validating) but interpolate the RAW untrimmed u, so a URI with surrounding whitespace passes the guard yet emits a malformed `<  http://x  >`.
   _Impact:_ A resource/type URI arriving with leading or trailing whitespace (common from copy-paste, config JSON, or some endpoints' bindings) passes isNavigableIri and is embedded as `<  http://e.org/x  >`; Virtuoso/most engines reject the space-containing IRI so the whole labels/composition/subclass/embed query 400s or returns nothing, and labels/embeds silently vanish. sanitizeIri(u) returns the trimmed safe form and is what the single-IRI builders (buildResourceTriplesQuery etc.) use; the VALUES builders (buildLabelsQuery L263-268, buildCompositionQuery L153, buildSubclassQuery L242, buildSkosxlLabelsQuery L295, buildValuesQuery L306-307, buildEmbeddedTriplesQuery L319-324, buildEmbedOrphanQuery L197-198) should too.
 
-- [ ] **R30 · `src/services/sparql.ts:924`** — `PLAUSIBLE`
+- [x] **R30 · `src/services/sparql.ts:924`** — `PLAUSIBLE`
+  _Fixed:_ `fetchRawRdf` now runs `conceptUri` through `sanitizeIri` before interpolating it into the CONSTRUCT (throws on unsafe), closing the injection. (Function still has zero callers — dead until the raw view is wired up — but hardened, matching the earlier R03 patch.)
   fetchRawRdf interpolates conceptUri into the CONSTRUCT query without sanitizeIri, unlike every other query builder — SPARQL injection via a crafted resource URI.
   _Impact:_ A resource whose IRI (from an untrusted endpoint, deep-link, or history) contains `>` — e.g. `http://x/a> } ; DROP ...` or `...> ?p ?o } WHERE { ?s ?p ?o` — is passed to fetchRawRdf. encodeURIComponent on line 941 does NOT neutralize this because the metacharacters are inside the SPARQL string, not the URL: the `>` closes the `<...>` IRI early, so the injected text becomes live query syntax sent to the remote endpoint. Every other builder in rdfQueries.ts guards this exact case with sanitizeIri()/isNavigableIri() (which reject the `<>"{}|\^\` chars in UNSAFE_IRI); fetchRawRdf is the one path that skips it.
 
-- [ ] **R31 · `src/components/rdf/ResourceView.vue:207`** — `CONFIRMED`
+- [x] **R31 · `src/components/rdf/ResourceView.vue:207`** — `CONFIRMED`
+  _Fixed:_ the incoming section now renders its own "Show graphs" toggle (driving the shared `showGraphs`) when the header block is absent — i.e. no outgoing triples/types — so an incoming-only resource can still reveal the provenance of its referencing rows. (Also folds into R20's `triples.length || types.length` gate.)
   The 'Show graphs' toggle is nested inside the .resource-graphs block gated on triples.length, but the 'Referenced by' incoming section renders whenever there is no load/error — so a resource with incoming relations but zero outgoing triples can never enable showGraphs.
   _Impact:_ Navigate to a resource that is only ever an object (it has incoming references but no outgoing triples — e.g. a shared code/category whose own definition lives in an unqueried graph). triples.length===0, so the whole graph block including the 'Show graphs' button is hidden, yet the incoming section still renders and its PropertyTable receives :show-graphs="false". Single-graph incoming rows then display no graph chip (showGraphsFor only auto-reveals multi-graph rows) and the user has no control to reveal provenance — the graph-provenance-is-core invariant is unsatisfiable for such resources.
 
-- [ ] **R32 · `src/components/rdf/InstanceList.vue:23`** — `CONFIRMED`
+- [x] **R32 · `src/components/rdf/InstanceList.vue:23`** — `CONFIRMED`
+  _Fixed:_ `rangeLabel` now shows the visible range (e.g. `1–7`, or `1–25+` on a full page) when the lazy count is 0/in-flight/failed, upgrading to `of N` when the count lands.
   rangeLabel returns '0' whenever `total` is 0, but the list still renders a full page of instances during (and after a failed) lazy count.
   _Impact:_ On every fresh type selection useInstanceList resets `total` to 0 and fills it in only when the count lands. During that window (and permanently if the count query fails) the header badge shows '0' even though 25 instance rows are visibly listed below it, so the count badge contradicts the visible list.
 
@@ -158,7 +166,8 @@ Ranked below R01–R25 by the review (mostly `PLAUSIBLE`, plus a few `CONFIRMED`
   The ?resource watcher sets uriInput when a resource is present but never clears it when the resource is dropped from the URL.
   _Impact:_ User inspects resource X (URI bar shows X), then clicks a type in the sidebar; selectType pushes only ?type, dropping ?resource. The resource watcher fires with r=null and skips the assignment (guarded by `if (uri)`), so the URI input keeps displaying the previously-viewed resource X while the instance list is shown — a stale, misleading input value.
 
-- [ ] **R35 · `src/utils/configExport.ts:21`** — `CONFIRMED`
+- [x] **R35 · `src/utils/configExport.ts:21`** — `CONFIRMED`
+  _Fixed:_ `endpointSlug` falls back to `'endpoint'` when the name has no ASCII alphanumerics, so the download is `endpoint.json` not a base-less `.json` dotfile. (Slug only names the manual single-file download — `buildAppConfig` emits inline endpoint objects, not slug refs — so cross-endpoint distinctness is the deployer's/browser's concern, not a hash's.)
   endpointSlug returns an empty string for names with no ASCII alphanumerics, yielding a filename of literally ".json".
   _Impact:_ An endpoint named in a non-Latin script or symbols only (e.g. "日本語", "!!!", or whitespace) produces endpointSlug(name) === "". exportEndpoint (App.vue:45) then downloads `${slug}.json` = ".json" — a dot-file with no basename. Two such endpoints both export to ".json" and collide, and the app.json manifest can't reference them by a distinct slug. Any config/endpoints/&lt;slug>.json lookup for that endpoint targets '/config/endpoints/.json'.
 

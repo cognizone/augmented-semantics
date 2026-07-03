@@ -11,6 +11,7 @@
  */
 import type { SPARQLEndpoint, AppError, ErrorCode, LabelPredicateCapabilities, LabelPredicatesByResourceType } from '../types'
 import { logger } from './logger'
+import { sanitizeIri } from './rdfQueries'
 
 // SPARQL result types
 export interface SPARQLBinding {
@@ -459,6 +460,35 @@ export async function detectGraphs(
   } catch {
     // GRAPH queries not supported by this endpoint
     return { supportsNamedGraphs: null }
+  }
+}
+
+/**
+ * Probe whether the default (no-GRAPH) graph is a redundant MERGE of the named
+ * graphs — so queries can drop the default branch (useDefault=false) instead of
+ * the `{GRAPH …} UNION {…}` safe superset. Only meaningful when named graphs
+ * exist. Samples up to `sample` default triples and asks whether ANY is absent
+ * from every named graph:
+ *   - false (none unique / default empty) → 'merged' → skip the default branch
+ *   - true  (some unique)                 → 'own'    → must query the default too
+ *
+ * Returns undefined on error/timeout so the caller keeps the safe superset.
+ * ponytail: it's a SAMPLE — a default-only triple rarer than 1-in-`sample`
+ * could be missed and misread as 'merged' (dropping that data). Deployers with
+ * genuinely-own default data should declare `graph.defaultView` in config.
+ */
+export async function detectDefaultView(
+  endpoint: SPARQLEndpoint,
+  sample = 20000
+): Promise<'merged' | 'own' | undefined> {
+  const n = Math.max(1, Math.floor(sample))
+  const query = `ASK { { SELECT ?s ?p ?o WHERE { ?s ?p ?o } LIMIT ${n} } FILTER NOT EXISTS { GRAPH ?g { ?s ?p ?o } } }`
+  try {
+    const results = await executeSparql(endpoint, query, { retries: 1 })
+    if (typeof results.boolean !== 'boolean') return undefined
+    return results.boolean ? 'own' : 'merged'
+  } catch {
+    return undefined
   }
 }
 
@@ -940,9 +970,13 @@ export async function fetchRawRdf(
 ): Promise<string> {
   const { timeout } = { ...DEFAULT_CONFIG, ...config }
 
+  // Sanitize before interpolation — a `>`-bearing IRI would otherwise close the
+  // <...> early and inject live CONSTRUCT/WHERE syntax (encodeURIComponent on the
+  // body does NOT neutralize metachars inside the SPARQL string). Throws on unsafe. (R30)
+  const iri = sanitizeIri(conceptUri)
   const query = withPrefixes(`
-    CONSTRUCT { <${conceptUri}> ?p ?o }
-    WHERE { <${conceptUri}> ?p ?o }
+    CONSTRUCT { <${iri}> ?p ?o }
+    WHERE { <${iri}> ?p ?o }
   `)
 
   logger.debug('SPARQL', `Fetching raw RDF for ${conceptUri}`, { format })

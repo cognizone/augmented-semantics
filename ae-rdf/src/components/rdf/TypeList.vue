@@ -36,6 +36,15 @@ const SIDEBAR_WIDTH_KEY = 'ae-rdf-sidebar-width'
 const MIN_W = 200, MAX_W = 560
 const clampW = (w: number) => Math.min(MAX_W, Math.max(MIN_W, w))
 const sidebarWidth = ref(clampW(Number(localStorage.getItem(SIDEBAR_WIDTH_KEY)) || 280))
+
+// Show/hide embed types nested inline under their composing class. Off → they
+// only appear in the collapsed "Embedded" system group at the bottom. Persisted.
+const SHOW_EMBEDS_KEY = 'ae-rdf-show-embeds'
+const showEmbeds = ref(localStorage.getItem(SHOW_EMBEDS_KEY) !== '0')
+function toggleEmbeds() {
+  showEmbeds.value = !showEmbeds.value
+  localStorage.setItem(SHOW_EMBEDS_KEY, showEmbeds.value ? '1' : '0')
+}
 const dragging = ref(false)
 let dragStartX = 0, dragStartW = 0
 function startDrag(e: PointerEvent) {
@@ -182,7 +191,10 @@ const existingGroups = computed(() => {
   return [...s].sort((a, b) => a.localeCompare(b))
 })
 
-const collapsedGroups = ref<Set<string>>(new Set([SYS_EMBEDDED, SYS_HIDDEN]))
+// Explicit per-group toggles; a group not toggled falls to its default: system
+// "Embedded" expanded, "Hidden" collapsed, named groups per the groupsCollapsed
+// setting. (Changing the setting live re-defaults any group the user hasn't touched.)
+const groupOverrides = ref<Map<string, boolean>>(new Map())
 
 // System-group members: every embed type (also nested under its classes — shown
 // here too for consistency) and every hidden navigable type.
@@ -192,14 +204,17 @@ const embeddedGroupTypes = computed(() =>
 const hiddenGroupTypes = computed(() =>
   types.value.filter(t => isHidden(t.uri) && !embedSet.value.has(t.uri)).map(t => t.uri).sort((a, b) => countOf(b) - countOf(a)),
 )
-const isGroupCollapsed = (name: string) => collapsedGroups.value.has(name)
+const defaultCollapsed = (name: string) =>
+  name === SYS_EMBEDDED ? false : name === SYS_HIDDEN ? true : settings.groupsCollapsed
+const isGroupCollapsed = (name: string) =>
+  groupOverrides.value.has(name) ? groupOverrides.value.get(name)! : defaultCollapsed(name)
 function toggleGroup(name: string) {
-  const next = new Set(collapsedGroups.value)
-  next.has(name) ? next.delete(name) : next.add(name)
-  collapsedGroups.value = next
+  const next = new Map(groupOverrides.value)
+  next.set(name, !isGroupCollapsed(name))
+  groupOverrides.value = next
 }
 
-const hasKids = (uri: string) => subChildren(uri).length > 0 || childrenOf(uri).length > 0
+const hasKids = (uri: string) => subChildren(uri).length > 0 || (showEmbeds.value && childrenOf(uri).length > 0)
 
 // scoped=false → the count exists but isn't relative to this row's ancestry
 // (a deeper embed's count is the global per-parent-type total), so we hide it
@@ -225,7 +240,7 @@ const rows = computed<Row[]>(() => {
       if (pinned.has(sub)) continue // shown in the pinned section instead
       visit(sub, depth + 1)
     }
-    for (const e of embedRows(uri)) {
+    if (showEmbeds.value) for (const e of embedRows(uri)) {
       // Only a direct embed child (e.depth === 1) has a count scoped to this
       // class; deeper ones carry the global per-parent-type total → unscoped,
       // resolved on demand via the [class, …embed chain].
@@ -354,7 +369,18 @@ function selectType(uri: string) {
 
 <template>
   <aside class="type-list" :style="{ width: sidebarWidth + 'px' }">
-    <div class="type-list-header">Types</div>
+    <div class="type-list-header">
+      <span>Types</span>
+      <button
+        class="header-toggle"
+        :class="{ off: !showEmbeds }"
+        :aria-pressed="showEmbeds"
+        :title="showEmbeds ? 'Hide embedded types nested under their class' : 'Show embedded types nested under their class'"
+        @click="toggleEmbeds"
+      >
+        <span class="material-symbols-outlined">data_object</span>
+      </button>
+    </div>
 
     <div v-if="showLoading" class="state">
       <ProgressSpinner style="width: 28px; height: 28px" strokeWidth="4" />
@@ -555,6 +581,33 @@ function selectType(uri: string) {
   color: var(--ae-text-secondary);
   border-bottom: 1px solid var(--ae-border-color);
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.header-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.15rem;
+  border-radius: 4px;
+  color: var(--ae-accent);
+}
+
+.header-toggle:hover {
+  background: var(--ae-bg-hover);
+}
+
+.header-toggle.off {
+  color: var(--ae-text-muted);
+}
+
+.header-toggle .material-symbols-outlined {
+  font-size: 16px;
 }
 
 .type-items {

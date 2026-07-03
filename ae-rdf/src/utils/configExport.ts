@@ -16,9 +16,11 @@ export interface ExportInput {
   documentationUrl?: string
 }
 
-/** Filename-safe slug for an endpoint, matching config/endpoints/<slug>.json. */
+/** Filename-safe slug for an endpoint, matching config/endpoints/<slug>.json.
+ *  Falls back to 'endpoint' for a name with no ASCII alphanumerics, so the
+ *  download is `endpoint.json`, not a base-less `.json` dotfile. (R35) */
 export function endpointSlug(name: string): string {
-  return name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+  return name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'endpoint'
 }
 
 /** Build one endpoint's deployable config, omitting empty sections. */

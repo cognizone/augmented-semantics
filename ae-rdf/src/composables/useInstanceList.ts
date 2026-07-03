@@ -8,7 +8,7 @@
  * @see /spec/ae-rdf
  * @see /spec/common/com02-StateManagement.md
  */
-import { ref, watch, onScopeDispose, type Ref } from 'vue'
+import { ref, computed, watch, onScopeDispose, type Ref } from 'vue'
 import { useEndpointStore, useBrowseStore, useTypeConfigStore, useLanguageStore } from '../stores'
 import {
   executeSparql,
@@ -42,7 +42,19 @@ export function useInstanceList() {
   const page = ref(0)
   const typeLabel = ref('')
   const filter = ref('') // label/URI substring; empty = unfiltered
+  const orphansOnly = ref(false) // embed types only: show just instances with no owner via embedVia
   let requestId = 0
+
+  // The current type's embed owning predicate, if it's an embed type that pins one.
+  // Only such types HAVE orphans (instances with no owner via it), so the toggle
+  // shows only when this is set — otherwise "orphan" is undefined.
+  const orphanVia = computed(() => {
+    const type = browseStore.currentType
+    if (!type) return ''
+    const cfg = typeConfig.get(type)
+    return cfg.render === 'embed' && cfg.embedVia ? cfg.embedVia : ''
+  })
+  const canFilterOrphans = computed(() => !!orphanVia.value)
   let countedFor: string | null = null // `${endpointId}|${type}|${filter}` the total is valid for
 
   async function load(): Promise<void> {
@@ -65,7 +77,8 @@ export function useInstanceList() {
     // defaults (see resolveSearchPredicates). Folded into countKey so the count
     // tracks the filtered set (and any config change to the searchable fields).
     const searchPredicates = resolveSearchPredicates(typeConfig.get(type), endpoint.typeProperties?.[type])
-    const countKey = `${endpointId}|${strategy.useNamed}${strategy.useDefault}|${type}|${term}|${searchPredicates.join(',')}`
+    const via = orphansOnly.value ? orphanVia.value : ''
+    const countKey = `${endpointId}|${strategy.useNamed}${strategy.useDefault}|${type}|${term}|${searchPredicates.join(',')}|${via}`
     const needCount = countedFor !== countKey
 
     logger.info('useInstanceList', 'Loading instances', { type, page: page.value, strategy })
@@ -77,7 +90,7 @@ export function useInstanceList() {
 
     try {
       const [listRes, typeResolved] = await Promise.all([
-        executeSparql(endpoint, buildInstanceListQuery(type, strategy, PAGE_SIZE, page.value * PAGE_SIZE, term, searchPredicates), { retries: 1 }),
+        executeSparql(endpoint, buildInstanceListQuery(type, strategy, PAGE_SIZE, page.value * PAGE_SIZE, term, searchPredicates, via), { retries: 1 }),
         resolveUris([type]),
       ])
       if (!isCurrent()) return
@@ -105,7 +118,7 @@ export function useInstanceList() {
       instances.value = uris.map(u => ({ uri: u, label: labelMap.get(u) ?? u }))
 
       if (needCount) {
-        executeSparql(endpoint, buildInstanceCountQuery(type, strategy, term, searchPredicates), { retries: 1 })
+        executeSparql(endpoint, buildInstanceCountQuery(type, strategy, term, searchPredicates, via), { retries: 1 })
           .then(countRes => {
             if (!isCurrent()) return
             total.value = parseInt(countRes.results.bindings[0]?.total?.value ?? '0', 10)
@@ -132,6 +145,7 @@ export function useInstanceList() {
     (t) => {
       page.value = 0
       countedFor = null
+      orphansOnly.value = false // don't carry a hidden orphan constraint to the next type
       if (t) load()
       else { instances.value = []; total.value = 0 }
     },
@@ -165,9 +179,16 @@ export function useInstanceList() {
   })
   onScopeDispose(() => clearTimeout(filterTimer))
 
+  // Orphan toggle → new result set + count, back to page 0 (same reason as graph).
+  watch(orphansOnly, () => {
+    if (!browseStore.currentType) return
+    if (page.value === 0) load()
+    else page.value = 0 // page watcher reloads
+  })
+
   function setPage(n: number) {
     page.value = n
   }
 
-  return { instances, total, loading, error, page, pageSize: PAGE_SIZE, typeLabel, filter, setPage }
+  return { instances, total, loading, error, page, pageSize: PAGE_SIZE, typeLabel, filter, orphansOnly, canFilterOrphans, setPage }
 }

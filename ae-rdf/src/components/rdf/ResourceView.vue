@@ -16,7 +16,7 @@ import { LABEL_PREDICATES, validateURI } from '../../services'
 import { localName as localNameOf, humanizeLocalName, qname as toQname, displayType } from '../../utils/format'
 import { orderedByConfig, toggleInList } from '../../utils/propertyOrder'
 import { URL_PARAMS } from '../../router'
-import type { PropertyGroup } from '../../composables'
+import type { PropertyGroup, ResourceObject } from '../../composables'
 import PropertyTable from './PropertyTable.vue'
 
 const route = useRoute()
@@ -80,16 +80,11 @@ function byPriority(a: PropertyGroup, b: PropertyGroup): number {
     || humanizeLocalName(a.predicate).localeCompare(humanizeLocalName(b.predicate))
 }
 
-// Per-type field config (order + hide). A resource can have several types, so
-// pick a deterministic one: the first (alphabetically) of its types that has
-// any config, else the first type — so read and write target the same config.
-const cfgType = computed<string | null>(() => {
-  const uris = typeChips.value.map(c => c.uri).sort()
-  return uris.find(u => {
-    const c = typeConfig.get(u)
-    return (c.order?.length ?? 0) > 0 || (c.hide?.length ?? 0) > 0 || (c.label?.length ?? 0) > 0
-  }) ?? uris[0] ?? null
-})
+// Per-type field config (order + hide + label). A resource can have several
+// types; the store picks the one deterministic config type (same rule the
+// heading label uses — see useResourceView.deriveLabel), so read and write and
+// the composed heading all target the same config. (R28)
+const cfgType = computed<string | null>(() => typeConfig.configType(typeChips.value.map(c => c.uri)))
 const orderList = computed(() => (cfgType.value ? typeConfig.get(cfgType.value).order ?? [] : []))
 const hideList = computed(() => (cfgType.value ? typeConfig.get(cfgType.value).hide ?? [] : []))
 const labelList = computed(() => (cfgType.value ? typeConfig.get(cfgType.value).label ?? [] : []))
@@ -148,16 +143,19 @@ function selectType(typeUri: string) {
   router.push({ query: { [URL_PARAMS.TYPE]: typeUri } })
 }
 
-// Union of graphs the resource's triples assert in (provenance summary).
+// Union of graphs the resource asserts in (provenance summary).
 const graphSummary = computed(() => {
   const set = new Set<string>()
   let hasDefault = false
-  for (const group of triples.value) {
-    for (const o of group.objects) {
-      if (o.graphs.length) o.graphs.forEach(g => set.add(g))
-      else hasDefault = true
-    }
+  const fold = (o: ResourceObject) => {
+    if (o.graphs.length) o.graphs.forEach(g => set.add(g))
+    else hasDefault = true
   }
+  // rdf:type is lifted out of `triples` into `types`, so fold its graphs in too:
+  // otherwise the graph a resource's TYPE lives in is dropped, and a type-only
+  // resource (triples.length === 0) would show no provenance at all. (R20)
+  types.value.forEach(fold)
+  for (const group of triples.value) group.objects.forEach(fold)
   return { graphs: [...set], hasDefault }
 })
 
@@ -211,7 +209,7 @@ onUnmounted(() => scrollEl.value?.removeEventListener('scroll', onScroll))
         <button class="copy-btn" aria-label="Copy URI" title="Copy URI" @click="copyToClipboard(uri, 'URI')">
           <span class="material-symbols-outlined">content_copy</span>
         </button>
-        <div v-if="!showLoading && !error && triples.length" class="resource-graphs">
+        <div v-if="!showLoading && !error && (triples.length || types.length)" class="resource-graphs">
           <span class="material-symbols-outlined graph-icon">hub</span>
           <span class="graph-summary">
             <template v-if="graphSummary.graphs.length">
@@ -268,6 +266,15 @@ onUnmounted(() => scrollEl.value?.removeEventListener('scroll', onScroll))
         <template v-else-if="incomingLoaded">
           <p v-if="!incomingGroups.length" class="inc-state">Nothing references this resource.</p>
           <template v-else>
+            <!-- Own graph toggle for the incoming table when the header has none
+                 (no outgoing triples/types) — else the graph provenance of the
+                 referencing rows is unreachable. When outgoing content exists the
+                 header toggle already drives the shared showGraphs here. (R31) -->
+            <div v-if="!triples.length && !types.length" class="inc-graph-row">
+              <button class="graph-toggle" :class="{ on: showGraphs }" @click="showGraphs = !showGraphs">
+                {{ showGraphs ? 'Hide graphs' : 'Show graphs' }}
+              </button>
+            </div>
             <PropertyTable :groups="incomingGroups" :resolved="incomingResolved" :labels="incomingLabels" :object-types="incomingTypes" :show-graphs="showGraphs" :incoming="true" @navigate="navigate" />
             <p v-if="incomingTruncated" class="inc-truncated">
               Showing the first {{ incomingShown.toLocaleString('en-US') }}{{ incomingCount !== null ? ` of ${incomingCount.toLocaleString('en-US')}` : '' }} — open a specific one to keep walking.
@@ -443,6 +450,12 @@ onUnmounted(() => scrollEl.value?.removeEventListener('scroll', onScroll))
 
 .incoming-body {
   margin-top: 0.5rem;
+}
+
+.inc-graph-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.25rem;
 }
 
 .inc-state {

@@ -13,7 +13,7 @@
  */
 import { onMounted, onUnmounted } from 'vue'
 import { useEndpointStore, useBrowseStore } from '../stores'
-import { detectGraphs, eventBus, logger } from '../services'
+import { detectGraphs, detectDefaultView, eventBus, logger } from '../services'
 
 export function useGraphMode() {
   const endpointStore = useEndpointStore()
@@ -22,6 +22,7 @@ export function useGraphMode() {
   async function detect(): Promise<void> {
     const endpoint = endpointStore.current
     if (!endpoint) return
+    const endpointId = endpoint.id
     const cfg = endpoint.graph ?? {}
 
     // quads: config > SKOS analysis > unknown (probe below).
@@ -31,20 +32,39 @@ export function useGraphMode() {
       if (skos === true || skos === false) quads = skos
     }
 
-    // Publish what we know now (defaultView is config-only); safe superset if unknown.
+    // Publish what we know now (safe superset if unknown).
     browseStore.setGraph({ quads, defaultView: cfg.defaultView })
 
     // Probe quads only if still unknown.
     if (quads === undefined) {
-      const endpointId = endpoint.id
       try {
         const { supportsNamedGraphs } = await detectGraphs(endpoint)
         if (endpointStore.current?.id !== endpointId) return // endpoint changed mid-probe
-        const probed = supportsNamedGraphs === true ? true : supportsNamedGraphs === false ? false : undefined
-        browseStore.setGraph({ quads: probed, defaultView: cfg.defaultView })
-        logger.info('useGraphMode', 'Probed quad support', { quads: probed, endpoint: endpoint.url })
+        quads = supportsNamedGraphs === true ? true : supportsNamedGraphs === false ? false : undefined
+        browseStore.setGraph({ quads, defaultView: cfg.defaultView })
+        logger.info('useGraphMode', 'Probed quad support', { quads, endpoint: endpoint.url })
       } catch (e) {
         logger.warn('useGraphMode', 'Quad probe failed; using safe default', { error: e })
+      }
+    }
+
+    // defaultView: config wins. Else, when named graphs exist, probe whether the
+    // default graph is a redundant merge — if so, drop the default branch
+    // (NAMED-only) instead of the {GRAPH …} UNION {…} superset that doubles every
+    // scan. Only act on a confident 'merged'; 'own'/uncertain/error keep the
+    // superset (never silently drop data). One-time, at connect.
+    if (quads === true && cfg.defaultView === undefined) {
+      try {
+        const dv = await detectDefaultView(endpoint)
+        if (endpointStore.current?.id !== endpointId) return // endpoint changed mid-probe
+        if (dv === 'merged') {
+          browseStore.setGraph({ quads, defaultView: 'merged' })
+          logger.info('useGraphMode', 'Probed default view: merged → named-only', { endpoint: endpoint.url })
+        } else {
+          logger.info('useGraphMode', 'Default view own/uncertain → safe superset', { dv, endpoint: endpoint.url })
+        }
+      } catch (e) {
+        logger.warn('useGraphMode', 'Default-view probe failed; using safe superset', { error: e })
       }
     }
   }

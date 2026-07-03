@@ -2,6 +2,7 @@
   "name": "Cordis Datalab",
   "url": "https://cordis.europa.eu/datalab/sparql",
   "suggestedLanguagePriorities": ["en"],
+  "graph": { "quads": true, "defaultView": "merged" },
   "types": {
     "http://data.europa.eu/s66#Project": {
       "search": [
@@ -804,6 +805,10 @@
   },
   "typeInventory": [
     {
+      "uri": "http://data.europa.eu/s66#Project",
+      "count": 80208
+    },
+    {
       "uri": "http://data.europa.eu/s66#Result",
       "count": 696156
     },
@@ -846,10 +851,6 @@
     {
       "uri": "http://data.europa.eu/s66#Grant",
       "count": 80222
-    },
-    {
-      "uri": "http://data.europa.eu/s66#Project",
-      "count": 80208
     },
     {
       "uri": "http://data.europa.eu/s66#PostalAddress",

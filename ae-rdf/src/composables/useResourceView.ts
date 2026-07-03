@@ -86,9 +86,12 @@ export function useResourceView() {
   /** Pick a display label: a per-type composed label if configured, else the
    *  predicate-precedence + language heuristic. */
   function deriveLabel(groups: PropertyGroup[], typeUris: string[], objLabels: Map<string, string>): string | null {
-    const labelType = [...typeUris].sort().find(u => (typeConfig.get(u).label?.length ?? 0) > 0)
-    if (labelType) {
-      const preds = typeConfig.get(labelType).label!
+    // Compose from the SAME config type the edit panel writes to (cfgType), not
+    // an independently-picked "first type with a label" — those drifted so the
+    // heading composed one type while the label toggles wrote another. (R28)
+    const labelType = typeConfig.configType(typeUris)
+    const preds = labelType ? typeConfig.get(labelType).label ?? [] : []
+    if (preds.length) {
       // On the resource's OWN page there is no relation context to trim against
       // (composeLabels' selfUri drop only fires for embeds/links), so the full
       // composed identity would headline every linked entity — org · role ·

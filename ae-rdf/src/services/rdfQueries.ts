@@ -71,6 +71,24 @@ export function sparqlString(term: string): string {
     .replace(/\t/g, '\\t')
 }
 
+/**
+ * A `<iri>`-per-term VALUES fragment: each IRI sanitized (trimmed + validated),
+ * unsafe ones dropped, capped at `cap`. Sanitizing AT the interpolation point is
+ * the fix for R29 — `filter(isNavigableIri).map(u => `<${u}>`)` validated the
+ * trimmed form but emitted the RAW one, so a whitespace-padded URI passed the
+ * guard yet produced a malformed `<  iri  >` that 400s the whole query.
+ */
+function iriValues(uris: readonly string[], cap = Infinity): string {
+  const out: string[] = []
+  for (const u of uris) {
+    let safe: string
+    try { safe = sanitizeIri(u) } catch { continue }
+    out.push(`<${safe}>`)
+    if (out.length >= cap) break
+  }
+  return out.join(' ')
+}
+
 /* ───────────────────────── Graph strategy ───────────────────────── */
 
 /** Which graph scopes a query should touch, derived from the endpoint axes. */
@@ -141,15 +159,38 @@ function scoped(body: string, s: GraphStrategy, gvar: string): string {
  * ponytail: no SKOS-XL reified labels and no multi-hop composed labels — direct
  * literals + URI only, to start with.
  */
-function instanceMatch(iri: string, s: GraphStrategy, filter?: string, predicates: readonly string[] = LABEL_PREDICATES): string {
+function instanceMatch(iri: string, s: GraphStrategy, filter?: string, predicates: readonly string[] = LABEL_PREDICATES, orphanVia?: string): string {
   const base = membership(`<${iri}>`, s)
   const term = (filter ?? '').trim().slice(0, 200)
-  if (!term) return base
-  const t = sparqlString(term)
-  const preds = predicates.filter(isNavigableIri)
-  const labelValues = (preds.length ? preds : LABEL_PREDICATES).map(p => `<${p}>`).join(' ')
-  const labelMatch = `EXISTS { VALUES ?lp { ${labelValues} } ${scoped('?s ?lp ?lbl', s, '?lg')} FILTER(isLiteral(?lbl) && CONTAINS(LCASE(STR(?lbl)), LCASE("${t}"))) }`
-  return `${base} FILTER( CONTAINS(LCASE(STR(?s)), LCASE("${t}")) || ${labelMatch} )`
+  let core: string
+  if (!term) {
+    core = base
+  } else {
+    // AND-of-tokens: every whitespace-separated word must appear (any order) in the
+    // SAME value. Matches "all my words" intent, and — unlike a contiguous phrase —
+    // usually HAS hits, so LIMIT can stop early instead of scanning the whole type.
+    const tokens = term.split(/\s+/).filter(Boolean).map(sparqlString)
+    const allContain = (v: string) => tokens.map(t => `CONTAINS(LCASE(STR(${v})), LCASE("${t}"))`).join(' && ')
+    const preds = predicates.filter(isNavigableIri)
+    // iriValues sanitizes at the interpolation point (R29) — a whitespace-padded
+    // configured predicate passed isNavigableIri but would emit a malformed `<  p  >`.
+    const labelValues = iriValues(preds.length ? preds : LABEL_PREDICATES)
+    // JOIN, not correlated EXISTS: lets the planner drive from the selective label
+    // match rather than re-testing every instance of the type (measured ~3× faster
+    // on a 700k-instance type). DISTINCT ?s (in the caller) collapses a resource
+    // with several matching labels. isLiteral drops composed URI-hop fields; the URI
+    // branch keeps unlabeled resources findable.
+    const labelBranch = `{ ${base} VALUES ?lp { ${labelValues} } ${scoped('?s ?lp ?lbl', s, '?lg')} FILTER(isLiteral(?lbl) && ${allContain('?lbl')}) }`
+    const uriBranch = `{ ${base} FILTER(${allContain('?s')}) }`
+    core = `${labelBranch} UNION ${uriBranch}`
+  }
+  // Orphan filter: keep only instances with NO owner via the embed's owning
+  // predicate — the ones that surface ONLY in this list, never inline under a
+  // parent. Wraps the (possibly union) core so the FILTER applies to every branch.
+  if (orphanVia && isNavigableIri(orphanVia)) {
+    core = `{ ${core} } FILTER NOT EXISTS { ${scoped(`?owner <${sanitizeIri(orphanVia)}> ?s`, s, '?og')} }`
+  }
+  return core
 }
 
 /* ───────────────────────── Discovery / list ───────────────────────── */
@@ -187,9 +228,9 @@ export function resolveSearchPredicates(cfg: TypeConfig, profile?: TypeProfile):
 
 /** Total distinct instances of a type (instance-list header / paging), optionally
  *  narrowed by the same label/URI filter (and predicate set) the list uses. */
-export function buildInstanceCountQuery(typeUri: string, s: GraphStrategy, filter?: string, predicates?: readonly string[]): string {
+export function buildInstanceCountQuery(typeUri: string, s: GraphStrategy, filter?: string, predicates?: readonly string[], orphanVia?: string): string {
   const iri = sanitizeIri(typeUri)
-  return `SELECT (COUNT(DISTINCT ?s) AS ?total) WHERE { ${instanceMatch(iri, s, filter, predicates)} }`
+  return `SELECT (COUNT(DISTINCT ?s) AS ?total) WHERE { ${instanceMatch(iri, s, filter, predicates, orphanVia)} }`
 }
 
 /**
@@ -205,11 +246,11 @@ export function buildInstanceCountQuery(typeUri: string, s: GraphStrategy, filte
  * We take the engine's natural order; this is a navigation index, not a report
  * (so paging is by the engine's order, not a stable key — acceptable here).
  */
-export function buildInstanceListQuery(typeUri: string, s: GraphStrategy, limit = 100, offset = 0, filter?: string, predicates?: readonly string[]): string {
+export function buildInstanceListQuery(typeUri: string, s: GraphStrategy, limit = 100, offset = 0, filter?: string, predicates?: readonly string[], orphanVia?: string): string {
   const iri = sanitizeIri(typeUri)
   const lim = Math.max(1, Math.floor(limit))
   const off = Math.max(0, Math.floor(offset))
-  return `SELECT DISTINCT ?s WHERE { ${instanceMatch(iri, s, filter, predicates)} } LIMIT ${lim} OFFSET ${off}`
+  return `SELECT DISTINCT ?s WHERE { ${instanceMatch(iri, s, filter, predicates, orphanVia)} } LIMIT ${lim} OFFSET ${off}`
 }
 
 /**
@@ -224,7 +265,7 @@ export function buildInstanceListQuery(typeUri: string, s: GraphStrategy, limit 
  * Provenance is irrelevant here — this is a structural map, not displayed triples.
  */
 export function buildCompositionQuery(embedTypeUris: string[], s: GraphStrategy): string {
-  const values = embedTypeUris.filter(isNavigableIri).slice(0, 64).map(u => `<${u}>`).join(' ')
+  const values = iriValues(embedTypeUris, 64)
   const body = s.useDefault
     ? `?o a ?e . ?s ?p ?o . ?s a ?c .`
     : `GRAPH ?ge { ?o a ?e } GRAPH ?gp { ?s ?p ?o } GRAPH ?gc { ?s a ?c }`
@@ -269,7 +310,7 @@ export function buildIncomingPredicatesQuery(typeUri: string, s: GraphStrategy):
 export function buildEmbedOrphanQuery(pairs: { type: string; via: string }[], s: GraphStrategy): string {
   const values = pairs
     .filter(p => isNavigableIri(p.type) && isNavigableIri(p.via))
-    .map(p => `(<${p.type}> <${p.via}>)`)
+    .map(p => `(<${sanitizeIri(p.type)}> <${sanitizeIri(p.via)}>)`) // sanitized (trimmed), not raw (R29)
     .join(' ')
   if (!values) return ''
   const body = s.useDefault
@@ -289,13 +330,14 @@ export function buildEmbedOrphanQuery(pairs: { type: string; via: string }[], s:
  */
 export function buildPathCountQuery(chain: string[], s: GraphStrategy): string {
   if (chain.length < 2 || chain.some(u => !isNavigableIri(u))) return ''
+  const safe = chain.map(u => sanitizeIri(u)) // trimmed+validated; interpolate these, not raw chain (R29)
   const hops = chain.length - 1
   let gi = 0
   const stmt = (pat: string) => (s.useDefault ? pat : `GRAPH ?g${gi++} { ${pat} }`)
-  const lines = [stmt(`?x0 a <${chain[0]}>`)]
+  const lines = [stmt(`?x0 a <${safe[0]}>`)]
   for (let i = 1; i <= hops; i++) {
     lines.push(stmt(`?x${i - 1} ?p${i} ?x${i}`))
-    lines.push(stmt(`?x${i} a <${chain[i]}>`))
+    lines.push(stmt(`?x${i} a <${safe[i]}>`))
   }
   // Join with ' . ': bare triple patterns (useDefault) REQUIRE a dot separator,
   // and a dot after a GRAPH{…} block is also valid, so it works for both shapes.
@@ -315,7 +357,7 @@ const SUBCLASS_OF = 'http://www.w3.org/2000/01/rdf-schema#subClassOf'
  * relationship is structural, so provenance doesn't matter here.
  */
 export function buildSubclassQuery(typeUris: string[], s: GraphStrategy): string {
-  const values = typeUris.filter(isNavigableIri).slice(0, 500).map(u => `<${u}>`).join(' ')
+  const values = iriValues(typeUris, 500)
   const pred = `<${SUBCLASS_OF}>`
   const body = s.useDefault
     ? `?sub ${pred} ?super .`
@@ -337,11 +379,7 @@ export function buildSubclassQuery(typeUris: string[], s: GraphStrategy): string
  * hierarchy needed. (SAMPLE breaks ties on genuine multiple inheritance.)
  */
 export function buildLabelsQuery(uris: string[]): string {
-  const values = uris
-    .filter(isNavigableIri)
-    .slice(0, 256)
-    .map(u => `<${u}>`)
-    .join(' ')
+  const values = iriValues(uris, 256)
   const subClassOf = `<${SUBCLASS_OF}>`
   // Per-predicate OPTIONAL + COALESCE in LABEL_PREDICATES precedence order — a
   // single VALUES ?lp + SAMPLE(?lbl) picks arbitrarily and IGNORES precedence
@@ -372,7 +410,7 @@ ${labelOptionals}
  * safe subjects.
  */
 export function buildSkosxlLabelsQuery(uris: string[]): string {
-  const s = uris.filter(isNavigableIri).slice(0, 256).map(u => `<${u}>`).join(' ')
+  const s = iriValues(uris, 256)
   if (!s) return ''
   return `SELECT ?s ?lf WHERE { VALUES ?s { ${s} } ?s <${SKOSXL_PREFLABEL}> ?l . ?l <${SKOSXL_LITERALFORM}> ?lf }`
 }
@@ -383,8 +421,8 @@ export function buildSkosxlLabelsQuery(uris: string[]): string {
  * when there are no safe subjects/predicates (caller skips).
  */
 export function buildValuesQuery(uris: string[], predicates: string[]): string {
-  const s = uris.filter(isNavigableIri).slice(0, 256).map(u => `<${u}>`).join(' ')
-  const p = predicates.filter(isNavigableIri).map(u => `<${u}>`).join(' ')
+  const s = iriValues(uris, 256)
+  const p = iriValues(predicates)
   if (!s || !p) return ''
   return `SELECT ?s ?p ?v WHERE { VALUES ?s { ${s} } VALUES ?p { ${p} } ?s ?p ?v }`
 }
@@ -403,11 +441,7 @@ export function buildValuesQuery(uris: string[], predicates: string[]): string {
 export const EMBED_BATCH = 64
 
 export function buildEmbeddedTriplesQuery(uris: string[], s: GraphStrategy): string {
-  const values = uris
-    .filter(isNavigableIri)
-    .slice(0, EMBED_BATCH)
-    .map(u => `<${u}>`)
-    .join(' ')
+  const values = iriValues(uris, EMBED_BATCH)
   let pattern: string
   if (s.useNamed && s.useDefault) {
     pattern = `{ GRAPH ?g { ?s ?p ?o } } UNION { ?s ?p ?o FILTER NOT EXISTS { GRAPH ?ng { ?s ?p ?o } } }`

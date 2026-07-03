@@ -17,12 +17,20 @@ import { URL_PARAMS } from '../../router'
 
 const route = useRoute()
 const router = useRouter()
-const { instances, total, loading, error, page, pageSize, typeLabel, filter, setPage } = useInstanceList()
+const { instances, total, loading, error, page, pageSize, typeLabel, filter, orphansOnly, canFilterOrphans, setPage } = useInstanceList()
 const showLoading = useDelayedLoading(loading)
 
 const rangeLabel = computed(() => {
-  if (!total.value) return '0'
+  const shown = instances.value.length
   const from = page.value * pageSize + 1
+  // Count is lazy and may still be in flight or have failed (swallowed → total=0).
+  // Show the known visible range rather than a bogus "0" while rows are on screen;
+  // a full page implies more, so mark it "+" until the real total lands.
+  if (!total.value) {
+    if (!shown) return '0'
+    const to = page.value * pageSize + shown
+    return `${from.toLocaleString('en-US')}–${to.toLocaleString('en-US')}${shown >= pageSize ? '+' : ''}`
+  }
   const to = Math.min((page.value + 1) * pageSize, total.value)
   return `${from.toLocaleString('en-US')}–${to.toLocaleString('en-US')} of ${total.value.toLocaleString('en-US')}`
 })
@@ -66,6 +74,17 @@ function onPage(e: { page: number }) {
           <span class="material-symbols-outlined">close</span>
         </button>
       </div>
+      <button
+        v-if="canFilterOrphans"
+        class="il-orphan-toggle"
+        :class="{ active: orphansOnly }"
+        :aria-pressed="orphansOnly"
+        title="Show only instances with no owner — reachable only here"
+        @click="orphansOnly = !orphansOnly"
+      >
+        <span class="material-symbols-outlined">link_off</span>
+        Unreferenced
+      </button>
       <span class="il-range">{{ rangeLabel }}</span>
     </header>
 
@@ -89,7 +108,9 @@ function onPage(e: { page: number }) {
       </ul>
 
       <p v-else class="state">
-        {{ filter.trim() ? `No instances match “${filter.trim()}”.` : 'No instances of this type.' }}
+        {{ filter.trim()
+          ? `No ${orphansOnly ? 'unreferenced ' : ''}instances match “${filter.trim()}”.`
+          : orphansOnly ? 'No unreferenced instances — all have an owner.' : 'No instances of this type.' }}
       </p>
 
       <Paginator
@@ -158,6 +179,35 @@ function onPage(e: { page: number }) {
 
 .il-filter-clear .material-symbols-outlined {
   font-size: 16px;
+}
+
+.il-orphan-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-shrink: 0;
+  font-size: 0.6875rem;
+  padding: 0.2rem 0.5rem;
+  background: var(--ae-bg-elevated);
+  border: 1px solid var(--ae-border-color);
+  border-radius: 10px;
+  cursor: pointer;
+  color: var(--ae-text-secondary);
+  white-space: nowrap;
+}
+
+.il-orphan-toggle:hover {
+  color: var(--ae-text-primary);
+  background: var(--ae-bg-hover);
+}
+
+.il-orphan-toggle.active {
+  color: var(--ae-status-warning);
+  border-color: var(--ae-status-warning);
+}
+
+.il-orphan-toggle .material-symbols-outlined {
+  font-size: 14px;
 }
 
 .il-title {
