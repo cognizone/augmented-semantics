@@ -93,9 +93,19 @@ export type TypeCount = UriCount
 
 /**
  * One discovered property of a type: the predicate IRI and how often it occurs
- * across that type's instances.
+ * across that type's instances, plus its observed per-instance cardinality when
+ * a full (non-sampled) scan measured it:
+ * - `min`: 0 if any instance of the type lacks the property, else the smallest
+ *          per-instance occurrence count (≥1) — i.e. required (min≥1) vs optional.
+ * - `max`: the largest per-instance occurrence count — 1 = single-valued/functional,
+ *          >1 = multi-valued.
+ * Absent on sampled profiles (a sample can't prove min=0 or the true max). Feeds
+ * potential OWL/SHACL cardinality constraints and list-vs-single rendering hints.
  */
-export type TypeProperty = UriCount
+export interface TypeProperty extends UriCount {
+  min?: number
+  max?: number
+}
 
 /**
  * Discovered schema for one type, generated offline by

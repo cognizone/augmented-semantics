@@ -5,11 +5,19 @@
  * queries are too unreliable to run at runtime, so we run them once here — with
  * timeouts, retries and a sampled fallback — and bake the result into the
  * endpoint config JSON so the app reads it instead of querying:
- *   - `typeProperties` — distinct properties per type (+ `ok`/`sampled` flags)
+ *   - `typeProperties` — distinct properties per type (+ `ok`/`sampled` flags),
+ *                        each with per-instance `min`/`max` cardinality on a full
+ *                        (non-sampled) scan
  *   - `subclasses`     — rdfs:subClassOf hierarchy among inventory types
  *   - `composition`    — which classes embed which value-types (+ counts)
  * Plus a `profiledAt` stamp. If a section is missing the app falls back to its
  * normal live behaviour.
+ *
+ * Planned uses for the `min`/`max` cardinality (not yet consumed by the app):
+ *   - OWL/SHACL generation (AE OWL / AE SHACL): min≥1 → owl:minCardinality /
+ *     sh:minCount; max=1 → functional / sh:maxCount 1.
+ *   - Auto-suggesting `search`/`label` fields (prefer single-valued required text).
+ *   - PropertyTable rendering hints: max=1 → single value, max>1 → list.
  *
  * SAFE BY DESIGN: only `typeProperties`, `subclasses`, `composition` and
  * `profiledAt` are (re)written. Hand-authored `types` / `typeInventory` /
@@ -34,7 +42,7 @@ const TIMEOUT_MS = 90_000 // per request; a full GROUP BY over a big type is slo
 const RETRIES = 2
 const SAMPLE_SIZE = 2000 // fallback when the full scan times out / errors
 
-interface PropEntry { uri: string; count: number }
+interface PropEntry { uri: string; count: number; min?: number; max?: number }
 interface TypeProfile { ok: boolean; sampled?: boolean; properties: PropEntry[] }
 interface CompEntry { uri: string; count: number }
 
@@ -44,8 +52,18 @@ const values = (uris: string[]) => uris.map(u => `<${u}>`).join(' ')
 // ponytail: default-graph triples only (`?s a <T> . ?s ?p ?o`) — matches what
 // this app's target endpoints expose. A quad-only store would need GRAPH
 // wrapping; add that (reading cfg.graph) if/when such an endpoint needs it.
+//
+// Full scan: nested aggregation gives BOTH the occurrence count and per-instance
+// cardinality in one query. Inner groups per (?s ?p) → ?c = how many times ?s has
+// ?p; outer rolls up per ?p:
+//   ?n      = SUM(?c)      total occurrences (== the old COUNT(*))
+//   ?havers = COUNT(?s)    distinct instances that have ?p at least once
+//   ?lo/?hi = MIN/MAX(?c)  per-instance occurrence range (both ≥1, over havers)
+// min cardinality = havers < typeTotal ? 0 : lo (some instance lacks ?p ⇒ optional);
+// max cardinality = hi. Heavier than a flat GROUP BY, so it's the full path only —
+// the sampled fallback stays cheap and omits cardinality (a sample can't prove min=0).
 const fullQuery = (t: string) =>
-  `SELECT ?p (COUNT(*) AS ?n) WHERE { ?s a <${t}> . ?s ?p ?o } GROUP BY ?p ORDER BY DESC(?n)`
+  `SELECT ?p (SUM(?c) AS ?n) (COUNT(?s) AS ?havers) (MIN(?c) AS ?lo) (MAX(?c) AS ?hi) WHERE { SELECT ?s ?p (COUNT(?o) AS ?c) WHERE { ?s a <${t}> . ?s ?p ?o } GROUP BY ?s ?p } GROUP BY ?p ORDER BY DESC(?n)`
 const sampledQuery = (t: string) =>
   `SELECT ?p (COUNT(*) AS ?n) WHERE { { SELECT ?s WHERE { ?s a <${t}> } LIMIT ${SAMPLE_SIZE} } ?s ?p ?o } GROUP BY ?p ORDER BY DESC(?n)`
 const typesQuery = () => `SELECT DISTINCT ?t WHERE { ?s a ?t }`
@@ -83,20 +101,35 @@ async function sparql(url: string, query: string): Promise<Record<string, { valu
   throw lastErr
 }
 
-/** Profile one type: full scan first, sampled fallback on failure. */
-async function profileType(url: string, type: string): Promise<TypeProfile | null> {
-  const toEntries = (rows: Record<string, { value: string }>[]): PropEntry[] =>
-    rows
-      .map(b => ({ uri: b.p?.value ?? '', count: parseInt(b.n?.value ?? '0', 10) }))
-      .filter(e => e.uri)
-      .sort((a, b) => b.count - a.count)
+/**
+ * Profile one type: full scan first, sampled fallback on failure. `total` is the
+ * type's distinct-instance count (from the inventory) — needed to tell "min=0,
+ * some instance lacks it" from "min≥1, every instance has it". 0/unknown ⇒ skip
+ * the min derivation (leave min undefined rather than assert a wrong required-ness).
+ */
+async function profileType(url: string, type: string, total: number): Promise<TypeProfile | null> {
+  // Sampled rows: occurrence count only (no cardinality — a sample can't prove min=0).
+  const sampledEntries = (rows: Record<string, { value: string }>[]): PropEntry[] =>
+    rows.map(b => ({ uri: b.p?.value ?? '', count: parseInt(b.n?.value ?? '0', 10) }))
+      .filter(e => e.uri).sort((a, b) => b.count - a.count)
+  // Full rows: also carry per-instance cardinality (havers/lo/hi → min/max).
+  const fullEntries = (rows: Record<string, { value: string }>[]): PropEntry[] =>
+    rows.map(b => {
+      const havers = parseInt(b.havers?.value ?? '0', 10)
+      const lo = parseInt(b.lo?.value ?? '0', 10)
+      const hi = parseInt(b.hi?.value ?? '0', 10)
+      const e: PropEntry = { uri: b.p?.value ?? '', count: parseInt(b.n?.value ?? '0', 10) }
+      if (hi > 0) e.max = hi
+      if (total > 0 && havers > 0) e.min = havers < total ? 0 : lo
+      return e
+    }).filter(e => e.uri).sort((a, b) => b.count - a.count)
   try {
-    return { ok: true, properties: toEntries(await sparql(url, fullQuery(type))) }
+    return { ok: true, properties: fullEntries(await sparql(url, fullQuery(type))) }
   } catch {
     // full scan failed (usually a server-side timeout) — try a sample
   }
   try {
-    return { ok: true, sampled: true, properties: toEntries(await sparql(url, sampledQuery(type))) }
+    return { ok: true, sampled: true, properties: sampledEntries(await sparql(url, sampledQuery(type))) }
   } catch (e) {
     console.error(`  ✗ ${type} — ${(e as Error).message}`)
     return null
@@ -159,6 +192,11 @@ async function profileOrphanCounts(url: string, pairs: { type: string; via: stri
   }
 }
 
+// Wall-clock helpers for phase logging (mirrors ae-skos' profiler output style).
+const t0 = Date.now()
+const secs = (from: number) => `${((Date.now() - from) / 1000).toFixed(1)}s`
+const phase = (label: string) => { console.error(`\n▸ ${label}  (+${secs(t0)})`); return Date.now() }
+
 async function main() {
   const path = resolve(process.cwd(), process.argv[2] ?? DEFAULT_CONFIG)
   const cfg = JSON.parse(await readFile(path, 'utf8'))
@@ -171,47 +209,57 @@ async function main() {
     console.error('No typeInventory — discovering types live…')
     typeUris = (await sparql(url, typesQuery())).map(b => b.t?.value ?? '').filter(Boolean)
   }
-  console.error(`Profiling ${typeUris.length} types against ${url}`)
+  // Distinct-instance total per type (from the inventory) — needed to derive
+  // min=0 (some instance lacks the property) from the per-instance cardinality.
+  const totals: Record<string, number> = {}
+  for (const t of (cfg.typeInventory ?? []) as { uri: string; count: number }[]) totals[t.uri] = t.count
+  console.error(`Endpoint: ${url}\nTypes: ${typeUris.length}`)
 
+  // ── Properties + per-instance cardinality ──────────────────────────────
+  let p = phase(`Properties + cardinality — ${typeUris.length} types`)
   const out: Record<string, TypeProfile> = { ...(cfg.typeProperties ?? {}) }
-  let okCount = 0
+  let okCount = 0, sampledCount = 0
   for (const [i, type] of typeUris.entries()) {
-    const profile = await profileType(url, type)
+    const tt = Date.now()
+    const profile = await profileType(url, type, totals[type] ?? 0)
     if (profile) {
       out[type] = profile
       okCount++
-      console.error(`  [${i + 1}/${typeUris.length}] ${profile.sampled ? '~' : '✓'} ${type} (${profile.properties.length} props)`)
+      if (profile.sampled) sampledCount++
+      const card = profile.properties.some(pr => pr.max !== undefined) ? ', card' : ''
+      console.error(`  [${i + 1}/${typeUris.length}] ${profile.sampled ? '~' : '✓'} ${type} (${profile.properties.length} props${card}, ${secs(tt)})`)
     } else if (!out[type]) {
       // keep any prior good entry; only record a failure if we have nothing
       out[type] = { ok: false, properties: [] }
     }
   }
-
   cfg.typeProperties = out
+  console.error(`  → ${okCount}/${typeUris.length} OK (${sampledCount} sampled, no cardinality) in ${secs(p)}`)
 
-  // Subclass hierarchy (for the nested sidebar tree).
+  // ── Subclass hierarchy (for the nested sidebar tree) ───────────────────
+  p = phase('Subclasses')
   const subs = await profileSubclasses(url, typeUris)
-  if (subs) { cfg.subclasses = subs; console.error(`Subclasses: ${Object.keys(subs).length} superclasses`) }
+  if (subs) { cfg.subclasses = subs; console.error(`  → ${Object.keys(subs).length} superclasses in ${secs(p)}`) }
 
-  // Embed composition — only over types configured as render:embed.
+  // ── Embed composition — only over types configured as render:embed ─────
   const embeds = Object.entries(cfg.types ?? {})
     .filter(([, c]) => (c as { render?: string }).render === 'embed')
     .map(([uri]) => uri)
+  p = phase(`Composition — ${embeds.length} embed types`)
   const comp = await profileComposition(url, embeds)
-  if (comp) { cfg.composition = comp; console.error(`Composition: ${embeds.length} embed types → ${Object.keys(comp).length} composing classes`) }
+  if (comp) { cfg.composition = comp; console.error(`  → ${Object.keys(comp).length} composing classes in ${secs(p)}`) }
 
-  // Embed-orphan counts — embed types that pin an owning predicate (embedVia).
-  const totals: Record<string, number> = {}
-  for (const t of (cfg.typeInventory ?? []) as { uri: string; count: number }[]) totals[t.uri] = t.count
+  // ── Embed-orphan counts — embed types that pin an owning predicate ─────
   const orphanPairs = Object.entries(cfg.types ?? {})
     .filter(([, c]) => (c as { render?: string; embedVia?: string }).render === 'embed' && (c as { embedVia?: string }).embedVia)
     .map(([uri, c]) => ({ type: uri, via: (c as { embedVia: string }).embedVia, total: totals[uri] ?? 0 }))
+  p = phase(`Orphan counts — ${orphanPairs.length} pinned embed types`)
   const orphans = await profileOrphanCounts(url, orphanPairs)
-  if (orphans) { cfg.orphanCounts = orphans; console.error(`Orphan counts: ${Object.keys(orphans).length} embed types with orphans`) }
+  if (orphans) { cfg.orphanCounts = orphans; console.error(`  → ${Object.keys(orphans).length} types with orphans in ${secs(p)}`) }
 
   cfg.profiledAt = new Date().toISOString()
   await writeFile(path, JSON.stringify(cfg, null, 2) + '\n')
-  console.error(`\nDone: ${okCount}/${typeUris.length} types profiled OK → ${path}`)
+  console.error(`\n✓ Done in ${secs(t0)}: ${okCount}/${typeUris.length} types → ${path}`)
 }
 
 main().catch(e => { console.error(e); process.exit(1) })
