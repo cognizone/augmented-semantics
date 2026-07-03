@@ -26,6 +26,7 @@ export function useIncomingRelations() {
 
   const groups: Ref<PropertyGroup[]> = ref([]) // predicate → referencing subjects
   const count = ref<number | null>(null) // distinct referencing resources (null = unknown)
+  const shown = ref(0) // distinct referencing resources actually displayed
   const truncated = ref(false) // fetched list hit the cap
   const loading = ref(false)
   const loaded = ref(false)
@@ -39,6 +40,7 @@ export function useIncomingRelations() {
   function reset() {
     groups.value = []
     count.value = null
+    shown.value = 0
     truncated.value = false
     loaded.value = false
     loading.value = false
@@ -100,7 +102,6 @@ export function useIncomingRelations() {
       if (!isCurrent()) return
 
       const bindings = listRes.results.bindings
-      truncated.value = bindings.length >= INCOMING_LIMIT
 
       // Group by predicate; fold the same (p,s) across graphs into a graphs[] set.
       const byPredicate = new Map<string, { group: PropertyGroup; subjects: Map<string, ResourceObject> }>()
@@ -162,6 +163,12 @@ export function useIncomingRelations() {
       objectTypes.value = typeMap
       resolved.value = resolvedMap
       count.value = countRes ? parseInt(countRes.results.bindings[0]?.n?.value ?? '0', 10) : null
+      // The list query projects raw ?s ?g ?p (no DISTINCT), so a quad store
+      // multiplies rows per graph — hitting the row cap does NOT mean 1,000
+      // distinct subjects. Report the real count assembled, and only flag
+      // truncation when more subjects exist than we displayed.
+      shown.value = subjectIris.size
+      truncated.value = bindings.length >= INCOMING_LIMIT && (count.value === null || count.value > shown.value)
       loaded.value = true
       logger.info('useIncomingRelations', 'Loaded incoming relations', { uri, predicates: out.length, count: count.value })
     } catch (e: unknown) {
@@ -174,5 +181,5 @@ export function useIncomingRelations() {
     }
   }
 
-  return { groups, count, truncated, loading, loaded, error, resolved, objectLabels, objectTypes, load, loadCount, reset }
+  return { groups, count, shown, truncated, loading, loaded, error, resolved, objectLabels, objectTypes, load, loadCount, reset }
 }

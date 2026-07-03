@@ -7,13 +7,19 @@
  *
  * @see /spec/common/com03-ErrorHandling.md
  */
-import { ref, onErrorCaptured } from 'vue'
+import { ref, onErrorCaptured, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import Button from 'primevue/button'
 import { logger } from '../../services'
 
 const error = ref<Error | null>(null)
 const errorInfo = ref('')
 const showDetails = ref(false)
+
+// Clear the caught error on navigation — otherwise one error hides the slot
+// across every subsequent route and wedges the whole app on "Something went wrong".
+const route = useRoute()
+watch(() => route.fullPath, () => { if (error.value) reset() })
 
 onErrorCaptured((err: Error, instance, info: string) => {
   error.value = err

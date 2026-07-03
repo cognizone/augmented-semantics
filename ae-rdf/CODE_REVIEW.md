@@ -83,21 +83,26 @@ Check a box when the issue is fixed.
 - [ ] **R20 · `src/components/rdf/ResourceView.vue:148`** — `CONFIRMED`
   The header graph summary iterates only `triples.value` (which excludes `rdf:type`) and never `types.value` → the named graph a resource's **type** lives in is dropped. A type-only resource (`triples.length===0`) hides the whole graph block despite rendering type chips → provenance shown nowhere.
 
-- [ ] **R21 · `src/components/rdf/TypeList.vue:150`** — `CONFIRMED`
+- [x] **R21 · `src/components/rdf/TypeList.vue:150`** — `CONFIRMED`
+  _Fixed:_ `nestedSubs` now only marks a sub as nested when its parent is a navigable `baseType` — subs of hidden/embedded parents stay in `normalRoots`.
   `nestedSubs` nests a subclass under its parent without checking the parent is navigable. A navigable subclass of an **embedded/hidden** superclass is removed from `normalRoots`, but the parent is never `visit()`ed → the subclass (and its instance count) **vanishes from the sidebar** and can't be selected.
 
 ## 🟡 Error handling / robustness
 
-- [ ] **R22 · `src/services/sparql.ts:349`** — `CONFIRMED`
+- [x] **R22 · `src/services/sparql.ts:349`** — `CONFIRMED`
+  _Fixed:_ after parsing, the response must be SELECT-shaped (`results.bindings` array) or ASK-shaped (`boolean`) — anything else throws `INVALID_RESPONSE` instead of reaching callers.
   A `200` + JSON content-type + non-SPARQL body (e.g. `{"error":"…"}`) parses to a truthy `data`, skipping the `!data` guards → returned as `SPARQLResults` with no `.results`. Callers (`useResourceView.ts:137`, `useInstanceList.ts:78`) then throw `Cannot read properties of undefined (reading 'bindings')` → graceful endpoint error becomes an **unhandled crash**.
 
-- [ ] **R23 · `src/components/common/ErrorBoundary.vue:18`** — `CONFIRMED`
+- [x] **R23 · `src/components/common/ErrorBoundary.vue:18`** — `CONFIRMED`
+  _Fixed:_ a `watch` on `route.fullPath` clears the caught error on navigation, so the boundary no longer wedges the app across routes.
   `error` is never cleared on route change. After one caught error the boundary keeps the slot hidden across all navigation → the **whole app is wedged** on "Something went wrong" until the user manually clicks "Try Again".
 
-- [ ] **R24 · `src/components/rdf/InstanceList.vue:67`** — `CONFIRMED`
+- [x] **R24 · `src/components/rdf/InstanceList.vue:67`** — `CONFIRMED`
+  _Fixed:_ paginator now gates on an `effectiveTotal` (falls back to paged-through count + lookahead when the lazy count is 0/failed) and renders even on an empty page, so later pages stay reachable.
   Paginator is gated on `total > pageSize`. When the separate `COUNT(DISTINCT)` query is slow or fails (swallowed with `logger.warn`), `total` stays `0` → **no paginator renders**, and the rest of a large type is unreachable through the UI.
 
-- [ ] **R25 · `src/composables/useIncomingRelations.ts:101`** — `CONFIRMED`
+- [x] **R25 · `src/composables/useIncomingRelations.ts:101`** — `CONFIRMED`
+  _Fixed:_ `truncated` now compares distinct subjects shown (`shown` = `subjectIris.size`) against the real count, and the warning reports the actual displayed count instead of the hardcoded 1,000.
   `truncated` is derived from the raw binding count, but `buildIncomingQuery` projects `?s ?g ?p` with no `DISTINCT` → quad endpoints multiply rows per named graph → **false "Showing the first 1,000 of N"** warning when nothing was actually dropped.
 
 ---

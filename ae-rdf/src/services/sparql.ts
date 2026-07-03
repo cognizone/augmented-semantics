@@ -359,6 +359,18 @@ export async function executeSparql(
         )
       }
 
+      // A 200 with a JSON body that parsed but isn't a SPARQL result set (e.g.
+      // an endpoint error object `{"error":"…"}`) would otherwise slip through
+      // and crash callers on `.results.bindings`. Require SELECT or ASK shape.
+      if (!Array.isArray(data.results?.bindings) && typeof data.boolean !== 'boolean') {
+        logger.error('SPARQL', 'Response is not a SPARQL result set', { contentType })
+        throw createError(
+          'INVALID_RESPONSE',
+          'Unexpected response format',
+          `Response parsed but is not a SPARQL result set. Content-Type: ${contentType}`
+        )
+      }
+
       const resultCount = data?.results?.bindings?.length ?? 0
       logger.info('SPARQL', `Query successful: ${resultCount} results`)
       return data

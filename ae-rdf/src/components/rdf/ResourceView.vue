@@ -33,6 +33,7 @@ const {
   groups: incomingGroups,
   count: incomingCount,
   truncated: incomingTruncated,
+  shown: incomingShown,
   loading: incomingLoading,
   loaded: incomingLoaded,
   error: incomingError,
@@ -44,7 +45,6 @@ const {
   reset: resetIncoming,
 } = useIncomingRelations()
 const incomingOpen = ref(false)
-const INCOMING_LIMIT = 1000
 
 const uri = computed(() => browseStore.currentResource)
 // Protocol-check before it hits the href sink — a ?resource=javascript:… deep
@@ -270,7 +270,7 @@ onUnmounted(() => scrollEl.value?.removeEventListener('scroll', onScroll))
           <template v-else>
             <PropertyTable :groups="incomingGroups" :resolved="incomingResolved" :labels="incomingLabels" :object-types="incomingTypes" :show-graphs="showGraphs" :incoming="true" @navigate="navigate" />
             <p v-if="incomingTruncated" class="inc-truncated">
-              Showing the first {{ INCOMING_LIMIT.toLocaleString('en-US') }}{{ incomingCount !== null ? ` of ${incomingCount.toLocaleString('en-US')}` : '' }} — open a specific one to keep walking.
+              Showing the first {{ incomingShown.toLocaleString('en-US') }}{{ incomingCount !== null ? ` of ${incomingCount.toLocaleString('en-US')}` : '' }} — open a specific one to keep walking.
             </p>
           </template>
         </template>

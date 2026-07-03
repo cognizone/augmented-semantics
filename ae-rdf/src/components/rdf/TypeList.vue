@@ -144,10 +144,16 @@ const subChildren = (uri: string): string[] =>
     .filter(s => !embedSet.value.has(s) && !isGrouped(s) && !isHidden(s))
     .sort((a, b) => countOf(b) - countOf(a))
 // Subclasses that nest under a parent → never top-level. Grouped types are
-// promoted to roots (shown under their group), so they're excluded here.
+// promoted to roots (shown under their group), so they're excluded here. Only
+// nest under a *navigable* parent (baseTypes): a subclass of a hidden/embedded
+// superclass is never visit()ed under it, so it must stay a root or it vanishes.
 const nestedSubs = computed(() => {
+  const navigable = new Set(baseTypes.value.map(t => t.uri))
   const s = new Set<string>()
-  for (const [, subs] of subclasses.value) for (const sub of subs) if (!embedSet.value.has(sub) && !isGrouped(sub)) s.add(sub)
+  for (const [parent, subs] of subclasses.value) {
+    if (!navigable.has(parent)) continue
+    for (const sub of subs) if (!embedSet.value.has(sub) && !isGrouped(sub)) s.add(sub)
+  }
   return s
 })
 const pinnedRoots = computed(() => baseTypes.value.filter(t => isPinned(t.uri)).map(t => t.uri))
