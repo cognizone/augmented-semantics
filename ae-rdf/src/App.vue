@@ -64,7 +64,7 @@ const uriDisplayOptions = [
   { label: 'Full URI', value: 'full' },
 ]
 
-const appName = computed(() => config.value.config?.appName ?? 'AE RDF')
+const appName = computed(() => config.value.config?.appName ?? 'AE RDF Browser')
 watch(appName, (name) => { document.title = name }, { immediate: true })
 
 // Config values reach DOM URL sinks (<a href>, <img src>); a hostile/misconfigured
