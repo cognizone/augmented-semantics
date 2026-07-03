@@ -152,7 +152,7 @@ Ranked below R01–R25 by the review (mostly `PLAUSIBLE`, plus a few `CONFIRMED`
 
 - [ ] **R35 · `src/utils/configExport.ts:21`** — `CONFIRMED`
   endpointSlug returns an empty string for names with no ASCII alphanumerics, yielding a filename of literally ".json".
-  _Impact:_ An endpoint named in a non-Latin script or symbols only (e.g. "日本語", "!!!", or whitespace) produces endpointSlug(name) === "". exportEndpoint (App.vue:45) then downloads `${slug}.json` = ".json" — a dot-file with no basename. Two such endpoints both export to ".json" and collide, and the app.json manifest can't reference them by a distinct slug. Any config/endpoints/<slug>.json lookup for that endpoint targets '/config/endpoints/.json'.
+  _Impact:_ An endpoint named in a non-Latin script or symbols only (e.g. "日本語", "!!!", or whitespace) produces endpointSlug(name) === "". exportEndpoint (App.vue:45) then downloads `${slug}.json` = ".json" — a dot-file with no basename. Two such endpoints both export to ".json" and collide, and the app.json manifest can't reference them by a distinct slug. Any config/endpoints/&lt;slug>.json lookup for that endpoint targets '/config/endpoints/.json'.
 
 - [ ] **R36 · `src/services/security.ts:203`** — `CONFIRMED`
   assessEndpointTrust's localhost check omits the IPv6 loopback [::1] that the sibling checkEndpointSecurity recognizes.
@@ -168,7 +168,7 @@ Ranked below R01–R25 by the review (mostly `PLAUSIBLE`, plus a few `CONFIRMED`
 
 - [ ] **R39 · `src/services/rdfQueries.ts:133`** — `PLAUSIBLE`
   buildInstanceListQuery places the label OPTIONALs (?s rdfs:label ?l1 …) outside any GRAPH block, but under the merged-quads strategy (useNamed && !useDefault) the DISTINCT ?s subquery is GRAPH-scoped; on a pure quad store whose labels live only in named graphs the OPTIONALs match nothing, so every instance in the list falls back to its raw URI as its label.
-  _Impact:_ Endpoint declares graph.quads=true and defaultView='merged' → strategy {useNamed:true, useDefault:false}. membership wraps ?s a <Type> in GRAPH ?g, but the three label OPTIONALs (?s rdfs:label ?l1 etc.) run against the default graph only. On a store where rdfs:label triples are inside named graphs, ?l1/?l2/?l3 stay unbound, BIND(COALESCE(...,STR(?s))) yields the URI, and InstanceList shows every row's label as its full URI instead of its human label.
+  _Impact:_ Endpoint declares graph.quads=true and defaultView='merged' → strategy {useNamed:true, useDefault:false}. membership wraps ?s a &lt;Type> in GRAPH ?g, but the three label OPTIONALs (?s rdfs:label ?l1 etc.) run against the default graph only. On a store where rdfs:label triples are inside named graphs, ?l1/?l2/?l3 stay unbound, BIND(COALESCE(...,STR(?s))) yields the URI, and InstanceList shows every row's label as its full URI instead of its human label.
 
 - [ ] **R40 · `src/services/sparql.ts:361`** — `PLAUSIBLE`
   Caller-initiated abort via config.signal is treated as a timeout and retried, so a user-cancelled request keeps re-firing instead of stopping.
@@ -263,7 +263,7 @@ Largely AE SKOS copy-paste carry-over: unused exports, duplicated types/helpers,
   _Impact:_ escapeSparqlString, escapeSparqlRegex, sanitizeSearchInput, sanitizeHtml, and isValidURI have no callers outside security.ts (barrel `export * from './security'` hides this from tsc's unused check). The actual IRI-injection guard used by query builders is sanitizeIri + UNSAFE_IRI in services/rdfQueries.ts, and there is no v-html in the app for sanitizeHtml to guard. Carrying these dead exports invites future callers to reach for the weaker escapeSparqlString (which does not reject the control/brace characters that sanitizeIri blocks) instead of the guard that is actually wired up.
 
 - [ ] **R62 · `src/components/common/ErrorBoundary.vue:27`** — `CONFIRMED`
-  The logged component name uses `instance?.$options?.name`, which is undefined for <script setup> SFCs (the app's convention), so the 'component' field is effectively always 'Unknown'.
+  The logged component name uses `instance?.$options?.name`, which is undefined for &lt;script setup> SFCs (the app's convention), so the 'component' field is effectively always 'Unknown'.
   _Impact:_ Every component in this codebase uses `<script setup lang="ts">`, which does not populate `$options.name` unless a separate name is declared. So logger.error always records component:'Unknown', making the boundary's error logs useless for pinpointing which component threw. Using instance?.type?.__name (or __file) would recover the real component identity.
 
 - [ ] **R63 · `src/composables/useClipboard.ts:28`** — `CONFIRMED`
@@ -272,7 +272,7 @@ Largely AE SKOS copy-paste carry-over: unused exports, duplicated types/helpers,
 
 - [ ] **R64 · `src/components/rdf/ResourceView.vue:257`** — `CONFIRMED`
   The incoming-relations spinner binds incomingLoading (the composable's raw loading ref) directly, bypassing useDelayedLoading, unlike every other spinner in the app which honors the com03 300ms delay.
-  _Impact:_ Expanding 'Referenced by' against a fast endpoint that returns in <300ms flashes the ProgressSpinner for a few frames on every expand, whereas the main resource view, instance list, and type list all wrap their loading in useDelayedLoading(loading) and show nothing for sub-300ms operations. The inconsistency violates the com03 delayed-loading convention and produces visible flicker specifically in the incoming section.
+  _Impact:_ Expanding 'Referenced by' against a fast endpoint that returns in &lt;300ms flashes the ProgressSpinner for a few frames on every expand, whereas the main resource view, instance list, and type list all wrap their loading in useDelayedLoading(loading) and show nothing for sub-300ms operations. The inconsistency violates the com03 delayed-loading convention and produces visible flicker specifically in the incoming section.
 
 - [ ] **R65 · `src/components/rdf/PropertyTable.vue:356`** — `CONFIRMED`
   embedGroups() is called up to 3 times per embedded URI row on every render (v-if at 356, :groups prop at 360, badge-suppression check at 421), each time re-doing a Map lookup, ancestors scan, typeConfig lookup, hide-filter, and orderedByConfig() sort.
