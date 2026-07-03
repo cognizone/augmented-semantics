@@ -2,101 +2,653 @@
   "name": "Fedlex",
   "url": "https://fedlex.data.admin.ch/sparqlendpoint",
   "types": {
-    "http://data.legilux.public.lu/resource/ontology/jolux#Manifestation": {
-      "render": "embed"
+    "http://data.europa.eu/eli/ontology#InForce": {
+      "group": "Vocabularies",
+      "label": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ],
+      "search": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ]
+    },
+    "http://data.europa.eu/eli/ontology#Language": {
+      "group": "Vocabularies",
+      "label": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ],
+      "search": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel",
+        "http://www.w3.org/2004/02/skos/core#notation"
+      ]
+    },
+    "http://data.europa.eu/eli/ontology#LegalValue": {
+      "group": "Vocabularies",
+      "label": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ],
+      "search": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ]
+    },
+    "http://data.legilux.public.lu/resource/ontology/jolux#Act": {
+      "sidebar": "pin"
+    },
+    "http://data.legilux.public.lu/resource/ontology/jolux#ComplexWork": {
+      "label": [
+        "http://www.w3.org/2000/01/rdf-schema#label"
+      ],
+      "search": [
+        "http://www.w3.org/2000/01/rdf-schema#label"
+      ]
+    },
+    "http://data.legilux.public.lu/resource/ontology/jolux#Consolidation": {
+      "sidebar": "pin"
+    },
+    "http://data.legilux.public.lu/resource/ontology/jolux#ConsultationStage": {
+      "group": "Vocabularies",
+      "label": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ],
+      "search": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ]
+    },
+    "http://data.legilux.public.lu/resource/ontology/jolux#ConsultationStatus": {
+      "group": "Vocabularies",
+      "label": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ],
+      "search": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ]
+    },
+    "http://data.legilux.public.lu/resource/ontology/jolux#Country": {
+      "group": "Vocabularies",
+      "label": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ],
+      "search": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel",
+        "http://www.w3.org/2004/02/skos/core#notation"
+      ]
+    },
+    "http://data.legilux.public.lu/resource/ontology/jolux#DraftDocument": {
+      "label": [
+        "http://data.legilux.public.lu/resource/ontology/jolux#title"
+      ],
+      "search": [
+        "http://data.legilux.public.lu/resource/ontology/jolux#title"
+      ]
+    },
+    "http://data.legilux.public.lu/resource/ontology/jolux#DraftProcessDocumentType": {
+      "group": "Vocabularies",
+      "label": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ],
+      "search": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel",
+        "http://www.w3.org/2004/02/skos/core#notation"
+      ]
+    },
+    "http://data.legilux.public.lu/resource/ontology/jolux#DraftRelatedDocument": {
+      "label": [
+        "http://data.legilux.public.lu/resource/ontology/jolux#title"
+      ],
+      "search": [
+        "http://data.legilux.public.lu/resource/ontology/jolux#title"
+      ]
+    },
+    "http://data.legilux.public.lu/resource/ontology/jolux#EULegalResource": {
+      "label": [
+        "http://data.legilux.public.lu/resource/ontology/jolux#title"
+      ],
+      "search": [
+        "http://data.legilux.public.lu/resource/ontology/jolux#title"
+      ]
+    },
+    "http://data.legilux.public.lu/resource/ontology/jolux#EUTextSubjectTheme": {
+      "group": "Vocabularies",
+      "label": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ],
+      "search": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel",
+        "http://www.w3.org/2004/02/skos/core#notation"
+      ]
+    },
+    "http://data.legilux.public.lu/resource/ontology/jolux#EditionSerial": {
+      "label": [
+        "http://www.w3.org/2000/01/rdf-schema#label"
+      ],
+      "search": [
+        "http://www.w3.org/2000/01/rdf-schema#label"
+      ]
+    },
+    "http://data.legilux.public.lu/resource/ontology/jolux#EnforcementStatus": {
+      "group": "Vocabularies",
+      "label": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ],
+      "search": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ]
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#Expression": {
-      "render": "embed"
+      "label": [
+        "http://data.legilux.public.lu/resource/ontology/jolux#title"
+      ],
+      "search": [
+        "http://data.legilux.public.lu/resource/ontology/jolux#title"
+      ],
+      "sidebar": "pin"
     },
-    "http://www.openlinksw.com/schemas/virtrdf#array-of-QuadMap": {
-      "sidebar": "hide"
+    "http://data.legilux.public.lu/resource/ontology/jolux#ImpactType": {
+      "group": "Vocabularies",
+      "label": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ],
+      "search": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel",
+        "http://www.w3.org/2004/02/skos/core#notation"
+      ]
     },
-    "http://www.openlinksw.com/schemas/virtrdf#array-of-QuadMapATable": {
-      "sidebar": "hide"
+    "http://data.legilux.public.lu/resource/ontology/jolux#InformationSource": {
+      "group": "Vocabularies",
+      "label": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ],
+      "search": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ]
     },
-    "http://www.openlinksw.com/schemas/virtrdf#QuadMapATable": {
-      "sidebar": "hide"
+    "http://data.legilux.public.lu/resource/ontology/jolux#InstrumentType": {
+      "group": "Vocabularies",
+      "label": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ],
+      "search": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ]
     },
-    "http://www.openlinksw.com/schemas/virtrdf#array-of-string": {
-      "sidebar": "hide"
+    "http://data.legilux.public.lu/resource/ontology/jolux#InternationalActor": {
+      "group": "Vocabularies",
+      "label": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ],
+      "search": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel",
+        "http://www.w3.org/2004/02/skos/core#notation"
+      ]
     },
-    "http://www.w3.org/ns/sparql-service-description#Service": {
-      "sidebar": "hide"
+    "http://data.legilux.public.lu/resource/ontology/jolux#Language": {
+      "group": "Vocabularies",
+      "label": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ],
+      "search": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel",
+        "http://www.w3.org/2004/02/skos/core#notation"
+      ]
     },
-    "http://www.openlinksw.com/schemas/virtrdf#RdfDebugger": {
-      "sidebar": "hide"
+    "http://data.legilux.public.lu/resource/ontology/jolux#LegalAnalysisStatus": {
+      "group": "Vocabularies",
+      "label": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ],
+      "search": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ]
     },
-    "http://www.w3.org/2002/07/owl#IrreflexiveProperty": {
-      "group": "Ontology"
+    "http://data.legilux.public.lu/resource/ontology/jolux#LegalInstitution": {
+      "group": "Vocabularies",
+      "label": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ],
+      "search": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel",
+        "http://www.w3.org/2004/02/skos/core#notation"
+      ]
     },
-    "http://www.w3.org/2002/07/owl#TransitiveProperty": {
-      "group": "Ontology"
+    "http://data.legilux.public.lu/resource/ontology/jolux#LegalResource": {
+      "label": [
+        "http://data.legilux.public.lu/resource/ontology/jolux#title"
+      ],
+      "search": [
+        "http://data.legilux.public.lu/resource/ontology/jolux#title"
+      ]
+    },
+    "http://data.legilux.public.lu/resource/ontology/jolux#LegalResourceGenre": {
+      "group": "Vocabularies",
+      "label": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ],
+      "search": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel",
+        "http://www.w3.org/2004/02/skos/core#notation"
+      ]
+    },
+    "http://data.legilux.public.lu/resource/ontology/jolux#LegalSubjectTheme": {
+      "group": "Vocabularies",
+      "label": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ],
+      "search": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel",
+        "http://www.w3.org/2004/02/skos/core#notation"
+      ]
+    },
+    "http://data.legilux.public.lu/resource/ontology/jolux#LegalTaxonomy": {
+      "group": "Vocabularies",
+      "label": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ],
+      "search": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel",
+        "http://www.w3.org/2004/02/skos/core#notation"
+      ]
+    },
+    "http://data.legilux.public.lu/resource/ontology/jolux#LegalValue": {
+      "group": "Vocabularies",
+      "label": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ],
+      "search": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ]
+    },
+    "http://data.legilux.public.lu/resource/ontology/jolux#License": {
+      "group": "Vocabularies",
+      "label": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ],
+      "search": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ]
+    },
+    "http://data.legilux.public.lu/resource/ontology/jolux#Manifestation": {
+      "label": [
+        "http://data.legilux.public.lu/resource/ontology/jolux#title"
+      ],
+      "search": [
+        "http://data.legilux.public.lu/resource/ontology/jolux#title"
+      ],
+      "sidebar": "pin"
+    },
+    "http://data.legilux.public.lu/resource/ontology/jolux#MigrationDraftStageType": {
+      "group": "Vocabularies",
+      "label": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ],
+      "search": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel",
+        "http://www.w3.org/2004/02/skos/core#notation"
+      ]
+    },
+    "http://data.legilux.public.lu/resource/ontology/jolux#NotationType": {
+      "group": "Vocabularies",
+      "label": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ],
+      "search": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ]
+    },
+    "http://data.legilux.public.lu/resource/ontology/jolux#NotificationType": {
+      "group": "Vocabularies",
+      "label": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ],
+      "search": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel",
+        "http://www.w3.org/2004/02/skos/core#notation"
+      ]
+    },
+    "http://data.legilux.public.lu/resource/ontology/jolux#ProjectType": {
+      "group": "Vocabularies",
+      "label": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ],
+      "search": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel",
+        "http://www.w3.org/2004/02/skos/core#notation"
+      ]
+    },
+    "http://data.legilux.public.lu/resource/ontology/jolux#PublicationCompleteness": {
+      "group": "Vocabularies",
+      "label": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ],
+      "search": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ]
+    },
+    "http://data.legilux.public.lu/resource/ontology/jolux#PublicationFolderStage": {
+      "group": "Vocabularies",
+      "label": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ],
+      "search": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ]
+    },
+    "http://data.legilux.public.lu/resource/ontology/jolux#PublicationFolderStatus": {
+      "group": "Vocabularies",
+      "label": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ],
+      "search": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ]
+    },
+    "http://data.legilux.public.lu/resource/ontology/jolux#PublicationProcessRelatedToDocumentStatus": {
+      "group": "Vocabularies",
+      "label": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ],
+      "search": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ]
+    },
+    "http://data.legilux.public.lu/resource/ontology/jolux#PublicationProcessRelatedToExpressionStatus": {
+      "group": "Vocabularies",
+      "label": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ],
+      "search": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ]
+    },
+    "http://data.legilux.public.lu/resource/ontology/jolux#PublicationProcessRelatedToManifestationStatus": {
+      "group": "Vocabularies",
+      "label": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ],
+      "search": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ]
+    },
+    "http://data.legilux.public.lu/resource/ontology/jolux#PublicationProcessStage": {
+      "group": "Vocabularies",
+      "label": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ],
+      "search": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel",
+        "http://www.w3.org/2004/02/skos/core#notation"
+      ]
+    },
+    "http://data.legilux.public.lu/resource/ontology/jolux#PublicationProcessStatus": {
+      "group": "Vocabularies",
+      "label": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ],
+      "search": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ]
+    },
+    "http://data.legilux.public.lu/resource/ontology/jolux#ResourceFamily": {
+      "group": "Vocabularies",
+      "label": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ],
+      "search": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel",
+        "http://www.w3.org/2004/02/skos/core#notation"
+      ]
+    },
+    "http://data.legilux.public.lu/resource/ontology/jolux#ResourceType": {
+      "group": "Vocabularies",
+      "label": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ],
+      "search": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel",
+        "http://www.w3.org/2004/02/skos/core#notation"
+      ]
+    },
+    "http://data.legilux.public.lu/resource/ontology/jolux#Role": {
+      "group": "Vocabularies",
+      "label": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ],
+      "search": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel",
+        "http://www.w3.org/2004/02/skos/core#notation"
+      ]
+    },
+    "http://data.legilux.public.lu/resource/ontology/jolux#RsAbbreviation": {
+      "group": "Vocabularies",
+      "label": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ],
+      "search": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ]
+    },
+    "http://data.legilux.public.lu/resource/ontology/jolux#SubdivisionType": {
+      "group": "Vocabularies",
+      "label": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ],
+      "search": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel",
+        "http://www.w3.org/2004/02/skos/core#notation"
+      ]
+    },
+    "http://data.legilux.public.lu/resource/ontology/jolux#TaskResultType": {
+      "group": "Vocabularies",
+      "label": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ],
+      "search": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel",
+        "http://www.w3.org/2004/02/skos/core#notation"
+      ]
+    },
+    "http://data.legilux.public.lu/resource/ontology/jolux#TreatyAccessionType": {
+      "group": "Vocabularies",
+      "label": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ],
+      "search": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel",
+        "http://www.w3.org/2004/02/skos/core#notation"
+      ]
+    },
+    "http://data.legilux.public.lu/resource/ontology/jolux#TreatyStatus": {
+      "group": "Vocabularies",
+      "label": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ],
+      "search": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ]
+    },
+    "http://data.legilux.public.lu/resource/ontology/jolux#TreatySubjectTheme": {
+      "group": "Vocabularies",
+      "label": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ],
+      "search": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel",
+        "http://www.w3.org/2004/02/skos/core#notation"
+      ]
+    },
+    "http://data.legilux.public.lu/resource/ontology/jolux#TreatyType": {
+      "group": "Vocabularies",
+      "label": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ],
+      "search": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ]
+    },
+    "http://data.legilux.public.lu/resource/ontology/jolux#TypeProcedure": {
+      "group": "Vocabularies",
+      "label": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ],
+      "search": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ]
+    },
+    "http://data.legilux.public.lu/resource/ontology/jolux#UserFormat": {
+      "group": "Vocabularies",
+      "label": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ],
+      "search": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel",
+        "http://www.w3.org/2004/02/skos/core#notation"
+      ]
+    },
+    "http://data.legilux.public.lu/resource/ontology/jolux#Work": {
+      "label": [
+        "http://data.legilux.public.lu/resource/ontology/jolux#title"
+      ],
+      "search": [
+        "http://data.legilux.public.lu/resource/ontology/jolux#title"
+      ],
+      "sidebar": "pin"
+    },
+    "http://data.legilux.public.lu/resource/ontology/jolux#WorkAtOj": {
+      "label": [
+        "http://data.legilux.public.lu/resource/ontology/jolux#title"
+      ],
+      "search": [
+        "http://data.legilux.public.lu/resource/ontology/jolux#title"
+      ]
+    },
+    "http://publications.europa.eu/resource/authority/language": {
+      "group": "Vocabularies",
+      "label": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ],
+      "search": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel",
+        "http://www.w3.org/2004/02/skos/core#notation"
+      ]
     },
     "http://www.openlinksw.com/schemas/virtrdf#QuadMap": {
       "group": "Ontology"
     },
-    "http://www.w3.org/2000/01/rdf-schema#Datatype": {
+    "http://www.openlinksw.com/schemas/virtrdf#QuadMapATable": {
+      "group": "Ontology"
+    },
+    "http://www.openlinksw.com/schemas/virtrdf#QuadMapColumn": {
       "group": "Ontology"
     },
     "http://www.openlinksw.com/schemas/virtrdf#QuadMapFText": {
-      "sidebar": "hide"
-    },
-    "http://www.openlinksw.com/schemas/virtrdf#QuadStorage": {
-      "sidebar": "hide"
-    },
-    "http://www.w3.org/2002/07/owl#SymmetricProperty": {
-      "group": "Ontology"
-    },
-    "http://www.w3.org/2002/07/owl#Ontology": {
-      "group": "Ontology"
-    },
-    "http://www.openlinksw.com/schemas/virtrdf#QuadMapValue": {
-      "sidebar": "hide"
-    },
-    "http://www.openlinksw.com/schemas/virtrdf#QuadMapColumn": {
-      "sidebar": "hide"
-    },
-    "http://www.openlinksw.com/schemas/virtrdf#array-of-QuadMapColumn": {
-      "sidebar": "hide"
-    },
-    "http://www.w3.org/2002/07/owl#FunctionalProperty": {
-      "group": "Ontology"
-    },
-    "http://www.w3.org/2002/07/owl#AnnotationProperty": {
-      "group": "Ontology"
-    },
-    "http://www.w3.org/2002/07/owl#NamedIndividual": {
       "group": "Ontology"
     },
     "http://www.openlinksw.com/schemas/virtrdf#QuadMapFormat": {
-      "sidebar": "hide"
+      "group": "Ontology"
+    },
+    "http://www.openlinksw.com/schemas/virtrdf#QuadMapValue": {
+      "group": "Ontology"
+    },
+    "http://www.openlinksw.com/schemas/virtrdf#QuadStorage": {
+      "group": "Ontology"
+    },
+    "http://www.openlinksw.com/schemas/virtrdf#RdfDebugger": {
+      "group": "Ontology"
+    },
+    "http://www.openlinksw.com/schemas/virtrdf#array-of-QuadMap": {
+      "group": "Ontology"
+    },
+    "http://www.openlinksw.com/schemas/virtrdf#array-of-QuadMapATable": {
+      "group": "Ontology"
+    },
+    "http://www.openlinksw.com/schemas/virtrdf#array-of-QuadMapColumn": {
+      "group": "Ontology"
     },
     "http://www.openlinksw.com/schemas/virtrdf#array-of-QuadMapFormat": {
-      "sidebar": "hide"
-    },
-    "http://www.w3.org/2002/07/owl#ObjectProperty": {
       "group": "Ontology"
     },
-    "http://data.legilux.public.lu/resource/ontology/jolux#PostalAddress": {
-      "render": "embed"
-    },
-    "http://data.legilux.public.lu/resource/ontology/jolux#ContactPoint": {
-      "render": "embed"
-    },
-    "http://www.w3.org/2002/07/owl#Restriction": {
-      "group": "Ontology"
-    },
-    "http://www.w3.org/2002/07/owl#Class": {
+    "http://www.openlinksw.com/schemas/virtrdf#array-of-string": {
       "group": "Ontology"
     },
     "http://www.w3.org/1999/02/22-rdf-syntax-ns#List": {
       "group": "Ontology"
     },
+    "http://www.w3.org/2000/01/rdf-schema#Datatype": {
+      "group": "Ontology"
+    },
+    "http://www.w3.org/2002/07/owl#AnnotationProperty": {
+      "group": "Ontology"
+    },
+    "http://www.w3.org/2002/07/owl#Axiom": {
+      "group": "Ontology"
+    },
+    "http://www.w3.org/2002/07/owl#Class": {
+      "group": "Ontology"
+    },
     "http://www.w3.org/2002/07/owl#DatatypeProperty": {
       "group": "Ontology"
     },
+    "http://www.w3.org/2002/07/owl#FunctionalProperty": {
+      "group": "Ontology"
+    },
+    "http://www.w3.org/2002/07/owl#IrreflexiveProperty": {
+      "group": "Ontology"
+    },
+    "http://www.w3.org/2002/07/owl#NamedIndividual": {
+      "group": "Ontology"
+    },
+    "http://www.w3.org/2002/07/owl#ObjectProperty": {
+      "group": "Ontology"
+    },
+    "http://www.w3.org/2002/07/owl#Ontology": {
+      "group": "Ontology"
+    },
+    "http://www.w3.org/2002/07/owl#Restriction": {
+      "group": "Ontology"
+    },
+    "http://www.w3.org/2002/07/owl#SymmetricProperty": {
+      "group": "Ontology"
+    },
+    "http://www.w3.org/2002/07/owl#TransitiveProperty": {
+      "group": "Ontology"
+    },
     "http://www.w3.org/2004/02/skos/core#Collection": {
-      "render": "link"
+      "group": "Vocabularies",
+      "label": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ],
+      "search": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ]
+    },
+    "http://www.w3.org/2004/02/skos/core#Concept": {
+      "group": "Vocabularies",
+      "label": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ],
+      "search": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel",
+        "http://www.w3.org/2004/02/skos/core#notation"
+      ]
+    },
+    "http://www.w3.org/2004/02/skos/core#ConceptScheme": {
+      "group": "Vocabularies",
+      "label": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ],
+      "search": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ]
+    },
+    "http://www.w3.org/ns/sparql-service-description#Service": {
+      "group": "Ontology"
+    },
+    "https://jurivoc.bger.ch/model/Jurivoc": {
+      "group": "Vocabularies",
+      "label": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ],
+      "search": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ]
     }
   },
   "typeInventory": [
