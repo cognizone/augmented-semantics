@@ -57,6 +57,31 @@ jobs:
           cp apps/era/app.json _site/skos-era/config/
           cp apps/era/logo.png _site/skos-era/config/
 
+      # Build AE RDF (default — curated multi-endpoint picker from public/config/app.json)
+      - name: Build AE RDF
+        run: pnpm --filter ae-rdf build
+        env:
+          BASE_URL: /augmented-semantics/rdf/
+
+      - name: Add RDF to site
+        run: |
+          mkdir -p _site/rdf
+          cp -r ae-rdf/dist/* _site/rdf/
+          cp _site/rdf/index.html _site/rdf/404.html
+
+      # Build AE RDF — Cordis variant (single locked endpoint, branded)
+      - name: Build AE RDF Cordis
+        run: pnpm --filter ae-rdf build
+        env:
+          BASE_URL: /augmented-semantics/rdf-cordis/
+
+      - name: Add RDF Cordis to site
+        run: |
+          mkdir -p _site/rdf-cordis
+          cp -r ae-rdf/dist/* _site/rdf-cordis/
+          cp _site/rdf-cordis/index.html _site/rdf-cordis/404.html
+          cp apps/cordis-rdf/app.json _site/rdf-cordis/config/app.json
+
       # Build documentation
       - name: Build docs
         run: pnpm docs:build

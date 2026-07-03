@@ -1,0 +1,7 @@
+{
+  "appName": "CORDIS RDF Browser",
+  "endpoints": ["cordis-datalab"],
+  "prefixes": {
+    "eurio": "http://data.europa.eu/s66#"
+  }
+}
