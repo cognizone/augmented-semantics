@@ -134,13 +134,14 @@
       ]
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#Expression": {
+      "render": "embed",
+      "embedVia": "http://data.legilux.public.lu/resource/ontology/jolux#isRealizedBy",
       "label": [
         "http://data.legilux.public.lu/resource/ontology/jolux#title"
       ],
       "search": [
         "http://data.legilux.public.lu/resource/ontology/jolux#title"
-      ],
-      "sidebar": "pin"
+      ]
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#ImpactType": {
       "group": "Vocabularies",
@@ -266,13 +267,14 @@
       ]
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#Manifestation": {
+      "render": "embed",
+      "embedVia": "http://data.legilux.public.lu/resource/ontology/jolux#isEmbodiedBy",
       "label": [
         "http://data.legilux.public.lu/resource/ontology/jolux#title"
       ],
       "search": [
         "http://data.legilux.public.lu/resource/ontology/jolux#title"
-      ],
-      "sidebar": "pin"
+      ]
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#MigrationDraftStageType": {
       "group": "Vocabularies",
@@ -530,43 +532,43 @@
       ]
     },
     "http://www.openlinksw.com/schemas/virtrdf#QuadMap": {
-      "group": "Ontology"
+      "sidebar": "hide"
     },
     "http://www.openlinksw.com/schemas/virtrdf#QuadMapATable": {
-      "group": "Ontology"
+      "sidebar": "hide"
     },
     "http://www.openlinksw.com/schemas/virtrdf#QuadMapColumn": {
-      "group": "Ontology"
+      "sidebar": "hide"
     },
     "http://www.openlinksw.com/schemas/virtrdf#QuadMapFText": {
-      "group": "Ontology"
+      "sidebar": "hide"
     },
     "http://www.openlinksw.com/schemas/virtrdf#QuadMapFormat": {
-      "group": "Ontology"
+      "sidebar": "hide"
     },
     "http://www.openlinksw.com/schemas/virtrdf#QuadMapValue": {
-      "group": "Ontology"
+      "sidebar": "hide"
     },
     "http://www.openlinksw.com/schemas/virtrdf#QuadStorage": {
-      "group": "Ontology"
+      "sidebar": "hide"
     },
     "http://www.openlinksw.com/schemas/virtrdf#RdfDebugger": {
-      "group": "Ontology"
+      "sidebar": "hide"
     },
     "http://www.openlinksw.com/schemas/virtrdf#array-of-QuadMap": {
-      "group": "Ontology"
+      "sidebar": "hide"
     },
     "http://www.openlinksw.com/schemas/virtrdf#array-of-QuadMapATable": {
-      "group": "Ontology"
+      "sidebar": "hide"
     },
     "http://www.openlinksw.com/schemas/virtrdf#array-of-QuadMapColumn": {
-      "group": "Ontology"
+      "sidebar": "hide"
     },
     "http://www.openlinksw.com/schemas/virtrdf#array-of-QuadMapFormat": {
-      "group": "Ontology"
+      "sidebar": "hide"
     },
     "http://www.openlinksw.com/schemas/virtrdf#array-of-string": {
-      "group": "Ontology"
+      "sidebar": "hide"
     },
     "http://www.w3.org/1999/02/22-rdf-syntax-ns#List": {
       "group": "Ontology"
@@ -648,6 +650,17 @@
       ],
       "search": [
         "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ]
+    },
+    "http://data.legilux.public.lu/resource/ontology/jolux#ContactPoint": {
+      "render": "embed",
+      "embedVia": "http://data.legilux.public.lu/resource/ontology/jolux#address",
+      "label": [
+        "http://data.legilux.public.lu/resource/ontology/jolux#streetAddress"
+      ],
+      "search": [
+        "http://data.legilux.public.lu/resource/ontology/jolux#streetAddress",
+        "http://data.legilux.public.lu/resource/ontology/jolux#email"
       ]
     }
   },
