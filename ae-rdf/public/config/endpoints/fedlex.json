@@ -74,6 +74,26 @@
       "render": "embed",
       "embedVia": "http://data.legilux.public.lu/resource/ontology/jolux#publicationProcessHasPublicationTask"
     },
+    "http://data.legilux.public.lu/resource/ontology/jolux#PublicationDocumentOutput": {
+      "render": "embed",
+      "embedVia": "^http://data.legilux.public.lu/resource/ontology/jolux#outputDocumentOfPublicationTask"
+    },
+    "http://data.legilux.public.lu/resource/ontology/jolux#TreatyDocument": {
+      "render": "embed",
+      "embedVia": "http://data.legilux.public.lu/resource/ontology/jolux#treatyProcessHasResultingTreatyDocument"
+    },
+    "http://data.legilux.public.lu/resource/ontology/jolux#SubdivisionIdentificationDetail": {
+      "render": "embed",
+      "embedVia": "http://data.legilux.public.lu/resource/ontology/jolux#legalResourceSubdivisionHasSubdivisionIdentificationDetail"
+    },
+    "http://data.legilux.public.lu/resource/ontology/jolux#ConsultationModificationHistory": {
+      "render": "embed",
+      "embedVia": "http://data.legilux.public.lu/resource/ontology/jolux#consultationHasModification"
+    },
+    "http://data.legilux.public.lu/resource/ontology/jolux#RatificationRestriction": {
+      "render": "embed",
+      "embedVia": "http://data.legilux.public.lu/resource/ontology/jolux#partyConditionHasRatificationRestriction"
+    },
     "http://data.legilux.public.lu/resource/ontology/jolux#Edition": {
       "label": [
         "http://data.legilux.public.lu/resource/ontology/jolux#editionType",
