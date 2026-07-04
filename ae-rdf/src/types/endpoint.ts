@@ -79,6 +79,10 @@ export interface TypeConfig {
    *  type relations (e.g. hasResult → publications, datasets, software). Set via
    *  the per-row "group by type" toggle in edit mode. */
   groupByType?: string[]
+  /** Predicate IRIs whose literal values are booleans — render "1"/"true" (and
+   *  "0"/"false") as a checkbox instead of the raw lexical value. For endpoints
+   *  that store booleans as 0/1 without an xsd:boolean datatype (Virtuoso). */
+  boolean?: string[]
 }
 
 /** A URI paired with a count — the shared shape behind the cached inventory,

@@ -47,6 +47,8 @@ const props = defineProps<{
   /** Predicates whose object lists render grouped by the object's type (a
    *  subheading + count per type) instead of a flat list. */
   groupByType?: string[]
+  /** Predicates whose literal values render as a boolean checkbox (1/true → ✓). */
+  booleanParts?: string[]
 }>()
 
 const emit = defineEmits<{
@@ -62,6 +64,19 @@ const isHidden = (predicate: string) => props.hidden?.includes(predicate) ?? fal
 const isLabelPart = (predicate: string) => props.labelParts?.includes(predicate) ?? false
 const isFoldBoundary = (predicate: string) => props.foldAfter === predicate
 const isGrouped = (predicate: string) => props.groupByType?.includes(predicate) ?? false
+
+// Boolean literals: for a predicate configured `boolean`, parse the lexical value
+// (1/true → true, 0/false → false). Returns null for unconfigured predicates or
+// unrecognized values, so those fall through to the normal literal rendering.
+const XSD_BOOLEAN = 'http://www.w3.org/2001/XMLSchema#boolean'
+const asBool = (v: string): boolean | null => {
+  const s = v.trim().toLowerCase()
+  if (s === '1' || s === 'true') return true
+  if (s === '0' || s === 'false') return false
+  return null
+}
+const boolView = (o: ResourceObject, predicate: string): boolean | null =>
+  props.booleanParts?.includes(predicate) || o.datatype === XSD_BOOLEAN ? asBool(o.value) : null
 
 // Embed row-fold: show rows through `foldAfter`, reveal the rest on demand. Only
 // when inlined (embed) and not editing — edit mode shows all rows to configure.
@@ -147,6 +162,7 @@ const embedHidden = (o: ResourceObject) => (embedType(o) ? typeConfig.get(embedT
 const embedLabelParts = (o: ResourceObject) => (embedType(o) ? typeConfig.get(embedType(o)!).label ?? [] : [])
 const embedFoldAfter = (o: ResourceObject) => (embedType(o) ? typeConfig.get(embedType(o)!).foldAfter : undefined)
 const embedGroupByType = (o: ResourceObject) => (embedType(o) ? typeConfig.get(embedType(o)!).groupByType ?? [] : [])
+const embedBooleanParts = (o: ResourceObject) => (embedType(o) ? typeConfig.get(embedType(o)!).boolean ?? [] : [])
 
 /** Toggle the fold boundary inside an embed (set to this predicate, or clear). */
 function onEmbedToggleFold(o: ResourceObject, predicate: string) {
@@ -369,6 +385,7 @@ function graphTitle(o: ResourceObject): string {
                   :label-parts="embedLabelParts(row.o)"
                   :fold-after="embedFoldAfter(row.o)"
                   :group-by-type="embedGroupByType(row.o)"
+                  :boolean-parts="embedBooleanParts(row.o)"
                   :embed="true"
                   @navigate="emit('navigate', $event)"
                   @reorder="p => onEmbedReorder(row.o!, p)"
@@ -397,6 +414,14 @@ function graphTitle(o: ResourceObject): string {
 
               <!-- Blank node -->
               <span v-else-if="row.o.termType === 'bnode'" class="bnode">[ anonymous node ]</span>
+
+              <!-- Boolean literal (configured predicate or xsd:boolean): checkbox.
+                   v-else-if keeps the ONE chain intact — only literals reach here,
+                   so a stray v-if wouldn't detach the v-else literal below. -->
+              <span v-else-if="boolView(row.o, group.predicate) !== null" class="literal bool-literal">
+                <span class="material-symbols-outlined bool-icon" :class="{ 'bool-true': boolView(row.o, group.predicate) }">{{ boolView(row.o, group.predicate) ? 'check_box' : 'check_box_outline_blank' }}</span>
+                {{ boolView(row.o, group.predicate) ? 'true' : 'false' }}
+              </span>
 
               <!-- Literal -->
               <span v-else class="literal">
@@ -656,6 +681,21 @@ function graphTitle(o: ResourceObject): string {
 
 .literal {
   color: var(--ae-text-primary);
+}
+
+.bool-literal {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.bool-icon {
+  font-size: 16px;
+  color: var(--ae-text-muted);
+}
+
+.bool-icon.bool-true {
+  color: var(--ae-accent);
 }
 
 .tag {

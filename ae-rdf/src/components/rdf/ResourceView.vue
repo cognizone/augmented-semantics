@@ -90,6 +90,7 @@ const hideList = computed(() => (cfgType.value ? typeConfig.get(cfgType.value).h
 const labelList = computed(() => (cfgType.value ? typeConfig.get(cfgType.value).label ?? [] : []))
 const foldAfterVal = computed(() => (cfgType.value ? typeConfig.get(cfgType.value).foldAfter : undefined))
 const groupByTypeList = computed(() => (cfgType.value ? typeConfig.get(cfgType.value).groupByType ?? [] : []))
+const booleanList = computed(() => (cfgType.value ? typeConfig.get(cfgType.value).boolean ?? [] : []))
 const canEdit = computed(() => settings.editMode && !!cfgType.value)
 
 // Hidden predicates are dropped in normal mode; kept (greyed) in edit mode so
@@ -241,12 +242,12 @@ onUnmounted(() => scrollEl.value?.removeEventListener('scroll', onScroll))
     <template v-else>
       <section v-if="attributes.length" class="prop-section">
         <h3 class="section-title">Attributes</h3>
-        <PropertyTable :key="'attr:' + uri" :groups="attributes" :resolved="resolved" :labels="objectLabels" :object-types="objectTypes" :show-graphs="showGraphs" :reorderable="canEdit" :hidden="hideList" :label-parts="labelList" :fold-after="foldAfterVal" :group-by-type="groupByTypeList" @navigate="navigate" @reorder="p => onReorder('attr', p)" @toggle-hide="onToggleHide" @toggle-label="onToggleLabel" @toggle-fold="onToggleFold" @toggle-group-by-type="onToggleGroupByType" />
+        <PropertyTable :key="'attr:' + uri" :groups="attributes" :resolved="resolved" :labels="objectLabels" :object-types="objectTypes" :show-graphs="showGraphs" :reorderable="canEdit" :hidden="hideList" :label-parts="labelList" :fold-after="foldAfterVal" :group-by-type="groupByTypeList" :boolean-parts="booleanList" @navigate="navigate" @reorder="p => onReorder('attr', p)" @toggle-hide="onToggleHide" @toggle-label="onToggleLabel" @toggle-fold="onToggleFold" @toggle-group-by-type="onToggleGroupByType" />
       </section>
 
       <section v-if="relationships.length" class="prop-section">
         <h3 class="section-title">Relationships</h3>
-        <PropertyTable :key="'rel:' + uri" :groups="relationships" :resolved="resolved" :labels="objectLabels" :object-types="objectTypes" :embedded="embedded" :ancestors="uri ? [uri] : []" :show-graphs="showGraphs" :reorderable="canEdit" :hidden="hideList" :label-parts="labelList" :fold-after="foldAfterVal" :group-by-type="groupByTypeList" @navigate="navigate" @reorder="p => onReorder('rel', p)" @toggle-hide="onToggleHide" @toggle-label="onToggleLabel" @toggle-fold="onToggleFold" @toggle-group-by-type="onToggleGroupByType" />
+        <PropertyTable :key="'rel:' + uri" :groups="relationships" :resolved="resolved" :labels="objectLabels" :object-types="objectTypes" :embedded="embedded" :ancestors="uri ? [uri] : []" :show-graphs="showGraphs" :reorderable="canEdit" :hidden="hideList" :label-parts="labelList" :fold-after="foldAfterVal" :group-by-type="groupByTypeList" :boolean-parts="booleanList" @navigate="navigate" @reorder="p => onReorder('rel', p)" @toggle-hide="onToggleHide" @toggle-label="onToggleLabel" @toggle-fold="onToggleFold" @toggle-group-by-type="onToggleGroupByType" />
       </section>
     </template>
 
