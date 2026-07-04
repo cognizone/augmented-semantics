@@ -1,6 +1,13 @@
 {
   "name": "Fedlex",
   "url": "https://fedlex.data.admin.ch/sparqlendpoint",
+  "suggestedLanguagePriorities": [
+    "en",
+    "fr",
+    "de",
+    "it",
+    "rm"
+  ],
   "types": {
     "http://data.legilux.public.lu/resource/ontology/jolux#EntryIntoForce": {
       "render": "embed",
