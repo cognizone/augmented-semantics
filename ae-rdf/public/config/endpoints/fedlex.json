@@ -1370,7 +1370,25 @@
           "max": 1,
           "min": 1
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+            "max": 3
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#inScheme",
+            "max": 3
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#topConceptOf",
+            "max": 3
+          }
+        ]
+      }
     },
     "http://data.europa.eu/eli/ontology#Language": {
       "ok": true,
@@ -1411,7 +1429,33 @@
           "max": 5,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#historicalImpactForLanguage",
+            "max": 5
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#language",
+            "max": 25
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#hasTopConcept",
+            "max": 126
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#inScheme",
+            "max": 126
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#topConceptOf",
+            "max": 126
+          }
+        ]
+      }
     },
     "http://data.europa.eu/eli/ontology#LegalValue": {
       "ok": true,
@@ -1476,7 +1520,53 @@
           "max": 1,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#format",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#narrower",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#relatedMatch",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#broader",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+            "max": 4
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#hasTopConcept",
+            "max": 4
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#narrower",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#broader",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#inScheme",
+            "max": 4
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#topConceptOf",
+            "max": 4
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#Act": {
       "ok": true,
@@ -1807,7 +1897,23 @@
           "max": 1,
           "min": 1
         }
-      ]
+      ],
+      "embed": {
+        "inverse": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#isRealizedBy",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#compendiumIntegratesAct",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#isPartOf",
+            "max": 5
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#Compilation": {
       "ok": true,
@@ -1848,7 +1954,19 @@
           "max": 1,
           "min": 1
         }
-      ]
+      ],
+      "embed": {
+        "inverse": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#isRealizedBy",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#isMemberOf",
+            "max": 18
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#ComplexWork": {
       "ok": true,
@@ -1865,7 +1983,15 @@
           "max": 2,
           "min": 2
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#isMemberOf",
+            "max": 1
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#Consolidation": {
       "ok": true,
@@ -2091,7 +2217,57 @@
           "max": 1,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#isMemberOf",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#rectifies",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#treatyNotificationPublishedIn",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#legalAnalysisOfLegalResource",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#legalResourceSubdivisionIsPartOf",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#publicationProcessForConsolidationAbstract",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#approbationAct",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#foreseenImpactToLegalResource",
+            "max": 33
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#isRealizedBy",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#basicAct",
+            "max": 17
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#classifiedByTaxonomyEntry",
+            "max": 36
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#Consultation": {
       "ok": true,
@@ -2150,7 +2326,37 @@
           "max": 1,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#legislativeTaskHasResultingLegalResource",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#isFollowingAct",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#draftHasTask",
+            "max": 1
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#hasSubTask",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#foreseenImpactToLegalResource",
+            "max": 49
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#previousConsultationStatus",
+            "max": 96
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#ConsultationModificationHistory": {
       "ok": true,
@@ -2179,7 +2385,15 @@
           "max": 1,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#consultationHasModification",
+            "max": 2
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#ConsultationPhase": {
       "ok": true,
@@ -2268,7 +2482,41 @@
           "max": 2,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#hasSubTask",
+            "max": 1
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#opinionHasDraftRelatedDocument",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#consultationHasModification",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#opinionIsAboutDraftDocument",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#institutionInChargeOfTheEventLevel3",
+            "max": 2
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#legalInstitutionForOpinion",
+            "max": 4
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#legalInstitutionForTechnicalSupport",
+            "max": 52
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#ConsultationPreparation": {
       "ok": true,
@@ -2321,7 +2569,25 @@
           "max": 1,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#hasSubTask",
+            "max": 1
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#consultationHasModification",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#institutionInChargeOfTheEventLevel3",
+            "max": 2
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#ConsultationStage": {
       "ok": true,
@@ -2392,7 +2658,61 @@
           "max": 1,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#broaderTransitive",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#broader",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#hasTopConcept",
+            "max": 5
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#member",
+            "max": 6
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#narrower",
+            "max": 6
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#narrower",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#relatedMatch",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#broaderTransitive",
+            "max": 2
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#topConceptOf",
+            "max": 5
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#broader",
+            "max": 6
+          },
+          {
+            "via": "http://publications.europa.eu/ontology/euvoc#status",
+            "max": 22
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#inScheme",
+            "max": 23
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#ConsultationStatus": {
       "ok": true,
@@ -2439,7 +2759,45 @@
           "max": 1,
           "min": 1
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#previousConsultationStatus",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#relatedMatch",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#consultationStatus",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#member",
+            "max": 5
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#hasTopConcept",
+            "max": 7
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#inScheme",
+            "max": 7
+          },
+          {
+            "via": "http://publications.europa.eu/ontology/euvoc#status",
+            "max": 7
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#topConceptOf",
+            "max": 7
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#ConsultationTask": {
       "ok": true,
@@ -2540,7 +2898,41 @@
           "max": 2,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#hasSubTask",
+            "max": 4
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#opinionHasDraftRelatedDocument",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#opinionIsAboutDraftDocument",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#legalInstitutionForOpinion",
+            "max": 4
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#consultationHasModification",
+            "max": 4
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#institutionInChargeOfTheEventLevel3",
+            "max": 6
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#legalInstitutionForTechnicalSupport",
+            "max": 52
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#ContactPoint": {
       "ok": true,
@@ -2575,7 +2967,25 @@
           "max": 1,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#address",
+            "max": 1
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#email",
+            "max": 2
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#website",
+            "max": 41
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#Country": {
       "ok": true,
@@ -2658,7 +3068,53 @@
           "max": 1,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#treatyRatificationParty",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#depositary",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#partyConditionOfParty",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#broader",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#entryIntoForceFor",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#notificationFrom",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#treatyPartyCountry",
+            "max": 3
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#narrower",
+            "max": 104
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#narrower",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#broader",
+            "max": 104
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#Draft": {
       "ok": true,
@@ -2758,7 +3214,21 @@
           "max": 1,
           "min": 1
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#opinionIsAboutDraftDocument",
+            "max": 26
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#isRealizedBy",
+            "max": 1
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#DraftProcessDocumentType": {
       "ok": true,
@@ -2823,7 +3293,53 @@
           "max": 1,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#draftProcessDocumentType",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#broader",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#hasTopConcept",
+            "max": 3
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#member",
+            "max": 8
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#narrower",
+            "max": 8
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#narrower",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#topConceptOf",
+            "max": 3
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#broader",
+            "max": 8
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#inScheme",
+            "max": 13
+          },
+          {
+            "via": "http://publications.europa.eu/ontology/euvoc#status",
+            "max": 13
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#DraftRelatedDocument": {
       "ok": true,
@@ -2852,7 +3368,21 @@
           "max": 1,
           "min": 1
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#opinionHasDraftRelatedDocument",
+            "max": 19
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#isRealizedBy",
+            "max": 1
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#EULegalResource": {
       "ok": true,
@@ -2893,7 +3423,29 @@
           "max": 3,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#treatyLegalResourceForOtherParty",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#impactToLegalResource",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#factor",
+            "max": 1
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#isRealizedBy",
+            "max": 1
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#EUTextSubjectTheme": {
       "ok": true,
@@ -2928,7 +3480,33 @@
           "max": 1,
           "min": 1
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#euConventionDomain",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#relatedMatch",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#hasTopConcept",
+            "max": 24
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#inScheme",
+            "max": 24
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#topConceptOf",
+            "max": 24
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#Edition": {
       "ok": true,
@@ -2981,7 +3559,25 @@
           "max": 1,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#incorporates",
+            "max": 38
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#isRealizedBy",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#isMemberOf",
+            "max": 18
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#EditionSerial": {
       "ok": true,
@@ -2998,7 +3594,15 @@
           "max": 2,
           "min": 2
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#isMemberOf",
+            "max": 1
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#EnforcementStatus": {
       "ok": true,
@@ -3045,7 +3649,33 @@
           "max": 1,
           "min": 1
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#inForceStatus",
+            "max": 2
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#hasTopConcept",
+            "max": 6
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#inScheme",
+            "max": 6
+          },
+          {
+            "via": "http://publications.europa.eu/ontology/euvoc#status",
+            "max": 6
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#topConceptOf",
+            "max": 6
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#EntryIntoForce": {
       "ok": true,
@@ -3074,7 +3704,15 @@
           "max": 1,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#treatyProcessHasTask",
+            "max": 2
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#Event": {
       "ok": true,
@@ -3606,7 +4244,7 @@
       "properties": [
         {
           "uri": "http://data.legilux.public.lu/resource/ontology/jolux#isEmbodiedBy",
-          "count": 1033723,
+          "count": 1033729,
           "max": 10,
           "min": 0
         },
@@ -3813,7 +4451,41 @@
           "max": 1,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#legalResourceImpactHasType",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#member",
+            "max": 17
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#hasTopConcept",
+            "max": 31
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#exactMatch",
+            "max": 7
+          },
+          {
+            "via": "http://publications.europa.eu/ontology/euvoc#status",
+            "max": 26
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#inScheme",
+            "max": 31
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#topConceptOf",
+            "max": 31
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#InformationSource": {
       "ok": true,
@@ -3860,7 +4532,33 @@
           "max": 1,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#informationSource",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#hasTopConcept",
+            "max": 6
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#inScheme",
+            "max": 6
+          },
+          {
+            "via": "http://publications.europa.eu/ontology/euvoc#status",
+            "max": 6
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#topConceptOf",
+            "max": 6
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#InitialDraft": {
       "ok": true,
@@ -3972,7 +4670,25 @@
           "max": 1,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#partyOrganisationOfTreaty",
+            "max": 116
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#legalResourceHasImpact",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#factor",
+            "max": 8
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#InstrumentType": {
       "ok": true,
@@ -4019,7 +4735,33 @@
           "max": 1,
           "min": 1
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#member",
+            "max": 4
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#hasTopConcept",
+            "max": 5
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#inScheme",
+            "max": 5
+          },
+          {
+            "via": "http://publications.europa.eu/ontology/euvoc#status",
+            "max": 5
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#topConceptOf",
+            "max": 5
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#InternationalActor": {
       "ok": true,
@@ -4102,7 +4844,57 @@
           "max": 1,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#depositary",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#partyConditionOfParty",
+            "max": 1
+          },
+          {
+            "via": "http://purl.org/dc/terms/replaces",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#notificationFrom",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#factor",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#treatyUnderUmbrellaOf",
+            "max": 2
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#treatyPartyOrganisation",
+            "max": 2
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#member",
+            "max": 25
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#partyOrganisationOfTreaty",
+            "max": 1
+          },
+          {
+            "via": "http://purl.org/dc/terms/replaces",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#relatedMatch",
+            "max": 2
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#Language": {
       "ok": true,
@@ -4143,7 +4935,33 @@
           "max": 5,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#historicalImpactForLanguage",
+            "max": 5
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#language",
+            "max": 25
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#hasTopConcept",
+            "max": 126
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#inScheme",
+            "max": 126
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#topConceptOf",
+            "max": 126
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#LegalAnalysis": {
       "ok": true,
@@ -4166,7 +4984,19 @@
           "max": 1,
           "min": 1
         }
-      ]
+      ],
+      "embed": {
+        "inverse": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#legalAnalysisHasLegalResourceImpact",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#legalAnalysisOfLegalResource",
+            "max": 1
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#LegalAnalysisStatus": {
       "ok": true,
@@ -4213,7 +5043,29 @@
           "max": 1,
           "min": 1
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#hasTopConcept",
+            "max": 3
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#inScheme",
+            "max": 3
+          },
+          {
+            "via": "http://publications.europa.eu/ontology/euvoc#status",
+            "max": 3
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#topConceptOf",
+            "max": 3
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#LegalInstitution": {
       "ok": true,
@@ -4326,7 +5178,89 @@
           "max": 1,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#legalInstitutionForOpinion",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#broader",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#institutionInChargeOfTheEventLevel2",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#responsibilityOf",
+            "max": 1
+          },
+          {
+            "via": "http://purl.org/dc/terms/replaces",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#institutionInChargeOfTheEvent",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#rightsHolder",
+            "max": 2
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#institutionInChargeOfTheEventLevel3",
+            "max": 2
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#legalInstitutionForTechnicalSupport",
+            "max": 2
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#publisher",
+            "max": 2
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#isOpinionOf",
+            "max": 3
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#legalInstitutionForLegalSupport",
+            "max": 3
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#narrower",
+            "max": 39
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#hasTopConcept",
+            "max": 61
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#address",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#narrower",
+            "max": 1
+          },
+          {
+            "via": "http://purl.org/dc/terms/replaces",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#broader",
+            "max": 39
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#topConceptOf",
+            "max": 61
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#LegalResource": {
       "ok": true,
@@ -4409,7 +5343,65 @@
           "max": 1,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#impactToLegalResource",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#treatyLegalResourceForOtherParty",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#treatyProcessHasResultingTreatyDocument",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#factor",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#isAnnexOfWork",
+            "max": 2
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#modifies",
+            "max": 7
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#workHasAnnex",
+            "max": 146
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#isRealizedBy",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#compendiumIntegratesAct",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#workHasAnnex",
+            "max": 2
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#isPartOf",
+            "max": 5
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#modifiedBy",
+            "max": 7
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#isAnnexOfWork",
+            "max": 146
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#LegalResourceGenre": {
       "ok": true,
@@ -4462,7 +5454,33 @@
           "max": 1,
           "min": 1
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#legalResourceGenre",
+            "max": 2
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#hasTopConcept",
+            "max": 4
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#inScheme",
+            "max": 4
+          },
+          {
+            "via": "http://publications.europa.eu/ontology/euvoc#status",
+            "max": 4
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#topConceptOf",
+            "max": 4
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#LegalResourceImpact": {
       "ok": true,
@@ -4729,7 +5747,33 @@
           "max": 1,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#broader",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#narrower",
+            "max": 67
+          },
+          {
+            "via": "http://purl.org/dc/elements/1.1/subject",
+            "max": 117
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#narrower",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#broader",
+            "max": 67
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#LegalTaxonomy": {
       "ok": true,
@@ -4824,7 +5868,49 @@
           "max": 1,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#seeAlsoTarget",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#citationToLegalTaxonomy",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#broader",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#seeAlsoSource",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#classifiedByTaxonomyEntry",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#broaderTransitive",
+            "max": 11
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#hasTopConcept",
+            "max": 18
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#narrower",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#topConceptOf",
+            "max": 18
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#LegalValue": {
       "ok": true,
@@ -4889,7 +5975,53 @@
           "max": 1,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#format",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#narrower",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#relatedMatch",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#broader",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+            "max": 4
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#hasTopConcept",
+            "max": 4
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#narrower",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#broader",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#inScheme",
+            "max": 4
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#topConceptOf",
+            "max": 4
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#LegislativeTask": {
       "ok": true,
@@ -5074,7 +6206,77 @@
           "max": 2,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#legislativeTaskHasResultingLegalResource",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#isFollowingAct",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#draftHasTask",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#hasSubTask",
+            "max": 4
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#draftHasLegislativeTask",
+            "max": 12
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#hasSubTask",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#opinionHasDraftRelatedDocument",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#opinionIsAboutDraftDocument",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#legalInstitutionForOpinion",
+            "max": 4
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#consultationHasModification",
+            "max": 4
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#institutionInChargeOfTheEventLevel3",
+            "max": 6
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#legislativeTaskHasResultingLegalResource",
+            "max": 42
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#taskTriggersPublicationProcess",
+            "max": 42
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#foreseenImpactToLegalResource",
+            "max": 49
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#legalInstitutionForTechnicalSupport",
+            "max": 52
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#previousConsultationStatus",
+            "max": 96
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#License": {
       "ok": true,
@@ -5121,7 +6323,29 @@
           "max": 1,
           "min": 1
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#hasTopConcept",
+            "max": 1
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#inScheme",
+            "max": 1
+          },
+          {
+            "via": "http://publications.europa.eu/ontology/euvoc#status",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#topConceptOf",
+            "max": 1
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#Manifestation": {
       "ok": true,
@@ -5275,7 +6499,21 @@
           "max": 1,
           "min": 1
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#isPartOf",
+            "max": 1
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#isRealizedBy",
+            "max": 1
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#MemorialSerial": {
       "ok": true,
@@ -5304,7 +6542,21 @@
           "max": 1,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#isMemberOf",
+            "max": 1
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#isRealizedBy",
+            "max": 1
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#MigrationDraftStage": {
       "ok": true,
@@ -5380,7 +6632,33 @@
           "max": 1,
           "min": 1
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#migrationDraftStageType",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#hasTopConcept",
+            "max": 77
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#inScheme",
+            "max": 77
+          },
+          {
+            "via": "http://publications.europa.eu/ontology/euvoc#status",
+            "max": 77
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#topConceptOf",
+            "max": 77
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#NotationType": {
       "ok": true,
@@ -5421,7 +6699,29 @@
           "max": 1,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#hasTopConcept",
+            "max": 11
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://publications.europa.eu/ontology/euvoc#status",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#inScheme",
+            "max": 11
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#topConceptOf",
+            "max": 11
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#Notification": {
       "ok": true,
@@ -5495,7 +6795,33 @@
           "max": 1,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#notificationType",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#member",
+            "max": 2
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#hasTopConcept",
+            "max": 9
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#inScheme",
+            "max": 9
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#topConceptOf",
+            "max": 9
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#PartyConditionToTreaty": {
       "ok": true,
@@ -5589,7 +6915,37 @@
           "max": 1,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#hasSubTask",
+            "max": 1
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#institutionInChargeOfTheEventLevel3",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#opinionHasDraftRelatedDocument",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#consultationHasModification",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#legalInstitutionForLegalSupport",
+            "max": 49
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#institutionInChargeOfTheEventLevel2",
+            "max": 99
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#PostalAddress": {
       "ok": true,
@@ -5624,7 +6980,25 @@
           "max": 1,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#address",
+            "max": 1
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#email",
+            "max": 2
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#website",
+            "max": 41
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#ProjectType": {
       "ok": true,
@@ -5671,7 +7045,37 @@
           "max": 1,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#legislativeTaskType",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#relatedProjectType",
+            "max": 6
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#hasTopConcept",
+            "max": 26
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://publications.europa.eu/ontology/euvoc#status",
+            "max": 18
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#inScheme",
+            "max": 26
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#topConceptOf",
+            "max": 26
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#PublicationCompleteness": {
       "ok": true,
@@ -5712,7 +7116,33 @@
           "max": 1,
           "min": 1
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#legalResourcePublicationCompleteness",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#hasTopConcept",
+            "max": 3
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#inScheme",
+            "max": 3
+          },
+          {
+            "via": "http://publications.europa.eu/ontology/euvoc#status",
+            "max": 3
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#topConceptOf",
+            "max": 3
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#PublicationDocumentOutput": {
       "ok": true,
@@ -5735,7 +7165,15 @@
           "max": 1,
           "min": 1
         }
-      ]
+      ],
+      "embed": {
+        "inverse": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#outputDocumentOfPublicationTask",
+            "max": 1
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#PublicationFolderStage": {
       "ok": true,
@@ -5782,7 +7220,29 @@
           "max": 1,
           "min": 1
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#hasTopConcept",
+            "max": 4
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#inScheme",
+            "max": 4
+          },
+          {
+            "via": "http://publications.europa.eu/ontology/euvoc#status",
+            "max": 4
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#topConceptOf",
+            "max": 4
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#PublicationFolderStatus": {
       "ok": true,
@@ -5829,7 +7289,29 @@
           "max": 1,
           "min": 1
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#hasTopConcept",
+            "max": 5
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#inScheme",
+            "max": 5
+          },
+          {
+            "via": "http://publications.europa.eu/ontology/euvoc#status",
+            "max": 5
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#topConceptOf",
+            "max": 5
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#PublicationProcess": {
       "ok": true,
@@ -5864,7 +7346,23 @@
           "max": 1,
           "min": 1
         }
-      ]
+      ],
+      "embed": {
+        "inverse": [
+          {
+            "via": "http://data.cogni.zone/internal/legiconso#impactsToUpdate",
+            "max": 3
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#publicationProcessHasPublicationTask",
+            "max": 5
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#publicationProcessForConsolidationAbstract",
+            "max": 42
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#PublicationProcessRelatedToDocumentStatus": {
       "ok": true,
@@ -5911,7 +7409,29 @@
           "max": 1,
           "min": 1
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#hasTopConcept",
+            "max": 3
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#inScheme",
+            "max": 3
+          },
+          {
+            "via": "http://publications.europa.eu/ontology/euvoc#status",
+            "max": 3
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#topConceptOf",
+            "max": 3
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#PublicationProcessRelatedToExpressionStatus": {
       "ok": true,
@@ -5970,7 +7490,37 @@
           "max": 1,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#member",
+            "max": 8
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#hasTopConcept",
+            "max": 11
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#relatedMatch",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#inScheme",
+            "max": 11
+          },
+          {
+            "via": "http://publications.europa.eu/ontology/euvoc#status",
+            "max": 11
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#topConceptOf",
+            "max": 11
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#PublicationProcessRelatedToManifestationStatus": {
       "ok": true,
@@ -6017,7 +7567,29 @@
           "max": 1,
           "min": 1
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#hasTopConcept",
+            "max": 3
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#inScheme",
+            "max": 3
+          },
+          {
+            "via": "http://publications.europa.eu/ontology/euvoc#status",
+            "max": 3
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#topConceptOf",
+            "max": 3
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#PublicationProcessStage": {
       "ok": true,
@@ -6070,7 +7642,29 @@
           "max": 1,
           "min": 1
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#hasTopConcept",
+            "max": 26
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#inScheme",
+            "max": 26
+          },
+          {
+            "via": "http://publications.europa.eu/ontology/euvoc#status",
+            "max": 26
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#topConceptOf",
+            "max": 26
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#PublicationProcessStatus": {
       "ok": true,
@@ -6123,7 +7717,37 @@
           "max": 1,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#relatedMatch",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#member",
+            "max": 8
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#hasTopConcept",
+            "max": 12
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#inScheme",
+            "max": 12
+          },
+          {
+            "via": "http://publications.europa.eu/ontology/euvoc#status",
+            "max": 12
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#topConceptOf",
+            "max": 12
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#PublicationTask": {
       "ok": true,
@@ -6140,7 +7764,19 @@
           "max": 8,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#outputDocumentOfPublicationTask",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#publicationProcessHasPublicationTask",
+            "max": 9
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#RatificationRestriction": {
       "ok": true,
@@ -6163,7 +7799,19 @@
           "max": 1,
           "min": 1
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#partyConditionHasRatificationRestriction",
+            "max": 3
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#treatyHasRatificationRestriction",
+            "max": 32
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#ReferralToConseilGouvernement": {
       "ok": true,
@@ -6192,7 +7840,25 @@
           "max": 1,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#treatyProcessHasTask",
+            "max": 1
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#draftLegislationApprovalPublishedIn",
+            "max": 27
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#draftLegislationInitialInformationPublishedIn",
+            "max": 28
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#Registration": {
       "ok": true,
@@ -6209,7 +7875,15 @@
           "max": 1,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#treatyProcessHasTask",
+            "max": 2
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#ResourceFamily": {
       "ok": true,
@@ -6262,7 +7936,45 @@
           "max": 1,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#relatedResourceFamily",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#related",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#legalResourceFamilyType",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#hasTopConcept",
+            "max": 13
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#related",
+            "max": 1
+          },
+          {
+            "via": "http://publications.europa.eu/ontology/euvoc#status",
+            "max": 10
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#inScheme",
+            "max": 13
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#topConceptOf",
+            "max": 13
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#ResourceType": {
       "ok": true,
@@ -6369,7 +8081,69 @@
           "max": 1,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#typeDocument",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#historicalTypeDocument",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#broader",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#narrower",
+            "max": 18
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#hasTopConcept",
+            "max": 27
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#member",
+            "max": 45
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#narrower",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#relatedProjectTask",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#relatedProjectType",
+            "max": 10
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#broader",
+            "max": 18
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#relatedResourceFamily",
+            "max": 22
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#topConceptOf",
+            "max": 28
+          },
+          {
+            "via": "http://publications.europa.eu/ontology/euvoc#status",
+            "max": 52
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#inScheme",
+            "max": 83
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#ResultOfAConsultationPublication": {
       "ok": true,
@@ -6422,7 +8196,33 @@
           "max": 2,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#hasSubTask",
+            "max": 1
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#opinionHasDraftRelatedDocument",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#consultationHasModification",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#institutionInChargeOfTheEventLevel3",
+            "max": 2
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#legalInstitutionForLegalSupport",
+            "max": 139
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#Role": {
       "ok": true,
@@ -6475,7 +8275,29 @@
           "max": 1,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#hasTopConcept",
+            "max": 51
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#inScheme",
+            "max": 51
+          },
+          {
+            "via": "http://publications.europa.eu/ontology/euvoc#status",
+            "max": 51
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#topConceptOf",
+            "max": 51
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#RsAbbreviation": {
       "ok": true,
@@ -6522,7 +8344,29 @@
           "max": 1,
           "min": 1
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#hasTopConcept",
+            "max": 36
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#inScheme",
+            "max": 36
+          },
+          {
+            "via": "http://publications.europa.eu/ontology/euvoc#status",
+            "max": 36
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#topConceptOf",
+            "max": 36
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#SeeAlso": {
       "ok": true,
@@ -6551,7 +8395,19 @@
           "max": 1,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "inverse": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#seeAlsoTarget",
+            "max": 19
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#seeAlsoSource",
+            "max": 39
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#SubdivisionIdentificationDetail": {
       "ok": true,
@@ -6580,7 +8436,15 @@
           "max": 1,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#legalResourceSubdivisionHasSubdivisionIdentificationDetail",
+            "max": 4
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#SubdivisionType": {
       "ok": true,
@@ -6657,7 +8521,61 @@
           "max": 1,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#legalResourceSubdivisionType",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#legalResourceSubdivisionDetailType",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#narrower",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#broader",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#subdivisionType",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#member",
+            "max": 9
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#hasTopConcept",
+            "max": 10
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#narrower",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#broader",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#topConceptOf",
+            "max": 10
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#inScheme",
+            "max": 20
+          },
+          {
+            "via": "http://publications.europa.eu/ontology/euvoc#status",
+            "max": 20
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#TaskForTreaty": {
       "ok": true,
@@ -6803,7 +8721,29 @@
           "max": 1,
           "min": 1
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#hasTopConcept",
+            "max": 3
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#inScheme",
+            "max": 3
+          },
+          {
+            "via": "http://publications.europa.eu/ontology/euvoc#status",
+            "max": 3
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#topConceptOf",
+            "max": 3
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#TreatyAccessionType": {
       "ok": true,
@@ -6844,7 +8784,29 @@
           "max": 1,
           "min": 1
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#partyConditionAccessionType",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#hasTopConcept",
+            "max": 4
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#inScheme",
+            "max": 4
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#topConceptOf",
+            "max": 4
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#TreatyDocument": {
       "ok": true,
@@ -6885,7 +8847,41 @@
           "max": 7,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#treatyProcessHasResultingTreatyDocument",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#isAnnexOfWork",
+            "max": 2
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#modifies",
+            "max": 7
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#workHasAnnex",
+            "max": 146
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#workHasAnnex",
+            "max": 2
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#modifiedBy",
+            "max": 7
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#isAnnexOfWork",
+            "max": 146
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#TreatyProcess": {
       "ok": true,
@@ -7052,7 +9048,53 @@
           "max": 1,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#factor",
+            "max": 1
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#treatyHasRatificationRestriction",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#treatyProcessHasPartyCondition",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#producedIn",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#treatyProcessHasResultingTreatyDocument",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#treatyProcessHasTask",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#treatyLegalResourceForOtherParty",
+            "max": 3
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#treatyNotificationPublishedIn",
+            "max": 9
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#euConventionDomain",
+            "max": 111
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#classifiedByTaxonomyEntry",
+            "max": 113
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#TreatyRatification": {
       "ok": true,
@@ -7075,7 +9117,15 @@
           "max": 1,
           "min": 1
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#treatyProcessHasTask",
+            "max": 1
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#TreatySignature": {
       "ok": true,
@@ -7098,7 +9148,15 @@
           "max": 1,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#treatyProcessHasTask",
+            "max": 1
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#TreatyStatus": {
       "ok": true,
@@ -7151,7 +9209,29 @@
           "max": 1,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#hasTopConcept",
+            "max": 6
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://publications.europa.eu/ontology/euvoc#status",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#inScheme",
+            "max": 6
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#topConceptOf",
+            "max": 6
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#TreatySubjectTheme": {
       "ok": true,
@@ -7186,7 +9266,29 @@
           "max": 1,
           "min": 1
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#treatySubject",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#hasTopConcept",
+            "max": 61
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#inScheme",
+            "max": 61
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#topConceptOf",
+            "max": 61
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#TreatyType": {
       "ok": true,
@@ -7233,7 +9335,33 @@
           "max": 1,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#treatyType",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#hasTopConcept",
+            "max": 4
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://publications.europa.eu/ontology/euvoc#status",
+            "max": 3
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#inScheme",
+            "max": 4
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#topConceptOf",
+            "max": 4
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#TypeProcedure": {
       "ok": true,
@@ -7280,7 +9408,33 @@
           "max": 1,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#processType",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#hasTopConcept",
+            "max": 5
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://publications.europa.eu/ontology/euvoc#status",
+            "max": 3
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#inScheme",
+            "max": 5
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#topConceptOf",
+            "max": 5
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#UserFormat": {
       "ok": true,
@@ -7345,7 +9499,45 @@
           "max": 1,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#userFormat",
+            "max": 2
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#member",
+            "max": 10
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#hasTopConcept",
+            "max": 19
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#closeMatch",
+            "max": 4
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#relatedMatch",
+            "max": 16
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#inScheme",
+            "max": 19
+          },
+          {
+            "via": "http://publications.europa.eu/ontology/euvoc#status",
+            "max": 19
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#topConceptOf",
+            "max": 19
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#Volume": {
       "ok": true,
@@ -7386,7 +9578,19 @@
           "max": 1,
           "min": 1
         }
-      ]
+      ],
+      "embed": {
+        "inverse": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#isRealizedBy",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#isMemberOf",
+            "max": 63
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#VolumeSerial": {
       "ok": true,
@@ -7415,7 +9619,21 @@
           "max": 1,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#isMemberOf",
+            "max": 1
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#isRealizedBy",
+            "max": 1
+          }
+        ]
+      }
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#Work": {
       "ok": true,
@@ -8168,7 +10386,33 @@
           "max": 1,
           "min": 1
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#hasTopConcept",
+            "max": 4
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#historicalImpactForLanguage",
+            "max": 4
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#language",
+            "max": 4
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#inScheme",
+            "max": 4
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#topConceptOf",
+            "max": 4
+          }
+        ]
+      }
     },
     "http://www.openlinksw.com/schemas/virtrdf#QuadMap": {
       "ok": true,
@@ -8215,7 +10459,41 @@
           "max": 1,
           "min": 1
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://www.openlinksw.com/schemas/virtrdf#qsDefaultMap",
+            "max": 1
+          },
+          {
+            "via": "http://www.openlinksw.com/schemas/virtrdf#item",
+            "max": 3
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://www.openlinksw.com/schemas/virtrdf#qmPredicateMap",
+            "max": 1
+          },
+          {
+            "via": "http://www.openlinksw.com/schemas/virtrdf#qmObjectMap",
+            "max": 1
+          },
+          {
+            "via": "http://www.openlinksw.com/schemas/virtrdf#qmSubjectMap",
+            "max": 1
+          },
+          {
+            "via": "http://www.openlinksw.com/schemas/virtrdf#qmGraphMap",
+            "max": 1
+          },
+          {
+            "via": "http://www.openlinksw.com/schemas/virtrdf#qmMatchingFlags",
+            "max": 3
+          }
+        ]
+      }
     },
     "http://www.openlinksw.com/schemas/virtrdf#QuadMapATable": {
       "ok": true,
@@ -8238,7 +10516,15 @@
           "max": 1,
           "min": 1
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://www.w3.org/1999/02/22-rdf-syntax-ns#_1",
+            "max": 1
+          }
+        ]
+      }
     },
     "http://www.openlinksw.com/schemas/virtrdf#QuadMapColumn": {
       "ok": true,
@@ -8261,7 +10547,15 @@
           "max": 1,
           "min": 1
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://www.w3.org/1999/02/22-rdf-syntax-ns#_1",
+            "max": 1
+          }
+        ]
+      }
     },
     "http://www.openlinksw.com/schemas/virtrdf#QuadMapFText": {
       "ok": true,
@@ -8302,7 +10596,25 @@
           "max": 1,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://www.openlinksw.com/schemas/virtrdf#qmvGeo",
+            "max": 1
+          },
+          {
+            "via": "http://www.openlinksw.com/schemas/virtrdf#qmvFText",
+            "max": 1
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://www.openlinksw.com/schemas/virtrdf#qmvftConds",
+            "max": 1
+          }
+        ]
+      }
     },
     "http://www.openlinksw.com/schemas/virtrdf#QuadMapFormat": {
       "ok": true,
@@ -8647,7 +10959,69 @@
           "uri": "http://www.openlinksw.com/schemas/virtrdf#inheritFrom",
           "count": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://www.w3.org/1999/02/22-rdf-syntax-ns#_1",
+            "max": 1
+          },
+          {
+            "via": "http://www.openlinksw.com/schemas/virtrdf#qmvFormat",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/1999/02/22-rdf-syntax-ns#_3",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/1999/02/22-rdf-syntax-ns#_4",
+            "max": 1
+          },
+          {
+            "via": "http://www.openlinksw.com/schemas/virtrdf#qmfSubFormatForRefs",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/1999/02/22-rdf-syntax-ns#_2",
+            "max": 1
+          },
+          {
+            "via": "http://www.openlinksw.com/schemas/virtrdf#inheritFrom",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/1999/02/22-rdf-syntax-ns#_5",
+            "max": 1
+          },
+          {
+            "via": "http://www.openlinksw.com/schemas/virtrdf#item",
+            "max": 141
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://www.openlinksw.com/schemas/virtrdf#qmfSubFormatForRefs",
+            "max": 1
+          },
+          {
+            "via": "http://www.openlinksw.com/schemas/virtrdf#qmfSuperFormats",
+            "max": 1
+          },
+          {
+            "via": "http://www.openlinksw.com/schemas/virtrdf#inheritFrom",
+            "max": 9
+          },
+          {
+            "via": "http://www.openlinksw.com/schemas/virtrdf#noInherit",
+            "max": 62
+          },
+          {
+            "via": "http://www.openlinksw.com/schemas/virtrdf#qmfValRange-rvrRestrictions",
+            "max": 68
+          }
+        ]
+      }
     },
     "http://www.openlinksw.com/schemas/virtrdf#QuadMapValue": {
       "ok": true,
@@ -8700,7 +11074,49 @@
           "max": 1,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://www.openlinksw.com/schemas/virtrdf#qmPredicateMap",
+            "max": 1
+          },
+          {
+            "via": "http://www.openlinksw.com/schemas/virtrdf#qmObjectMap",
+            "max": 1
+          },
+          {
+            "via": "http://www.openlinksw.com/schemas/virtrdf#qmSubjectMap",
+            "max": 1
+          },
+          {
+            "via": "http://www.openlinksw.com/schemas/virtrdf#qmGraphMap",
+            "max": 1
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://www.openlinksw.com/schemas/virtrdf#qmvGeo",
+            "max": 1
+          },
+          {
+            "via": "http://www.openlinksw.com/schemas/virtrdf#qmvColumns",
+            "max": 1
+          },
+          {
+            "via": "http://www.openlinksw.com/schemas/virtrdf#qmvFText",
+            "max": 1
+          },
+          {
+            "via": "http://www.openlinksw.com/schemas/virtrdf#qmvATables",
+            "max": 4
+          },
+          {
+            "via": "http://www.openlinksw.com/schemas/virtrdf#qmvFormat",
+            "max": 5
+          }
+        ]
+      }
     },
     "http://www.openlinksw.com/schemas/virtrdf#QuadStorage": {
       "ok": true,
@@ -8729,7 +11145,29 @@
           "max": 1,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://www.openlinksw.com/schemas/virtrdf#item",
+            "max": 3
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://www.openlinksw.com/schemas/virtrdf#qsDefaultMap",
+            "max": 1
+          },
+          {
+            "via": "http://www.openlinksw.com/schemas/virtrdf#qsUserMaps",
+            "max": 1
+          },
+          {
+            "via": "http://www.openlinksw.com/schemas/virtrdf#qsMatchingFlags",
+            "max": 3
+          }
+        ]
+      }
     },
     "http://www.openlinksw.com/schemas/virtrdf#RdfDebugger": {
       "ok": true,
@@ -8740,7 +11178,15 @@
           "max": 1,
           "min": 1
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://www.openlinksw.com/schemas/virtrdf#item",
+            "max": 1
+          }
+        ]
+      }
     },
     "http://www.openlinksw.com/schemas/virtrdf#array-of-QuadMap": {
       "ok": true,
@@ -8751,7 +11197,19 @@
           "max": 1,
           "min": 1
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://www.openlinksw.com/schemas/virtrdf#qsUserMaps",
+            "max": 1
+          },
+          {
+            "via": "http://www.openlinksw.com/schemas/virtrdf#item",
+            "max": 3
+          }
+        ]
+      }
     },
     "http://www.openlinksw.com/schemas/virtrdf#array-of-QuadMapATable": {
       "ok": true,
@@ -8768,7 +11226,21 @@
           "max": 1,
           "min": 1
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://www.openlinksw.com/schemas/virtrdf#qmvATables",
+            "max": 1
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://www.w3.org/1999/02/22-rdf-syntax-ns#_1",
+            "max": 1
+          }
+        ]
+      }
     },
     "http://www.openlinksw.com/schemas/virtrdf#array-of-QuadMapColumn": {
       "ok": true,
@@ -8785,7 +11257,21 @@
           "max": 1,
           "min": 1
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://www.openlinksw.com/schemas/virtrdf#qmvColumns",
+            "max": 1
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://www.w3.org/1999/02/22-rdf-syntax-ns#_1",
+            "max": 1
+          }
+        ]
+      }
     },
     "http://www.openlinksw.com/schemas/virtrdf#array-of-QuadMapFormat": {
       "ok": true,
@@ -8826,7 +11312,37 @@
           "max": 1,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://www.openlinksw.com/schemas/virtrdf#qmfSuperFormats",
+            "max": 1
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://www.w3.org/1999/02/22-rdf-syntax-ns#_4",
+            "max": 2
+          },
+          {
+            "via": "http://www.w3.org/1999/02/22-rdf-syntax-ns#_5",
+            "max": 2
+          },
+          {
+            "via": "http://www.w3.org/1999/02/22-rdf-syntax-ns#_3",
+            "max": 5
+          },
+          {
+            "via": "http://www.w3.org/1999/02/22-rdf-syntax-ns#_1",
+            "max": 7
+          },
+          {
+            "via": "http://www.w3.org/1999/02/22-rdf-syntax-ns#_2",
+            "max": 8
+          }
+        ]
+      }
     },
     "http://www.openlinksw.com/schemas/virtrdf#array-of-string": {
       "ok": true,
@@ -8837,7 +11353,15 @@
           "max": 1,
           "min": 1
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://www.openlinksw.com/schemas/virtrdf#qmvftConds",
+            "max": 1
+          }
+        ]
+      }
     },
     "http://www.w3.org/1999/02/22-rdf-syntax-ns#List": {
       "ok": true,
@@ -8860,7 +11384,33 @@
           "max": 1,
           "min": 1
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://www.w3.org/1999/02/22-rdf-syntax-ns#rest",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2002/07/owl#propertyChainAxiom",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2002/07/owl#unionOf",
+            "max": 1
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://www.w3.org/1999/02/22-rdf-syntax-ns#first",
+            "max": 7
+          },
+          {
+            "via": "http://www.w3.org/1999/02/22-rdf-syntax-ns#rest",
+            "max": 18
+          }
+        ]
+      }
     },
     "http://www.w3.org/2000/01/rdf-schema#Datatype": {
       "ok": true,
@@ -8877,7 +11427,19 @@
           "max": 1,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#range",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2002/07/owl#onDataRange",
+            "max": 1
+          }
+        ]
+      }
     },
     "http://www.w3.org/2002/07/owl#AnnotationProperty": {
       "ok": true,
@@ -9002,7 +11564,57 @@
           "max": 1,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2002/07/owl#annotatedSource",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/ns/prov#unqualifiedForm",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#subPropertyOf",
+            "max": 1
+          },
+          {
+            "via": "http://data.europa.eu/eli/ontology#specificPropertyOf",
+            "max": 1
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/ns/prov#qualifiedForm",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#range",
+            "max": 2
+          },
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#domain",
+            "max": 2
+          },
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#subPropertyOf",
+            "max": 7
+          },
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#isDefinedBy",
+            "max": 18
+          }
+        ]
+      }
     },
     "http://www.w3.org/2002/07/owl#Axiom": {
       "ok": true,
@@ -9049,7 +11661,23 @@
           "max": 1,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "inverse": [
+          {
+            "via": "http://www.w3.org/2002/07/owl#annotatedSource",
+            "max": 2
+          },
+          {
+            "via": "http://www.w3.org/2002/07/owl#annotatedTarget",
+            "max": 3
+          },
+          {
+            "via": "http://www.w3.org/2002/07/owl#annotatedProperty",
+            "max": 5
+          }
+        ]
+      }
     },
     "http://www.w3.org/2002/07/owl#Class": {
       "ok": true,
@@ -9228,7 +11856,97 @@
           "max": 1,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#range",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2002/07/owl#onClass",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2002/07/owl#allValuesFrom",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/ns/prov#qualifiedForm",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/1999/02/22-rdf-syntax-ns#first",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2002/07/owl#someValuesFrom",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/ns/prov#sharesDefinitionWith",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2002/07/owl#annotatedTarget",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#domain",
+            "max": 2
+          },
+          {
+            "via": "http://www.w3.org/2002/07/owl#equivalentClass",
+            "max": 2
+          },
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+            "max": 3
+          },
+          {
+            "via": "http://www.w3.org/2002/07/owl#disjointWith",
+            "max": 4
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#range",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#domain",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2002/07/owl#equivalentClass",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/ns/prov#unqualifiedForm",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2002/07/owl#disjointWith",
+            "max": 4
+          },
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#isDefinedBy",
+            "max": 29
+          },
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+            "max": 84
+          }
+        ]
+      }
     },
     "http://www.w3.org/2002/07/owl#DatatypeProperty": {
       "ok": true,
@@ -9389,7 +12107,81 @@
           "max": 1,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://www.w3.org/2002/07/owl#onProperty",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/ns/prov#qualifiedForm",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#subPropertyOf",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2002/07/owl#equivalentProperty",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+            "max": 2
+          },
+          {
+            "via": "http://www.w3.org/ns/prov#unqualifiedForm",
+            "max": 4
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#label",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#comment",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/ns/prov#unqualifiedForm",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/ns/prov#sharesDefinitionWith",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2002/07/owl#equivalentProperty",
+            "max": 1
+          },
+          {
+            "via": "http://data.europa.eu/eli/ontology#specificPropertyOf",
+            "max": 2
+          },
+          {
+            "via": "http://www.w3.org/ns/prov#qualifiedForm",
+            "max": 4
+          },
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#isDefinedBy",
+            "max": 6
+          },
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#subPropertyOf",
+            "max": 9
+          },
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#domain",
+            "max": 29
+          }
+        ]
+      }
     },
     "http://www.w3.org/2002/07/owl#FunctionalProperty": {
       "ok": true,
@@ -9490,7 +12282,49 @@
           "max": 1,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2002/07/owl#inverseOf",
+            "max": 1
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#isDefinedBy",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2002/07/owl#inverseOf",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#subPropertyOf",
+            "max": 2
+          },
+          {
+            "via": "http://data.europa.eu/eli/ontology#specificPropertyOf",
+            "max": 2
+          },
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#domain",
+            "max": 4
+          },
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#range",
+            "max": 5
+          }
+        ]
+      }
     },
     "http://www.w3.org/2002/07/owl#IrreflexiveProperty": {
       "ok": true,
@@ -9519,7 +12353,25 @@
           "max": 1,
           "min": 1
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://www.w3.org/2002/07/owl#onProperty",
+            "max": 1
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#range",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#domain",
+            "max": 1
+          }
+        ]
+      }
     },
     "http://www.w3.org/2002/07/owl#NamedIndividual": {
       "ok": true,
@@ -9638,7 +12490,73 @@
           "max": 1,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#inScheme",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#format",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#narrower",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#relatedMatch",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#broader",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2002/07/owl#hasValue",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#topConceptOf",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#hasTopConcept",
+            "max": 4
+          },
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+            "max": 5
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://purl.org/dc/terms/license",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#hasTopConcept",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#narrower",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#broader",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#inScheme",
+            "max": 4
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#topConceptOf",
+            "max": 4
+          }
+        ]
+      }
     },
     "http://www.w3.org/2002/07/owl#ObjectProperty": {
       "ok": true,
@@ -9853,7 +12771,109 @@
           "max": 1,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://www.w3.org/2002/07/owl#onProperty",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#range",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#exactMatch",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/ns/prov#qualifiedForm",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2002/07/owl#annotatedSource",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/1999/02/22-rdf-syntax-ns#first",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/ns/prov#unqualifiedForm",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2002/07/owl#inverseOf",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2002/07/owl#equivalentProperty",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2002/07/owl#annotatedTarget",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#subPropertyOf",
+            "max": 2
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/ns/prov#unqualifiedForm",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2002/07/owl#inverseOf",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2002/07/owl#equivalentProperty",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/ns/prov#qualifiedForm",
+            "max": 2
+          },
+          {
+            "via": "http://www.w3.org/ns/prov#sharesDefinitionWith",
+            "max": 3
+          },
+          {
+            "via": "http://data.europa.eu/eli/ontology#specificPropertyOf",
+            "max": 15
+          },
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#subPropertyOf",
+            "max": 23
+          },
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#domain",
+            "max": 30
+          },
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#range",
+            "max": 39
+          },
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#isDefinedBy",
+            "max": 44
+          }
+        ]
+      }
     },
     "http://www.w3.org/2002/07/owl#Ontology": {
       "ok": true,
@@ -9942,7 +12962,37 @@
           "max": 1,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#isDefinedBy",
+            "max": 1
+          },
+          {
+            "via": "http://purl.org/dc/terms/isRequiredBy",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2002/07/owl#imports",
+            "max": 4
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2002/07/owl#versionIRI",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2002/07/owl#imports",
+            "max": 3
+          }
+        ]
+      }
     },
     "http://www.w3.org/2002/07/owl#Restriction": {
       "ok": true,
@@ -10021,7 +13071,49 @@
           "uri": "http://www.w3.org/2002/07/owl#someValuesFrom",
           "count": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://www.w3.org/2002/07/owl#equivalentClass",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/1999/02/22-rdf-syntax-ns#first",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+            "max": 25
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://www.w3.org/2002/07/owl#allValuesFrom",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2002/07/owl#hasValue",
+            "max": 2
+          },
+          {
+            "via": "http://www.w3.org/2002/07/owl#someValuesFrom",
+            "max": 13
+          },
+          {
+            "via": "http://www.w3.org/2002/07/owl#onProperty",
+            "max": 21
+          },
+          {
+            "via": "http://www.w3.org/2002/07/owl#onClass",
+            "max": 21
+          },
+          {
+            "via": "http://www.w3.org/2002/07/owl#onDataRange",
+            "max": 103
+          }
+        ]
+      }
     },
     "http://www.w3.org/2002/07/owl#SymmetricProperty": {
       "ok": true,
@@ -10080,7 +13172,33 @@
           "max": 1,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#subPropertyOf",
+            "max": 1
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#range",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#domain",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#subPropertyOf",
+            "max": 2
+          },
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#isDefinedBy",
+            "max": 4
+          }
+        ]
+      }
     },
     "http://www.w3.org/2002/07/owl#TransitiveProperty": {
       "ok": true,
@@ -10133,7 +13251,33 @@
           "max": 1,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#subPropertyOf",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2002/07/owl#inverseOf",
+            "max": 1
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://www.w3.org/2002/07/owl#inverseOf",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#subPropertyOf",
+            "max": 2
+          },
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#isDefinedBy",
+            "max": 3
+          }
+        ]
+      }
     },
     "http://www.w3.org/2004/02/skos/core#Collection": {
       "ok": true,
@@ -10192,7 +13336,29 @@
           "max": 1,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://purl.org/umu/uneskos#hasMicroThesaurus",
+            "max": 5
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#member",
+            "max": 3
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#inScheme",
+            "max": 5
+          },
+          {
+            "via": "http://publications.europa.eu/ontology/euvoc#status",
+            "max": 20
+          }
+        ]
+      }
     },
     "http://www.w3.org/2004/02/skos/core#Concept": {
       "ok": true,
@@ -10437,7 +13603,55 @@
           "max": 1,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "inverse": [
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#address",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#narrower",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#partyOrganisationOfTreaty",
+            "max": 1
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#relatedProjectTask",
+            "max": 1
+          },
+          {
+            "via": "http://purl.org/dc/terms/replaces",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#closeMatch",
+            "max": 4
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#exactMatch",
+            "max": 7
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#relatedProjectType",
+            "max": 10
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#relatedMatch",
+            "max": 16
+          },
+          {
+            "via": "http://data.legilux.public.lu/resource/ontology/jolux#relatedResourceFamily",
+            "max": 22
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#related",
+            "max": 22
+          }
+        ]
+      }
     },
     "http://www.w3.org/2004/02/skos/core#ConceptScheme": {
       "ok": true,
@@ -10544,7 +13758,45 @@
           "max": 1,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#inScheme",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2002/07/owl#hasValue",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#topConceptOf",
+            "max": 1
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#hasTopConcept",
+            "max": 1
+          },
+          {
+            "via": "http://purl.org/umu/uneskos#hasMicroThesaurus",
+            "max": 1
+          },
+          {
+            "via": "http://purl.org/dc/terms/isRequiredBy",
+            "max": 2
+          },
+          {
+            "via": "http://purl.org/dc/terms/license",
+            "max": 25
+          }
+        ]
+      }
     },
     "http://www.w3.org/ns/sparql-service-description#Service": {
       "ok": true,
@@ -10615,7 +13867,51 @@
           "max": 1,
           "min": 1
         }
-      ]
+      ],
+      "embed": {
+        "inverse": [
+          {
+            "via": "http://www.w3.org/ns/sparql-service-description#endpoint",
+            "max": 1
+          },
+          {
+            "via": "http://www.openlinksw.com/schemas/virtrdf#graph-crud-endpoint",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/ns/sparql-service-description#supportedLanguage",
+            "max": 2
+          },
+          {
+            "via": "http://www.w3.org/ns/sparql-service-description#extensionFunction",
+            "max": 2
+          },
+          {
+            "via": "http://www.w3.org/ns/sparql-service-description#languageExtension",
+            "max": 2
+          },
+          {
+            "via": "http://www.w3.org/ns/sparql-service-description#inputFormat",
+            "max": 2
+          },
+          {
+            "via": "http://www.w3.org/ns/sparql-service-description#resultFormat",
+            "max": 2
+          },
+          {
+            "via": "http://www.w3.org/ns/sparql-service-description#propertyFeature",
+            "max": 2
+          },
+          {
+            "via": "http://www.w3.org/ns/sparql-service-description#extensionAggregate",
+            "max": 2
+          },
+          {
+            "via": "http://www.w3.org/ns/sparql-service-description#feature",
+            "max": 2
+          }
+        ]
+      }
     },
     "https://jurivoc.bger.ch/model/Jurivoc": {
       "ok": true,
@@ -10680,7 +13976,37 @@
           "max": 1,
           "min": 0
         }
-      ]
+      ],
+      "embed": {
+        "forward": [
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#broader",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#related",
+            "max": 22
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#hasTopConcept",
+            "max": 37
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#narrower",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#related",
+            "max": 22
+          },
+          {
+            "via": "http://www.w3.org/2004/02/skos/core#topConceptOf",
+            "max": 37
+          }
+        ]
+      }
     }
   },
   "composition": {
@@ -10714,6 +14040,30 @@
         "count": 52448
       }
     ],
+    "http://data.legilux.public.lu/resource/ontology/jolux#Consultation": [
+      {
+        "uri": "http://data.legilux.public.lu/resource/ontology/jolux#ResultOfAConsultationPublication",
+        "count": 1821
+      }
+    ],
+    "http://data.legilux.public.lu/resource/ontology/jolux#ConsultationPhase": [
+      {
+        "uri": "http://data.legilux.public.lu/resource/ontology/jolux#DraftRelatedDocument",
+        "count": 8864
+      }
+    ],
+    "http://data.legilux.public.lu/resource/ontology/jolux#ConsultationTask": [
+      {
+        "uri": "http://data.legilux.public.lu/resource/ontology/jolux#DraftRelatedDocument",
+        "count": 11959
+      }
+    ],
+    "http://data.legilux.public.lu/resource/ontology/jolux#Draft": [
+      {
+        "uri": "http://data.legilux.public.lu/resource/ontology/jolux#MigrationDraftStage",
+        "count": 61739
+      }
+    ],
     "http://data.legilux.public.lu/resource/ontology/jolux#DraftDocument": [
       {
         "uri": "http://data.legilux.public.lu/resource/ontology/jolux#Expression",
@@ -10738,10 +14088,54 @@
         "count": 4011
       }
     ],
+    "http://data.legilux.public.lu/resource/ontology/jolux#Event": [
+      {
+        "uri": "http://data.legilux.public.lu/resource/ontology/jolux#TreatySignature",
+        "count": 18601
+      },
+      {
+        "uri": "http://data.legilux.public.lu/resource/ontology/jolux#Registration",
+        "count": 5177
+      },
+      {
+        "uri": "http://data.legilux.public.lu/resource/ontology/jolux#ResultOfAConsultationPublication",
+        "count": 1821
+      },
+      {
+        "uri": "http://data.legilux.public.lu/resource/ontology/jolux#PublicationTask",
+        "count": 2959
+      },
+      {
+        "uri": "http://data.legilux.public.lu/resource/ontology/jolux#EntryIntoForce",
+        "count": 18672
+      },
+      {
+        "uri": "http://data.legilux.public.lu/resource/ontology/jolux#DraftRelatedDocument",
+        "count": 11959
+      },
+      {
+        "uri": "http://data.legilux.public.lu/resource/ontology/jolux#TreatyRatification",
+        "count": 3045
+      },
+      {
+        "uri": "http://data.legilux.public.lu/resource/ontology/jolux#ReferralToConseilGouvernement",
+        "count": 8727
+      },
+      {
+        "uri": "http://data.legilux.public.lu/resource/ontology/jolux#MigrationDraftStage",
+        "count": 61739
+      }
+    ],
     "http://data.legilux.public.lu/resource/ontology/jolux#Expression": [
       {
         "uri": "http://data.legilux.public.lu/resource/ontology/jolux#Manifestation",
         "count": 1026009
+      }
+    ],
+    "http://data.legilux.public.lu/resource/ontology/jolux#InitialDraft": [
+      {
+        "uri": "http://data.legilux.public.lu/resource/ontology/jolux#MigrationDraftStage",
+        "count": 61739
       }
     ],
     "http://data.legilux.public.lu/resource/ontology/jolux#LegalInstitution": [
@@ -10772,6 +14166,16 @@
         "count": 186278
       }
     ],
+    "http://data.legilux.public.lu/resource/ontology/jolux#LegislativeTask": [
+      {
+        "uri": "http://data.legilux.public.lu/resource/ontology/jolux#DraftRelatedDocument",
+        "count": 11959
+      },
+      {
+        "uri": "http://data.legilux.public.lu/resource/ontology/jolux#ResultOfAConsultationPublication",
+        "count": 1821
+      }
+    ],
     "http://data.legilux.public.lu/resource/ontology/jolux#Memorial": [
       {
         "uri": "http://data.legilux.public.lu/resource/ontology/jolux#Expression",
@@ -10782,6 +14186,52 @@
       {
         "uri": "http://data.legilux.public.lu/resource/ontology/jolux#Expression",
         "count": 774
+      }
+    ],
+    "http://data.legilux.public.lu/resource/ontology/jolux#PositionStatementPublication": [
+      {
+        "uri": "http://data.legilux.public.lu/resource/ontology/jolux#DraftRelatedDocument",
+        "count": 1180
+      }
+    ],
+    "http://data.legilux.public.lu/resource/ontology/jolux#PublicationDocumentOutput": [
+      {
+        "uri": "http://data.legilux.public.lu/resource/ontology/jolux#PublicationTask",
+        "count": 2959
+      }
+    ],
+    "http://data.legilux.public.lu/resource/ontology/jolux#PublicationProcess": [
+      {
+        "uri": "http://data.legilux.public.lu/resource/ontology/jolux#PublicationTask",
+        "count": 2959
+      }
+    ],
+    "http://data.legilux.public.lu/resource/ontology/jolux#ResultOfAConsultationPublication": [
+      {
+        "uri": "http://data.legilux.public.lu/resource/ontology/jolux#DraftRelatedDocument",
+        "count": 1915
+      }
+    ],
+    "http://data.legilux.public.lu/resource/ontology/jolux#TreatyProcess": [
+      {
+        "uri": "http://data.legilux.public.lu/resource/ontology/jolux#TreatyRatification",
+        "count": 3045
+      },
+      {
+        "uri": "http://data.legilux.public.lu/resource/ontology/jolux#ReferralToConseilGouvernement",
+        "count": 8727
+      },
+      {
+        "uri": "http://data.legilux.public.lu/resource/ontology/jolux#EntryIntoForce",
+        "count": 18672
+      },
+      {
+        "uri": "http://data.legilux.public.lu/resource/ontology/jolux#Registration",
+        "count": 5177
+      },
+      {
+        "uri": "http://data.legilux.public.lu/resource/ontology/jolux#TreatySignature",
+        "count": 18601
       }
     ],
     "http://data.legilux.public.lu/resource/ontology/jolux#Volume": [
@@ -10797,6 +14247,10 @@
       }
     ],
     "http://data.legilux.public.lu/resource/ontology/jolux#Work": [
+      {
+        "uri": "http://data.legilux.public.lu/resource/ontology/jolux#PublicationTask",
+        "count": 2959
+      },
       {
         "uri": "http://data.legilux.public.lu/resource/ontology/jolux#Expression",
         "count": 783505
@@ -10820,5 +14274,5 @@
     ]
   },
   "orphanCounts": {},
-  "profiledAt": "2026-07-03T23:10:37.833Z"
+  "profiledAt": "2026-07-04T12:17:41.165Z"
 }
