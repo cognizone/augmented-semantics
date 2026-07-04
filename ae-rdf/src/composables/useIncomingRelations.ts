@@ -9,8 +9,8 @@
  */
 import { ref, type Ref } from 'vue'
 import { useEndpointStore, useBrowseStore, useLanguageStore, useTypeConfigStore } from '../stores'
-import { executeSparql, resolveUris, logger, buildIncomingQuery, buildIncomingCountQuery, buildLabelsQuery, resolveGraphStrategy } from '../services'
-import { composeLabels } from './composeLabels'
+import { executeSparql, resolveUris, logger, buildIncomingQuery, buildIncomingCountQuery, resolveGraphStrategy } from '../services'
+import { composeLabels, resolveLabels } from './composeLabels'
 import { labelLangs } from '../utils/labelLang'
 import type { PropertyGroup, ResourceObject } from './useResourceView'
 
@@ -133,19 +133,13 @@ export function useIncomingRelations() {
         if (graph) toResolve.add(graph)
       }
 
-      // Labels + most-specific types for the referencing subjects.
-      const labelRes = subjectIris.size
-        ? await executeSparql(endpoint, buildLabelsQuery([...subjectIris]), { retries: 1 }).catch(() => null)
-        : null
-      if (!isCurrent()) return
-
+      // Labels + most-specific types for the referencing subjects, via the shared
+      // resolver (batched/WAF-safe label lookup + precedence + SKOS-XL).
       const labelMap = new Map<string, string>()
       const typeMap = new Map<string, string>()
-      for (const b of labelRes?.results.bindings ?? []) {
-        const s = b.s?.value
-        if (!s) continue
-        if (b.label?.value) labelMap.set(s, b.label.value)
-        if (b.type?.value) typeMap.set(s, b.type.value)
+      if (subjectIris.size) {
+        await resolveLabels(endpoint, [...subjectIris], labelLangs(endpoint.languagePriorities, languageStore.preferred), labelMap, typeMap, isCurrent)
+        if (!isCurrent()) return
       }
 
       // Compose per-type labels (same resolver as the resource view), so a

@@ -33,15 +33,22 @@ vi.mock('../../services', async (orig) => {
         bindings.push({ type: { type: 'uri', value: TYPE }, count: { value: '5' } })
       } else if (/AS \?total/i.test(query)) {
         bindings.push({ total: { value: '5' } })
-      } else if (new RegExp(INSTANCE.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).test(query) && /\?p\b/i.test(query)) {
+      } else if (/SELECT \?s \?p \?l\b/i.test(query)) {
+        // resolveLabels label-values query (?s ?p ?l): the instance's rdfs:label
+        bindings.push({ s: { type: 'uri', value: INSTANCE }, p: { type: 'uri', value: 'http://www.w3.org/2000/01/rdf-schema#label' }, l: { type: 'literal', value: 'Instance Y', 'xml:lang': 'en' } })
+      } else if (/SELECT \?s \?t\b/i.test(query)) {
+        // resolveLabels most-specific-type query (?s ?t)
+        bindings.push({ s: { type: 'uri', value: INSTANCE }, t: { type: 'uri', value: TYPE } })
+      } else if (new RegExp(INSTANCE.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).test(query) && /\?o\b/i.test(query)) {
         // resource triples for the opened instance — a label, a type, a uri link
         bindings.push(
           { p: { type: 'uri', value: 'http://www.w3.org/2000/01/rdf-schema#label' }, o: { type: 'literal', value: 'Instance Y', 'xml:lang': 'en' } },
           { p: { type: 'uri', value: 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type' }, o: { type: 'uri', value: TYPE } },
           { p: { type: 'uri', value: 'http://ex/related' }, o: { type: 'uri', value: 'http://r/Z' }, g: { type: 'uri', value: 'http://g/1' } },
         )
-      } else if (/GROUP BY \?s/i.test(query) || /\?s\b[\s\S]*LIMIT/i.test(query)) {
-        bindings.push({ s: { type: 'uri', value: INSTANCE }, label: { value: 'Instance Y' } })
+      } else if (/DISTINCT \?s\b/i.test(query) || /\?s\b[\s\S]*LIMIT/i.test(query)) {
+        // instance list — ?s only; labels are resolved separately (above)
+        bindings.push({ s: { type: 'uri', value: INSTANCE } })
       }
       return { results: { bindings } }
     }),

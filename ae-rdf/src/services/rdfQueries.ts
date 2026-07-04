@@ -236,7 +236,7 @@ export function buildInstanceCountQuery(typeUri: string, s: GraphStrategy, filte
 /**
  * One page of DISTINCT instances of a type (the ?s only). Labels are resolved
  * SEPARATELY by the caller via the canonical resolver (resolveLabels →
- * buildLabelsQuery precedence + SKOS-XL + language pick), on the bounded page of
+ * buildLabelValuesQuery precedence + SKOS-XL + language pick), on the bounded page of
  * ~25 URIs — so the instance-list label matches the detail-heading label for the
  * same resource. Resolving labels here hand-rolled a 3-of-6-predicate subset with
  * no SKOS-XL / language, which drifted from the heading (e.g. foaf:name-only
@@ -368,46 +368,58 @@ export function buildSubclassQuery(typeUris: string[], s: GraphStrategy): string
 /* ───────────────────────── Labels / embed ───────────────────────── */
 
 /**
- * Best label AND the MOST SPECIFIC type per IRI. OPTIONAL label so label-less
- * subjects still return a type (badge / fallback). Default-view scoped (labels
- * live there on merged/triple stores). Unsafe IRIs are skipped.
+ * Label lookup as (?s ?p ?l) rows for a batch of subjects × a batch of label
+ * predicates — the CALLER (resolveLabels) picks the best value per subject by
+ * LABEL_PREDICATES precedence, then language, client-side.
  *
- * Most-specific = a type the subject asserts that has no more-specific asserted
- * type below it (no `?more rdfs:subClassOf+ ?t`). So an object typed Result →
- * ProjectPublication → JournalPaper badges as "JournalPaper", not an arbitrary
- * ancestor. Self-contained — the picking happens in the query, no client-side
- * hierarchy needed. (SAMPLE breaks ties on genuine multiple inheritance.)
+ * Why not one query with COALESCE over all 6 predicates (server-side precedence)?
+ * Some endpoints sit behind a cumulative-anomaly-score WAF that blocks a request
+ * carrying too many external vocab URLs — Fedlex blocks at 6 (≤5 OK), whether via
+ * OPTIONAL or VALUES. So predicates are batched (LABEL_PREDICATE_BATCH) and merged
+ * client-side; a single VALUES ?p pattern also keeps the query cheap. Empty when
+ * no safe subjects/predicates (caller skips). SKOS-XL is a separate query.
+ *
+ * Batch of 2: Fedlex's WAF weights vocab domains unequally and blocks some even in
+ * pairs (foaf/schema.org), so no batch size passes ALL — but the resolver catches
+ * each batch independently, so a blocked pair just contributes no labels while the
+ * rest resolve. Type resolution (buildTypeQuery, separate) and per-type composed
+ * labels (buildValuesQuery, the type's own predicates) are the paths that matter
+ * and don't depend on these standard vocab predicates.
  */
-export function buildLabelsQuery(uris: string[]): string {
+export const LABEL_PREDICATE_BATCH = 2
+
+export function buildLabelValuesQuery(uris: string[], predicates: readonly string[]): string {
+  const s = iriValues(uris, 256)
+  const p = iriValues(predicates)
+  if (!s || !p) return ''
+  return `SELECT ?s ?p ?l WHERE { VALUES ?s { ${s} } VALUES ?p { ${p} } ?s ?p ?l }`
+}
+
+/**
+ * MOST SPECIFIC asserted type per IRI, as (?s ?t) rows. Most-specific = a type the
+ * subject asserts with no more-specific asserted type below it (no
+ * `?more rdfs:subClassOf+ ?t`) — so an object typed Result → ProjectPublication →
+ * JournalPaper resolves to "JournalPaper", not an arbitrary ancestor. Split from
+ * the label lookup (above) so neither carries the other's WAF/planner cost; the
+ * caller merges both into its label/type maps. Empty when no safe subjects.
+ */
+export function buildTypeQuery(uris: string[]): string {
   const values = iriValues(uris, 256)
+  if (!values) return ''
   const subClassOf = `<${SUBCLASS_OF}>`
-  // Per-predicate OPTIONAL + COALESCE in LABEL_PREDICATES precedence order — a
-  // single VALUES ?lp + SAMPLE(?lbl) picks arbitrarily and IGNORES precedence
-  // (dc:title over rdfs:label). Direct label literal only: SKOS-XL labels are
-  // resolved by a SEPARATE query (buildSkosxlLabelsQuery) — adding the reified
-  // skos-xl OPTIONAL here alongside the most-specific-type FILTER NOT EXISTS
-  // makes Virtuoso's planner blow its execution-time limit (observed: 680s >
-  // 400s → the whole query 500s, so labels/types silently vanish and objects
-  // look dangling).
-  const labelOptionals = LABEL_PREDICATES.map((p, i) => `  OPTIONAL { ?s <${p}> ?l${i} }`).join('\n')
-  const coalesce = `COALESCE(${LABEL_PREDICATES.map((_, i) => `?l${i}`).join(', ')})`
-  return `SELECT ?s (SAMPLE(${coalesce}) AS ?label) (SAMPLE(?t) AS ?type) WHERE {
+  return `SELECT ?s ?t WHERE {
   VALUES ?s { ${values} }
-${labelOptionals}
-  OPTIONAL {
-    ?s a ?t .
-    FILTER NOT EXISTS { ?s a ?more . ?more ${subClassOf}+ ?t . FILTER(?more != ?t) }
-  }
-} GROUP BY ?s`
+  ?s a ?t .
+  FILTER NOT EXISTS { ?s a ?more . ?more ${subClassOf}+ ?t . FILTER(?more != ?t) }
+}`
 }
 
 /**
  * SKOS-XL labels for a set of subjects: (?s ?lf) rows where ?lf is the
  * literalForm (lang-tagged) reached via skosxl:prefLabel. Plain required
  * patterns — fast, and returns nothing for non-SKOS-XL subjects. The caller
- * picks the best language client-side (Virtuoso can't do the language
- * preference in buildLabelsQuery's shared-var OPTIONAL shape). Empty when no
- * safe subjects.
+ * picks the best language client-side, same as the base label resolution. Empty
+ * when no safe subjects.
  */
 export function buildSkosxlLabelsQuery(uris: string[]): string {
   const s = iriValues(uris, 256)

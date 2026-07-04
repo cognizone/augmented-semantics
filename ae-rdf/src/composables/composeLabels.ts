@@ -11,14 +11,15 @@
  * fetched here too, else a linked object's composed label collapses to raw UUIDs.
  *
  * Mutates `labelMap` (and may add referent types to `typeMap`) in place. Every
- * label path routes through this so buildLabelsQuery (standard predicates only)
- * is just the seed, never the final answer — otherwise composed-label types with
- * no standard label (a Grant) show their UUID, and types with a verbose raw
- * rdfs:label (an OrganisationRole) show that instead of the clean composed label.
+ * label path routes through this so the base resolver (resolveLabels: standard
+ * predicates only) is just the seed, never the final answer — otherwise
+ * composed-label types with no standard label (a Grant) show their UUID, and
+ * types with a verbose raw rdfs:label (an OrganisationRole) show that instead of
+ * the clean composed label.
  *
  * @see /spec/ae-rdf
  */
-import { executeSparql, buildValuesQuery, buildLabelsQuery, buildSkosxlLabelsQuery } from '../services'
+import { executeSparql, buildValuesQuery, buildLabelValuesQuery, buildTypeQuery, buildSkosxlLabelsQuery, LABEL_PREDICATES, LABEL_PREDICATE_BATCH } from '../services'
 import { useTypeConfigStore } from '../stores'
 import { pickByLangs } from '../utils/labelLang'
 import type { SPARQLEndpoint } from '../types/endpoint'
@@ -29,11 +30,12 @@ const MAX_LABEL_HOPS = 3
 /**
  * THE base label + most-specific-type resolver for a set of URIs — the shared
  * seed every label path uses (heading, instance list, links, embeds): the
- * 6-predicate precedence label (buildLabelsQuery) with the SKOS-XL literalForm
- * override picked by language. Fills `labelMap`/`typeMap` in place, never
- * overwriting an entry the caller pre-seeded. composeLabels runs ON TOP of this
- * for types that configure a composed label. Hand-rolling a predicate subset
- * anywhere is exactly how the list / heading / link labels drifted apart.
+ * 6-predicate precedence label (buildLabelValuesQuery, batched + merged by
+ * precedence client-side) + most-specific type (buildTypeQuery) + the SKOS-XL
+ * literalForm override, all picked by language. Fills `labelMap`/`typeMap` in
+ * place, never overwriting an entry the caller pre-seeded. composeLabels runs ON
+ * TOP of this for types that configure a composed label. Hand-rolling a predicate
+ * subset anywhere is exactly how the list / heading / link labels drifted apart.
  */
 export async function resolveLabels(
   endpoint: SPARQLEndpoint,
@@ -44,22 +46,52 @@ export async function resolveLabels(
   isCurrent: () => boolean,
 ): Promise<void> {
   if (!uris.length) return
+  // Labels are fetched in small PREDICATE BATCHES (buildLabelValuesQuery) rather
+  // than one query with COALESCE over all 6 — a cumulative-anomaly WAF (Fedlex)
+  // blocks a request carrying ≥6 external vocab URLs, whether via OPTIONAL or
+  // VALUES. Type and SKOS-XL are separate queries. Precedence + language are
+  // picked HERE, client-side, preserving the LABEL_PREDICATES order (never an
+  // arbitrary SAMPLE). All queries run in parallel.
+  const batches: string[][] = []
+  for (let i = 0; i < LABEL_PREDICATES.length; i += LABEL_PREDICATE_BATCH)
+    batches.push(LABEL_PREDICATES.slice(i, i + LABEL_PREDICATE_BATCH))
   const skosxlQ = buildSkosxlLabelsQuery(uris)
-  const [labelRes, skosxlRes] = await Promise.all([
-    executeSparql(endpoint, buildLabelsQuery(uris), { retries: 1 }).catch(() => null),
-    skosxlQ ? executeSparql(endpoint, skosxlQ, { retries: 1 }).catch(() => null) : Promise.resolve(null),
+  const run = (q: string) => (q ? executeSparql(endpoint, q, { retries: 1 }).catch(() => null) : Promise.resolve(null))
+  const [typeRes, skosxlRes, ...labelRes] = await Promise.all([
+    run(buildTypeQuery(uris)),
+    run(skosxlQ),
+    ...batches.map(b => run(buildLabelValuesQuery(uris, b))),
   ])
   if (!isCurrent()) return
-  for (const b of labelRes?.results.bindings ?? []) {
-    const s = b.s?.value
-    if (!s) continue
-    if (b.label?.value && !labelMap.has(s)) labelMap.set(s, b.label.value)
-    if (b.type?.value && !typeMap.has(s)) typeMap.set(s, b.type.value)
+
+  // Most-specific type per subject (don't clobber a caller pre-seed).
+  for (const b of typeRes?.results.bindings ?? []) {
+    const s = b.s?.value, t = b.t?.value
+    if (s && t && !typeMap.has(s)) typeMap.set(s, t)
   }
+
+  // Label: gather every (predicate, value) row, then per subject take the value of
+  // the HIGHEST-PRECEDENCE predicate (LABEL_PREDICATES order), then the best
+  // language — the client-side equivalent of the old COALESCE precedence.
+  const rank = new Map(LABEL_PREDICATES.map((p, i) => [p, i]))
+  const cands = new Map<string, { p: string; v: string; lang?: string }[]>()
+  for (const res of labelRes) for (const b of res?.results.bindings ?? []) {
+    const s = b.s?.value, p = b.p?.value, l = b.l
+    if (!s || !p || !l?.value) continue
+    const c = { p, v: l.value, lang: l['xml:lang'] }
+    const arr = cands.get(s); if (arr) arr.push(c); else cands.set(s, [c])
+  }
+  for (const [s, arr] of cands) {
+    if (labelMap.has(s)) continue // respect caller pre-seed
+    const best = Math.min(...arr.map(c => rank.get(c.p) ?? 99))
+    const pick = pickByLangs(arr.filter(c => (rank.get(c.p) ?? 99) === best).map(c => ({ v: c.v, lang: c.lang })), langs)
+    if (pick) labelMap.set(s, pick.v)
+  }
+
   // SKOS-XL: override with the best-language literalForm per subject (a Concept
   // labelled skosxl:prefLabel → its English literalForm, not a UUID or arbitrary
-  // language). buildLabelsQuery's shared-var OPTIONAL shape can't carry the
-  // language FILTER, so it's a separate query picked client-side here.
+  // language). Its reified shape can't carry the language FILTER server-side, so
+  // it's a separate query picked client-side here — and it WINS over the above.
   const xlBySubj = new Map<string, { v: string; lang?: string }[]>()
   for (const b of skosxlRes?.results.bindings ?? []) {
     const s = b.s?.value, lf = b.lf
@@ -113,17 +145,11 @@ export async function composeLabels(
     }
     // Fetch label + type for referents we don't know yet, so a URI field resolves
     // to a real label — and a referent that is ITSELF label-configured becomes the
-    // next hop.
+    // next hop. Route through resolveLabels (same batched/WAF-safe path).
     const unknown = [...targets].filter(u => !labelMap.has(u) || !typeMap.has(u))
     if (unknown.length) {
-      const tr = await executeSparql(endpoint, buildLabelsQuery(unknown), { retries: 1 }).catch(() => null)
+      await resolveLabels(endpoint, unknown, langs, labelMap, typeMap, isCurrent)
       if (!isCurrent()) return
-      for (const b of tr?.results.bindings ?? []) {
-        const s = b.s?.value
-        if (!s) continue
-        if (b.label?.value && !labelMap.has(s)) labelMap.set(s, b.label.value)
-        if (b.type?.value && !typeMap.has(s)) typeMap.set(s, b.type.value)
-      }
     }
     const next: string[] = []
     for (const u of targets) {

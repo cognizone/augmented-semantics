@@ -14,7 +14,9 @@ import {
   buildInstanceCountQuery,
   buildInstanceListQuery,
   resolveSearchPredicates,
-  buildLabelsQuery,
+  buildLabelValuesQuery,
+  buildTypeQuery,
+  LABEL_PREDICATE_BATCH,
   buildValuesQuery,
   buildEmbeddedTriplesQuery,
   buildCompositionQuery,
@@ -290,36 +292,48 @@ describe('resolveSearchPredicates', () => {
   })
 })
 
-describe('buildLabelsQuery', () => {
-  it('label by LABEL_PREDICATES precedence (COALESCE, not VALUES+SAMPLE) + MOST SPECIFIC type', () => {
-    const q = buildLabelsQuery([RES, TYPE])
+describe('buildLabelValuesQuery', () => {
+  const RL = 'http://www.w3.org/2000/01/rdf-schema#label'
+  const PL = 'http://www.w3.org/2004/02/skos/core#prefLabel'
+  it('emits (?s ?p ?l) rows over a VALUES batch of subjects × predicates', () => {
+    const q = buildLabelValuesQuery([RES, TYPE], [RL, PL])
     expect(q).toContain(`VALUES ?s { <${RES}> <${TYPE}> }`)
-    // per-predicate OPTIONAL + COALESCE preserves precedence (rdfs:label over dc:title);
-    // a single VALUES ?lp + SAMPLE would pick arbitrarily.
-    expect(q).toContain('OPTIONAL { ?s <http://www.w3.org/2000/01/rdf-schema#label> ?l0 }')
-    expect(q).toContain('COALESCE(?l0, ?l1, ?l2, ?l3, ?l4, ?l5)')
-    expect(q).toContain('AS ?label')
-    expect(q).toContain('SAMPLE(?t) AS ?type')
-    expect(q).not.toContain('VALUES ?lp')
-    expect(q).toContain('?s a ?t')
-    // leaf-type picker: exclude any type that has a more-specific asserted type
-    expect(q).toContain('FILTER NOT EXISTS')
-    expect(q).toContain('subClassOf')
-    expect(q).toContain('GROUP BY ?s')
-    // The reified SKOS-XL OPTIONAL must NOT live here — sharing ?lbl with the
-    // type FILTER NOT EXISTS blows Virtuoso's exec-time limit. It has its own
-    // query (buildSkosxlLabelsQuery).
-    expect(q).not.toContain('skos-xl#literalForm')
+    expect(q).toContain(`VALUES ?p { <${RL}> <${PL}> }`)
+    expect(q).toContain('?s ?p ?l')
+    expect(q).toContain('SELECT ?s ?p ?l')
   })
-  it('skips unsafe IRIs', () => {
-    const q = buildLabelsQuery(['http://e.org/x> }', RES])
+  it('carries NO OPTIONAL/COALESCE (precedence is picked client-side) — keeps the WAF footprint low', () => {
+    const q = buildLabelValuesQuery([RES], [RL, PL])
+    expect(q).not.toContain('OPTIONAL')
+    expect(q).not.toContain('COALESCE')
+  })
+  it('batches so a request never carries all 6 vocab URLs at once (Fedlex WAF blocks ≥6)', () => {
+    expect(LABEL_PREDICATE_BATCH).toBeLessThanOrEqual(5)
+  })
+  it('skips unsafe/whitespace IRIs on both axes; empty when nothing safe', () => {
+    const q = buildLabelValuesQuery([`  ${RES}  `, 'x> }'], [RL])
     expect(q).toContain(`<${RES}>`)
     expect(q).not.toContain('x> }')
-  })
-  it('trims whitespace-padded IRIs — emits <trimmed>, not a malformed <  iri  > (R29)', () => {
-    const q = buildLabelsQuery([`  ${RES}  `])
-    expect(q).toContain(`<${RES}>`)
     expect(q).not.toContain(`<  ${RES}`)
+    expect(buildLabelValuesQuery([], [RL])).toBe('')
+    expect(buildLabelValuesQuery([RES], [])).toBe('')
+  })
+})
+
+describe('buildTypeQuery', () => {
+  it('emits (?s ?t) most-specific type, no label patterns (split from labels)', () => {
+    const q = buildTypeQuery([RES])
+    expect(q).toContain(`VALUES ?s { <${RES}> }`)
+    expect(q).toContain('?s a ?t')
+    // leaf-type picker: exclude any type with a more-specific asserted type
+    expect(q).toContain('FILTER NOT EXISTS')
+    expect(q).toContain('subClassOf')
+    expect(q).not.toContain('COALESCE')
+    expect(q).not.toContain('rdf-schema#label')
+  })
+  it('skips unsafe IRIs; empty when none safe', () => {
+    expect(buildTypeQuery(['x> }'])).toBe('')
+    expect(buildTypeQuery([`  ${RES}  `])).toContain(`<${RES}>`)
   })
 })
 

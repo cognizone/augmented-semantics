@@ -352,7 +352,19 @@ export async function executeSparql(
       }
 
       if (!data) {
-        logger.error('SPARQL', 'Invalid response format', { contentType })
+        // An HTML body on a 200 is almost always a proxy/WAF interstitial ("URL
+        // blocked"), not the SPARQL endpoint — flag it so it isn't mistaken for an
+        // empty result (which silently surfaces as dangling links / missing labels).
+        const looksHtml = /^\s*<(?:!doctype|html)/i.test(responseText)
+        if (looksHtml) {
+          // WAF blocks often have a rate/transient component, so retry with the
+          // loop's backoff before giving up. (Content-based blocks just exhaust
+          // retries and surface the error — no worse than failing immediately.)
+          logger.warn('SPARQL', 'Blocked by a proxy/WAF (HTML response, not SPARQL) — retrying', { contentType, sample: responseText.slice(0, 160) })
+          lastError = createError('INVALID_RESPONSE', 'Request blocked by a proxy/WAF', `Non-SPARQL HTML response. Content-Type: ${contentType}`)
+          continue
+        }
+        logger.error('SPARQL', 'Invalid response format', { contentType, sample: responseText.slice(0, 200) })
         throw createError(
           'INVALID_RESPONSE',
           'Unexpected response format',

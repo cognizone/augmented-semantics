@@ -11,7 +11,7 @@
  */
 import { ref, computed, type Ref } from 'vue'
 import { useEndpointStore, useLanguageStore, useBrowseStore, useTypeConfigStore } from '../stores'
-import { executeSparql, resolveUris, logger, buildResourceTriplesQuery, buildLabelsQuery, buildEmbeddedTriplesQuery, resolveGraphStrategy, LABEL_PREDICATES, EMBED_BATCH } from '../services'
+import { executeSparql, resolveUris, logger, buildResourceTriplesQuery, buildEmbeddedTriplesQuery, resolveGraphStrategy, LABEL_PREDICATES, EMBED_BATCH } from '../services'
 import { labelLangs as computeLabelLangs, pickByLangs } from '../utils/labelLang'
 import { composeLabels, resolveLabels } from './composeLabels'
 
@@ -63,7 +63,7 @@ export function useResourceView() {
   // Label language priority for the CURRENT endpoint: its configured
   // languagePriorities (from the endpoint JSON), else the user's global
   // preference, always ending in 'en' as a universal fallback. The first entry
-  // drives single-language label queries (buildLabelsQuery).
+  // drives single-language label resolution (resolveLabels).
   const labelLangs = () => computeLabelLangs(endpointStore.current?.languagePriorities, languageStore.preferred)
 
   /** Preferred-language literal value for a predicate group, or a URI object's
@@ -335,14 +335,8 @@ export function useResourceView() {
         // an already-resolved label/type. Matches composeLabels' sibling filter.
         const newIris = [...nestedIris].filter(u => !labelMap.has(u) || !typeMap.has(u))
         if (newIris.length) {
-          const lr = await executeSparql(endpoint, buildLabelsQuery(newIris), { retries: 1 }).catch(() => null)
+          await resolveLabels(endpoint, newIris, labelLangs(), labelMap, typeMap, isCurrent)
           if (!isCurrent()) return
-          for (const b of lr?.results.bindings ?? []) {
-            const s = b.s?.value
-            if (!s) continue
-            if (b.label?.value && !labelMap.has(s)) labelMap.set(s, b.label.value)
-            if (b.type?.value && !typeMap.has(s)) typeMap.set(s, b.type.value)
-          }
         }
 
         frontier = embedBudget > 0 ? capFrontier(embedFrontier(nestedPairs)) : []
