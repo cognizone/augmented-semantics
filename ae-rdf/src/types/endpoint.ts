@@ -46,7 +46,12 @@ export interface TypeConfig {
    *  THIS predicate (its owning relationship). Unset = inline wherever the type
    *  is an object — fine for pure value objects with a single owner, but set it
    *  for entities referenced by several types (e.g. a Grant owned by its Project
-   *  via isFundedBy, not by every FundingAgency that disburses it). */
+   *  via isFundedBy, not by every FundingAgency that disburses it).
+   *
+   *  Prefix with `^` for an INVERSE embed: `^<predicate>` inlines this object into
+   *  the resource it POINTS AT via <predicate> (this object is the subject, the
+   *  owner is the object) — e.g. a PublicationProcess shown inline on the
+   *  ConsolidationAbstract it references. Rendered as an incoming (`↤`) relation. */
   embedVia?: string
   sidebar?: TypeSidebar
   /** Optional sidebar group label (e.g. "Ontology") — collects this type under a

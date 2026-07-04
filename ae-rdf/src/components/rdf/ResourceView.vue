@@ -156,7 +156,9 @@ const graphSummary = computed(() => {
   // otherwise the graph a resource's TYPE lives in is dropped, and a type-only
   // resource (triples.length === 0) would show no provenance at all. (R20)
   types.value.forEach(fold)
-  for (const group of triples.value) group.objects.forEach(fold)
+  // Skip synthetic inverse-embed groups (`^predicate`): their objects are handles
+  // with no graphs of their own, so folding them would spuriously add "default graph".
+  for (const group of triples.value) if (!group.predicate.startsWith('^')) group.objects.forEach(fold)
   return { graphs: [...set], hasDefault }
 })
 

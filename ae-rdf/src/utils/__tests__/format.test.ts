@@ -52,6 +52,11 @@ describe('display modes', () => {
     expect(displayPredicate(pred, new Map(), 'full')).toBe(pred)
   })
 
+  it('displayPredicate: `^` marks an inverse (incoming) predicate with a ↤ prefix', () => {
+    expect(displayPredicate('^' + pred, new Map(), 'humanized')).toBe('↤ Date end applicability')
+    expect(displayPredicate('^' + dct, resolved, 'prefixed')).toBe('↤ dct:title')
+  })
+
   it('displayObject: label wins when humanized; mode otherwise', () => {
     const thing = 'http://x#thing'
     const withThing = new Map([[thing, { prefix: '', localName: 'thing' }]])

@@ -20,6 +20,7 @@ import {
   LABEL_PREDICATE_BATCH,
   buildValuesQuery,
   buildEmbeddedTriplesQuery,
+  buildInverseEmbedQuery,
   buildCompositionQuery,
   buildSubclassQuery,
   buildPathCountQuery,
@@ -352,6 +353,25 @@ describe('buildTypeSubclassQuery', () => {
   it('skips unsafe IRIs; empty when none safe', () => {
     expect(buildTypeSubclassQuery(['x> }'])).toBe('')
     expect(buildTypeSubclassQuery([`  ${RES}  `])).toContain(`<${RES}>`)
+  })
+})
+
+describe('buildInverseEmbedQuery', () => {
+  it('finds referrers via the inverse predicates (VALUES ?via), graph-aware', () => {
+    const q = buildInverseEmbedQuery(RES, [TYPE], BOTH)
+    expect(q).toContain('SELECT DISTINCT ?s ?via')
+    expect(q).toContain(`VALUES ?via { <${TYPE}> }`)
+    expect(q).toContain(`?s ?via <${RES}>`)
+    expect(q).toContain('GRAPH ?g') // BOTH → named ∪ default-only
+  })
+  it('plain pattern (no GRAPH) for a default-only endpoint', () => {
+    const q = buildInverseEmbedQuery(RES, [TYPE], DEFAULT)
+    expect(q).toContain(`?s ?via <${RES}>`)
+    expect(q).not.toContain('GRAPH')
+  })
+  it('empty when no safe predicates', () => {
+    expect(buildInverseEmbedQuery(RES, [], BOTH)).toBe('')
+    expect(buildInverseEmbedQuery(RES, ['x> }'], BOTH)).toBe('')
   })
 })
 

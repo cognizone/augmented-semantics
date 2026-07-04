@@ -11,7 +11,7 @@
  */
 import { ref, computed, type Ref } from 'vue'
 import { useEndpointStore, useLanguageStore, useBrowseStore, useTypeConfigStore } from '../stores'
-import { executeSparql, resolveUris, logger, buildResourceTriplesQuery, buildEmbeddedTriplesQuery, resolveGraphStrategy, LABEL_PREDICATES, EMBED_BATCH } from '../services'
+import { executeSparql, resolveUris, logger, buildResourceTriplesQuery, buildEmbeddedTriplesQuery, buildInverseEmbedQuery, resolveGraphStrategy, LABEL_PREDICATES, EMBED_BATCH } from '../services'
 import { labelLangs as computeLabelLangs, pickByLangs } from '../utils/labelLang'
 import { composeLabels, resolveLabels } from './composeLabels'
 
@@ -158,9 +158,31 @@ export function useResourceView() {
 
     logger.info('useResourceView', 'Loading resource', { uri })
 
+    // Inverse-embed predicates: types configured `render:embed` with `embedVia:"^P"`
+    // inline the referrer that points here via P. Query those referrers alongside
+    // the outgoing triples (skipped entirely when no type opts in).
+    const invPredicates = [...new Set(
+      Object.values(endpoint.types ?? {})
+        .filter(c => c.render === 'embed' && c.embedVia?.startsWith('^'))
+        .map(c => c.embedVia!.slice(1)),
+    )]
+
     try {
-      const results = await executeSparql(endpoint, query, { retries: 1 })
+      const [results, invResults] = await Promise.all([
+        executeSparql(endpoint, query, { retries: 1 }),
+        invPredicates.length
+          ? executeSparql(endpoint, buildInverseEmbedQuery(uri, invPredicates, strategy), { retries: 1 }).catch(() => null)
+          : Promise.resolve(null),
+      ])
       if (!isCurrent()) return
+
+      // (referrer, predicate-arrived-by) pairs — seeded into the embed BFS below as
+      // roots with via `^predicate`, and surfaced as synthetic `^predicate` groups.
+      const invPairs: { uri: string; via: string }[] = []
+      for (const b of invResults?.results.bindings ?? []) {
+        const s = b.s?.value, via = b.via?.value
+        if (s && via && s !== uri) invPairs.push({ uri: s, via })
+      }
 
       // Group by predicate, then dedupe objects by their term identity, folding
       // the graph of each row into a graphs[] set — the same (p,o) can come back
@@ -212,6 +234,8 @@ export function useResourceView() {
           for (const gr of o.graphs) toResolve.add(gr)
         }
       }
+      // Inverse referrers need labels/types (badge + embed decision) and prefixes.
+      for (const { uri: s, via } of invPairs) { objectIris.add(s); toResolve.add(s); toResolve.add(via) }
 
       // Resolve prefixes and canonical object labels in parallel (Phase 2). The
       // shared resolver does the 6-predicate precedence label + SKOS-XL language
@@ -278,9 +302,12 @@ export function useResourceView() {
       // so embedVia can gate on the predicate.
       const embedFrontier = (pairs: { uri: string; via: string }[]) =>
         [...new Set(pairs.filter(x => !seen.has(x.uri) && isEmbed(x.uri, x.via)).map(x => x.uri))]
-      let frontier = capFrontier(embedFrontier(
-        propGroups.flatMap(g => g.objects.filter(o => o.termType === 'uri').map(o => ({ uri: o.value, via: g.predicate }))),
-      ))
+      let frontier = capFrontier(embedFrontier([
+        ...propGroups.flatMap(g => g.objects.filter(o => o.termType === 'uri').map(o => ({ uri: o.value, via: g.predicate }))),
+        // Inverse-embed roots: referrer reached via `^predicate` (isEmbed matches the
+        // type's `embedVia:"^predicate"`). Fetched + inlined by the same BFS.
+        ...invPairs.map(p => ({ uri: p.uri, via: `^${p.via}` })),
+      ]))
 
       for (let depth = 0; depth < MAX_EMBED_DEPTH && frontier.length; depth++) {
         embedBudget -= frontier.length
@@ -371,7 +398,21 @@ export function useResourceView() {
         for (const [k, v] of er) resolvedMap.set(k, v)
       }
 
-      triples.value = propGroups
+      // Inverse-embed referrers → synthetic `^predicate` relationship groups, shown
+      // in RELATIONSHIPS with an incoming (↤) marker. Only embed-configured referrers
+      // (isEmbed); those past the embed budget aren't in embeddedMap and so render as
+      // plain links inside the group. Kept OUT of `propGroups` above so they don't
+      // affect the heading label or the graph summary.
+      const invGroups = new Map<string, PropertyGroup>()
+      for (const { uri: s, via } of invPairs) {
+        const pred = `^${via}`
+        if (!isEmbed(s, pred)) continue
+        let g = invGroups.get(pred)
+        if (!g) { g = { predicate: pred, objects: [] }; invGroups.set(pred, g) }
+        if (!g.objects.some(o => o.value === s)) g.objects.push({ termType: 'uri', value: s, graphs: [] })
+      }
+
+      triples.value = [...propGroups, ...invGroups.values()]
       types.value = typeGroup?.objects ?? []
       resolved.value = resolvedMap
       objectLabels.value = labelMap

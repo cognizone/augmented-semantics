@@ -29,8 +29,11 @@ export function qname(uri: string, resolved: ResolvedMap): string {
  */
 export type UriDisplayMode = 'humanized' | 'prefixed' | 'full'
 
-/** Predicate label per display mode. */
+/** Predicate label per display mode. A `^`-prefixed IRI is an INVERSE (incoming)
+ *  predicate — an inverse-embedded referrer's synthetic group — shown with an
+ *  incoming marker before the base predicate's label. */
 export function displayPredicate(uri: string, resolved: ResolvedMap, mode: UriDisplayMode): string {
+  if (uri.startsWith('^')) return `↤ ${displayPredicate(uri.slice(1), resolved, mode)}`
   if (mode === 'full') return uri
   if (mode === 'prefixed') return qname(uri, resolved)
   return humanizeLocalName(uri)

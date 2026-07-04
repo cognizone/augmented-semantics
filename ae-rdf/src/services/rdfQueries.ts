@@ -474,6 +474,29 @@ export function buildEmbeddedTriplesQuery(uris: string[], s: GraphStrategy): str
   return `SELECT ?s ?g ?p ?o WHERE { VALUES ?s { ${values} } ${pattern} } ORDER BY ?s ?p`
 }
 
+/**
+ * Referrers to INVERSE-embed: subjects `?s` that point at `resourceUri` through one
+ * of `predicates` (a type pinning `embedVia: "^<predicate>"`). Returns (?s ?via) so
+ * the caller groups each referrer under the predicate it arrived by, then feeds it
+ * into the embed BFS. Bounded by the fixed object, so it stays cheap. Empty when no
+ * predicates. Graph strategy mirrors the incoming/embed queries.
+ */
+export function buildInverseEmbedQuery(resourceUri: string, predicates: string[], s: GraphStrategy): string {
+  const iri = sanitizeIri(resourceUri)
+  const vias = iriValues(predicates)
+  if (!vias) return ''
+  const triple = `?s ?via <${iri}>`
+  let pattern: string
+  if (s.useNamed && s.useDefault) {
+    pattern = `{ GRAPH ?g { ${triple} } } UNION { ${triple} FILTER NOT EXISTS { GRAPH ?ng { ${triple} } } }`
+  } else if (s.useNamed) {
+    pattern = `GRAPH ?g { ${triple} }`
+  } else {
+    pattern = triple
+  }
+  return `SELECT DISTINCT ?s ?via WHERE { VALUES ?via { ${vias} } ${pattern} }`
+}
+
 /* ───────────────────────── Resource detail (core) ───────────────────────── */
 
 /**
