@@ -10,6 +10,61 @@
         "http://data.legilux.public.lu/resource/ontology/jolux#entryIntoForceFor"
       ]
     },
+    "http://data.legilux.public.lu/resource/ontology/jolux#LegislativeTask": {
+      "label": [
+        "http://data.legilux.public.lu/resource/ontology/jolux#eventTitle"
+      ]
+    },
+    "http://data.legilux.public.lu/resource/ontology/jolux#Consultation": {
+      "label": [
+        "http://data.legilux.public.lu/resource/ontology/jolux#eventTitle"
+      ]
+    },
+    "http://data.legilux.public.lu/resource/ontology/jolux#Memorial": {
+      "label": [
+        "http://data.legilux.public.lu/resource/ontology/jolux#memorialYear",
+        "http://data.legilux.public.lu/resource/ontology/jolux#memorialNumber"
+      ]
+    },
+    "http://data.legilux.public.lu/resource/ontology/jolux#MemorialSerial": {
+      "label": [
+        "http://data.legilux.public.lu/resource/ontology/jolux#memorialYear"
+      ]
+    },
+    "http://data.legilux.public.lu/resource/ontology/jolux#TreatySignature": {
+      "label": [
+        "http://data.legilux.public.lu/resource/ontology/jolux#treatySignatureDate"
+      ]
+    },
+    "http://data.legilux.public.lu/resource/ontology/jolux#TreatyRatification": {
+      "label": [
+        "http://data.legilux.public.lu/resource/ontology/jolux#treatyRatificationParty",
+        "http://data.legilux.public.lu/resource/ontology/jolux#treatyPartyRatificationDate"
+      ]
+    },
+    "http://data.legilux.public.lu/resource/ontology/jolux#Edition": {
+      "label": [
+        "http://data.legilux.public.lu/resource/ontology/jolux#editionType",
+        "http://data.legilux.public.lu/resource/ontology/jolux#publicationDate"
+      ]
+    },
+    "http://data.legilux.public.lu/resource/ontology/jolux#Compilation": {
+      "label": [
+        "http://data.legilux.public.lu/resource/ontology/jolux#editionType",
+        "http://data.legilux.public.lu/resource/ontology/jolux#publicationDate"
+      ]
+    },
+    "http://data.legilux.public.lu/resource/ontology/jolux#Volume": {
+      "label": [
+        "http://data.legilux.public.lu/resource/ontology/jolux#volumeYear",
+        "http://data.legilux.public.lu/resource/ontology/jolux#sequenceInTheYearOfPublication"
+      ]
+    },
+    "http://data.legilux.public.lu/resource/ontology/jolux#VolumeSerial": {
+      "label": [
+        "http://data.legilux.public.lu/resource/ontology/jolux#volumeYear"
+      ]
+    },
     "http://data.europa.eu/eli/ontology#InForce": {
       "group": "Vocabularies",
       "label": [
