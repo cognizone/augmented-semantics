@@ -131,9 +131,14 @@ export interface EmbedFanEdge {
  *              with `embedVia:"<via>"`.
  * - `inverse`: this type as an embedded SUBJECT (me ─via→ owner) → `embedVia:"^<via>"`.
  * Each list is sorted by `max` ascending (best candidate first) and only includes
- * edges within the embed budget. A profiler hint — not consumed by the app.
+ * edges within the embed budget. `selfMax` is the type's OWN biggest single-property
+ * fan-out — how many rows it renders when inlined; a HIGH selfMax is a flood trap (a
+ * wall of rows when inlined even at fan-in 1, e.g. an analysis with 1 owner but
+ * thousands of child links), so treat high-selfMax as NOT embeddable despite a low
+ * fan-in. A profiler hint — not consumed by the app.
  */
 export interface EmbedHints {
+  selfMax?: number
   forward?: EmbedFanEdge[]
   inverse?: EmbedFanEdge[]
 }

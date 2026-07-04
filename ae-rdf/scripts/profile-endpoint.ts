@@ -19,6 +19,11 @@
  *                        (as a subject → `embedVia:"^<p>"`). Low max ⇒ safe to embed
  *                        via that edge. This is the fan-in check you'd otherwise run
  *                        by hand per candidate. Skipped for types > EMBED_PROFILE_MAX.
+ *                        Each hint also carries `selfMax` (the type's own biggest
+ *                        property fan-out): a HIGH selfMax is a flood trap — a wall of
+ *                        rows when inlined even at fan-in 1 (LegalAnalysis: 1/owner but
+ *                        8016 impact links) — so treat high-selfMax as NOT embeddable
+ *                        despite a low fan-in.
  *   - `subclasses`     — rdfs:subClassOf hierarchy among inventory types
  *   - `composition`    — which classes embed which value-types (+ counts)
  * Plus a `profiledAt` stamp. If a section is missing the app falls back to its
@@ -63,8 +68,10 @@ interface PropEntry { uri: string; count: number; min?: number; max?: number }
 interface FanEdge { via: string; max: number }
 /** Embed candidacy: which edges this type can be embedded through, worst-case count.
  *  forward = type as an embedded OBJECT (owner ─via→ me): `render:embed` + `embedVia:"<via>"`.
- *  inverse = type as an embedded SUBJECT (me ─via→ owner): `embedVia:"^<via>"`. */
-interface EmbedHints { forward?: FanEdge[]; inverse?: FanEdge[] }
+ *  inverse = type as an embedded SUBJECT (me ─via→ owner): `embedVia:"^<via>"`.
+ *  selfMax = the type's OWN biggest single-property fan-out — how many rows it renders
+ *  when inlined; high ⇒ a wall even at fan-in 1, so NOT a real candidate. */
+interface EmbedHints { selfMax?: number; forward?: FanEdge[]; inverse?: FanEdge[] }
 interface TypeProfile { ok: boolean; sampled?: boolean; properties: PropEntry[]; embed?: EmbedHints }
 interface CompEntry { uri: string; count: number }
 
@@ -313,6 +320,14 @@ const EMBED_CAP = 150
 // Skip embed fan-in for types bigger than this: they're never embed targets, and the
 // incoming scan over every instance is too costly. Raise if a real candidate exceeds it.
 const EMBED_PROFILE_MAX = 50_000
+// FLOOD SIGNAL: a low per-owner fan-in (few embeds per owner) is NOT enough — a type
+// that itself holds a huge child list renders a wall of link rows when inlined. So each
+// embed hint also carries `selfMax` = the type's OWN biggest single-property fan-out
+// (max over its properties' `max`). A clean value object is ~1-5; a trap is hundreds+
+// (Fedlex LegalAnalysis: 1 analysis per owner but 8016 impact links). Annotated, not
+// hard-dropped — max is worst-case and over-flags types that are usually compact
+// (PublicationProcess 178, TreatyDocument 221); this line only drives the ⚠ log flag.
+const EMBED_SELF_MAX = 50
 
 // Inverse fan-in: max distinct THIS-type SUBJECTS sharing one object, per outgoing
 // IRI predicate. Low ⇒ safe to inverse-embed on the referent via `embedVia:"^<p>"`.
@@ -330,7 +345,7 @@ const forwardFanQuery = (t: string) =>
  * hand per candidate; low max ⇒ embeddable. Optional hint, so a short leash + one
  * retry, and a blocked/slow query just yields no edge (no failure).
  */
-async function profileEmbed(url: string, t: string, onStep?: (s: string) => void): Promise<EmbedHints | null> {
+async function profileEmbed(url: string, t: string, selfMax: number, onStep?: (s: string) => void): Promise<EmbedHints | null> {
   const edges = async (q: string): Promise<FanEdge[]> => {
     const rows = await sparql(url, q, 1, LIST_TIMEOUT_MS).catch(() => null)
     if (!rows) return []
@@ -342,7 +357,8 @@ async function profileEmbed(url: string, t: string, onStep?: (s: string) => void
   onStep?.('forward'); const forward = await edges(forwardFanQuery(t))
   onStep?.('inverse'); const inverse = await edges(inverseFanQuery(t))
   if (!forward.length && !inverse.length) return null
-  const hints: EmbedHints = {}
+  // selfMax rides along so a reader can spot a flood trap (safe fan-in, huge own list).
+  const hints: EmbedHints = { selfMax }
   if (forward.length) hints.forward = forward
   if (inverse.length) hints.inverse = inverse
   return hints
@@ -427,11 +443,15 @@ async function main() {
 
   // ── Embed fan-in — max instances per owner, both directions (embed hints) ──
   // Written onto each typeProperties entry (shared object ref, so already sorted).
-  // Skips huge types (never embed targets; the incoming scan is costly).
+  // Skips huge types (never embed targets; the incoming scan is costly). Each hint
+  // also carries selfMax (the type's own biggest property fan-out) so a reader can
+  // spot a flood trap — safe fan-in but a wall of own rows (LegalAnalysis: 1/owner,
+  // 8016 impact links). selfMax is free (from the props already profiled).
   p = phase(`Embed fan-in — ${typeUris.length} types`)
-  let embedCount = 0
+  let embedCount = 0, floodFlag = 0
   for (const [i, type] of typeUris.entries()) {
     if (!out[type]?.ok || (totals[type] ?? 0) > EMBED_PROFILE_MAX) continue
+    const selfMax = Math.max(0, ...out[type].properties.map(pr => pr.max ?? 0))
     const tt = Date.now()
     const tag = `[${i + 1}/${typeUris.length}]`
     const short = type.replace(/^.*[#/]/, '') || type
@@ -439,7 +459,7 @@ async function main() {
     const beat = () => process.stderr.write(`${CLEAR}  ${tag} ⏳ ${short} — ${step} fan-in (${secs(tt)})`)
     let timer: ReturnType<typeof setInterval> | undefined
     if (isTTY) { beat(); timer = setInterval(beat, 1000) }
-    const embed = await profileEmbed(url, type, (s) => { step = s; if (isTTY) beat() })
+    const embed = await profileEmbed(url, type, selfMax, (s) => { step = s; if (isTTY) beat() })
     if (timer) clearInterval(timer)
     if (isTTY) process.stderr.write(CLEAR)
     if (embed) {
@@ -447,10 +467,12 @@ async function main() {
       embedCount++
       const f = embed.forward?.length ? ` fwd:${embed.forward[0]!.max}` : ''
       const inv = embed.inverse?.length ? ` inv:${embed.inverse[0]!.max}` : ''
-      console.error(`  ${tag} ✓ ${short} —${f}${inv} (${secs(tt)})`)
+      const warn = selfMax > EMBED_SELF_MAX ? ` ⚠selfMax:${selfMax}` : ''
+      if (warn) floodFlag++
+      console.error(`  ${tag} ✓ ${short} —${f}${inv}${warn} (${secs(tt)})`)
     }
   }
-  console.error(`  → ${embedCount} types with an embeddable edge in ${secs(p)}`)
+  console.error(`  → ${embedCount} types with an embeddable edge (${floodFlag} flagged ⚠ flood-risk: selfMax > ${EMBED_SELF_MAX}) in ${secs(p)}`)
 
   // ── Subclass hierarchy (for the nested sidebar tree) ───────────────────
   p = phase('Subclasses')
