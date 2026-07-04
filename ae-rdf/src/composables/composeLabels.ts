@@ -44,6 +44,12 @@ export async function resolveLabels(
   labelMap: Map<string, string>,
   typeMap: Map<string, string>,
   isCurrent: () => boolean,
+  // Optional: collect ALL most-specific types per subject (not just the one kept
+  // in typeMap). A node with several independent most-specific types — e.g.
+  // ConsultationTask + ResultOfAConsultationPublication — needs every type visible
+  // to the embed decision, else which one "wins" typeMap is arbitrary (no ORDER BY)
+  // and a render:embed type gets silently missed.
+  allTypes?: Map<string, Set<string>>,
 ): Promise<void> {
   if (!uris.length) return
   // Labels are fetched in small PREDICATE BATCHES (buildLabelValuesQuery) rather
@@ -64,10 +70,17 @@ export async function resolveLabels(
   ])
   if (!isCurrent()) return
 
-  // Most-specific type per subject (don't clobber a caller pre-seed).
+  // Most-specific type per subject: typeMap keeps ONE (badge/label, don't clobber
+  // a caller pre-seed); allTypes (if provided) keeps ALL for the embed decision.
   for (const b of typeRes?.results.bindings ?? []) {
     const s = b.s?.value, t = b.t?.value
-    if (s && t && !typeMap.has(s)) typeMap.set(s, t)
+    if (!s || !t) continue
+    if (!typeMap.has(s)) typeMap.set(s, t)
+    if (allTypes) {
+      let set = allTypes.get(s)
+      if (!set) { set = new Set(); allTypes.set(s, set) }
+      set.add(t)
+    }
   }
 
   // Label: gather every (predicate, value) row, then per subject take the value of

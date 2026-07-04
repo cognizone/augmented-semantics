@@ -218,9 +218,12 @@ export function useResourceView() {
       // pick, so heading / list / link / embed all agree on a resource's label.
       const labelMap = new Map<string, string>()
       const typeMap = new Map<string, string>()
+      // ALL most-specific types per object, so the embed decision sees every type
+      // of a multi-typed node (typeMap keeps only one, arbitrarily).
+      const allTypes = new Map<string, Set<string>>()
       const [resolvedMap] = await Promise.all([
         resolveUris([...toResolve]),
-        resolveLabels(endpoint, [...objectIris], labelLangs(), labelMap, typeMap, isCurrent),
+        resolveLabels(endpoint, [...objectIris], labelLangs(), labelMap, typeMap, isCurrent, allTypes),
       ])
       if (!isCurrent()) return
 
@@ -259,9 +262,17 @@ export function useResourceView() {
       // what stops a multiply-referenced entity (e.g. a Grant, linked from Project,
       // FundingAgency, GrantPayment…) from inlining everywhere instead of only
       // under its owner. No embedVia ⇒ inline anywhere (plain value objects).
+      // Check EVERY type of the object (a node can carry several independent
+      // most-specific types); embed if any is render:embed for this predicate.
+      // Fall back to the single typeMap entry if allTypes has nothing yet.
       const isEmbed = (u: string, via: string) => {
-        const cfg = typeConfig.get(typeMap.get(u) ?? '')
-        return cfg.render === 'embed' && (!cfg.embedVia || cfg.embedVia === via)
+        const types = allTypes.get(u)
+        const candidates = types?.size ? types : new Set([typeMap.get(u) ?? ''])
+        for (const t of candidates) {
+          const cfg = typeConfig.get(t)
+          if (cfg.render === 'embed' && (!cfg.embedVia || cfg.embedVia === via)) return true
+        }
+        return false
       }
       // Distinct object IRIs to inline, from (object, predicate-reached-by) pairs
       // so embedVia can gate on the predicate.
@@ -335,7 +346,7 @@ export function useResourceView() {
         // an already-resolved label/type. Matches composeLabels' sibling filter.
         const newIris = [...nestedIris].filter(u => !labelMap.has(u) || !typeMap.has(u))
         if (newIris.length) {
-          await resolveLabels(endpoint, newIris, labelLangs(), labelMap, typeMap, isCurrent)
+          await resolveLabels(endpoint, newIris, labelLangs(), labelMap, typeMap, isCurrent, allTypes)
           if (!isCurrent()) return
         }
 
