@@ -12,7 +12,13 @@
  *                        each measured individually for its occurrence count and
  *                        per-instance `min`/`max` cardinality (`sampled` means the
  *                        property LIST fell back to a sample, so it may be missing
- *                        rare predicates — the measured counts are still full)
+ *                        rare predicates — the measured counts are still full).
+ *                        Also `embed` — per-type EMBED CANDIDACY: the max instances
+ *                        of the type that inline under ONE owner through each edge,
+ *                        `forward` (as an object → `embedVia:"<p>"`) and `inverse`
+ *                        (as a subject → `embedVia:"^<p>"`). Low max ⇒ safe to embed
+ *                        via that edge. This is the fan-in check you'd otherwise run
+ *                        by hand per candidate. Skipped for types > EMBED_PROFILE_MAX.
  *   - `subclasses`     — rdfs:subClassOf hierarchy among inventory types
  *   - `composition`    — which classes embed which value-types (+ counts)
  * Plus a `profiledAt` stamp. If a section is missing the app falls back to its
@@ -53,7 +59,13 @@ const RETRIES = 2
 const SAMPLE_SIZE = 2000 // distinct-subject cap when the full listing times out
 
 interface PropEntry { uri: string; count: number; min?: number; max?: number }
-interface TypeProfile { ok: boolean; sampled?: boolean; properties: PropEntry[] }
+/** An owning edge + the max instances of a type that hang off ONE owner through it. */
+interface FanEdge { via: string; max: number }
+/** Embed candidacy: which edges this type can be embedded through, worst-case count.
+ *  forward = type as an embedded OBJECT (owner ─via→ me): `render:embed` + `embedVia:"<via>"`.
+ *  inverse = type as an embedded SUBJECT (me ─via→ owner): `embedVia:"^<via>"`. */
+interface EmbedHints { forward?: FanEdge[]; inverse?: FanEdge[] }
+interface TypeProfile { ok: boolean; sampled?: boolean; properties: PropEntry[]; embed?: EmbedHints }
 interface CompEntry { uri: string; count: number }
 
 const RDFS_SUBCLASS = 'http://www.w3.org/2000/01/rdf-schema#subClassOf'
@@ -294,6 +306,48 @@ async function profileOrphanCounts(url: string, pairs: { type: string; via: stri
   }
 }
 
+const RDF_TYPE = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'
+// Above this per-owner count an embed just spills to links (mirrors the app's
+// MAX_EMBED_TOTAL), so edges past it aren't embed candidates — dropped from hints.
+const EMBED_CAP = 150
+// Skip embed fan-in for types bigger than this: they're never embed targets, and the
+// incoming scan over every instance is too costly. Raise if a real candidate exceeds it.
+const EMBED_PROFILE_MAX = 50_000
+
+// Inverse fan-in: max distinct THIS-type SUBJECTS sharing one object, per outgoing
+// IRI predicate. Low ⇒ safe to inverse-embed on the referent via `embedVia:"^<p>"`.
+const inverseFanQuery = (t: string) =>
+  `SELECT ?p (MAX(?c) AS ?hi) WHERE { SELECT ?p ?o (COUNT(DISTINCT ?s) AS ?c) WHERE { { SELECT DISTINCT ?s WHERE { ?s a <${t}> } } ?s ?p ?o . FILTER(isIRI(?o)) } GROUP BY ?p ?o } GROUP BY ?p`
+// Forward fan-in: max distinct THIS-type OBJECTS per owner, per incoming predicate.
+// Low ⇒ safe to embed under the owner via `embedVia:"<p>"`. DISTINCT ?o first keeps
+// it quad-safe (an object in N graphs counts once), same trick as the property scan.
+const forwardFanQuery = (t: string) =>
+  `SELECT ?p (MAX(?c) AS ?hi) WHERE { SELECT ?p ?s (COUNT(DISTINCT ?o) AS ?c) WHERE { { SELECT DISTINCT ?o WHERE { ?o a <${t}> } } ?s ?p ?o } GROUP BY ?p ?s } GROUP BY ?p`
+
+/**
+ * Per-owner fan-in in both directions — the max instances of `t` that inline under
+ * one owner through each edge. This is the embed-safety check we'd otherwise run by
+ * hand per candidate; low max ⇒ embeddable. Optional hint, so a short leash + one
+ * retry, and a blocked/slow query just yields no edge (no failure).
+ */
+async function profileEmbed(url: string, t: string, onStep?: (s: string) => void): Promise<EmbedHints | null> {
+  const edges = async (q: string): Promise<FanEdge[]> => {
+    const rows = await sparql(url, q, 1, LIST_TIMEOUT_MS).catch(() => null)
+    if (!rows) return []
+    return rows
+      .map(r => ({ via: r.p?.value ?? '', max: Number(r.hi?.value ?? 0) }))
+      .filter(e => e.via && e.via !== RDF_TYPE && e.max > 0 && e.max <= EMBED_CAP)
+      .sort((a, b) => a.max - b.max) // lowest fan-in (best embed candidate) first
+  }
+  onStep?.('forward'); const forward = await edges(forwardFanQuery(t))
+  onStep?.('inverse'); const inverse = await edges(inverseFanQuery(t))
+  if (!forward.length && !inverse.length) return null
+  const hints: EmbedHints = {}
+  if (forward.length) hints.forward = forward
+  if (inverse.length) hints.inverse = inverse
+  return hints
+}
+
 // Wall-clock helpers for phase logging (mirrors ae-skos' profiler output style).
 const t0 = Date.now()
 const secs = (from: number) => `${((Date.now() - from) / 1000).toFixed(1)}s`
@@ -370,6 +424,33 @@ async function main() {
   // runs, instead of tracking typeInventory's count-order (which drifts).
   cfg.typeProperties = sortKeys(out)
   console.error(`  → ${okCount}/${typeUris.length} OK (${sampledCount} sampled, no cardinality) in ${secs(p)}`)
+
+  // ── Embed fan-in — max instances per owner, both directions (embed hints) ──
+  // Written onto each typeProperties entry (shared object ref, so already sorted).
+  // Skips huge types (never embed targets; the incoming scan is costly).
+  p = phase(`Embed fan-in — ${typeUris.length} types`)
+  let embedCount = 0
+  for (const [i, type] of typeUris.entries()) {
+    if (!out[type]?.ok || (totals[type] ?? 0) > EMBED_PROFILE_MAX) continue
+    const tt = Date.now()
+    const tag = `[${i + 1}/${typeUris.length}]`
+    const short = type.replace(/^.*[#/]/, '') || type
+    let step = 'forward'
+    const beat = () => process.stderr.write(`${CLEAR}  ${tag} ⏳ ${short} — ${step} fan-in (${secs(tt)})`)
+    let timer: ReturnType<typeof setInterval> | undefined
+    if (isTTY) { beat(); timer = setInterval(beat, 1000) }
+    const embed = await profileEmbed(url, type, (s) => { step = s; if (isTTY) beat() })
+    if (timer) clearInterval(timer)
+    if (isTTY) process.stderr.write(CLEAR)
+    if (embed) {
+      out[type].embed = embed
+      embedCount++
+      const f = embed.forward?.length ? ` fwd:${embed.forward[0]!.max}` : ''
+      const inv = embed.inverse?.length ? ` inv:${embed.inverse[0]!.max}` : ''
+      console.error(`  ${tag} ✓ ${short} —${f}${inv} (${secs(tt)})`)
+    }
+  }
+  console.error(`  → ${embedCount} types with an embeddable edge in ${secs(p)}`)
 
   // ── Subclass hierarchy (for the nested sidebar tree) ───────────────────
   p = phase('Subclasses')
