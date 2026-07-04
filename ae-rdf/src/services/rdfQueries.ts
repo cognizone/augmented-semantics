@@ -21,8 +21,8 @@ export const LABEL_PREDICATES: readonly string[] = [
   'http://www.w3.org/2004/02/skos/core#prefLabel',
   'http://purl.org/dc/terms/title',
   'http://purl.org/dc/elements/1.1/title',
-  'http://xmlns.com/foaf/0.1/name',
-  'http://schema.org/name',
+  // ponytail: dropped foaf:name / schema:name — lowest precedence, and Fedlex's
+  // WAF blocks that vocab pair anyway. Re-add if an endpoint labels only via them.
 ]
 
 // SKOS-XL reifies labels: ?s skosxl:prefLabel ?label . ?label skosxl:literalForm "…".
@@ -372,19 +372,15 @@ export function buildSubclassQuery(typeUris: string[], s: GraphStrategy): string
  * predicates — the CALLER (resolveLabels) picks the best value per subject by
  * LABEL_PREDICATES precedence, then language, client-side.
  *
- * Why not one query with COALESCE over all 6 predicates (server-side precedence)?
+ * Why not one query with COALESCE over all predicates (server-side precedence)?
  * Some endpoints sit behind a cumulative-anomaly-score WAF that blocks a request
  * carrying too many external vocab URLs — Fedlex blocks at 6 (≤5 OK), whether via
  * OPTIONAL or VALUES. So predicates are batched (LABEL_PREDICATE_BATCH) and merged
- * client-side; a single VALUES ?p pattern also keeps the query cheap. Empty when
- * no safe subjects/predicates (caller skips). SKOS-XL is a separate query.
- *
- * Batch of 2: Fedlex's WAF weights vocab domains unequally and blocks some even in
- * pairs (foaf/schema.org), so no batch size passes ALL — but the resolver catches
- * each batch independently, so a blocked pair just contributes no labels while the
- * rest resolve. Type resolution (buildTypeQuery, separate) and per-type composed
- * labels (buildValuesQuery, the type's own predicates) are the paths that matter
- * and don't depend on these standard vocab predicates.
+ * client-side; a single VALUES ?p pattern also keeps the query cheap. The resolver
+ * catches each batch independently, so a batch the WAF blocks just contributes no
+ * labels while the rest resolve. Empty when no safe subjects/predicates (caller
+ * skips). SKOS-XL is a separate query. Type resolution (buildTypeQuery) and per-type
+ * composed labels (buildValuesQuery) are separate paths that don't depend on these.
  */
 export const LABEL_PREDICATE_BATCH = 2
 
