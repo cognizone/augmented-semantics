@@ -44,9 +44,13 @@ watch(
 watch(
   () => route.query[URL_PARAMS.TYPE],
   (t) => {
-    const type = typeof t === 'string' ? t : null
-    browseStore.setType(type)
-    if (type) browseStore.setResource(null) // ?type wins over a leftover ?resource (R33)
+    browseStore.setType(typeof t === 'string' ? t : null)
+    // Do NOT clear the resource here. selectType() already drops ?resource when you
+    // pick a type, and the resource watcher syncs currentResource from ?resource
+    // (null when absent). Clearing it unconditionally clobbered a valid
+    // ?type+?resource load — clicking an instance keeps ?type, so on (re)load both
+    // `immediate` watchers run and this wiped the resource the other just set, showing
+    // the instance list instead of the resource. Resource has precedence (template). (R33)
   },
   { immediate: true }
 )

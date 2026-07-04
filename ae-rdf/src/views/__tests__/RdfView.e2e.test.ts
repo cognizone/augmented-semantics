@@ -95,4 +95,29 @@ describe('RdfView e2e: type → resource → type', () => {
     expect(wrapper.find('.instance-list').exists(), 'instances after SECOND type click').toBe(true)
     expect(wrapper.text()).toContain('Instance Y')
   })
+
+  // Regression: a URL carrying BOTH ?type and ?resource (what clicking an instance
+  // produces, and what a shared link / refresh replays) must render the RESOURCE,
+  // not the list. The type watcher used to clobber the resource on such a load.
+  it('renders the resource when the URL has both ?type and ?resource', async () => {
+    const router = createRouter({ history: createMemoryHistory(), routes: [{ path: '/', component: RdfView }] })
+    router.push({ path: '/', query: { type: TYPE, resource: INSTANCE } })
+    await router.isReady()
+
+    const endpoint = useEndpointStore()
+    endpoint.endpoints = [{ id: 'e1', name: 'Test', url: 'http://x/sparql' } as any]
+    ;(endpoint as any).currentId = 'e1'
+
+    const wrapper = mount(RdfView, {
+      global: {
+        plugins: [router, PrimeVue, ToastService, ConfirmationService],
+        directives: { tooltip: Tooltip },
+      },
+    })
+    await flushPromises()
+
+    expect(wrapper.find('.instance-list').exists(), 'list must NOT show when ?resource is present').toBe(false)
+    expect(wrapper.find('.resource-title').exists(), 'resource view is shown').toBe(true)
+    expect(wrapper.find('.resource-title').text()).toContain('Instance Y')
+  })
 })
