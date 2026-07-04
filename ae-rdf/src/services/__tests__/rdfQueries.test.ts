@@ -16,6 +16,7 @@ import {
   resolveSearchPredicates,
   buildLabelValuesQuery,
   buildTypeQuery,
+  buildTypeSubclassQuery,
   LABEL_PREDICATE_BATCH,
   buildValuesQuery,
   buildEmbeddedTriplesQuery,
@@ -307,7 +308,7 @@ describe('buildLabelValuesQuery', () => {
     expect(q).not.toContain('OPTIONAL')
     expect(q).not.toContain('COALESCE')
   })
-  it('batches so a request never carries all 6 vocab URLs at once (Fedlex WAF blocks ≥6)', () => {
+  it('batches so a request never carries ≥6 vocab URLs at once (Fedlex WAF blocks ≥6)', () => {
     expect(LABEL_PREDICATE_BATCH).toBeLessThanOrEqual(5)
   })
   it('skips unsafe/whitespace IRIs on both axes; empty when nothing safe', () => {
@@ -321,19 +322,36 @@ describe('buildLabelValuesQuery', () => {
 })
 
 describe('buildTypeQuery', () => {
-  it('emits (?s ?t) most-specific type, no label patterns (split from labels)', () => {
+  it('emits DISTINCT (?s ?t) all asserted types, no label patterns (split from labels)', () => {
     const q = buildTypeQuery([RES])
     expect(q).toContain(`VALUES ?s { <${RES}> }`)
     expect(q).toContain('?s a ?t')
-    // leaf-type picker: exclude any type with a more-specific asserted type
-    expect(q).toContain('FILTER NOT EXISTS')
-    expect(q).toContain('subClassOf')
+    // DISTINCT collapses `?s a ?t` duplicated across many graphs (Fedlex) at scan;
+    // most-specific is narrowed client-side, NOT via a server-side NOT EXISTS/+ that
+    // times out on such endpoints.
+    expect(q).toContain('DISTINCT')
+    expect(q).not.toContain('FILTER NOT EXISTS')
+    expect(q).not.toContain('subClassOf')
     expect(q).not.toContain('COALESCE')
     expect(q).not.toContain('rdf-schema#label')
   })
   it('skips unsafe IRIs; empty when none safe', () => {
     expect(buildTypeQuery(['x> }'])).toBe('')
     expect(buildTypeQuery([`  ${RES}  `])).toContain(`<${RES}>`)
+  })
+})
+
+describe('buildTypeSubclassQuery', () => {
+  it('emits DISTINCT (?sub ?super) transitive subclass edges bounded by VALUES', () => {
+    const q = buildTypeSubclassQuery([RES, TYPE])
+    expect(q).toContain(`VALUES ?sub { <${RES}> <${TYPE}> }`)
+    expect(q).toContain('subClassOf>+ ?super') // bounded transitive → cheap
+    expect(q).toContain('DISTINCT')
+    expect(q).toContain('FILTER(?sub != ?super)')
+  })
+  it('skips unsafe IRIs; empty when none safe', () => {
+    expect(buildTypeSubclassQuery(['x> }'])).toBe('')
+    expect(buildTypeSubclassQuery([`  ${RES}  `])).toContain(`<${RES}>`)
   })
 })
 

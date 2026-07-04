@@ -392,22 +392,35 @@ export function buildLabelValuesQuery(uris: string[], predicates: readonly strin
 }
 
 /**
- * MOST SPECIFIC asserted type per IRI, as (?s ?t) rows. Most-specific = a type the
- * subject asserts with no more-specific asserted type below it (no
- * `?more rdfs:subClassOf+ ?t`) — so an object typed Result → ProjectPublication →
- * JournalPaper resolves to "JournalPaper", not an arbitrary ancestor. Split from
- * the label lookup (above) so neither carries the other's WAF/planner cost; the
- * caller merges both into its label/type maps. Empty when no safe subjects.
+ * ALL asserted types per IRI, as DISTINCT (?s ?t) rows. The caller (resolveLabels)
+ * narrows these to the MOST SPECIFIC client-side, using buildTypeSubclassQuery for
+ * the subclass edges — so an object typed Result → ProjectPublication → JournalPaper
+ * still resolves to "JournalPaper". Empty when no safe subjects.
+ *
+ * Why not filter to most-specific server-side (FILTER NOT EXISTS { ?s a ?more .
+ * ?more rdfs:subClassOf+ ?t })? On endpoints that duplicate `?s a ?t` across
+ * thousands of named graphs (Fedlex: one `FRA a skos:Concept` appears >100k times),
+ * NOT EXISTS re-scans that pile per row AND the unbounded transitive closure never
+ * returns — every server-side variant (NOT EXISTS / MINUS, transitive or single-hop)
+ * times out. DISTINCT here collapses the duplicates at scan; the subclass step is
+ * bounded by a small VALUES type set, so its `+` closure stays cheap.
  */
 export function buildTypeQuery(uris: string[]): string {
   const values = iriValues(uris, 256)
   if (!values) return ''
-  const subClassOf = `<${SUBCLASS_OF}>`
-  return `SELECT ?s ?t WHERE {
-  VALUES ?s { ${values} }
-  ?s a ?t .
-  FILTER NOT EXISTS { ?s a ?more . ?more ${subClassOf}+ ?t . FILTER(?more != ?t) }
-}`
+  return `SELECT DISTINCT ?s ?t WHERE { VALUES ?s { ${values} } ?s a ?t }`
+}
+
+/**
+ * Subclass edges (?sub rdfs:subClassOf+ ?super) among a KNOWN set of types — the
+ * VALUES list bounds the transitive start, so the `+` closure is cheap where an
+ * unbounded one blows up. resolveLabels feeds it the types buildTypeQuery found and
+ * drops any type that is a supertype of another asserted type. Empty when none safe.
+ */
+export function buildTypeSubclassQuery(typeUris: string[]): string {
+  const values = iriValues(typeUris, 256)
+  if (!values) return ''
+  return `SELECT DISTINCT ?sub ?super WHERE { VALUES ?sub { ${values} } ?sub <${SUBCLASS_OF}>+ ?super . FILTER(?sub != ?super) }`
 }
 
 /**

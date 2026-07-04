@@ -19,13 +19,36 @@
  *
  * @see /spec/ae-rdf
  */
-import { executeSparql, buildValuesQuery, buildLabelValuesQuery, buildTypeQuery, buildSkosxlLabelsQuery, LABEL_PREDICATES, LABEL_PREDICATE_BATCH } from '../services'
+import { executeSparql, buildValuesQuery, buildLabelValuesQuery, buildTypeQuery, buildTypeSubclassQuery, buildSkosxlLabelsQuery, LABEL_PREDICATES, LABEL_PREDICATE_BATCH } from '../services'
 import { useTypeConfigStore } from '../stores'
 import { pickByLangs } from '../utils/labelLang'
 import type { SPARQLEndpoint } from '../types/endpoint'
 
 // ponytail: cap the label graph walk at 3 hops (payment→role→org is 2).
 const MAX_LABEL_HOPS = 3
+
+/**
+ * Per subject, keep only the MOST SPECIFIC of its asserted types: drop any type
+ * that is a supertype of another type the same subject asserts. `subsOf` maps a
+ * super-type to its (transitive) subtypes (from buildTypeSubclassQuery). Pure, so
+ * the narrowing that replaces the old server-side FILTER NOT EXISTS is unit-tested.
+ */
+export function mostSpecificTypes(
+  subjectTypes: Map<string, Set<string>>,
+  subsOf: Map<string, Set<string>>,
+): Map<string, Set<string>> {
+  const out = new Map<string, Set<string>>()
+  for (const [s, types] of subjectTypes) {
+    const keep = new Set<string>()
+    for (const t of types) {
+      const subs = subsOf.get(t)
+      if (subs && [...types].some(u => u !== t && subs.has(u))) continue // t has a more-specific sibling
+      keep.add(t)
+    }
+    out.set(s, keep)
+  }
+  return out
+}
 
 /**
  * THE base label + most-specific-type resolver for a set of URIs — the shared
@@ -53,9 +76,9 @@ export async function resolveLabels(
 ): Promise<void> {
   if (!uris.length) return
   // Labels are fetched in small PREDICATE BATCHES (buildLabelValuesQuery) rather
-  // than one query with COALESCE over all 6 — a cumulative-anomaly WAF (Fedlex)
-  // blocks a request carrying ≥6 external vocab URLs, whether via OPTIONAL or
-  // VALUES. Type and SKOS-XL are separate queries. Precedence + language are
+  // than one query with COALESCE over all predicates — a cumulative-anomaly WAF
+  // (Fedlex) blocks a request carrying ≥6 external vocab URLs, whether via OPTIONAL
+  // or VALUES. Type and SKOS-XL are separate queries. Precedence + language are
   // picked HERE, client-side, preserving the LABEL_PREDICATES order (never an
   // arbitrary SAMPLE). All queries run in parallel.
   const batches: string[][] = []
@@ -70,16 +93,40 @@ export async function resolveLabels(
   ])
   if (!isCurrent()) return
 
-  // Most-specific type per subject: typeMap keeps ONE (badge/label, don't clobber
-  // a caller pre-seed); allTypes (if provided) keeps ALL for the embed decision.
+  // Types: buildTypeQuery returns ALL asserted types (DISTINCT); most-specific is
+  // narrowed HERE, client-side. A SECOND query fetches subclass edges among just
+  // those types (bounded VALUES → cheap) — doing it server-side times out on
+  // endpoints that duplicate `?s a ?t` across thousands of graphs (Fedlex). If that
+  // query fails/returns nothing, subsOf is empty ⇒ no narrowing (all types kept).
+  const subjectTypes = new Map<string, Set<string>>()
+  const seenTypes = new Set<string>()
   for (const b of typeRes?.results.bindings ?? []) {
     const s = b.s?.value, t = b.t?.value
     if (!s || !t) continue
-    if (!typeMap.has(s)) typeMap.set(s, t)
-    if (allTypes) {
-      let set = allTypes.get(s)
-      if (!set) { set = new Set(); allTypes.set(s, set) }
-      set.add(t)
+    let set = subjectTypes.get(s); if (!set) { set = new Set(); subjectTypes.set(s, set) }
+    set.add(t); seenTypes.add(t)
+  }
+  const subsOf = new Map<string, Set<string>>() // super → its (transitive) subtypes
+  if (seenTypes.size) {
+    const scRes = await run(buildTypeSubclassQuery([...seenTypes]))
+    if (!isCurrent()) return
+    for (const b of scRes?.results.bindings ?? []) {
+      const sub = b.sub?.value, sup = b.super?.value
+      if (!sub || !sup) continue
+      let set = subsOf.get(sup); if (!set) { set = new Set(); subsOf.set(sup, set) }
+      set.add(sub)
+    }
+  }
+  // typeMap keeps ONE most-specific (badge/label, don't clobber a caller pre-seed);
+  // allTypes (if provided) keeps ALL most-specific for the embed decision.
+  for (const [s, types] of mostSpecificTypes(subjectTypes, subsOf)) {
+    for (const t of types) {
+      if (!typeMap.has(s)) typeMap.set(s, t)
+      if (allTypes) {
+        let set = allTypes.get(s)
+        if (!set) { set = new Set(); allTypes.set(s, set) }
+        set.add(t)
+      }
     }
   }
 
