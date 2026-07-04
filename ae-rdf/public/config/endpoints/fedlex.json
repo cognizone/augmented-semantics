@@ -54,6 +54,11 @@
       "render": "embed",
       "embedVia": "http://data.legilux.public.lu/resource/ontology/jolux#treatyProcessHasTask"
     },
+    "http://data.legilux.public.lu/resource/ontology/jolux#PartyConditionToTreaty": {
+      "label": [
+        "http://data.legilux.public.lu/resource/ontology/jolux#partyConditionOfParty"
+      ]
+    },
     "http://data.legilux.public.lu/resource/ontology/jolux#Edition": {
       "label": [
         "http://data.legilux.public.lu/resource/ontology/jolux#editionType",
