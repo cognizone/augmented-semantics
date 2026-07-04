@@ -2,6 +2,14 @@
   "name": "Fedlex",
   "url": "https://fedlex.data.admin.ch/sparqlendpoint",
   "types": {
+    "http://data.legilux.public.lu/resource/ontology/jolux#EntryIntoForce": {
+      "render": "embed",
+      "embedVia": "http://data.legilux.public.lu/resource/ontology/jolux#treatyProcessHasTask",
+      "label": [
+        "http://data.legilux.public.lu/resource/ontology/jolux#entryIntoForceDate",
+        "http://data.legilux.public.lu/resource/ontology/jolux#entryIntoForceFor"
+      ]
+    },
     "http://data.europa.eu/eli/ontology#InForce": {
       "group": "Vocabularies",
       "label": [
