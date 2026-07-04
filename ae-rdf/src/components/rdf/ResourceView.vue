@@ -160,6 +160,15 @@ const graphSummary = computed(() => {
   return { graphs: [...set], hasDefault }
 })
 
+// Header provenance chips are capped: a replicated vocab concept can appear in
+// hundreds of named graphs (Fedlex), flooding the header. Show a few; the existing
+// "Show graphs" toggle (which also reveals per-triple tags) expands to all.
+const GRAPH_CHIP_CAP = 12
+const visibleGraphs = computed(() =>
+  showGraphs.value ? graphSummary.value.graphs : graphSummary.value.graphs.slice(0, GRAPH_CHIP_CAP),
+)
+const hiddenGraphCount = computed(() => graphSummary.value.graphs.length - visibleGraphs.value.length)
+
 const heading = computed(() => label.value || (uri.value ? localNameOf(uri.value) : ''))
 
 watch(
@@ -214,7 +223,8 @@ onUnmounted(() => scrollEl.value?.removeEventListener('scroll', onScroll))
           <span class="material-symbols-outlined graph-icon">hub</span>
           <span class="graph-summary">
             <template v-if="graphSummary.graphs.length">
-              <span v-for="g in graphSummary.graphs" :key="g" class="graph-chip" v-tooltip.top="{ value: g, showDelay: 120 }">{{ qname(g) }}</span>
+              <span v-for="g in visibleGraphs" :key="g" class="graph-chip" v-tooltip.top="{ value: g, showDelay: 120 }">{{ qname(g) }}</span>
+              <span v-if="hiddenGraphCount > 0" class="graph-chip more" @click="showGraphs = true">+{{ hiddenGraphCount }} more</span>
               <span v-if="graphSummary.hasDefault" class="graph-chip default">default graph</span>
             </template>
             <span v-else class="graph-chip default">default graph</span>
@@ -514,6 +524,16 @@ onUnmounted(() => scrollEl.value?.removeEventListener('scroll', onScroll))
 
 .graph-chip.default {
   font-style: italic;
+}
+
+.graph-chip.more {
+  cursor: pointer;
+  color: var(--ae-accent);
+  border-color: var(--ae-accent);
+}
+
+.graph-chip.more:hover {
+  background: var(--ae-bg-hover);
 }
 
 .graph-toggle {
