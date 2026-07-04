@@ -32,15 +32,27 @@
       ]
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#TreatySignature": {
+      "render": "embed",
+      "embedVia": "http://data.legilux.public.lu/resource/ontology/jolux#treatyProcessHasTask",
       "label": [
         "http://data.legilux.public.lu/resource/ontology/jolux#treatySignatureDate"
       ]
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#TreatyRatification": {
+      "render": "embed",
+      "embedVia": "http://data.legilux.public.lu/resource/ontology/jolux#treatyProcessHasTask",
       "label": [
         "http://data.legilux.public.lu/resource/ontology/jolux#treatyRatificationParty",
         "http://data.legilux.public.lu/resource/ontology/jolux#treatyPartyRatificationDate"
       ]
+    },
+    "http://data.legilux.public.lu/resource/ontology/jolux#Registration": {
+      "render": "embed",
+      "embedVia": "http://data.legilux.public.lu/resource/ontology/jolux#treatyProcessHasTask"
+    },
+    "http://data.legilux.public.lu/resource/ontology/jolux#ReferralToConseilGouvernement": {
+      "render": "embed",
+      "embedVia": "http://data.legilux.public.lu/resource/ontology/jolux#treatyProcessHasTask"
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#Edition": {
       "label": [
