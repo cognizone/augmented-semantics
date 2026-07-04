@@ -298,6 +298,9 @@
         "http://www.w3.org/2004/02/skos/core#prefLabel"
       ]
     },
+    "http://data.legilux.public.lu/resource/ontology/jolux#Notification": {
+      "render": "link"
+    },
     "http://data.legilux.public.lu/resource/ontology/jolux#NotificationType": {
       "group": "Vocabularies",
       "label": [
@@ -410,6 +413,10 @@
         "http://www.w3.org/2004/02/skos/core#prefLabel",
         "http://www.w3.org/2004/02/skos/core#notation"
       ]
+    },
+    "http://data.legilux.public.lu/resource/ontology/jolux#ResultOfAConsultationPublication": {
+      "render": "embed",
+      "embedVia": "http://data.legilux.public.lu/resource/ontology/jolux#hasSubTask"
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#Role": {
       "group": "Vocabularies",
