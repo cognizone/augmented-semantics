@@ -43,13 +43,13 @@
  * that axis' prior value — so a flaky run never destroys good data.
  *
  * Usage:
- *   node scripts/profile-endpoint.ts [path-to-endpoint.json] [--gentle]
+ *   node scripts/profile-endpoint.ts [path-to-endpoint.json]
  *   node scripts/profile-endpoint.ts                      # defaults to cordis
- *   node scripts/profile-endpoint.ts …/rinf.json --gentle # rate-limited endpoint
- * --gentle crawls a restrictive/rate-limited endpoint (e.g. ERA RINF's managed
- * gateway — 500s under load, times out on unbounded scans): it PACES requests,
- * backs off harder, and runs LIGHT queries only (sampled property LISTS — no
- * cardinality, no embed fan-in, no defaultView probe). Fewer facts, but it finishes.
+ * The config's `backend` ("graphdb" | "virtuoso", default virtuoso) picks the query
+ * SHAPE. GraphDB (e.g. ERA RINF) lists properties with the FLAT join and skips the
+ * heavy per-subject scans (cardinality / embed fan-in / defaultView) that time out on
+ * its gateway — fewer facts, but COMPLETE property LISTS and it finishes. Virtuoso
+ * (Fedlex/Cordis) uses the nested quad-safe shape and profiles everything.
  * Non-URI type values (bnode/literal) are always logged and skipped, never queried.
  * Node 23.6+ runs .ts directly (type stripping) — no build step.
  *
@@ -69,27 +69,15 @@ const TIMEOUT_MS = 90_000 // per request; a full GROUP BY over a big type is slo
 const LIST_TIMEOUT_MS = 30_000
 const SAMPLE_SIZE = 2000 // distinct-subject cap when the full listing times out
 
-// --gentle: profile a restrictive endpoint that TIMES OUT on the unbounded per-subject
-// scans (e.g. ERA RINF). It sticks to LIGHT queries only — sampled property LISTS, NO
-// cardinality, NO embed fan-in, NO defaultView probe — and additionally paces requests
-// (THROTTLE_MS) and backs off harder (exponential, more retries) for endpoints that
-// also rate-limit. Fewer facts, but the run completes. (NB: the profiler now POSTs
-// queries — RINF's gateway 500s on GET — so gentle is about timeouts, not the method.)
-const GENTLE = process.argv.includes('--gentle')
-const RETRIES = GENTLE ? 4 : 2
-const THROTTLE_MS = GENTLE ? 400 : 0
+// The config's `backend` picks the query SHAPE (set from cfg.backend in main).
+// GraphDB (e.g. ERA RINF) is fast on the FLAT `?s a T . ?s ?p ?o` join but times out
+// on the nested DISTINCT-?s subquery AND on the heavy per-subject scans; Virtuoso
+// (Fedlex/Cordis) graph-multiplies the flat join, so it needs the nested quad-safe
+// shape and can afford the full scans. GraphDB → flat COMPLETE property LISTS, and we
+// skip cardinality / embed fan-in / defaultView (they time out on its gateway).
+let GRAPHDB = false
+const RETRIES = 2
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms))
-// Serialized pacer: each request awaits the previous, then holds the gate open
-// THROTTLE_MS, so requests (even parallel bursts) are spaced out. No-op when off.
-let throttleGate: Promise<void> = Promise.resolve()
-async function throttle(): Promise<void> {
-  if (THROTTLE_MS <= 0) return
-  const prev = throttleGate
-  let release!: () => void
-  throttleGate = new Promise<void>(r => { release = r })
-  await prev
-  setTimeout(release, THROTTLE_MS)
-}
 
 interface PropEntry { uri: string; count: number; min?: number; max?: number }
 /** An owning edge + the max instances of a type that hang off ONE owner through it. */
@@ -138,6 +126,10 @@ const propListQuery = (t: string) =>
   `SELECT DISTINCT ?p WHERE { { SELECT DISTINCT ?s WHERE { ?s a <${t}> } } ?s ?p ?o }`
 const sampledPropListQuery = (t: string) =>
   `SELECT DISTINCT ?p WHERE { { SELECT DISTINCT ?s WHERE { ?s a <${t}> } LIMIT ${SAMPLE_SIZE} } ?s ?p ?o }`
+// Flat, no nested subquery — GraphDB lists ALL properties fast this way (the nested
+// shape times out there); on Virtuoso it graph-multiplies, so it's GraphDB-only.
+const flatPropListQuery = (t: string) =>
+  `SELECT DISTINCT ?p WHERE { ?s a <${t}> . ?s ?p ?o }`
 // Per-property cardinality: inner counts DISTINCT ?p-values per instance → ?c;
 // outer rolls up:
 //   ?n      = SUM(?c)   total occurrences   ?havers = COUNT(?s) instances that have ?p
@@ -167,7 +159,6 @@ async function sparql(url: string, query: string, retries = RETRIES, timeoutMs =
     let timedOut = false
     const timer = setTimeout(() => { timedOut = true; ctrl.abort() }, timeoutMs)
     try {
-      await throttle() // pace requests in --gentle mode; no-op otherwise
       // POST, not GET: some managed gateways (ERA RINF) reject query-in-URL GET with
       // 500, and POST has no URL-length limit. Works everywhere (Virtuoso included).
       const res = await fetch(url, {
@@ -183,10 +174,9 @@ async function sparql(url: string, query: string, retries = RETRIES, timeoutMs =
       lastErr = e
       // A timeout means the query is too expensive — retrying just burns another
       // TIMEOUT_MS to fail identically. Stop and let the caller fall back (e.g. to
-      // a sample). Transient errors (HTTP 5xx, connection reset) still retry — with
-      // a longer, exponential backoff under --gentle to ride out rate-limiting.
+      // a sample). Transient errors (HTTP 5xx, connection reset) still retry.
       if (timedOut) break
-      if (attempt < retries) await sleep(GENTLE ? 2000 * 2 ** attempt : 1000 * (attempt + 1))
+      if (attempt < retries) await sleep(1000 * (attempt + 1))
     } finally {
       clearTimeout(timer)
     }
@@ -201,7 +191,6 @@ async function ask(url: string, query: string): Promise<boolean | undefined> {
     let timedOut = false
     const timer = setTimeout(() => { timedOut = true; ctrl.abort() }, TIMEOUT_MS)
     try {
-      await throttle()
       const res = await fetch(url, {
         method: 'POST',
         headers: { Accept: 'application/sparql-results+json', 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -213,7 +202,7 @@ async function ask(url: string, query: string): Promise<boolean | undefined> {
       return typeof json.boolean === 'boolean' ? json.boolean : undefined
     } catch {
       if (timedOut) break // a timeout won't finish on retry
-      if (attempt < RETRIES) await sleep(GENTLE ? 2000 * 2 ** attempt : 1000 * (attempt + 1))
+      if (attempt < RETRIES) await sleep(1000 * (attempt + 1))
     } finally {
       clearTimeout(timer)
     }
@@ -231,8 +220,8 @@ async function profileGraph(url: string): Promise<{ quads?: boolean; defaultView
   const quads = await ask(url, namedGraphAsk())
   let defaultView: 'merged' | 'own' | undefined
   // The defaultView probe (FILTER NOT EXISTS over a 20k sample) is heavy — it times
-  // out on restrictive endpoints, so --gentle skips it (the app falls back at connect).
-  if (quads === true && !GENTLE) {
+  // out on GraphDB's gateway, so we skip it there (the app falls back at connect).
+  if (quads === true && !GRAPHDB) {
     const someOwn = await ask(url, defaultViewAsk(DEFAULT_VIEW_SAMPLE))
     if (someOwn === false) defaultView = 'merged'
     else if (someOwn === true) defaultView = 'own'
@@ -261,13 +250,18 @@ async function profileType(url: string, type: string, total: number, onStep?: (s
   onStep?.('listing properties')
   let sampled = false
   let props: string[] = []
-  // --gentle skips the full (unbounded) list — it times out on restrictive endpoints —
-  // and goes straight to the LIMITed sample.
-  if (!GENTLE) {
-    try {
-      props = (await sparql(url, propListQuery(type), 0, LIST_TIMEOUT_MS)).map(b => b.p?.value ?? '')
-    } catch { /* too big / slow to list fully — fall back to the sample below */ }
-  }
+  // GraphDB: the FLAT join lists all properties fast (the nested subquery times out
+  // there) — give it the full TIMEOUT_MS since the biggest types run ~90s. Virtuoso:
+  // the nested quad-safe shape on a short leash (LIST_TIMEOUT_MS). Either way, fall
+  // back to the LIMITed sample below if the primary shape is too slow.
+  try {
+    props = (await sparql(
+      url,
+      GRAPHDB ? flatPropListQuery(type) : propListQuery(type),
+      0,
+      GRAPHDB ? TIMEOUT_MS : LIST_TIMEOUT_MS,
+    )).map(b => b.p?.value ?? '')
+  } catch { /* too big / slow to list fully — fall back to the sample below */ }
   if (!props.length) {
     onStep?.('sampled property list')
     try {
@@ -281,13 +275,14 @@ async function profileType(url: string, type: string, total: number, onStep?: (s
   props = props.filter(safeIri)
 
   // 2. Measure each property: occurrence count + per-instance min/max cardinality.
-  // --gentle SKIPS this — the card query is an unbounded per-subject aggregation that
-  // times out on restrictive endpoints — keeping just the property list (uri only).
+  // GraphDB SKIPS this — the per-subject aggregation runs ~30min over its biggest
+  // types and the app never reads cardinality (it resolves live) — keeping just the
+  // property list (uri only).
   const entries: PropEntry[] = []
   for (let i = 0; i < props.length; i++) {
     const p = props[i]
     const e: PropEntry = { uri: p, count: 0 }
-    if (!GENTLE) {
+    if (!GRAPHDB) {
       onStep?.(`property ${i + 1}/${props.length}: ${shortIri(p)}`)
       try {
         const b = (await sparql(url, propCardQuery(type, p)))[0] ?? {}
@@ -303,7 +298,7 @@ async function profileType(url: string, type: string, total: number, onStep?: (s
     }
     entries.push(e)
   }
-  if (!GENTLE) entries.sort((a, b) => b.count - a.count)
+  if (!GRAPHDB) entries.sort((a, b) => b.count - a.count)
   return { ok: true, sampled: sampled || undefined, properties: entries }
 }
 
@@ -427,7 +422,8 @@ async function main() {
   const cfg = JSON.parse(await readFile(path, 'utf8'))
   const url: string = cfg.url
   if (!url) throw new Error(`No "url" in ${path}`)
-  if (GENTLE) console.error('--gentle: paced requests, backoff, sampled property lists only (no cardinality / embed / defaultView)')
+  GRAPHDB = cfg.backend === 'graphdb'
+  if (GRAPHDB) console.error('backend: graphdb — flat COMPLETE property lists, skipping cardinality / embed / defaultView')
 
   // Type list: prefer the cached inventory; else discover it live AND cache it (with
   // counts) — so a fresh config-endpoint gets a persisted typeInventory the app can use,
@@ -466,7 +462,7 @@ async function main() {
   console.error(`  → quads=${graph.quads ?? '?'} defaultView=${graph.defaultView ?? '?'} in ${secs(p)}`)
 
   // ── Properties + per-instance cardinality ──────────────────────────────
-  p = phase(`Properties + cardinality — ${typeUris.length} types`)
+  p = phase(`Properties${GRAPHDB ? '' : ' + cardinality'} — ${typeUris.length} types`)
   const out: Record<string, TypeProfile> = { ...(cfg.typeProperties ?? {}) }
   let okCount = 0, sampledCount = 0
   for (const [i, type] of typeUris.entries()) {
@@ -514,7 +510,7 @@ async function main() {
   p = phase(`Embed fan-in — ${typeUris.length} types`)
   let embedCount = 0, floodFlag = 0
   for (const [i, type] of typeUris.entries()) {
-    if (GENTLE) break // --gentle: fan-in needs unbounded per-subject scans that time out here
+    if (GRAPHDB) break // graphdb: fan-in needs per-subject scans that time out on its gateway
     if (!out[type]?.ok || (totals[type] ?? 0) > EMBED_PROFILE_MAX) continue
     const selfMax = Math.max(0, ...out[type].properties.map(pr => pr.max ?? 0))
     const tt = Date.now()
@@ -537,7 +533,7 @@ async function main() {
       console.error(`  ${tag} ✓ ${short} —${f}${inv}${warn} (${secs(tt)})`)
     }
   }
-  console.error(`  → ${GENTLE ? 'skipped (--gentle)' : `${embedCount} types with an embeddable edge (${floodFlag} flagged ⚠ flood-risk: selfMax > ${EMBED_SELF_MAX})`} in ${secs(p)}`)
+  console.error(`  → ${GRAPHDB ? 'skipped (backend: graphdb)' : `${embedCount} types with an embeddable edge (${floodFlag} flagged ⚠ flood-risk: selfMax > ${EMBED_SELF_MAX})`} in ${secs(p)}`)
 
   // ── Subclass hierarchy (for the nested sidebar tree) ───────────────────
   p = phase('Subclasses')

@@ -28,6 +28,9 @@ export interface ConfigEndpoint extends SuggestedEndpointSource {
   analysis?: EndpointAnalysis
   /** Graph behaviour axes (quads / defaultView) — drives query construction */
   graph?: EndpointGraph
+  /** SPARQL engine — profiler-only: picks the property-listing query shape
+   *  (graphdb → flat; virtuoso/unset → nested quad-safe). @see scripts/profile-endpoint.ts */
+  backend?: 'graphdb' | 'virtuoso'
   /** Per-type display config, keyed by type IRI */
   types?: Record<string, TypeConfig>
   /** Cached type inventory (uri + count) for an instant Types sidebar on deploy */
