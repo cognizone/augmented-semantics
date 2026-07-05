@@ -23,9 +23,62 @@ import { executeSparql, buildValuesQuery, buildLabelValuesQuery, buildTypeQuery,
 import { useTypeConfigStore } from '../stores'
 import { pickByLangs } from '../utils/labelLang'
 import type { SPARQLEndpoint } from '../types/endpoint'
+import type { AppError } from '../types/errors'
 
 // ponytail: cap the label graph walk at 3 hops (payment→role→org is 2).
 const MAX_LABEL_HOPS = 3
+
+// Subject VALUES-list chunk size. Big enough that ordinary resources fetch in one
+// request; larger sets chunk, and a WAF-rejected chunk split-retries below.
+// ponytail: tune down if a WAF blocks even 20 subjects; split-retry self-heals anyway.
+export const SUBJECT_BATCH = 20
+
+/**
+ * Run a VALUES-over-URIs query in subject chunks of `batch`, merging bindings.
+ * If a chunk is rejected for a PAYLOAD reason — a cumulative-anomaly WAF 400
+ * (QUERY_ERROR) or a WAF HTML interstitial (INVALID_RESPONSE) — split it and retry
+ * the halves, down to a single URI (then drop it: its label just won't resolve).
+ * Non-payload failures (timeout / server / network) do NOT split — splitting can't
+ * help and would amplify load during an outage — the chunk is dropped instead.
+ * `attempt` resolves a chunk's bindings or throws an AppError. Pure (no endpoint
+ * dependency) so the split logic is unit-tested apart from the network.
+ */
+export async function fetchInChunks<B>(
+  uris: string[],
+  batch: number,
+  attempt: (chunk: string[]) => Promise<B[]>,
+): Promise<B[]> {
+  const splittable = (e: unknown): boolean => {
+    const code = (e as AppError | undefined)?.code
+    return code === 'QUERY_ERROR' || code === 'INVALID_RESPONSE'
+  }
+  const run = async (chunk: string[]): Promise<B[]> => {
+    if (!chunk.length) return []
+    try {
+      return await attempt(chunk)
+    } catch (e) {
+      if (chunk.length <= 1 || !splittable(e)) return []
+      const mid = chunk.length >> 1
+      const [a, b] = await Promise.all([run(chunk.slice(0, mid)), run(chunk.slice(mid))])
+      return [...a, ...b]
+    }
+  }
+  const size = Math.max(1, batch)
+  const chunks: string[][] = []
+  for (let i = 0; i < uris.length; i += size) chunks.push(uris.slice(i, i + size))
+  const out = await Promise.all(chunks.map(run))
+  return out.flat()
+}
+
+/** Chunked + WAF-split VALUES-over-`list` query for one endpoint (fetchInChunks
+ *  wired to executeSparql). retries:0 — the split IS the recovery for a WAF block,
+ *  and a deterministic 400 gains nothing from a plain retry. */
+function fetchValues(endpoint: SPARQLEndpoint, list: string[], build: (u: string[]) => string) {
+  return fetchInChunks(list, SUBJECT_BATCH, async (chunk) => {
+    const q = build(chunk)
+    return q ? (await executeSparql(endpoint, q, { retries: 0 })).results.bindings : []
+  })
+}
 
 /**
  * Per subject, keep only the MOST SPECIFIC of its asserted types: drop any type
@@ -84,12 +137,15 @@ export async function resolveLabels(
   const batches: string[][] = []
   for (let i = 0; i < LABEL_PREDICATES.length; i += LABEL_PREDICATE_BATCH)
     batches.push(LABEL_PREDICATES.slice(i, i + LABEL_PREDICATE_BATCH))
-  const skosxlQ = buildSkosxlLabelsQuery(uris)
-  const run = (q: string) => (q ? executeSparql(endpoint, q, { retries: 1 }).catch(() => null) : Promise.resolve(null))
-  const [typeRes, skosxlRes, ...labelRes] = await Promise.all([
-    run(buildTypeQuery(uris)),
-    run(skosxlQ),
-    ...batches.map(b => run(buildLabelValuesQuery(uris, b))),
+  // Predicate batching (above) caps the vocab URLs per request; the SUBJECT VALUES
+  // list needs capping too. A resource with many object URIs — e.g. Fedlex file
+  // URLs — otherwise builds ONE oversized VALUES list that the cumulative-anomaly
+  // WAF rejects wholesale (400), silently dropping EVERY label. fetchValues chunks
+  // the subjects and split-retries a rejected chunk.
+  const [typeB, skosxlB, ...labelB] = await Promise.all([
+    fetchValues(endpoint, uris, u => buildTypeQuery(u)),
+    fetchValues(endpoint, uris, u => buildSkosxlLabelsQuery(u)),
+    ...batches.map(b => fetchValues(endpoint, uris, u => buildLabelValuesQuery(u, b))),
   ])
   if (!isCurrent()) return
 
@@ -100,7 +156,7 @@ export async function resolveLabels(
   // query fails/returns nothing, subsOf is empty ⇒ no narrowing (all types kept).
   const subjectTypes = new Map<string, Set<string>>()
   const seenTypes = new Set<string>()
-  for (const b of typeRes?.results.bindings ?? []) {
+  for (const b of typeB) {
     const s = b.s?.value, t = b.t?.value
     if (!s || !t) continue
     let set = subjectTypes.get(s); if (!set) { set = new Set(); subjectTypes.set(s, set) }
@@ -108,9 +164,9 @@ export async function resolveLabels(
   }
   const subsOf = new Map<string, Set<string>>() // super → its (transitive) subtypes
   if (seenTypes.size) {
-    const scRes = await run(buildTypeSubclassQuery([...seenTypes]))
+    const scB = await fetchValues(endpoint, [...seenTypes], u => buildTypeSubclassQuery(u))
     if (!isCurrent()) return
-    for (const b of scRes?.results.bindings ?? []) {
+    for (const b of scB) {
       const sub = b.sub?.value, sup = b.super?.value
       if (!sub || !sup) continue
       let set = subsOf.get(sup); if (!set) { set = new Set(); subsOf.set(sup, set) }
@@ -135,7 +191,7 @@ export async function resolveLabels(
   // language — the client-side equivalent of the old COALESCE precedence.
   const rank = new Map(LABEL_PREDICATES.map((p, i) => [p, i]))
   const cands = new Map<string, { p: string; v: string; lang?: string }[]>()
-  for (const res of labelRes) for (const b of res?.results.bindings ?? []) {
+  for (const arr of labelB) for (const b of arr) {
     const s = b.s?.value, p = b.p?.value, l = b.l
     if (!s || !p || !l?.value) continue
     const c = { p, v: l.value, lang: l['xml:lang'] }
@@ -153,7 +209,7 @@ export async function resolveLabels(
   // language). Its reified shape can't carry the language FILTER server-side, so
   // it's a separate query picked client-side here — and it WINS over the above.
   const xlBySubj = new Map<string, { v: string; lang?: string }[]>()
-  for (const b of skosxlRes?.results.bindings ?? []) {
+  for (const b of skosxlB) {
     const s = b.s?.value, lf = b.lf
     if (!s || !lf?.value) continue
     const arr = xlBySubj.get(s) ?? []
@@ -188,12 +244,11 @@ export async function composeLabels(
   let frontier = [...composeType.keys()] // subjects whose fields we still need
   for (let hop = 0; hop < MAX_LABEL_HOPS && frontier.length; hop++) {
     const preds = [...new Set(frontier.flatMap(s => typeConfig.get(composeType.get(s)!).label ?? []))]
-    const q = buildValuesQuery(frontier, preds)
-    if (!q) break
-    const vr = await executeSparql(endpoint, q, { retries: 1 }).catch(() => null)
+    if (!preds.length) break
+    const vBindings = await fetchValues(endpoint, frontier, u => buildValuesQuery(u, preds))
     if (!isCurrent()) return
     const targets = new Set<string>()
-    for (const b of vr?.results.bindings ?? []) {
+    for (const b of vBindings) {
       const s = b.s?.value, p = b.p?.value, o = b.v
       if (!s || !p || !o?.value) continue
       let m = valByS.get(s)
