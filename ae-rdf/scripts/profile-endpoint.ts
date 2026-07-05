@@ -43,8 +43,14 @@
  * that axis' prior value — so a flaky run never destroys good data.
  *
  * Usage:
- *   node scripts/profile-endpoint.ts [path-to-endpoint.json]
+ *   node scripts/profile-endpoint.ts [path-to-endpoint.json] [--gentle]
  *   node scripts/profile-endpoint.ts                      # defaults to cordis
+ *   node scripts/profile-endpoint.ts …/rinf.json --gentle # rate-limited endpoint
+ * --gentle crawls a restrictive/rate-limited endpoint (e.g. ERA RINF's managed
+ * gateway — 500s under load, times out on unbounded scans): it PACES requests,
+ * backs off harder, and runs LIGHT queries only (sampled property LISTS — no
+ * cardinality, no embed fan-in, no defaultView probe). Fewer facts, but it finishes.
+ * Non-URI type values (bnode/literal) are always logged and skipped, never queried.
  * Node 23.6+ runs .ts directly (type stripping) — no build step.
  *
  * @see /spec/ae-rdf  — mirrors the typeInventory caching pattern (useRdfTypes.ts)
@@ -61,8 +67,29 @@ const TIMEOUT_MS = 90_000 // per request; a full GROUP BY over a big type is slo
 // genuinely huge DISTINCT-subject count (millions). Give it a short leash and fall
 // back to a distinct-subject sample rather than waiting out the full TIMEOUT_MS.
 const LIST_TIMEOUT_MS = 30_000
-const RETRIES = 2
 const SAMPLE_SIZE = 2000 // distinct-subject cap when the full listing times out
+
+// --gentle: crawl a rate-limited / restrictive endpoint (e.g. ERA RINF's managed
+// gateway, which 500s under rapid load and times out on unbounded scans). It PACES
+// requests (THROTTLE_MS between them), retries transient errors harder (exponential
+// backoff, more attempts), and sticks to LIGHT queries only — sampled property LISTS
+// with NO cardinality, NO embed fan-in, NO defaultView probe — since the heavy scans
+// those need just time out there. Fewer facts, but the run actually completes.
+const GENTLE = process.argv.includes('--gentle')
+const RETRIES = GENTLE ? 4 : 2
+const THROTTLE_MS = GENTLE ? 400 : 0
+const sleep = (ms: number) => new Promise(r => setTimeout(r, ms))
+// Serialized pacer: each request awaits the previous, then holds the gate open
+// THROTTLE_MS, so requests (even parallel bursts) are spaced out. No-op when off.
+let throttleGate: Promise<void> = Promise.resolve()
+async function throttle(): Promise<void> {
+  if (THROTTLE_MS <= 0) return
+  const prev = throttleGate
+  let release!: () => void
+  throttleGate = new Promise<void>(r => { release = r })
+  await prev
+  setTimeout(release, THROTTLE_MS)
+}
 
 interface PropEntry { uri: string; count: number; min?: number; max?: number }
 /** An owning edge + the max instances of a type that hang off ONE owner through it. */
@@ -133,13 +160,14 @@ const compositionQuery = (embeds: string[]) =>
 const orphanLinkedQuery = (pairs: { type: string; via: string }[]) =>
   `SELECT ?e (COUNT(DISTINCT ?o) AS ?linked) WHERE { VALUES (?e ?via) { ${pairs.map(p => `(<${p.type}> <${p.via}>)`).join(' ')} } ?o a ?e . ?s ?via ?o . } GROUP BY ?e`
 
-async function sparql(url: string, query: string, retries = RETRIES, timeoutMs = TIMEOUT_MS): Promise<Record<string, { value: string }>[]> {
+async function sparql(url: string, query: string, retries = RETRIES, timeoutMs = TIMEOUT_MS): Promise<Record<string, { type?: string; value: string }>[]> {
   let lastErr: unknown
   for (let attempt = 0; attempt <= retries; attempt++) {
     const ctrl = new AbortController()
     let timedOut = false
     const timer = setTimeout(() => { timedOut = true; ctrl.abort() }, timeoutMs)
     try {
+      await throttle() // pace requests in --gentle mode; no-op otherwise
       const res = await fetch(`${url}?query=${encodeURIComponent(query)}`, {
         headers: { Accept: 'application/sparql-results+json' },
         signal: ctrl.signal,
@@ -151,9 +179,10 @@ async function sparql(url: string, query: string, retries = RETRIES, timeoutMs =
       lastErr = e
       // A timeout means the query is too expensive — retrying just burns another
       // TIMEOUT_MS to fail identically. Stop and let the caller fall back (e.g. to
-      // a sample). Transient errors (HTTP 5xx, connection reset) still retry.
+      // a sample). Transient errors (HTTP 5xx, connection reset) still retry — with
+      // a longer, exponential backoff under --gentle to ride out rate-limiting.
       if (timedOut) break
-      if (attempt < retries) await new Promise(r => setTimeout(r, 1000 * (attempt + 1)))
+      if (attempt < retries) await sleep(GENTLE ? 2000 * 2 ** attempt : 1000 * (attempt + 1))
     } finally {
       clearTimeout(timer)
     }
@@ -168,6 +197,7 @@ async function ask(url: string, query: string): Promise<boolean | undefined> {
     let timedOut = false
     const timer = setTimeout(() => { timedOut = true; ctrl.abort() }, TIMEOUT_MS)
     try {
+      await throttle()
       const res = await fetch(`${url}?query=${encodeURIComponent(query)}`, {
         headers: { Accept: 'application/sparql-results+json' },
         signal: ctrl.signal,
@@ -177,7 +207,7 @@ async function ask(url: string, query: string): Promise<boolean | undefined> {
       return typeof json.boolean === 'boolean' ? json.boolean : undefined
     } catch {
       if (timedOut) break // a timeout won't finish on retry
-      if (attempt < RETRIES) await new Promise(r => setTimeout(r, 1000 * (attempt + 1)))
+      if (attempt < RETRIES) await sleep(GENTLE ? 2000 * 2 ** attempt : 1000 * (attempt + 1))
     } finally {
       clearTimeout(timer)
     }
@@ -194,7 +224,9 @@ async function ask(url: string, query: string): Promise<boolean | undefined> {
 async function profileGraph(url: string): Promise<{ quads?: boolean; defaultView?: 'merged' | 'own' }> {
   const quads = await ask(url, namedGraphAsk())
   let defaultView: 'merged' | 'own' | undefined
-  if (quads === true) {
+  // The defaultView probe (FILTER NOT EXISTS over a 20k sample) is heavy — it times
+  // out on restrictive endpoints, so --gentle skips it (the app falls back at connect).
+  if (quads === true && !GENTLE) {
     const someOwn = await ask(url, defaultViewAsk(DEFAULT_VIEW_SAMPLE))
     if (someOwn === false) defaultView = 'merged'
     else if (someOwn === true) defaultView = 'own'
@@ -223,9 +255,13 @@ async function profileType(url: string, type: string, total: number, onStep?: (s
   onStep?.('listing properties')
   let sampled = false
   let props: string[] = []
-  try {
-    props = (await sparql(url, propListQuery(type), 0, LIST_TIMEOUT_MS)).map(b => b.p?.value ?? '')
-  } catch { /* too big / slow to list fully — fall back to the sample below */ }
+  // --gentle skips the full (unbounded) list — it times out on restrictive endpoints —
+  // and goes straight to the LIMITed sample.
+  if (!GENTLE) {
+    try {
+      props = (await sparql(url, propListQuery(type), 0, LIST_TIMEOUT_MS)).map(b => b.p?.value ?? '')
+    } catch { /* too big / slow to list fully — fall back to the sample below */ }
+  }
   if (!props.length) {
     onStep?.('sampled property list')
     try {
@@ -239,25 +275,29 @@ async function profileType(url: string, type: string, total: number, onStep?: (s
   props = props.filter(safeIri)
 
   // 2. Measure each property: occurrence count + per-instance min/max cardinality.
+  // --gentle SKIPS this — the card query is an unbounded per-subject aggregation that
+  // times out on restrictive endpoints — keeping just the property list (uri only).
   const entries: PropEntry[] = []
   for (let i = 0; i < props.length; i++) {
     const p = props[i]
-    onStep?.(`property ${i + 1}/${props.length}: ${shortIri(p)}`)
     const e: PropEntry = { uri: p, count: 0 }
-    try {
-      const b = (await sparql(url, propCardQuery(type, p)))[0] ?? {}
-      const havers = parseInt(b.havers?.value ?? '0', 10)
-      const lo = parseInt(b.lo?.value ?? '0', 10)
-      const hi = parseInt(b.hi?.value ?? '0', 10)
-      e.count = parseInt(b.n?.value ?? '0', 10)
-      if (hi > 0) e.max = hi
-      if (total > 0 && havers > 0) e.min = havers < total ? 0 : lo
-    } catch {
-      // one property's measurement failed — keep it (uri only), don't fail the type
+    if (!GENTLE) {
+      onStep?.(`property ${i + 1}/${props.length}: ${shortIri(p)}`)
+      try {
+        const b = (await sparql(url, propCardQuery(type, p)))[0] ?? {}
+        const havers = parseInt(b.havers?.value ?? '0', 10)
+        const lo = parseInt(b.lo?.value ?? '0', 10)
+        const hi = parseInt(b.hi?.value ?? '0', 10)
+        e.count = parseInt(b.n?.value ?? '0', 10)
+        if (hi > 0) e.max = hi
+        if (total > 0 && havers > 0) e.min = havers < total ? 0 : lo
+      } catch {
+        // one property's measurement failed — keep it (uri only), don't fail the type
+      }
     }
     entries.push(e)
   }
-  entries.sort((a, b) => b.count - a.count)
+  if (!GENTLE) entries.sort((a, b) => b.count - a.count)
   return { ok: true, sampled: sampled || undefined, properties: entries }
 }
 
@@ -376,10 +416,12 @@ const isTTY = process.stderr.isTTY // live heartbeat only on a terminal, not a r
 const CLEAR = '\r\x1b[2K' // carriage-return + erase-line, to overwrite the heartbeat
 
 async function main() {
-  const path = resolve(process.cwd(), process.argv[2] ?? DEFAULT_CONFIG)
+  const arg = process.argv.slice(2).find(a => !a.startsWith('--')) // path is the non-flag arg
+  const path = resolve(process.cwd(), arg ?? DEFAULT_CONFIG)
   const cfg = JSON.parse(await readFile(path, 'utf8'))
   const url: string = cfg.url
   if (!url) throw new Error(`No "url" in ${path}`)
+  if (GENTLE) console.error('--gentle: paced requests, backoff, sampled property lists only (no cardinality / embed / defaultView)')
 
   // Type list: prefer the cached inventory; else discover it live AND cache it (with
   // counts) — so a fresh config-endpoint gets a persisted typeInventory the app can use,
@@ -388,12 +430,17 @@ async function main() {
   if (!typeUris.length) {
     console.error('No typeInventory — discovering types + counts live…')
     const inv = (await sparql(url, typeInventoryQuery()))
-      .map(b => ({ uri: b.t?.value ?? '', count: parseInt(b.n?.value ?? '0', 10) }))
-      .filter(e => e.uri)
+      .filter(b => b.t?.type === 'uri') // only URI types — bnode/literal type values are skipped below
+      .map(b => ({ uri: b.t!.value, count: parseInt(b.n?.value ?? '0', 10) }))
       .sort((a, b) => b.count - a.count)
     cfg.typeInventory = inv
     typeUris = inv.map(e => e.uri)
   }
+  // Only profile REAL URI types — log and skip anything that isn't an http(s) IRI
+  // (bnode/literal type values, junk), so we never build a query around a non-IRI.
+  const nonUri = typeUris.filter(t => !safeIri(t))
+  if (nonUri.length) console.error(`  ⚠ ${nonUri.length} non-URI type(s) logged & skipped: ${nonUri.slice(0, 8).join(', ')}${nonUri.length > 8 ? ' …' : ''}`)
+  typeUris = typeUris.filter(safeIri)
   // Process in URI order (namespace-grouped) so the live [N/total] log reads in the
   // same order as the sorted typeProperties keys on disk — scannable, not count-desc.
   typeUris.sort()
@@ -461,6 +508,7 @@ async function main() {
   p = phase(`Embed fan-in — ${typeUris.length} types`)
   let embedCount = 0, floodFlag = 0
   for (const [i, type] of typeUris.entries()) {
+    if (GENTLE) break // --gentle: fan-in needs unbounded per-subject scans that time out here
     if (!out[type]?.ok || (totals[type] ?? 0) > EMBED_PROFILE_MAX) continue
     const selfMax = Math.max(0, ...out[type].properties.map(pr => pr.max ?? 0))
     const tt = Date.now()
@@ -483,7 +531,7 @@ async function main() {
       console.error(`  ${tag} ✓ ${short} —${f}${inv}${warn} (${secs(tt)})`)
     }
   }
-  console.error(`  → ${embedCount} types with an embeddable edge (${floodFlag} flagged ⚠ flood-risk: selfMax > ${EMBED_SELF_MAX}) in ${secs(p)}`)
+  console.error(`  → ${GENTLE ? 'skipped (--gentle)' : `${embedCount} types with an embeddable edge (${floodFlag} flagged ⚠ flood-risk: selfMax > ${EMBED_SELF_MAX})`} in ${secs(p)}`)
 
   // ── Subclass hierarchy (for the nested sidebar tree) ───────────────────
   p = phase('Subclasses')
