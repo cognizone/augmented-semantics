@@ -374,46 +374,6 @@
       "count": 1
     },
     {
-      "uri": "11101",
-      "count": 1
-    },
-    {
-      "uri": "11101_HIB",
-      "count": 1
-    },
-    {
-      "uri": "27101_LAG",
-      "count": 1
-    },
-    {
-      "uri": "62101",
-      "count": 1
-    },
-    {
-      "uri": "60201",
-      "count": 1
-    },
-    {
-      "uri": "17101",
-      "count": 1
-    },
-    {
-      "uri": "19501",
-      "count": 1
-    },
-    {
-      "uri": "60101",
-      "count": 1
-    },
-    {
-      "uri": "12401_WienCont",
-      "count": 1
-    },
-    {
-      "uri": "STLB",
-      "count": 1
-    },
-    {
       "uri": "http://www.w3.org/2002/07/owl#AllDisjointClasses",
       "count": 1
     }
