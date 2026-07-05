@@ -69,12 +69,12 @@ const TIMEOUT_MS = 90_000 // per request; a full GROUP BY over a big type is slo
 const LIST_TIMEOUT_MS = 30_000
 const SAMPLE_SIZE = 2000 // distinct-subject cap when the full listing times out
 
-// --gentle: crawl a rate-limited / restrictive endpoint (e.g. ERA RINF's managed
-// gateway, which 500s under rapid load and times out on unbounded scans). It PACES
-// requests (THROTTLE_MS between them), retries transient errors harder (exponential
-// backoff, more attempts), and sticks to LIGHT queries only — sampled property LISTS
-// with NO cardinality, NO embed fan-in, NO defaultView probe — since the heavy scans
-// those need just time out there. Fewer facts, but the run actually completes.
+// --gentle: profile a restrictive endpoint that TIMES OUT on the unbounded per-subject
+// scans (e.g. ERA RINF). It sticks to LIGHT queries only — sampled property LISTS, NO
+// cardinality, NO embed fan-in, NO defaultView probe — and additionally paces requests
+// (THROTTLE_MS) and backs off harder (exponential, more retries) for endpoints that
+// also rate-limit. Fewer facts, but the run completes. (NB: the profiler now POSTs
+// queries — RINF's gateway 500s on GET — so gentle is about timeouts, not the method.)
 const GENTLE = process.argv.includes('--gentle')
 const RETRIES = GENTLE ? 4 : 2
 const THROTTLE_MS = GENTLE ? 400 : 0
@@ -168,8 +168,12 @@ async function sparql(url: string, query: string, retries = RETRIES, timeoutMs =
     const timer = setTimeout(() => { timedOut = true; ctrl.abort() }, timeoutMs)
     try {
       await throttle() // pace requests in --gentle mode; no-op otherwise
-      const res = await fetch(`${url}?query=${encodeURIComponent(query)}`, {
-        headers: { Accept: 'application/sparql-results+json' },
+      // POST, not GET: some managed gateways (ERA RINF) reject query-in-URL GET with
+      // 500, and POST has no URL-length limit. Works everywhere (Virtuoso included).
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { Accept: 'application/sparql-results+json', 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `query=${encodeURIComponent(query)}`,
         signal: ctrl.signal,
       })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
@@ -198,8 +202,10 @@ async function ask(url: string, query: string): Promise<boolean | undefined> {
     const timer = setTimeout(() => { timedOut = true; ctrl.abort() }, TIMEOUT_MS)
     try {
       await throttle()
-      const res = await fetch(`${url}?query=${encodeURIComponent(query)}`, {
-        headers: { Accept: 'application/sparql-results+json' },
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { Accept: 'application/sparql-results+json', 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `query=${encodeURIComponent(query)}`,
         signal: ctrl.signal,
       })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
