@@ -26,6 +26,7 @@
       "url": "https://data-interop.era.europa.eu/api/sparql"
     },
     "era-evr-kg-test",
+    "rinf",
     {
       "name": "EU Publications Office",
       "url": "https://publications.europa.eu/webapi/rdf/sparql"

@@ -1,0 +1,7 @@
+{
+  "name": "ERA RINF",
+  "url": "https://rinf.data.era.europa.eu/api/v1/sparql/rinf",
+  "graph": {
+    "quads": true
+  }
+}
