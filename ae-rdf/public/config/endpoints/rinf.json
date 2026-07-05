@@ -377,5 +377,5089 @@
       "uri": "http://www.w3.org/2002/07/owl#AllDisjointClasses",
       "count": 1
     }
-  ]
+  ],
+  "typeProperties": {
+    "http://data.europa.eu/949/Body": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/organisationCode",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/role",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/ns/org#identifier",
+          "count": 0
+        }
+      ]
+    },
+    "http://data.europa.eu/949/Bridge": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/validity",
+          "count": 0
+        },
+        {
+          "uri": "http://www.opengis.net/ont/geosparql#hasGeometry",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/inCountry",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/infrastructureManager",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/netReference",
+          "count": 0
+        }
+      ]
+    },
+    "http://data.europa.eu/949/ContactLineSystem": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/notApplicable",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/minimumContactWireHeight",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/contactLineSystemType",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/umax2",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/currentLimitationRequired",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/energySupplySystem",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/maximumContactWireHeight",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/conditionalRegenerativeBrake",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/maxTrainCurrent",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/notYetAvailable",
+          "count": 0
+        }
+      ]
+    },
+    "http://data.europa.eu/949/Document": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/documentUrl",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/hashSource",
+          "count": 0
+        },
+        {
+          "uri": "http://xmlns.com/foaf/0.1/name",
+          "count": 0
+        }
+      ]
+    },
+    "http://data.europa.eu/949/ERTMSErrorChangeRequest": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#inScheme",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#prefLabel",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#topConceptOf",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#related",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#definition",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/status",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/changeRequestPreventsService",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#note",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/replaces",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/isReplacedBy",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#comment",
+          "count": 0
+        }
+      ]
+    },
+    "http://data.europa.eu/949/ETCS": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/notApplicable",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/etcsLevelType",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/etcsBaseline",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/hasETCSRestrictionsConditions",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/hasEtcsNationalPacket44",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/etcsMVersion",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/etcsSystemCompatibility",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/trainIntegrityOnBoardRequired",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/notYetAvailable",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/etcsInfillLineAccess",
+          "count": 0
+        }
+      ]
+    },
+    "http://data.europa.eu/949/Feature": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.opengis.net/ont/geosparql#hasGeometry",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/borderPointId",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/notApplicable",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/inCountry",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/infrastructureManager",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/hasPart",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/notYetAvailable",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/primaryLocation",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/localRulesOrRestrictionsDoc",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/netReference",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/localRulesOrRestrictions",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/uopid",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/opName",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/opType",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/operatingLanguage",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/canonicalURI",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/referenceBorderPoint",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/validity",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/primaryLocationCode",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/primaryLocationName",
+          "count": 0
+        }
+      ]
+    },
+    "http://data.europa.eu/949/FrenchTrainDetectionSystemLimitation": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/frenchTrainDetectionSystemLimitationNumber",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/frenchTrainDetectionSystemLimitationApplicable",
+          "count": 0
+        }
+      ]
+    },
+    "http://data.europa.eu/949/HABD": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/notApplicable",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/hotAxleBoxDetectorTSICompliant",
+          "count": 0
+        }
+      ]
+    },
+    "http://data.europa.eu/949/IC": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#comment",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/elements/1.1/subject",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/eli/ontology#is_member_of",
+          "count": 0
+        }
+      ]
+    },
+    "http://data.europa.eu/949/InfrastructureElement": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/hasLRS",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/kilometer",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/notApplicable",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/gaugingProfile",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/canonicalURI",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/infrastructureManager",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/isPartOf",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/notYetAvailable",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/wheelSetGauge",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/trackId",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/materialised/isValid",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/hasEmergencyPlan",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/netReference",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/tunnelIdentification",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/materialised/geometry_wkt",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/materialised/location",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/gradientProfile",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/gsmrNetworkCoverage",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/trackRaisedPantographsDistanceAndSpeed",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/gsmROptionalFunctions",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/maximumPermittedSpeed",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/gsmRNoCoverage",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/hasHotAxleBoxDetector",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/tracksideHabd",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/magneticBraking",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/hasLevelCrossings",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/usesGroup555",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/temperatureRange",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/voiceRadioCompatible",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/trackDirection",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/hasPhaseSeparation",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/hasPart",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/TSITractionHarmonics",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/trainDetectionSystem",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/permittedContactForce",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/automaticDroppingDeviceRequired",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/hasSystemSeparation",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/flangeLubeForbidden",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/tsiPantographHead",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/railInclination",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/contactStripMaterial",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/otherPantographHead",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/eddyCurrentBraking",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/isQuietRoute",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/contactStripMaterialMetallicContent",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/publicNetworkRoaming",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/gsmRVersion",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/etcs",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/contactLineSystem",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/hasSevereWeatherConditions",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/minimumHorizontalRadius",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/publicNetworkRoamingDetails",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/tsiSwitchCrossing",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/legacyRadioSystem",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/protectionLegacySystem",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/energySupplySystemTSICompliant",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/inCountry",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/primaryLocation",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/localRulesOrRestrictions",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/uopid",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/opName",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/opType",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/opTypeGaugeChangeover",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/lengthOfTunnel",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/assistanceStartingTrain",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/lengthOfPlatform",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/platformId",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/platformHeight",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/areaBoardingAid",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/nationalLine",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/lengthOfSectionOfLine",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/solNature",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/opEnd",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/opStart",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/freightCorridor",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/tenClassification",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/cantDeficiency",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/maximumTrainDeceleration",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/localRulesOrRestrictionsDoc",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/partOfTENT",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/switchProtectControlWarning",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/trackLoadCapability",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/maximumAltitude",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/profileNumberSemiTrailers",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/profileNumberSwapBodies",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/hasAdditionalBrakingInformation",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/trackSystemSeparationInfo",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/minimumWheelDiameter",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/referenceBorderPoint",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/hasWaterRestocking",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/hasToiletDischarge",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/hasRefuelling",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/hasSandRestocking",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/hasExternalCleaning",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/hasElectricShoreSupply",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/sidingId",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/accelerationLevelCrossing",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/lengthOfSiding",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/tsiCompliantCompositeBrakeBlocks",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/maxDistEndTrainFirstAxle",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/maxDistConsecutiveAxles",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/tsiCompliantMaxImpedanceWheelset",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/flangeLubeRules",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/tsiCompliantShuntDevices",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/tsiCompliantRSTShuntImpedance",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/tsiCompliantMaxDistConsecutiveAxles",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/otherTrainProtection",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/gprsForETCS",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/gsmRActiveMobiles",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/dataRadioCompatible",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/etcsDegradedSituation",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/crossSectionArea",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/hasBallast",
+          "count": 0
+        }
+      ]
+    },
+    "http://data.europa.eu/949/KilometricPost": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/hasLRS",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/kilometer",
+          "count": 0
+        }
+      ]
+    },
+    "http://data.europa.eu/949/LevelCrossing": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 0
+        },
+        {
+          "uri": "http://www.opengis.net/ont/geosparql#hasGeometry",
+          "count": 0
+        }
+      ]
+    },
+    "http://data.europa.eu/949/LinearElement": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.opengis.net/ont/geosparql#asWKT",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/length",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/validity",
+          "count": 0
+        },
+        {
+          "uri": "http://www.opengis.net/ont/geosparql#hasGeometry",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/lengthOfNetLinearElement",
+          "count": 0
+        }
+      ]
+    },
+    "http://data.europa.eu/949/LinearPositioningSystem": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/inCountry",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/lineId",
+          "count": 0
+        }
+      ]
+    },
+    "http://data.europa.eu/949/LinearPositioningSystemCoordinate": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/kmPost",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/offsetFromKilometricPost",
+          "count": 0
+        }
+      ]
+    },
+    "http://data.europa.eu/949/LinesideDistanceIndication": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/linesideDistanceIndicationFrequency",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/linesideDistanceIndicationAppearance",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/notYetAvailable",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/linesideDistanceIndicationPositioning",
+          "count": 0
+        }
+      ]
+    },
+    "http://data.europa.eu/949/LoadCapability": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/loadCapabilityLineCategory",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/loadCapabilitySpeed",
+          "count": 0
+        }
+      ]
+    },
+    "http://data.europa.eu/949/MaximumMagneticField": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/maximumMagneticFieldDirectionX",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/maximumMagneticFieldDirectionY",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/maximumMagneticFieldDirectionZ",
+          "count": 0
+        }
+      ]
+    },
+    "http://data.europa.eu/949/MinimumVerticalRadius": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/minimumVerticalRadiusHollow",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/minimumVerticalRadiusCrest",
+          "count": 0
+        }
+      ]
+    },
+    "http://data.europa.eu/949/NetAreaReference": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 0
+        },
+        {
+          "uri": "http://www.opengis.net/ont/geosparql#hasGeometry",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/startsAt",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/endsAt",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/hashSource",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/includes",
+          "count": 0
+        }
+      ]
+    },
+    "http://data.europa.eu/949/NetBasicReference": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2003/01/geo/wgs84_pos#lat",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2003/01/geo/wgs84_pos#long",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 0
+        },
+        {
+          "uri": "http://www.opengis.net/ont/geosparql#hasGeometry",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/hasLrsCoordinate",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/startsAt",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/endsAt",
+          "count": 0
+        }
+      ]
+    },
+    "http://data.europa.eu/949/NetElement": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 0
+        },
+        {
+          "uri": "http://www.opengis.net/ont/geosparql#asWKT",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/length",
+          "count": 0
+        }
+      ]
+    },
+    "http://data.europa.eu/949/NetLinearReference": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 0
+        },
+        {
+          "uri": "http://www.opengis.net/ont/geosparql#hasGeometry",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/startsAt",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/endsAt",
+          "count": 0
+        }
+      ]
+    },
+    "http://data.europa.eu/949/NetPointReference": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2003/01/geo/wgs84_pos#lat",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2003/01/geo/wgs84_pos#long",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 0
+        },
+        {
+          "uri": "http://www.opengis.net/ont/geosparql#hasGeometry",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/hasLrsCoordinate",
+          "count": 0
+        }
+      ]
+    },
+    "http://data.europa.eu/949/NetRelation": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/elementB",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/navigability",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/elementA",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/notApplicable",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/localRulesOrRestrictions",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/localRulesOrRestrictionsDoc",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/validity",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/isOnOriginOfElementA",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/isOnOriginOfElementB",
+          "count": 0
+        }
+      ]
+    },
+    "http://data.europa.eu/949/OperationalPoint": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/notApplicable",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/canonicalURI",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/inCountry",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/hasPart",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/primaryLocation",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/netReference",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/localRulesOrRestrictions",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/uopid",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/opName",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/opType",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/opTypeGaugeChangeover",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/notYetAvailable",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/referenceBorderPoint",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/validity",
+          "count": 0
+        }
+      ]
+    },
+    "http://data.europa.eu/949/OrganisationRole": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/hasOrganisationRole",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/roleOf",
+          "count": 0
+        }
+      ]
+    },
+    "http://data.europa.eu/949/PhaseInfo": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/phaseInfoSwitchOffBreaker",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/phaseInfoKm",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/phaseInfoLength",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/phaseInfoDistanceType",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/phaseInfoPantographLowered",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/phaseInfoChangeSupplySystem",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/notYetAvailable",
+          "count": 0
+        }
+      ]
+    },
+    "http://data.europa.eu/949/PlatformEdge": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/assistanceStartingTrain",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/canonicalURI",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/lengthOfPlatform",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/infrastructureManager",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/isPartOf",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/notYetAvailable",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/platformId",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/platformHeight",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/areaBoardingAid",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/tenClassification",
+          "count": 0
+        }
+      ]
+    },
+    "http://data.europa.eu/949/PrimaryLocation": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/inCountry",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/primaryLocationCode",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/netReference",
+          "count": 0
+        }
+      ]
+    },
+    "http://data.europa.eu/949/RaisedPantographsDistanceAndSpeed": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/raisedPantographsSpeed",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/raisedPantographsDistance",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/raisedPantographsNumber",
+          "count": 0
+        }
+      ]
+    },
+    "http://data.europa.eu/949/ReferenceBorderPoint": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 0
+        },
+        {
+          "uri": "http://www.opengis.net/ont/geosparql#hasGeometry",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/inCountry",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/borderPointId",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2003/01/geo/wgs84_pos#location",
+          "count": 0
+        }
+      ]
+    },
+    "http://data.europa.eu/949/RunningTrack": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/notApplicable",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/gaugingProfile",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/canonicalURI",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/infrastructureManager",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/isPartOf",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/notYetAvailable",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/wheelSetGauge",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/trackId",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/materialised/isValid",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/gradientProfile",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/gsmrNetworkCoverage",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/trackRaisedPantographsDistanceAndSpeed",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/gsmROptionalFunctions",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/maximumPermittedSpeed",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/gsmRNoCoverage",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/hasHotAxleBoxDetector",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/tracksideHabd",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/magneticBraking",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/hasLevelCrossings",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/usesGroup555",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/temperatureRange",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/voiceRadioCompatible",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/trackDirection",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/hasPhaseSeparation",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/hasPart",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/TSITractionHarmonics",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/trainDetectionSystem",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/permittedContactForce",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/automaticDroppingDeviceRequired",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/hasSystemSeparation",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/flangeLubeForbidden",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/tsiPantographHead",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/railInclination",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/contactStripMaterial",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/otherPantographHead",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/eddyCurrentBraking",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/isQuietRoute",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/contactStripMaterialMetallicContent",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/publicNetworkRoaming",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/gsmRVersion",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/etcs",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/contactLineSystem",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/hasSevereWeatherConditions",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/minimumHorizontalRadius",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/publicNetworkRoamingDetails",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/tsiSwitchCrossing",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/legacyRadioSystem",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/protectionLegacySystem",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/energySupplySystemTSICompliant",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/freightCorridor",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/tenClassification",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/cantDeficiency",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/maximumTrainDeceleration",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/localRulesOrRestrictionsDoc",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/partOfTENT",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/switchProtectControlWarning",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/trackLoadCapability",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/maximumAltitude",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/profileNumberSemiTrailers",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/localRulesOrRestrictions",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/profileNumberSwapBodies",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/hasAdditionalBrakingInformation",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/trackSystemSeparationInfo",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/minimumWheelDiameter",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/accelerationLevelCrossing",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/tsiCompliantCompositeBrakeBlocks",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/maxDistEndTrainFirstAxle",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/maxDistConsecutiveAxles",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/tsiCompliantMaxImpedanceWheelset",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/flangeLubeRules",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/tsiCompliantShuntDevices",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/tsiCompliantRSTShuntImpedance",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/tsiCompliantMaxDistConsecutiveAxles",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/otherTrainProtection",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/gprsForETCS",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/gsmRActiveMobiles",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/dataRadioCompatible",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/etcsDegradedSituation",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/hasBallast",
+          "count": 0
+        }
+      ]
+    },
+    "http://data.europa.eu/949/SectionOfLine": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/canonicalURI",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/inCountry",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/infrastructureManager",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/nationalLine",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/hasPart",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/lengthOfSectionOfLine",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/netReference",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/solNature",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/opEnd",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/opStart",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/validity",
+          "count": 0
+        }
+      ]
+    },
+    "http://data.europa.eu/949/Siding": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/notApplicable",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/hasWaterRestocking",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/canonicalURI",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/tenClassification",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/infrastructureManager",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/isPartOf",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/hasPart",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/notYetAvailable",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/hasToiletDischarge",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/hasRefuelling",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/hasSandRestocking",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/contactLineSystem",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/hasExternalCleaning",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/hasElectricShoreSupply",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/sidingId",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/lengthOfSiding",
+          "count": 0
+        }
+      ]
+    },
+    "http://data.europa.eu/949/Signal": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/validity",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/infrastructureManager",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/netReference",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/kilometer",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/signalId",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/relativeDistanceDangerPoint",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/signalType",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/appliesToDirection",
+          "count": 0
+        },
+        {
+          "uri": "http://www.opengis.net/ont/geosparql#hasGeometry",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/inCountry",
+          "count": 0
+        }
+      ]
+    },
+    "http://data.europa.eu/949/Switch": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/validity",
+          "count": 0
+        },
+        {
+          "uri": "http://www.opengis.net/ont/geosparql#hasGeometry",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/inCountry",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/infrastructureManager",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/netReference",
+          "count": 0
+        }
+      ]
+    },
+    "http://data.europa.eu/949/SystemSeparationInfo": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/notYetAvailable",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/systemSeparationChangeSupplySystem",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/systemSeparationSwitchOffBreaker",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/systemSeparationPantographLowered",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/systemSeparationInfoLength",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/systemSeparationInfoKm",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/systemSeparationInfoPantographLowered",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/systemSeparationInfoSwitchOffBreaker",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/systemSeparationKm",
+          "count": 0
+        }
+      ]
+    },
+    "http://data.europa.eu/949/TENCorridor": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/tentNetworkLevel",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/notYetAvailable",
+          "count": 0
+        }
+      ]
+    },
+    "http://data.europa.eu/949/TENTCorridor": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/tentNetworkLevel",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/typeOfTraffic",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/notYetAvailable",
+          "count": 0
+        }
+      ]
+    },
+    "http://data.europa.eu/949/TSI": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2002/07/owl#sameAs",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#notation",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/eli/ontology#amends",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/eli/ontology#has_member",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/eli/ontology#repeals",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2002/07/owl#deprecated",
+          "count": 0
+        }
+      ]
+    },
+    "http://data.europa.eu/949/TemporalFeature": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2006/time#hasBeginning",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2006/time#hasEnd",
+          "count": 0
+        }
+      ]
+    },
+    "http://data.europa.eu/949/TopologicalCoordinate": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/offsetFromOrigin",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/onLinearElement",
+          "count": 0
+        }
+      ]
+    },
+    "http://data.europa.eu/949/Track": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 0
+        },
+        {
+          "uri": "http://www.opengis.net/ont/geosparql#hasGeometry",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/sidingId",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/gradient",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/minimumHorizontalRadius",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/hasElectricShoreSupply",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/hasWaterRestocking",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/hasToiletDischarge",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/hasExternalCleaning",
+          "count": 0
+        }
+      ]
+    },
+    "http://data.europa.eu/949/TrainDetectionSystem": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/notApplicable",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/trainDetectionSystemType",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/notYetAvailable",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/maxImpedanceWheelset",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/trainDetectionSystemSpecificCheck",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/trainDetectionSystemSpecificCheckDocument",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/tdsFrenchTrainDetectionSystemLimitation",
+          "count": 0
+        }
+      ]
+    },
+    "http://data.europa.eu/949/Tunnel": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/notApplicable",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/hasEmergencyPlan",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/canonicalURI",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/infrastructureManager",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/isPartOf",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/notYetAvailable",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/netReference",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/tunnelIdentification",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/materialised/geometry_wkt",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/materialised/isValid",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/materialised/location",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/lengthOfTunnel",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/crossSectionArea",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/validity",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/tunnelDocRef",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/rollingStockFireCategory",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/nationalRollingStockFireCategory",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/complianceInfTsi",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/verificationSRT",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/demonstrationSRT",
+          "count": 0
+        }
+      ]
+    },
+    "http://data.europa.eu/949/VehicleType": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/hasRegenerativeBrake",
+          "count": 0
+        }
+      ]
+    },
+    "http://data.europa.eu/eli/ontology#Format": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/eli/ontology#embodies",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/eli/ontology#is_exemplified_by",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/eli/ontology#format",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/eli/ontology#publisher_agent",
+          "count": 0
+        }
+      ]
+    },
+    "http://data.europa.eu/eli/ontology#LegalExpression": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/eli/ontology#is_embodied_by",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/eli/ontology#title",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/eli/ontology#language",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/eli/ontology#realizes",
+          "count": 0
+        }
+      ]
+    },
+    "http://data.europa.eu/eli/ontology#LegalResource": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/eli/ontology#cites",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/eli/ontology#changes",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/eli/ontology#is_about",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/eli/ontology#date_publication",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/eli/ontology#transposed_by",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/eli/ontology#changed_by",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/eli/ontology#is_realized_by",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/eli/ontology#consolidated_by",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/eli/ontology#first_date_entry_in_force",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/eli/ontology#uri_schema",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/eli/ontology#type_document",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/eli/ontology#date_document",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/eli/ontology#based_on",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/eli/ontology#passed_by",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/eli/ontology#in_force",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/eli/ontology#id_local",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/eli/ontology#cited_by",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/eli/ontology#responsibility_of",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/eli/ontology#date_no_longer_in_force",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/eli/ontology#related_to",
+          "count": 0
+        }
+      ]
+    },
+    "http://publications.europa.eu/ontology/authority/MappedCode": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/elements/1.1/source",
+          "count": 0
+        },
+        {
+          "uri": "http://publications.europa.eu/ontology/authority/legacy-code",
+          "count": 0
+        },
+        {
+          "uri": "http://publications.europa.eu/ontology/authority/affected-table",
+          "count": 0
+        }
+      ]
+    },
+    "http://rdf-vocabulary.ddialliance.org/xkos#ClassificationLevel": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#prefLabel",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#notation",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/modified",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#member",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2008/05/skos-xl#prefLabel",
+          "count": 0
+        },
+        {
+          "uri": "http://rdf-vocabulary.ddialliance.org/xkos#organizedBy",
+          "count": 0
+        },
+        {
+          "uri": "http://rdf-vocabulary.ddialliance.org/xkos#depth",
+          "count": 0
+        }
+      ]
+    },
+    "http://rdf-vocabulary.ddialliance.org/xkos#ConceptAssociation": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/description",
+          "count": 0
+        },
+        {
+          "uri": "http://rdf-vocabulary.ddialliance.org/xkos#targetConcept",
+          "count": 0
+        },
+        {
+          "uri": "http://rdf-vocabulary.ddialliance.org/xkos#sourceConcept",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/modified",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/created",
+          "count": 0
+        }
+      ]
+    },
+    "http://rdf-vocabulary.ddialliance.org/xkos#Correspondence": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#prefLabel",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/modified",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/created",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/creator",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2008/05/skos-xl#prefLabel",
+          "count": 0
+        },
+        {
+          "uri": "http://rdf-vocabulary.ddialliance.org/xkos#madeOf",
+          "count": 0
+        },
+        {
+          "uri": "http://rdf-vocabulary.ddialliance.org/xkos#compares",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#changeNote",
+          "count": 0
+        }
+      ]
+    },
+    "http://www.opengis.net/ont/geosparql#Feature": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2003/01/geo/wgs84_pos#lat",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2003/01/geo/wgs84_pos#long",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 0
+        },
+        {
+          "uri": "http://www.opengis.net/ont/geosparql#hasGeometry",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/hasLrsCoordinate",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/startsAt",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/endsAt",
+          "count": 0
+        }
+      ]
+    },
+    "http://www.opengis.net/ont/geosparql#Geometry": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.opengis.net/ont/geosparql#asWKT",
+          "count": 0
+        }
+      ]
+    },
+    "http://www.opengis.net/ont/sf#LineString": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.opengis.net/ont/geosparql#asWKT",
+          "count": 0
+        }
+      ]
+    },
+    "http://www.opengis.net/ont/sf#MultiLineString": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.opengis.net/ont/geosparql#asWKT",
+          "count": 0
+        }
+      ]
+    },
+    "http://www.opengis.net/ont/sf#Point": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.opengis.net/ont/geosparql#asWKT",
+          "count": 0
+        }
+      ]
+    },
+    "http://www.w3.org/1999/02/22-rdf-syntax-ns#List": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 0
+        },
+        {
+          "uri": "http://www.opengis.net/ont/geosparql#hasGeometry",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/startsAt",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/endsAt",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/hashSource",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#first",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#rest",
+          "count": 0
+        }
+      ]
+    },
+    "http://www.w3.org/2000/01/rdf-schema#Datatype": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2002/07/owl#onDatatype",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2002/07/owl#withRestrictions",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2002/07/owl#unionOf",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2002/07/owl#oneOf",
+          "count": 0
+        }
+      ]
+    },
+    "http://www.w3.org/2002/07/owl#AllDisjointClasses": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2002/07/owl#members",
+          "count": 0
+        }
+      ]
+    },
+    "http://www.w3.org/2002/07/owl#AnnotationProperty": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#domain",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#range",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/modified",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#comment",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/created",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#isDefinedBy",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/shaclShapeValidationRule",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2003/06/sw-vocab-status/ns#term_status",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#altLabel",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#definition",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#note",
+          "count": 0
+        }
+      ]
+    },
+    "http://www.w3.org/2002/07/owl#Class": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#scopeNote",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#comment",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/created",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#isDefinedBy",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/shaclShapeValidationRule",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/modified",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2003/06/sw-vocab-status/ns#term_status",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2002/07/owl#disjointWith",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/source",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#definition",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/replaces",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#example",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2002/07/owl#deprecated",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/isReplacedBy",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/modifed",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/relation",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#editorialNote",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/rinfIndex",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#altLabel",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/usedInEradis",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#note",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/evrIndex",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2002/07/owl#unionOf",
+          "count": 0
+        }
+      ]
+    },
+    "http://www.w3.org/2002/07/owl#DatatypeProperty": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#prefLabel",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#altLabel",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#definition",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#comment",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/rinfIndex",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/tsiOPEAppendixD2Index",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#isDefinedBy",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/applicable",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/shaclShapeValidationRule",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/legalDeadline",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/creator",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/contributor",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/date",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#subPropertyOf",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#domain",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#range",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/source",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/modified",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#scopeNote",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/created",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2003/06/sw-vocab-status/ns#term_status",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/XMLName",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/formatNote",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/dependencyNote",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/relation",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/usedInRCCCalculations",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#editorialNote",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/unitOfMeasure",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/eratvIndex",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#example",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/evrIndex",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/replaces",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/isRequiredBy",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#note",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2002/07/owl#deprecated",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/isReplacedBy",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/wasInvalidatedBy",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/tsiOPEAppendixD3Index",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#seeAslo",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2002/07/owl#propertyDisjointWith",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/usedInEradis",
+          "count": 0
+        }
+      ]
+    },
+    "http://www.w3.org/2002/07/owl#FunctionalProperty": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#subPropertyOf",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#domain",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#range",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/modified",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#scopeNote",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/replaces",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#comment",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/created",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/rinfIndex",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/relation",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#isDefinedBy",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2003/06/sw-vocab-status/ns#term_status",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/applicable",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/shaclShapeValidationRule",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/XMLName",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/legalDeadline",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/usedInRCCCalculations",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/dependencyNote",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/formatNote",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/source",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#editorialNote",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/unitOfMeasure",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/eratvIndex",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/isRequiredBy",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/tsiOPEAppendixD2Index",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/inSkosConceptScheme",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#example",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#changeNote",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#note",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/evrIndex",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#altLabel",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2002/07/owl#deprecated",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/tsiOPEAppendixD3Index",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/isReplacedBy",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#seeAslo",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/wasInvalidatedBy",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2002/07/owl#propertyDisjointWith",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/usedInEradis",
+          "count": 0
+        }
+      ]
+    },
+    "http://www.w3.org/2002/07/owl#IrreflexiveProperty": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#domain",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#range",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/modified",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#comment",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/created",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#isDefinedBy",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/shaclShapeValidationRule",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/replaces",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2002/07/owl#inverseOf",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#subPropertyOf",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#altLabel",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#scopeNote",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/rinfIndex",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2003/06/sw-vocab-status/ns#term_status",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/applicable",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/legalDeadline",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#example",
+          "count": 0
+        }
+      ]
+    },
+    "http://www.w3.org/2002/07/owl#NamedIndividual": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/notApplicable",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/minimumContactWireHeight",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/contactLineSystemType",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/currentLimitationRequired",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/maxCurrentStandstillPantograph",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/energySupplySystem",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/maximumContactWireHeight",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/maxTrainCurrent",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/conditionsAppliedRegenerativeBraking",
+          "count": 0
+        }
+      ]
+    },
+    "http://www.w3.org/2002/07/owl#ObjectProperty": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/modified",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#comment",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/created",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#isDefinedBy",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2003/06/sw-vocab-status/ns#term_status",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/shaclShapeValidationRule",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#subPropertyOf",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#domain",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#range",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#scopeNote",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/replaces",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/rinfIndex",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/relation",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/applicable",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/XMLName",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/legalDeadline",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/usedInRCCCalculations",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/dependencyNote",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/formatNote",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/source",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/inSkosConceptScheme",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#altLabel",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#note",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#editorialNote",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/eratvIndex",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#historyNote",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/evrIndex",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#prefLabel",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#definition",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/creator",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/contributor",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/date",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/isRequiredBy",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/tsiOPEAppendixD2Index",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#changeNote",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2002/07/owl#inverseOf",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/isReplacedBy",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2002/07/owl#deprecated",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/unitOfMeasure",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#example",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/tsiOPEAppendixD3Index",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/modifed",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/usedInEradis",
+          "count": 0
+        }
+      ]
+    },
+    "http://www.w3.org/2002/07/owl#Ontology": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/modified",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#comment",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/issued",
+          "count": 0
+        },
+        {
+          "uri": "http://creativecommons.org/ns#license",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#changeNote",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/title",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2002/07/owl#versionInfo",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/creator",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/contributor",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2002/07/owl#priorVersion",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/publisher",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2002/07/owl#versionIRI",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/ns/shacl#declare",
+          "count": 0
+        }
+      ]
+    },
+    "http://www.w3.org/2002/07/owl#Restriction": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2002/07/owl#qualifiedCardinality",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2002/07/owl#onClass",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2002/07/owl#onProperty",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2002/07/owl#onDataRange",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2002/07/owl#allValuesFrom",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2002/07/owl#minQualifiedCardinality",
+          "count": 0
+        }
+      ]
+    },
+    "http://www.w3.org/2002/07/owl#SymmetricProperty": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#subPropertyOf",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#domain",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#range",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#altLabel",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#scopeNote",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#comment",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/created",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/rinfIndex",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#isDefinedBy",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2003/06/sw-vocab-status/ns#term_status",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/applicable",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/shaclShapeValidationRule",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/legalDeadline",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#example",
+          "count": 0
+        }
+      ]
+    },
+    "http://www.w3.org/2003/01/geo/wgs84_pos#Point": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.opengis.net/ont/geosparql#asWKT",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2003/01/geo/wgs84_pos#lat",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/hashSource",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2003/01/geo/wgs84_pos#lon",
+          "count": 0
+        }
+      ]
+    },
+    "http://www.w3.org/2003/01/geo/wgs84_pos#SpatialThing": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2003/01/geo/wgs84_pos#lat",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2003/01/geo/wgs84_pos#long",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 0
+        },
+        {
+          "uri": "http://www.opengis.net/ont/geosparql#hasGeometry",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/hasLrsCoordinate",
+          "count": 0
+        }
+      ]
+    },
+    "http://www.w3.org/2004/02/skos/core#Collection": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#inScheme",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#prefLabel",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#topConceptOf",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#definition",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#member",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#note",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#notation",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/issued",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/description",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/source",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/title",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#scopeNote",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#comment",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/modified",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2008/05/skos-xl#prefLabel",
+          "count": 0
+        },
+        {
+          "uri": "http://rdf-vocabulary.ddialliance.org/xkos#organizedBy",
+          "count": 0
+        },
+        {
+          "uri": "http://rdf-vocabulary.ddialliance.org/xkos#depth",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/inCountry",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#altLabel",
+          "count": 0
+        }
+      ]
+    },
+    "http://www.w3.org/2004/02/skos/core#Concept": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#inScheme",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#prefLabel",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#topConceptOf",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#notation",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#altLabel",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#hiddenLabel",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#scopeNote",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/source",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/elements/1.1/identifier",
+          "count": 0
+        },
+        {
+          "uri": "http://publications.europa.eu/ontology/authority/authority-code",
+          "count": 0
+        },
+        {
+          "uri": "http://publications.europa.eu/ontology/authority/op-mapped-code",
+          "count": 0
+        },
+        {
+          "uri": "http://publications.europa.eu/ontology/authority/start.use",
+          "count": 0
+        },
+        {
+          "uri": "http://publications.europa.eu/ontology/authority/deprecated",
+          "count": 0
+        },
+        {
+          "uri": "http://publications.europa.eu/resource/authority/op-code",
+          "count": 0
+        },
+        {
+          "uri": "http://publications.europa.eu/ontology/authority/op-code",
+          "count": 0
+        },
+        {
+          "uri": "http://publications.europa.eu/ontology/authority/protocol-order",
+          "count": 0
+        },
+        {
+          "uri": "http://publications.europa.eu/ontology/authority/protocol.order",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#definition",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/created",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#note",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#narrower",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/modified",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#closeMatch",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#broader",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/inCountry",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#comment",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#related",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/status",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/changeRequestPreventsService",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#editorialNote",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/isRequiredBy",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#exactMatch",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#changeNote",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/replaces",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/isReplacedBy",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/spar/cito/isConfirmedBy",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/issued",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/rinfIndex",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+          "count": 0
+        }
+      ]
+    },
+    "http://www.w3.org/2004/02/skos/core#ConceptScheme": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#prefLabel",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/modified",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#comment",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/issued",
+          "count": 0
+        },
+        {
+          "uri": "http://creativecommons.org/ns#license",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#changeNote",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/title",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/rinfIndex",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/source",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#hasTopConcept",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/created",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/description",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#hiddenLabel",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/unitOfMeasure",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#scopeNote",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/eratvIndex",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/ns/prov#wasDerivedFrom",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/relation",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#title",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#editorialNote",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2002/07/owl#versionInfo",
+          "count": 0
+        },
+        {
+          "uri": "http://publications.europa.eu/ontology/authority/tableid",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#altLabel",
+          "count": 0
+        },
+        {
+          "uri": "http://publications.europa.eu/ontology/authority/table.id",
+          "count": 0
+        },
+        {
+          "uri": "http://publications.europa.eu/ontology/authority/table.version.number",
+          "count": 0
+        },
+        {
+          "uri": "http://publications.europa.eu/ontology/authority/prefLabel",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#notation",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/identifier",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/creator",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/eli/ontology#based_on",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2008/05/skos-xl#prefLabel",
+          "count": 0
+        },
+        {
+          "uri": "http://rdf-vocabulary.ddialliance.org/xkos#levels",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/isReferencedBy",
+          "count": 0
+        },
+        {
+          "uri": "http://rdf-vocabulary.ddialliance.org/xkos#follows",
+          "count": 0
+        },
+        {
+          "uri": "http://rdf-vocabulary.ddialliance.org/xkos#belongsTo",
+          "count": 0
+        },
+        {
+          "uri": "http://rdf-vocabulary.ddialliance.org/xkos#covers",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/eli/ontology#version_date",
+          "count": 0
+        },
+        {
+          "uri": "http://schema.org/startDate",
+          "count": 0
+        },
+        {
+          "uri": "http://rdf-vocabulary.ddialliance.org/xkos#numberOfLevels",
+          "count": 0
+        },
+        {
+          "uri": "http://rdf-vocabulary.ddialliance.org/xkos#variant",
+          "count": 0
+        }
+      ]
+    },
+    "http://www.w3.org/2006/time#Instant": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2006/time#inXSDDate",
+          "count": 0
+        }
+      ]
+    },
+    "http://www.w3.org/2006/time#Interval": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2006/time#hasBeginning",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2006/time#hasEnd",
+          "count": 0
+        }
+      ]
+    },
+    "http://www.w3.org/2006/time#TemporalEntity": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2006/time#hasBeginning",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2006/time#hasEnd",
+          "count": 0
+        }
+      ]
+    },
+    "http://www.w3.org/2008/05/skos-xl#Label": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2002/07/owl#versionInfo",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2008/05/skos-xl#literalForm",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/modified",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/created",
+          "count": 0
+        },
+        {
+          "uri": "http://www.lexinfo.net/ontology/2.0/lexinfo#transliteration",
+          "count": 0
+        },
+        {
+          "uri": "http://www.lexinfo.net/ontology/2.0/lexinfo#romanization",
+          "count": 0
+        }
+      ]
+    },
+    "http://www.w3.org/ns/dcat#Dataset": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/modified",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/issued",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/title",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/description",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2002/07/owl#versionInfo",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/ns/prov#wasDerivedFrom",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/creator",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/publisher",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/conformsTo",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/license",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/language",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/ns/prov#wasAttributedTo",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/ns/dcat#distribution",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/ns/dcat#landingPage",
+          "count": 0
+        }
+      ]
+    },
+    "http://www.w3.org/ns/dcat#Distribution": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/title",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/ns/dcat#mediaType",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/ns/dcat#format",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/license",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/ns/dcat#downloadURL",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#note",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/format",
+          "count": 0
+        }
+      ]
+    },
+    "http://www.w3.org/ns/locn#Geometry": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.opengis.net/ont/geosparql#asWKT",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/hashSource",
+          "count": 0
+        }
+      ]
+    },
+    "http://www.w3.org/ns/org#Organization": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/organisationCode",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/role",
+          "count": 0
+        }
+      ]
+    },
+    "http://www.w3.org/ns/shacl#NodeShape": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/ns/shacl#targetClass",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/ns/shacl#message",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/ns/shacl#nodeKind",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/ns/shacl#sparql",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/ns/shacl#property",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/ns/shacl#pattern",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/ns/shacl#target",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/ns/shacl#severity",
+          "count": 0
+        }
+      ]
+    },
+    "http://www.w3.org/ns/shacl#PropertyShape": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#comment",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/rinfIndex",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/scope",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/affectedProperty",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/affectedClass",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/ns/shacl#message",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/ns/shacl#path",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/ns/shacl#severity",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/ns/shacl#datatype",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/ns/shacl#maxCount",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/ns/shacl#class",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/ns/shacl#pattern",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/ns/shacl#nodeKind",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/ns/shacl#qualifiedMinCount",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/ns/shacl#qualifiedValueShape",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/ns/shacl#or",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/ns/shacl#minCount",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/tsiOPEAppendixD2Index",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/ns/shacl#sparql",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/ns/shacl#uniqueLang",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/ns/shacl#in",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/ns/shacl#minInclusive",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/ns/shacl#maxLength",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/ns/shacl#minLength",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/ns/shacl#maxExclusive",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/ns/shacl#maxInclusive",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/ns/shacl#disjoint",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#note",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/ns/shacl#not",
+          "count": 0
+        }
+      ]
+    },
+    "http://www.w3.org/ns/shacl#SPARQLConstraint": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#comment",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/rinfIndex",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/scope",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/affectedProperty",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/affectedClass",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/ns/shacl#message",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/ns/shacl#select",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/ns/shacl#prefixes",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/ns/shacl#severity",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/ns/shacl#nodeKind",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 0
+        }
+      ]
+    },
+    "http://www.w3.org/ns/shacl#SPARQLTarget": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/ns/shacl#select",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/ns/shacl#prefixes",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/scope",
+          "count": 0
+        }
+      ]
+    },
+    "https://w3id.org/vpa#Requirement": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2002/07/owl#sameAs",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#notation",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/eli/ontology#amends",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#comment",
+          "count": 0
+        },
+        {
+          "uri": "http://purl.org/dc/elements/1.1/subject",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/eli/ontology#is_member_of",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/eli/ontology#has_member",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/eli/ontology#repeals",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2002/07/owl#deprecated",
+          "count": 0
+        }
+      ]
+    },
+    "https://www.w3.org/ns/locn#Geometry": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2002/07/owl#versionInfo",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/ns/dcat#distribution",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/nuts/scale",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/nuts/projection",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/nuts/spatiality",
+          "count": 0
+        }
+      ]
+    },
+    "https://www.w3.org/ns/org#Organization": {
+      "ok": true,
+      "sampled": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/organisationCode",
+          "count": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/role",
+          "count": 0
+        }
+      ]
+    }
+  },
+  "subclasses": {
+    "http://data.europa.eu/949/Feature": [
+      "http://data.europa.eu/949/InfrastructureElement",
+      "http://data.europa.eu/949/NetBasicReference",
+      "http://data.europa.eu/949/NetElement",
+      "http://data.europa.eu/949/NetRelation",
+      "http://data.europa.eu/949/ReferenceBorderPoint"
+    ],
+    "http://data.europa.eu/949/InfrastructureElement": [
+      "http://data.europa.eu/949/Bridge",
+      "http://data.europa.eu/949/HABD",
+      "http://data.europa.eu/949/KilometricPost",
+      "http://data.europa.eu/949/LevelCrossing",
+      "http://data.europa.eu/949/OperationalPoint",
+      "http://data.europa.eu/949/PlatformEdge",
+      "http://data.europa.eu/949/PrimaryLocation",
+      "http://data.europa.eu/949/SectionOfLine",
+      "http://data.europa.eu/949/Signal",
+      "http://data.europa.eu/949/Switch",
+      "http://data.europa.eu/949/Track",
+      "http://data.europa.eu/949/Tunnel"
+    ],
+    "http://data.europa.eu/949/NetBasicReference": [
+      "http://data.europa.eu/949/NetAreaReference",
+      "http://data.europa.eu/949/NetLinearReference",
+      "http://data.europa.eu/949/NetPointReference"
+    ],
+    "http://data.europa.eu/949/NetElement": [
+      "http://data.europa.eu/949/LinearElement"
+    ],
+    "http://data.europa.eu/949/Track": [
+      "http://data.europa.eu/949/RunningTrack",
+      "http://data.europa.eu/949/Siding"
+    ],
+    "http://www.opengis.net/ont/geosparql#Feature": [
+      "http://data.europa.eu/949/Feature"
+    ],
+    "http://www.w3.org/2004/02/skos/core#Concept": [
+      "http://data.europa.eu/949/ERTMSErrorChangeRequest"
+    ]
+  },
+  "composition": {},
+  "orphanCounts": {},
+  "profiledAt": "2026-07-05T10:35:55.184Z"
 }
