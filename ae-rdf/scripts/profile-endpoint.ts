@@ -36,10 +36,11 @@
  *   - PropertyTable rendering hints: max=1 → single value, max>1 → list.
  *
  * SAFE BY DESIGN: only `graph`, `typeProperties`, `subclasses`, `composition`,
- * `orphanCounts` and `profiledAt` are (re)written. Hand-authored `types` /
- * `typeInventory` / everything else is preserved. A per-type property query that
- * fails keeps its previously-profiled entry, and an inconclusive graph probe
- * keeps that axis' prior value — so a flaky run never destroys good data.
+ * `orphanCounts` and `profiledAt` are (re)written. Hand-authored `types` is preserved,
+ * as is an existing `typeInventory` — but an ABSENT `typeInventory` is discovered and
+ * seeded (with counts) so a fresh config-endpoint gets one. A per-type property query
+ * that fails keeps its previously-profiled entry, and an inconclusive graph probe keeps
+ * that axis' prior value — so a flaky run never destroys good data.
  *
  * Usage:
  *   node scripts/profile-endpoint.ts [path-to-endpoint.json]
@@ -117,7 +118,10 @@ const sampledPropListQuery = (t: string) =>
 // min = havers < typeTotal ? 0 : lo (some instance lacks it ⇒ optional); max = hi.
 const propCardQuery = (t: string, p: string) =>
   `SELECT (SUM(?c) AS ?n) (COUNT(?s) AS ?havers) (MIN(?c) AS ?lo) (MAX(?c) AS ?hi) WHERE { SELECT ?s (COUNT(DISTINCT ?o) AS ?c) WHERE { { SELECT DISTINCT ?s WHERE { ?s a <${t}> } } ?s <${p}> ?o } GROUP BY ?s }`
-const typesQuery = () => `SELECT DISTINCT ?t WHERE { ?s a ?t }`
+// Type discovery = the inventory query (types + instance counts). Count-based GROUP BY,
+// NOT a bare `SELECT DISTINCT ?t` — that can 500 on big endpoints (RINF) — and it also
+// yields the per-type totals the min=0 cardinality derivation needs.
+const typeInventoryQuery = () => `SELECT ?t (COUNT(DISTINCT ?s) AS ?n) WHERE { ?s a ?t } GROUP BY ?t ORDER BY DESC(?n)`
 // subClassOf among inventory types (both ends filtered to the inventory below).
 const subclassQuery = (uris: string[]) =>
   `SELECT DISTINCT ?sub ?super WHERE { VALUES ?sub { ${values(uris)} } ?sub <${RDFS_SUBCLASS}> ?super . FILTER(?sub != ?super) }`
@@ -377,11 +381,18 @@ async function main() {
   const url: string = cfg.url
   if (!url) throw new Error(`No "url" in ${path}`)
 
-  // Type list: prefer the cached inventory; else discover it live.
+  // Type list: prefer the cached inventory; else discover it live AND cache it (with
+  // counts) — so a fresh config-endpoint gets a persisted typeInventory the app can use,
+  // and this run's `totals` (below) are populated for cardinality.
   let typeUris: string[] = (cfg.typeInventory ?? []).map((t: { uri: string }) => t.uri).filter(Boolean)
   if (!typeUris.length) {
-    console.error('No typeInventory — discovering types live…')
-    typeUris = (await sparql(url, typesQuery())).map(b => b.t?.value ?? '').filter(Boolean)
+    console.error('No typeInventory — discovering types + counts live…')
+    const inv = (await sparql(url, typeInventoryQuery()))
+      .map(b => ({ uri: b.t?.value ?? '', count: parseInt(b.n?.value ?? '0', 10) }))
+      .filter(e => e.uri)
+      .sort((a, b) => b.count - a.count)
+    cfg.typeInventory = inv
+    typeUris = inv.map(e => e.uri)
   }
   // Process in URI order (namespace-grouped) so the live [N/total] log reads in the
   // same order as the sorted typeProperties keys on disk — scannable, not count-desc.
