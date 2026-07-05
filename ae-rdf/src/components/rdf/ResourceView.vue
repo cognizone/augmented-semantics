@@ -14,7 +14,7 @@ import { useBrowseStore, useSettingsStore, useTypeConfigStore } from '../../stor
 import { useResourceView, useIncomingRelations, useClipboard, useDelayedLoading } from '../../composables'
 import { LABEL_PREDICATES, validateURI } from '../../services'
 import { localName as localNameOf, humanizeLocalName, qname as toQname, displayType } from '../../utils/format'
-import { orderedByConfig, toggleInList } from '../../utils/propertyOrder'
+import { isAlwaysLast, orderedByConfig, toggleInList } from '../../utils/propertyOrder'
 import { URL_PARAMS } from '../../router'
 import type { PropertyGroup, ResourceObject } from '../../composables'
 import PropertyTable from './PropertyTable.vue'
@@ -68,6 +68,9 @@ const typeChips = computed(() =>
 // Priority within a section: labels → identifiers → dates → status → rest,
 // then alphabetical by humanized name.
 function rank(predicate: string): number {
+  // Sink below the rank-4 "rest" so ALWAYS_LAST predicates land at the section
+  // bottom (`order` only pins to the top). The embed path sinks them too.
+  if (isAlwaysLast(predicate)) return 5
   const ln = localNameOf(predicate).toLowerCase()
   if ((LABEL_PREDICATES as readonly string[]).includes(predicate)) return 0
   if (/identifier|notation|^id$/.test(ln)) return 1

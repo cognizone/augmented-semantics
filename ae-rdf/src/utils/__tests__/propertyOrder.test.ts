@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { orderedByConfig, moveInOrder, toggleInList, composeLabel } from '../propertyOrder'
+import { orderedByConfig, moveInOrder, toggleInList, composeLabel, isAlwaysLast, sinkAlwaysLast, ALWAYS_LAST } from '../propertyOrder'
 
 const id = (s: string) => s
 // fallback: plain alphabetical, to prove unlisted items keep a stable order
@@ -24,6 +24,26 @@ describe('orderedByConfig', () => {
     const items = ['b', 'a']
     orderedByConfig(items, id, ['a'], alpha)
     expect(items).toEqual(['b', 'a'])
+  })
+})
+
+describe('sinkAlwaysLast', () => {
+  const REALIZED = ALWAYS_LAST[0]! // isRealizedBy
+  const EMBODIED = ALWAYS_LAST[1]! // isEmbodiedBy
+
+  it('flags configured predicates', () => {
+    expect(isAlwaysLast(REALIZED)).toBe(true)
+    expect(isAlwaysLast('http://example.org/other')).toBe(false)
+  })
+
+  it('sinks always-last predicates to the bottom even when order is empty', () => {
+    const items = [REALIZED, 'a', EMBODIED, 'b']
+    expect(orderedByConfig(items, id, [], sinkAlwaysLast(id))).toEqual(['a', 'b', REALIZED, EMBODIED])
+  })
+
+  it('keeps configured keys first, still sinks always-last below the rest', () => {
+    const items = [REALIZED, 'a', 'b']
+    expect(orderedByConfig(items, id, ['b'], sinkAlwaysLast(id))).toEqual(['b', 'a', REALIZED])
   })
 })
 

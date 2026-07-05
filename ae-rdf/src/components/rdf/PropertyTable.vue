@@ -11,7 +11,7 @@ import { computed, ref } from 'vue'
 import { isNavigableIri } from '../../services'
 import { useSettingsStore, useTypeConfigStore } from '../../stores'
 import { qname as toQname, displayPredicate, displayObject, displayType, type ResolvedMap } from '../../utils/format'
-import { moveInOrder, orderedByConfig, toggleInList } from '../../utils/propertyOrder'
+import { moveInOrder, orderedByConfig, sinkAlwaysLast, toggleInList } from '../../utils/propertyOrder'
 import type { PropertyGroup, ResourceObject } from '../../composables'
 
 const props = defineProps<{
@@ -147,9 +147,11 @@ function embedGroups(o: ResourceObject, viaPredicate: string): PropertyGroup[] |
   const hide = cfg.hide ?? []
   let gs = !settings.editMode && !settings.showHidden && hide.length ? groups.filter(g => !hide.includes(g.predicate)) : groups
   // Honor the embed type's configured field order, so ordering a type applies
-  // wherever it renders — standalone or inlined. Unlisted keep insertion order.
+  // wherever it renders — standalone or inlined. Unlisted keep insertion order,
+  // except ALWAYS_LAST predicates, which sink to the bottom (the standalone view
+  // does the same via rank(), but embeds don't use that priority fallback).
   const order = cfg.order ?? []
-  if (order.length) gs = orderedByConfig(gs, g => g.predicate, order, () => 0)
+  gs = orderedByConfig(gs, g => g.predicate, order, sinkAlwaysLast(g => g.predicate))
   return gs
 }
 

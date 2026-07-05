@@ -26,6 +26,25 @@ export function orderedByConfig<T>(
 }
 
 /**
+ * Predicates pinned to the very bottom of their section, in every render context
+ * (the standalone `rank` fallback AND the embed insertion-order fallback).
+ * `order` can only pin to the TOP, so "always last" has to live here.
+ * ponytail: fedlex-specific list; promote to per-endpoint config if it must vary.
+ */
+export const ALWAYS_LAST: readonly string[] = [
+  'http://data.legilux.public.lu/resource/ontology/jolux#isRealizedBy',
+  'http://data.legilux.public.lu/resource/ontology/jolux#isEmbodiedBy',
+]
+
+/** True when `predicate` should sink below every other field in its section. */
+export const isAlwaysLast = (predicate: string): boolean => ALWAYS_LAST.includes(predicate)
+
+/** Fallback comparator: sink ALWAYS_LAST keys to the bottom, otherwise stable (0). */
+export const sinkAlwaysLast =
+  <T>(keyOf: (t: T) => string) =>
+  (a: T, b: T): number => (isAlwaysLast(keyOf(a)) ? 1 : 0) - (isAlwaysLast(keyOf(b)) ? 1 : 0)
+
+/**
  * Compose a label from `labelPreds` in order: look up each predicate's value,
  * drop blanks, and join. Returns '' when nothing resolves (caller falls back to
  * the default label). `valueOf` returns the display value for a predicate.
