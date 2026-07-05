@@ -156,6 +156,9 @@
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#Act": {
       "sidebar": "pin",
+      "label": [
+        "http://data.legilux.public.lu/resource/ontology/jolux#isRealizedBy"
+      ],
       "order": [
         "http://data.legilux.public.lu/resource/ontology/jolux#sequenceInTheYearOfPublication",
         "http://data.legilux.public.lu/resource/ontology/jolux#dateDocument",
@@ -274,10 +277,18 @@
       "render": "embed",
       "embedVia": "http://data.legilux.public.lu/resource/ontology/jolux#isRealizedBy",
       "label": [
-        "http://data.legilux.public.lu/resource/ontology/jolux#title"
+        "http://purl.org/dc/terms/identifier"
       ],
       "search": [
         "http://data.legilux.public.lu/resource/ontology/jolux#title"
+      ],
+      "order": [
+        "http://purl.org/dc/terms/identifier",
+        "http://data.legilux.public.lu/resource/ontology/jolux#memorialName",
+        "http://data.legilux.public.lu/resource/ontology/jolux#memorialYear",
+        "http://data.legilux.public.lu/resource/ontology/jolux#title",
+        "http://data.legilux.public.lu/resource/ontology/jolux#language",
+        "http://data.legilux.public.lu/resource/ontology/jolux#isPartOf"
       ]
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#ImpactType": {
@@ -411,7 +422,12 @@
       ],
       "search": [
         "http://data.legilux.public.lu/resource/ontology/jolux#title"
-      ]
+      ],
+      "order": [
+        "http://data.legilux.public.lu/resource/ontology/jolux#userFormat",
+        "http://data.legilux.public.lu/resource/ontology/jolux#publisher"
+      ],
+      "foldAfter": "http://data.legilux.public.lu/resource/ontology/jolux#publisher"
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#MigrationDraftStageType": {
       "group": "Vocabularies",
