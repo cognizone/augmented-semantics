@@ -44,6 +44,16 @@ export interface SPARQLRequestConfig {
 // Global timeout for SPARQL requests (1 minute)
 const SPARQL_TIMEOUT_MS = 60000
 
+// Dev-only: endpoints whose CORS allowlist rejects the localhost origin are
+// routed through the Vite reverse proxy (see server.proxy in vite.config.ts —
+// keep these paths in sync). Prod hits the real URL untouched.
+const DEV_ENDPOINT_PROXY: Record<string, string> = {
+  'https://rinf.data.era.europa.eu/api/v1/sparql/rinf': '/__proxy/rinf',
+  'https://graph.tst.data.test-era.europa.eu/repositories/EVR-KG': '/__proxy/evr',
+}
+const endpointUrl = (url: string): string =>
+  import.meta.env.DEV ? (DEV_ENDPOINT_PROXY[url] ?? url) : url
+
 const DEFAULT_CONFIG: Required<Omit<SPARQLRequestConfig, 'signal'>> = {
   timeout: SPARQL_TIMEOUT_MS,
   retries: 3,
@@ -296,7 +306,7 @@ export async function executeSparql(
     }
 
     try {
-      const response = await fetch(endpoint.url, {
+      const response = await fetch(endpointUrl(endpoint.url), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
@@ -997,7 +1007,7 @@ export async function fetchRawRdf(
   const timeoutId = setTimeout(() => controller.abort(), timeout)
 
   try {
-    const response = await fetch(endpoint.url, {
+    const response = await fetch(endpointUrl(endpoint.url), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',

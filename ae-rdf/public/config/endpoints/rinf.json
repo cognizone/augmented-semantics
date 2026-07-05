@@ -5,6 +5,527 @@
   "graph": {
     "quads": true
   },
+  "types": {
+    "http://data.europa.eu/949/OperationalPoint": {
+      "label": [
+        "http://data.europa.eu/949/opName"
+      ],
+      "search": [
+        "http://data.europa.eu/949/opName",
+        "http://data.europa.eu/949/uopid"
+      ],
+      "order": [
+        "http://data.europa.eu/949/uopid",
+        "http://data.europa.eu/949/opName",
+        "http://data.europa.eu/949/opType",
+        "http://data.europa.eu/949/primaryLocation",
+        "http://data.europa.eu/949/hasPart",
+        "http://data.europa.eu/949/inCountry",
+        "http://data.europa.eu/949/infrastructureManager",
+        "http://data.europa.eu/949/validity",
+        "http://www.opengis.net/ont/geosparql#hasGeometry",
+        "http://data.europa.eu/949/netReference"
+      ],
+      "hide": [
+        "http://data.europa.eu/949/hashSource",
+        "http://data.europa.eu/949/materialised/isValid",
+        "http://data.europa.eu/949/materialised/geometry_wkt",
+        "http://data.europa.eu/949/materialised/location"
+      ]
+    },
+    "http://data.europa.eu/949/SectionOfLine": {
+      "label": [
+        "http://data.europa.eu/949/opStart",
+        "http://data.europa.eu/949/opEnd"
+      ],
+      "order": [
+        "http://data.europa.eu/949/nationalLine",
+        "http://data.europa.eu/949/opStart",
+        "http://data.europa.eu/949/opEnd",
+        "http://data.europa.eu/949/lengthOfSectionOfLine",
+        "http://data.europa.eu/949/solNature",
+        "http://data.europa.eu/949/operationalRegimeType",
+        "http://data.europa.eu/949/inCountry",
+        "http://data.europa.eu/949/infrastructureManager",
+        "http://data.europa.eu/949/validity",
+        "http://www.opengis.net/ont/geosparql#hasGeometry",
+        "http://data.europa.eu/949/netReference"
+      ],
+      "hide": [
+        "http://data.europa.eu/949/hashSource",
+        "http://data.europa.eu/949/materialised/isValid",
+        "http://data.europa.eu/949/materialised/geometry_wkt",
+        "http://data.europa.eu/949/materialised/location"
+      ]
+    },
+    "http://data.europa.eu/949/Track": {
+      "label": [
+        "http://data.europa.eu/949/trackId"
+      ],
+      "search": [
+        "http://data.europa.eu/949/trackId"
+      ],
+      "order": [
+        "http://data.europa.eu/949/trackId",
+        "http://data.europa.eu/949/trackDirection",
+        "http://data.europa.eu/949/maximumPermittedSpeed",
+        "http://data.europa.eu/949/lineCategory",
+        "http://data.europa.eu/949/trackLoadCapability",
+        "http://data.europa.eu/949/gaugingProfile",
+        "http://data.europa.eu/949/contactLineSystem",
+        "http://data.europa.eu/949/etcs",
+        "http://data.europa.eu/949/trainDetectionSystem",
+        "http://data.europa.eu/949/tenClassification",
+        "http://data.europa.eu/949/inCountry",
+        "http://data.europa.eu/949/infrastructureManager",
+        "http://data.europa.eu/949/validity",
+        "http://www.opengis.net/ont/geosparql#hasGeometry",
+        "http://data.europa.eu/949/netReference"
+      ],
+      "hide": [
+        "http://data.europa.eu/949/hashSource",
+        "http://data.europa.eu/949/materialised/isValid",
+        "http://data.europa.eu/949/materialised/geometry_wkt",
+        "http://data.europa.eu/949/materialised/location"
+      ]
+    },
+    "http://data.europa.eu/949/RunningTrack": {
+      "label": [
+        "http://data.europa.eu/949/trackId"
+      ],
+      "search": [
+        "http://data.europa.eu/949/trackId"
+      ],
+      "order": [
+        "http://data.europa.eu/949/trackId",
+        "http://data.europa.eu/949/trackDirection",
+        "http://data.europa.eu/949/maximumPermittedSpeed",
+        "http://data.europa.eu/949/lineCategory",
+        "http://data.europa.eu/949/trackLoadCapability",
+        "http://data.europa.eu/949/gaugingProfile",
+        "http://data.europa.eu/949/contactLineSystem",
+        "http://data.europa.eu/949/etcs",
+        "http://data.europa.eu/949/trainDetectionSystem",
+        "http://data.europa.eu/949/tenClassification",
+        "http://data.europa.eu/949/inCountry",
+        "http://data.europa.eu/949/infrastructureManager",
+        "http://data.europa.eu/949/validity",
+        "http://www.opengis.net/ont/geosparql#hasGeometry",
+        "http://data.europa.eu/949/netReference"
+      ],
+      "hide": [
+        "http://data.europa.eu/949/hashSource",
+        "http://data.europa.eu/949/materialised/isValid",
+        "http://data.europa.eu/949/materialised/geometry_wkt",
+        "http://data.europa.eu/949/materialised/location"
+      ]
+    },
+    "http://data.europa.eu/949/Siding": {
+      "label": [
+        "http://data.europa.eu/949/sidingId"
+      ],
+      "search": [
+        "http://data.europa.eu/949/sidingId"
+      ],
+      "order": [
+        "http://data.europa.eu/949/sidingId",
+        "http://data.europa.eu/949/lengthOfSiding",
+        "http://data.europa.eu/949/gradient",
+        "http://data.europa.eu/949/contactLineSystem",
+        "http://data.europa.eu/949/connectedTo",
+        "http://data.europa.eu/949/inCountry",
+        "http://data.europa.eu/949/infrastructureManager",
+        "http://data.europa.eu/949/validity",
+        "http://www.opengis.net/ont/geosparql#hasGeometry",
+        "http://data.europa.eu/949/netReference"
+      ],
+      "hide": [
+        "http://data.europa.eu/949/hashSource",
+        "http://data.europa.eu/949/materialised/isValid",
+        "http://data.europa.eu/949/materialised/geometry_wkt",
+        "http://data.europa.eu/949/materialised/location"
+      ]
+    },
+    "http://data.europa.eu/949/Tunnel": {
+      "label": [
+        "http://data.europa.eu/949/tunnelIdentification"
+      ],
+      "search": [
+        "http://data.europa.eu/949/tunnelIdentification"
+      ],
+      "order": [
+        "http://data.europa.eu/949/tunnelIdentification",
+        "http://data.europa.eu/949/lengthOfTunnel",
+        "http://data.europa.eu/949/crossSectionArea",
+        "http://data.europa.eu/949/rollingStockFireCategory",
+        "http://data.europa.eu/949/hasEmergencyPlan",
+        "http://data.europa.eu/949/inCountry",
+        "http://data.europa.eu/949/infrastructureManager",
+        "http://data.europa.eu/949/validity",
+        "http://www.opengis.net/ont/geosparql#hasGeometry",
+        "http://data.europa.eu/949/netReference"
+      ],
+      "hide": [
+        "http://data.europa.eu/949/hashSource",
+        "http://data.europa.eu/949/materialised/isValid",
+        "http://data.europa.eu/949/materialised/geometry_wkt",
+        "http://data.europa.eu/949/materialised/location"
+      ]
+    },
+    "http://data.europa.eu/949/Signal": {
+      "label": [
+        "http://data.europa.eu/949/signalId"
+      ],
+      "search": [
+        "http://data.europa.eu/949/signalId"
+      ],
+      "order": [
+        "http://data.europa.eu/949/signalId",
+        "http://data.europa.eu/949/signalType",
+        "http://data.europa.eu/949/appliesToDirection",
+        "http://data.europa.eu/949/signalOrientation",
+        "http://data.europa.eu/949/kilometer",
+        "http://data.europa.eu/949/inCountry",
+        "http://data.europa.eu/949/infrastructureManager",
+        "http://data.europa.eu/949/validity",
+        "http://www.opengis.net/ont/geosparql#hasGeometry",
+        "http://data.europa.eu/949/netReference"
+      ],
+      "hide": [
+        "http://data.europa.eu/949/hashSource",
+        "http://data.europa.eu/949/materialised/isValid",
+        "http://data.europa.eu/949/materialised/geometry_wkt",
+        "http://data.europa.eu/949/materialised/location"
+      ]
+    },
+    "http://data.europa.eu/949/PlatformEdge": {
+      "label": [
+        "http://data.europa.eu/949/platformId"
+      ],
+      "search": [
+        "http://data.europa.eu/949/platformId"
+      ],
+      "order": [
+        "http://data.europa.eu/949/platformId",
+        "http://data.europa.eu/949/lengthOfPlatform",
+        "http://data.europa.eu/949/platformHeight",
+        "http://data.europa.eu/949/typeOfTraffic",
+        "http://data.europa.eu/949/assistanceStartingTrain",
+        "http://data.europa.eu/949/inCountry",
+        "http://data.europa.eu/949/infrastructureManager",
+        "http://data.europa.eu/949/validity",
+        "http://www.opengis.net/ont/geosparql#hasGeometry",
+        "http://data.europa.eu/949/netReference"
+      ],
+      "hide": [
+        "http://data.europa.eu/949/hashSource",
+        "http://data.europa.eu/949/materialised/isValid",
+        "http://data.europa.eu/949/materialised/geometry_wkt",
+        "http://data.europa.eu/949/materialised/location"
+      ]
+    },
+    "http://data.europa.eu/949/PrimaryLocation": {
+      "label": [
+        "http://data.europa.eu/949/primaryLocationName"
+      ],
+      "search": [
+        "http://data.europa.eu/949/primaryLocationName",
+        "http://data.europa.eu/949/primaryLocationCode"
+      ],
+      "order": [
+        "http://data.europa.eu/949/primaryLocationCode",
+        "http://data.europa.eu/949/primaryLocationName",
+        "http://data.europa.eu/949/passengerFlag",
+        "http://data.europa.eu/949/freightFlag",
+        "http://data.europa.eu/949/handoverPointFlag",
+        "http://data.europa.eu/949/inCountry",
+        "http://data.europa.eu/949/infrastructureManager",
+        "http://data.europa.eu/949/validity",
+        "http://www.opengis.net/ont/geosparql#hasGeometry",
+        "http://data.europa.eu/949/netReference"
+      ],
+      "hide": [
+        "http://data.europa.eu/949/hashSource",
+        "http://data.europa.eu/949/materialised/isValid",
+        "http://data.europa.eu/949/materialised/geometry_wkt",
+        "http://data.europa.eu/949/materialised/location"
+      ]
+    },
+    "http://data.europa.eu/949/KilometricPost": {
+      "label": [
+        "http://data.europa.eu/949/kmPostName"
+      ],
+      "search": [
+        "http://data.europa.eu/949/kmPostName"
+      ],
+      "order": [
+        "http://data.europa.eu/949/kmPostName",
+        "http://data.europa.eu/949/kilometer",
+        "http://data.europa.eu/949/measuredDistance",
+        "http://data.europa.eu/949/isPartOf",
+        "http://data.europa.eu/949/inCountry",
+        "http://data.europa.eu/949/infrastructureManager",
+        "http://data.europa.eu/949/validity",
+        "http://www.opengis.net/ont/geosparql#hasGeometry",
+        "http://data.europa.eu/949/netReference"
+      ],
+      "hide": [
+        "http://data.europa.eu/949/hashSource",
+        "http://data.europa.eu/949/materialised/isValid",
+        "http://data.europa.eu/949/materialised/geometry_wkt",
+        "http://data.europa.eu/949/materialised/location"
+      ]
+    },
+    "http://data.europa.eu/949/Bridge": {
+      "order": [
+        "http://data.europa.eu/949/inCountry",
+        "http://data.europa.eu/949/infrastructureManager",
+        "http://data.europa.eu/949/validity",
+        "http://www.opengis.net/ont/geosparql#hasGeometry",
+        "http://data.europa.eu/949/netReference"
+      ],
+      "hide": [
+        "http://data.europa.eu/949/hashSource",
+        "http://data.europa.eu/949/materialised/isValid",
+        "http://data.europa.eu/949/materialised/geometry_wkt",
+        "http://data.europa.eu/949/materialised/location"
+      ]
+    },
+    "http://data.europa.eu/949/LevelCrossing": {
+      "order": [
+        "http://data.europa.eu/949/inCountry",
+        "http://data.europa.eu/949/infrastructureManager",
+        "http://data.europa.eu/949/validity",
+        "http://www.opengis.net/ont/geosparql#hasGeometry",
+        "http://data.europa.eu/949/netReference"
+      ],
+      "hide": [
+        "http://data.europa.eu/949/hashSource",
+        "http://data.europa.eu/949/materialised/isValid",
+        "http://data.europa.eu/949/materialised/geometry_wkt",
+        "http://data.europa.eu/949/materialised/location"
+      ]
+    },
+    "http://data.europa.eu/949/Switch": {
+      "order": [
+        "http://data.europa.eu/949/inCountry",
+        "http://data.europa.eu/949/infrastructureManager",
+        "http://data.europa.eu/949/validity",
+        "http://www.opengis.net/ont/geosparql#hasGeometry",
+        "http://data.europa.eu/949/netReference"
+      ],
+      "hide": [
+        "http://data.europa.eu/949/hashSource",
+        "http://data.europa.eu/949/materialised/isValid",
+        "http://data.europa.eu/949/materialised/geometry_wkt",
+        "http://data.europa.eu/949/materialised/location"
+      ]
+    },
+    "http://data.europa.eu/949/HABD": {
+      "label": [
+        "http://data.europa.eu/949/hotAxleBoxDetectorIdentification"
+      ],
+      "order": [
+        "http://data.europa.eu/949/hotAxleBoxDetectorIdentification",
+        "http://data.europa.eu/949/hotAxleBoxDetectorLocation",
+        "http://data.europa.eu/949/hotAxleBoxDetectorGeneration",
+        "http://data.europa.eu/949/hotAxleBoxDetectorTSICompliant"
+      ]
+    },
+    "http://data.europa.eu/949/ReferenceBorderPoint": {
+      "label": [
+        "http://data.europa.eu/949/borderPointId"
+      ],
+      "order": [
+        "http://data.europa.eu/949/borderPointId",
+        "http://data.europa.eu/949/inCountry",
+        "http://www.opengis.net/ont/geosparql#hasGeometry",
+        "http://www.w3.org/2003/01/geo/wgs84_pos#location"
+      ]
+    },
+    "http://data.europa.eu/949/NetRelation": {
+      "order": [
+        "http://data.europa.eu/949/elementA",
+        "http://data.europa.eu/949/elementB",
+        "http://data.europa.eu/949/navigability",
+        "http://data.europa.eu/949/isOnOriginOfElementA",
+        "http://data.europa.eu/949/isOnOriginOfElementB",
+        "http://data.europa.eu/949/validity"
+      ]
+    },
+    "http://www.opengis.net/ont/geosparql#Geometry": {
+      "group": "Value objects",
+      "render": "embed",
+      "embedVia": "http://www.opengis.net/ont/geosparql#hasGeometry",
+      "order": [
+        "http://www.opengis.net/ont/geosparql#asWKT",
+        "http://www.w3.org/2003/01/geo/wgs84_pos#lat",
+        "http://www.w3.org/2003/01/geo/wgs84_pos#long",
+        "http://www.w3.org/2003/01/geo/wgs84_pos#lon"
+      ],
+      "hide": [
+        "http://data.europa.eu/949/hashSource"
+      ]
+    },
+    "http://data.europa.eu/949/Geometry": {
+      "group": "Value objects",
+      "render": "embed",
+      "embedVia": "http://www.opengis.net/ont/geosparql#hasGeometry",
+      "order": [
+        "http://www.opengis.net/ont/geosparql#asWKT",
+        "http://www.w3.org/2003/01/geo/wgs84_pos#lat",
+        "http://www.w3.org/2003/01/geo/wgs84_pos#long",
+        "http://www.w3.org/2003/01/geo/wgs84_pos#lon"
+      ],
+      "hide": [
+        "http://data.europa.eu/949/hashSource"
+      ]
+    },
+    "http://www.opengis.net/ont/sf#Point": {
+      "group": "Value objects",
+      "render": "embed",
+      "embedVia": "http://www.opengis.net/ont/geosparql#hasGeometry",
+      "order": [
+        "http://www.opengis.net/ont/geosparql#asWKT",
+        "http://www.w3.org/2003/01/geo/wgs84_pos#lat",
+        "http://www.w3.org/2003/01/geo/wgs84_pos#long",
+        "http://www.w3.org/2003/01/geo/wgs84_pos#lon"
+      ]
+    },
+    "http://www.w3.org/2003/01/geo/wgs84_pos#Point": {
+      "group": "Value objects",
+      "render": "embed",
+      "embedVia": "http://www.w3.org/2003/01/geo/wgs84_pos#location",
+      "order": [
+        "http://www.opengis.net/ont/geosparql#asWKT",
+        "http://www.w3.org/2003/01/geo/wgs84_pos#lat",
+        "http://www.w3.org/2003/01/geo/wgs84_pos#long",
+        "http://www.w3.org/2003/01/geo/wgs84_pos#lon"
+      ],
+      "hide": [
+        "http://data.europa.eu/949/hashSource"
+      ]
+    },
+    "http://data.europa.eu/949/TopologicalCoordinate": {
+      "group": "Value objects",
+      "render": "embed",
+      "embedVia": "http://data.europa.eu/949/hasTopoCoordinate",
+      "order": [
+        "http://data.europa.eu/949/onElement",
+        "http://data.europa.eu/949/onLinearElement",
+        "http://data.europa.eu/949/offsetFromOrigin"
+      ]
+    },
+    "http://data.europa.eu/949/LinearPositioningSystemCoordinate": {
+      "group": "Value objects",
+      "render": "embed",
+      "embedVia": "http://data.europa.eu/949/hasLrsCoordinate",
+      "order": [
+        "http://data.europa.eu/949/kmPost",
+        "http://data.europa.eu/949/offsetFromKilometricPost"
+      ]
+    },
+    "http://data.europa.eu/949/TemporalFeature": {
+      "group": "Value objects",
+      "render": "embed",
+      "embedVia": "http://data.europa.eu/949/validity",
+      "order": [
+        "http://www.w3.org/2006/time#hasBeginning",
+        "http://www.w3.org/2006/time#hasEnd"
+      ]
+    },
+    "http://www.w3.org/2006/time#TemporalEntity": {
+      "group": "Value objects",
+      "render": "embed",
+      "embedVia": "http://data.europa.eu/949/validity",
+      "order": [
+        "http://www.w3.org/2006/time#hasBeginning",
+        "http://www.w3.org/2006/time#hasEnd"
+      ]
+    },
+    "http://data.europa.eu/949/ContactLineSystem": {
+      "group": "Value objects",
+      "render": "embed",
+      "embedVia": "http://data.europa.eu/949/contactLineSystem",
+      "order": [
+        "http://data.europa.eu/949/contactLineSystemType",
+        "http://data.europa.eu/949/energySupplySystem",
+        "http://data.europa.eu/949/umax2",
+        "http://data.europa.eu/949/maxTrainCurrent",
+        "http://data.europa.eu/949/minimumContactWireHeight",
+        "http://data.europa.eu/949/maximumContactWireHeight"
+      ]
+    },
+    "http://data.europa.eu/949/ETCS": {
+      "group": "Value objects",
+      "render": "embed",
+      "embedVia": "http://data.europa.eu/949/etcs",
+      "order": [
+        "http://data.europa.eu/949/etcsLevelType",
+        "http://data.europa.eu/949/etcsBaseline",
+        "http://data.europa.eu/949/etcsMVersion",
+        "http://data.europa.eu/949/etcsSystemCompatibility",
+        "http://data.europa.eu/949/etcsInfill"
+      ]
+    },
+    "http://data.europa.eu/949/TrainDetectionSystem": {
+      "group": "Value objects",
+      "render": "embed",
+      "embedVia": "http://data.europa.eu/949/trainDetectionSystem",
+      "order": [
+        "http://data.europa.eu/949/trainDetectionSystemType",
+        "http://data.europa.eu/949/maxImpedanceWheelset",
+        "http://data.europa.eu/949/maxFlangeHeight"
+      ]
+    },
+    "http://www.w3.org/2004/02/skos/core#Concept": {
+      "label": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ],
+      "search": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ]
+    },
+    "http://www.w3.org/1999/02/22-rdf-syntax-ns#List": {
+      "group": "Ontology"
+    },
+    "http://www.w3.org/2000/01/rdf-schema#Datatype": {
+      "group": "Ontology"
+    },
+    "http://www.w3.org/2002/07/owl#Class": {
+      "group": "Ontology"
+    },
+    "http://www.w3.org/2002/07/owl#DatatypeProperty": {
+      "group": "Ontology"
+    },
+    "http://www.w3.org/2002/07/owl#ObjectProperty": {
+      "group": "Ontology"
+    },
+    "http://www.w3.org/2002/07/owl#FunctionalProperty": {
+      "group": "Ontology"
+    },
+    "http://www.w3.org/2002/07/owl#AnnotationProperty": {
+      "group": "Ontology"
+    },
+    "http://www.w3.org/2002/07/owl#NamedIndividual": {
+      "group": "Ontology"
+    },
+    "http://www.w3.org/2002/07/owl#Restriction": {
+      "group": "Ontology"
+    },
+    "http://www.w3.org/2002/07/owl#IrreflexiveProperty": {
+      "group": "Ontology"
+    },
+    "http://www.w3.org/2002/07/owl#SymmetricProperty": {
+      "group": "Ontology"
+    },
+    "http://www.w3.org/2002/07/owl#Ontology": {
+      "group": "Ontology"
+    },
+    "http://www.w3.org/2002/07/owl#AllDisjointClasses": {
+      "group": "Ontology"
+    }
+  },
   "typeInventory": [
     {
       "uri": "http://data.europa.eu/949/InfrastructureElement",
@@ -7757,5 +8278,5 @@
   },
   "composition": {},
   "orphanCounts": {},
-  "profiledAt": "2026-07-05T11:10:56.157Z"
+  "profiledAt": "2026-07-05T11:12:26.775Z"
 }
