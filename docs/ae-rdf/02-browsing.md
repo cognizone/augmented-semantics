@@ -34,6 +34,22 @@ Counts are the number of *distinct* subjects of that type. On large datasets the
 
 Selecting a type shows a paged list of its instances (100 per page), each with its best available label (falling back to the URI). Use the pager at the bottom to move through pages. Click an instance to open it.
 
+### Filtering the list
+
+A **filter box** sits above the list — type to narrow it to instances whose **name or URI** contains what you type. It matches the same label fields AE RDF uses to name things (a type's configured **label** fields if set, otherwise the usual `rdfs:label` / `skos:prefLabel` / `dcterms:title` / `foaf:name` family), plus the URI itself — so you can find a resource by a word in its title *or* by a fragment of its identifier.
+
+- The filter runs against the **whole type on the server**, not just the current page — so it finds matches on page 40 without you paging there. The instance count updates to the filtered total.
+- It's **debounced** — AE RDF waits until you pause typing before querying, so a fast typist doesn't fire a query per keystroke.
+- Press **Esc** or the **✕** to clear it. The box stays visible as you switch types, so a filter is never a hidden constraint.
+
+::: tip Custom search fields
+A type can pin exactly which predicates the filter searches via its **search** fields in the [config](index.md#settings) — useful when the default label fields aren't what you want to match on.
+:::
+
+### Unreferenced instances (orphans)
+
+For a **value-object type** (one set to **Embed** with an owning predicate — e.g. a `PostalAddress` reached via `hasAddress`), an **Orphans only** toggle appears. Turn it on to list just the instances that *no* resource points at through that predicate — the dangling value objects with no owner. It's off by default and resets when you switch types.
+
 ## The resource view
 
 Opening an instance — or pasting a URI in the top bar and pressing **Go** — shows the resource:

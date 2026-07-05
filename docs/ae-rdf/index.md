@@ -11,7 +11,7 @@ outline: deep
 A fast, browser-only explorer for **any** RDF dataset behind a SPARQL endpoint. Connect, see what types of things exist, drill into a type's instances, open any resource, and follow its links — all live, all in your browser. No backend, no precomputed indexes, no data leaves your machine.
 
 ::: info Early days
-AE RDF is intentionally barebones: live queries only. Endpoint connection, type discovery, instance lists, and a graph-aware resource view work today. A raw SPARQL panel and incoming-link view are planned.
+AE RDF is intentionally barebones: live queries only. Endpoint connection, type discovery, filterable instance lists, incoming links ("Referenced by"), and a graph-aware resource view work today. A raw SPARQL panel is planned.
 :::
 
 > **Want your endpoint on the list?** If you maintain a public SPARQL endpoint and would like it included as a suggested endpoint, [open an issue on GitHub](https://github.com/cognizone/augmented-semantics/issues).
