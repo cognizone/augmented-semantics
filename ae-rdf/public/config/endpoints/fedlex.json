@@ -68,7 +68,12 @@
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#PublicationProcess": {
       "render": "embed",
-      "embedVia": "^http://data.legilux.public.lu/resource/ontology/jolux#publicationProcessForConsolidationAbstract"
+      "embedVia": "^http://data.legilux.public.lu/resource/ontology/jolux#publicationProcessForConsolidationAbstract",
+      "order": [
+        "http://data.legilux.public.lu/resource/ontology/jolux#publicationDate",
+        "http://data.legilux.public.lu/resource/ontology/jolux#publicationProcessHasPublicationTask"
+      ],
+      "foldAfter": "http://data.legilux.public.lu/resource/ontology/jolux#publicationProcessHasPublicationTask"
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#PublicationTask": {
       "render": "embed",
@@ -80,7 +85,11 @@
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#TreatyDocument": {
       "render": "embed",
-      "embedVia": "http://data.legilux.public.lu/resource/ontology/jolux#treatyProcessHasResultingTreatyDocument"
+      "embedVia": "http://data.legilux.public.lu/resource/ontology/jolux#treatyProcessHasResultingTreatyDocument",
+      "order": [
+        "http://data.legilux.public.lu/resource/ontology/jolux#typeDocument"
+      ],
+      "foldAfter": "http://data.legilux.public.lu/resource/ontology/jolux#typeDocument"
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#SubdivisionIdentificationDetail": {
       "render": "embed",
@@ -146,7 +155,17 @@
       ]
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#Act": {
-      "sidebar": "pin"
+      "sidebar": "pin",
+      "order": [
+        "http://data.legilux.public.lu/resource/ontology/jolux#sequenceInTheYearOfPublication",
+        "http://data.legilux.public.lu/resource/ontology/jolux#dateDocument",
+        "http://data.legilux.public.lu/resource/ontology/jolux#publicationDate",
+        "http://purl.org/dc/terms/created",
+        "http://purl.org/dc/terms/modified",
+        "http://data.legilux.public.lu/resource/ontology/jolux#nonAnonymousWorkToRemoveDate",
+        "http://data.legilux.public.lu/resource/ontology/jolux#isPartOf",
+        "http://data.legilux.public.lu/resource/ontology/jolux#legalResourceFamilyType"
+      ]
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#ComplexWork": {
       "label": [
