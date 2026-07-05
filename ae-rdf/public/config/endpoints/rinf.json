@@ -3,5 +3,419 @@
   "url": "https://rinf.data.era.europa.eu/api/v1/sparql/rinf",
   "graph": {
     "quads": true
-  }
+  },
+  "typeInventory": [
+    {
+      "uri": "http://data.europa.eu/949/InfrastructureElement",
+      "count": 821223
+    },
+    {
+      "uri": "http://data.europa.eu/949/RunningTrack",
+      "count": 402057
+    },
+    {
+      "uri": "http://data.europa.eu/949/NetBasicReference",
+      "count": 259962
+    },
+    {
+      "uri": "http://data.europa.eu/949/NetPointReference",
+      "count": 251074
+    },
+    {
+      "uri": "http://www.opengis.net/ont/geosparql#Feature",
+      "count": 250567
+    },
+    {
+      "uri": "http://www.opengis.net/ont/geosparql#Geometry",
+      "count": 239238
+    },
+    {
+      "uri": "http://data.europa.eu/949/ContactLineSystem",
+      "count": 227474
+    },
+    {
+      "uri": "http://data.europa.eu/949/TrainDetectionSystem",
+      "count": 213359
+    },
+    {
+      "uri": "http://data.europa.eu/949/ETCS",
+      "count": 129800
+    },
+    {
+      "uri": "http://data.europa.eu/949/Siding",
+      "count": 129071
+    },
+    {
+      "uri": "http://data.europa.eu/949/TENCorridor",
+      "count": 126087
+    },
+    {
+      "uri": "http://data.europa.eu/949/NetLinearReference",
+      "count": 105335
+    },
+    {
+      "uri": "http://data.europa.eu/949/Feature",
+      "count": 102067
+    },
+    {
+      "uri": "http://data.europa.eu/949/LinearPositioningSystemCoordinate",
+      "count": 99383
+    },
+    {
+      "uri": "http://data.europa.eu/949/TENTCorridor",
+      "count": 83193
+    },
+    {
+      "uri": "http://data.europa.eu/949/TopologicalCoordinate",
+      "count": 78515
+    },
+    {
+      "uri": "http://www.w3.org/2003/01/geo/wgs84_pos#SpatialThing",
+      "count": 74522
+    },
+    {
+      "uri": "http://data.europa.eu/949/HABD",
+      "count": 72268
+    },
+    {
+      "uri": "http://data.europa.eu/949/KilometricPost",
+      "count": 70613
+    },
+    {
+      "uri": "http://data.europa.eu/949/SectionOfLine",
+      "count": 67030
+    },
+    {
+      "uri": "http://www.w3.org/ns/dcat#Distribution",
+      "count": 63139
+    },
+    {
+      "uri": "https://www.w3.org/ns/locn#Geometry",
+      "count": 63138
+    },
+    {
+      "uri": "http://data.europa.eu/949/PlatformEdge",
+      "count": 61076
+    },
+    {
+      "uri": "http://data.europa.eu/949/OperationalPoint",
+      "count": 59295
+    },
+    {
+      "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#List",
+      "count": 52117
+    },
+    {
+      "uri": "http://data.europa.eu/949/PrimaryLocation",
+      "count": 45212
+    },
+    {
+      "uri": "http://data.europa.eu/949/Track",
+      "count": 26077
+    },
+    {
+      "uri": "http://data.europa.eu/949/NetRelation",
+      "count": 21932
+    },
+    {
+      "uri": "http://www.w3.org/2004/02/skos/core#Concept",
+      "count": 18438
+    },
+    {
+      "uri": "http://data.europa.eu/949/Tunnel",
+      "count": 15416
+    },
+    {
+      "uri": "http://data.europa.eu/949/LinearElement",
+      "count": 13517
+    },
+    {
+      "uri": "http://data.europa.eu/949/LinearPositioningSystem",
+      "count": 8911
+    },
+    {
+      "uri": "http://data.europa.eu/949/Signal",
+      "count": 7498
+    },
+    {
+      "uri": "http://www.w3.org/2008/05/skos-xl#Label",
+      "count": 7272
+    },
+    {
+      "uri": "http://www.opengis.net/ont/sf#Point",
+      "count": 6937
+    },
+    {
+      "uri": "http://data.europa.eu/eli/ontology#Format",
+      "count": 6571
+    },
+    {
+      "uri": "http://data.europa.eu/949/TemporalFeature",
+      "count": 5175
+    },
+    {
+      "uri": "http://www.w3.org/2006/time#TemporalEntity",
+      "count": 5151
+    },
+    {
+      "uri": "http://publications.europa.eu/ontology/authority/MappedCode",
+      "count": 4912
+    },
+    {
+      "uri": "http://www.w3.org/2003/01/geo/wgs84_pos#Point",
+      "count": 4738
+    },
+    {
+      "uri": "http://data.europa.eu/949/NetAreaReference",
+      "count": 4573
+    },
+    {
+      "uri": "http://data.europa.eu/949/LevelCrossing",
+      "count": 4235
+    },
+    {
+      "uri": "http://www.w3.org/2006/time#Instant",
+      "count": 4181
+    },
+    {
+      "uri": "http://data.europa.eu/949/Switch",
+      "count": 3580
+    },
+    {
+      "uri": "http://rdf-vocabulary.ddialliance.org/xkos#ConceptAssociation",
+      "count": 2477
+    },
+    {
+      "uri": "http://www.opengis.net/ont/sf#LineString",
+      "count": 2466
+    },
+    {
+      "uri": "http://data.europa.eu/949/Bridge",
+      "count": 2358
+    },
+    {
+      "uri": "http://data.europa.eu/eli/ontology#LegalExpression",
+      "count": 1861
+    },
+    {
+      "uri": "http://data.europa.eu/949/Document",
+      "count": 1155
+    },
+    {
+      "uri": "http://data.europa.eu/949/LinesideDistanceIndication",
+      "count": 915
+    },
+    {
+      "uri": "http://data.europa.eu/949/OrganisationRole",
+      "count": 796
+    },
+    {
+      "uri": "http://data.europa.eu/949/Body",
+      "count": 661
+    },
+    {
+      "uri": "https://w3id.org/vpa#Requirement",
+      "count": 651
+    },
+    {
+      "uri": "http://www.w3.org/ns/org#Organization",
+      "count": 649
+    },
+    {
+      "uri": "http://data.europa.eu/949/LoadCapability",
+      "count": 567
+    },
+    {
+      "uri": "http://data.europa.eu/949/IC",
+      "count": 564
+    },
+    {
+      "uri": "http://data.europa.eu/949/PhaseInfo",
+      "count": 500
+    },
+    {
+      "uri": "http://www.w3.org/2002/07/owl#DatatypeProperty",
+      "count": 464
+    },
+    {
+      "uri": "http://www.w3.org/ns/shacl#PropertyShape",
+      "count": 393
+    },
+    {
+      "uri": "http://www.w3.org/2002/07/owl#Class",
+      "count": 341
+    },
+    {
+      "uri": "http://www.w3.org/2002/07/owl#ObjectProperty",
+      "count": 340
+    },
+    {
+      "uri": "http://data.europa.eu/949/ReferenceBorderPoint",
+      "count": 288
+    },
+    {
+      "uri": "http://www.w3.org/2002/07/owl#FunctionalProperty",
+      "count": 222
+    },
+    {
+      "uri": "http://data.europa.eu/949/RaisedPantographsDistanceAndSpeed",
+      "count": 222
+    },
+    {
+      "uri": "http://www.w3.org/ns/shacl#SPARQLConstraint",
+      "count": 211
+    },
+    {
+      "uri": "http://www.w3.org/2006/time#Interval",
+      "count": 186
+    },
+    {
+      "uri": "http://data.europa.eu/949/NetElement",
+      "count": 173
+    },
+    {
+      "uri": "http://www.w3.org/2004/02/skos/core#ConceptScheme",
+      "count": 149
+    },
+    {
+      "uri": "http://data.europa.eu/949/SystemSeparationInfo",
+      "count": 125
+    },
+    {
+      "uri": "http://data.europa.eu/949/ERTMSErrorChangeRequest",
+      "count": 111
+    },
+    {
+      "uri": "http://data.europa.eu/eli/ontology#LegalResource",
+      "count": 91
+    },
+    {
+      "uri": "http://www.w3.org/ns/shacl#NodeShape",
+      "count": 76
+    },
+    {
+      "uri": "http://data.europa.eu/949/TSI",
+      "count": 62
+    },
+    {
+      "uri": "http://www.w3.org/2002/07/owl#AnnotationProperty",
+      "count": 53
+    },
+    {
+      "uri": "http://www.opengis.net/ont/sf#MultiLineString",
+      "count": 45
+    },
+    {
+      "uri": "http://www.w3.org/2004/02/skos/core#Collection",
+      "count": 41
+    },
+    {
+      "uri": "http://www.w3.org/ns/locn#Geometry",
+      "count": 38
+    },
+    {
+      "uri": "http://www.w3.org/2002/07/owl#NamedIndividual",
+      "count": 16
+    },
+    {
+      "uri": "http://data.europa.eu/949/VehicleType",
+      "count": 16
+    },
+    {
+      "uri": "http://data.europa.eu/949/MinimumVerticalRadius",
+      "count": 14
+    },
+    {
+      "uri": "http://rdf-vocabulary.ddialliance.org/xkos#Correspondence",
+      "count": 14
+    },
+    {
+      "uri": "http://www.w3.org/2000/01/rdf-schema#Datatype",
+      "count": 12
+    },
+    {
+      "uri": "http://www.w3.org/2002/07/owl#Restriction",
+      "count": 11
+    },
+    {
+      "uri": "http://www.w3.org/ns/shacl#SPARQLTarget",
+      "count": 7
+    },
+    {
+      "uri": "http://www.w3.org/2002/07/owl#IrreflexiveProperty",
+      "count": 4
+    },
+    {
+      "uri": "http://rdf-vocabulary.ddialliance.org/xkos#ClassificationLevel",
+      "count": 4
+    },
+    {
+      "uri": "http://data.europa.eu/949/MaximumMagneticField",
+      "count": 3
+    },
+    {
+      "uri": "http://data.europa.eu/949/FrenchTrainDetectionSystemLimitation",
+      "count": 2
+    },
+    {
+      "uri": "http://www.w3.org/2002/07/owl#Ontology",
+      "count": 1
+    },
+    {
+      "uri": "http://www.w3.org/2002/07/owl#SymmetricProperty",
+      "count": 1
+    },
+    {
+      "uri": "http://www.w3.org/ns/dcat#Dataset",
+      "count": 1
+    },
+    {
+      "uri": "https://www.w3.org/ns/org#Organization",
+      "count": 1
+    },
+    {
+      "uri": "11101",
+      "count": 1
+    },
+    {
+      "uri": "11101_HIB",
+      "count": 1
+    },
+    {
+      "uri": "27101_LAG",
+      "count": 1
+    },
+    {
+      "uri": "62101",
+      "count": 1
+    },
+    {
+      "uri": "60201",
+      "count": 1
+    },
+    {
+      "uri": "17101",
+      "count": 1
+    },
+    {
+      "uri": "19501",
+      "count": 1
+    },
+    {
+      "uri": "60101",
+      "count": 1
+    },
+    {
+      "uri": "12401_WienCont",
+      "count": 1
+    },
+    {
+      "uri": "STLB",
+      "count": 1
+    },
+    {
+      "uri": "http://www.w3.org/2002/07/owl#AllDisjointClasses",
+      "count": 1
+    }
+  ]
 }
