@@ -66,6 +66,11 @@ const uriDisplayOptions = [
 
 const appName = computed(() => config.value.config?.appName ?? 'AE RDF Browser')
 watch(appName, (name) => { document.title = name }, { immediate: true })
+// Shrink the "E" in the "AE" prefix so the title reads more like "A RDF Browser".
+const titleParts = computed(() => {
+  const n = appName.value
+  return n[1] === 'E' ? { a: n[0], e: n[1], rest: n.slice(2) } : { a: n, e: '', rest: '' }
+})
 
 // Config values reach DOM URL sinks (<a href>, <img src>); a hostile/misconfigured
 // config could inject a `javascript:` URL. Vet absolute URLs via validateURI; pass
@@ -152,7 +157,7 @@ onUnmounted(() => {
           class="app-logo"
           @error="($event.target as HTMLImageElement).style.display = 'none'"
         />
-        <h1 class="app-title">{{ appName }}</h1>
+        <h1 class="app-title">{{ titleParts.a }}<span class="app-title-e">{{ titleParts.e }}</span>{{ titleParts.rest }}</h1>
         <button
           v-if="!endpointStore.isSingleEndpoint"
           class="dropdown-trigger"
@@ -317,6 +322,11 @@ onUnmounted(() => {
   font-weight: 700;
   color: var(--ae-text-primary);
   letter-spacing: 0.02em;
+}
+
+.app-title-e {
+  font-size: 0.5em;
+  font-weight: 600;
 }
 
 .status-dot {
