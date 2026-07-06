@@ -5,7 +5,7 @@ outline: deep
 # AE RDF User Manual
 
 ::: tip Try it now
-[Open AE RDF](https://cognizone.github.io/augmented-semantics/) in your browser — no installation required.
+[Open AE RDF](https://cognizone.github.io/augmented-semantics/rdf/) in your browser — no installation required.
 :::
 
 A fast, browser-only explorer for **any** RDF dataset behind a SPARQL endpoint. Connect, see what types of things exist, drill into a type's instances, open any resource, and follow its links — all live, all in your browser. No backend, no precomputed indexes, no data leaves your machine.

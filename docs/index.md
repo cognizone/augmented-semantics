@@ -50,7 +50,7 @@ Semantic Web technologies like SKOS, RDF, OWL, and SHACL are powerful but often 
 
 ### Quick Links
 
-- [Try AE SKOS Online](https://cognizone.github.io/augmented-semantics/)
+- [Try AE SKOS Online](https://cognizone.github.io/augmented-semantics/skos/)
 - [Download Desktop App](/downloads)
 - [GitHub Repository](https://github.com/cognizone/augmented-semantics)
 

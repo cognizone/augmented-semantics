@@ -8,7 +8,7 @@ Use the tools directly in your browser — no installation required.
 
 | App | Description | Link |
 |-----|-------------|------|
-| **AE SKOS** | SKOS vocabulary browser | [Open AE SKOS](https://cognizone.github.io/augmented-semantics/) |
+| **AE SKOS** | SKOS vocabulary browser | [Open AE SKOS](https://cognizone.github.io/augmented-semantics/skos/) |
 | **AE SKOS (ERA)** | Pre-configured for ERA vocabularies | [Open ERA Edition](https://cognizone.github.io/augmented-semantics/skos-era/) |
 
 ## Desktop Apps

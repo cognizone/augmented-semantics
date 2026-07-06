@@ -31,17 +31,17 @@ jobs:
 
       - run: pnpm install
 
-      # Build default app (root)
+      # Build generic SKOS (/skos)
       - name: Build default SKOS
         run: pnpm --filter ae-skos build
         env:
-          BASE_URL: /augmented-semantics/
+          BASE_URL: /augmented-semantics/skos/
 
       - name: Prepare site structure
         run: |
-          mkdir -p _site
-          cp -r ae-skos/dist/* _site/
-          cp _site/index.html _site/404.html
+          mkdir -p _site/skos
+          cp -r ae-skos/dist/* _site/skos/
+          cp _site/skos/index.html _site/skos/404.html
 
       # Build ERA variant
       - name: Build SKOS ERA
@@ -112,10 +112,9 @@ jobs:
       - name: Build docs
         run: pnpm docs:build
 
-      - name: Add docs to site
+      - name: Add docs to site (served at root)
         run: |
-          mkdir -p _site/docs
-          cp -r docs/.vitepress/dist/* _site/docs/
+          cp -r docs/.vitepress/dist/* _site/
 
       - uses: actions/upload-pages-artifact@v3
         with:

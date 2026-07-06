@@ -84,7 +84,7 @@ const logoUrl = computed(() =>
 )
 const docsUrl = computed(() =>
   safeConfigUrl(config.value.config?.documentationUrl) ??
-  'https://cognizone.github.io/augmented-semantics/docs/ae-rdf/'
+  'https://cognizone.github.io/augmented-semantics/ae-rdf/'
 )
 
 // Build info

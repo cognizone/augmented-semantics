@@ -30,13 +30,13 @@ After deployment, the site is available at:
 
 | Path | Content |
 |------|---------|
-| `/augmented-semantics/` | AE SKOS application |
-| `/augmented-semantics/docs/` | VitePress documentation |
+| `/augmented-semantics/` | VitePress documentation (landing) |
+| `/augmented-semantics/skos/` | AE SKOS application |
 
 ### URLs
 
-- **App:** `https://cognizone.github.io/augmented-semantics/`
-- **Docs:** `https://cognizone.github.io/augmented-semantics/docs/`
+- **App:** `https://cognizone.github.io/augmented-semantics/skos/`
+- **Docs:** `https://cognizone.github.io/augmented-semantics/`
 
 ### Customizing for Forks
 

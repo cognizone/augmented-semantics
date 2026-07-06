@@ -5,7 +5,7 @@ outline: deep
 # AE SKOS User Manual
 
 ::: tip Try it now
-[Open AE SKOS](https://cognizone.github.io/augmented-semantics/) in your browser - no installation required.
+[Open AE SKOS](https://cognizone.github.io/augmented-semantics/skos/) in your browser - no installation required.
 :::
 
 A fast, modern browser for exploring SKOS vocabularies. Lazy-loaded trees, instant search, multilingual support, dark mode, and keyboard shortcuts — all running directly in your browser. No backend, no installation, no data leaves your machine.

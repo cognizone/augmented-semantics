@@ -41,7 +41,7 @@ const logoUrl = computed(() =>
 )
 const docsUrl = computed(() =>
   config.value.config?.documentationUrl ??
-  'https://cognizone.github.io/augmented-semantics/docs/ae-skos/'
+  'https://cognizone.github.io/augmented-semantics/ae-skos/'
 )
 
 // Build info

@@ -4,10 +4,10 @@ export default defineConfig({
   title: 'Augmented Semantics',
   description: 'AI-powered toolkit for Semantic Web technologies',
 
-  base: '/augmented-semantics/docs/',
+  base: '/augmented-semantics/',
 
   head: [
-    ['link', { rel: 'icon', type: 'image/svg+xml', href: '/augmented-semantics/docs/logo.svg' }]
+    ['link', { rel: 'icon', type: 'image/svg+xml', href: '/augmented-semantics/logo.svg' }]
   ],
 
   themeConfig: {

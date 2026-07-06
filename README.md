@@ -4,9 +4,9 @@ Browser-based tools for exploring Semantic Web data. Connect directly to SPARQL 
 
 ## Quick Links
 
-- **[Documentation](https://cognizone.github.io/augmented-semantics/docs/)** - User guides and deployment instructions
+- **[Documentation](https://cognizone.github.io/augmented-semantics/)** - User guides and deployment instructions
 - **[Try AE SKOS](https://cognizone.github.io/augmented-semantics/)** - Live demo
-- **[Downloads](https://cognizone.github.io/augmented-semantics/docs/downloads.html)** - Desktop apps and releases
+- **[Downloads](https://cognizone.github.io/augmented-semantics/downloads.html)** - Desktop apps and releases
 
 ## Tools
 
