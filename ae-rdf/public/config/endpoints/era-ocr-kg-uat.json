@@ -410,7 +410,8 @@
             "max": 17
           }
         ]
-      }
+      },
+      "blank": true
     },
     "http://www.w3.org/1999/02/22-rdf-syntax-ns#List": {
       "ok": true,
@@ -1313,9 +1314,50 @@
       "http://www.w3.org/2000/01/rdf-schema#Datatype"
     ]
   },
-  "composition": {},
+  "composition": {
+    "http://data.europa.eu/949/Body": [
+      {
+        "uri": "http://data.europa.eu/949/Activity",
+        "count": 5473
+      },
+      {
+        "uri": "http://www.w3.org/ns/org#Site",
+        "count": 5473
+      },
+      {
+        "uri": "http://data.europa.eu/949/Document",
+        "count": 4636
+      }
+    ],
+    "http://www.w3.org/2004/02/skos/core#Concept": [
+      {
+        "uri": "http://publications.europa.eu/ontology/authority/MappedCode",
+        "count": 1224
+      }
+    ],
+    "http://www.w3.org/ns/org#Organization": [
+      {
+        "uri": "http://data.europa.eu/949/Activity",
+        "count": 5473
+      },
+      {
+        "uri": "http://www.w3.org/ns/org#Site",
+        "count": 5473
+      },
+      {
+        "uri": "http://data.europa.eu/949/Document",
+        "count": 4636
+      }
+    ],
+    "http://www.w3.org/ns/org#Site": [
+      {
+        "uri": "http://www.w3.org/ns/locn#Address",
+        "count": 5473
+      }
+    ]
+  },
   "orphanCounts": {},
-  "profiledAt": "2026-07-06T08:51:00.635Z",
+  "profiledAt": "2026-07-06T11:18:09.774Z",
   "types": {
     "http://www.w3.org/ns/org#Organization": {
       "label": [
@@ -1468,5 +1510,9 @@
         "http://www.w3.org/2004/02/skos/core#prefLabel"
       ]
     }
-  }
+  },
+  "deprecatedPredicates": [
+    "http://www.w3.org/2002/07/owl#deprecated",
+    "http://publications.europa.eu/ontology/authority/deprecated"
+  ]
 }
