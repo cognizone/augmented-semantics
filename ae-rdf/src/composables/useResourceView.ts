@@ -14,6 +14,7 @@ import { useEndpointStore, useLanguageStore, useBrowseStore, useTypeConfigStore 
 import { executeSparql, resolveUris, logger, buildResourceTriplesQuery, buildEmbeddedTriplesQuery, buildBlankNodeTriplesQuery, buildInverseEmbedQuery, resolveGraphStrategy, LABEL_PREDICATES, DEFAULT_DEPRECATED_PREDICATES, EMBED_BATCH } from '../services'
 import { labelLangs as computeLabelLangs, pickByLangs } from '../utils/labelLang'
 import { headingParts } from '../utils/propertyOrder'
+import { groupNumber } from '../utils/format'
 import { composeLabels, composeViaLabels, resolveLabels, resolveDeprecated } from './composeLabels'
 
 const RDF_TYPE = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'
@@ -97,6 +98,7 @@ export function useResourceView() {
     // heading composed one type while the label toggles wrote another. (R28)
     const labelType = typeConfig.configType(typeUris)
     const preds = labelType ? typeConfig.get(labelType).label ?? [] : []
+    const grp = new Set(labelType ? typeConfig.get(labelType).number ?? [] : [])
     if (preds.length) {
       // On the resource's OWN page there is no relation context to trim against
       // (composeLabels' selfUri drop only fires for embeds/links), so the full
@@ -108,8 +110,9 @@ export function useResourceView() {
       const items: { value: string; linked: boolean }[] = []
       for (const p of preds) {
         const group = groups.find(g => g.predicate === p)
-        const value = groupValue(group, objLabels)
+        let value = groupValue(group, objLabels)
         if (!value) continue
+        if (grp.has(p)) value = groupNumber(value) ?? value
         items.push({ value, linked: !group?.objects.some(o => o.termType === 'literal') })
       }
       const full = !!(labelType && typeConfig.get(labelType).labelFull)

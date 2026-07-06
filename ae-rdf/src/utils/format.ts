@@ -53,6 +53,27 @@ export function displayType(uri: string, resolved: ResolvedMap, mode: UriDisplay
   return localName(uri)
 }
 
+/**
+ * Group a number's digits with thousands separators for display — `312500` →
+ * `312,500`, sign and any fractional part preserved exactly (`1234.50` →
+ * `1,234.50`). Returns null (caller keeps the raw value) when the string isn't a
+ * plain decimal — scientific notation, non-numeric, empty — so a field ticked by
+ * mistake never mangles text. Lossless: the integer part is grouped via BigInt,
+ * so large values don't hit float precision limits.
+ *
+ * Datatype-BLIND on purpose: grouping is opt-in per field (TypeConfig.number),
+ * because the source data types amounts inconsistently (xsd:decimal on some
+ * MonetaryAmounts, plain xsd:string on others). We group by explicit choice, not
+ * by datatype — so it works regardless of how the value happens to be typed, and
+ * raw values in un-ticked fields (RCN, ids) are never touched.
+ */
+export function groupNumber(value: string): string | null {
+  const m = /^([+-]?)(\d+)(\.\d+)?$/.exec(value.trim())
+  if (!m) return null
+  const [, sign, int, frac = ''] = m
+  return sign + BigInt(int).toLocaleString('en-US') + frac
+}
+
 // Tokens to keep upper-cased even when the source is lower/mixed case, so e.g.
 // `rcn` → "RCN" rather than "Rcn".
 const ACRONYMS = new Set([

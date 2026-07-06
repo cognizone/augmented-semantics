@@ -95,6 +95,12 @@ export interface TypeConfig {
    *  "0"/"false") as a checkbox instead of the raw lexical value. For endpoints
    *  that store booleans as 0/1 without an xsd:boolean datatype (Virtuoso). */
   boolean?: string[]
+  /** Predicate IRIs whose (numeric) values are grouped with thousands separators
+   *  — `312500` → `312,500` — both in the property row and anywhere the value
+   *  composes a label (heading, links, "Has total cost"). Opt-in per field
+   *  (default none): the data types amounts inconsistently, so we group by
+   *  explicit choice, not datatype. Set via the per-row toggle in edit mode. */
+  number?: string[]
   /** Contextual object labels: when a resource of THIS type links out via a
    *  predicate listed here, its object's DISPLAY label is composed from the
    *  given field IRIs instead of the object type's own label — so a node shared

@@ -22,6 +22,7 @@
 import { executeSparql, buildValuesQuery, buildDeprecatedQuery, buildLabelValuesQuery, buildTypeQuery, buildTypeSubclassQuery, buildSkosxlLabelsQuery, LABEL_PREDICATES, LABEL_PREDICATE_BATCH } from '../services'
 import { useTypeConfigStore } from '../stores'
 import { pickByLangs } from '../utils/labelLang'
+import { groupNumber } from '../utils/format'
 import type { SPARQLEndpoint } from '../types/endpoint'
 import type { AppError } from '../types/errors'
 
@@ -300,10 +301,13 @@ export async function composeLabels(
   for (let pass = 0; pass < MAX_LABEL_HOPS; pass++) {
     for (const [s, t] of composeType) {
       const preds = typeConfig.get(t).label ?? []
-      const parts = preds.map(p => resolve(s, p)).filter((c): c is { v: string; lang?: string } => !!c?.v)
+      const grp = new Set(typeConfig.get(t).number ?? [])
+      const parts = preds
+        .map(p => ({ p, r: resolve(s, p) }))
+        .filter((x): x is { p: string; r: { v: string; lang?: string } } => !!x.r?.v)
       if (parts.length) {
-        labelMap.set(s, parts.map(c => c.v).join(' · '))
-        labelLang.set(s, parts[0]!.lang)
+        labelMap.set(s, parts.map(({ p, r }) => (grp.has(p) ? groupNumber(r.v) ?? r.v : r.v)).join(' · '))
+        labelLang.set(s, parts[0]!.r.lang)
       }
     }
   }
@@ -327,6 +331,9 @@ export function composeParts(
   labelMap: Map<string, string>,
   langs: string[],
   selfUri: string,
+  /** Fields whose numeric value is grouped with thousands separators (the
+   *  object type's TypeConfig.number). Default none. */
+  groupFields: Set<string> = new Set(),
 ): string {
   const parts: string[] = []
   for (const f of fields) {
@@ -335,7 +342,7 @@ export function composeParts(
     const lits = arr.filter(x => !x.uri)
     if (lits.length) {
       const pick = pickByLangs(lits.map(x => ({ v: x.v, lang: x.lang })), langs)
-      if (pick?.v) parts.push(pick.v)
+      if (pick?.v) parts.push(groupFields.has(f) ? groupNumber(pick.v) ?? pick.v : pick.v)
       continue
     }
     // URI field: the referent's label, or — since the author explicitly chose this
@@ -429,7 +436,10 @@ export async function composeViaLabels(
   for (const r of requests) {
     const m = new Map<string, string>()
     for (const obj of r.objects) {
-      const label = composeParts(r.fields, valByS.get(obj) ?? new Map(), labelMap, langs, selfUri)
+      // Group the object type's ticked numeric fields (TypeConfig.number).
+      const ot = typeMap.get(obj)
+      const groupFields = new Set(ot ? typeConfig.get(ot).number ?? [] : [])
+      const label = composeParts(r.fields, valByS.get(obj) ?? new Map(), labelMap, langs, selfUri, groupFields)
       if (label) m.set(obj, label)
     }
     if (m.size) out.set(r.predicate, m)

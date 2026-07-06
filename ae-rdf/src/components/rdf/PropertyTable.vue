@@ -10,7 +10,7 @@
 import { computed, ref } from 'vue'
 import { isNavigableIri } from '../../services'
 import { useSettingsStore, useTypeConfigStore } from '../../stores'
-import { qname as toQname, displayPredicate, displayObject, displayType, type ResolvedMap } from '../../utils/format'
+import { qname as toQname, displayPredicate, displayObject, displayType, groupNumber, type ResolvedMap } from '../../utils/format'
 import { moveInOrder, orderedByConfig, sinkAlwaysLast, toggleInList } from '../../utils/propertyOrder'
 import type { PropertyGroup, ResourceObject } from '../../composables'
 
@@ -55,6 +55,8 @@ const props = defineProps<{
   groupByType?: string[]
   /** Predicates whose literal values render as a boolean checkbox (1/true → ✓). */
   booleanParts?: string[]
+  /** Predicates whose numeric values are grouped with thousands separators. */
+  numberParts?: string[]
 }>()
 
 const emit = defineEmits<{
@@ -64,12 +66,14 @@ const emit = defineEmits<{
   toggleLabel: [predicate: string]
   toggleFold: [predicate: string]
   toggleGroupByType: [predicate: string]
+  toggleNumber: [predicate: string]
 }>()
 
 const isHidden = (predicate: string) => props.hidden?.includes(predicate) ?? false
 const isLabelPart = (predicate: string) => props.labelParts?.includes(predicate) ?? false
 const isFoldBoundary = (predicate: string) => props.foldAfter === predicate
 const isGrouped = (predicate: string) => props.groupByType?.includes(predicate) ?? false
+const isNumber = (predicate: string) => props.numberParts?.includes(predicate) ?? false
 
 // Boolean literals: for a predicate configured `boolean`, parse the lexical value
 // (1/true → true, 0/false → false). Returns null for unconfigured predicates or
@@ -173,6 +177,7 @@ const embedLabelParts = (o: ResourceObject) => (embedType(o) ? typeConfig.get(em
 const embedFoldAfter = (o: ResourceObject) => (embedType(o) ? typeConfig.get(embedType(o)!).foldAfter : undefined)
 const embedGroupByType = (o: ResourceObject) => (embedType(o) ? typeConfig.get(embedType(o)!).groupByType ?? [] : [])
 const embedBooleanParts = (o: ResourceObject) => (embedType(o) ? typeConfig.get(embedType(o)!).boolean ?? [] : [])
+const embedNumberParts = (o: ResourceObject) => (embedType(o) ? typeConfig.get(embedType(o)!).number ?? [] : [])
 
 /** Toggle the fold boundary inside an embed (set to this predicate, or clear). */
 function onEmbedToggleFold(o: ResourceObject, predicate: string) {
@@ -186,6 +191,12 @@ function onEmbedToggleFold(o: ResourceObject, predicate: string) {
 function onEmbedToggleGroupByType(o: ResourceObject, predicate: string) {
   const type = embedType(o)
   if (type) typeConfig.set(type, { groupByType: toggleInList(typeConfig.get(type).groupByType ?? [], predicate) })
+}
+
+/** Toggle number-grouping for a predicate inside an embed, on that object's type. */
+function onEmbedToggleNumber(o: ResourceObject, predicate: string) {
+  const type = embedType(o)
+  if (type) typeConfig.set(type, { number: toggleInList(typeConfig.get(type).number ?? [], predicate) })
 }
 
 /** Persist a drag-reorder inside an embed to that object's type config. */
@@ -247,6 +258,18 @@ function isDangling(uri: string): boolean {
 const objText = (o: ResourceObject, predicate?: string) =>
   o.termType === 'uri' ? objectText(o.value, predicate) : o.value
 
+// A literal's display text: grouped with thousands separators when its predicate
+// is ticked `number` (and the value is a plain number), else the raw value.
+const literalText = (o: ResourceObject, predicate: string) =>
+  isNumber(predicate) ? groupNumber(o.value) ?? o.value : o.value
+
+// Long-form prose (abstract/description) gets a capped reading measure; short
+// identity values (Title, names, codes) stay full-width so they don't wrap. The
+// threshold sits well above a typical long title so only real paragraphs trip it.
+// ponytail: tune LONG_TEXT if a class of titles wraps that shouldn't.
+const LONG_TEXT = 160
+const isLongLiteral = (o: ResourceObject) => o.termType === 'literal' && o.value.length > LONG_TEXT
+
 /** Objects of a predicate, sorted by display text (label/qname, else literal). */
 function sortedObjects(group: PropertyGroup): ResourceObject[] {
   return [...group.objects].sort((a, b) =>
@@ -303,6 +326,25 @@ function moreLabel(group: PropertyGroup): string {
   if (matches > OBJECT_CAP)
     return `first ${fmtN(OBJECT_CAP)} of ${fmtN(matches)} matches — open one to keep walking`
   return matches === 1 ? '1 match' : `${fmtN(matches)} matches`
+}
+
+// Flow a flat list of several short values into responsive columns instead of a
+// tall single-file stack (keywords, concept links, countries — "many short
+// repeated values"). Grouped lists carry their own headers, and embedded value
+// objects are wide/structured, so both stay stacked.
+const FLOW_MIN = 3
+// Above this average display length, values are entity references / composed
+// labels (e.g. "ORG NAME · participantOrganisationRole" beneficiary lists), which
+// turn ragged in narrow columns — keep those single-file. Short tags (keywords,
+// concepts, countries) flow. ponytail: tune with the 18rem column-width.
+const FLOW_MAX_AVG_LEN = 40
+function shouldFlow(group: PropertyGroup): boolean {
+  if (isGrouped(group.predicate)) return false
+  const shown = shownObjects(group)
+  if (shown.length < FLOW_MIN) return false
+  if (shown.some(o => embedGroups(o, group.predicate))) return false
+  const avgLen = shown.reduce((n, o) => n + objText(o, group.predicate).length, 0) / shown.length
+  return avgLen <= FLOW_MAX_AVG_LEN
 }
 
 // A rendered row is either a value (`o`), a type subheading (grouped mode), or a
@@ -399,7 +441,13 @@ function graphTitle(o: ResourceObject): string {
             :class="{ on: isGrouped(group.predicate) }"
             :title="isGrouped(group.predicate) ? 'Grouped by type — click to ungroup' : 'Group this list by object type'"
             @click="emit('toggleGroupByType', group.predicate)"
-          >category</button><span v-if="incoming" class="in-arrow" title="incoming — resources that link here">↤</span>{{ predicateLabel(group.predicate) }}</th>
+          >category</button><button
+            v-if="reorderable"
+            class="fold-toggle material-symbols-outlined"
+            :class="{ on: isNumber(group.predicate) }"
+            :title="isNumber(group.predicate) ? 'Grouped as a number — click to disable' : 'Group this value with thousands separators'"
+            @click="emit('toggleNumber', group.predicate)"
+          >123</button><span v-if="incoming" class="in-arrow" title="incoming — resources that link here">↤</span>{{ predicateLabel(group.predicate) }}</th>
         <td class="prop-values">
           <!-- Filter box for big flat lists (all objects already loaded client-side). -->
           <div v-if="showObjFilter(group)" class="prop-filter-wrap">
@@ -422,6 +470,7 @@ function graphTitle(o: ResourceObject): string {
             </button>
           </div>
 
+          <div class="value-flow" :class="{ flow: shouldFlow(group) }">
           <template v-for="(row, ri) in displayRows(group)" :key="ri">
             <!-- Type subheading (grouped mode) -->
             <div v-if="row.header !== undefined" class="type-subheading">
@@ -435,7 +484,7 @@ function graphTitle(o: ResourceObject): string {
             </div>
 
             <!-- A value -->
-            <div v-else-if="row.o" class="prop-value" :title="graphTitle(row.o)">
+            <div v-else-if="row.o" class="prop-value" :class="{ 'long-text': isLongLiteral(row.o) }" :title="graphTitle(row.o)">
               <!-- Embedded value object: inline its triples (recursively — an
                    embedded object may itself embed more, e.g. Site → PostalAddress) -->
               <div v-if="embedGroups(row.o, group.predicate)" class="embed">
@@ -457,6 +506,7 @@ function graphTitle(o: ResourceObject): string {
                   :fold-after="embedFoldAfter(row.o)"
                   :group-by-type="embedGroupByType(row.o)"
                   :boolean-parts="embedBooleanParts(row.o)"
+                  :number-parts="embedNumberParts(row.o)"
                   :embed="true"
                   @navigate="emit('navigate', $event)"
                   @reorder="p => onEmbedReorder(row.o!, p)"
@@ -464,6 +514,7 @@ function graphTitle(o: ResourceObject): string {
                   @toggle-label="p => onEmbedToggleLabel(row.o!, p)"
                   @toggle-fold="p => onEmbedToggleFold(row.o!, p)"
                   @toggle-group-by-type="p => onEmbedToggleGroupByType(row.o!, p)"
+                  @toggle-number="p => onEmbedToggleNumber(row.o!, p)"
                 />
               </div>
 
@@ -494,9 +545,11 @@ function graphTitle(o: ResourceObject): string {
                 {{ boolView(row.o, group.predicate) ? 'true' : 'false' }}
               </span>
 
-              <!-- Literal -->
+              <!-- Literal — verbatim, unless its predicate is ticked `number`
+                   (then grouped with thousands separators). Raw by default so a
+                   code/id (RCN) is never comma-grouped. -->
               <span v-else class="literal">
-                {{ row.o.value }}
+                {{ literalText(row.o, group.predicate) }}
                 <span v-if="row.o.lang" class="tag lang-tag">@{{ row.o.lang }}</span>
                 <span v-else-if="row.o.datatype && row.o.datatype !== XSD_STRING" class="tag datatype-tag">{{ qname(row.o.datatype) }}</span>
               </span>
@@ -534,6 +587,7 @@ function graphTitle(o: ResourceObject): string {
               </span>
             </div>
           </template>
+          </div>
 
           <!-- Flat long lists: collapsed to a count (lazy), revealed capped on demand. -->
           <div v-if="!isGrouped(group.predicate) && isBig(group)" class="prop-more">
@@ -594,6 +648,26 @@ function graphTitle(o: ResourceObject): string {
 .prop-value {
   padding: 0.125rem 0;
   word-break: break-word;
+}
+
+/* Cap the reading measure for long PROSE only (abstracts/descriptions ran
+   ~180ch/line on wide screens). Applied by length, not to every value — a
+   blanket cap wrapped short identity fields like Title onto two lines. */
+.prop-value.long-text {
+  max-width: 72ch;
+}
+
+/* Multi-value flat lists (keywords, concept links, countries) flow into
+   responsive columns instead of a tall single-file stack. `column-width` lets
+   the browser fit as many columns as the width allows; break-inside keeps each
+   value whole. ponytail: tune 18rem if values wrap awkwardly inside a column. */
+.value-flow.flow {
+  columns: 18rem;
+  column-gap: 1.5rem;
+}
+
+.value-flow.flow > .prop-value {
+  break-inside: avoid;
 }
 
 .in-arrow {
