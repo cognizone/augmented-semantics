@@ -11,7 +11,7 @@
  */
 import { ref, computed, type Ref } from 'vue'
 import { useEndpointStore, useLanguageStore, useBrowseStore, useTypeConfigStore } from '../stores'
-import { executeSparql, resolveUris, logger, buildResourceTriplesQuery, buildEmbeddedTriplesQuery, buildInverseEmbedQuery, resolveGraphStrategy, LABEL_PREDICATES, EMBED_BATCH } from '../services'
+import { executeSparql, resolveUris, logger, buildResourceTriplesQuery, buildEmbeddedTriplesQuery, buildBlankNodeTriplesQuery, buildInverseEmbedQuery, resolveGraphStrategy, LABEL_PREDICATES, EMBED_BATCH } from '../services'
 import { labelLangs as computeLabelLangs, pickByLangs } from '../utils/labelLang'
 import { headingParts } from '../utils/propertyOrder'
 import { composeLabels, composeViaLabels, resolveLabels } from './composeLabels'
@@ -380,6 +380,40 @@ export function useResourceView() {
         }
 
         frontier = embedBudget > 0 ? capFrontier(embedFrontier(nestedPairs)) : []
+      }
+
+      // Blank-node value objects (e.g. MappedCode) can't go in a VALUES list — no
+      // stable, queryable id — so the URI embed BFS above skips them. Fetch them
+      // PATH-SCOPED from the resource and inline them: a bnode has no standalone
+      // view, so it's always embedded. One hop (these value objects are flat).
+      if (propGroups.some(g => g.objects.some(o => o.termType === 'bnode'))) {
+        const bnRes = await executeSparql(endpoint, buildBlankNodeTriplesQuery(uri, strategy), { retries: 1 }).catch(() => null)
+        if (!isCurrent()) return
+        const bnObjByKey = new Map<string, ResourceObject>()
+        for (const b of bnRes?.results.bindings ?? []) {
+          const bn = b.b?.value, p = b.p?.value, o = b.o
+          if (!bn || !p || !o) continue
+          if (p === RDF_TYPE) { // the bnode's type → its embed badge + config (order/hide)
+            if (o.type === 'uri') { if (!typeMap.has(bn)) typeMap.set(bn, o.value); embToResolve.add(o.value) }
+            continue
+          }
+          const termType = o.type === 'uri' ? 'uri' : o.type === 'bnode' ? 'bnode' : 'literal'
+          const graph = b.g?.value
+          const key = `${bn} ${p} ${termType} ${o.value} ${o['xml:lang'] ?? ''} ${o.datatype ?? ''}`
+          let obj = bnObjByKey.get(key)
+          if (!obj) {
+            obj = { termType, value: o.value, lang: o['xml:lang'] || undefined, datatype: o.datatype || undefined, graphs: [] }
+            bnObjByKey.set(key, obj)
+            let eg = embeddedMap.get(bn); if (!eg) { eg = []; embeddedMap.set(bn, eg) }
+            let g = eg.find(x => x.predicate === p); if (!g) { g = { predicate: p, objects: [] }; eg.push(g) }
+            g.objects.push(obj)
+          }
+          if (graph && !obj.graphs.includes(graph)) obj.graphs.push(graph)
+          embToResolve.add(p)
+          if (o.type === 'uri') embToResolve.add(o.value)
+          if (o.datatype) embToResolve.add(o.datatype)
+          if (graph) embToResolve.add(graph)
+        }
       }
 
       // Composed labels: override standard labels with the per-type composed label

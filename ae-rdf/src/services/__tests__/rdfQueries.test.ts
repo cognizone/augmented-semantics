@@ -10,6 +10,7 @@ import {
   LABEL_PREDICATES,
   resolveGraphStrategy,
   buildResourceTriplesQuery,
+  buildBlankNodeTriplesQuery,
   buildTypeInventoryQuery,
   buildInstanceCountQuery,
   buildInstanceListQuery,
@@ -49,6 +50,26 @@ describe('buildValuesQuery', () => {
     expect(buildValuesQuery([], [TYPE])).toBe('')
     expect(buildValuesQuery([RES], [])).toBe('')
     expect(buildValuesQuery(['not an iri'], [TYPE])).toBe('')
+  })
+})
+
+describe('buildBlankNodeTriplesQuery', () => {
+  it('binds the bnode relative to the resource and never in a VALUES list', () => {
+    for (const s of [BOTH, NAMED, DEFAULT]) {
+      const q = buildBlankNodeTriplesQuery(RES, s)
+      expect(q).toContain(`<${RES}> ?xp ?b`) // path-scoped from the resource
+      expect(q).toContain('FILTER(isBlank(?b))') // only blank-node objects
+      expect(q).toContain('?b ?p ?o') // fetch the bnode's own triples
+      expect(q).not.toContain('VALUES') // a bnode has no queryable id
+    }
+  })
+  it('selects the graph for quad strategies, omits it for the default-only strategy', () => {
+    expect(buildBlankNodeTriplesQuery(RES, NAMED)).toContain('SELECT ?g ?b ?p ?o')
+    expect(buildBlankNodeTriplesQuery(RES, DEFAULT)).toContain('SELECT ?b ?p ?o')
+    expect(buildBlankNodeTriplesQuery(RES, DEFAULT)).not.toContain('?g')
+  })
+  it('rejects an unsafe resource IRI (injection guard)', () => {
+    expect(() => buildBlankNodeTriplesQuery('http://x/a> } DROP ALL #', DEFAULT)).toThrow()
   })
 })
 

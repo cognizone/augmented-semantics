@@ -141,12 +141,14 @@ const qname = (uri: string) => toQname(uri, props.resolved)
 // back-reference (e.g. Grant reached via isBeneficiaryOf, not its isFundedBy
 // owner) renders as a link even though the object is in the embed map.
 function embedGroups(o: ResourceObject, viaPredicate: string): PropertyGroup[] | null {
-  if (o.termType !== 'uri') return null
+  if (o.termType !== 'uri' && o.termType !== 'bnode') return null
   const groups = props.embedded?.get(o.value)
   if (!groups || (props.ancestors ?? []).includes(o.value)) return null
   const type = embedType(o)
   const cfg = type ? typeConfig.get(type) : {}
-  if (cfg.embedVia && cfg.embedVia !== viaPredicate) return null
+  // A blank node has no standalone view, so it's always inlined; a URI embed
+  // respects embedVia (inline only under its owning predicate).
+  if (o.termType === 'uri' && cfg.embedVia && cfg.embedVia !== viaPredicate) return null
   // Hidden predicates: dropped in normal mode, kept (greyed) in edit mode.
   const hide = cfg.hide ?? []
   let gs = !settings.editMode && !settings.showHidden && hide.length ? groups.filter(g => !hide.includes(g.predicate)) : groups

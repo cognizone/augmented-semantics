@@ -524,6 +524,32 @@ export function buildResourceTriplesQuery(resourceUri: string, s: GraphStrategy)
   return `SELECT ?p ?o WHERE { <${iri}> ?p ?o } ORDER BY ?p`
 }
 
+/**
+ * Triples of a resource's BLANK-NODE objects, fetched PATH-SCOPED from the resource
+ * (`<iri> ?x ?b . ?b ?p ?o`) — a blank node has no stable, queryable id, so it can't
+ * go in a VALUES list like a URI embed; it's only reachable relative to a parent.
+ * `?b` is the blank node (its label is consistent within this result set, and stable
+ * across queries on RDF4J/GraphDB, so the caller correlates it to the parent triple's
+ * bnode object). One hop — the value objects here (e.g. MappedCode) are flat. Graph
+ * handling mirrors buildResourceTriplesQuery so provenance is preserved.
+ */
+export function buildBlankNodeTriplesQuery(resourceUri: string, s: GraphStrategy): string {
+  const iri = sanitizeIri(resourceUri)
+  const link = s.useNamed
+    ? `{ GRAPH ?gl { <${iri}> ?xp ?b } }${s.useDefault ? ` UNION { <${iri}> ?xp ?b }` : ''}`
+    : `<${iri}> ?xp ?b`
+  if (s.useNamed && s.useDefault) {
+    return `SELECT ?g ?b ?p ?o WHERE {
+  ${link} FILTER(isBlank(?b))
+  { GRAPH ?g { ?b ?p ?o } } UNION { ?b ?p ?o FILTER NOT EXISTS { GRAPH ?ng { ?b ?p ?o } } }
+} ORDER BY ?b ?p`
+  }
+  if (s.useNamed) {
+    return `SELECT ?g ?b ?p ?o WHERE { ${link} FILTER(isBlank(?b)) GRAPH ?g { ?b ?p ?o } } ORDER BY ?b ?p`
+  }
+  return `SELECT ?b ?p ?o WHERE { ${link} FILTER(isBlank(?b)) . ?b ?p ?o } ORDER BY ?b ?p`
+}
+
 /* ───────────────────────── Incoming (inverse) relations ───────────────────────── */
 
 /** Graph-aware `?s ?p <iri>` body — who references this resource. */
