@@ -82,6 +82,19 @@ jobs:
           cp _site/rdf-cordis/index.html _site/rdf-cordis/404.html
           cp apps/cordis-rdf/app.json _site/rdf-cordis/config/app.json
 
+      # Build AE RDF — ERA OCR-KG variant (single locked endpoint, branded)
+      - name: Build AE RDF OCR
+        run: pnpm --filter ae-rdf build
+        env:
+          BASE_URL: /augmented-semantics/rdf-ocr/
+
+      - name: Add RDF OCR to site
+        run: |
+          mkdir -p _site/rdf-ocr
+          cp -r ae-rdf/dist/* _site/rdf-ocr/
+          cp _site/rdf-ocr/index.html _site/rdf-ocr/404.html
+          cp apps/ocr-rdf/app.json _site/rdf-ocr/config/app.json
+
       # Build documentation
       - name: Build docs
         run: pnpm docs:build

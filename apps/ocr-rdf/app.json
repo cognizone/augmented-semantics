@@ -1,0 +1,7 @@
+{
+  "appName": "ERA OCR-KG Browser",
+  "endpoints": ["era-ocr-kg-uat"],
+  "prefixes": {
+    "era": "http://data.europa.eu/949/"
+  }
+}
