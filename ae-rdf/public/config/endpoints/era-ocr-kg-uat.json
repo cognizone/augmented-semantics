@@ -1338,7 +1338,12 @@
         "http://purl.org/dc/terms/issued",
         "http://purl.org/dc/terms/created",
         "http://purl.org/dc/terms/modified"
-      ]
+      ],
+      "viaLabels": {
+        "http://xmlns.com/foaf/0.1/homepage": [
+          "http://xmlns.com/foaf/0.1/page"
+        ]
+      }
     },
     "http://data.europa.eu/949/Body": {
       "label": [
@@ -1361,7 +1366,12 @@
         "http://purl.org/dc/terms/issued",
         "http://purl.org/dc/terms/created",
         "http://purl.org/dc/terms/modified"
-      ]
+      ],
+      "viaLabels": {
+        "http://xmlns.com/foaf/0.1/homepage": [
+          "http://xmlns.com/foaf/0.1/page"
+        ]
+      }
     },
     "http://data.europa.eu/949/OrganisationRole": {
       "label": [
@@ -1413,11 +1423,11 @@
     },
     "http://data.europa.eu/949/Document": {
       "label": [
-        "http://xmlns.com/foaf/0.1/page"
+        "http://xmlns.com/foaf/0.1/primaryTopic"
       ],
       "order": [
-        "http://xmlns.com/foaf/0.1/page",
-        "http://xmlns.com/foaf/0.1/primaryTopic"
+        "http://xmlns.com/foaf/0.1/primaryTopic",
+        "http://xmlns.com/foaf/0.1/page"
       ]
     },
     "http://publications.europa.eu/ontology/authority/MappedCode": {

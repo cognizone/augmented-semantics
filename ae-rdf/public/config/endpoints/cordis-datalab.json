@@ -74,7 +74,13 @@
       "hide": [
         "http://data.europa.eu/s66#duration",
         "http://data.europa.eu/s66/v#hasShaclError"
-      ]
+      ],
+      "viaLabels": {
+        "http://data.europa.eu/s66#hasBeneficiary": [
+          "http://data.europa.eu/s66#isRoleOf",
+          "http://data.europa.eu/s66#roleLabel"
+        ]
+      }
     },
     "http://data.europa.eu/s66#OrganisationRole": {
       "render": "embed",
@@ -125,7 +131,13 @@
       "hide": [
         "http://www.w3.org/2000/01/rdf-schema#label"
       ],
-      "foldAfter": "http://data.europa.eu/s66#hasPaymentAmount"
+      "foldAfter": "http://data.europa.eu/s66#hasPaymentAmount",
+      "viaLabels": {
+        "http://data.europa.eu/s66#hasRecipient": [
+          "http://data.europa.eu/s66#isRoleOf",
+          "http://data.europa.eu/s66#roleLabel"
+        ]
+      }
     },
     "http://data.europa.eu/s66#PostalAddress": {
       "render": "embed",
