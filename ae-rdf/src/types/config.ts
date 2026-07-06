@@ -49,6 +49,10 @@ export interface ConfigEndpoint extends SuggestedEndpointSource {
   orphanCounts?: Record<string, number>
   /** ISO timestamp of the last profiling run. */
   profiledAt?: string
+  /** Predicate IRIs that flag a resource as deprecated when asserted `true`
+   *  (profiler-detected from a seed of common flags, e.g. owl:deprecated). The
+   *  app badges such resources. Unset → the app's built-in default. */
+  deprecatedPredicates?: string[]
   /** Language priorities (same as SuggestedEndpoint) */
   suggestedLanguagePriorities?: string[]
 }

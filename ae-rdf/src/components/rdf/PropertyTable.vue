@@ -23,6 +23,8 @@ const props = defineProps<{
    *  label for THIS predicate (TypeConfig.viaLabels), so a shared node reads per
    *  direction. Wins over `labels`; falls through to it when absent. */
   contextLabels?: Map<string, Map<string, string>>
+  /** Object IRIs flagged deprecated — get a "deprecated" badge next to the link. */
+  deprecated?: Set<string>
   /** Object IRI → a type IRI, shown as a badge / fallback text. */
   objectTypes?: Map<string, string>
   /** Object IRI → its triples, when its type is configured render:embed (depth-1). */
@@ -445,6 +447,7 @@ function graphTitle(o: ResourceObject): string {
                   :labels="labels"
                   :context-labels="contextLabels"
                   :object-types="objectTypes"
+                  :deprecated="deprecated"
                   :embedded="embedded"
                   :ancestors="[...(ancestors ?? []), row.o.value]"
                   :show-graphs="showGraphs"
@@ -512,6 +515,9 @@ function graphTitle(o: ResourceObject): string {
                    resource; a link still needs its badge. Grouped lists show the
                    type as the section heading, so no per-row badge there. -->
               <span v-if="row.o.termType === 'uri' && !embedGroups(row.o, group.predicate) && !isGrouped(group.predicate) && objectBadge(row.o.value)" class="tag type-badge">{{ objectBadge(row.o.value) }}</span>
+
+              <!-- Deprecated flag on a linked resource -->
+              <span v-if="row.o.termType === 'uri' && deprecated?.has(row.o.value)" class="deprecated-badge" v-tooltip.top="'Deprecated'">deprecated</span>
 
               <!-- Graph provenance (always known; shown per option a) -->
               <span v-if="showGraphsFor(row.o)" class="graph-tags">

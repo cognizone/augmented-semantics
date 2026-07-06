@@ -172,6 +172,16 @@ const typeInventoryQuery = () => `SELECT ?t (COUNT(DISTINCT ?s) AS ?n) WHERE { ?
 // id — reachable only inline via a parent — so such a type wants render:embed +
 // sidebar:hide, and the app fetches its triples path-scoped (buildBlankNodeTriplesQuery).
 const blankTypesQuery = () => `SELECT ?t (COUNT(?s) AS ?n) WHERE { ?s a ?t FILTER(isBlank(?s)) } GROUP BY ?t ORDER BY DESC(?n)`
+// Reasonable seed of boolean deprecation flags to look for. The ones actually
+// present (asserted `true` somewhere) are written to cfg.deprecatedPredicates and
+// the app badges any resource asserting one. Predicate-indexed, so each probe is
+// cheap. Extend this list as new flags turn up.
+const DEPRECATION_CANDIDATES = [
+  'http://www.w3.org/2002/07/owl#deprecated',
+  'http://publications.europa.eu/ontology/authority/deprecated',
+  'http://data.europa.eu/949/deprecated',
+]
+const deprecatedAskQuery = (p: string) => `ASK { ?s <${p}> ?v FILTER(str(?v) = "true") }`
 // subClassOf among inventory types (both ends filtered to the inventory below).
 const subclassQuery = (uris: string[]) =>
   `SELECT DISTINCT ?sub ?super WHERE { VALUES ?sub { ${values(uris)} } ?sub <${RDFS_SUBCLASS}> ?super . FILTER(?sub != ?super) }`
@@ -587,6 +597,23 @@ async function main() {
       console.error(`  ⬥ ${t.replace(/^.*[#/]/, '')}: ${n}${total ? `/${total}` : ''} blank-node instance(s)${allBlank ? ' (ALL — embed + sidebar:hide)' : ''}`)
     }
     console.error(`  → ${blankCount} blank-node type(s) in ${secs(p)}`)
+  }
+
+  // ── Deprecation flags ───────────────────────────────────────────────────
+  // Probe a seed of common boolean deprecation predicates; the ones actually
+  // asserted `true` become cfg.deprecatedPredicates (the app badges resources
+  // that assert any of them). Each ASK is predicate-indexed, so it's cheap.
+  p = phase('Deprecation flags')
+  const foundDep: string[] = []
+  for (const pred of DEPRECATION_CANDIDATES) {
+    if (await ask(url, deprecatedAskQuery(pred))) foundDep.push(pred)
+  }
+  if (foundDep.length) {
+    cfg.deprecatedPredicates = foundDep
+    console.error(`  → ${foundDep.length} deprecation flag(s): ${foundDep.map(p => p.replace(/^.*[#/]/, '')).join(', ')} in ${secs(p)}`)
+  } else {
+    delete cfg.deprecatedPredicates
+    console.error(`  → none in ${secs(p)}`)
   }
 
   // ── Subclass hierarchy (for the nested sidebar tree) ───────────────────

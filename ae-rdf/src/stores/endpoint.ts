@@ -150,6 +150,7 @@ export const useEndpointStore = defineStore('endpoint', () => {
       subclasses: ce.subclasses,
       composition: ce.composition,
       orphanCounts: ce.orphanCounts,
+      deprecatedPredicates: ce.deprecatedPredicates,
       profiledAt: ce.profiledAt,
       languagePriorities: ce.suggestedLanguagePriorities,
       createdAt: new Date().toISOString(),

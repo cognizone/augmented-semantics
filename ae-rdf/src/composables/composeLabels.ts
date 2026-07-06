@@ -19,7 +19,7 @@
  *
  * @see /spec/ae-rdf
  */
-import { executeSparql, buildValuesQuery, buildLabelValuesQuery, buildTypeQuery, buildTypeSubclassQuery, buildSkosxlLabelsQuery, LABEL_PREDICATES, LABEL_PREDICATE_BATCH } from '../services'
+import { executeSparql, buildValuesQuery, buildDeprecatedQuery, buildLabelValuesQuery, buildTypeQuery, buildTypeSubclassQuery, buildSkosxlLabelsQuery, LABEL_PREDICATES, LABEL_PREDICATE_BATCH } from '../services'
 import { useTypeConfigStore } from '../stores'
 import { pickByLangs } from '../utils/labelLang'
 import type { SPARQLEndpoint } from '../types/endpoint'
@@ -359,6 +359,24 @@ export function composeParts(
  * from composeLabels: it's a single hop off the viewed resource, and its compose
  * rule (composeParts) is deliberately more permissive about referents.
  */
+/**
+ * Which of `uris` are deprecated (assert a deprecation predicate = `true`), added
+ * to `deprecatedSet` in place. Batched + WAF-safe like resolveLabels. Separate,
+ * cheap query so links / instance rows / the heading can all badge consistently.
+ */
+export async function resolveDeprecated(
+  endpoint: SPARQLEndpoint,
+  uris: string[],
+  predicates: readonly string[],
+  deprecatedSet: Set<string>,
+  isCurrent: () => boolean,
+): Promise<void> {
+  if (!uris.length || !predicates.length) return
+  const rows = await fetchValues(endpoint, uris, u => buildDeprecatedQuery(u, predicates))
+  if (!isCurrent()) return
+  for (const b of rows) { const s = b.s?.value; if (s) deprecatedSet.add(s) }
+}
+
 export async function composeViaLabels(
   endpoint: SPARQLEndpoint,
   sourceType: string | null,

@@ -25,7 +25,7 @@ const browseStore = useBrowseStore()
 const settings = useSettingsStore()
 const typeConfig = useTypeConfigStore()
 const { copyToClipboard } = useClipboard()
-const { triples, types, label, loading, error, resolved, objectLabels, contextLabels, objectTypes, embedded, loadResource } = useResourceView()
+const { triples, types, label, loading, error, resolved, objectLabels, contextLabels, objectTypes, embedded, deprecated, deprecatedObjects, loadResource } = useResourceView()
 const showLoading = useDelayedLoading(loading)
 
 // Inverse relations (who points at this resource) — loaded lazily on expand.
@@ -207,6 +207,7 @@ onUnmounted(() => scrollEl.value?.removeEventListener('scroll', onScroll))
       <!-- Title + type chip(s) on one line -->
       <div class="rh-title-row">
         <h2 class="resource-title">{{ heading }}</h2>
+        <span v-if="deprecated" class="deprecated-badge" v-tooltip.top="'This resource is deprecated'">deprecated</span>
         <div v-if="typeChips.length" class="resource-types">
           <button
             v-for="t in typeChips"
@@ -262,7 +263,7 @@ onUnmounted(() => scrollEl.value?.removeEventListener('scroll', onScroll))
 
       <section v-if="relationships.length" class="prop-section">
         <h3 class="section-title">Relationships</h3>
-        <PropertyTable :key="'rel:' + uri" :groups="relationships" :resolved="resolved" :labels="objectLabels" :context-labels="contextLabels" :object-types="objectTypes" :embedded="embedded" :ancestors="uri ? [uri] : []" :show-graphs="showGraphs" :reorderable="canEdit" :hidden="hideList" :label-parts="labelList" :fold-after="foldAfterVal" :group-by-type="groupByTypeList" :boolean-parts="booleanList" @navigate="navigate" @reorder="p => onReorder('rel', p)" @toggle-hide="onToggleHide" @toggle-label="onToggleLabel" @toggle-fold="onToggleFold" @toggle-group-by-type="onToggleGroupByType" />
+        <PropertyTable :key="'rel:' + uri" :groups="relationships" :resolved="resolved" :labels="objectLabels" :context-labels="contextLabels" :object-types="objectTypes" :embedded="embedded" :deprecated="deprecatedObjects" :ancestors="uri ? [uri] : []" :show-graphs="showGraphs" :reorderable="canEdit" :hidden="hideList" :label-parts="labelList" :fold-after="foldAfterVal" :group-by-type="groupByTypeList" :boolean-parts="booleanList" @navigate="navigate" @reorder="p => onReorder('rel', p)" @toggle-hide="onToggleHide" @toggle-label="onToggleLabel" @toggle-fold="onToggleFold" @toggle-group-by-type="onToggleGroupByType" />
       </section>
     </template>
 

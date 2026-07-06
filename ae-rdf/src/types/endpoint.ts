@@ -17,6 +17,7 @@ export interface SPARQLEndpoint {
   subclasses?: Record<string, string[]>         // cached rdfs:subClassOf hierarchy: superclass IRI → subtype IRIs
   composition?: Record<string, CompositionEntry[]> // cached embed composition: class IRI → embed types it contains
   orphanCounts?: Record<string, number>         // cached embed-orphan counts: embed type IRI → instances with no owner
+  deprecatedPredicates?: string[]               // predicates that flag a resource deprecated when asserted `true` (profiler-detected)
   profiledAt?: string                           // ISO timestamp of the last property-profiling run
   selectedGraphs?: string[]
   languagePriorities?: string[]  // User-ordered language codes

@@ -214,3 +214,22 @@
 .p-paginator .p-disabled {
   opacity: 0.4;
 }
+
+/* Deprecated badge — mirrors AE SKOS (consider extracting to @ae/styles if a 3rd
+   consumer lands). Shown on a deprecated resource's header, links, instance rows. */
+.deprecated-badge {
+  font-size: 0.625rem;
+  font-weight: 500;
+  text-transform: lowercase;
+  background: color-mix(in srgb, var(--ae-status-warning) 20%, transparent);
+  color: color-mix(in srgb, var(--ae-status-warning) 70%, black);
+  padding: 0.1rem 0.35rem;
+  border-radius: 3px;
+  margin-left: 0.25rem;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+
+:root.dark .deprecated-badge {
+  color: var(--ae-status-warning);
+}

@@ -19,12 +19,14 @@ import {
   resolveGraphStrategy,
   resolveSearchPredicates,
 } from '../services'
-import { composeLabels, resolveLabels } from './composeLabels'
+import { composeLabels, resolveLabels, resolveDeprecated } from './composeLabels'
+import { DEFAULT_DEPRECATED_PREDICATES } from '../services'
 import { labelLangs } from '../utils/labelLang'
 
 export interface Instance {
   uri: string
   label: string
+  deprecated?: boolean
 }
 
 export const PAGE_SIZE = 25
@@ -115,7 +117,10 @@ export function useInstanceList() {
         await composeLabels(endpoint, labelMap, typeMap, typeConfig, langs, '', isCurrent)
         if (!isCurrent()) return
       }
-      instances.value = uris.map(u => ({ uri: u, label: labelMap.get(u) ?? u }))
+      const depSet = new Set<string>()
+      await resolveDeprecated(endpoint, uris, endpoint.deprecatedPredicates ?? [...DEFAULT_DEPRECATED_PREDICATES], depSet, isCurrent)
+      if (!isCurrent()) return
+      instances.value = uris.map(u => ({ uri: u, label: labelMap.get(u) ?? u, deprecated: depSet.has(u) }))
 
       if (needCount) {
         executeSparql(endpoint, buildInstanceCountQuery(type, strategy, term, searchPredicates, via), { retries: 1 })

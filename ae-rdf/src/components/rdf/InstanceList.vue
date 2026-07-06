@@ -101,7 +101,7 @@ function onPage(e: { page: number }) {
       <ul v-if="instances.length" class="il-items">
         <li v-for="inst in instances" :key="inst.uri">
           <button class="il-item" :title="inst.uri" @click="open(inst.uri)">
-            <span class="il-label">{{ inst.label }}</span>
+            <span class="il-label">{{ inst.label }}<span v-if="inst.deprecated" class="deprecated-badge">deprecated</span></span>
             <span class="il-uri">{{ inst.uri }}</span>
           </button>
         </li>

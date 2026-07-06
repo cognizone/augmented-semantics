@@ -448,6 +448,19 @@ export function buildValuesQuery(uris: string[], predicates: string[]): string {
   return `SELECT ?s ?p ?v WHERE { VALUES ?s { ${s} } VALUES ?p { ${p} } ?s ?p ?v }`
 }
 
+/** Built-in deprecation flag used when an endpoint has no configured/profiled set. */
+export const DEFAULT_DEPRECATED_PREDICATES = ['http://www.w3.org/2002/07/owl#deprecated'] as const
+
+/** Which of `uris` are deprecated — assert any of `predicates` with a `true`
+ *  value (owl:deprecated & friends). The flag may live in the default graph or a
+ *  named graph, so check both. Returns just the deprecated subjects. */
+export function buildDeprecatedQuery(uris: string[], predicates: readonly string[]): string {
+  const s = iriValues(uris, 256)
+  const p = iriValues([...predicates])
+  if (!s || !p) return ''
+  return `SELECT DISTINCT ?s WHERE { VALUES ?s { ${s} } VALUES ?p { ${p} } { ?s ?p ?d } UNION { GRAPH ?g { ?s ?p ?d } } FILTER(str(?d) = "true") }`
+}
+
 /**
  * Triples of several resources at once (batch), for inline embedding of value
  * objects. Depth-1, and graph-aware: `?g` is projected so the caller folds each

@@ -11,10 +11,10 @@
  */
 import { ref, computed, type Ref } from 'vue'
 import { useEndpointStore, useLanguageStore, useBrowseStore, useTypeConfigStore } from '../stores'
-import { executeSparql, resolveUris, logger, buildResourceTriplesQuery, buildEmbeddedTriplesQuery, buildBlankNodeTriplesQuery, buildInverseEmbedQuery, resolveGraphStrategy, LABEL_PREDICATES, EMBED_BATCH } from '../services'
+import { executeSparql, resolveUris, logger, buildResourceTriplesQuery, buildEmbeddedTriplesQuery, buildBlankNodeTriplesQuery, buildInverseEmbedQuery, resolveGraphStrategy, LABEL_PREDICATES, DEFAULT_DEPRECATED_PREDICATES, EMBED_BATCH } from '../services'
 import { labelLangs as computeLabelLangs, pickByLangs } from '../utils/labelLang'
 import { headingParts } from '../utils/propertyOrder'
-import { composeLabels, composeViaLabels, resolveLabels } from './composeLabels'
+import { composeLabels, composeViaLabels, resolveLabels, resolveDeprecated } from './composeLabels'
 
 const RDF_TYPE = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'
 
@@ -51,6 +51,8 @@ export function useResourceView() {
   // viaLabels: overrides a linked object's label per referring predicate.
   const contextLabels: Ref<Map<string, Map<string, string>>> = ref(new Map())
   const objectTypes: Ref<Map<string, string>> = ref(new Map()) // object IRI → a type IRI
+  const deprecated = ref(false) // the viewed resource is flagged deprecated
+  const deprecatedObjects: Ref<Set<string>> = ref(new Set()) // linked/embedded objects flagged deprecated
   const embedded: Ref<Map<string, PropertyGroup[]>> = ref(new Map()) // embeddable object IRI → its triples
   let requestId = 0
 
@@ -143,6 +145,8 @@ export function useResourceView() {
     types.value = []
     objectLabels.value = new Map()
     contextLabels.value = new Map()
+    deprecated.value = false
+    deprecatedObjects.value = new Set()
     objectTypes.value = new Map()
     embedded.value = new Map()
     resolved.value = new Map()
@@ -431,6 +435,16 @@ export function useResourceView() {
       const contextMap = await composeViaLabels(endpoint, srcType, propGroups, labelMap, typeMap, typeConfig, labelLangs(), uri, isCurrent)
       if (!isCurrent()) return
 
+      // Deprecation: the viewed resource is flagged from its own triples (a
+      // deprecation predicate asserted `true`); linked/embedded objects are checked
+      // in one batched query so links + the header badge consistently. Predicates
+      // are profiler-detected (endpoint.deprecatedPredicates) or the built-in default.
+      const depPreds = endpoint.deprecatedPredicates ?? [...DEFAULT_DEPRECATED_PREDICATES]
+      const depSelf = propGroups.some(g => depPreds.includes(g.predicate) && g.objects.some(o => o.termType === 'literal' && o.value === 'true'))
+      const depObjects = new Set<string>()
+      await resolveDeprecated(endpoint, [...objectIris], depPreds, depObjects, isCurrent)
+      if (!isCurrent()) return
+
       // Resolve prefixes for everything the embeds introduced (predicates, object
       // IRIs, datatypes, graphs) plus all object types (badges). resolveUris is
       // cached, so re-listing already-resolved IRIs is cheap.
@@ -461,6 +475,8 @@ export function useResourceView() {
       resolved.value = resolvedMap
       objectLabels.value = labelMap
       contextLabels.value = contextMap
+      deprecated.value = depSelf
+      deprecatedObjects.value = depObjects
       objectTypes.value = typeMap
       embedded.value = embeddedMap
 
@@ -478,5 +494,5 @@ export function useResourceView() {
     }
   }
 
-  return { triples, types, label, loading, error, resolved, objectLabels, contextLabels, objectTypes, embedded, loadResource }
+  return { triples, types, label, loading, error, resolved, objectLabels, contextLabels, objectTypes, embedded, deprecated, deprecatedObjects, loadResource }
 }

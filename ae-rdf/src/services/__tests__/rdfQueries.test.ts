@@ -11,6 +11,7 @@ import {
   resolveGraphStrategy,
   buildResourceTriplesQuery,
   buildBlankNodeTriplesQuery,
+  buildDeprecatedQuery,
   buildTypeInventoryQuery,
   buildInstanceCountQuery,
   buildInstanceListQuery,
@@ -70,6 +71,23 @@ describe('buildBlankNodeTriplesQuery', () => {
   })
   it('rejects an unsafe resource IRI (injection guard)', () => {
     expect(() => buildBlankNodeTriplesQuery('http://x/a> } DROP ALL #', DEFAULT)).toThrow()
+  })
+})
+
+describe('buildDeprecatedQuery', () => {
+  const OWL = 'http://www.w3.org/2002/07/owl#deprecated'
+  it('returns subjects asserting a predicate = "true", checking default + named graphs', () => {
+    const q = buildDeprecatedQuery([RES], [OWL])
+    expect(q).toContain(`VALUES ?s { <${RES}> }`)
+    expect(q).toContain(`VALUES ?p { <${OWL}> }`)
+    expect(q).toContain('{ ?s ?p ?d }') // default graph
+    expect(q).toContain('GRAPH ?g { ?s ?p ?d }') // any named graph
+    expect(q).toContain('FILTER(str(?d) = "true")')
+  })
+  it('returns empty when there are no safe subjects or predicates', () => {
+    expect(buildDeprecatedQuery([], [OWL])).toBe('')
+    expect(buildDeprecatedQuery([RES], [])).toBe('')
+    expect(buildDeprecatedQuery(['not an iri'], [OWL])).toBe('')
   })
 })
 
