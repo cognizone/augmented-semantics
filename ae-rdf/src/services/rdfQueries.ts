@@ -590,5 +590,34 @@ export function buildIncomingQuery(resourceUri: string, s: GraphStrategy, limit 
   const iri = sanitizeIri(resourceUri)
   const lim = Math.max(1, Math.floor(limit))
   const proj = s.useNamed ? '?s ?g ?p' : '?s ?p'
-  return `SELECT ${proj} WHERE { ${incomingPattern(iri, s)} } ORDER BY ?p ?s LIMIT ${lim}`
+  // Blank-node referrers are anonymous (no navigable view); they're fetched
+  // separately WITH their own triples by buildIncomingBlankNodeQuery and inlined,
+  // so exclude them here to avoid a bare, useless id and a cross-query id mismatch.
+  return `SELECT ${proj} WHERE { ${incomingPattern(iri, s)} FILTER(!isBlank(?s)) } ORDER BY ?p ?s LIMIT ${lim}`
+}
+
+/**
+ * Blank-node referrers of a resource, WITH their own triples, in one query so the
+ * bnode label is self-consistent (`?b ?xp <iri> . ?b ?p ?o`). `?xp` is the
+ * predicate pointing at the resource (the group), `?p ?o` the bnode's own
+ * properties — inlined in "Referenced by" (a restriction reads "onProperty …
+ * someValuesFrom Class", not a bare `b10081`). One hop; graph handling mirrors
+ * buildBlankNodeTriplesQuery. Capped: a hub can be referenced by many bnodes.
+ */
+export function buildIncomingBlankNodeQuery(resourceUri: string, s: GraphStrategy, limit = 2000): string {
+  const iri = sanitizeIri(resourceUri)
+  const lim = Math.max(1, Math.floor(limit))
+  const link = s.useNamed
+    ? `{ GRAPH ?gl { ?b ?xp <${iri}> } }${s.useDefault ? ` UNION { ?b ?xp <${iri}> }` : ''}`
+    : `?b ?xp <${iri}>`
+  if (s.useNamed && s.useDefault) {
+    return `SELECT ?g ?xp ?b ?p ?o WHERE {
+  ${link} FILTER(isBlank(?b))
+  { GRAPH ?g { ?b ?p ?o } } UNION { ?b ?p ?o FILTER NOT EXISTS { GRAPH ?ng { ?b ?p ?o } } }
+} ORDER BY ?b ?p LIMIT ${lim}`
+  }
+  if (s.useNamed) {
+    return `SELECT ?g ?xp ?b ?p ?o WHERE { ${link} FILTER(isBlank(?b)) GRAPH ?g { ?b ?p ?o } } ORDER BY ?b ?p LIMIT ${lim}`
+  }
+  return `SELECT ?xp ?b ?p ?o WHERE { ${link} FILTER(isBlank(?b)) . ?b ?p ?o } ORDER BY ?b ?p LIMIT ${lim}`
 }

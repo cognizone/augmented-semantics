@@ -9,12 +9,13 @@
  */
 import { ref, type Ref } from 'vue'
 import { useEndpointStore, useBrowseStore, useLanguageStore, useTypeConfigStore } from '../stores'
-import { executeSparql, resolveUris, logger, buildIncomingQuery, buildIncomingCountQuery, resolveGraphStrategy } from '../services'
+import { executeSparql, resolveUris, logger, buildIncomingQuery, buildIncomingCountQuery, buildIncomingBlankNodeQuery, resolveGraphStrategy } from '../services'
 import { composeLabels, resolveLabels } from './composeLabels'
 import { labelLangs } from '../utils/labelLang'
 import type { PropertyGroup, ResourceObject } from './useResourceView'
 
 const INCOMING_LIMIT = 1000
+const RDF_TYPE = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'
 
 type ResolvedMap = Map<string, { prefix: string; localName: string }>
 
@@ -34,6 +35,7 @@ export function useIncomingRelations() {
   const resolved: Ref<ResolvedMap> = ref(new Map())
   const objectLabels: Ref<Map<string, string>> = ref(new Map())
   const objectTypes: Ref<Map<string, string>> = ref(new Map())
+  const embedded: Ref<Map<string, PropertyGroup[]>> = ref(new Map()) // bnode referrer → its own triples (inlined)
   let requestId = 0
   let countReqId = 0
 
@@ -47,6 +49,7 @@ export function useIncomingRelations() {
     error.value = null
     objectLabels.value = new Map()
     objectTypes.value = new Map()
+    embedded.value = new Map()
     requestId++ // invalidate any in-flight list load() — else it paints the previous resource's data (isCurrent stays true)
     countReqId++ // invalidate any in-flight eager count
   }
@@ -81,10 +84,11 @@ export function useIncomingRelations() {
     error.value = null
     const strategy = resolveGraphStrategy(browseStore.graph)
 
-    let listQuery: string, countQuery: string
+    let listQuery: string, countQuery: string, blankQuery: string
     try {
       listQuery = buildIncomingQuery(uri, strategy, INCOMING_LIMIT)
       countQuery = buildIncomingCountQuery(uri, strategy)
+      blankQuery = buildIncomingBlankNodeQuery(uri, strategy)
     } catch (e) {
       logger.warn('useIncomingRelations', 'Rejected unsafe resource URI', { uri, error: e })
       error.value = 'Invalid resource URI'
@@ -94,10 +98,12 @@ export function useIncomingRelations() {
 
     logger.info('useIncomingRelations', 'Loading incoming relations', { uri })
     try {
-      // Count and list in parallel; a slow/failed count shouldn't block the list.
-      const [listRes, countRes] = await Promise.all([
+      // Count, list, and blank-node referrers in parallel; a slow/failed count or
+      // blank query shouldn't block the list.
+      const [listRes, countRes, blankRes] = await Promise.all([
         executeSparql(endpoint, listQuery, { retries: 1 }),
         executeSparql(endpoint, countQuery, { retries: 1 }).catch(() => null),
+        executeSparql(endpoint, blankQuery, { retries: 1 }).catch(() => null),
       ])
       if (!isCurrent()) return
 
@@ -133,12 +139,61 @@ export function useIncomingRelations() {
         if (graph) toResolve.add(graph)
       }
 
-      // Labels + most-specific types for the referencing subjects, via the shared
-      // resolver (batched/WAF-safe label lookup + precedence + SKOS-XL).
+      // Blank-node referrers: anonymous, so instead of a bare useless id we inline
+      // their OWN triples (a restriction reads "onProperty … someValuesFrom Class").
+      // Grouped under the predicate that points here (?xp); rdf:type is pulled out
+      // as the badge, the rest becomes the inlined body. The bnode label is
+      // self-consistent within this single query (buildIncomingBlankNodeQuery).
+      const embedMap = new Map<string, PropertyGroup[]>() // bnode → its prop groups
+      const bnodeTypes = new Map<string, string>() // bnode → rdf:type (badge); kept OUT of typeMap so composeLabels never VALUES-queries a bnode id
+      const embedObjectIris = new Set<string>() // URI objects inside bnode props — need labels/types too
+      const bnodeShown = new Set<string>()
+      for (const b of blankRes?.results.bindings ?? []) {
+        const bn = b.b?.value, xp = b.xp?.value, p = b.p?.value, o = b.o
+        if (!bn || !xp || !p || !o) continue
+        const graph = b.g?.value
+        // The referrer object, under its pointing predicate group (create the
+        // group if the URI list didn't already have this predicate).
+        let entry = byPredicate.get(xp)
+        if (!entry) {
+          const group: PropertyGroup = { predicate: xp, objects: [] }
+          entry = { group, subjects: new Map() }
+          byPredicate.set(xp, entry)
+          out.push(group)
+        }
+        let ro = entry.subjects.get(bn)
+        if (!ro) {
+          ro = { termType: 'bnode', value: bn, graphs: [] }
+          entry.subjects.set(bn, ro)
+          entry.group.objects.push(ro)
+          bnodeShown.add(bn)
+          toResolve.add(xp)
+        }
+        if (graph && !ro.graphs.includes(graph)) ro.graphs.push(graph)
+        if (p === RDF_TYPE) {
+          if (o.type === 'uri' && !bnodeTypes.has(bn)) { bnodeTypes.set(bn, o.value); toResolve.add(o.value) }
+          continue
+        }
+        // The bnode's own property → an inlined row.
+        let bg = embedMap.get(bn)
+        if (!bg) { bg = []; embedMap.set(bn, bg) }
+        let g = bg.find(x => x.predicate === p)
+        if (!g) { g = { predicate: p, objects: [] }; bg.push(g) }
+        const termType = o.type === 'uri' ? 'uri' : o.type === 'bnode' ? 'bnode' : 'literal'
+        g.objects.push({ termType, value: o.value, lang: o['xml:lang'] || undefined, datatype: o.datatype || undefined, graphs: graph ? [graph] : [] })
+        toResolve.add(p)
+        if (o.type === 'uri') { toResolve.add(o.value); embedObjectIris.add(o.value) }
+        if (o.datatype) toResolve.add(o.datatype)
+      }
+
+      // Labels + most-specific types for the referencing subjects (and the URI
+      // objects inside inlined bnode props), via the shared resolver (batched/WAF-
+      // safe label lookup + precedence + SKOS-XL).
       const labelMap = new Map<string, string>()
       const typeMap = new Map<string, string>()
-      if (subjectIris.size) {
-        await resolveLabels(endpoint, [...subjectIris], labelLangs(endpoint.languagePriorities, languageStore.preferred), labelMap, typeMap, isCurrent)
+      const toLabel = new Set([...subjectIris, ...embedObjectIris])
+      if (toLabel.size) {
+        await resolveLabels(endpoint, [...toLabel], labelLangs(endpoint.languagePriorities, languageStore.preferred), labelMap, typeMap, isCurrent)
         if (!isCurrent()) return
       }
 
@@ -148,6 +203,9 @@ export function useIncomingRelations() {
       await composeLabels(endpoint, labelMap, typeMap, typeConfig, labelLangs(endpoint.languagePriorities, languageStore.preferred), uri, isCurrent)
       if (!isCurrent()) return
       for (const t of typeMap.values()) toResolve.add(t) // incl. referent types the walk found
+      // Bnode type badges: merged AFTER composeLabels so bnode ids never reach its
+      // VALUES queries. A real referrer type wins if one somehow shares the key.
+      for (const [bn, t] of bnodeTypes) if (!typeMap.has(bn)) typeMap.set(bn, t)
 
       const resolvedMap = await resolveUris([...toResolve])
       if (!isCurrent()) return
@@ -155,6 +213,7 @@ export function useIncomingRelations() {
       groups.value = out
       objectLabels.value = labelMap
       objectTypes.value = typeMap
+      embedded.value = embedMap
       resolved.value = resolvedMap
       // Only overwrite on success: a failed list-time count must NOT erase the
       // value the eager loadCount() already put in the headline (R27). count stays
@@ -164,7 +223,7 @@ export function useIncomingRelations() {
       // multiplies rows per graph — hitting the row cap does NOT mean 1,000
       // distinct subjects. Report the real count assembled, and only flag
       // truncation when more subjects exist than we displayed.
-      shown.value = subjectIris.size
+      shown.value = subjectIris.size + bnodeShown.size
       truncated.value = bindings.length >= INCOMING_LIMIT && (count.value === null || count.value > shown.value)
       loaded.value = true
       logger.info('useIncomingRelations', 'Loaded incoming relations', { uri, predicates: out.length, count: count.value })
@@ -178,5 +237,5 @@ export function useIncomingRelations() {
     }
   }
 
-  return { groups, count, shown, truncated, loading, loaded, error, resolved, objectLabels, objectTypes, load, loadCount, reset }
+  return { groups, count, shown, truncated, loading, loaded, error, resolved, objectLabels, objectTypes, embedded, load, loadCount, reset }
 }

@@ -28,6 +28,7 @@ import {
   buildPathCountQuery,
   buildIncomingCountQuery,
   buildIncomingQuery,
+  buildIncomingBlankNodeQuery,
   buildIncomingPredicatesQuery,
   buildEmbedOrphanQuery,
 } from '../rdfQueries'
@@ -512,6 +513,22 @@ describe('incoming (inverse) relations', () => {
     expect(def).toContain('SELECT ?s ?p')
     expect(def).not.toContain('GRAPH')
     expect(buildIncomingQuery(RES, BOTH).split('LIMIT')[1].trim()).toBe('1000') // default cap
+  })
+  it('list: excludes blank-node referrers (fetched with their triples separately)', () => {
+    expect(buildIncomingQuery(RES, DEFAULT)).toContain('FILTER(!isBlank(?s))')
+    expect(buildIncomingQuery(RES, BOTH)).toContain('FILTER(!isBlank(?s))')
+  })
+  it('blank referrers: inverse link + isBlank + the bnode’s own triples, capped', () => {
+    const def = buildIncomingBlankNodeQuery(RES, DEFAULT)
+    expect(def).toContain(`?b ?xp <${RES}>`)      // the bnode points AT the resource
+    expect(def).toContain('FILTER(isBlank(?b))')
+    expect(def).toContain('?b ?p ?o')             // and we pull its own properties
+    expect(def).toContain('SELECT ?xp ?b ?p ?o')
+    expect(def).not.toContain('GRAPH')
+    expect(def).toContain('LIMIT 2000')
+    expect(buildIncomingBlankNodeQuery(RES, NAMED)).toContain('SELECT ?g ?xp ?b ?p ?o')
+    expect(buildIncomingBlankNodeQuery(RES, BOTH)).toContain('FILTER NOT EXISTS')
+    expect(() => buildIncomingBlankNodeQuery('http://e.org/x> } DROP', BOTH)).toThrow()
   })
 })
 

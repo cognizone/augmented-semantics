@@ -40,6 +40,7 @@ const {
   resolved: incomingResolved,
   objectLabels: incomingLabels,
   objectTypes: incomingTypes,
+  embedded: incomingEmbedded,
   load: loadIncoming,
   loadCount: loadIncomingCount,
   reset: resetIncoming,
@@ -310,7 +311,7 @@ onUnmounted(() => scrollEl.value?.removeEventListener('scroll', onScroll))
                 {{ showGraphs ? 'Hide graphs' : 'Show graphs' }}
               </button>
             </div>
-            <PropertyTable :groups="incomingGroups" :resolved="incomingResolved" :labels="incomingLabels" :object-types="incomingTypes" :show-graphs="showGraphs" :incoming="true" @navigate="navigate" />
+            <PropertyTable :groups="incomingGroups" :resolved="incomingResolved" :labels="incomingLabels" :object-types="incomingTypes" :embedded="incomingEmbedded" :show-graphs="showGraphs" :incoming="true" @navigate="navigate" />
             <p v-if="incomingTruncated" class="inc-truncated">
               Showing the first {{ incomingShown.toLocaleString('en-US') }}{{ incomingCount !== null ? ` of ${incomingCount.toLocaleString('en-US')}` : '' }} — open a specific one to keep walking.
             </p>
