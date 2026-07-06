@@ -238,7 +238,8 @@
           "uri": "http://xmlns.com/foaf/0.1/name",
           "count": 23742,
           "max": 21,
-          "min": 0
+          "min": 0,
+          "maxLen": 256
         },
         {
           "uri": "http://www.w3.org/ns/org#hasSite",
@@ -256,25 +257,29 @@
           "uri": "http://purl.org/dc/terms/identifier",
           "count": 13703,
           "max": 10,
-          "min": 0
+          "min": 0,
+          "maxLen": 14
         },
         {
           "uri": "http://purl.org/goodrelations/v1#legalNumber",
           "count": 11811,
           "max": 6,
-          "min": 0
+          "min": 0,
+          "maxLen": 64
         },
         {
           "uri": "http://purl.org/goodrelations/v1#vatID",
           "count": 10304,
           "max": 3,
-          "min": 0
+          "min": 0,
+          "maxLen": 34
         },
         {
           "uri": "http://purl.org/dc/terms/issued",
           "count": 8455,
           "max": 4,
-          "min": 0
+          "min": 0,
+          "maxLen": 10
         },
         {
           "uri": "http://xmlns.com/foaf/0.1/phone",
@@ -286,7 +291,8 @@
           "uri": "http://xmlns.com/foaf/0.1/nick",
           "count": 6898,
           "max": 20,
-          "min": 0
+          "min": 0,
+          "maxLen": 64
         },
         {
           "uri": "http://data.europa.eu/949/organisationSize",
@@ -310,7 +316,8 @@
           "uri": "http://data.europa.eu/949/faxNumber",
           "count": 2406,
           "max": 3,
-          "min": 0
+          "min": 0,
+          "maxLen": 49
         },
         {
           "uri": "http://purl.org/dc/terms/replaces",
@@ -322,55 +329,64 @@
           "uri": "http://purl.org/goodrelations/v1#legalName",
           "count": 649,
           "max": 2,
-          "min": 0
+          "min": 0,
+          "maxLen": 137
         },
         {
           "uri": "http://data.europa.eu/949/organisationCode",
           "count": 214,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 4
         },
         {
           "uri": "http://data.europa.eu/949/platformDataParameter",
           "count": 214,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 4
         },
         {
           "uri": "http://data.europa.eu/949/rinfTechnicalDataCharacteristic",
           "count": 214,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 4
         },
         {
           "uri": "http://data.europa.eu/949/tunnelDataParameter",
           "count": 214,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 4
         },
         {
           "uri": "http://data.europa.eu/949/sidingDataParameter",
           "count": 214,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 4
         },
         {
           "uri": "http://data.europa.eu/949/infraSubsystemDataParameter",
           "count": 214,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 4
         },
         {
           "uri": "http://data.europa.eu/949/solGenericDataParameter",
           "count": 214,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 4
         },
         {
           "uri": "http://data.europa.eu/949/trackGenericDataParameter",
           "count": 214,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 4
         },
         {
           "uri": "http://www.w3.org/ns/org#hasMembership",
@@ -458,39 +474,63 @@
       "properties": [
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 0
+          "count": 276087,
+          "max": 3,
+          "min": 3
         },
         {
           "uri": "https://w3id.org/vpa#checkedRequirement",
-          "count": 0
+          "count": 164257,
+          "max": 45,
+          "min": 0
         },
         {
           "uri": "http://purl.org/dc/terms/identifier",
-          "count": 0
+          "count": 29384,
+          "max": 1,
+          "min": 0,
+          "maxLen": 30
         },
         {
           "uri": "https://w3id.org/vpa#withRestriction",
-          "count": 0
-        },
-        {
-          "uri": "http://purl.org/dc/terms/issued",
-          "count": 0
-        },
-        {
-          "uri": "https://w3id.org/vpa#versionNumber",
-          "count": 0
-        },
-        {
-          "uri": "http://www.w3.org/2000/01/rdf-schema#comment",
-          "count": 0
-        },
-        {
-          "uri": "http://www.w3.org/2004/02/skos/core#note",
-          "count": 0
+          "count": 27642,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://purl.org/dc/terms/description",
-          "count": 0
+          "count": 5142,
+          "max": 1,
+          "min": 0,
+          "maxLen": 1601
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#comment",
+          "count": 2968,
+          "max": 1,
+          "min": 0,
+          "maxLen": 5738
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#note",
+          "count": 2968,
+          "max": 1,
+          "min": 0,
+          "maxLen": 35
+        },
+        {
+          "uri": "https://w3id.org/vpa#versionNumber",
+          "count": 1376,
+          "max": 1,
+          "min": 0,
+          "maxLen": 10
+        },
+        {
+          "uri": "http://purl.org/dc/terms/issued",
+          "count": 1284,
+          "max": 1,
+          "min": 0,
+          "maxLen": 10
         }
       ]
     },
@@ -507,19 +547,22 @@
           "uri": "http://www.w3.org/2000/01/rdf-schema#comment",
           "count": 49317,
           "max": 4,
-          "min": 0
+          "min": 0,
+          "maxLen": 24479
         },
         {
           "uri": "http://data.europa.eu/949/nonCodedRestrictions",
           "count": 48,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 1354
         },
         {
           "uri": "http://data.europa.eu/949/vehicleTypeTechnicalDataCharacteristic",
           "count": 48,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 1354
         }
       ],
       "embed": {
@@ -575,7 +618,8 @@
           "uri": "http://purl.org/dc/terms/issued",
           "count": 23246,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 10
         },
         {
           "uri": "http://purl.org/dc/terms/valid",
@@ -593,19 +637,22 @@
           "uri": "http://purl.org/dc/terms/dateAccepted",
           "count": 21377,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 20
         },
         {
           "uri": "http://data.europa.eu/949/europeanIdentificationNumber",
           "count": 21207,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 31
         },
         {
           "uri": "http://purl.org/dc/terms/dateSubmitted",
           "count": 20387,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 20
         },
         {
           "uri": "http://xmlns.com/foaf/0.1/homepage",
@@ -623,19 +670,22 @@
           "uri": "http://data.europa.eu/949/coversHighSpeed",
           "count": 17828,
           "max": 2,
-          "min": 0
+          "min": 0,
+          "maxLen": 5
         },
         {
           "uri": "http://data.europa.eu/949/coversDangerousGoods",
           "count": 17818,
           "max": 2,
-          "min": 0
+          "min": 0,
+          "maxLen": 5
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#comment",
           "count": 16315,
           "max": 4,
-          "min": 0
+          "min": 0,
+          "maxLen": 5829
         },
         {
           "uri": "http://data.europa.eu/949/vehicleTypeSubCategory",
@@ -653,13 +703,15 @@
           "uri": "http://data.europa.eu/949/relatedCertificate",
           "count": 15578,
           "max": 2,
-          "min": 0
+          "min": 0,
+          "maxLen": 18
         },
         {
           "uri": "http://purl.org/dc/terms/source",
           "count": 15253,
           "max": 8,
-          "min": 0
+          "min": 0,
+          "maxLen": 2039
         },
         {
           "uri": "https://w3id.org/vpa#permits",
@@ -671,25 +723,29 @@
           "uri": "http://www.w3.org/2004/02/skos/core#editorialNote",
           "count": 14615,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 66
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#label",
           "count": 14438,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 52
         },
         {
           "uri": "http://purl.org/dc/terms/spatial",
           "count": 14325,
           "max": 2,
-          "min": 0
+          "min": 0,
+          "maxLen": 5829
         },
         {
           "uri": "http://purl.org/dc/terms/modified",
           "count": 12151,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 20
         },
         {
           "uri": "http://www.w3.org/ns/prov#wasInvalidatedBy",
@@ -719,31 +775,36 @@
           "uri": "http://data.europa.eu/949/coversOnlyShunting",
           "count": 9999,
           "max": 2,
-          "min": 0
+          "min": 0,
+          "maxLen": 5
         },
         {
           "uri": "http://www.w3.org/ns/prov#invalidatedAtTime",
           "count": 9638,
           "max": 3,
-          "min": 0
+          "min": 0,
+          "maxLen": 20
         },
         {
           "uri": "http://purl.org/dc/terms/available",
           "count": 8288,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 20
         },
         {
           "uri": "http://data.europa.eu/949/nonCodedRestrictions",
           "count": 7864,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 1659
         },
         {
           "uri": "http://data.europa.eu/949/vehicleTypeTechnicalDataCharacteristic",
           "count": 7864,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 1659
         },
         {
           "uri": "http://purl.org/dc/terms/references",
@@ -755,19 +816,22 @@
           "uri": "http://purl.org/dc/terms/identifier",
           "count": 5592,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 128
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#notation",
           "count": 4761,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 44
         },
         {
           "uri": "http://data.europa.eu/949/isTemporary",
           "count": 4761,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 5
         },
         {
           "uri": "https://w3id.org/vpa#withRestriction",
@@ -785,19 +849,22 @@
           "uri": "http://data.europa.eu/949/borderPointStation",
           "count": 2509,
           "max": 8,
-          "min": 0
+          "min": 0,
+          "maxLen": 4921
         },
         {
           "uri": "http://data.europa.eu/949/transportationVolumeFreight",
           "count": 2300,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 39
         },
         {
           "uri": "http://data.europa.eu/949/transportationVolumePassenger",
           "count": 1076,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 43
         },
         {
           "uri": "https://w3id.org/vpa#permissionType",
@@ -953,7 +1020,8 @@
           "uri": "http://purl.org/dc/terms/created",
           "count": 95816,
           "max": 2,
-          "min": 2
+          "min": 2,
+          "maxLen": 10
         },
         {
           "uri": "http://purl.org/dc/terms/audience",
@@ -995,19 +1063,22 @@
           "uri": "https://w3id.org/vpa#versionNumber",
           "count": 47942,
           "max": 2,
-          "min": 1
+          "min": 1,
+          "maxLen": 2
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
           "count": 47908,
           "max": 1,
-          "min": 1
+          "min": 1,
+          "maxLen": 69
         },
         {
           "uri": "http://purl.org/dc/terms/issued",
           "count": 47908,
           "max": 1,
-          "min": 1
+          "min": 1,
+          "maxLen": 10
         },
         {
           "uri": "http://purl.org/dc/terms/valid",
@@ -1019,25 +1090,29 @@
           "uri": "http://purl.org/dc/terms/identifier",
           "count": 47908,
           "max": 1,
-          "min": 1
+          "min": 1,
+          "maxLen": 90
         },
         {
           "uri": "http://purl.org/dc/terms/description",
           "count": 47908,
           "max": 1,
-          "min": 1
+          "min": 1,
+          "maxLen": 2453
         },
         {
           "uri": "http://data.europa.eu/949/resultStatement",
           "count": 47906,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 5168
         },
         {
           "uri": "http://purl.org/dc/terms/available",
           "count": 47881,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 20
         },
         {
           "uri": "http://xmlns.com/foaf/0.1/homepage",
@@ -1055,7 +1130,8 @@
           "uri": "http://purl.org/dc/terms/dateAccepted",
           "count": 47580,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 20
         },
         {
           "uri": "http://www.w3.org/ns/prov#wasGeneratedBy",
@@ -1067,13 +1143,15 @@
           "uri": "http://data.europa.eu/eli/ontology#title_short",
           "count": 11598,
           "max": 6,
-          "min": 0
+          "min": 0,
+          "maxLen": 77
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#comment",
           "count": 7404,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 1851
         },
         {
           "uri": "http://purl.org/dc/terms/replaces",
@@ -1097,7 +1175,8 @@
           "uri": "http://www.w3.org/ns/prov#invalidatedAtTime",
           "count": 3399,
           "max": 3,
-          "min": 0
+          "min": 0,
+          "maxLen": 20
         },
         {
           "uri": "http://purl.org/dc/terms/isReplacedBy",
@@ -1109,13 +1188,15 @@
           "uri": "http://data.europa.eu/949/sequenceStatement",
           "count": 2850,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 1121
         },
         {
           "uri": "http://data.europa.eu/949/validityStatement",
           "count": 1471,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 1936
         }
       ],
       "embed": {
@@ -1199,39 +1280,63 @@
       "properties": [
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 0
+          "count": 276087,
+          "max": 3,
+          "min": 3
         },
         {
           "uri": "https://w3id.org/vpa#checkedRequirement",
-          "count": 0
+          "count": 164257,
+          "max": 45,
+          "min": 0
         },
         {
           "uri": "http://purl.org/dc/terms/identifier",
-          "count": 0
+          "count": 29384,
+          "max": 1,
+          "min": 0,
+          "maxLen": 30
         },
         {
           "uri": "https://w3id.org/vpa#withRestriction",
-          "count": 0
-        },
-        {
-          "uri": "http://purl.org/dc/terms/issued",
-          "count": 0
-        },
-        {
-          "uri": "https://w3id.org/vpa#versionNumber",
-          "count": 0
-        },
-        {
-          "uri": "http://www.w3.org/2000/01/rdf-schema#comment",
-          "count": 0
-        },
-        {
-          "uri": "http://www.w3.org/2004/02/skos/core#note",
-          "count": 0
+          "count": 27642,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://purl.org/dc/terms/description",
-          "count": 0
+          "count": 5142,
+          "max": 1,
+          "min": 0,
+          "maxLen": 1601
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#comment",
+          "count": 2968,
+          "max": 1,
+          "min": 0,
+          "maxLen": 5738
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#note",
+          "count": 2968,
+          "max": 1,
+          "min": 0,
+          "maxLen": 35
+        },
+        {
+          "uri": "https://w3id.org/vpa#versionNumber",
+          "count": 1376,
+          "max": 1,
+          "min": 0,
+          "maxLen": 10
+        },
+        {
+          "uri": "http://purl.org/dc/terms/issued",
+          "count": 1284,
+          "max": 1,
+          "min": 0,
+          "maxLen": 10
         }
       ]
     },
@@ -1240,45 +1345,72 @@
       "properties": [
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 0
-        },
-        {
-          "uri": "http://data.europa.eu/949/documentURL",
-          "count": 0
-        },
-        {
-          "uri": "http://xmlns.com/foaf/0.1/primaryTopic",
-          "count": 0
+          "count": 494528,
+          "max": 3,
+          "min": 2
         },
         {
           "uri": "http://data.europa.eu/949/documentUrl",
-          "count": 0
+          "count": 163668,
+          "max": 12,
+          "min": 0,
+          "maxLen": 379
         },
         {
-          "uri": "http://xmlns.com/foaf/0.1/page",
-          "count": 0
+          "uri": "http://data.europa.eu/949/documentURL",
+          "count": 109871,
+          "max": 240,
+          "min": 0,
+          "maxLen": 379
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#label",
-          "count": 0
+          "count": 87400,
+          "max": 1,
+          "min": 0,
+          "maxLen": 190
         },
         {
           "uri": "http://purl.org/dc/terms/type",
-          "count": 0
+          "count": 87400,
+          "max": 1,
+          "min": 0
         },
         {
-          "uri": "http://www.w3.org/2000/01/rdf-schema#comment",
-          "count": 0
+          "uri": "http://xmlns.com/foaf/0.1/primaryTopic",
+          "count": 68349,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://purl.org/dc/terms/issued",
-          "count": 0
+          "count": 19513,
+          "max": 6,
+          "min": 0,
+          "maxLen": 10
         },
         {
           "uri": "http://purl.org/dc/terms/identifier",
-          "count": 0
+          "count": 19020,
+          "max": 6,
+          "min": 0,
+          "maxLen": 555
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#comment",
+          "count": 14844,
+          "max": 6,
+          "min": 0,
+          "maxLen": 40
+        },
+        {
+          "uri": "http://xmlns.com/foaf/0.1/page",
+          "count": 3892,
+          "max": 1,
+          "min": 0
         }
-      ]
+      ],
+      "blank": true
     },
     "http://data.europa.eu/949/ECDeclaration": {
       "ok": true,
@@ -1329,7 +1461,8 @@
           "uri": "http://data.europa.eu/eli/ontology#title_short",
           "count": 79385,
           "max": 48,
-          "min": 0
+          "min": 0,
+          "maxLen": 79
         },
         {
           "uri": "http://purl.org/dc/terms/source",
@@ -1347,7 +1480,8 @@
           "uri": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
           "count": 45259,
           "max": 3,
-          "min": 0
+          "min": 0,
+          "maxLen": 67
         },
         {
           "uri": "http://purl.org/dc/terms/type",
@@ -1365,13 +1499,15 @@
           "uri": "http://purl.org/dc/terms/description",
           "count": 45227,
           "max": 4,
-          "min": 0
+          "min": 0,
+          "maxLen": 256
         },
         {
           "uri": "http://purl.org/dc/terms/issued",
           "count": 45198,
           "max": 3,
-          "min": 0
+          "min": 0,
+          "maxLen": 10
         },
         {
           "uri": "http://purl.org/dc/terms/valid",
@@ -1389,19 +1525,22 @@
           "uri": "https://w3id.org/vpa#versionNumber",
           "count": 44807,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 2
         },
         {
           "uri": "http://purl.org/dc/terms/identifier",
           "count": 44807,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 29
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#comment",
           "count": 44499,
           "max": 3,
-          "min": 0
+          "min": 0,
+          "maxLen": 256
         },
         {
           "uri": "http://www.w3.org/ns/prov#wasGeneratedBy",
@@ -1419,7 +1558,8 @@
           "uri": "http://www.w3.org/ns/prov#invalidatedAtTime",
           "count": 21267,
           "max": 4,
-          "min": 0
+          "min": 0,
+          "maxLen": 20
         },
         {
           "uri": "http://purl.org/dc/terms/replaces",
@@ -1455,7 +1595,8 @@
           "uri": "http://www.w3.org/2004/02/skos/core#editorialNote",
           "count": 8503,
           "max": 70,
-          "min": 0
+          "min": 0,
+          "maxLen": 584
         }
       ],
       "embed": {
@@ -1585,13 +1726,15 @@
           "uri": "http://www.w3.org/2004/02/skos/core#definition",
           "count": 111,
           "max": 1,
-          "min": 1
+          "min": 1,
+          "maxLen": 145
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#prefLabel",
           "count": 111,
           "max": 1,
-          "min": 1
+          "min": 1,
+          "maxLen": 6
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#inScheme",
@@ -1609,19 +1752,22 @@
           "uri": "http://purl.org/dc/terms/status",
           "count": 111,
           "max": 1,
-          "min": 1
+          "min": 1,
+          "maxLen": 15
         },
         {
           "uri": "http://data.europa.eu/949/changeRequestPreventsService",
           "count": 110,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 5
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#note",
           "count": 81,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 78
         },
         {
           "uri": "http://purl.org/dc/terms/isReplacedBy",
@@ -1639,7 +1785,8 @@
           "uri": "http://www.w3.org/2000/01/rdf-schema#comment",
           "count": 1,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 53
         }
       ],
       "embed": {
@@ -1701,7 +1848,8 @@
           "uri": "http://www.w3.org/2000/01/rdf-schema#label",
           "count": 202,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 407
         }
       ],
       "embed": {
@@ -1745,7 +1893,8 @@
           "uri": "http://data.europa.eu/949/nandoCode",
           "count": 628,
           "max": 2,
-          "min": 0
+          "min": 0,
+          "maxLen": 7
         }
       ],
       "embed": {
@@ -1799,7 +1948,8 @@
           "uri": "http://www.w3.org/2000/01/rdf-schema#label",
           "count": 202,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 407
         }
       ],
       "embed": {
@@ -1831,19 +1981,22 @@
           "uri": "http://www.w3.org/2000/01/rdf-schema#comment",
           "count": 49317,
           "max": 4,
-          "min": 0
+          "min": 0,
+          "maxLen": 24479
         },
         {
           "uri": "http://data.europa.eu/949/nonCodedRestrictions",
           "count": 48,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 1354
         },
         {
           "uri": "http://data.europa.eu/949/vehicleTypeTechnicalDataCharacteristic",
           "count": 48,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 1354
         }
       ],
       "embed": {
@@ -1899,7 +2052,8 @@
           "uri": "http://www.w3.org/2000/01/rdf-schema#label",
           "count": 202,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 407
         }
       ],
       "embed": {
@@ -1931,7 +2085,8 @@
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#first",
           "count": 3,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 1
         },
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#rest",
@@ -1958,7 +2113,8 @@
             "max": 1
           }
         ]
-      }
+      },
+      "blank": true
     },
     "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property": {
       "ok": true,
@@ -1985,13 +2141,15 @@
           "uri": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
           "count": 61,
           "max": 2,
-          "min": 0
+          "min": 0,
+          "maxLen": 103
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#label",
           "count": 60,
           "max": 2,
-          "min": 0
+          "min": 0,
+          "maxLen": 65
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#isDefinedBy",
@@ -2009,13 +2167,15 @@
           "uri": "http://www.w3.org/2000/01/rdf-schema#comment",
           "count": 51,
           "max": 2,
-          "min": 0
+          "min": 0,
+          "maxLen": 466
         },
         {
           "uri": "http://purl.org/dc/terms/created",
           "count": 51,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 10
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#domain",
@@ -2027,19 +2187,22 @@
           "uri": "http://purl.org/dc/terms/modified",
           "count": 31,
           "max": 5,
-          "min": 0
+          "min": 0,
+          "maxLen": 10
         },
         {
           "uri": "http://www.w3.org/2003/06/sw-vocab-status/ns#term_status",
           "count": 29,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 8
         },
         {
           "uri": "http://data.europa.eu/949/rinfIndex",
           "count": 15,
           "max": 7,
-          "min": 0
+          "min": 0,
+          "maxLen": 11
         },
         {
           "uri": "http://purl.org/dc/terms/source",
@@ -2051,31 +2214,36 @@
           "uri": "http://data.europa.eu/949/usedInEradis",
           "count": 9,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 4
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#definition",
           "count": 7,
           "max": 2,
-          "min": 0
+          "min": 0,
+          "maxLen": 416
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#editorialNote",
           "count": 7,
           "max": 2,
-          "min": 0
+          "min": 0,
+          "maxLen": 170
         },
         {
           "uri": "http://data.europa.eu/949/XMLName",
           "count": 7,
           "max": 7,
-          "min": 0
+          "min": 0,
+          "maxLen": 21
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#altLabel",
           "count": 6,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 34
         },
         {
           "uri": "http://data.europa.eu/949/inSkosConceptScheme",
@@ -2087,13 +2255,15 @@
           "uri": "http://data.europa.eu/949/evrIndex",
           "count": 4,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 6
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#scopeNote",
           "count": 4,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 718
         },
         {
           "uri": "http://proton.semanticweb.org/protonsys#transitiveOver",
@@ -2111,13 +2281,15 @@
           "uri": "http://data.europa.eu/949/eratvIndex",
           "count": 3,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 7
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#example",
           "count": 3,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 566
         },
         {
           "uri": "http://purl.org/dc/terms/replaces",
@@ -2129,37 +2301,43 @@
           "uri": "http://www.w3.org/2002/07/owl#deprecated",
           "count": 1,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 5
         },
         {
           "uri": "http://data.europa.eu/949/applicable",
           "count": 1,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 1
         },
         {
           "uri": "http://data.europa.eu/949/formatNote",
           "count": 1,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 4
         },
         {
           "uri": "http://data.europa.eu/949/legalDeadline",
           "count": 1,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 87
         },
         {
           "uri": "http://data.europa.eu/949/tsiOPEAppendixD2Index",
           "count": 1,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 3
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#note",
           "count": 1,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 63
         }
       ],
       "embed": {
@@ -2296,7 +2474,8 @@
             "max": 4
           }
         ]
-      }
+      },
+      "blank": true
     },
     "http://www.w3.org/2000/01/rdf-schema#ContainerMembershipProperty": {
       "ok": true,
@@ -2371,7 +2550,8 @@
             "max": 4
           }
         ]
-      }
+      },
+      "blank": true
     },
     "http://www.w3.org/2002/07/owl#AllDisjointClasses": {
       "ok": true,
@@ -2388,7 +2568,8 @@
           "max": 1,
           "min": 1
         }
-      ]
+      ],
+      "blank": true
     },
     "http://www.w3.org/2002/07/owl#AnnotationProperty": {
       "ok": true,
@@ -2409,7 +2590,8 @@
           "uri": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
           "count": 25,
           "max": 2,
-          "min": 0
+          "min": 0,
+          "maxLen": 103
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#range",
@@ -2421,13 +2603,15 @@
           "uri": "http://www.w3.org/2000/01/rdf-schema#comment",
           "count": 23,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 610
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#label",
           "count": 23,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 65
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#isDefinedBy",
@@ -2439,19 +2623,22 @@
           "uri": "http://purl.org/dc/terms/created",
           "count": 23,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 10
         },
         {
           "uri": "http://purl.org/dc/terms/modified",
           "count": 13,
           "max": 2,
-          "min": 0
+          "min": 0,
+          "maxLen": 10
         },
         {
           "uri": "http://www.w3.org/2003/06/sw-vocab-status/ns#term_status",
           "count": 11,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 6
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#domain",
@@ -2463,7 +2650,8 @@
           "uri": "http://www.w3.org/2004/02/skos/core#altLabel",
           "count": 3,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 17
         },
         {
           "uri": "http://data.europa.eu/949/shaclShapeValidationRule",
@@ -2475,13 +2663,15 @@
           "uri": "http://www.w3.org/2004/02/skos/core#definition",
           "count": 1,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 416
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#note",
           "count": 1,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 63
         }
       ],
       "embed": {
@@ -2545,13 +2735,15 @@
           "uri": "http://www.w3.org/2000/01/rdf-schema#label",
           "count": 128,
           "max": 4,
-          "min": 0
+          "min": 0,
+          "maxLen": 90
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
           "count": 124,
           "max": 3,
-          "min": 0
+          "min": 0,
+          "maxLen": 93
         },
         {
           "uri": "http://www.w3.org/2002/07/owl#disjointWith",
@@ -2563,7 +2755,8 @@
           "uri": "http://www.w3.org/2000/01/rdf-schema#comment",
           "count": 107,
           "max": 2,
-          "min": 0
+          "min": 0,
+          "maxLen": 707
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#isDefinedBy",
@@ -2575,13 +2768,15 @@
           "uri": "http://purl.org/dc/terms/created",
           "count": 91,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 10
         },
         {
           "uri": "http://purl.org/dc/terms/modified",
           "count": 90,
           "max": 4,
-          "min": 0
+          "min": 0,
+          "maxLen": 10
         },
         {
           "uri": "http://data.europa.eu/949/shaclShapeValidationRule",
@@ -2593,13 +2788,15 @@
           "uri": "http://www.w3.org/2003/06/sw-vocab-status/ns#term_status",
           "count": 64,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 8
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#scopeNote",
           "count": 28,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 1420
         },
         {
           "uri": "http://purl.org/dc/terms/source",
@@ -2617,19 +2814,22 @@
           "uri": "http://www.w3.org/2004/02/skos/core#example",
           "count": 8,
           "max": 2,
-          "min": 0
+          "min": 0,
+          "maxLen": 999
         },
         {
           "uri": "http://www.w3.org/2002/07/owl#deprecated",
           "count": 7,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 5
         },
         {
           "uri": "http://data.europa.eu/949/usedInEradis",
           "count": 6,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 4
         },
         {
           "uri": "http://purl.org/dc/terms/isReplacedBy",
@@ -2641,37 +2841,43 @@
           "uri": "http://www.w3.org/2004/02/skos/core#editorialNote",
           "count": 4,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 130
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#altLabel",
           "count": 3,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 14
         },
         {
           "uri": "http://data.europa.eu/949/evrIndex",
           "count": 2,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 3
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#definition",
           "count": 2,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 226
         },
         {
           "uri": "http://data.europa.eu/949/rinfIndex",
           "count": 2,
           "max": 2,
-          "min": 0
+          "min": 0,
+          "maxLen": 14
         },
         {
           "uri": "http://purl.org/dc/terms/modifed",
           "count": 1,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 10
         },
         {
           "uri": "http://purl.org/dc/terms/relation",
@@ -2683,7 +2889,8 @@
           "uri": "http://www.w3.org/2004/02/skos/core#note",
           "count": 1,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 85
         }
       ],
       "embed": {
@@ -2776,7 +2983,8 @@
             "max": 104
           }
         ]
-      }
+      },
+      "blank": true
     },
     "http://www.w3.org/2002/07/owl#DatatypeProperty": {
       "ok": true,
@@ -2797,13 +3005,15 @@
           "uri": "http://purl.org/dc/terms/modified",
           "count": 647,
           "max": 6,
-          "min": 0
+          "min": 0,
+          "maxLen": 10
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
           "count": 539,
           "max": 3,
-          "min": 0
+          "min": 0,
+          "maxLen": 350
         },
         {
           "uri": "http://data.europa.eu/949/shaclShapeValidationRule",
@@ -2815,7 +3025,8 @@
           "uri": "http://www.w3.org/2000/01/rdf-schema#label",
           "count": 448,
           "max": 4,
-          "min": 0
+          "min": 0,
+          "maxLen": 168
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#isDefinedBy",
@@ -2827,7 +3038,8 @@
           "uri": "http://purl.org/dc/terms/created",
           "count": 438,
           "max": 2,
-          "min": 0
+          "min": 0,
+          "maxLen": 10
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#range",
@@ -2839,7 +3051,8 @@
           "uri": "http://www.w3.org/2000/01/rdf-schema#comment",
           "count": 394,
           "max": 5,
-          "min": 0
+          "min": 0,
+          "maxLen": 652
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#domain",
@@ -2851,25 +3064,29 @@
           "uri": "http://www.w3.org/2003/06/sw-vocab-status/ns#term_status",
           "count": 373,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 8
         },
         {
           "uri": "http://data.europa.eu/949/rinfIndex",
           "count": 270,
           "max": 7,
-          "min": 0
+          "min": 0,
+          "maxLen": 15
         },
         {
           "uri": "http://data.europa.eu/949/eratvIndex",
           "count": 153,
           "max": 6,
-          "min": 0
+          "min": 0,
+          "maxLen": 9
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#scopeNote",
           "count": 152,
           "max": 2,
-          "min": 0
+          "min": 0,
+          "maxLen": 1776
         },
         {
           "uri": "http://purl.org/dc/terms/isRequiredBy",
@@ -2881,7 +3098,8 @@
           "uri": "http://data.europa.eu/949/legalDeadline",
           "count": 145,
           "max": 2,
-          "min": 0
+          "min": 0,
+          "maxLen": 178
         },
         {
           "uri": "http://purl.org/dc/terms/source",
@@ -2893,13 +3111,15 @@
           "uri": "http://data.europa.eu/949/applicable",
           "count": 126,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 7
         },
         {
           "uri": "http://data.europa.eu/949/XMLName",
           "count": 117,
           "max": 7,
-          "min": 0
+          "min": 0,
+          "maxLen": 37
         },
         {
           "uri": "http://data.europa.eu/949/unitOfMeasure",
@@ -2917,37 +3137,43 @@
           "uri": "http://data.europa.eu/949/dependencyNote",
           "count": 63,
           "max": 2,
-          "min": 0
+          "min": 0,
+          "maxLen": 439
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#editorialNote",
           "count": 59,
           "max": 2,
-          "min": 0
+          "min": 0,
+          "maxLen": 507
         },
         {
           "uri": "http://data.europa.eu/949/formatNote",
           "count": 56,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 314
         },
         {
           "uri": "http://www.w3.org/2002/07/owl#deprecated",
           "count": 53,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 4
         },
         {
           "uri": "http://data.europa.eu/949/usedInRCCCalculations",
           "count": 46,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 5
         },
         {
           "uri": "http://data.europa.eu/949/tsiOPEAppendixD2Index",
           "count": 45,
           "max": 4,
-          "min": 0
+          "min": 0,
+          "maxLen": 7
         },
         {
           "uri": "http://purl.org/dc/terms/isReplacedBy",
@@ -2959,13 +3185,15 @@
           "uri": "http://data.europa.eu/949/evrIndex",
           "count": 20,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 6
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#altLabel",
           "count": 19,
           "max": 2,
-          "min": 0
+          "min": 0,
+          "maxLen": 94
         },
         {
           "uri": "http://purl.org/dc/terms/replaces",
@@ -2983,61 +3211,71 @@
           "uri": "http://data.europa.eu/949/tsiOPEAppendixD3Index",
           "count": 14,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 6
         },
         {
           "uri": "http://data.europa.eu/949/usedInEradis",
           "count": 11,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 4
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#example",
           "count": 7,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 566
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#note",
           "count": 7,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 103
         },
         {
           "uri": "http://purl.org/dc/terms/creator",
           "count": 1,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 40
         },
         {
           "uri": "http://purl.org/dc/terms/contributor",
           "count": 1,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 13
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#definition",
           "count": 1,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 47
         },
         {
           "uri": "http://purl.org/dc/terms/date",
           "count": 1,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 10
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#prefLabel",
           "count": 1,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 5
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#seeAslo",
           "count": 1,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 53
         },
         {
           "uri": "http://www.w3.org/2002/07/owl#propertyDisjointWith",
@@ -3145,7 +3383,8 @@
           "uri": "http://purl.org/dc/terms/modified",
           "count": 434,
           "max": 6,
-          "min": 0
+          "min": 0,
+          "maxLen": 10
         },
         {
           "uri": "http://data.europa.eu/949/shaclShapeValidationRule",
@@ -3157,19 +3396,22 @@
           "uri": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
           "count": 321,
           "max": 3,
-          "min": 1
+          "min": 1,
+          "maxLen": 350
         },
         {
           "uri": "http://data.europa.eu/949/rinfIndex",
           "count": 224,
           "max": 7,
-          "min": 0
+          "min": 0,
+          "maxLen": 15
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#label",
           "count": 222,
           "max": 1,
-          "min": 1
+          "min": 1,
+          "maxLen": 189
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#isDefinedBy",
@@ -3193,43 +3435,50 @@
           "uri": "http://purl.org/dc/terms/created",
           "count": 217,
           "max": 2,
-          "min": 0
+          "min": 0,
+          "maxLen": 10
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#comment",
           "count": 215,
           "max": 2,
-          "min": 0
+          "min": 0,
+          "maxLen": 480
         },
         {
           "uri": "http://www.w3.org/2003/06/sw-vocab-status/ns#term_status",
           "count": 205,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 8
         },
         {
           "uri": "http://data.europa.eu/949/legalDeadline",
           "count": 167,
           "max": 2,
-          "min": 0
+          "min": 0,
+          "maxLen": 178
         },
         {
           "uri": "http://data.europa.eu/949/applicable",
           "count": 136,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 7
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#scopeNote",
           "count": 129,
           "max": 2,
-          "min": 0
+          "min": 0,
+          "maxLen": 1776
         },
         {
           "uri": "http://data.europa.eu/949/XMLName",
           "count": 126,
           "max": 7,
-          "min": 0
+          "min": 0,
+          "maxLen": 37
         },
         {
           "uri": "http://purl.org/dc/terms/source",
@@ -3247,13 +3496,15 @@
           "uri": "http://data.europa.eu/949/dependencyNote",
           "count": 80,
           "max": 2,
-          "min": 0
+          "min": 0,
+          "maxLen": 439
         },
         {
           "uri": "http://data.europa.eu/949/usedInRCCCalculations",
           "count": 56,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 5
         },
         {
           "uri": "http://data.europa.eu/949/unitOfMeasure",
@@ -3265,13 +3516,15 @@
           "uri": "http://data.europa.eu/949/formatNote",
           "count": 50,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 314
         },
         {
           "uri": "http://data.europa.eu/949/tsiOPEAppendixD2Index",
           "count": 45,
           "max": 2,
-          "min": 0
+          "min": 0,
+          "maxLen": 7
         },
         {
           "uri": "http://data.europa.eu/949/inSkosConceptScheme",
@@ -3289,13 +3542,15 @@
           "uri": "http://data.europa.eu/949/eratvIndex",
           "count": 21,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 9
         },
         {
           "uri": "http://data.europa.eu/949/tsiOPEAppendixD3Index",
           "count": 17,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 6
         },
         {
           "uri": "http://purl.org/dc/terms/isRequiredBy",
@@ -3307,49 +3562,57 @@
           "uri": "http://www.w3.org/2004/02/skos/core#editorialNote",
           "count": 14,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 236
         },
         {
           "uri": "http://data.europa.eu/949/evrIndex",
           "count": 13,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 6
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#altLabel",
           "count": 11,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 94
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#example",
           "count": 6,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 771
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#note",
           "count": 6,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 80
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#changeNote",
           "count": 3,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 233
         },
         {
           "uri": "http://www.w3.org/2002/07/owl#deprecated",
           "count": 3,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 4
         },
         {
           "uri": "http://data.europa.eu/949/usedInEradis",
           "count": 2,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 4
         },
         {
           "uri": "http://www.w3.org/2002/07/owl#inverseOf",
@@ -3373,7 +3636,8 @@
           "uri": "http://www.w3.org/2000/01/rdf-schema#seeAslo",
           "count": 1,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 53
         },
         {
           "uri": "http://www.w3.org/2002/07/owl#propertyDisjointWith",
@@ -3503,7 +3767,8 @@
           "uri": "http://purl.org/dc/terms/modified",
           "count": 5,
           "max": 3,
-          "min": 0
+          "min": 0,
+          "maxLen": 10
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#domain",
@@ -3521,13 +3786,15 @@
           "uri": "http://www.w3.org/2000/01/rdf-schema#comment",
           "count": 4,
           "max": 1,
-          "min": 1
+          "min": 1,
+          "maxLen": 264
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#label",
           "count": 4,
           "max": 1,
-          "min": 1
+          "min": 1,
+          "maxLen": 12
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#isDefinedBy",
@@ -3539,7 +3806,8 @@
           "uri": "http://purl.org/dc/terms/created",
           "count": 4,
           "max": 1,
-          "min": 1
+          "min": 1,
+          "maxLen": 10
         },
         {
           "uri": "http://www.w3.org/2002/07/owl#inverseOf",
@@ -3557,19 +3825,22 @@
           "uri": "http://data.europa.eu/949/rinfIndex",
           "count": 2,
           "max": 2,
-          "min": 0
+          "min": 0,
+          "maxLen": 11
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#altLabel",
           "count": 2,
           "max": 2,
-          "min": 0
+          "min": 0,
+          "maxLen": 41
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#scopeNote",
           "count": 2,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 716
         },
         {
           "uri": "http://purl.org/dc/terms/replaces",
@@ -3581,25 +3852,29 @@
           "uri": "http://data.europa.eu/949/applicable",
           "count": 1,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 7
         },
         {
           "uri": "http://www.w3.org/2003/06/sw-vocab-status/ns#term_status",
           "count": 1,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 6
         },
         {
           "uri": "http://data.europa.eu/949/legalDeadline",
           "count": 1,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 46
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#example",
           "count": 1,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 64
         }
       ],
       "embed": {
@@ -3663,7 +3938,8 @@
           "uri": "http://purl.org/dc/terms/modified",
           "count": 474,
           "max": 6,
-          "min": 0
+          "min": 0,
+          "maxLen": 10
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#subPropertyOf",
@@ -3681,13 +3957,15 @@
           "uri": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
           "count": 393,
           "max": 4,
-          "min": 0
+          "min": 0,
+          "maxLen": 140
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#label",
           "count": 313,
           "max": 2,
-          "min": 0
+          "min": 0,
+          "maxLen": 189
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#isDefinedBy",
@@ -3699,13 +3977,15 @@
           "uri": "http://purl.org/dc/terms/created",
           "count": 300,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 10
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#comment",
           "count": 274,
           "max": 2,
-          "min": 0
+          "min": 0,
+          "maxLen": 739
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#range",
@@ -3723,13 +4003,15 @@
           "uri": "http://data.europa.eu/949/rinfIndex",
           "count": 236,
           "max": 5,
-          "min": 0
+          "min": 0,
+          "maxLen": 15
         },
         {
           "uri": "http://www.w3.org/2003/06/sw-vocab-status/ns#term_status",
           "count": 215,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 8
         },
         {
           "uri": "http://data.europa.eu/949/inSkosConceptScheme",
@@ -3741,25 +4023,29 @@
           "uri": "http://data.europa.eu/949/legalDeadline",
           "count": 122,
           "max": 2,
-          "min": 0
+          "min": 0,
+          "maxLen": 178
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#scopeNote",
           "count": 106,
           "max": 2,
-          "min": 0
+          "min": 0,
+          "maxLen": 2017
         },
         {
           "uri": "http://data.europa.eu/949/applicable",
           "count": 97,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 7
         },
         {
           "uri": "http://data.europa.eu/949/XMLName",
           "count": 97,
           "max": 2,
-          "min": 0
+          "min": 0,
+          "maxLen": 34
         },
         {
           "uri": "http://purl.org/dc/terms/source",
@@ -3777,7 +4063,8 @@
           "uri": "http://data.europa.eu/949/eratvIndex",
           "count": 63,
           "max": 8,
-          "min": 0
+          "min": 0,
+          "maxLen": 9
         },
         {
           "uri": "http://purl.org/dc/terms/isRequiredBy",
@@ -3789,31 +4076,36 @@
           "uri": "http://data.europa.eu/949/dependencyNote",
           "count": 55,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 190
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#editorialNote",
           "count": 45,
           "max": 2,
-          "min": 0
+          "min": 0,
+          "maxLen": 389
         },
         {
           "uri": "http://data.europa.eu/949/usedInRCCCalculations",
           "count": 43,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 5
         },
         {
           "uri": "http://www.w3.org/2002/07/owl#deprecated",
           "count": 42,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 5
         },
         {
           "uri": "http://data.europa.eu/949/tsiOPEAppendixD2Index",
           "count": 41,
           "max": 6,
-          "min": 0
+          "min": 0,
+          "maxLen": 7
         },
         {
           "uri": "http://purl.org/dc/terms/replaces",
@@ -3831,37 +4123,43 @@
           "uri": "http://data.europa.eu/949/evrIndex",
           "count": 20,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 6
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#note",
           "count": 16,
           "max": 2,
-          "min": 0
+          "min": 0,
+          "maxLen": 137
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#example",
           "count": 11,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 951
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#altLabel",
           "count": 11,
           "max": 2,
-          "min": 0
+          "min": 0,
+          "maxLen": 52
         },
         {
           "uri": "http://data.europa.eu/949/formatNote",
           "count": 11,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 1072
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#changeNote",
           "count": 10,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 233
         },
         {
           "uri": "http://www.w3.org/2002/07/owl#inverseOf",
@@ -3873,13 +4171,15 @@
           "uri": "http://www.w3.org/2004/02/skos/core#definition",
           "count": 8,
           "max": 2,
-          "min": 0
+          "min": 0,
+          "maxLen": 100
         },
         {
           "uri": "http://data.europa.eu/949/tsiOPEAppendixD3Index",
           "count": 8,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 6
         },
         {
           "uri": "http://data.europa.eu/949/unitOfMeasure",
@@ -3891,37 +4191,43 @@
           "uri": "http://data.europa.eu/949/usedInEradis",
           "count": 3,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 4
         },
         {
           "uri": "http://purl.org/dc/terms/modifed",
           "count": 3,
           "max": 2,
-          "min": 0
+          "min": 0,
+          "maxLen": 10
         },
         {
           "uri": "http://purl.org/dc/terms/creator",
           "count": 1,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 40
         },
         {
           "uri": "http://purl.org/dc/terms/contributor",
           "count": 1,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 13
         },
         {
           "uri": "http://purl.org/dc/terms/date",
           "count": 1,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 10
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#prefLabel",
           "count": 1,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 11
         },
         {
           "uri": "http://data.europa.eu/949/wasInvalidatedBy",
@@ -3933,7 +4239,8 @@
           "uri": "http://www.w3.org/2004/02/skos/core#historyNote",
           "count": 1,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 37
         }
       ],
       "embed": {
@@ -4035,7 +4342,8 @@
           "uri": "http://purl.org/dc/terms/modified",
           "count": 109,
           "max": 109,
-          "min": 109
+          "min": 109,
+          "maxLen": 10
         },
         {
           "uri": "http://purl.org/dc/terms/contributor",
@@ -4053,7 +4361,8 @@
           "uri": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
           "count": 2,
           "max": 2,
-          "min": 2
+          "min": 2,
+          "maxLen": 116
         },
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
@@ -4065,19 +4374,22 @@
           "uri": "http://www.w3.org/2000/01/rdf-schema#comment",
           "count": 1,
           "max": 1,
-          "min": 1
+          "min": 1,
+          "maxLen": 1305
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#label",
           "count": 1,
           "max": 1,
-          "min": 1
+          "min": 1,
+          "maxLen": 12
         },
         {
           "uri": "http://purl.org/dc/terms/issued",
           "count": 1,
           "max": 1,
-          "min": 1
+          "min": 1,
+          "maxLen": 10
         },
         {
           "uri": "http://www.w3.org/2002/07/owl#versionIRI",
@@ -4095,31 +4407,36 @@
           "uri": "http://purl.org/dc/terms/publisher",
           "count": 1,
           "max": 1,
-          "min": 1
+          "min": 1,
+          "maxLen": 34
         },
         {
           "uri": "http://purl.org/dc/terms/title",
           "count": 1,
           "max": 1,
-          "min": 1
+          "min": 1,
+          "maxLen": 12
         },
         {
           "uri": "http://www.w3.org/2002/07/owl#priorVersion",
           "count": 1,
           "max": 1,
-          "min": 1
+          "min": 1,
+          "maxLen": 112
         },
         {
           "uri": "http://www.w3.org/2002/07/owl#versionInfo",
           "count": 1,
           "max": 1,
-          "min": 1
+          "min": 1,
+          "maxLen": 6
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#changeNote",
           "count": 1,
           "max": 1,
-          "min": 1
+          "min": 1,
+          "maxLen": 41786
         }
       ],
       "embed": {
@@ -4173,7 +4490,8 @@
           "uri": "http://www.w3.org/2002/07/owl#qualifiedCardinality",
           "count": 9,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 1
         },
         {
           "uri": "http://www.w3.org/2002/07/owl#onClass",
@@ -4197,7 +4515,8 @@
           "uri": "http://www.w3.org/2002/07/owl#minQualifiedCardinality",
           "count": 1,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 1
         }
       ],
       "embed": {
@@ -4226,7 +4545,8 @@
             "max": 2
           }
         ]
-      }
+      },
+      "blank": true
     },
     "http://www.w3.org/2002/07/owl#SymmetricProperty": {
       "ok": true,
@@ -4265,13 +4585,15 @@
           "uri": "http://data.europa.eu/949/rinfIndex",
           "count": 2,
           "max": 2,
-          "min": 0
+          "min": 0,
+          "maxLen": 11
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#altLabel",
           "count": 2,
           "max": 2,
-          "min": 0
+          "min": 0,
+          "maxLen": 41
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#domain",
@@ -4289,13 +4611,15 @@
           "uri": "http://www.w3.org/2000/01/rdf-schema#comment",
           "count": 1,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 66
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#label",
           "count": 1,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 12
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#isDefinedBy",
@@ -4307,19 +4631,22 @@
           "uri": "http://purl.org/dc/terms/created",
           "count": 1,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 10
         },
         {
           "uri": "http://data.europa.eu/949/applicable",
           "count": 1,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 7
         },
         {
           "uri": "http://www.w3.org/2003/06/sw-vocab-status/ns#term_status",
           "count": 1,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 6
         },
         {
           "uri": "http://data.europa.eu/949/shaclShapeValidationRule",
@@ -4331,19 +4658,22 @@
           "uri": "http://data.europa.eu/949/legalDeadline",
           "count": 1,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 46
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#example",
           "count": 1,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 64
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#scopeNote",
           "count": 1,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 716
         }
       ],
       "embed": {
@@ -4497,25 +4827,29 @@
           "uri": "http://www.w3.org/2004/02/skos/core#prefLabel",
           "count": 37,
           "max": 1,
-          "min": 1
+          "min": 1,
+          "maxLen": 65
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#label",
           "count": 26,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 73
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#notation",
           "count": 20,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 11
         },
         {
           "uri": "http://purl.org/dc/terms/issued",
           "count": 17,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 10
         },
         {
           "uri": "http://data.europa.eu/949/inCountry",
@@ -4527,7 +4861,8 @@
           "uri": "http://www.w3.org/2004/02/skos/core#scopeNote",
           "count": 6,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 356
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#inScheme",
@@ -4539,19 +4874,22 @@
           "uri": "http://www.w3.org/2000/01/rdf-schema#comment",
           "count": 5,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 167
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#definition",
           "count": 5,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 171
         },
         {
           "uri": "http://purl.org/dc/terms/description",
           "count": 4,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 108
         },
         {
           "uri": "http://purl.org/dc/terms/source",
@@ -4563,13 +4901,15 @@
           "uri": "http://purl.org/dc/terms/title",
           "count": 2,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 95
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#note",
           "count": 1,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 76
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#topConceptOf",
@@ -4581,7 +4921,8 @@
           "uri": "http://www.w3.org/2004/02/skos/core#altLabel",
           "count": 1,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 18
         }
       ],
       "embed": {
@@ -4617,7 +4958,8 @@
           "uri": "http://www.w3.org/2004/02/skos/core#prefLabel",
           "count": 15607,
           "max": 33,
-          "min": 0
+          "min": 0,
+          "maxLen": 303
         },
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
@@ -4641,25 +4983,29 @@
           "uri": "http://www.w3.org/2004/02/skos/core#altLabel",
           "count": 3336,
           "max": 12,
-          "min": 0
+          "min": 0,
+          "maxLen": 117
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#notation",
           "count": 1541,
           "max": 2,
-          "min": 0
+          "min": 0,
+          "maxLen": 49
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#note",
           "count": 594,
           "max": 2,
-          "min": 0
+          "min": 0,
+          "maxLen": 262
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#definition",
           "count": 529,
           "max": 2,
-          "min": 0
+          "min": 0,
+          "maxLen": 843
         },
         {
           "uri": "http://data.europa.eu/949/inCountry",
@@ -4671,7 +5017,8 @@
           "uri": "http://www.w3.org/2004/02/skos/core#scopeNote",
           "count": 268,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 371
         },
         {
           "uri": "http://purl.org/dc/terms/source",
@@ -4683,7 +5030,8 @@
           "uri": "http://purl.org/dc/terms/created",
           "count": 154,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 10
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#related",
@@ -4701,31 +5049,36 @@
           "uri": "http://purl.org/dc/terms/status",
           "count": 111,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 15
         },
         {
           "uri": "http://data.europa.eu/949/changeRequestPreventsService",
           "count": 110,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 5
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#hiddenLabel",
           "count": 108,
           "max": 3,
-          "min": 0
+          "min": 0,
+          "maxLen": 52
         },
         {
           "uri": "http://data.europa.eu/949/nationalPropertyExpectedDatatype",
           "count": 104,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 41
         },
         {
           "uri": "http://data.europa.eu/949/nationalPropertyMandatory",
           "count": 104,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 5
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#narrower",
@@ -4743,25 +5096,29 @@
           "uri": "http://data.europa.eu/949/nationalPropertyMaxLength",
           "count": 70,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 4
         },
         {
           "uri": "http://purl.org/spar/cito/isConfirmedBy",
           "count": 46,
           "max": 5,
-          "min": 0
+          "min": 0,
+          "maxLen": 69
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#editorialNote",
           "count": 42,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 160
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#comment",
           "count": 39,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 300
         },
         {
           "uri": "http://purl.org/dc/terms/isReplacedBy",
@@ -4779,7 +5136,8 @@
           "uri": "http://purl.org/dc/elements/1.1/identifier",
           "count": 26,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 3
         },
         {
           "uri": "http://purl.org/dc/terms/related",
@@ -4791,13 +5149,15 @@
           "uri": "http://www.w3.org/2000/01/rdf-schema#label",
           "count": 17,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 10
         },
         {
           "uri": "http://www.w3.org/2002/07/owl#deprecated",
           "count": 15,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 4
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#exactMatch",
@@ -4809,55 +5169,64 @@
           "uri": "http://www.w3.org/2004/02/skos/core#label",
           "count": 13,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 45
         },
         {
           "uri": "http://purl.org/dc/terms/modified",
           "count": 12,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 10
         },
         {
           "uri": "http://data.europa.eu/949/rinfIndex",
           "count": 12,
           "max": 4,
-          "min": 0
+          "min": 0,
+          "maxLen": 14
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#changeNote",
           "count": 10,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 232
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
           "count": 7,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 113
         },
         {
           "uri": "http://purl.org/dc/terms/issued",
           "count": 5,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 10
         },
         {
           "uri": "http://data.europa.eu/949/tsiOPEAppendixD2Index",
           "count": 5,
           "max": 2,
-          "min": 0
+          "min": 0,
+          "maxLen": 5
         },
         {
           "uri": "http://purl.org/dc/terms/title",
           "count": 4,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 61
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#altlabel",
           "count": 3,
           "max": 3,
-          "min": 0
+          "min": 0,
+          "maxLen": 31
         },
         {
           "uri": "http://purl.org/dc/terms/replaces",
@@ -4875,7 +5244,8 @@
           "uri": "http://www.w3.org/2004/02/skos/core#example",
           "count": 1,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 527
         }
       ],
       "embed": {
@@ -5001,7 +5371,8 @@
           "uri": "http://purl.org/dc/terms/modified",
           "count": 276,
           "max": 10,
-          "min": 0
+          "min": 0,
+          "maxLen": 10
         },
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
@@ -5013,19 +5384,22 @@
           "uri": "http://www.w3.org/2004/02/skos/core#prefLabel",
           "count": 130,
           "max": 1,
-          "min": 1
+          "min": 1,
+          "maxLen": 88
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#comment",
           "count": 128,
           "max": 2,
-          "min": 0
+          "min": 0,
+          "maxLen": 278
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#label",
           "count": 128,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 90
         },
         {
           "uri": "http://creativecommons.org/ns#license",
@@ -5037,13 +5411,15 @@
           "uri": "http://purl.org/dc/terms/title",
           "count": 123,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 264
         },
         {
           "uri": "http://purl.org/dc/terms/issued",
           "count": 117,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 10
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#hasTopConcept",
@@ -5055,37 +5431,43 @@
           "uri": "http://data.europa.eu/949/rinfIndex",
           "count": 83,
           "max": 11,
-          "min": 0
+          "min": 0,
+          "maxLen": 15
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#changeNote",
           "count": 38,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 1997
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
           "count": 21,
           "max": 2,
-          "min": 0
+          "min": 0,
+          "maxLen": 124
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#hiddenLabel",
           "count": 13,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 35
         },
         {
           "uri": "http://purl.org/dc/terms/created",
           "count": 13,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 10
         },
         {
           "uri": "http://data.europa.eu/949/eratvIndex",
           "count": 12,
           "max": 9,
-          "min": 0
+          "min": 0,
+          "maxLen": 9
         },
         {
           "uri": "http://data.europa.eu/949/unitOfMeasure",
@@ -5097,7 +5479,8 @@
           "uri": "http://www.w3.org/2004/02/skos/core#editorialNote",
           "count": 6,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 294
         },
         {
           "uri": "http://purl.org/dc/terms/source",
@@ -5109,7 +5492,8 @@
           "uri": "http://purl.org/dc/terms/description",
           "count": 5,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 267
         },
         {
           "uri": "http://purl.org/dc/terms/relation",
@@ -5121,31 +5505,36 @@
           "uri": "http://www.w3.org/2004/02/skos/core#scopeNote",
           "count": 4,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 295
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#title",
           "count": 1,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 42
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#altLabel",
           "count": 1,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 17
         },
         {
           "uri": "http://www.w3.org/2002/07/owl#versionInfo",
           "count": 1,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 10
         },
         {
           "uri": "http://publications.europa.eu/ontology/authority/tableid",
           "count": 1,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 8
         },
         {
           "uri": "http://www.w3.org/ns/prov#wasDerivedFrom",
@@ -5215,7 +5604,8 @@
           "uri": "http://www.w3.org/2006/time#years",
           "count": 46,
           "max": 1,
-          "min": 1
+          "min": 1,
+          "maxLen": 6
         }
       ],
       "embed": {
@@ -5241,7 +5631,8 @@
           "uri": "http://www.w3.org/2006/time#inXSDDate",
           "count": 8551,
           "max": 1,
-          "min": 1
+          "min": 1,
+          "maxLen": 10
         }
       ],
       "embed": {
@@ -5327,25 +5718,29 @@
           "uri": "http://www.w3.org/ns/locn#fullAddress",
           "count": 16179,
           "max": 10,
-          "min": 0
+          "min": 0,
+          "maxLen": 181
         },
         {
           "uri": "http://www.w3.org/ns/locn#thoroughfare",
           "count": 15114,
           "max": 10,
-          "min": 0
+          "min": 0,
+          "maxLen": 146
         },
         {
           "uri": "http://www.w3.org/ns/locn#postName",
           "count": 14718,
           "max": 10,
-          "min": 0
+          "min": 0,
+          "maxLen": 58
         },
         {
           "uri": "http://www.w3.org/ns/locn#postCode",
           "count": 14582,
           "max": 8,
-          "min": 0
+          "min": 0,
+          "maxLen": 48
         },
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
@@ -5395,7 +5790,8 @@
           "uri": "http://www.w3.org/2000/01/rdf-schema#label",
           "count": 93,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 86
         }
       ],
       "embed": {
@@ -5437,7 +5833,8 @@
           "uri": "http://xmlns.com/foaf/0.1/name",
           "count": 23742,
           "max": 21,
-          "min": 1
+          "min": 1,
+          "maxLen": 256
         },
         {
           "uri": "http://www.w3.org/ns/org#hasSite",
@@ -5455,25 +5852,29 @@
           "uri": "http://purl.org/dc/terms/identifier",
           "count": 13703,
           "max": 10,
-          "min": 0
+          "min": 0,
+          "maxLen": 14
         },
         {
           "uri": "http://purl.org/goodrelations/v1#legalNumber",
           "count": 11811,
           "max": 6,
-          "min": 0
+          "min": 0,
+          "maxLen": 64
         },
         {
           "uri": "http://purl.org/goodrelations/v1#vatID",
           "count": 10304,
           "max": 3,
-          "min": 0
+          "min": 0,
+          "maxLen": 34
         },
         {
           "uri": "http://purl.org/dc/terms/issued",
           "count": 8455,
           "max": 4,
-          "min": 0
+          "min": 0,
+          "maxLen": 10
         },
         {
           "uri": "http://xmlns.com/foaf/0.1/phone",
@@ -5485,7 +5886,8 @@
           "uri": "http://xmlns.com/foaf/0.1/nick",
           "count": 6898,
           "max": 20,
-          "min": 0
+          "min": 0,
+          "maxLen": 64
         },
         {
           "uri": "http://data.europa.eu/949/organisationSize",
@@ -5509,7 +5911,8 @@
           "uri": "http://data.europa.eu/949/faxNumber",
           "count": 2406,
           "max": 3,
-          "min": 0
+          "min": 0,
+          "maxLen": 49
         },
         {
           "uri": "http://purl.org/dc/terms/replaces",
@@ -5521,55 +5924,64 @@
           "uri": "http://purl.org/goodrelations/v1#legalName",
           "count": 649,
           "max": 2,
-          "min": 0
+          "min": 0,
+          "maxLen": 137
         },
         {
           "uri": "http://data.europa.eu/949/organisationCode",
           "count": 214,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 4
         },
         {
           "uri": "http://data.europa.eu/949/platformDataParameter",
           "count": 214,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 4
         },
         {
           "uri": "http://data.europa.eu/949/rinfTechnicalDataCharacteristic",
           "count": 214,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 4
         },
         {
           "uri": "http://data.europa.eu/949/tunnelDataParameter",
           "count": 214,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 4
         },
         {
           "uri": "http://data.europa.eu/949/sidingDataParameter",
           "count": 214,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 4
         },
         {
           "uri": "http://data.europa.eu/949/infraSubsystemDataParameter",
           "count": 214,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 4
         },
         {
           "uri": "http://data.europa.eu/949/solGenericDataParameter",
           "count": 214,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 4
         },
         {
           "uri": "http://data.europa.eu/949/trackGenericDataParameter",
           "count": 214,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 4
         },
         {
           "uri": "http://www.w3.org/ns/org#hasMembership",
@@ -5659,7 +6071,8 @@
           "uri": "http://www.w3.org/2000/01/rdf-schema#label",
           "count": 18409,
           "max": 14,
-          "min": 1
+          "min": 1,
+          "maxLen": 257
         },
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
@@ -5695,39 +6108,59 @@
       "properties": [
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 0
+          "count": 429618,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://purl.org/dc/terms/type",
-          "count": 0
+          "count": 429618,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/ns/prov#endedAtTime",
-          "count": 0
-        },
-        {
-          "uri": "http://www.w3.org/ns/prov#generated",
-          "count": 0
-        },
-        {
-          "uri": "http://www.w3.org/ns/prov#used",
-          "count": 0
+          "count": 428541,
+          "max": 3,
+          "min": 0,
+          "maxLen": 20
         },
         {
           "uri": "http://www.w3.org/ns/prov#wasAssociatedWith",
-          "count": 0
+          "count": 367169,
+          "max": 4,
+          "min": 0
+        },
+        {
+          "uri": "http://www.w3.org/ns/prov#generated",
+          "count": 213504,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://www.w3.org/ns/prov#used",
+          "count": 134125,
+          "max": 2,
+          "min": 0
         },
         {
           "uri": "http://www.w3.org/ns/prov#wasInformedBy",
-          "count": 0
-        },
-        {
-          "uri": "http://www.w3.org/2000/01/rdf-schema#comment",
-          "count": 0
+          "count": 42319,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/949/requestFor",
-          "count": 0
+          "count": 37052,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#comment",
+          "count": 18389,
+          "max": 2,
+          "min": 0,
+          "maxLen": 8192
         }
       ]
     },
@@ -5735,32 +6168,48 @@
       "ok": true,
       "properties": [
         {
-          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 0
-        },
-        {
           "uri": "http://data.europa.eu/949/state",
-          "count": 0
+          "count": 198760,
+          "max": 2,
+          "min": 1
         },
         {
-          "uri": "http://www.w3.org/ns/prov#generatedAtTime",
-          "count": 0
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 198632,
+          "max": 1,
+          "min": 1
         },
         {
           "uri": "http://www.w3.org/ns/prov#specializationOf",
-          "count": 0
+          "count": 198632,
+          "max": 1,
+          "min": 1
         },
         {
-          "uri": "http://www.w3.org/ns/prov#wasGeneratedBy",
-          "count": 0
+          "uri": "http://www.w3.org/ns/prov#generatedAtTime",
+          "count": 197469,
+          "max": 4,
+          "min": 0,
+          "maxLen": 20
         },
         {
           "uri": "http://www.w3.org/ns/prov#invalidatedAtTime",
-          "count": 0
+          "count": 99407,
+          "max": 2,
+          "min": 0,
+          "maxLen": 20
+        },
+        {
+          "uri": "http://www.w3.org/ns/prov#wasGeneratedBy",
+          "count": 99316,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://www.w3.org/ns/prov#wasInvalidatedBy",
-          "count": 0
+          "count": 99316,
+          "max": 1,
+          "min": 0
         }
       ]
     },
@@ -5769,169 +6218,270 @@
       "properties": [
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 0
-        },
-        {
-          "uri": "http://data.europa.eu/949/documentURL",
-          "count": 0
-        },
-        {
-          "uri": "http://xmlns.com/foaf/0.1/primaryTopic",
-          "count": 0
-        },
-        {
-          "uri": "http://data.europa.eu/949/documentUrl",
-          "count": 0
-        },
-        {
-          "uri": "http://www.w3.org/2000/01/rdf-schema#comment",
-          "count": 0
-        },
-        {
-          "uri": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
-          "count": 0
-        },
-        {
-          "uri": "http://purl.org/dc/terms/creator",
-          "count": 0
+          "count": 4259608,
+          "max": 4,
+          "min": 2
         },
         {
           "uri": "http://purl.org/dc/terms/issued",
-          "count": 0
-        },
-        {
-          "uri": "http://purl.org/dc/terms/valid",
-          "count": 0
-        },
-        {
-          "uri": "http://xmlns.com/foaf/0.1/homepage",
-          "count": 0
-        },
-        {
-          "uri": "http://purl.org/dc/terms/type",
-          "count": 0
-        },
-        {
-          "uri": "http://data.europa.eu/949/state",
-          "count": 0
-        },
-        {
-          "uri": "http://www.w3.org/ns/prov#wasGeneratedBy",
-          "count": 0
-        },
-        {
-          "uri": "http://data.europa.eu/949/changeActivity",
-          "count": 0
-        },
-        {
-          "uri": "http://purl.org/dc/terms/source",
-          "count": 0
-        },
-        {
-          "uri": "http://purl.org/dc/terms/requires",
-          "count": 0
-        },
-        {
-          "uri": "http://purl.org/dc/terms/contributor",
-          "count": 0
-        },
-        {
-          "uri": "https://w3id.org/vpa#versionNumber",
-          "count": 0
-        },
-        {
-          "uri": "http://purl.org/dc/terms/identifier",
-          "count": 0
-        },
-        {
-          "uri": "http://purl.org/dc/terms/description",
-          "count": 0
-        },
-        {
-          "uri": "http://data.europa.eu/eli/ontology#id_local",
-          "count": 0
-        },
-        {
-          "uri": "http://data.europa.eu/eli/ontology#title_short",
-          "count": 0
-        },
-        {
-          "uri": "http://www.w3.org/ns/prov#activity",
-          "count": 0
-        },
-        {
-          "uri": "http://purl.org/dc/terms/replaces",
-          "count": 0
-        },
-        {
-          "uri": "http://www.w3.org/ns/prov#wasDerivedFrom",
-          "count": 0
-        },
-        {
-          "uri": "http://purl.org/dc/terms/conformsTo",
-          "count": 0
-        },
-        {
-          "uri": "http://www.w3.org/ns/prov#invalidatedAtTime",
-          "count": 0
-        },
-        {
-          "uri": "http://www.w3.org/ns/prov#wasInvalidatedBy",
-          "count": 0
-        },
-        {
-          "uri": "http://purl.org/dc/terms/isReplacedBy",
-          "count": 0
-        },
-        {
-          "uri": "http://www.w3.org/2004/02/skos/core#editorialNote",
-          "count": 0
-        },
-        {
-          "uri": "https://w3id.org/vpa#checkedCompliance",
-          "count": 0
-        },
-        {
-          "uri": "https://w3id.org/vpa#withRestriction",
-          "count": 0
-        },
-        {
-          "uri": "http://purl.org/dc/terms/audience",
-          "count": 0
-        },
-        {
-          "uri": "http://purl.org/dc/terms/dateAccepted",
-          "count": 0
-        },
-        {
-          "uri": "http://purl.org/dc/terms/created",
-          "count": 0
-        },
-        {
-          "uri": "http://purl.org/dc/terms/available",
-          "count": 0
-        },
-        {
-          "uri": "http://data.europa.eu/949/resultStatement",
-          "count": 0
-        },
-        {
-          "uri": "http://data.europa.eu/949/sequenceStatement",
-          "count": 0
-        },
-        {
-          "uri": "http://data.europa.eu/949/validityStatement",
-          "count": 0
-        },
-        {
-          "uri": "http://xmlns.com/foaf/0.1/page",
-          "count": 0
+          "count": 1842399,
+          "max": 6,
+          "min": 0,
+          "maxLen": 10
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#label",
-          "count": 0
+          "count": 1813205,
+          "max": 1,
+          "min": 0,
+          "maxLen": 242
+        },
+        {
+          "uri": "http://data.europa.eu/949/changeActivity",
+          "count": 377283,
+          "max": 9,
+          "min": 0
+        },
+        {
+          "uri": "http://www.w3.org/ns/prov#activity",
+          "count": 377283,
+          "max": 9,
+          "min": 0
+        },
+        {
+          "uri": "http://data.europa.eu/eli/ontology#id_local",
+          "count": 217719,
+          "max": 18,
+          "min": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/creator",
+          "count": 183539,
+          "max": 4,
+          "min": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/type",
+          "count": 180425,
+          "max": 3,
+          "min": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/contributor",
+          "count": 178223,
+          "max": 13,
+          "min": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/documentUrl",
+          "count": 163668,
+          "max": 12,
+          "min": 0,
+          "maxLen": 379
+        },
+        {
+          "uri": "http://purl.org/dc/terms/source",
+          "count": 115331,
+          "max": 14,
+          "min": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/identifier",
+          "count": 111735,
+          "max": 6,
+          "min": 0,
+          "maxLen": 555
+        },
+        {
+          "uri": "http://data.europa.eu/949/documentURL",
+          "count": 109871,
+          "max": 240,
+          "min": 0,
+          "maxLen": 379
+        },
+        {
+          "uri": "http://purl.org/dc/terms/conformsTo",
+          "count": 106474,
+          "max": 7,
+          "min": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/created",
+          "count": 95816,
+          "max": 2,
+          "min": 0,
+          "maxLen": 10
+        },
+        {
+          "uri": "http://data.europa.eu/949/state",
+          "count": 93877,
+          "max": 3,
+          "min": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/audience",
+          "count": 93228,
+          "max": 2,
+          "min": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+          "count": 93167,
+          "max": 3,
+          "min": 0,
+          "maxLen": 69
+        },
+        {
+          "uri": "http://purl.org/dc/terms/description",
+          "count": 93135,
+          "max": 4,
+          "min": 0,
+          "maxLen": 2453
+        },
+        {
+          "uri": "http://purl.org/dc/terms/valid",
+          "count": 92980,
+          "max": 2,
+          "min": 0
+        },
+        {
+          "uri": "https://w3id.org/vpa#versionNumber",
+          "count": 92749,
+          "max": 2,
+          "min": 0,
+          "maxLen": 2
+        },
+        {
+          "uri": "http://xmlns.com/foaf/0.1/homepage",
+          "count": 92668,
+          "max": 3,
+          "min": 0
+        },
+        {
+          "uri": "https://w3id.org/vpa#checkedCompliance",
+          "count": 92029,
+          "max": 3,
+          "min": 0
+        },
+        {
+          "uri": "http://www.w3.org/ns/prov#wasGeneratedBy",
+          "count": 91050,
+          "max": 2,
+          "min": 0
+        },
+        {
+          "uri": "http://data.europa.eu/eli/ontology#title_short",
+          "count": 90983,
+          "max": 48,
+          "min": 0,
+          "maxLen": 79
+        },
+        {
+          "uri": "http://purl.org/dc/terms/requires",
+          "count": 88146,
+          "max": 4,
+          "min": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#comment",
+          "count": 80228,
+          "max": 6,
+          "min": 0,
+          "maxLen": 1851
+        },
+        {
+          "uri": "http://xmlns.com/foaf/0.1/primaryTopic",
+          "count": 68349,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/resultStatement",
+          "count": 47906,
+          "max": 1,
+          "min": 0,
+          "maxLen": 5168
+        },
+        {
+          "uri": "http://purl.org/dc/terms/available",
+          "count": 47881,
+          "max": 1,
+          "min": 0,
+          "maxLen": 20
+        },
+        {
+          "uri": "http://purl.org/dc/terms/dateAccepted",
+          "count": 47580,
+          "max": 1,
+          "min": 0,
+          "maxLen": 20
+        },
+        {
+          "uri": "http://www.w3.org/ns/prov#wasInvalidatedBy",
+          "count": 26513,
+          "max": 3,
+          "min": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/replaces",
+          "count": 26102,
+          "max": 2,
+          "min": 0
+        },
+        {
+          "uri": "http://www.w3.org/ns/prov#invalidatedAtTime",
+          "count": 24666,
+          "max": 4,
+          "min": 0,
+          "maxLen": 20
+        },
+        {
+          "uri": "http://www.w3.org/ns/prov#wasDerivedFrom",
+          "count": 24512,
+          "max": 2,
+          "min": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/isReplacedBy",
+          "count": 24509,
+          "max": 3,
+          "min": 0
+        },
+        {
+          "uri": "https://w3id.org/vpa#withRestriction",
+          "count": 18179,
+          "max": 3,
+          "min": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#editorialNote",
+          "count": 8503,
+          "max": 70,
+          "min": 0,
+          "maxLen": 584
+        },
+        {
+          "uri": "http://xmlns.com/foaf/0.1/page",
+          "count": 3892,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/sequenceStatement",
+          "count": 2850,
+          "max": 1,
+          "min": 0,
+          "maxLen": 1121
+        },
+        {
+          "uri": "http://data.europa.eu/949/validityStatement",
+          "count": 1471,
+          "max": 1,
+          "min": 0,
+          "maxLen": 1936
         }
-      ]
+      ],
+      "blank": true
     },
     "http://xmlns.com/foaf/0.1/Person": {
       "ok": true,
@@ -5946,19 +6496,22 @@
           "uri": "http://xmlns.com/foaf/0.1/name",
           "count": 194,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 32
         },
         {
           "uri": "http://xmlns.com/foaf/0.1/familyName",
           "count": 194,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 26
         },
         {
           "uri": "http://xmlns.com/foaf/0.1/givenName",
           "count": 194,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 14
         },
         {
           "uri": "http://xmlns.com/foaf/0.1/mbox",
@@ -5998,39 +6551,63 @@
       "properties": [
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 0
+          "count": 276087,
+          "max": 3,
+          "min": 3
         },
         {
           "uri": "https://w3id.org/vpa#checkedRequirement",
-          "count": 0
+          "count": 164257,
+          "max": 45,
+          "min": 0
         },
         {
           "uri": "http://purl.org/dc/terms/identifier",
-          "count": 0
+          "count": 29384,
+          "max": 1,
+          "min": 0,
+          "maxLen": 30
         },
         {
           "uri": "https://w3id.org/vpa#withRestriction",
-          "count": 0
-        },
-        {
-          "uri": "http://purl.org/dc/terms/issued",
-          "count": 0
-        },
-        {
-          "uri": "https://w3id.org/vpa#versionNumber",
-          "count": 0
-        },
-        {
-          "uri": "http://www.w3.org/2000/01/rdf-schema#comment",
-          "count": 0
-        },
-        {
-          "uri": "http://www.w3.org/2004/02/skos/core#note",
-          "count": 0
+          "count": 27642,
+          "max": 1,
+          "min": 0
         },
         {
           "uri": "http://purl.org/dc/terms/description",
-          "count": 0
+          "count": 5142,
+          "max": 1,
+          "min": 0,
+          "maxLen": 1601
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#comment",
+          "count": 2968,
+          "max": 1,
+          "min": 0,
+          "maxLen": 5738
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#note",
+          "count": 2968,
+          "max": 1,
+          "min": 0,
+          "maxLen": 35
+        },
+        {
+          "uri": "https://w3id.org/vpa#versionNumber",
+          "count": 1376,
+          "max": 1,
+          "min": 0,
+          "maxLen": 10
+        },
+        {
+          "uri": "http://purl.org/dc/terms/issued",
+          "count": 1284,
+          "max": 1,
+          "min": 0,
+          "maxLen": 10
         }
       ]
     },
@@ -6038,12 +6615,16 @@
       "ok": true,
       "properties": [
         {
-          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 0
+          "uri": "http://www.w3.org/2000/01/rdf-schema#member",
+          "count": 1831967,
+          "max": 21840,
+          "min": 1
         },
         {
-          "uri": "http://www.w3.org/2000/01/rdf-schema#member",
-          "count": 0
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 88205,
+          "max": 1,
+          "min": 1
         }
       ]
     },
@@ -6052,155 +6633,248 @@
       "properties": [
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-          "count": 0
-        },
-        {
-          "uri": "http://www.w3.org/2000/01/rdf-schema#comment",
-          "count": 0
-        },
-        {
-          "uri": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
-          "count": 0
-        },
-        {
-          "uri": "http://purl.org/dc/terms/creator",
-          "count": 0
+          "count": 4027280,
+          "max": 4,
+          "min": 2
         },
         {
           "uri": "http://purl.org/dc/terms/issued",
-          "count": 0
-        },
-        {
-          "uri": "http://purl.org/dc/terms/valid",
-          "count": 0
-        },
-        {
-          "uri": "http://xmlns.com/foaf/0.1/homepage",
-          "count": 0
-        },
-        {
-          "uri": "http://purl.org/dc/terms/type",
-          "count": 0
-        },
-        {
-          "uri": "http://data.europa.eu/949/state",
-          "count": 0
-        },
-        {
-          "uri": "http://www.w3.org/ns/prov#wasGeneratedBy",
-          "count": 0
-        },
-        {
-          "uri": "http://data.europa.eu/949/changeActivity",
-          "count": 0
-        },
-        {
-          "uri": "http://purl.org/dc/terms/source",
-          "count": 0
-        },
-        {
-          "uri": "http://purl.org/dc/terms/requires",
-          "count": 0
-        },
-        {
-          "uri": "http://purl.org/dc/terms/contributor",
-          "count": 0
-        },
-        {
-          "uri": "https://w3id.org/vpa#versionNumber",
-          "count": 0
-        },
-        {
-          "uri": "http://purl.org/dc/terms/identifier",
-          "count": 0
-        },
-        {
-          "uri": "http://purl.org/dc/terms/description",
-          "count": 0
-        },
-        {
-          "uri": "http://data.europa.eu/eli/ontology#id_local",
-          "count": 0
-        },
-        {
-          "uri": "http://data.europa.eu/eli/ontology#title_short",
-          "count": 0
-        },
-        {
-          "uri": "http://www.w3.org/ns/prov#activity",
-          "count": 0
-        },
-        {
-          "uri": "http://purl.org/dc/terms/replaces",
-          "count": 0
-        },
-        {
-          "uri": "http://www.w3.org/ns/prov#wasDerivedFrom",
-          "count": 0
-        },
-        {
-          "uri": "http://purl.org/dc/terms/conformsTo",
-          "count": 0
-        },
-        {
-          "uri": "http://www.w3.org/ns/prov#invalidatedAtTime",
-          "count": 0
-        },
-        {
-          "uri": "http://www.w3.org/ns/prov#wasInvalidatedBy",
-          "count": 0
-        },
-        {
-          "uri": "http://purl.org/dc/terms/isReplacedBy",
-          "count": 0
-        },
-        {
-          "uri": "http://www.w3.org/2004/02/skos/core#editorialNote",
-          "count": 0
-        },
-        {
-          "uri": "https://w3id.org/vpa#checkedCompliance",
-          "count": 0
-        },
-        {
-          "uri": "https://w3id.org/vpa#withRestriction",
-          "count": 0
-        },
-        {
-          "uri": "http://purl.org/dc/terms/audience",
-          "count": 0
-        },
-        {
-          "uri": "http://purl.org/dc/terms/dateAccepted",
-          "count": 0
-        },
-        {
-          "uri": "http://purl.org/dc/terms/created",
-          "count": 0
-        },
-        {
-          "uri": "http://purl.org/dc/terms/available",
-          "count": 0
-        },
-        {
-          "uri": "http://data.europa.eu/949/resultStatement",
-          "count": 0
-        },
-        {
-          "uri": "http://data.europa.eu/949/sequenceStatement",
-          "count": 0
-        },
-        {
-          "uri": "http://data.europa.eu/949/validityStatement",
-          "count": 0
+          "count": 1822886,
+          "max": 3,
+          "min": 0,
+          "maxLen": 10
         },
         {
           "uri": "http://www.w3.org/2000/01/rdf-schema#label",
-          "count": 0
+          "count": 1813205,
+          "max": 1,
+          "min": 0,
+          "maxLen": 242
+        },
+        {
+          "uri": "http://data.europa.eu/949/changeActivity",
+          "count": 377283,
+          "max": 9,
+          "min": 0
+        },
+        {
+          "uri": "http://www.w3.org/ns/prov#activity",
+          "count": 377283,
+          "max": 9,
+          "min": 0
+        },
+        {
+          "uri": "http://data.europa.eu/eli/ontology#id_local",
+          "count": 217719,
+          "max": 18,
+          "min": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/creator",
+          "count": 183539,
+          "max": 4,
+          "min": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/type",
+          "count": 180425,
+          "max": 3,
+          "min": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/contributor",
+          "count": 178223,
+          "max": 13,
+          "min": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/source",
+          "count": 115331,
+          "max": 14,
+          "min": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/conformsTo",
+          "count": 106474,
+          "max": 7,
+          "min": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/created",
+          "count": 95816,
+          "max": 2,
+          "min": 0,
+          "maxLen": 10
+        },
+        {
+          "uri": "http://data.europa.eu/949/state",
+          "count": 93877,
+          "max": 3,
+          "min": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/audience",
+          "count": 93228,
+          "max": 2,
+          "min": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+          "count": 93167,
+          "max": 3,
+          "min": 0,
+          "maxLen": 69
+        },
+        {
+          "uri": "http://purl.org/dc/terms/description",
+          "count": 93135,
+          "max": 4,
+          "min": 0,
+          "maxLen": 2453
+        },
+        {
+          "uri": "http://purl.org/dc/terms/valid",
+          "count": 92980,
+          "max": 2,
+          "min": 0
+        },
+        {
+          "uri": "https://w3id.org/vpa#versionNumber",
+          "count": 92749,
+          "max": 2,
+          "min": 0,
+          "maxLen": 2
+        },
+        {
+          "uri": "http://purl.org/dc/terms/identifier",
+          "count": 92715,
+          "max": 1,
+          "min": 0,
+          "maxLen": 90
+        },
+        {
+          "uri": "http://xmlns.com/foaf/0.1/homepage",
+          "count": 92668,
+          "max": 3,
+          "min": 0
+        },
+        {
+          "uri": "https://w3id.org/vpa#checkedCompliance",
+          "count": 92029,
+          "max": 3,
+          "min": 0
+        },
+        {
+          "uri": "http://www.w3.org/ns/prov#wasGeneratedBy",
+          "count": 91050,
+          "max": 2,
+          "min": 0
+        },
+        {
+          "uri": "http://data.europa.eu/eli/ontology#title_short",
+          "count": 90983,
+          "max": 48,
+          "min": 0,
+          "maxLen": 79
+        },
+        {
+          "uri": "http://purl.org/dc/terms/requires",
+          "count": 88146,
+          "max": 4,
+          "min": 0
         },
         {
           "uri": "http://data.europa.eu/949/documentUrl",
-          "count": 0
+          "count": 87400,
+          "max": 1,
+          "min": 0,
+          "maxLen": 379
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#comment",
+          "count": 65384,
+          "max": 3,
+          "min": 0,
+          "maxLen": 1851
+        },
+        {
+          "uri": "http://data.europa.eu/949/resultStatement",
+          "count": 47906,
+          "max": 1,
+          "min": 0,
+          "maxLen": 5168
+        },
+        {
+          "uri": "http://purl.org/dc/terms/available",
+          "count": 47881,
+          "max": 1,
+          "min": 0,
+          "maxLen": 20
+        },
+        {
+          "uri": "http://purl.org/dc/terms/dateAccepted",
+          "count": 47580,
+          "max": 1,
+          "min": 0,
+          "maxLen": 20
+        },
+        {
+          "uri": "http://www.w3.org/ns/prov#wasInvalidatedBy",
+          "count": 26513,
+          "max": 3,
+          "min": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/replaces",
+          "count": 26102,
+          "max": 2,
+          "min": 0
+        },
+        {
+          "uri": "http://www.w3.org/ns/prov#invalidatedAtTime",
+          "count": 24666,
+          "max": 4,
+          "min": 0,
+          "maxLen": 20
+        },
+        {
+          "uri": "http://www.w3.org/ns/prov#wasDerivedFrom",
+          "count": 24512,
+          "max": 2,
+          "min": 0
+        },
+        {
+          "uri": "http://purl.org/dc/terms/isReplacedBy",
+          "count": 24509,
+          "max": 3,
+          "min": 0
+        },
+        {
+          "uri": "https://w3id.org/vpa#withRestriction",
+          "count": 18179,
+          "max": 3,
+          "min": 0
+        },
+        {
+          "uri": "http://www.w3.org/2004/02/skos/core#editorialNote",
+          "count": 8503,
+          "max": 70,
+          "min": 0,
+          "maxLen": 584
+        },
+        {
+          "uri": "http://data.europa.eu/949/sequenceStatement",
+          "count": 2850,
+          "max": 1,
+          "min": 0,
+          "maxLen": 1121
+        },
+        {
+          "uri": "http://data.europa.eu/949/validityStatement",
+          "count": 1471,
+          "max": 1,
+          "min": 0,
+          "maxLen": 1936
         }
       ]
     },
@@ -6253,7 +6927,8 @@
           "uri": "http://purl.org/dc/terms/issued",
           "count": 23246,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 10
         },
         {
           "uri": "http://www.w3.org/ns/prov#wasGeneratedBy",
@@ -6265,31 +6940,36 @@
           "uri": "http://purl.org/dc/terms/dateAccepted",
           "count": 21377,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 20
         },
         {
           "uri": "http://data.europa.eu/949/europeanIdentificationNumber",
           "count": 21207,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 31
         },
         {
           "uri": "http://purl.org/dc/terms/dateSubmitted",
           "count": 20387,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 20
         },
         {
           "uri": "http://data.europa.eu/949/coversHighSpeed",
           "count": 20354,
           "max": 2,
-          "min": 0
+          "min": 0,
+          "maxLen": 5
         },
         {
           "uri": "http://data.europa.eu/949/coversDangerousGoods",
           "count": 20344,
           "max": 2,
-          "min": 0
+          "min": 0,
+          "maxLen": 5
         },
         {
           "uri": "http://xmlns.com/foaf/0.1/homepage",
@@ -6301,7 +6981,8 @@
           "uri": "http://www.w3.org/2000/01/rdf-schema#comment",
           "count": 19588,
           "max": 4,
-          "min": 0
+          "min": 0,
+          "maxLen": 5829
         },
         {
           "uri": "http://purl.org/dc/terms/type",
@@ -6313,19 +6994,22 @@
           "uri": "http://purl.org/dc/terms/source",
           "count": 17511,
           "max": 8,
-          "min": 0
+          "min": 0,
+          "maxLen": 2039
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#editorialNote",
           "count": 16945,
           "max": 11,
-          "min": 0
+          "min": 0,
+          "maxLen": 123
         },
         {
           "uri": "http://purl.org/dc/terms/spatial",
           "count": 16851,
           "max": 2,
-          "min": 0
+          "min": 0,
+          "maxLen": 5829
         },
         {
           "uri": "http://data.europa.eu/949/vehicleTypeSubCategory",
@@ -6343,7 +7027,8 @@
           "uri": "http://data.europa.eu/949/relatedCertificate",
           "count": 15578,
           "max": 2,
-          "min": 0
+          "min": 0,
+          "maxLen": 18
         },
         {
           "uri": "https://w3id.org/vpa#permits",
@@ -6355,19 +7040,22 @@
           "uri": "http://www.w3.org/2000/01/rdf-schema#label",
           "count": 14438,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 52
         },
         {
           "uri": "http://data.europa.eu/949/coversOnlyShunting",
           "count": 12525,
           "max": 2,
-          "min": 0
+          "min": 0,
+          "maxLen": 5
         },
         {
           "uri": "http://purl.org/dc/terms/modified",
           "count": 12151,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 20
         },
         {
           "uri": "http://www.w3.org/ns/prov#wasInvalidatedBy",
@@ -6397,25 +7085,29 @@
           "uri": "http://www.w3.org/ns/prov#invalidatedAtTime",
           "count": 9638,
           "max": 3,
-          "min": 0
+          "min": 0,
+          "maxLen": 20
         },
         {
           "uri": "http://purl.org/dc/terms/available",
           "count": 8288,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 20
         },
         {
           "uri": "http://data.europa.eu/949/nonCodedRestrictions",
           "count": 7864,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 1659
         },
         {
           "uri": "http://data.europa.eu/949/vehicleTypeTechnicalDataCharacteristic",
           "count": 7864,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 1659
         },
         {
           "uri": "http://purl.org/dc/terms/references",
@@ -6427,19 +7119,22 @@
           "uri": "http://purl.org/dc/terms/identifier",
           "count": 5652,
           "max": 2,
-          "min": 0
+          "min": 0,
+          "maxLen": 128
         },
         {
           "uri": "http://www.w3.org/2004/02/skos/core#notation",
           "count": 4761,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 44
         },
         {
           "uri": "http://data.europa.eu/949/isTemporary",
           "count": 4761,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 5
         },
         {
           "uri": "https://w3id.org/vpa#withRestriction",
@@ -6451,7 +7146,8 @@
           "uri": "http://data.europa.eu/949/borderPointStation",
           "count": 2717,
           "max": 8,
-          "min": 0
+          "min": 0,
+          "maxLen": 4921
         },
         {
           "uri": "http://purl.org/dc/terms/hasPart",
@@ -6463,13 +7159,15 @@
           "uri": "http://data.europa.eu/949/transportationVolumeFreight",
           "count": 2300,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 39
         },
         {
           "uri": "http://data.europa.eu/949/transportationVolumePassenger",
           "count": 1076,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 43
         },
         {
           "uri": "https://w3id.org/vpa#permissionType",
@@ -6481,7 +7179,8 @@
           "uri": "http://purl.org/dc/terms/created",
           "count": 60,
           "max": 2,
-          "min": 0
+          "min": 0,
+          "maxLen": 10
         },
         {
           "uri": "https://w3id.org/vpa#checkedCompliance",
@@ -6499,13 +7198,15 @@
           "uri": "https://w3id.org/vpa#versionNumber",
           "count": 59,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 1
         },
         {
           "uri": "http://purl.org/dc/terms/description",
           "count": 59,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 256
         },
         {
           "uri": "http://purl.org/dc/terms/conformsTo",
@@ -6641,7 +7342,8 @@
           "uri": "http://purl.org/dc/terms/title",
           "count": 201,
           "max": 2,
-          "min": 1
+          "min": 1,
+          "maxLen": 381
         },
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
@@ -6653,7 +7355,8 @@
           "uri": "http://www.w3.org/2000/01/rdf-schema#comment",
           "count": 197,
           "max": 1,
-          "min": 1
+          "min": 1,
+          "maxLen": 50
         }
       ],
       "embed": {
@@ -6679,19 +7382,22 @@
           "uri": "http://www.w3.org/2000/01/rdf-schema#comment",
           "count": 49317,
           "max": 4,
-          "min": 0
+          "min": 0,
+          "maxLen": 24479
         },
         {
           "uri": "http://data.europa.eu/949/nonCodedRestrictions",
           "count": 48,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 1354
         },
         {
           "uri": "http://data.europa.eu/949/vehicleTypeTechnicalDataCharacteristic",
           "count": 48,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 1354
         }
       ],
       "embed": {
@@ -6716,8 +7422,8 @@
       "http://data.europa.eu/949/CABRestriction"
     ],
     "http://www.opengis.net/ont/geosparql#Feature": [
-      "http://data.europa.eu/949/Feature",
-      "http://data.europa.eu/949/ReferenceBorderPoint"
+      "http://data.europa.eu/949/ReferenceBorderPoint",
+      "http://data.europa.eu/949/Feature"
     ],
     "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property": [
       "http://www.w3.org/2000/01/rdf-schema#ContainerMembershipProperty"
@@ -6729,9 +7435,9 @@
       "http://data.europa.eu/949/ERTMSErrorChangeRequest"
     ],
     "http://xmlns.com/foaf/0.1/Document": [
+      "http://data.europa.eu/949/ECDeclaration",
       "http://data.europa.eu/949/CertificationLevelDocument",
       "http://data.europa.eu/949/Document",
-      "http://data.europa.eu/949/ECDeclaration",
       "https://w3id.org/vpa#EvidenceDocument"
     ],
     "https://w3id.org/vpa#Compliance": [
@@ -6739,8 +7445,8 @@
       "http://data.europa.eu/949/Compliance"
     ],
     "https://w3id.org/vpa#EvidenceDocument": [
-      "http://data.europa.eu/949/CertificationLevelDocument",
-      "http://data.europa.eu/949/ECDeclaration"
+      "http://data.europa.eu/949/ECDeclaration",
+      "http://data.europa.eu/949/CertificationLevelDocument"
     ],
     "https://w3id.org/vpa#Permission": [
       "http://data.europa.eu/949/Certificate"
@@ -6750,13 +7456,129 @@
       "http://data.europa.eu/949/Restriction"
     ]
   },
-  "composition": {},
-  "orphanCounts": {},
-  "profiledAt": "2026-07-06T09:02:36.252Z",
+  "composition": {
+    "http://data.europa.eu/949/Body": [
+      {
+        "uri": "http://data.europa.eu/949/Document",
+        "count": 3892
+      },
+      {
+        "uri": "http://xmlns.com/foaf/0.1/Document",
+        "count": 3892
+      }
+    ],
+    "http://data.europa.eu/949/Certificate": [
+      {
+        "uri": "http://data.europa.eu/949/Document",
+        "count": 19604
+      },
+      {
+        "uri": "http://xmlns.com/foaf/0.1/Document",
+        "count": 19604
+      }
+    ],
+    "http://data.europa.eu/949/CertificationLevelDocument": [
+      {
+        "uri": "http://data.europa.eu/949/Document",
+        "count": 47815
+      },
+      {
+        "uri": "http://xmlns.com/foaf/0.1/Document",
+        "count": 55239
+      }
+    ],
+    "http://data.europa.eu/949/Document": [
+      {
+        "uri": "http://xmlns.com/foaf/0.1/Document",
+        "count": 44436
+      }
+    ],
+    "http://data.europa.eu/949/ECDeclaration": [
+      {
+        "uri": "http://data.europa.eu/949/Document",
+        "count": 44853
+      },
+      {
+        "uri": "http://xmlns.com/foaf/0.1/Document",
+        "count": 73862
+      }
+    ],
+    "http://www.w3.org/ns/org#Organization": [
+      {
+        "uri": "http://data.europa.eu/949/Document",
+        "count": 3892
+      },
+      {
+        "uri": "http://xmlns.com/foaf/0.1/Document",
+        "count": 3892
+      }
+    ],
+    "http://www.w3.org/ns/prov#Activity": [
+      {
+        "uri": "http://xmlns.com/foaf/0.1/Document",
+        "count": 91040
+      }
+    ],
+    "http://www.w3.org/ns/prov#Entity": [
+      {
+        "uri": "http://xmlns.com/foaf/0.1/Document",
+        "count": 73557
+      }
+    ],
+    "http://xmlns.com/foaf/0.1/Document": [
+      {
+        "uri": "http://data.europa.eu/949/Document",
+        "count": 92668
+      }
+    ],
+    "https://w3id.org/vpa#Evidence": [
+      {
+        "uri": "http://data.europa.eu/949/Document",
+        "count": 87400
+      },
+      {
+        "uri": "http://xmlns.com/foaf/0.1/Document",
+        "count": 1830913
+      }
+    ],
+    "https://w3id.org/vpa#EvidenceDocument": [
+      {
+        "uri": "http://data.europa.eu/949/Document",
+        "count": 92668
+      },
+      {
+        "uri": "http://xmlns.com/foaf/0.1/Document",
+        "count": 129101
+      }
+    ],
+    "https://w3id.org/vpa#Permission": [
+      {
+        "uri": "http://data.europa.eu/949/Document",
+        "count": 19604
+      },
+      {
+        "uri": "http://xmlns.com/foaf/0.1/Document",
+        "count": 19604
+      }
+    ],
+    "node2322": [
+      {
+        "uri": "http://data.europa.eu/949/Document",
+        "count": 3892
+      },
+      {
+        "uri": "http://xmlns.com/foaf/0.1/Document",
+        "count": 3892
+      }
+    ]
+  },
+  "orphanCounts": {
+    "http://data.europa.eu/949/Document": 87400,
+    "http://xmlns.com/foaf/0.1/Document": 1923493
+  },
+  "profiledAt": "2026-07-06T15:47:15.868Z",
   "types": {
     "http://data.europa.eu/949/Document": {
-      "render": "embed",
-      "embedVia": "http://xmlns.com/foaf/0.1/homepage",
       "label": [
         "http://data.europa.eu/949/documentURL"
       ],
@@ -6766,11 +7588,12 @@
       ],
       "hide": [
         "http://data.europa.eu/949/documentUrl"
+      ],
+      "capWidth": [
+        "http://www.w3.org/2000/01/rdf-schema#comment"
       ]
     },
     "http://xmlns.com/foaf/0.1/Document": {
-      "render": "embed",
-      "embedVia": "http://xmlns.com/foaf/0.1/homepage",
       "label": [
         "http://data.europa.eu/949/documentURL"
       ],
@@ -6780,6 +7603,149 @@
       ],
       "hide": [
         "http://data.europa.eu/949/documentUrl"
+      ],
+      "capWidth": [
+        "http://purl.org/dc/terms/description",
+        "http://www.w3.org/2000/01/rdf-schema#comment"
+      ]
+    },
+    "http://data.europa.eu/949/CABAssessmentCheck": {
+      "capWidth": [
+        "http://purl.org/dc/terms/description",
+        "http://www.w3.org/2000/01/rdf-schema#comment"
+      ]
+    },
+    "http://data.europa.eu/949/CABRestriction": {
+      "capWidth": [
+        "http://www.w3.org/2000/01/rdf-schema#comment"
+      ]
+    },
+    "http://data.europa.eu/949/Certificate": {
+      "capWidth": [
+        "http://www.w3.org/2000/01/rdf-schema#comment"
+      ]
+    },
+    "http://data.europa.eu/949/CertificationLevelDocument": {
+      "capWidth": [
+        "http://purl.org/dc/terms/description",
+        "http://www.w3.org/2000/01/rdf-schema#comment"
+      ]
+    },
+    "http://data.europa.eu/949/Compliance": {
+      "capWidth": [
+        "http://purl.org/dc/terms/description",
+        "http://www.w3.org/2000/01/rdf-schema#comment"
+      ]
+    },
+    "http://data.europa.eu/949/ECDeclaration": {
+      "capWidth": [
+        "http://purl.org/dc/terms/description",
+        "http://www.w3.org/2000/01/rdf-schema#comment"
+      ]
+    },
+    "http://data.europa.eu/949/ERTMSErrorChangeRequest": {
+      "capWidth": [
+        "http://www.w3.org/2000/01/rdf-schema#comment"
+      ]
+    },
+    "http://data.europa.eu/949/Restriction": {
+      "capWidth": [
+        "http://www.w3.org/2000/01/rdf-schema#comment"
+      ]
+    },
+    "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property": {
+      "capWidth": [
+        "http://www.w3.org/2000/01/rdf-schema#comment"
+      ]
+    },
+    "http://www.w3.org/2002/07/owl#AnnotationProperty": {
+      "capWidth": [
+        "http://www.w3.org/2000/01/rdf-schema#comment"
+      ]
+    },
+    "http://www.w3.org/2002/07/owl#Class": {
+      "capWidth": [
+        "http://www.w3.org/2000/01/rdf-schema#comment"
+      ]
+    },
+    "http://www.w3.org/2002/07/owl#DatatypeProperty": {
+      "capWidth": [
+        "http://www.w3.org/2000/01/rdf-schema#comment"
+      ]
+    },
+    "http://www.w3.org/2002/07/owl#FunctionalProperty": {
+      "capWidth": [
+        "http://www.w3.org/2000/01/rdf-schema#comment"
+      ]
+    },
+    "http://www.w3.org/2002/07/owl#IrreflexiveProperty": {
+      "capWidth": [
+        "http://www.w3.org/2000/01/rdf-schema#comment"
+      ]
+    },
+    "http://www.w3.org/2002/07/owl#ObjectProperty": {
+      "capWidth": [
+        "http://www.w3.org/2000/01/rdf-schema#comment"
+      ]
+    },
+    "http://www.w3.org/2002/07/owl#Ontology": {
+      "capWidth": [
+        "http://www.w3.org/2000/01/rdf-schema#comment"
+      ]
+    },
+    "http://www.w3.org/2002/07/owl#SymmetricProperty": {
+      "capWidth": [
+        "http://www.w3.org/2000/01/rdf-schema#comment"
+      ]
+    },
+    "http://www.w3.org/2004/02/skos/core#Collection": {
+      "capWidth": [
+        "http://www.w3.org/2000/01/rdf-schema#comment",
+        "http://purl.org/dc/terms/description"
+      ]
+    },
+    "http://www.w3.org/2004/02/skos/core#Concept": {
+      "capWidth": [
+        "http://www.w3.org/2000/01/rdf-schema#comment"
+      ]
+    },
+    "http://www.w3.org/2004/02/skos/core#ConceptScheme": {
+      "capWidth": [
+        "http://www.w3.org/2000/01/rdf-schema#comment",
+        "http://purl.org/dc/terms/description"
+      ]
+    },
+    "http://www.w3.org/ns/prov#Activity": {
+      "capWidth": [
+        "http://www.w3.org/2000/01/rdf-schema#comment"
+      ]
+    },
+    "https://w3id.org/vpa#Compliance": {
+      "capWidth": [
+        "http://purl.org/dc/terms/description",
+        "http://www.w3.org/2000/01/rdf-schema#comment"
+      ]
+    },
+    "https://w3id.org/vpa#EvidenceDocument": {
+      "capWidth": [
+        "http://purl.org/dc/terms/description",
+        "http://www.w3.org/2000/01/rdf-schema#comment"
+      ]
+    },
+    "https://w3id.org/vpa#Permission": {
+      "capWidth": [
+        "http://www.w3.org/2000/01/rdf-schema#comment",
+        "http://purl.org/dc/terms/description"
+      ]
+    },
+    "https://w3id.org/vpa#Requirement": {
+      "capWidth": [
+        "http://www.w3.org/2000/01/rdf-schema#comment"
+      ]
+    },
+    "https://w3id.org/vpa#Restriction": {
+      "capWidth": [
+        "http://www.w3.org/2000/01/rdf-schema#comment"
       ]
     }
   }
