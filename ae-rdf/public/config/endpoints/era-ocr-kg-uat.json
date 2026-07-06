@@ -1551,9 +1551,7 @@
         "http://publications.europa.eu/ontology/authority/legacy-code",
         "http://purl.org/dc/elements/1.1/source",
         "http://publications.europa.eu/ontology/authority/affected-table"
-      ],
-      "render": "embed",
-      "embedVia": "http://publications.europa.eu/ontology/authority/op-mapped-code"
+      ]
     },
     "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property": {
       "group": "Ontology"

@@ -89,7 +89,10 @@ const SYS_HIDDEN = 'Hidden'
 
 const typeName = (uri: string) => displayType(uri, resolved.value, settings.uriDisplay)
 const cfg = (uri: string) => typeConfig.get(uri)
-const isHidden = (uri: string) => cfg(uri).sidebar === 'hide'
+// Blank-node types have no navigable instance view (anonymous nodes) — always
+// hidden and never clickable, regardless of per-type config.
+const isBlank = (uri: string) => typeConfig.blank(uri)
+const isHidden = (uri: string) => cfg(uri).sidebar === 'hide' || isBlank(uri)
 const isPinned = (uri: string) => cfg(uri).sidebar === 'pin'
 const renderOf = (uri: string) => cfg(uri).render ?? 'link'
 
@@ -110,7 +113,9 @@ function toggleCollapse(uri: string) {
 
 /* ── Embed nesting (value objects shown inline under their composing class) ── */
 
-const embedSet = computed(() => new Set(types.value.filter(t => renderOf(t.uri) === 'embed').map(t => t.uri)))
+// Blank types never go in the Embedded group — they're hidden (their properties
+// still inline via the resource view's always-on blank-node pass, not this set).
+const embedSet = computed(() => new Set(types.value.filter(t => renderOf(t.uri) === 'embed' && !isBlank(t.uri)).map(t => t.uri)))
 
 // Embed children of a class, each with a count scoped to that class (not the
 // global type total), commonest first.
@@ -432,6 +437,19 @@ function selectType(uri: string) {
             <span class="type-count">{{ formatCount(row.count) }}</span>
           </button>
 
+          <!-- Blank-node type: anonymous instances, no navigable view — static. -->
+          <span
+            v-else-if="row.kind === 'class' && isBlank(row.uri)"
+            class="type-item type-item-static"
+            :title="row.uri + ' — blank-node type: instances are anonymous, no page to open'"
+          >
+            <span class="type-name">{{ typeName(row.uri) }}</span>
+            <span class="type-ind">
+              <span class="material-symbols-outlined ind" title="Blank-node type — reachable only inline">data_object</span>
+            </span>
+            <span class="type-count">{{ formatCount(row.count) }}</span>
+          </span>
+
           <!-- Class: a navigable type (click → instance list). -->
           <button
             v-else-if="row.kind === 'class'"
@@ -650,6 +668,12 @@ function selectType(uri: string) {
 
 .type-item.active {
   box-shadow: inset 2px 0 0 var(--ae-accent);
+}
+
+/* Blank-node type row: not a link, not clickable. */
+.type-item-static {
+  cursor: default;
+  color: var(--ae-text-muted);
 }
 
 /* Disclosure chevron (collapse/expand a superclass) + alignment spacer. */

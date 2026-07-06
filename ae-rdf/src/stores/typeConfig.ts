@@ -19,6 +19,13 @@ export const useTypeConfigStore = defineStore('typeConfig', () => {
     return endpointStore.current?.types?.[typeUri] ?? {}
   }
 
+  /** Profiler hint: this type's instances are blank nodes — anonymous, so they
+   *  have no navigable instance view and are only ever reached inline via a
+   *  parent. Treated as hidden + non-clickable in the sidebar. */
+  function blank(typeUri: string): boolean {
+    return endpointStore.current?.typeProperties?.[typeUri]?.blank === true
+  }
+
   /** The one type whose config governs a multi-typed resource: the first (sorted)
    *  of `typeUris` carrying any order/hide/label config, else the first type.
    *  ONE rule so the heading's composed label (useResourceView.deriveLabel) and
@@ -47,5 +54,5 @@ export const useTypeConfigStore = defineStore('typeConfig', () => {
     endpointStore.updateEndpoint(ep.id, { types: Object.keys(all).length ? all : undefined })
   }
 
-  return { get, set, configType }
+  return { get, set, configType, blank }
 })
