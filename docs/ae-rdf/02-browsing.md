@@ -59,7 +59,7 @@ Opening an instance — or pasting a URI in the top bar and pressing **Go** — 
 - **Attributes** — properties whose values are literals (dates, statuses, text), shown with language and datatype tags.
 - **Relationships** — properties whose values are other resources. These are **clickable links** <img src="./icons/icon-link.svg" height="14"> — click to walk to that resource. Each link carries a small **type badge** showing the *most specific* type (e.g. `[JournalPaper]`, not the generic `[Result]`) so you can see exactly *what* it points at. Value-object types set to **Embed** (in the [Types gear](#types-sidebar)) show their properties inline instead of a link — e.g. a monetary amount renders as `value 1902.6 · currency EUR` in place, nested as deep as the data goes.
 
-A property with a huge number of values (say a hub node linking thousands of others) shows the first **100** with a *Show all / Show fewer* toggle, so the page stays manageable.
+A property with a huge number of values (say a funding scheme linking thousands of grants) starts collapsed to a count with a **Show first 100** link, so the page stays manageable. Once expanded, a **filter box** appears above the values — type to narrow the list by name or URI (matched against every value, not just the 100 shown, since they're all already loaded). The status line reports how many match; **Esc** or the **✕** clears it.
 
 ### Referenced by (incoming links)
 

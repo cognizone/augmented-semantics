@@ -232,10 +232,14 @@ function isDangling(uri: string): boolean {
   )
 }
 
+/** An object's display text: its resolved label/qname (URIs) or literal value. */
+const objText = (o: ResourceObject) => (o.termType === 'uri' ? objectText(o.value) : o.value)
+
 /** Objects of a predicate, sorted by display text (label/qname, else literal). */
 function sortedObjects(group: PropertyGroup): ResourceObject[] {
-  const key = (o: ResourceObject) => (o.termType === 'uri' ? objectText(o.value) : o.value).toLowerCase()
-  return [...group.objects].sort((a, b) => key(a).localeCompare(key(b)))
+  return [...group.objects].sort((a, b) =>
+    objText(a).toLowerCase().localeCompare(objText(b).toLowerCase()),
+  )
 }
 
 // A predicate can have thousands of objects (a hub node linking every grant).
@@ -248,15 +252,45 @@ const expanded = ref<Set<string>>(new Set())
 const fmtN = (n: number) => n.toLocaleString('en-US')
 const isBig = (group: PropertyGroup) => group.objects.length > OBJECT_CAP
 const isCollapsed = (group: PropertyGroup) => isBig(group) && !expanded.value.has(group.predicate)
+
+// Per-predicate value filter. Every object of the predicate is already loaded
+// (the resource query has no per-predicate LIMIT), so a big list is narrowed
+// client-side by a substring match over each object's display text — no query.
+// Only offered on big, expanded, flat lists (see showObjFilter).
+const objFilter = ref<Record<string, string>>({})
+const filterTerm = (predicate: string) => (objFilter.value[predicate] ?? '').trim().toLowerCase()
+const showObjFilter = (group: PropertyGroup) =>
+  !isGrouped(group.predicate) && isBig(group) && !isCollapsed(group)
+
+/** sortedObjects, narrowed by this predicate's filter term (if set). */
+function filteredObjects(group: PropertyGroup): ResourceObject[] {
+  const term = filterTerm(group.predicate)
+  const all = sortedObjects(group)
+  return term ? all.filter(o => objText(o).toLowerCase().includes(term)) : all
+}
+const matchCount = (group: PropertyGroup) => filteredObjects(group).length
+
 function shownObjects(group: PropertyGroup): ResourceObject[] {
   if (isCollapsed(group)) return []
-  const all = sortedObjects(group)
-  return isBig(group) ? all.slice(0, OBJECT_CAP) : all
+  const all = filteredObjects(group)
+  return all.length > OBJECT_CAP ? all.slice(0, OBJECT_CAP) : all
 }
 function toggleExpand(predicate: string) {
   const next = new Set(expanded.value)
   next.has(predicate) ? next.delete(predicate) : next.add(predicate)
   expanded.value = next
+}
+
+/** Count/status line under a big flat list, reflecting any active filter. */
+function moreLabel(group: PropertyGroup): string {
+  const total = group.objects.length
+  if (!filterTerm(group.predicate))
+    return `first ${fmtN(OBJECT_CAP)} of ${fmtN(total)} — open one to keep walking`
+  const matches = matchCount(group)
+  if (matches === 0) return `No values match “${(objFilter.value[group.predicate] ?? '').trim()}”`
+  if (matches > OBJECT_CAP)
+    return `first ${fmtN(OBJECT_CAP)} of ${fmtN(matches)} matches — open one to keep walking`
+  return matches === 1 ? '1 match' : `${fmtN(matches)} matches`
 }
 
 // A rendered row is either a value (`o`), a type subheading (grouped mode), or a
@@ -355,6 +389,27 @@ function graphTitle(o: ResourceObject): string {
             @click="emit('toggleGroupByType', group.predicate)"
           >category</button><span v-if="incoming" class="in-arrow" title="incoming — resources that link here">↤</span>{{ predicateLabel(group.predicate) }}</th>
         <td class="prop-values">
+          <!-- Filter box for big flat lists (all objects already loaded client-side). -->
+          <div v-if="showObjFilter(group)" class="prop-filter-wrap">
+            <input
+              :value="objFilter[group.predicate] ?? ''"
+              class="prop-filter"
+              type="text"
+              placeholder="Filter these values…"
+              :aria-label="`Filter ${predicateLabel(group.predicate)} values by name or URI`"
+              @input="objFilter[group.predicate] = ($event.target as HTMLInputElement).value"
+              @keyup.escape="objFilter[group.predicate] = ''"
+            />
+            <button
+              v-if="filterTerm(group.predicate)"
+              class="prop-filter-clear"
+              aria-label="Clear filter"
+              @click="objFilter[group.predicate] = ''"
+            >
+              <span class="material-symbols-outlined">close</span>
+            </button>
+          </div>
+
           <template v-for="(row, ri) in displayRows(group)" :key="ri">
             <!-- Type subheading (grouped mode) -->
             <div v-if="row.header !== undefined" class="type-subheading">
@@ -470,7 +525,7 @@ function graphTitle(o: ResourceObject): string {
               <a class="show-more" @click="toggleExpand(group.predicate)">Show first {{ fmtN(OBJECT_CAP) }}</a>
             </template>
             <template v-else>
-              <span class="prop-more-count">first {{ fmtN(OBJECT_CAP) }} of {{ fmtN(group.objects.length) }} — open one to keep walking</span>
+              <span class="prop-more-count">{{ moreLabel(group) }}</span>
               <a class="show-more" @click="toggleExpand(group.predicate)">Hide</a>
             </template>
           </div>
@@ -603,6 +658,59 @@ function graphTitle(o: ResourceObject): string {
 
 .prop-more-count {
   color: var(--ae-text-muted);
+}
+
+/* Per-predicate value filter (big flat lists) */
+.prop-filter-wrap {
+  position: relative;
+  display: flex;
+  max-width: 280px;
+  margin: 0.125rem 0 0.375rem;
+}
+
+.prop-filter {
+  flex: 1;
+  font-size: 0.75rem;
+  padding: 0.25rem 1.75rem 0.25rem 0.5rem;
+  color: var(--ae-text-primary);
+  background: var(--ae-bg-elevated);
+  border: 1px solid var(--ae-border-color);
+  border-radius: 4px;
+}
+
+.prop-filter:focus {
+  outline: none;
+  border-color: var(--ae-accent);
+}
+
+.prop-filter::placeholder {
+  color: var(--ae-text-muted);
+}
+
+.prop-filter-clear {
+  position: absolute;
+  right: 0.125rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--ae-text-secondary);
+}
+
+.prop-filter-clear:hover {
+  color: var(--ae-text-primary);
+}
+
+.prop-filter-clear .material-symbols-outlined {
+  font-size: 15px;
 }
 
 /* Type subheading in grouped object lists (hasResult → JournalPaper, Dataset …) */
