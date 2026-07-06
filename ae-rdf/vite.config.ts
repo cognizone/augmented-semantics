@@ -42,6 +42,9 @@ export default defineConfig({
     proxy: {
       '/__proxy/rinf': eraProxy('https://rinf.data.era.europa.eu', '/api/v1/sparql/rinf'),
       '/__proxy/evr': eraProxy('https://graph.tst.data.test-era.europa.eu', '/repositories/EVR-KG'),
+      '/__proxy/uat-ocr': eraProxy('https://graph.uat.data.test-era.europa.eu', '/repositories/OCR-KG'),
+      '/__proxy/uat-eradis': eraProxy('https://graph.uat.data.test-era.europa.eu', '/repositories/ERADIS-KG'),
+      '/__proxy/uat-vkm': eraProxy('https://graph.uat.data.test-era.europa.eu', '/repositories/VKM-KG'),
     },
   },
 })

@@ -50,6 +50,9 @@ const SPARQL_TIMEOUT_MS = 60000
 const DEV_ENDPOINT_PROXY: Record<string, string> = {
   'https://rinf.data.era.europa.eu/api/v1/sparql/rinf': '/__proxy/rinf',
   'https://graph.tst.data.test-era.europa.eu/repositories/EVR-KG': '/__proxy/evr',
+  'https://graph.uat.data.test-era.europa.eu/repositories/OCR-KG': '/__proxy/uat-ocr',
+  'https://graph.uat.data.test-era.europa.eu/repositories/ERADIS-KG': '/__proxy/uat-eradis',
+  'https://graph.uat.data.test-era.europa.eu/repositories/VKM-KG': '/__proxy/uat-vkm',
 }
 const endpointUrl = (url: string): string =>
   import.meta.env.DEV ? (DEV_ENDPOINT_PROXY[url] ?? url) : url

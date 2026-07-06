@@ -1,0 +1,786 @@
+{
+  "name": "ERA VKM-KG (UAT)",
+  "url": "https://graph.uat.data.test-era.europa.eu/repositories/VKM-KG",
+  "backend": "graphdb",
+  "typeInventory": [
+    {
+      "uri": "http://data.europa.eu/949/OrganisationRole",
+      "count": 4974
+    },
+    {
+      "uri": "http://data.europa.eu/949/VehicleKeeperMarking",
+      "count": 4974
+    },
+    {
+      "uri": "http://data.europa.eu/949/Body",
+      "count": 4974
+    },
+    {
+      "uri": "http://www.w3.org/ns/org#Organization",
+      "count": 4974
+    },
+    {
+      "uri": "http://data.europa.eu/949/Document",
+      "count": 3687
+    },
+    {
+      "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property",
+      "count": 29
+    },
+    {
+      "uri": "http://www.w3.org/2002/07/owl#TransitiveProperty",
+      "count": 4
+    },
+    {
+      "uri": "http://www.w3.org/2002/07/owl#SymmetricProperty",
+      "count": 4
+    },
+    {
+      "uri": "http://www.w3.org/2000/01/rdf-schema#Class",
+      "count": 3
+    },
+    {
+      "uri": "http://www.w3.org/2000/01/rdf-schema#Datatype",
+      "count": 3
+    },
+    {
+      "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#List",
+      "count": 1
+    },
+    {
+      "uri": "http://www.w3.org/2000/01/rdf-schema#ContainerMembershipProperty",
+      "count": 1
+    }
+  ],
+  "graph": {
+    "quads": true
+  },
+  "typeProperties": {
+    "http://data.europa.eu/949/Body": {
+      "ok": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 9948,
+          "max": 2,
+          "min": 2
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 4998,
+          "max": 2,
+          "min": 1
+        },
+        {
+          "uri": "http://xmlns.com/foaf/0.1/name",
+          "count": 4998,
+          "max": 2,
+          "min": 1
+        },
+        {
+          "uri": "http://data.europa.eu/949/role",
+          "count": 4974,
+          "max": 1,
+          "min": 1
+        },
+        {
+          "uri": "http://xmlns.com/foaf/0.1/homepage",
+          "count": 3687,
+          "max": 2,
+          "min": 0
+        }
+      ],
+      "embed": {
+        "selfMax": 2,
+        "forward": [
+          {
+            "via": "http://xmlns.com/foaf/0.1/primaryTopic",
+            "max": 1
+          },
+          {
+            "via": "http://data.europa.eu/949/isRoleOf",
+            "max": 1
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://data.europa.eu/949/role",
+            "max": 1
+          },
+          {
+            "via": "http://xmlns.com/foaf/0.1/homepage",
+            "max": 1
+          }
+        ]
+      }
+    },
+    "http://data.europa.eu/949/Document": {
+      "ok": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 3706,
+          "max": 2,
+          "min": 1
+        },
+        {
+          "uri": "http://xmlns.com/foaf/0.1/page",
+          "count": 3705,
+          "max": 2,
+          "min": 1
+        },
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 3687,
+          "max": 1,
+          "min": 1
+        },
+        {
+          "uri": "http://xmlns.com/foaf/0.1/primaryTopic",
+          "count": 3687,
+          "max": 1,
+          "min": 1
+        }
+      ],
+      "embed": {
+        "selfMax": 2,
+        "forward": [
+          {
+            "via": "http://xmlns.com/foaf/0.1/homepage",
+            "max": 2
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://xmlns.com/foaf/0.1/primaryTopic",
+            "max": 2
+          }
+        ]
+      }
+    },
+    "http://data.europa.eu/949/OrganisationRole": {
+      "ok": true,
+      "properties": [
+        {
+          "uri": "http://purl.org/dc/terms/identifier",
+          "count": 44204,
+          "max": 9,
+          "min": 1
+        },
+        {
+          "uri": "http://purl.org/dc/terms/issued",
+          "count": 44204,
+          "max": 9,
+          "min": 1
+        },
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 9948,
+          "max": 2,
+          "min": 2
+        },
+        {
+          "uri": "http://data.europa.eu/949/vkmStatus",
+          "count": 4979,
+          "max": 2,
+          "min": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/inCountry",
+          "count": 4975,
+          "max": 2,
+          "min": 1
+        },
+        {
+          "uri": "http://data.europa.eu/949/hasOrganisationRole",
+          "count": 4974,
+          "max": 1,
+          "min": 1
+        },
+        {
+          "uri": "http://data.europa.eu/949/isRoleOf",
+          "count": 4974,
+          "max": 1,
+          "min": 1
+        },
+        {
+          "uri": "http://data.europa.eu/949/vkmCode",
+          "count": 4974,
+          "max": 1,
+          "min": 1
+        },
+        {
+          "uri": "http://data.europa.eu/949/vkmNational",
+          "count": 4974,
+          "max": 1,
+          "min": 1
+        },
+        {
+          "uri": "http://data.europa.eu/949/isOTIFMember",
+          "count": 480,
+          "max": 1,
+          "min": 0
+        }
+      ],
+      "embed": {
+        "selfMax": 9,
+        "forward": [
+          {
+            "via": "http://data.europa.eu/949/role",
+            "max": 1
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://data.europa.eu/949/isRoleOf",
+            "max": 1
+          }
+        ]
+      }
+    },
+    "http://data.europa.eu/949/VehicleKeeperMarking": {
+      "ok": true,
+      "properties": [
+        {
+          "uri": "http://purl.org/dc/terms/identifier",
+          "count": 44204,
+          "max": 9,
+          "min": 1
+        },
+        {
+          "uri": "http://purl.org/dc/terms/issued",
+          "count": 44204,
+          "max": 9,
+          "min": 1
+        },
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 9948,
+          "max": 2,
+          "min": 2
+        },
+        {
+          "uri": "http://data.europa.eu/949/vkmStatus",
+          "count": 4979,
+          "max": 2,
+          "min": 0
+        },
+        {
+          "uri": "http://data.europa.eu/949/inCountry",
+          "count": 4975,
+          "max": 2,
+          "min": 1
+        },
+        {
+          "uri": "http://data.europa.eu/949/hasOrganisationRole",
+          "count": 4974,
+          "max": 1,
+          "min": 1
+        },
+        {
+          "uri": "http://data.europa.eu/949/isRoleOf",
+          "count": 4974,
+          "max": 1,
+          "min": 1
+        },
+        {
+          "uri": "http://data.europa.eu/949/vkmCode",
+          "count": 4974,
+          "max": 1,
+          "min": 1
+        },
+        {
+          "uri": "http://data.europa.eu/949/vkmNational",
+          "count": 4974,
+          "max": 1,
+          "min": 1
+        },
+        {
+          "uri": "http://data.europa.eu/949/isOTIFMember",
+          "count": 480,
+          "max": 1,
+          "min": 0
+        }
+      ],
+      "embed": {
+        "selfMax": 9,
+        "forward": [
+          {
+            "via": "http://data.europa.eu/949/role",
+            "max": 1
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://data.europa.eu/949/isRoleOf",
+            "max": 1
+          }
+        ]
+      }
+    },
+    "http://www.w3.org/1999/02/22-rdf-syntax-ns#List": {
+      "ok": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 1,
+          "max": 1,
+          "min": 1
+        }
+      ]
+    },
+    "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property": {
+      "ok": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 33,
+          "max": 2,
+          "min": 1
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#subPropertyOf",
+          "count": 22,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#domain",
+          "count": 6,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#range",
+          "count": 5,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://proton.semanticweb.org/protonsys#transitiveOver",
+          "count": 3,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://www.w3.org/2002/07/owl#inverseOf",
+          "count": 1,
+          "max": 1,
+          "min": 0
+        }
+      ],
+      "embed": {
+        "selfMax": 2,
+        "forward": [
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#subPropertyOf",
+            "max": 1
+          },
+          {
+            "via": "http://proton.semanticweb.org/protonsys#transitiveOver",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2002/07/owl#inverseOf",
+            "max": 1
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#subPropertyOf",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2002/07/owl#inverseOf",
+            "max": 1
+          },
+          {
+            "via": "http://proton.semanticweb.org/protonsys#transitiveOver",
+            "max": 2
+          },
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#domain",
+            "max": 3
+          },
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#range",
+            "max": 3
+          }
+        ]
+      }
+    },
+    "http://www.w3.org/2000/01/rdf-schema#Class": {
+      "ok": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 6,
+          "max": 2,
+          "min": 2
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+          "count": 4,
+          "max": 2,
+          "min": 1
+        }
+      ],
+      "embed": {
+        "selfMax": 2,
+        "forward": [
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+            "max": 1
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+            "max": 1
+          }
+        ]
+      }
+    },
+    "http://www.w3.org/2000/01/rdf-schema#ContainerMembershipProperty": {
+      "ok": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 2,
+          "max": 2,
+          "min": 2
+        }
+      ]
+    },
+    "http://www.w3.org/2000/01/rdf-schema#Datatype": {
+      "ok": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 6,
+          "max": 2,
+          "min": 2
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+          "count": 4,
+          "max": 2,
+          "min": 1
+        }
+      ],
+      "embed": {
+        "selfMax": 2,
+        "forward": [
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+            "max": 1
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+            "max": 1
+          }
+        ]
+      }
+    },
+    "http://www.w3.org/2002/07/owl#SymmetricProperty": {
+      "ok": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 7,
+          "max": 2,
+          "min": 1
+        },
+        {
+          "uri": "http://www.w3.org/2002/07/owl#inverseOf",
+          "count": 4,
+          "max": 1,
+          "min": 1
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#subPropertyOf",
+          "count": 3,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://proton.semanticweb.org/protonsys#transitiveOver",
+          "count": 2,
+          "max": 1,
+          "min": 0
+        }
+      ],
+      "embed": {
+        "selfMax": 2,
+        "forward": [
+          {
+            "via": "http://proton.semanticweb.org/protonsys#transitiveOver",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2002/07/owl#inverseOf",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#subPropertyOf",
+            "max": 1
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#subPropertyOf",
+            "max": 1
+          },
+          {
+            "via": "http://proton.semanticweb.org/protonsys#transitiveOver",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2002/07/owl#inverseOf",
+            "max": 1
+          }
+        ]
+      }
+    },
+    "http://www.w3.org/2002/07/owl#TransitiveProperty": {
+      "ok": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 8,
+          "max": 2,
+          "min": 2
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#subPropertyOf",
+          "count": 4,
+          "max": 1,
+          "min": 1
+        },
+        {
+          "uri": "http://proton.semanticweb.org/protonsys#transitiveOver",
+          "count": 4,
+          "max": 1,
+          "min": 1
+        },
+        {
+          "uri": "http://www.w3.org/2002/07/owl#inverseOf",
+          "count": 2,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#domain",
+          "count": 1,
+          "max": 1,
+          "min": 0
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#range",
+          "count": 1,
+          "max": 1,
+          "min": 0
+        }
+      ],
+      "embed": {
+        "selfMax": 2,
+        "forward": [
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#subPropertyOf",
+            "max": 1
+          },
+          {
+            "via": "http://proton.semanticweb.org/protonsys#transitiveOver",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2002/07/owl#inverseOf",
+            "max": 1
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://proton.semanticweb.org/protonsys#transitiveOver",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#domain",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#range",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2002/07/owl#inverseOf",
+            "max": 1
+          },
+          {
+            "via": "http://www.w3.org/2000/01/rdf-schema#subPropertyOf",
+            "max": 2
+          }
+        ]
+      }
+    },
+    "http://www.w3.org/ns/org#Organization": {
+      "ok": true,
+      "properties": [
+        {
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "count": 9948,
+          "max": 2,
+          "min": 2
+        },
+        {
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "count": 4998,
+          "max": 2,
+          "min": 1
+        },
+        {
+          "uri": "http://xmlns.com/foaf/0.1/name",
+          "count": 4998,
+          "max": 2,
+          "min": 1
+        },
+        {
+          "uri": "http://data.europa.eu/949/role",
+          "count": 4974,
+          "max": 1,
+          "min": 1
+        },
+        {
+          "uri": "http://xmlns.com/foaf/0.1/homepage",
+          "count": 3687,
+          "max": 2,
+          "min": 0
+        }
+      ],
+      "embed": {
+        "selfMax": 2,
+        "forward": [
+          {
+            "via": "http://xmlns.com/foaf/0.1/primaryTopic",
+            "max": 1
+          },
+          {
+            "via": "http://data.europa.eu/949/isRoleOf",
+            "max": 1
+          }
+        ],
+        "inverse": [
+          {
+            "via": "http://data.europa.eu/949/role",
+            "max": 1
+          },
+          {
+            "via": "http://xmlns.com/foaf/0.1/homepage",
+            "max": 1
+          }
+        ]
+      }
+    }
+  },
+  "subclasses": {
+    "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property": [
+      "http://www.w3.org/2000/01/rdf-schema#ContainerMembershipProperty"
+    ],
+    "http://www.w3.org/2000/01/rdf-schema#Class": [
+      "http://www.w3.org/2000/01/rdf-schema#Datatype"
+    ]
+  },
+  "composition": {},
+  "orphanCounts": {},
+  "profiledAt": "2026-07-06T08:53:34.614Z",
+  "types": {
+    "http://data.europa.eu/949/VehicleKeeperMarking": {
+      "label": [
+        "http://data.europa.eu/949/vkmCode",
+        "http://purl.org/dc/terms/identifier"
+      ],
+      "order": [
+        "http://data.europa.eu/949/vkmCode",
+        "http://purl.org/dc/terms/identifier",
+        "http://data.europa.eu/949/vkmStatus",
+        "http://data.europa.eu/949/inCountry",
+        "http://data.europa.eu/949/vkmNational",
+        "http://data.europa.eu/949/isOTIFMember",
+        "http://data.europa.eu/949/isRoleOf",
+        "http://data.europa.eu/949/hasOrganisationRole",
+        "http://purl.org/dc/terms/issued"
+      ]
+    },
+    "http://data.europa.eu/949/OrganisationRole": {
+      "label": [
+        "http://data.europa.eu/949/vkmCode",
+        "http://purl.org/dc/terms/identifier"
+      ],
+      "order": [
+        "http://data.europa.eu/949/vkmCode",
+        "http://purl.org/dc/terms/identifier",
+        "http://data.europa.eu/949/vkmStatus",
+        "http://data.europa.eu/949/inCountry",
+        "http://data.europa.eu/949/vkmNational",
+        "http://data.europa.eu/949/isOTIFMember",
+        "http://data.europa.eu/949/isRoleOf",
+        "http://data.europa.eu/949/hasOrganisationRole",
+        "http://purl.org/dc/terms/issued"
+      ]
+    },
+    "http://data.europa.eu/949/Body": {
+      "label": [
+        "http://xmlns.com/foaf/0.1/name"
+      ],
+      "order": [
+        "http://xmlns.com/foaf/0.1/name",
+        "http://www.w3.org/2000/01/rdf-schema#label",
+        "http://data.europa.eu/949/role",
+        "http://xmlns.com/foaf/0.1/homepage"
+      ]
+    },
+    "http://www.w3.org/ns/org#Organization": {
+      "label": [
+        "http://xmlns.com/foaf/0.1/name"
+      ],
+      "order": [
+        "http://xmlns.com/foaf/0.1/name",
+        "http://www.w3.org/2000/01/rdf-schema#label",
+        "http://data.europa.eu/949/role",
+        "http://xmlns.com/foaf/0.1/homepage"
+      ]
+    },
+    "http://data.europa.eu/949/Document": {
+      "label": [
+        "http://www.w3.org/2000/01/rdf-schema#label"
+      ],
+      "order": [
+        "http://www.w3.org/2000/01/rdf-schema#label",
+        "http://xmlns.com/foaf/0.1/page",
+        "http://xmlns.com/foaf/0.1/primaryTopic"
+      ]
+    },
+    "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property": {
+      "group": "Ontology"
+    },
+    "http://www.w3.org/2002/07/owl#TransitiveProperty": {
+      "group": "Ontology"
+    },
+    "http://www.w3.org/2002/07/owl#SymmetricProperty": {
+      "group": "Ontology"
+    },
+    "http://www.w3.org/2000/01/rdf-schema#Class": {
+      "group": "Ontology"
+    },
+    "http://www.w3.org/2000/01/rdf-schema#Datatype": {
+      "group": "Ontology"
+    },
+    "http://www.w3.org/1999/02/22-rdf-syntax-ns#List": {
+      "group": "Ontology"
+    },
+    "http://www.w3.org/2000/01/rdf-schema#ContainerMembershipProperty": {
+      "group": "Ontology"
+    }
+  }
+}
