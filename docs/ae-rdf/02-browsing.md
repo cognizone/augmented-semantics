@@ -14,9 +14,11 @@ It's a **tree**, not a flat list:
 
 - **Subclasses tuck under their general type.** Where the data says one type is a kind of another (`rdfs:subClassOf`), it nests beneath it — e.g. `Result › ProjectPublication › JournalPaper` — indented, with a chevron to collapse/expand. (Only relationships the data actually states are nested; if the endpoint doesn't declare them, the list stays flat.)
 - **Value objects nest under the class that uses them.** A type set to **Embed** (see below) appears beneath the class that composes it — e.g. `PublicBody › Site › PostalAddress` — with a `{}` icon. The count next to a direct child is scoped to that class; for deeper ones, **hover** the row to fetch the exact path-scoped count.
-- **Groups.** Types can be collected under a named, collapsible **group** header (e.g. an "Ontology" group for schema classes). Two groups are built in and sit at the bottom, collapsed: **Embedded** (all value-object types) and **Hidden** (all hidden types).
+- **Groups.** Types can be collected under a named, collapsible **group** header (e.g. an "Ontology" group for schema classes). Two groups are built in and sit at the bottom: **Embedded** (all value-object types, **expanded** by default) and **Hidden** (all hidden types, **collapsed** by default).
 
 Pinned types float to the top; configured types show small indicator icons (pinned, embedded, label).
+
+The **Types** header has a `{}` toggle to show or hide embedded types nested under their class (they always stay listed in the **Embedded** group either way). Drag the sidebar's right edge to resize it — the width is remembered.
 
 Turn on **Config authoring mode** in [Settings](index.md#settings) to reveal a per-type **gear**:
 
@@ -32,7 +34,7 @@ Counts are the number of *distinct* subjects of that type. On large datasets the
 
 ## Instance list
 
-Selecting a type shows a paged list of its instances (100 per page), each with its best available label (falling back to the URI). Use the pager at the bottom to move through pages. Click an instance to open it.
+Selecting a type shows a paged list of its instances (25 per page), each with its best available label (falling back to the URI). Use the pager at the bottom to move through pages. Click an instance to open it.
 
 ### Filtering the list
 
@@ -48,13 +50,13 @@ A type can pin exactly which predicates the filter searches via its **search** f
 
 ### Unreferenced instances (orphans)
 
-For a **value-object type** (one set to **Embed** with an owning predicate — e.g. a `PostalAddress` reached via `hasAddress`), an **Orphans only** toggle appears. Turn it on to list just the instances that *no* resource points at through that predicate — the dangling value objects with no owner. It's off by default and resets when you switch types.
+For a **value-object type** (one set to **Embed** with an owning predicate — e.g. a `PostalAddress` reached via `hasAddress`), an **Unreferenced** toggle appears. Turn it on to list just the instances that *no* resource points at through that predicate — the dangling value objects with no owner. It's off by default and resets when you switch types.
 
 ## The resource view
 
 Opening an instance — or pasting a URI in the top bar and pressing **Go** — shows the resource:
 
-- **Header** — the resource's label (or local name if it has none), its full URI with a copy <img src="./icons/icon-copy.svg" height="14"> button and an external-link <img src="./icons/icon-open-in-new.svg" height="14"> to dereference it, plus its **type chips** and a [graph summary](03-graphs.md).
+- **Header** — the resource's label (or local name if it has none), its full URI (click it to dereference — opens in a new tab) with a copy <img src="./icons/icon-copy.svg" height="14"> button next to it, plus its **type chips** and a [graph summary](03-graphs.md).
 - **Type chips** — the resource's `rdf:type`s, lifted out of the property list. Click a chip to browse all instances of that type.
 - **Attributes** — properties whose values are literals (dates, statuses, text), shown with language and datatype tags.
 - **Relationships** — properties whose values are other resources. These are **clickable links** <img src="./icons/icon-link.svg" height="14"> — click to walk to that resource. Each link carries a small **type badge** showing the *most specific* type (e.g. `[JournalPaper]`, not the generic `[Result]`) so you can see exactly *what* it points at. Value-object types set to **Embed** (in the [Types gear](#types-sidebar)) show their properties inline instead of a link — e.g. a monetary amount renders as `value 1902.6 · currency EUR` in place, nested as deep as the data goes.

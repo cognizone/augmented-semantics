@@ -38,7 +38,7 @@ If the endpoint is protected, choose an **Authentication** type:
 | API key | Header name + key |
 | Bearer token | Token |
 
-Credentials are sent with each query and kept in your browser only.
+Credentials are **never saved** — leave them blank and AE RDF asks for them when it connects, holding them in memory for that session only. They're sent only to the endpoint, with each query.
 
 ### Graph behaviour (authoring mode)
 

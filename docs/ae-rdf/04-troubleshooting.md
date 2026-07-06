@@ -28,7 +28,7 @@ doesn't, queries fail with a **CORS** error and the Types sidebar stays empty.
 The URI you opened genuinely has no statements *about* it at this endpoint. Common causes:
 
 - A typo or a non-existent URI (check the exact spelling, including any trailing segment).
-- The resource is only referenced *by* others (incoming links) but has no outgoing triples — an incoming-link view is planned but not in this version.
+- The resource is only referenced *by* others but has no outgoing triples — expand **Referenced by** at the bottom of the resource view to see (and walk) the incoming links.
 
 ## The sidebar is slow
 

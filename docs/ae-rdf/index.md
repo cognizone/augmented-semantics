@@ -34,10 +34,10 @@ Endpoints are **shared with the other Augmented Semantics tools** (e.g. AE SKOS)
 | Button | | Description |
 |--------|---|-------------|
 | **Endpoint** | badge | Shows the active endpoint. Click to switch endpoints or open the [Endpoint Manager](01-endpoints.md). |
-| **Help** | <img src="./icons/icon-help.svg" height="16"> | Opens this user manual. |
-| **Prefixes** | | The active `prefix → namespace` mappings used to render qnames. |
+| **Documentation** | <img src="./icons/icon-help.svg" height="16"> | Opens the AE RDF documentation (this manual). |
+| **Prefixes** | <img src="./icons/icon-tag.svg" height="16"> | The active `prefix → namespace` mappings used to render qnames. |
 | **Dark mode** | <img src="./icons/icon-dark-mode.svg" height="16"> | Toggle light/dark theme. |
-| **Settings** | <img src="./icons/icon-settings.svg" height="16"> | Dark mode, URI display, and build info. |
+| **Settings** | <img src="./icons/icon-settings.svg" height="16"> | Display, sidebar behaviour, authoring mode, export, and build info. |
 
 ## Settings
 
@@ -48,9 +48,18 @@ Open the settings dialog from the <img src="./icons/icon-settings.svg" height="1
   - *Humanized names* (default) — friendly labels (e.g. "Date end applicability").
   - *Prefixed* — compact qnames (e.g. `skos:Concept`).
   - *Full URI* — the raw IRI.
+- **Show hidden fields** — reveal properties hidden by the endpoint config (shown greyed), without entering authoring mode.
+- **Collapse groups by default** — named sidebar groups (e.g. "Ontology") start collapsed. The built-in **Hidden** group always starts collapsed and **Embedded** always starts expanded, regardless of this setting.
+- **Config authoring mode** — off by default (clean, read-only browsing). Turn it on to reveal the per-type gears in the Types sidebar and the export buttons below. The configured effects (embed/hide/pin) apply either way; this just shows the editing tools.
 
-- **Config authoring mode** — off by default (clean, read-only browsing). Turn it on to reveal the per-type gears in the Types sidebar and the export button below. The configured effects (embed/hide/pin) apply either way; this just shows the editing tools.
-- **Export app.json** (Deployment, authoring mode only) — download the current endpoints (incl. their graph behaviour), per-type config, a cached snapshot of the type inventory (for an instant Types sidebar on deploy), and the prefix mappings (so qnames render offline, without prefix.cc) (sidebar visibility, embed/link/label) as a locked deployment config. Tweak everything live, export, drop the file at `config/app.json`, and end users get a pre-configured, locked AE RDF. Credentials are never included in the export.
+### Exporting a deployment config (authoring mode)
+
+With authoring mode on, two export buttons appear under **Deployment**:
+
+- **Export app.json** — the manifest: app name, prefix mappings (so qnames render offline, without prefix.cc), and the endpoint list. Each endpoint carries its graph behaviour, per-type config (sidebar visibility, embed/link/label, order), and a cached snapshot of the type inventory (for an instant Types sidebar on deploy).
+- **Export &lt;endpoint&gt;** — the currently selected endpoint as its own file.
+
+To deploy: drop the manifest at `config/app.json`. Endpoints can be embedded in the manifest, or split into `config/endpoints/<slug>.json` files referenced from the manifest by slug — export each with the per-endpoint button and add its slug to the manifest's `endpoints` list. Tweak everything live, export, deploy, and end users get a pre-configured, locked AE RDF. **Credentials are never included in any export.**
 
 Settings are saved in your browser (localStorage).
 
