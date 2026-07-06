@@ -1,0 +1,7 @@
+{
+  "appName": "ERA VKM-KG Browser",
+  "endpoints": ["era-vkm-kg-uat"],
+  "prefixes": {
+    "era": "http://data.europa.eu/949/"
+  }
+}

@@ -34,6 +34,9 @@
  *     sh:minCount; max=1 → functional / sh:maxCount 1.
  *   - Auto-suggesting `search`/`label` fields (prefer single-valued required text).
  *   - PropertyTable rendering hints: max=1 → single value, max>1 → list.
+ * Also `maxLen` per property — the max length of its LITERAL values — a display-
+ * config size hint: high maxLen ⇒ long prose (suggest `capWidth`); many short
+ * repeated values ⇒ suggest `columns`.
  *
  * SAFE BY DESIGN: only `graph`, `typeProperties`, `subclasses`, `composition`,
  * `orphanCounts` and `profiledAt` are (re)written. Hand-authored `types` is preserved,
@@ -81,14 +84,22 @@ const SAMPLE_SIZE = 2000 // distinct-subject cap when the full listing times out
 // skip cardinality / embed fan-in / defaultView (they time out on its gateway).
 let GRAPHDB = false
 // Heavy per-subject scans (per-property count + cardinality, embed fan-in) run for
-// EVERY backend by default — but only on types up to HEAVY_TYPE_MAX instances (the
-// scans are quadratic-ish and time out over millions of subjects on GraphDB's
-// gateway). Bigger types keep their complete property LIST, uri-only (count 0).
-// `--fast` skips the heavy scans entirely — for huge endpoints (e.g. ERA RINF)
-// where even the mid-size types are too costly.
+// EVERY backend by default. Types are processed SMALLEST-first, and once the heavy
+// scan has TIMED OUT on HEAVY_TIMEOUT_LIMIT types in a row we stop attempting it
+// (everything bigger will time out too) — the remaining types keep their complete
+// property LIST and reuse their PRIOR counts. `--fast` skips the heavy scans
+// entirely; `--heavy-max=N` caps by instance count (default off — the adaptive
+// timeout cutoff is the real limiter); `--heavy-timeouts=N` tunes the streak.
+const argNum = (name: string, def: number): number => {
+  const a = process.argv.find(x => x.startsWith(`--${name}=`))
+  const n = a ? Number(a.slice(a.indexOf('=') + 1)) : NaN
+  return Number.isFinite(n) && n > 0 ? n : def
+}
 const SKIP_HEAVY = process.argv.includes('--fast')
-// Per-type instance ceiling for the heavy scans — bigger types keep list-only.
-const HEAVY_TYPE_MAX = 50_000
+// Optional hard ceiling on instance count for heavy scans (default: no cap — let
+// the timeout streak decide). Consecutive-timeout budget before we stop scanning.
+const HEAVY_TYPE_MAX = argNum('heavy-max', Infinity)
+const HEAVY_TIMEOUT_LIMIT = argNum('heavy-timeouts', 5)
 const RETRIES = 2
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms))
 
@@ -106,7 +117,7 @@ const HEADERS: Record<string, string> = {
   ...AUTH_HEADER,
 }
 
-interface PropEntry { uri: string; count: number; min?: number; max?: number }
+interface PropEntry { uri: string; count: number; min?: number; max?: number; maxLen?: number }
 /** An owning edge + the max instances of a type that hang off ONE owner through it. */
 interface FanEdge { via: string; max: number }
 /** Embed candidacy: which edges this type can be embedded through, worst-case count.
@@ -161,9 +172,13 @@ const flatPropListQuery = (t: string) =>
 // outer rolls up:
 //   ?n      = SUM(?c)   total occurrences   ?havers = COUNT(?s) instances that have ?p
 //   ?lo/?hi = MIN/MAX(?c) per-instance range (≥1, over havers)
+//   ?maxlen = MAX string length over LITERAL values (0 for URI-only properties) —
+//             a size hint for display config (long prose ⇒ suggest width-cap; short
+//             repeated values ⇒ suggest columns). isLiteral guard keeps long URIs
+//             from reading as prose; added as an aggregate so ?c stays unchanged.
 // min = havers < typeTotal ? 0 : lo (some instance lacks it ⇒ optional); max = hi.
 const propCardQuery = (t: string, p: string) =>
-  `SELECT (SUM(?c) AS ?n) (COUNT(?s) AS ?havers) (MIN(?c) AS ?lo) (MAX(?c) AS ?hi) WHERE { SELECT ?s (COUNT(DISTINCT ?o) AS ?c) WHERE { { SELECT DISTINCT ?s WHERE { ?s a <${t}> } } ?s <${p}> ?o } GROUP BY ?s }`
+  `SELECT (SUM(?c) AS ?n) (COUNT(?s) AS ?havers) (MIN(?c) AS ?lo) (MAX(?c) AS ?hi) (MAX(?ml) AS ?maxlen) WHERE { SELECT ?s (COUNT(DISTINCT ?o) AS ?c) (MAX(IF(isLiteral(?o), STRLEN(STR(?o)), 0)) AS ?ml) WHERE { { SELECT DISTINCT ?s WHERE { ?s a <${t}> } } ?s <${p}> ?o } GROUP BY ?s }`
 // Type discovery = the inventory query (types + instance counts). Count-based GROUP BY,
 // NOT a bare `SELECT DISTINCT ?t` — that can 500 on big endpoints (RINF) — and it also
 // yields the per-type totals the min=0 cardinality derivation needs.
@@ -215,8 +230,9 @@ async function sparql(url: string, query: string, retries = RETRIES, timeoutMs =
       lastErr = e
       // A timeout means the query is too expensive — retrying just burns another
       // TIMEOUT_MS to fail identically. Stop and let the caller fall back (e.g. to
-      // a sample). Transient errors (HTTP 5xx, connection reset) still retry.
-      if (timedOut) break
+      // a sample). Tag it so callers can tell a timeout (query too big) from a
+      // transient error. Transient errors (HTTP 5xx, connection reset) still retry.
+      if (timedOut) { lastErr = Object.assign(new Error(`timeout after ${timeoutMs}ms`), { isTimeout: true }); break }
       if (attempt < retries) await sleep(1000 * (attempt + 1))
     } finally {
       clearTimeout(timer)
@@ -283,7 +299,7 @@ const safeIri = (u: string) => /^https?:\/\/[^\s<>"{}|\\^`]+$/.test(u)
  * called with 'listing properties', 'sampled property list' (on list fallback),
  * and `property k/N: <name>` as each is measured.
  */
-async function profileType(url: string, type: string, total: number, onStep?: (step: string) => void): Promise<TypeProfile | null> {
+async function profileType(url: string, type: string, total: number, heavy: boolean, onStep?: (step: string) => void, prior?: TypeProfile): Promise<{ profile: TypeProfile | null; timedOut: boolean }> {
   // 1. List the type's distinct properties (over DISTINCT subjects — quad-safe).
   // Fast unless the type has a genuinely huge distinct-subject count, so give it a
   // short leash (no retry, LIST_TIMEOUT_MS) and fall back to a distinct-subject
@@ -310,16 +326,18 @@ async function profileType(url: string, type: string, total: number, onStep?: (s
       sampled = true // list may be incomplete (rare properties missed)
     } catch (e) {
       console.error(`  ✗ ${type} — ${(e as Error).message}`)
-      return null
+      return { profile: null, timedOut: false }
     }
   }
   props = props.filter(safeIri)
 
   // 2. Measure each property: occurrence count + per-instance min/max cardinality.
-  // On by default for all backends, but skipped for `--fast` or when the type is
-  // bigger than HEAVY_TYPE_MAX (the per-subject aggregation times out over millions
-  // of subjects on GraphDB's gateway). Skipped ⇒ complete property list, uri-only.
-  const measure = !SKIP_HEAVY && total <= HEAVY_TYPE_MAX
+  // Attempted only when `heavy` (the caller stops asking once the timeout streak is
+  // hit). If the FIRST measurement of this type times out, stop measuring the rest
+  // (same subject set ⇒ they'd all time out) — remaining props keep their PRIOR
+  // count. Report `timedOut` so the caller can grow the consecutive-timeout streak.
+  let measure = heavy
+  let timedOut = false
   const entries: PropEntry[] = []
   for (let i = 0; i < props.length; i++) {
     const p = props[i]
@@ -331,17 +349,35 @@ async function profileType(url: string, type: string, total: number, onStep?: (s
         const havers = parseInt(b.havers?.value ?? '0', 10)
         const lo = parseInt(b.lo?.value ?? '0', 10)
         const hi = parseInt(b.hi?.value ?? '0', 10)
+        const maxlen = parseInt(b.maxlen?.value ?? '0', 10)
         e.count = parseInt(b.n?.value ?? '0', 10)
         if (hi > 0) e.max = hi
         if (total > 0 && havers > 0) e.min = havers < total ? 0 : lo
-      } catch {
-        // one property's measurement failed — keep it (uri only), don't fail the type
+        if (maxlen > 0) e.maxLen = maxlen
+      } catch (err) {
+        // Timeout ⇒ this type is too big; stop measuring its remaining props (they'd
+        // time out too) and flag it so the caller counts the streak. A non-timeout
+        // failure just leaves this one property uri-only and keeps going.
+        if ((err as { isTimeout?: boolean }).isTimeout) { timedOut = true; measure = false }
+      }
+    }
+    // A listed property always occurs ≥1×, so count 0 means "not measured THIS run"
+    // (heavy skipped, --fast, this type timed out, or one property failed) — never a
+    // real zero. Reuse the previous profile's value so a re-run never downgrades good
+    // counts to 0 (the recurring Virtuoso "counts went to 0" on big types).
+    if (e.count === 0 && prior) {
+      const pe = prior.properties.find(x => x.uri === p)
+      if (pe && pe.count > 0) {
+        e.count = pe.count
+        if (pe.min !== undefined) e.min = pe.min
+        if (pe.max !== undefined) e.max = pe.max
+        if (pe.maxLen !== undefined) e.maxLen = pe.maxLen
       }
     }
     entries.push(e)
   }
-  if (measure) entries.sort((a, b) => b.count - a.count)
-  return { ok: true, sampled: sampled || undefined, properties: entries }
+  if (entries.some(e => e.count > 0)) entries.sort((a, b) => b.count - a.count)
+  return { profile: { ok: true, sampled: sampled || undefined, properties: entries }, timedOut }
 }
 
 /** rdfs:subClassOf hierarchy among the inventory types → { super: [subs] }. */
@@ -486,13 +522,15 @@ async function main() {
   const nonUri = typeUris.filter(t => !safeIri(t))
   if (nonUri.length) console.error(`  ⚠ ${nonUri.length} non-URI type(s) logged & skipped: ${nonUri.slice(0, 8).join(', ')}${nonUri.length > 8 ? ' …' : ''}`)
   typeUris = typeUris.filter(safeIri)
-  // Process in URI order (namespace-grouped) so the live [N/total] log reads in the
-  // same order as the sorted typeProperties keys on disk — scannable, not count-desc.
-  typeUris.sort()
   // Distinct-instance total per type (from the inventory) — needed to derive
   // min=0 (some instance lacks the property) from the per-instance cardinality.
   const totals: Record<string, number> = {}
   for (const t of (cfg.typeInventory ?? []) as { uri: string; count: number }[]) totals[t.uri] = t.count
+  // Process SMALLEST-first: cheap types finish fast, and the heavy scan's timeout
+  // streak trips only once we climb into the too-big types — so we measure as far up
+  // as the endpoint can bear, then stop. (The on-disk typeProperties keys are sorted
+  // by URI regardless — sortKeys below — so processing order doesn't dirty the diff.)
+  typeUris.sort((a, b) => (totals[a] ?? 0) - (totals[b] ?? 0))
   console.error(`Endpoint: ${url}\nTypes: ${typeUris.length}`)
 
   // ── Graph shape (named graphs? merged default?) ────────────────────────
@@ -508,32 +546,50 @@ async function main() {
   p = phase(`Properties${SKIP_HEAVY ? '' : ' + cardinality'} — ${typeUris.length} types`)
   const out: Record<string, TypeProfile> = { ...(cfg.typeProperties ?? {}) }
   let okCount = 0, sampledCount = 0
+  // Heavy scans run smallest-first and stop for good once HEAVY_TIMEOUT_LIMIT types
+  // in a row time out — past that ceiling every bigger type would too. Larger types
+  // still get their property LIST refreshed and keep their prior counts (preserved
+  // in profileType), so no data is lost — we just don't re-measure what can't finish.
+  let timeoutStreak = 0
+  let heavyStopped = false
   for (const [i, type] of typeUris.entries()) {
     const tt = Date.now()
     const tag = `[${i + 1}/${typeUris.length}]`
     const short = type.replace(/^.*[#/]/, '') || type
+    const total = totals[type] ?? 0
+    const nfmt = total.toLocaleString('en-US') // instance count — readable, and shows the ascending climb
+    const heavy = !SKIP_HEAVY && !heavyStopped && total <= HEAVY_TYPE_MAX
     // Live progress: on a TTY, tick elapsed + current step (which property is
     // being measured) in place so a slow type isn't a silent gap. Off a TTY
     // (redirected to a file) the \r heartbeat would just spam lines, so we skip
     // the per-property ticks and only note the sampled-list fallback — one line
     // per type on the happy path.
     let step = 'listing properties'
-    const beat = () => process.stderr.write(`${CLEAR}  ${tag} ⏳ ${short} — ${step} (${secs(tt)})`)
+    const beat = () => process.stderr.write(`${CLEAR}  ${tag} ⏳ ${short} (${nfmt}) — ${step} (${secs(tt)})`)
     let timer: ReturnType<typeof setInterval> | undefined
     if (isTTY) { beat(); timer = setInterval(beat, 1000) }
-    const profile = await profileType(url, type, totals[type] ?? 0, (s) => {
+    const { profile, timedOut } = await profileType(url, type, total, heavy, (s) => {
       step = s
       if (isTTY) beat()
       else if (s === 'sampled property list') console.error(`  ${tag}   ↳ ${short}: ${s}`)
-    })
+    }, out[type])
     if (timer) clearInterval(timer)
     if (isTTY) process.stderr.write(CLEAR) // wipe the heartbeat before the result line
+    // Grow / reset the consecutive-timeout streak (only while we're still measuring).
+    if (heavy) {
+      if (timedOut) {
+        if (++timeoutStreak >= HEAVY_TIMEOUT_LIMIT) {
+          heavyStopped = true
+          console.error(`  ⚠ ${HEAVY_TIMEOUT_LIMIT} heavy-scan timeouts in a row — stopping measurement; larger types keep their prior counts`)
+        }
+      } else timeoutStreak = 0
+    }
     if (profile) {
       out[type] = profile
       okCount++
       if (profile.sampled) sampledCount++
       const card = profile.properties.some(pr => pr.max !== undefined) ? ', card' : ''
-      console.error(`  ${tag} ${profile.sampled ? '~' : '✓'} ${type} (${profile.properties.length} props${card}, ${secs(tt)})`)
+      console.error(`  ${tag} ${profile.sampled ? '~' : '✓'}${timedOut ? ' ⏱' : ''} ${type} (${nfmt} instances, ${profile.properties.length} props${card}, ${secs(tt)})`)
     } else if (!out[type]) {
       // keep any prior good entry; only record a failure if we have nothing
       out[type] = { ok: false, properties: [] }

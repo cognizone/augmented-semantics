@@ -95,6 +95,19 @@ jobs:
           cp _site/rdf-era-ocr/index.html _site/rdf-era-ocr/404.html
           cp apps/ocr-rdf/app.json _site/rdf-era-ocr/config/app.json
 
+      # Build AE RDF — ERA VKM-KG variant (single locked endpoint, branded)
+      - name: Build AE RDF VKM
+        run: pnpm --filter ae-rdf build
+        env:
+          BASE_URL: /augmented-semantics/rdf-era-vkm/
+
+      - name: Add RDF VKM to site
+        run: |
+          mkdir -p _site/rdf-era-vkm
+          cp -r ae-rdf/dist/* _site/rdf-era-vkm/
+          cp _site/rdf-era-vkm/index.html _site/rdf-era-vkm/404.html
+          cp apps/vkm-rdf/app.json _site/rdf-era-vkm/config/app.json
+
       # Build documentation
       - name: Build docs
         run: pnpm docs:build

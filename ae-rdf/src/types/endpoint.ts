@@ -101,6 +101,14 @@ export interface TypeConfig {
    *  (default none): the data types amounts inconsistently, so we group by
    *  explicit choice, not datatype. Set via the per-row toggle in edit mode. */
   number?: string[]
+  /** Predicate IRIs whose object list flows into responsive columns instead of a
+   *  tall single-file stack. EXPLICIT opt-in per field (default none) — never
+   *  automatic. Set via the per-row columns toggle in edit mode. */
+  columns?: string[]
+  /** Predicate IRIs whose literal values cap to a readable reading measure
+   *  (~72ch) — for long prose (abstract/description). EXPLICIT opt-in per field
+   *  (default none) — never automatic. Set via the per-row width-cap toggle. */
+  capWidth?: string[]
   /** Contextual object labels: when a resource of THIS type links out via a
    *  predicate listed here, its object's DISPLAY label is composed from the
    *  given field IRIs instead of the object type's own label — so a node shared
@@ -135,6 +143,10 @@ export type TypeCount = UriCount
 export interface TypeProperty extends UriCount {
   min?: number
   max?: number
+  /** Max string length over this property's LITERAL values (absent/0 for URI-only
+   *  properties). A display-config size hint: high maxLen ⇒ long prose (suggest
+   *  `capWidth`); many short repeated values ⇒ suggest `columns`. */
+  maxLen?: number
 }
 
 /** One owning edge and the max instances of a type that inline under a SINGLE owner

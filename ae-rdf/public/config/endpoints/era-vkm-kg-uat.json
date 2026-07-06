@@ -69,13 +69,15 @@
           "uri": "http://www.w3.org/2000/01/rdf-schema#label",
           "count": 4998,
           "max": 2,
-          "min": 1
+          "min": 1,
+          "maxLen": 141
         },
         {
           "uri": "http://xmlns.com/foaf/0.1/name",
           "count": 4998,
           "max": 2,
-          "min": 1
+          "min": 1,
+          "maxLen": 141
         },
         {
           "uri": "http://data.europa.eu/949/role",
@@ -121,13 +123,15 @@
           "uri": "http://www.w3.org/2000/01/rdf-schema#label",
           "count": 3706,
           "max": 2,
-          "min": 1
+          "min": 1,
+          "maxLen": 150
         },
         {
           "uri": "http://xmlns.com/foaf/0.1/page",
           "count": 3705,
           "max": 2,
-          "min": 1
+          "min": 1,
+          "maxLen": 105
         },
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
@@ -165,13 +169,15 @@
           "uri": "http://purl.org/dc/terms/identifier",
           "count": 44204,
           "max": 9,
-          "min": 1
+          "min": 1,
+          "maxLen": 8
         },
         {
           "uri": "http://purl.org/dc/terms/issued",
           "count": 44204,
           "max": 9,
-          "min": 1
+          "min": 1,
+          "maxLen": 10
         },
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
@@ -207,19 +213,22 @@
           "uri": "http://data.europa.eu/949/vkmCode",
           "count": 4974,
           "max": 1,
-          "min": 1
+          "min": 1,
+          "maxLen": 6
         },
         {
           "uri": "http://data.europa.eu/949/vkmNational",
           "count": 4974,
           "max": 1,
-          "min": 1
+          "min": 1,
+          "maxLen": 11
         },
         {
           "uri": "http://data.europa.eu/949/isOTIFMember",
           "count": 480,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 4
         }
       ],
       "embed": {
@@ -245,13 +254,15 @@
           "uri": "http://purl.org/dc/terms/identifier",
           "count": 44204,
           "max": 9,
-          "min": 1
+          "min": 1,
+          "maxLen": 8
         },
         {
           "uri": "http://purl.org/dc/terms/issued",
           "count": 44204,
           "max": 9,
-          "min": 1
+          "min": 1,
+          "maxLen": 10
         },
         {
           "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
@@ -287,19 +298,22 @@
           "uri": "http://data.europa.eu/949/vkmCode",
           "count": 4974,
           "max": 1,
-          "min": 1
+          "min": 1,
+          "maxLen": 6
         },
         {
           "uri": "http://data.europa.eu/949/vkmNational",
           "count": 4974,
           "max": 1,
-          "min": 1
+          "min": 1,
+          "maxLen": 11
         },
         {
           "uri": "http://data.europa.eu/949/isOTIFMember",
           "count": 480,
           "max": 1,
-          "min": 0
+          "min": 0,
+          "maxLen": 4
         }
       ],
       "embed": {
@@ -637,13 +651,15 @@
           "uri": "http://www.w3.org/2000/01/rdf-schema#label",
           "count": 4998,
           "max": 2,
-          "min": 1
+          "min": 1,
+          "maxLen": 141
         },
         {
           "uri": "http://xmlns.com/foaf/0.1/name",
           "count": 4998,
           "max": 2,
-          "min": 1
+          "min": 1,
+          "maxLen": 141
         },
         {
           "uri": "http://data.europa.eu/949/role",
@@ -691,15 +707,27 @@
       "http://www.w3.org/2000/01/rdf-schema#Datatype"
     ]
   },
-  "composition": {},
+  "composition": {
+    "http://data.europa.eu/949/Body": [
+      {
+        "uri": "http://data.europa.eu/949/Document",
+        "count": 3687
+      }
+    ],
+    "http://www.w3.org/ns/org#Organization": [
+      {
+        "uri": "http://data.europa.eu/949/Document",
+        "count": 3687
+      }
+    ]
+  },
   "orphanCounts": {},
-  "profiledAt": "2026-07-06T13:30:02.487Z",
+  "profiledAt": "2026-07-06T13:48:17.594Z",
   "types": {
     "http://data.europa.eu/949/VehicleKeeperMarking": {
       "sidebar": "hide",
       "label": [
-        "http://data.europa.eu/949/vkmCode",
-        "http://purl.org/dc/terms/identifier"
+        "http://data.europa.eu/949/vkmCode"
       ],
       "order": [
         "http://data.europa.eu/949/vkmCode",
@@ -715,8 +743,7 @@
     },
     "http://data.europa.eu/949/OrganisationRole": {
       "label": [
-        "http://data.europa.eu/949/vkmCode",
-        "http://purl.org/dc/terms/identifier"
+        "http://data.europa.eu/949/vkmCode"
       ],
       "order": [
         "http://data.europa.eu/949/vkmCode",

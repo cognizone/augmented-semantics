@@ -57,6 +57,10 @@ const props = defineProps<{
   booleanParts?: string[]
   /** Predicates whose numeric values are grouped with thousands separators. */
   numberParts?: string[]
+  /** Predicates whose value list flows into responsive columns (explicit opt-in). */
+  columnParts?: string[]
+  /** Predicates whose literal values cap to a readable measure (explicit opt-in). */
+  capWidthParts?: string[]
 }>()
 
 const emit = defineEmits<{
@@ -67,6 +71,8 @@ const emit = defineEmits<{
   toggleFold: [predicate: string]
   toggleGroupByType: [predicate: string]
   toggleNumber: [predicate: string]
+  toggleColumns: [predicate: string]
+  toggleCapWidth: [predicate: string]
 }>()
 
 const isHidden = (predicate: string) => props.hidden?.includes(predicate) ?? false
@@ -74,6 +80,8 @@ const isLabelPart = (predicate: string) => props.labelParts?.includes(predicate)
 const isFoldBoundary = (predicate: string) => props.foldAfter === predicate
 const isGrouped = (predicate: string) => props.groupByType?.includes(predicate) ?? false
 const isNumber = (predicate: string) => props.numberParts?.includes(predicate) ?? false
+const isColumns = (predicate: string) => props.columnParts?.includes(predicate) ?? false
+const isCapWidth = (predicate: string) => props.capWidthParts?.includes(predicate) ?? false
 
 // Boolean literals: for a predicate configured `boolean`, parse the lexical value
 // (1/true → true, 0/false → false). Returns null for unconfigured predicates or
@@ -178,6 +186,8 @@ const embedFoldAfter = (o: ResourceObject) => (embedType(o) ? typeConfig.get(emb
 const embedGroupByType = (o: ResourceObject) => (embedType(o) ? typeConfig.get(embedType(o)!).groupByType ?? [] : [])
 const embedBooleanParts = (o: ResourceObject) => (embedType(o) ? typeConfig.get(embedType(o)!).boolean ?? [] : [])
 const embedNumberParts = (o: ResourceObject) => (embedType(o) ? typeConfig.get(embedType(o)!).number ?? [] : [])
+const embedColumnParts = (o: ResourceObject) => (embedType(o) ? typeConfig.get(embedType(o)!).columns ?? [] : [])
+const embedCapWidthParts = (o: ResourceObject) => (embedType(o) ? typeConfig.get(embedType(o)!).capWidth ?? [] : [])
 
 /** Toggle the fold boundary inside an embed (set to this predicate, or clear). */
 function onEmbedToggleFold(o: ResourceObject, predicate: string) {
@@ -197,6 +207,18 @@ function onEmbedToggleGroupByType(o: ResourceObject, predicate: string) {
 function onEmbedToggleNumber(o: ResourceObject, predicate: string) {
   const type = embedType(o)
   if (type) typeConfig.set(type, { number: toggleInList(typeConfig.get(type).number ?? [], predicate) })
+}
+
+/** Toggle column-flow for a predicate inside an embed, on that object's type. */
+function onEmbedToggleColumns(o: ResourceObject, predicate: string) {
+  const type = embedType(o)
+  if (type) typeConfig.set(type, { columns: toggleInList(typeConfig.get(type).columns ?? [], predicate) })
+}
+
+/** Toggle width-cap for a predicate inside an embed, on that object's type. */
+function onEmbedToggleCapWidth(o: ResourceObject, predicate: string) {
+  const type = embedType(o)
+  if (type) typeConfig.set(type, { capWidth: toggleInList(typeConfig.get(type).capWidth ?? [], predicate) })
 }
 
 /** Persist a drag-reorder inside an embed to that object's type config. */
@@ -263,12 +285,11 @@ const objText = (o: ResourceObject, predicate?: string) =>
 const literalText = (o: ResourceObject, predicate: string) =>
   isNumber(predicate) ? groupNumber(o.value) ?? o.value : o.value
 
-// Long-form prose (abstract/description) gets a capped reading measure; short
-// identity values (Title, names, codes) stay full-width so they don't wrap. The
-// threshold sits well above a typical long title so only real paragraphs trip it.
-// ponytail: tune LONG_TEXT if a class of titles wraps that shouldn't.
-const LONG_TEXT = 160
-const isLongLiteral = (o: ResourceObject) => o.termType === 'literal' && o.value.length > LONG_TEXT
+// Cap a literal to a readable reading measure (~72ch) — for long prose
+// (abstract/description). EXPLICIT opt-in only (the `capWidth` per-field toggle);
+// only literals are capped (URI links stay as-is).
+const isCapped = (o: ResourceObject, predicate: string) =>
+  o.termType === 'literal' && isCapWidth(predicate)
 
 /** Objects of a predicate, sorted by display text (label/qname, else literal). */
 function sortedObjects(group: PropertyGroup): ResourceObject[] {
@@ -328,23 +349,11 @@ function moreLabel(group: PropertyGroup): string {
   return matches === 1 ? '1 match' : `${fmtN(matches)} matches`
 }
 
-// Flow a flat list of several short values into responsive columns instead of a
-// tall single-file stack (keywords, concept links, countries — "many short
-// repeated values"). Grouped lists carry their own headers, and embedded value
-// objects are wide/structured, so both stay stacked.
-const FLOW_MIN = 3
-// Above this average display length, values are entity references / composed
-// labels (e.g. "ORG NAME · participantOrganisationRole" beneficiary lists), which
-// turn ragged in narrow columns — keep those single-file. Short tags (keywords,
-// concepts, countries) flow. ponytail: tune with the 18rem column-width.
-const FLOW_MAX_AVG_LEN = 40
+// Flow a flat list into responsive columns instead of a tall single-file stack.
+// EXPLICIT opt-in only (the `columns` per-field toggle) — never automatic. Grouped
+// lists carry their own type subheadings that columns would split, so skip those.
 function shouldFlow(group: PropertyGroup): boolean {
-  if (isGrouped(group.predicate)) return false
-  const shown = shownObjects(group)
-  if (shown.length < FLOW_MIN) return false
-  if (shown.some(o => embedGroups(o, group.predicate))) return false
-  const avgLen = shown.reduce((n, o) => n + objText(o, group.predicate).length, 0) / shown.length
-  return avgLen <= FLOW_MAX_AVG_LEN
+  return isColumns(group.predicate) && !isGrouped(group.predicate)
 }
 
 // A rendered row is either a value (`o`), a type subheading (grouped mode), or a
@@ -447,7 +456,19 @@ function graphTitle(o: ResourceObject): string {
             :class="{ on: isNumber(group.predicate) }"
             :title="isNumber(group.predicate) ? 'Grouped as a number — click to disable' : 'Group this value with thousands separators'"
             @click="emit('toggleNumber', group.predicate)"
-          >123</button><span v-if="incoming" class="in-arrow" title="incoming — resources that link here">↤</span>{{ predicateLabel(group.predicate) }}</th>
+          >123</button><button
+            v-if="reorderable"
+            class="fold-toggle material-symbols-outlined"
+            :class="{ on: isColumns(group.predicate) }"
+            :title="isColumns(group.predicate) ? 'Flowing into columns — click to disable' : 'Flow this value list into responsive columns'"
+            @click="emit('toggleColumns', group.predicate)"
+          >view_column</button><button
+            v-if="reorderable"
+            class="fold-toggle material-symbols-outlined"
+            :class="{ on: isCapWidth(group.predicate) }"
+            :title="isCapWidth(group.predicate) ? 'Width-capped for reading — click to disable' : 'Cap this value to a readable reading width'"
+            @click="emit('toggleCapWidth', group.predicate)"
+          >wrap_text</button><span v-if="incoming" class="in-arrow" title="incoming — resources that link here">↤</span>{{ predicateLabel(group.predicate) }}</th>
         <td class="prop-values">
           <!-- Filter box for big flat lists (all objects already loaded client-side). -->
           <div v-if="showObjFilter(group)" class="prop-filter-wrap">
@@ -484,11 +505,20 @@ function graphTitle(o: ResourceObject): string {
             </div>
 
             <!-- A value -->
-            <div v-else-if="row.o" class="prop-value" :class="{ 'long-text': isLongLiteral(row.o) }" :title="graphTitle(row.o)">
+            <div v-else-if="row.o" class="prop-value" :class="{ 'long-text': isCapped(row.o, group.predicate) }" :title="graphTitle(row.o)">
               <!-- Embedded value object: inline its triples (recursively — an
                    embedded object may itself embed more, e.g. Site → PostalAddress) -->
               <div v-if="embedGroups(row.o, group.predicate)" class="embed">
-                <span v-if="objectBadge(row.o.value)" class="tag type-badge">{{ objectBadge(row.o.value) }}</span>
+                <!-- Embed identity badge. When the embedded object is a real
+                     (navigable) URI, click it through to its own resource page;
+                     blank-node embeds have no page, so their badge stays static. -->
+                <a
+                  v-if="objectBadge(row.o.value) && row.o.termType === 'uri' && isNavigableIri(row.o.value)"
+                  class="tag type-badge embed-link"
+                  v-tooltip.top="{ value: `Open ${row.o.value}`, showDelay: 120 }"
+                  @click="emit('navigate', row.o.value)"
+                >{{ objectBadge(row.o.value) }}<span class="embed-link-arrow">↗</span></a>
+                <span v-else-if="objectBadge(row.o.value)" class="tag type-badge">{{ objectBadge(row.o.value) }}</span>
                 <PropertyTable
                   class="embed-table"
                   :groups="embedGroups(row.o, group.predicate)!"
@@ -507,6 +537,8 @@ function graphTitle(o: ResourceObject): string {
                   :group-by-type="embedGroupByType(row.o)"
                   :boolean-parts="embedBooleanParts(row.o)"
                   :number-parts="embedNumberParts(row.o)"
+                  :column-parts="embedColumnParts(row.o)"
+                  :cap-width-parts="embedCapWidthParts(row.o)"
                   :embed="true"
                   @navigate="emit('navigate', $event)"
                   @reorder="p => onEmbedReorder(row.o!, p)"
@@ -515,6 +547,8 @@ function graphTitle(o: ResourceObject): string {
                   @toggle-fold="p => onEmbedToggleFold(row.o!, p)"
                   @toggle-group-by-type="p => onEmbedToggleGroupByType(row.o!, p)"
                   @toggle-number="p => onEmbedToggleNumber(row.o!, p)"
+                  @toggle-columns="p => onEmbedToggleColumns(row.o!, p)"
+                  @toggle-cap-width="p => onEmbedToggleCapWidth(row.o!, p)"
                 />
               </div>
 
@@ -937,6 +971,19 @@ function graphTitle(o: ResourceObject): string {
   border: 1px solid var(--ae-border-color);
   background: var(--ae-bg-elevated);
   color: var(--ae-text-secondary);
+}
+
+/* Click-through badge on an embedded object → its own resource page. */
+.embed-link {
+  cursor: pointer;
+}
+.embed-link:hover {
+  color: var(--ae-accent);
+  border-color: var(--ae-accent);
+}
+.embed-link-arrow {
+  margin-left: 0.2rem;
+  opacity: 0.7;
 }
 
 /* Inline-embedded value object (MonetaryAmount, coordinates) */
