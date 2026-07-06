@@ -1,6 +1,9 @@
 {
   "name": "Cordis Datalab",
   "url": "https://cordis.europa.eu/datalab/sparql",
+  "deprecatedPredicates": [
+    "http://www.w3.org/2002/07/owl#deprecated"
+  ],
   "suggestedLanguagePriorities": [
     "en"
   ],

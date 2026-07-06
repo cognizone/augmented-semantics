@@ -1,6 +1,10 @@
 {
   "name": "ERA RINF",
   "url": "https://rinf.data.era.europa.eu/api/v1/sparql/rinf",
+  "deprecatedPredicates": [
+    "http://www.w3.org/2002/07/owl#deprecated",
+    "http://publications.europa.eu/ontology/authority/deprecated"
+  ],
   "backend": "graphdb",
   "graph": {
     "quads": true

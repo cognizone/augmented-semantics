@@ -1,6 +1,9 @@
 {
   "name": "Fedlex",
   "url": "https://fedlex.data.admin.ch/sparqlendpoint",
+  "deprecatedPredicates": [
+    "http://www.w3.org/2002/07/owl#deprecated"
+  ],
   "suggestedLanguagePriorities": [
     "en",
     "fr",
