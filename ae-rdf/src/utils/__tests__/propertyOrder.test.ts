@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { orderedByConfig, moveInOrder, toggleInList, composeLabel, isAlwaysLast, sinkAlwaysLast, ALWAYS_LAST } from '../propertyOrder'
+import { orderedByConfig, moveInOrder, toggleInList, composeLabel, isAlwaysLast, sinkAlwaysLast, ALWAYS_LAST, headingParts } from '../propertyOrder'
 
 const id = (s: string) => s
 // fallback: plain alphabetical, to prove unlisted items keep a stable order
@@ -24,6 +24,26 @@ describe('orderedByConfig', () => {
     const items = ['b', 'a']
     orderedByConfig(items, id, ['a'], alpha)
     expect(items).toEqual(['b', 'a'])
+  })
+})
+
+describe('headingParts', () => {
+  const lit = (value: string) => ({ value, linked: false })
+  const link = (value: string) => ({ value, linked: true })
+
+  it('keeps all literals + only the FIRST linked entity by default', () => {
+    // OrganisationRole = role (linked) + org (linked): default drops the org.
+    expect(headingParts([link('Role'), link('Org')], false)).toEqual(['Role'])
+    // literals always kept; extra linked entities dropped after the first.
+    expect(headingParts([lit('AAPSL'), link('Org'), link('Project')], false)).toEqual(['AAPSL', 'Org'])
+  })
+
+  it('keeps every part when full (reified relationship: role + org)', () => {
+    expect(headingParts([link('Role'), link('Org')], true)).toEqual(['Role', 'Org'])
+  })
+
+  it('is a no-op on all-literal parts', () => {
+    expect(headingParts([lit('1902.6'), lit('EUR')], false)).toEqual(['1902.6', 'EUR'])
   })
 })
 

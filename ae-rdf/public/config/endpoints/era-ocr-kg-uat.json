@@ -1375,7 +1375,8 @@
         "http://purl.org/dc/terms/issued",
         "http://purl.org/dc/terms/created",
         "http://purl.org/dc/terms/modified"
-      ]
+      ],
+      "labelFull": true
     },
     "http://data.europa.eu/949/Activity": {
       "order": [

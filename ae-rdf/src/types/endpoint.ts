@@ -69,6 +69,12 @@ export interface TypeConfig {
    *  this type (joined, in property-display order). Empty/unset → the default
    *  label heuristic (prefLabel → title → rdfs:label → …). */
   label?: string[]
+  /** Heading uses ALL `label` parts, not just literals + the first linked entity.
+   *  The default trims linked entities in the on-page heading (they're listed
+   *  below as relations); set this for a reified-relationship type whose identity
+   *  needs several linked parts — e.g. OrganisationRole = role + org. (Links and
+   *  embeds already show the full composed label; this only affects the heading.) */
+  labelFull?: boolean
   /** Predicate IRIs whose (literal) values the instance-list text filter matches
    *  for this type. Unset → the type's `label` fields, else the 6 default label
    *  predicates. Lets search target the right fields and skip redundant ones

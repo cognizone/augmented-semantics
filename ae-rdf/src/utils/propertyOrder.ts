@@ -60,6 +60,28 @@ export function composeLabel(
     .join(separator)
 }
 
+/**
+ * Heading parts from ordered (value, linked) label parts. By default keeps every
+ * literal part but only the FIRST linked entity — on a resource's own page the
+ * other linked entities are already listed below as relations, so the heading
+ * needn't repeat them (avoids "org · role · project"). `full` keeps them all —
+ * for a reified-relationship type (OrganisationRole = role + org) whose identity
+ * needs multiple linked parts. Pure, so the trim is unit-tested.
+ */
+export function headingParts(items: { value: string; linked: boolean }[], full: boolean): string[] {
+  if (full) return items.map(i => i.value)
+  const out: string[] = []
+  let sawLinked = false
+  for (const i of items) {
+    if (i.linked) {
+      if (sawLinked) continue
+      sawLinked = true
+    }
+    out.push(i.value)
+  }
+  return out
+}
+
 /** Add `item` to `list` if absent, else remove it. Returns a new array. */
 export function toggleInList(list: string[], item: string): string[] {
   return list.includes(item) ? list.filter(x => x !== item) : [...list, item]

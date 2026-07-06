@@ -13,6 +13,7 @@ import { ref, computed, type Ref } from 'vue'
 import { useEndpointStore, useLanguageStore, useBrowseStore, useTypeConfigStore } from '../stores'
 import { executeSparql, resolveUris, logger, buildResourceTriplesQuery, buildEmbeddedTriplesQuery, buildInverseEmbedQuery, resolveGraphStrategy, LABEL_PREDICATES, EMBED_BATCH } from '../services'
 import { labelLangs as computeLabelLangs, pickByLangs } from '../utils/labelLang'
+import { headingParts } from '../utils/propertyOrder'
 import { composeLabels, composeViaLabels, resolveLabels } from './composeLabels'
 
 const RDF_TYPE = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'
@@ -99,21 +100,18 @@ export function useResourceView() {
       // (composeLabels' selfUri drop only fires for embeds/links), so the full
       // composed identity would headline every linked entity — org · role ·
       // project. Keep all literal parts + the FIRST linked entity, drop the rest:
-      // the others are already listed below as relations. All-literal labels
-      // (Organisation, MonetaryAmount) are untouched.
-      let sawLinked = false
-      const parts: string[] = []
+      // the others are already listed below as relations. `labelFull` opts out
+      // (a reified-relationship type whose identity needs several linked parts,
+      // e.g. OrganisationRole = role + org). All-literal labels are untouched.
+      const items: { value: string; linked: boolean }[] = []
       for (const p of preds) {
         const group = groups.find(g => g.predicate === p)
         const value = groupValue(group, objLabels)
         if (!value) continue
-        const linked = !group?.objects.some(o => o.termType === 'literal')
-        if (linked) {
-          if (sawLinked) continue
-          sawLinked = true
-        }
-        parts.push(value)
+        items.push({ value, linked: !group?.objects.some(o => o.termType === 'literal') })
       }
+      const full = !!(labelType && typeConfig.get(labelType).labelFull)
+      const parts = headingParts(items, full)
       if (parts.length) return parts.join(' · ')
     }
 
