@@ -190,7 +190,12 @@ function instanceMatch(iri: string, s: GraphStrategy, filter?: string, predicate
   if (orphanVia && isNavigableIri(orphanVia)) {
     core = `{ ${core} } FILTER NOT EXISTS { ${scoped(`?owner <${sanitizeIri(orphanVia)}> ?s`, s, '?og')} }`
   }
-  return core
+  // Blank-node instances have no standalone view — they're only ever reached inline
+  // via a parent (see useResourceView's bnode pass). Drop them from the navigable
+  // index so a mixed type (some named, some bnode instances — e.g. owl:Class,
+  // foaf:Document) doesn't list anonymous rows that navigate to a broken resource.
+  // In instanceMatch so the list and count filter IDENTICALLY.
+  return `${core} FILTER(!isBlank(?s))`
 }
 
 /* ───────────────────────── Discovery / list ───────────────────────── */

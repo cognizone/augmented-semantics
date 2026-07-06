@@ -193,9 +193,13 @@ export interface TypeProfile {
   properties: TypeProperty[]
   /** Embed candidacy (profiler hint): per-owner fan-in forward + inverse. */
   embed?: EmbedHints
-  /** Instances of this type are blank nodes (profiler hint) — reachable only inline
-   *  via a parent, so it wants render:embed + sidebar:hide. */
+  /** ALL instances of this type are blank nodes (profiler hint) — reachable only
+   *  inline via a parent, so it wants render:embed + sidebar:hide. Set only when
+   *  the type is EXCLUSIVELY blank; a mixed type keeps named instances navigable. */
   blank?: boolean
+  /** Count of blank-node instances of this type (profiler hint), recorded whenever
+   *  non-zero — even for mixed types (where `blank` is unset). */
+  bnodeCount?: number
 }
 
 /** One embed type composed by a class, with a count scoped to that class. */

@@ -126,7 +126,7 @@ interface FanEdge { via: string; max: number }
  *  selfMax = the type's OWN biggest single-property fan-out — how many rows it renders
  *  when inlined; high ⇒ a wall even at fan-in 1, so NOT a real candidate. */
 interface EmbedHints { selfMax?: number; forward?: FanEdge[]; inverse?: FanEdge[] }
-interface TypeProfile { ok: boolean; sampled?: boolean; properties: PropEntry[]; embed?: EmbedHints; blank?: boolean }
+interface TypeProfile { ok: boolean; sampled?: boolean; properties: PropEntry[]; embed?: EmbedHints; blank?: boolean; bnodeCount?: number }
 interface CompEntry { uri: string; count: number }
 
 const RDFS_SUBCLASS = 'http://www.w3.org/2000/01/rdf-schema#subClassOf'
@@ -183,10 +183,12 @@ const propCardQuery = (t: string, p: string) =>
 // NOT a bare `SELECT DISTINCT ?t` — that can 500 on big endpoints (RINF) — and it also
 // yields the per-type totals the min=0 cardinality derivation needs.
 const typeInventoryQuery = () => `SELECT ?t (COUNT(DISTINCT ?s) AS ?n) WHERE { ?s a ?t } GROUP BY ?t ORDER BY DESC(?n)`
-// Types whose instances are BLANK NODES + how many. A bnode has no dereferenceable
-// id — reachable only inline via a parent — so such a type wants render:embed +
-// sidebar:hide, and the app fetches its triples path-scoped (buildBlankNodeTriplesQuery).
-const blankTypesQuery = () => `SELECT ?t (COUNT(?s) AS ?n) WHERE { ?s a ?t FILTER(isBlank(?s)) } GROUP BY ?t ORDER BY DESC(?n)`
+// Blank-node instance count per type. A bnode has no dereferenceable id — reachable
+// only inline via a parent. A type is only HIDDEN (blank:true) when ALL its instances
+// are bnodes (exclusive); a mixed type keeps its named instances navigable but records
+// the count. DISTINCT to match typeInventory's COUNT(DISTINCT ?s) so exclusivity
+// (n >= total) compares like with like.
+const blankTypesQuery = () => `SELECT ?t (COUNT(DISTINCT ?s) AS ?n) WHERE { ?s a ?t FILTER(isBlank(?s)) } GROUP BY ?t ORDER BY DESC(?n)`
 // Reasonable seed of boolean deprecation flags to look for. The ones actually
 // present (asserted `true` somewhere) are written to cfg.deprecatedPredicates and
 // the app badges any resource asserting one. Predicate-indexed, so each probe is
@@ -635,24 +637,28 @@ async function main() {
   console.error(`  → ${SKIP_HEAVY ? 'skipped (--fast)' : `${embedCount} types with an embeddable edge (${floodFlag} flagged ⚠ flood-risk: selfMax > ${EMBED_SELF_MAX})`} in ${secs(p)}`)
 
   // ── Blank-node detection ────────────────────────────────────────────────
-  // Which types are instanced as blank nodes (e.g. MappedCode). A bnode has no
-  // dereferenceable id, so such a type is only meaningful INLINE — flag it here so
-  // the config author gives it render:embed + sidebar:hide (the app then fetches it
-  // path-scoped). One grouped scan; best-effort (skipped on --fast, tolerates error).
+  // Count bnode instances per type. `bnodeCount` is recorded whenever non-zero;
+  // `blank:true` (→ the app hides + inlines the type) is set ONLY when the type is
+  // EXCLUSIVELY blank (every instance a bnode). A mixed type (some named, some bnode
+  // — e.g. owl:Class, foaf:Document) keeps its named instances navigable. One grouped
+  // scan; best-effort (skipped on --fast, tolerates error).
   if (!SKIP_HEAVY) {
     p = phase('Blank nodes')
     const blankRows = await sparql(url, blankTypesQuery()).catch(() => [])
-    let blankCount = 0
+    // Derived flags — clear before recompute so a re-profile drops stale marks (a type
+    // that used to be all-bnode but now has named instances must lose blank:true).
+    for (const e of Object.values(out)) { delete e.blank; delete e.bnodeCount }
+    let exclusiveCount = 0, mixedCount = 0
     for (const b of blankRows) {
       const t = b.t?.value, n = parseInt(b.n?.value ?? '0', 10)
-      if (!t || !n || !safeIri(t)) continue
-      if (out[t]) out[t].blank = true
-      blankCount++
+      if (!t || !n || !safeIri(t) || !out[t]) continue
       const total = totals[t] ?? 0
-      const allBlank = total > 0 && n >= total
-      console.error(`  ⬥ ${t.replace(/^.*[#/]/, '')}: ${n}${total ? `/${total}` : ''} blank-node instance(s)${allBlank ? ' (ALL — embed + sidebar:hide)' : ''}`)
+      const exclusive = total > 0 && n >= total
+      out[t].bnodeCount = n
+      if (exclusive) { out[t].blank = true; exclusiveCount++ } else mixedCount++
+      console.error(`  ⬥ ${t.replace(/^.*[#/]/, '')}: ${n}${total ? `/${total}` : ''} blank-node instance(s)${exclusive ? ' (ALL — embed + sidebar:hide)' : ' (mixed — kept navigable)'}`)
     }
-    console.error(`  → ${blankCount} blank-node type(s) in ${secs(p)}`)
+    console.error(`  → ${exclusiveCount} exclusive + ${mixedCount} mixed blank-node type(s) in ${secs(p)}`)
   }
 
   // ── Deprecation flags ───────────────────────────────────────────────────

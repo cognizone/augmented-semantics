@@ -181,22 +181,32 @@ describe('membership-driven aggregates always COUNT(DISTINCT ?s)', () => {
     expect(def).not.toContain('GRAPH')
   })
 
-  it('instance count: distinct, graph-scoped per strategy', () => {
+  it('instance count: distinct, graph-scoped per strategy, bnodes excluded', () => {
     expect(buildInstanceCountQuery(TYPE, NAMED)).toBe(
-      `SELECT (COUNT(DISTINCT ?s) AS ?total) WHERE { GRAPH ?g { ?s a <${TYPE}> } }`
+      `SELECT (COUNT(DISTINCT ?s) AS ?total) WHERE { GRAPH ?g { ?s a <${TYPE}> } FILTER(!isBlank(?s)) }`
     )
     expect(buildInstanceCountQuery(TYPE, DEFAULT)).toBe(
-      `SELECT (COUNT(DISTINCT ?s) AS ?total) WHERE { ?s a <${TYPE}> }`
+      `SELECT (COUNT(DISTINCT ?s) AS ?total) WHERE { ?s a <${TYPE}> FILTER(!isBlank(?s)) }`
     )
     expect(buildInstanceCountQuery(TYPE, BOTH)).toContain('UNION')
     expect(() => buildInstanceCountQuery('http://e.org/x> }', BOTH)).toThrow()
+  })
+
+  // Bnode instances have no standalone view — the navigable index (list + count,
+  // which share instanceMatch) excludes them so a mixed type doesn't offer rows
+  // that navigate nowhere. The type-inventory count is membership-total (bnodes in).
+  it('list and count exclude bnodes; inventory keeps them', () => {
+    expect(buildInstanceListQuery(TYPE, NAMED, 25, 0)).toContain('FILTER(!isBlank(?s))')
+    expect(buildInstanceCountQuery(TYPE, NAMED)).toContain('FILTER(!isBlank(?s))')
+    expect(buildInstanceListQuery(TYPE, DEFAULT, 25, 0, 'smith')).toContain('FILTER(!isBlank(?s))')
+    expect(buildTypeInventoryQuery(BOTH)).not.toContain('isBlank')
   })
 })
 
 describe('buildInstanceListQuery', () => {
   it('one distinct instance per row, page-bounded — labels resolved separately', () => {
     const q = buildInstanceListQuery(TYPE, NAMED, 100, 0)
-    expect(q).toContain(`SELECT DISTINCT ?s WHERE { GRAPH ?g { ?s a <${TYPE}> } } LIMIT 100 OFFSET 0`)
+    expect(q).toContain(`SELECT DISTINCT ?s WHERE { GRAPH ?g { ?s a <${TYPE}> } FILTER(!isBlank(?s)) } LIMIT 100 OFFSET 0`)
     // Labels are NOT hand-rolled here anymore — the caller resolves them via the
     // shared resolveLabels (precedence + SKOS-XL + language) so they match the heading.
     expect(q).not.toContain('SAMPLE')
@@ -221,7 +231,7 @@ describe('instance filter (label OR URI)', () => {
     const plain = buildInstanceListQuery(TYPE, NAMED, 25, 0)
     expect(buildInstanceListQuery(TYPE, NAMED, 25, 0, '')).toBe(plain)
     expect(buildInstanceListQuery(TYPE, NAMED, 25, 0, '   ')).toBe(plain)
-    expect(plain).not.toContain('FILTER')
+    expect(plain).not.toContain('CONTAINS') // no search filter (the bnode FILTER is always present)
     expect(buildInstanceCountQuery(TYPE, NAMED, '  ')).toBe(buildInstanceCountQuery(TYPE, NAMED))
   })
 
