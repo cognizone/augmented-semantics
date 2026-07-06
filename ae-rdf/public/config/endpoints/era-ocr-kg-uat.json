@@ -1413,11 +1413,11 @@
     },
     "http://data.europa.eu/949/Document": {
       "label": [
-        "http://xmlns.com/foaf/0.1/primaryTopic"
+        "http://xmlns.com/foaf/0.1/page"
       ],
       "order": [
-        "http://xmlns.com/foaf/0.1/primaryTopic",
-        "http://xmlns.com/foaf/0.1/page"
+        "http://xmlns.com/foaf/0.1/page",
+        "http://xmlns.com/foaf/0.1/primaryTopic"
       ]
     },
     "http://publications.europa.eu/ontology/authority/MappedCode": {
