@@ -8,7 +8,7 @@ Once you're connected, AE RDF gives you two ways into the data: **browse by type
 
 ## Types sidebar
 
-The left sidebar lists the dataset's `rdf:type`s, most common first, with a **distinct-instance count** next to each. Click any type — including embedded ones — to list its instances in the main pane.
+The left sidebar lists the dataset's `rdf:type`s, most common first, with a **distinct-instance count** next to each. Click any navigable type — including embedded ones — to list its instances in the main pane. (Blank-node types — whose instances are anonymous nodes with no page — sit in the **Hidden** group and aren't clickable; you only ever see them inlined under a resource that uses them.)
 
 It's a **tree**, not a flat list:
 
@@ -65,7 +65,7 @@ A property with a huge number of values (say a funding scheme linking thousands 
 
 ### Referenced by (incoming links)
 
-Relationships above point *outward*. To see what points **at** this resource — which grants fund it, which organisations are involved, which results it produced — expand the **Referenced by** section at the bottom. It loads on demand (incoming links can be huge), shows how many resources reference this one, and lists them grouped by predicate with an inbound **↤** marker. Each is a clickable link, so you can walk the graph *backwards* too. Very heavily-referenced resources show the first 1,000.
+Relationships above point *outward*. To see what points **at** this resource — which grants fund it, which organisations are involved, which results it produced — expand the **Referenced by** section at the bottom. It loads on demand (incoming links can be huge), shows how many resources reference this one, and lists them grouped by predicate with an inbound **↤** marker. A URI referrer is a clickable link, so you can walk the graph *backwards* too; a **blank-node referrer** (e.g. an `owl:Restriction` that points here via `owl:onProperty`) has no page of its own, so its own properties are **inlined** in place — `onProperty … someValuesFrom Class` — rather than shown as a bare anonymous id. Very heavily-referenced resources show the first 1,000.
 
 Within each section, properties are ordered by usefulness: labels and identifiers first, then dates, status, and the rest. Predicate names are humanized for readability (`dateEndApplicability` → "Date end applicability") — hover a predicate to see its real qname/URI.
 

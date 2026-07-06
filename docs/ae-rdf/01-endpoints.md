@@ -4,7 +4,11 @@ outline: deep
 
 # Managing Endpoints
 
-AE RDF talks directly to SPARQL endpoints from your browser. Endpoints you add are saved locally and **shared across the Augmented Semantics tools** — an endpoint added in AE SKOS shows up here, and vice versa (they use the same browser storage).
+AE RDF talks directly to SPARQL endpoints from your browser. On a **deployed instance** the available endpoints come from the app's bundled configuration (`config/app.json`) — pick one and connect. Adding, editing, and testing endpoints is part of the **standalone / authoring** build, where you assemble the config you then export and deploy.
+
+::: info Deployed vs. authoring
+A deployed AE RDF runs in **config mode**: its endpoint list is fixed by `config/app.json`. The add / edit / delete controls below don't persist there (a custom URL you type lasts only for the current session), and each tool ships its own config — so endpoints are **not** shared between AE SKOS and AE RDF. To change the shipped endpoints, edit the config and redeploy (see [Exporting a deployment config](index.md#exporting-a-deployment-config-authoring-mode)). The rest of this page describes the full manager as it works in the standalone / authoring build.
+:::
 
 ## The Endpoint Manager
 

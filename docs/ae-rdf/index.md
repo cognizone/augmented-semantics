@@ -22,12 +22,12 @@ AE RDF connects directly to SPARQL endpoints from your browser — the endpoint 
 
 ### Quick Start
 
-1. Open the endpoint menu in the header and pick a **suggested endpoint**, or choose **Add endpoint** for a custom URL.
+1. Open the endpoint menu in the header and pick an endpoint. (In the standalone / authoring build you can also **Add endpoint** for a custom URL — see [Managing Endpoints](01-endpoints.md).)
 2. Once connected, the **Types** sidebar lists every `rdf:type` in the dataset with an instance count.
 3. Click a type to see its instances, then click an instance to open it.
 4. Or paste any **resource URI** into the bar at the top and press **Go**.
 
-Endpoints are **shared with the other Augmented Semantics tools** (e.g. AE SKOS) — add one here and it's available there too, and vice versa.
+On a deployed instance the endpoints come from the app's bundled configuration; AE SKOS and AE RDF each ship their own, so the endpoint lists are **not** shared between the tools.
 
 ### Header Toolbar
 
