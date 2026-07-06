@@ -45,6 +45,10 @@
  * Usage:
  *   node scripts/profile-endpoint.ts [path-to-endpoint.json]
  *   node scripts/profile-endpoint.ts                      # defaults to cordis
+ *   SPARQL_USER=… SPARQL_PASS=… node scripts/profile-endpoint.ts <cfg>  # secured (Basic auth)
+ *   node scripts/profile-endpoint.ts <cfg> --fast         # skip heavy scans (huge endpoints)
+ * Per-property counts + cardinality and embed fan-in are computed by default for all
+ * backends, on types up to HEAVY_TYPE_MAX instances; `--fast` skips them entirely.
  * The config's `backend` ("graphdb" | "virtuoso", default virtuoso) picks the query
  * SHAPE. GraphDB (e.g. ERA RINF) lists properties with the FLAT join and skips the
  * heavy per-subject scans (cardinality / embed fan-in / defaultView) that time out on
@@ -76,8 +80,31 @@ const SAMPLE_SIZE = 2000 // distinct-subject cap when the full listing times out
 // shape and can afford the full scans. GraphDB → flat COMPLETE property LISTS, and we
 // skip cardinality / embed fan-in / defaultView (they time out on its gateway).
 let GRAPHDB = false
+// Heavy per-subject scans (per-property count + cardinality, embed fan-in) run for
+// EVERY backend by default — but only on types up to HEAVY_TYPE_MAX instances (the
+// scans are quadratic-ish and time out over millions of subjects on GraphDB's
+// gateway). Bigger types keep their complete property LIST, uri-only (count 0).
+// `--fast` skips the heavy scans entirely — for huge endpoints (e.g. ERA RINF)
+// where even the mid-size types are too costly.
+const SKIP_HEAVY = process.argv.includes('--fast')
+// Per-type instance ceiling for the heavy scans — bigger types keep list-only.
+const HEAVY_TYPE_MAX = 50_000
 const RETRIES = 2
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms))
+
+// Optional HTTP Basic auth for secured endpoints (e.g. ERA EVR-KG). Credentials
+// come from the environment ONLY — never the config file or the command line — so
+// no secret is ever committed to the repo or captured in shell history / logs.
+//   SPARQL_USER=… SPARQL_PASS=… node scripts/profile-endpoint.ts <config.json>
+const AUTH_HEADER: Record<string, string> = (() => {
+  const u = process.env.SPARQL_USER, p = process.env.SPARQL_PASS
+  return u && p ? { Authorization: `Basic ${Buffer.from(`${u}:${p}`).toString('base64')}` } : {}
+})()
+const HEADERS: Record<string, string> = {
+  Accept: 'application/sparql-results+json',
+  'Content-Type': 'application/x-www-form-urlencoded',
+  ...AUTH_HEADER,
+}
 
 interface PropEntry { uri: string; count: number; min?: number; max?: number }
 /** An owning edge + the max instances of a type that hang off ONE owner through it. */
@@ -163,7 +190,7 @@ async function sparql(url: string, query: string, retries = RETRIES, timeoutMs =
       // 500, and POST has no URL-length limit. Works everywhere (Virtuoso included).
       const res = await fetch(url, {
         method: 'POST',
-        headers: { Accept: 'application/sparql-results+json', 'Content-Type': 'application/x-www-form-urlencoded' },
+        headers: HEADERS,
         body: `query=${encodeURIComponent(query)}`,
         signal: ctrl.signal,
       })
@@ -193,7 +220,7 @@ async function ask(url: string, query: string): Promise<boolean | undefined> {
     try {
       const res = await fetch(url, {
         method: 'POST',
-        headers: { Accept: 'application/sparql-results+json', 'Content-Type': 'application/x-www-form-urlencoded' },
+        headers: HEADERS,
         body: `query=${encodeURIComponent(query)}`,
         signal: ctrl.signal,
       })
@@ -275,14 +302,15 @@ async function profileType(url: string, type: string, total: number, onStep?: (s
   props = props.filter(safeIri)
 
   // 2. Measure each property: occurrence count + per-instance min/max cardinality.
-  // GraphDB SKIPS this — the per-subject aggregation runs ~30min over its biggest
-  // types and the app never reads cardinality (it resolves live) — keeping just the
-  // property list (uri only).
+  // On by default for all backends, but skipped for `--fast` or when the type is
+  // bigger than HEAVY_TYPE_MAX (the per-subject aggregation times out over millions
+  // of subjects on GraphDB's gateway). Skipped ⇒ complete property list, uri-only.
+  const measure = !SKIP_HEAVY && total <= HEAVY_TYPE_MAX
   const entries: PropEntry[] = []
   for (let i = 0; i < props.length; i++) {
     const p = props[i]
     const e: PropEntry = { uri: p, count: 0 }
-    if (!GRAPHDB) {
+    if (measure) {
       onStep?.(`property ${i + 1}/${props.length}: ${shortIri(p)}`)
       try {
         const b = (await sparql(url, propCardQuery(type, p)))[0] ?? {}
@@ -298,7 +326,7 @@ async function profileType(url: string, type: string, total: number, onStep?: (s
     }
     entries.push(e)
   }
-  if (!GRAPHDB) entries.sort((a, b) => b.count - a.count)
+  if (measure) entries.sort((a, b) => b.count - a.count)
   return { ok: true, sampled: sampled || undefined, properties: entries }
 }
 
@@ -423,7 +451,8 @@ async function main() {
   const url: string = cfg.url
   if (!url) throw new Error(`No "url" in ${path}`)
   GRAPHDB = cfg.backend === 'graphdb'
-  if (GRAPHDB) console.error('backend: graphdb — flat COMPLETE property lists, skipping cardinality / embed / defaultView')
+  if (GRAPHDB) console.error(`backend: graphdb — flat COMPLETE property lists${SKIP_HEAVY ? ', skipping heavy scans (--fast)' : ''}`)
+  if (AUTH_HEADER.Authorization) console.error(`auth: HTTP Basic (SPARQL_USER=${process.env.SPARQL_USER})`)
 
   // Type list: prefer the cached inventory; else discover it live AND cache it (with
   // counts) — so a fresh config-endpoint gets a persisted typeInventory the app can use,
@@ -462,7 +491,7 @@ async function main() {
   console.error(`  → quads=${graph.quads ?? '?'} defaultView=${graph.defaultView ?? '?'} in ${secs(p)}`)
 
   // ── Properties + per-instance cardinality ──────────────────────────────
-  p = phase(`Properties${GRAPHDB ? '' : ' + cardinality'} — ${typeUris.length} types`)
+  p = phase(`Properties${SKIP_HEAVY ? '' : ' + cardinality'} — ${typeUris.length} types`)
   const out: Record<string, TypeProfile> = { ...(cfg.typeProperties ?? {}) }
   let okCount = 0, sampledCount = 0
   for (const [i, type] of typeUris.entries()) {
@@ -499,7 +528,7 @@ async function main() {
   // Sort by type URI so key order is deterministic — clean git diffs across
   // runs, instead of tracking typeInventory's count-order (which drifts).
   cfg.typeProperties = sortKeys(out)
-  console.error(`  → ${okCount}/${typeUris.length} OK (${sampledCount} sampled, no cardinality) in ${secs(p)}`)
+  console.error(`  → ${okCount}/${typeUris.length} OK (${sampledCount} sampled${SKIP_HEAVY ? ', no cardinality' : ''}) in ${secs(p)}`)
 
   // ── Embed fan-in — max instances per owner, both directions (embed hints) ──
   // Written onto each typeProperties entry (shared object ref, so already sorted).
@@ -510,7 +539,7 @@ async function main() {
   p = phase(`Embed fan-in — ${typeUris.length} types`)
   let embedCount = 0, floodFlag = 0
   for (const [i, type] of typeUris.entries()) {
-    if (GRAPHDB) break // graphdb: fan-in needs per-subject scans that time out on its gateway
+    if (SKIP_HEAVY) break // --fast: skip the per-subject fan-in scans
     if (!out[type]?.ok || (totals[type] ?? 0) > EMBED_PROFILE_MAX) continue
     const selfMax = Math.max(0, ...out[type].properties.map(pr => pr.max ?? 0))
     const tt = Date.now()
@@ -533,7 +562,7 @@ async function main() {
       console.error(`  ${tag} ✓ ${short} —${f}${inv}${warn} (${secs(tt)})`)
     }
   }
-  console.error(`  → ${GRAPHDB ? 'skipped (backend: graphdb)' : `${embedCount} types with an embeddable edge (${floodFlag} flagged ⚠ flood-risk: selfMax > ${EMBED_SELF_MAX})`} in ${secs(p)}`)
+  console.error(`  → ${SKIP_HEAVY ? 'skipped (--fast)' : `${embedCount} types with an embeddable edge (${floodFlag} flagged ⚠ flood-risk: selfMax > ${EMBED_SELF_MAX})`} in ${secs(p)}`)
 
   // ── Subclass hierarchy (for the nested sidebar tree) ───────────────────
   p = phase('Subclasses')
