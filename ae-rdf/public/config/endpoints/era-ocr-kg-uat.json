@@ -1339,11 +1339,7 @@
         "http://purl.org/dc/terms/created",
         "http://purl.org/dc/terms/modified"
       ],
-      "viaLabels": {
-        "http://xmlns.com/foaf/0.1/homepage": [
-          "http://xmlns.com/foaf/0.1/page"
-        ]
-      }
+      "sidebar": "hide"
     },
     "http://data.europa.eu/949/Body": {
       "label": [
@@ -1366,12 +1362,7 @@
         "http://purl.org/dc/terms/issued",
         "http://purl.org/dc/terms/created",
         "http://purl.org/dc/terms/modified"
-      ],
-      "viaLabels": {
-        "http://xmlns.com/foaf/0.1/homepage": [
-          "http://xmlns.com/foaf/0.1/page"
-        ]
-      }
+      ]
     },
     "http://data.europa.eu/949/OrganisationRole": {
       "label": [
@@ -1394,7 +1385,9 @@
         "http://www.w3.org/ns/prov#atTime",
         "http://data.europa.eu/949/revokedCode",
         "http://purl.org/dc/terms/creator"
-      ]
+      ],
+      "render": "embed",
+      "embedVia": "http://data.europa.eu/949/changeActivity"
     },
     "http://www.w3.org/ns/org#Site": {
       "render": "embed",
@@ -1426,8 +1419,13 @@
         "http://xmlns.com/foaf/0.1/primaryTopic"
       ],
       "order": [
-        "http://xmlns.com/foaf/0.1/primaryTopic",
-        "http://xmlns.com/foaf/0.1/page"
+        "http://xmlns.com/foaf/0.1/page",
+        "http://xmlns.com/foaf/0.1/primaryTopic"
+      ],
+      "render": "embed",
+      "embedVia": "http://xmlns.com/foaf/0.1/homepage",
+      "hide": [
+        "http://xmlns.com/foaf/0.1/primaryTopic"
       ]
     },
     "http://publications.europa.eu/ontology/authority/MappedCode": {
@@ -1461,6 +1459,11 @@
     },
     "http://www.w3.org/2000/01/rdf-schema#ContainerMembershipProperty": {
       "group": "Ontology"
+    },
+    "http://www.w3.org/2004/02/skos/core#Concept": {
+      "label": [
+        "http://www.w3.org/2004/02/skos/core#prefLabel"
+      ]
     }
   }
 }
