@@ -4888,8 +4888,7 @@
             "max": 1
           }
         ]
-      },
-      "blank": true
+      }
     },
     "http://www.w3.org/2002/07/owl#AllDisjointClasses": {
       "ok": true,
@@ -5030,8 +5029,7 @@
             "max": 32
           }
         ]
-      },
-      "blank": true
+      }
     },
     "http://www.w3.org/2002/07/owl#DatatypeProperty": {
       "ok": true,

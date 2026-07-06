@@ -12142,8 +12142,7 @@
             "max": 1
           }
         ]
-      },
-      "blank": true
+      }
     },
     "http://www.w3.org/2002/07/owl#AnnotationProperty": {
       "ok": true,
@@ -12687,8 +12686,7 @@
             "max": 84
           }
         ]
-      },
-      "blank": true
+      }
     },
     "http://www.w3.org/2002/07/owl#DatatypeProperty": {
       "ok": true,
