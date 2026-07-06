@@ -71,7 +71,7 @@ export function groupNumber(value: string): string | null {
   const m = /^([+-]?)(\d+)(\.\d+)?$/.exec(value.trim())
   if (!m) return null
   const [, sign, int, frac = ''] = m
-  return sign + BigInt(int).toLocaleString('en-US') + frac
+  return sign + BigInt(int!).toLocaleString('en-US') + frac
 }
 
 // Tokens to keep upper-cased even when the source is lower/mixed case, so e.g.
