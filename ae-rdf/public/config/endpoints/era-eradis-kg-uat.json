@@ -6752,5 +6752,35 @@
   },
   "composition": {},
   "orphanCounts": {},
-  "profiledAt": "2026-07-06T09:02:36.252Z"
+  "profiledAt": "2026-07-06T09:02:36.252Z",
+  "types": {
+    "http://data.europa.eu/949/Document": {
+      "render": "embed",
+      "embedVia": "http://xmlns.com/foaf/0.1/homepage",
+      "label": [
+        "http://data.europa.eu/949/documentURL"
+      ],
+      "order": [
+        "http://data.europa.eu/949/documentURL",
+        "http://xmlns.com/foaf/0.1/primaryTopic"
+      ],
+      "hide": [
+        "http://data.europa.eu/949/documentUrl"
+      ]
+    },
+    "http://xmlns.com/foaf/0.1/Document": {
+      "render": "embed",
+      "embedVia": "http://xmlns.com/foaf/0.1/homepage",
+      "label": [
+        "http://data.europa.eu/949/documentURL"
+      ],
+      "order": [
+        "http://data.europa.eu/949/documentURL",
+        "http://xmlns.com/foaf/0.1/primaryTopic"
+      ],
+      "hide": [
+        "http://data.europa.eu/949/documentUrl"
+      ]
+    }
+  }
 }
