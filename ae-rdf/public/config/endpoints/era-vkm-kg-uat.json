@@ -693,9 +693,10 @@
   },
   "composition": {},
   "orphanCounts": {},
-  "profiledAt": "2026-07-06T08:53:34.614Z",
+  "profiledAt": "2026-07-06T13:30:02.487Z",
   "types": {
     "http://data.europa.eu/949/VehicleKeeperMarking": {
+      "sidebar": "hide",
       "label": [
         "http://data.europa.eu/949/vkmCode",
         "http://purl.org/dc/terms/identifier"
@@ -741,6 +742,7 @@
       ]
     },
     "http://www.w3.org/ns/org#Organization": {
+      "sidebar": "hide",
       "label": [
         "http://xmlns.com/foaf/0.1/name"
       ],
@@ -752,12 +754,16 @@
       ]
     },
     "http://data.europa.eu/949/Document": {
+      "render": "embed",
+      "embedVia": "http://xmlns.com/foaf/0.1/homepage",
       "label": [
-        "http://www.w3.org/2000/01/rdf-schema#label"
+        "http://xmlns.com/foaf/0.1/primaryTopic"
       ],
       "order": [
-        "http://www.w3.org/2000/01/rdf-schema#label",
         "http://xmlns.com/foaf/0.1/page",
+        "http://xmlns.com/foaf/0.1/primaryTopic"
+      ],
+      "hide": [
         "http://xmlns.com/foaf/0.1/primaryTopic"
       ]
     },
