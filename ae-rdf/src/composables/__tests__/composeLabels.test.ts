@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { mostSpecificTypes, fetchInChunks } from '../composeLabels'
+import { mostSpecificTypes, fetchInChunks, composeParts } from '../composeLabels'
 
 // mostSpecificTypes is the client-side narrowing that replaced the server-side
 // FILTER NOT EXISTS { ?s a ?more . ?more rdfs:subClassOf+ ?t } — which times out on
@@ -82,5 +82,60 @@ describe('fetchInChunks', () => {
     const out = await fetchInChunks(['a', 'b', 'c', 'd'], 4, async () => { calls++; throw waf('TIMEOUT') })
     expect(out).toEqual([])
     expect(calls).toBe(1) // one attempt, no recursive splitting
+  })
+})
+
+// composeParts is the pure compose half of composeViaLabels (contextual object
+// labels): literal fields pick by language, URI fields resolve to the referent's
+// label (self dropped), joined by ' · ', missing fields skipped.
+describe('composeParts (viaLabels)', () => {
+  const ROLE = 'ex:roleLabel', OF = 'ex:isRoleOf', IN = 'ex:isInvolvedIn'
+  const lit = (v: string, lang?: string) => ({ v, uri: false, lang })
+  const uri = (v: string) => ({ v, uri: true })
+  const vals = (m: Record<string, { v: string; uri: boolean; lang?: string }[]>) =>
+    new Map(Object.entries(m))
+
+  it('composes a literal field + a URI field resolved via labelMap', () => {
+    const out = composeParts(
+      [ROLE, OF],
+      vals({ [ROLE]: [lit('Coordinator')], [OF]: [uri('org1')] }),
+      new Map([['org1', 'ACME']]),
+      ['en'],
+      'grant1',
+    )
+    expect(out).toBe('Coordinator · ACME')
+  })
+
+  it('drops a URI field that points at the viewed resource (self-reference)', () => {
+    const out = composeParts(
+      [ROLE, IN],
+      vals({ [ROLE]: [lit('Coordinator')], [IN]: [uri('grant1')] }),
+      new Map([['grant1', 'The Grant']]),
+      ['en'],
+      'grant1', // IN points back at self ⇒ dropped
+    )
+    expect(out).toBe('Coordinator')
+  })
+
+  it('picks the preferred language for a multilingual literal field', () => {
+    const out = composeParts(
+      [ROLE],
+      vals({ [ROLE]: [lit('Coördinator', 'nl'), lit('Coordinator', 'en')] }),
+      new Map(),
+      ['en'],
+      '',
+    )
+    expect(out).toBe('Coordinator')
+  })
+
+  it('skips absent fields; a URI field with no referent label falls back to the URI (homepage URL)', () => {
+    const out = composeParts(
+      [ROLE, IN, OF],
+      vals({ [ROLE]: [lit('Partner')], [OF]: [uri('http://acme.example/')] }), // IN absent; OF is a bare URL
+      new Map(), // no label for the URL — an author-chosen locator field
+      ['en'],
+      '',
+    )
+    expect(out).toBe('Partner · http://acme.example/')
   })
 })

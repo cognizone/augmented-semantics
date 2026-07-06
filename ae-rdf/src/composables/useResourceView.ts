@@ -13,7 +13,7 @@ import { ref, computed, type Ref } from 'vue'
 import { useEndpointStore, useLanguageStore, useBrowseStore, useTypeConfigStore } from '../stores'
 import { executeSparql, resolveUris, logger, buildResourceTriplesQuery, buildEmbeddedTriplesQuery, buildInverseEmbedQuery, resolveGraphStrategy, LABEL_PREDICATES, EMBED_BATCH } from '../services'
 import { labelLangs as computeLabelLangs, pickByLangs } from '../utils/labelLang'
-import { composeLabels, resolveLabels } from './composeLabels'
+import { composeLabels, composeViaLabels, resolveLabels } from './composeLabels'
 
 const RDF_TYPE = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'
 
@@ -46,6 +46,9 @@ export function useResourceView() {
   const error = ref<string | null>(null)
   const resolved: Ref<ResolvedMap> = ref(new Map())
   const objectLabels: Ref<Map<string, string>> = ref(new Map()) // object IRI → human label
+  // predicate IRI → (object IRI → contextual label), from the viewed type's
+  // viaLabels: overrides a linked object's label per referring predicate.
+  const contextLabels: Ref<Map<string, Map<string, string>>> = ref(new Map())
   const objectTypes: Ref<Map<string, string>> = ref(new Map()) // object IRI → a type IRI
   const embedded: Ref<Map<string, PropertyGroup[]>> = ref(new Map()) // embeddable object IRI → its triples
   let requestId = 0
@@ -141,6 +144,7 @@ export function useResourceView() {
     triples.value = []
     types.value = []
     objectLabels.value = new Map()
+    contextLabels.value = new Map()
     objectTypes.value = new Map()
     embedded.value = new Map()
     resolved.value = new Map()
@@ -387,6 +391,14 @@ export function useResourceView() {
       await composeLabels(endpoint, labelMap, typeMap, typeConfig, labelLangs(), uri, isCurrent)
       if (!isCurrent()) return
 
+      // Contextual object labels: the viewed type may relabel a LINKED object per
+      // referring predicate (viaLabels) — e.g. show a role's "role · org" under a
+      // Grant's hasBeneficiary, though that role's own page leads with its project.
+      // Same config type the heading/edit panel use (configType over the rdf:types).
+      const srcType = typeConfig.configType((typeGroup?.objects ?? []).filter(o => o.termType === 'uri').map(o => o.value))
+      const contextMap = await composeViaLabels(endpoint, srcType, propGroups, labelMap, typeMap, typeConfig, labelLangs(), uri, isCurrent)
+      if (!isCurrent()) return
+
       // Resolve prefixes for everything the embeds introduced (predicates, object
       // IRIs, datatypes, graphs) plus all object types (badges). resolveUris is
       // cached, so re-listing already-resolved IRIs is cheap.
@@ -416,6 +428,7 @@ export function useResourceView() {
       types.value = typeGroup?.objects ?? []
       resolved.value = resolvedMap
       objectLabels.value = labelMap
+      contextLabels.value = contextMap
       objectTypes.value = typeMap
       embedded.value = embeddedMap
 
@@ -433,5 +446,5 @@ export function useResourceView() {
     }
   }
 
-  return { triples, types, label, loading, error, resolved, objectLabels, objectTypes, embedded, loadResource }
+  return { triples, types, label, loading, error, resolved, objectLabels, contextLabels, objectTypes, embedded, loadResource }
 }

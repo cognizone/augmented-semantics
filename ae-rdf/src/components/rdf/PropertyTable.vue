@@ -19,6 +19,10 @@ const props = defineProps<{
   resolved: ResolvedMap
   /** Object IRI → human label (Phase 2). Falls back to the qname when absent. */
   labels?: Map<string, string>
+  /** predicate IRI → (object IRI → contextual label): overrides a linked object's
+   *  label for THIS predicate (TypeConfig.viaLabels), so a shared node reads per
+   *  direction. Wins over `labels`; falls through to it when absent. */
+  contextLabels?: Map<string, Map<string, string>>
   /** Object IRI → a type IRI, shown as a badge / fallback text. */
   objectTypes?: Map<string, string>
   /** Object IRI → its triples, when its type is configured render:embed (depth-1). */
@@ -206,8 +210,10 @@ function predicateLabel(uri: string): string {
 // Always show the object's own identity (label, else qname — distinct) as the
 // primary text; the type is a context badge. (A generic type like "Concept"
 // repeated N times is useless as the value itself.)
-function objectText(uri: string): string {
-  return displayObject(uri, props.resolved, mode.value, props.labels?.get(uri))
+function objectText(uri: string, predicate?: string): string {
+  // A per-predicate contextual label (viaLabels) wins over the canonical one.
+  const ctx = predicate ? props.contextLabels?.get(predicate)?.get(uri) : undefined
+  return displayObject(uri, props.resolved, mode.value, ctx ?? props.labels?.get(uri))
 }
 
 /** Type badge text for a linked resource (context), or null. */
@@ -232,13 +238,15 @@ function isDangling(uri: string): boolean {
   )
 }
 
-/** An object's display text: its resolved label/qname (URIs) or literal value. */
-const objText = (o: ResourceObject) => (o.termType === 'uri' ? objectText(o.value) : o.value)
+/** An object's display text: its resolved label/qname (URIs) or literal value.
+ *  `predicate` lets a URI object pick up its contextual (viaLabels) label. */
+const objText = (o: ResourceObject, predicate?: string) =>
+  o.termType === 'uri' ? objectText(o.value, predicate) : o.value
 
 /** Objects of a predicate, sorted by display text (label/qname, else literal). */
 function sortedObjects(group: PropertyGroup): ResourceObject[] {
   return [...group.objects].sort((a, b) =>
-    objText(a).toLowerCase().localeCompare(objText(b).toLowerCase()),
+    objText(a, group.predicate).toLowerCase().localeCompare(objText(b, group.predicate).toLowerCase()),
   )
 }
 
@@ -433,6 +441,7 @@ function graphTitle(o: ResourceObject): string {
                   :groups="embedGroups(row.o, group.predicate)!"
                   :resolved="resolved"
                   :labels="labels"
+                  :context-labels="contextLabels"
                   :object-types="objectTypes"
                   :embedded="embedded"
                   :ancestors="[...(ancestors ?? []), row.o.value]"
@@ -460,14 +469,14 @@ function graphTitle(o: ResourceObject): string {
                 :class="{ dangling: isDangling(row.o.value) }"
                 v-tooltip.top="{ value: isDangling(row.o.value) ? `${row.o.value}\n⚠ No data — this reference points to a resource with no properties` : row.o.value, showDelay: 120 }"
                 @click="emit('navigate', row.o.value)"
-              >{{ objectText(row.o.value) }}</a>
+              >{{ objectText(row.o.value, group.predicate) }}</a>
 
               <!-- URI we can't navigate to (e.g. mailto:) -->
               <span
                 v-else-if="row.o.termType === 'uri'"
                 class="uri-static"
                 v-tooltip.top="{ value: row.o.value, showDelay: 120 }"
-              >{{ objectText(row.o.value) }}</span>
+              >{{ objectText(row.o.value, group.predicate) }}</span>
 
               <!-- Blank node -->
               <span v-else-if="row.o.termType === 'bnode'" class="bnode">[ anonymous node ]</span>

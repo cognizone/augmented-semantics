@@ -308,3 +308,113 @@ export async function composeLabels(
     }
   }
 }
+
+/** One field's fetched values for a subject: literal or URI, with language. */
+export interface FieldValue { v: string; uri: boolean; lang?: string }
+
+/**
+ * Compose a label for ONE subject from `fields` (the compose half of
+ * composeViaLabels, pure so it's unit-tested apart from the network): a literal
+ * field picks the best-language value; a URI field resolves to the referent's
+ * label (from `labelMap`), dropping the self-reference. Joined by ' · ', missing
+ * fields skipped. Unlike composeLabels' walk, ANY referent that HAS a label is
+ * emitted (not only composed-label types) — a via-label points wherever the
+ * author says, so a plain-named Organisation must resolve.
+ */
+export function composeParts(
+  fields: string[],
+  valuesByField: Map<string, FieldValue[]>,
+  labelMap: Map<string, string>,
+  langs: string[],
+  selfUri: string,
+): string {
+  const parts: string[] = []
+  for (const f of fields) {
+    const arr = valuesByField.get(f)
+    if (!arr?.length) continue
+    const lits = arr.filter(x => !x.uri)
+    if (lits.length) {
+      const pick = pickByLangs(lits.map(x => ({ v: x.v, lang: x.lang })), langs)
+      if (pick?.v) parts.push(pick.v)
+      continue
+    }
+    // URI field: the referent's label, or — since the author explicitly chose this
+    // field — the URI itself when it has none (foaf:page → a homepage URL is a
+    // locator, not a labelled entity). Self-reference dropped. (composeLabels stays
+    // conservative here to avoid UUIDs in the canonical label; via-labels are
+    // author-directed, so showing the chosen value is the intent.)
+    const ref = arr.find(x => x.v !== selfUri)
+    if (ref) parts.push(labelMap.get(ref.v) ?? ref.v)
+  }
+  return parts.join(' · ')
+}
+
+/**
+ * Contextual object labels (TypeConfig.viaLabels): a SUBJECT type overrides how
+ * its object under a given predicate is labelled, so a shared node reads
+ * differently by direction — e.g. on a Grant, `hasBeneficiary` → [roleLabel,
+ * isRoleOf] shows "Coordinator · ACME", while that same OrganisationRole's own
+ * page leads with its project. Returns predicate → (objectURI → composed label);
+ * only LINKED objects consult it (embeds render their properties). Kept separate
+ * from composeLabels: it's a single hop off the viewed resource, and its compose
+ * rule (composeParts) is deliberately more permissive about referents.
+ */
+export async function composeViaLabels(
+  endpoint: SPARQLEndpoint,
+  sourceType: string | null,
+  groups: { predicate: string; objects: { value: string; termType: string }[] }[],
+  labelMap: Map<string, string>,
+  typeMap: Map<string, string>,
+  typeConfig: ReturnType<typeof useTypeConfigStore>,
+  langs: string[],
+  selfUri: string,
+  isCurrent: () => boolean,
+): Promise<Map<string, Map<string, string>>> {
+  const out = new Map<string, Map<string, string>>()
+  const via = sourceType ? typeConfig.get(sourceType).viaLabels : undefined
+  if (!via || !Object.keys(via).length) return out
+
+  // Requests: each configured predicate present on this resource → its fields +
+  // the URI objects reached through it.
+  const requests: { predicate: string; fields: string[]; objects: string[] }[] = []
+  for (const g of groups) {
+    const fields = via[g.predicate]
+    if (!fields?.length) continue
+    const objects = g.objects.filter(o => o.termType === 'uri').map(o => o.value)
+    if (objects.length) requests.push({ predicate: g.predicate, fields, objects })
+  }
+  if (!requests.length) return out
+
+  const allObjects = [...new Set(requests.flatMap(r => r.objects))]
+  const allFields = [...new Set(requests.flatMap(r => r.fields))]
+  const bindings = await fetchValues(endpoint, allObjects, u => buildValuesQuery(u, allFields))
+  if (!isCurrent()) return out
+
+  const valByS = new Map<string, Map<string, FieldValue[]>>()
+  const refTargets = new Set<string>()
+  for (const b of bindings) {
+    const s = b.s?.value, p = b.p?.value, o = b.v
+    if (!s || !p || !o?.value) continue
+    let m = valByS.get(s); if (!m) { m = new Map(); valByS.set(s, m) }
+    const arr = m.get(p) ?? []
+    arr.push({ v: o.value, uri: o.type === 'uri', lang: o['xml:lang'] })
+    m.set(p, arr)
+    if (o.type === 'uri' && o.value !== selfUri) refTargets.add(o.value)
+  }
+  // Resolve labels for URI-field referents we don't already know (isRoleOf → org).
+  const unknown = [...refTargets].filter(u => !labelMap.has(u))
+  if (unknown.length) {
+    await resolveLabels(endpoint, unknown, langs, labelMap, typeMap, isCurrent)
+    if (!isCurrent()) return out
+  }
+
+  for (const r of requests) {
+    const m = new Map<string, string>()
+    for (const obj of r.objects) {
+      const label = composeParts(r.fields, valByS.get(obj) ?? new Map(), labelMap, langs, selfUri)
+      if (label) m.set(obj, label)
+    }
+    if (m.size) out.set(r.predicate, m)
+  }
+  return out
+}

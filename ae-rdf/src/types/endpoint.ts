@@ -88,6 +88,14 @@ export interface TypeConfig {
    *  "0"/"false") as a checkbox instead of the raw lexical value. For endpoints
    *  that store booleans as 0/1 without an xsd:boolean datatype (Virtuoso). */
   boolean?: string[]
+  /** Contextual object labels: when a resource of THIS type links out via a
+   *  predicate listed here, its object's DISPLAY label is composed from the
+   *  given field IRIs instead of the object type's own label — so a node shared
+   *  across directions reads per-context. Keyed by the outgoing predicate IRI →
+   *  field IRIs (same rule as `label`: literals joined by ' · ', a URI field →
+   *  the referent's label). E.g. on Grant, `hasBeneficiary` → [roleLabel,
+   *  isRoleOf]. Applies to LINKED objects only (embeds render their properties). */
+  viaLabels?: Record<string, string[]>
 }
 
 /** A URI paired with a count — the shared shape behind the cached inventory,
