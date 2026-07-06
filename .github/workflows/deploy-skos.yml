@@ -86,14 +86,14 @@ jobs:
       - name: Build AE RDF OCR
         run: pnpm --filter ae-rdf build
         env:
-          BASE_URL: /augmented-semantics/rdf-ocr/
+          BASE_URL: /augmented-semantics/rdf-era-ocr/
 
       - name: Add RDF OCR to site
         run: |
-          mkdir -p _site/rdf-ocr
-          cp -r ae-rdf/dist/* _site/rdf-ocr/
-          cp _site/rdf-ocr/index.html _site/rdf-ocr/404.html
-          cp apps/ocr-rdf/app.json _site/rdf-ocr/config/app.json
+          mkdir -p _site/rdf-era-ocr
+          cp -r ae-rdf/dist/* _site/rdf-era-ocr/
+          cp _site/rdf-era-ocr/index.html _site/rdf-era-ocr/404.html
+          cp apps/ocr-rdf/app.json _site/rdf-era-ocr/config/app.json
 
       # Build documentation
       - name: Build docs
