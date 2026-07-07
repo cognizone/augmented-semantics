@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # Mirror .claude/hooks/pre-commit.sh: type-check + unit tests for both apps.
+      # Note: `exec` is required — `pnpm --filter X vue-tsc` looks for a script
+      # named vue-tsc (none exists) and silently no-ops.
+      - name: Type-check ae-skos
+        run: pnpm --filter ae-skos exec vue-tsc --noEmit
+
+      - name: Type-check ae-rdf
+        run: pnpm --filter ae-rdf exec vue-tsc --noEmit
+
+      - name: Test ae-skos
+        run: pnpm --filter ae-skos test:run
+
+      - name: Test ae-rdf
+        run: pnpm --filter ae-rdf test:run

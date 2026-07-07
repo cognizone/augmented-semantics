@@ -9,7 +9,7 @@
  */
 import { ref, watch, computed } from 'vue'
 import { useConceptStore, useEndpointStore, useLanguageStore, useSchemeStore, useSettingsStore, useUIStore, ORPHAN_SCHEME_URI, ORPHAN_SCHEME } from '../../stores'
-import { executeSparql, withPrefixes, logger } from '../../services'
+import { executeSparql, withPrefixes, logger, detectConceptSchemes } from '../../services'
 import { useCollections, useLabelResolver } from '../../composables'
 import { buildCapabilityAwareLabelUnionClause, CONCEPT_LABEL_PRIORITY } from '../../constants'
 import { getRefLabel } from '../../utils/displayUtils'
@@ -237,21 +237,39 @@ async function loadSchemes() {
   const schemeCapabilities = endpoint.analysis?.labelPredicates?.scheme
 
   // Get whitelist from endpoint analysis
-  const schemeUris = endpoint.analysis?.schemeUris || []
+  let schemeUris = endpoint.analysis?.schemeUris || []
   logger.info('ConceptBreadcrumb', 'Loading concept schemes', {
     endpoint: endpoint.url,
     whitelistCount: schemeUris.length
   })
 
-  // If no schemes in whitelist, set empty and return
-  if (schemeUris.length === 0) {
-    logger.info('ConceptBreadcrumb', 'No schemes in whitelist, setting empty')
-    schemeStore.setSchemes([])
-    endpointStore.setStatus('connected')
-    return
-  }
-
   endpointStore.setStatus('connecting')
+
+  // No pre-computed whitelist (e.g. a config-mode endpoint with no analysis):
+  // discover schemes directly from the endpoint and cache them on the endpoint.
+  if (schemeUris.length === 0) {
+    logger.info('ConceptBreadcrumb', 'No scheme whitelist, discovering from endpoint')
+    try {
+      const detected = await detectConceptSchemes(endpoint)
+      if (requestId !== schemeRequestId || endpointStore.current?.id !== endpointId) return
+      schemeUris = detected.schemeUris
+      endpointStore.updateEndpoint(endpointId, {
+        analysis: {
+          ...(endpoint.analysis ?? { hasSkosContent: true, supportsNamedGraphs: null, skosGraphCount: null, analyzedAt: new Date().toISOString() }),
+          schemeUris: detected.schemeUris,
+          schemeCount: detected.schemeCount,
+          schemesLimited: detected.schemesLimited,
+        },
+      })
+    } catch (e) {
+      logger.error('ConceptBreadcrumb', 'Failed to discover schemes', { error: e })
+    }
+    if (schemeUris.length === 0) {
+      schemeStore.setSchemes([])
+      endpointStore.setStatus('connected')
+      return
+    }
+  }
 
   // Build VALUES clause for whitelist
   const valuesClause = schemeUris.map(uri => `<${uri}>`).join(' ')
@@ -392,6 +410,17 @@ watch(
     }
   },
   { immediate: true }
+)
+
+// Reload current root data when a refresh is explicitly requested (header refresh button)
+watch(
+  () => endpointStore.refreshNonce,
+  () => {
+    if (!endpointStore.current) return
+    if (rootMode.value === 'scheme') loadSchemes()
+    else if (rootMode.value === 'collection') void loadCollectionRoots('collection')
+    else if (rootMode.value === 'orderedCollection') void loadCollectionRoots('orderedCollection')
+  }
 )
 
 // Reload schemes when language preference changes

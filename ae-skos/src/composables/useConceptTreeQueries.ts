@@ -42,9 +42,14 @@ export function useConceptTreeQueries() {
    */
   function buildExplicitTopConceptsMetadataQuery(schemeUri: string, pageSize: number, offset: number): string | null {
     const rel = endpointStore.current?.analysis?.relationships
-    if (!rel?.hasTopConceptOf && !rel?.hasHasTopConcept) {
+    // Only skip when analysis has run and confirmed there are no top-concept
+    // relationships. When relationships are unknown (e.g. a config-mode endpoint
+    // with no precomputed analysis), try both branches rather than showing nothing.
+    if (rel && !rel.hasTopConceptOf && !rel.hasHasTopConcept) {
       return null
     }
+    const useTopConceptOf = rel ? rel.hasTopConceptOf : true
+    const useHasTopConcept = rel ? rel.hasHasTopConcept : true
 
     const deprecationSelectVars = getDeprecationSelectVars()
     const deprecationClauses = getDeprecationSparqlClauses('?concept')
@@ -57,10 +62,10 @@ export function useConceptTreeQueries() {
     const { schemeTerm, valuesClause } = schemeValues
 
     const branches: string[] = []
-    if (rel.hasTopConceptOf) {
+    if (useTopConceptOf) {
       branches.push(`{ ?concept skos:topConceptOf ${schemeTerm} }`)
     }
-    if (rel.hasHasTopConcept) {
+    if (useHasTopConcept) {
       branches.push(`{ ${schemeTerm} skos:hasTopConcept ?concept }`)
     }
 
