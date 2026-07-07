@@ -63,6 +63,9 @@ export function useEndpointAnalysis() {
         languages: analysis.languages,
         totalConcepts: analysis.totalConcepts,
         relationships: analysis.relationships,
+        schemeUris: analysis.schemeUris,
+        schemeCount: analysis.schemeCount,
+        schemesLimited: analysis.schemesLimited,
         analyzedAt: analysis.analyzedAt,
       }
     } catch (e) {
