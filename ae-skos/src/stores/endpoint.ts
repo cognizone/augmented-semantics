@@ -25,6 +25,8 @@ export const useEndpointStore = defineStore('endpoint', () => {
   const status = ref<EndpointStatus>('disconnected')
   const error = ref<AppError | null>(null)
   const configMode = ref(false)
+  // Bumped to ask the browser to reload the current endpoint's root data (schemes/collections).
+  const refreshNonce = ref(0)
 
   // Getters
   const current = computed(() =>
@@ -248,6 +250,11 @@ export const useEndpointStore = defineStore('endpoint', () => {
   // Initialize
   loadFromStorage()
 
+  // Ask the concept browser to reload the current endpoint's root data.
+  function requestRefresh() {
+    refreshNonce.value++
+  }
+
   return {
     // State
     endpoints,
@@ -255,6 +262,7 @@ export const useEndpointStore = defineStore('endpoint', () => {
     status,
     error,
     configMode,
+    refreshNonce,
     // Getters
     current,
     sortedEndpoints,
@@ -270,5 +278,6 @@ export const useEndpointStore = defineStore('endpoint', () => {
     setStatus,
     setError,
     clearError,
+    requestRefresh,
   }
 })

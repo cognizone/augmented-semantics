@@ -8,7 +8,8 @@ import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { RouterView } from 'vue-router'
 import { useUIStore, useConceptStore, useSchemeStore, useSettingsStore, useLanguageStore, useEndpointStore } from './stores'
 import type { SettingsSection } from './stores/ui'
-import { useConfig } from './services'
+import { useConfig, logger } from './services'
+import { useEndpointAnalysis } from './composables'
 import Toast from 'primevue/toast'
 import Button from 'primevue/button'
 import Dialog from 'primevue/dialog'
@@ -27,6 +28,21 @@ const languageStore = useLanguageStore()
 const endpointStore = useEndpointStore()
 const config = useConfig()
 const showEndpointManager = ref(false)
+
+// Recompute the current endpoint's analysis, then reload its schemes/collections.
+const { reanalyzeEndpoint, analyzing } = useEndpointAnalysis()
+async function refreshEndpoint() {
+  const ep = endpointStore.current
+  if (!ep || analyzing.value) return
+  try {
+    const analysis = await reanalyzeEndpoint(ep)
+    endpointStore.updateEndpoint(ep.id, { analysis })
+  } catch (e) {
+    logger.error('App', 'Failed to refresh endpoint analysis', { error: e })
+  } finally {
+    endpointStore.requestRefresh()
+  }
+}
 
 // Config-based computed properties
 const appName = computed(() => config.value.config?.appName ?? 'AE SKOS')
@@ -286,6 +302,16 @@ onUnmounted(() => {
         </button>
         <Menu ref="languageMenu" :model="languageMenuItems" :popup="true" />
         <div class="header-icons">
+          <button
+            v-if="endpointStore.current"
+            class="header-icon-btn"
+            aria-label="Refresh endpoint"
+            :title="analyzing ? 'Refreshing…' : 'Refresh schemes and re-run analysis'"
+            :disabled="analyzing"
+            @click="refreshEndpoint"
+          >
+            <span class="material-symbols-outlined" :class="{ spinning: analyzing }">refresh</span>
+          </button>
           <a
             :href="docsUrl"
             target="_blank"
@@ -781,6 +807,19 @@ onUnmounted(() => {
 
 .header-icon-btn .material-symbols-outlined {
   font-size: 18px;
+}
+
+.header-icon-btn:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.header-icon-btn .material-symbols-outlined.spinning {
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 .header-icons {
