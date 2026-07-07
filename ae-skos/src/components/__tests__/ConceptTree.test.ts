@@ -295,15 +295,18 @@ describe('ConceptTree', () => {
     })
 
     it('top concepts query supports both skos:broader and skos:narrower for fallback', async () => {
-      ;(executeSparql as Mock).mockResolvedValueOnce({ results: { bindings: [] } })
+      ;(executeSparql as Mock).mockResolvedValue({ results: { bindings: [] } })
 
       mountConceptTree()
       await flushPromises()
 
-      const query = (executeSparql as Mock).mock.calls[0][1]
+      // The in-scheme-only fallback query runs alongside the explicit query; find it.
+      const queries = (executeSparql as Mock).mock.calls.map(c => c[1] as string)
+      const fallback = queries.find(q => q.includes('FILTER NOT EXISTS { ?concept skos:broader ?x }'))
+      expect(fallback).toBeDefined()
       // Fallback should check both directions
-      expect(query).toContain('FILTER NOT EXISTS { ?concept skos:broader ?x }')
-      expect(query).toContain('FILTER NOT EXISTS { ?x skos:narrower ?concept }')
+      expect(fallback).toContain('FILTER NOT EXISTS { ?concept skos:broader ?x }')
+      expect(fallback).toContain('FILTER NOT EXISTS { ?x skos:narrower ?concept }')
     })
 
     it('top concepts query counts children via both skos:broader and skos:narrower', async () => {
