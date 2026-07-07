@@ -25,7 +25,7 @@
       "name": "ERA Data Interop",
       "url": "https://data-interop.era.europa.eu/api/sparql"
     },
-    "era-evr-kg-test",
+    "era-evr-kg-dev",
     "era-ocr-kg-uat",
     "era-eradis-kg-uat",
     "era-vkm-kg-uat",

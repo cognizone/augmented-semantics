@@ -50,6 +50,7 @@ const SPARQL_TIMEOUT_MS = 60000
 const DEV_ENDPOINT_PROXY: Record<string, string> = {
   'https://rinf.data.era.europa.eu/api/v1/sparql/rinf': '/__proxy/rinf',
   'https://graph.tst.data.test-era.europa.eu/repositories/EVR-KG': '/__proxy/evr',
+  'https://graph.dev.data.test-era.europa.eu/repositories/EVR-KG': '/__proxy/dev-evr',
   'https://graph.uat.data.test-era.europa.eu/repositories/OCR-KG': '/__proxy/uat-ocr',
   'https://graph.uat.data.test-era.europa.eu/repositories/ERADIS-KG': '/__proxy/uat-eradis',
   'https://graph.uat.data.test-era.europa.eu/repositories/VKM-KG': '/__proxy/uat-vkm',
@@ -416,18 +417,18 @@ export async function executeSparql(
       }
 
       if (error instanceof TypeError) {
-        // Network error (CORS, offline, etc.)
-        const message = error.message.toLowerCase()
-        logger.error('SPARQL', 'Network error', { message: error.message })
-        if (message.includes('cors') || message.includes('cross-origin')) {
-          throw createError(
-            'CORS_BLOCKED',
-            'CORS error: Endpoint does not allow browser access',
-            'The endpoint needs to enable CORS headers'
-          )
-        }
-        lastError = createError('NETWORK_ERROR', 'Network error', error.message)
-        continue // Retry
+        // fetch rejected with TypeError = no HTTP response reached us. Browsers
+        // strip "cors" from the message for security, so we can't tell CORS from
+        // offline/DNS by string — but for a browser-only SPARQL tool a reachable
+        // endpoint that blocks the origin (CORS) is by far the common cause.
+        // Don't retry: a CORS block fails identically, so retrying just delays
+        // the answer by the full backoff (~7s). (redirect:'error' also lands here.)
+        logger.error('SPARQL', 'Network error (likely CORS)', { message: error.message })
+        throw createError(
+          'CORS_BLOCKED',
+          'Endpoint unreachable or blocks browser access (CORS)',
+          `The endpoint must send CORS headers allowing this origin, or be reachable. (${error.message})`
+        )
       }
 
       logger.error('SPARQL', 'Unknown error', { error: String(error) })

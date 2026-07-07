@@ -18,6 +18,9 @@ function getGitCommit(): string {
 // Origin header stripped so the allowlist check passes. Paths MUST stay in
 // sync with DEV_ENDPOINT_PROXY in src/services/sparql.ts.
 // ponytail: one entry per ERA host — http-proxy has no per-request routing.
+// Vite matches keys by url.startsWith(key), first wins — so NO key may be a
+// prefix of another (e.g. '/__proxy/evr' would shadow '/__proxy/evr-dev' and
+// route dev traffic to tst). Keep proxy slugs mutually non-prefixing.
 function eraProxy(target: string, path: string) {
   return {
     target,
@@ -42,6 +45,7 @@ export default defineConfig({
     proxy: {
       '/__proxy/rinf': eraProxy('https://rinf.data.era.europa.eu', '/api/v1/sparql/rinf'),
       '/__proxy/evr': eraProxy('https://graph.tst.data.test-era.europa.eu', '/repositories/EVR-KG'),
+      '/__proxy/dev-evr': eraProxy('https://graph.dev.data.test-era.europa.eu', '/repositories/EVR-KG'),
       '/__proxy/uat-ocr': eraProxy('https://graph.uat.data.test-era.europa.eu', '/repositories/OCR-KG'),
       '/__proxy/uat-eradis': eraProxy('https://graph.uat.data.test-era.europa.eu', '/repositories/ERADIS-KG'),
       '/__proxy/uat-vkm': eraProxy('https://graph.uat.data.test-era.europa.eu', '/repositories/VKM-KG'),

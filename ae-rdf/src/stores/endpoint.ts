@@ -157,9 +157,14 @@ export const useEndpointStore = defineStore('endpoint', () => {
       accessCount: 0,
     }))
 
-    // Auto-select first endpoint
-    if (endpoints.value.length > 0) {
-      currentId.value = endpoints.value[0]?.id ?? null
+    // Auto-select first endpoint. A secured endpoint must go through the
+    // credential gate (prompt) — setting currentId directly would connect it
+    // with no credentials in memory, so the first query 401s and the prompt
+    // never appears.
+    const first = endpoints.value[0]
+    if (first) {
+      if (needsCredentials(first)) pendingCredentialsId.value = first.id
+      else currentId.value = first.id
     }
   }
 
