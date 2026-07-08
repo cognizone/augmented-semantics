@@ -10,7 +10,7 @@
 import { computed, ref } from 'vue'
 import { isNavigableIri } from '../../services'
 import { useSettingsStore, useTypeConfigStore } from '../../stores'
-import { qname as toQname, displayPredicate, displayObject, displayType, groupNumber, type ResolvedMap } from '../../utils/format'
+import { qname as toQname, displayPredicate, displayObject, displayType, formatLiteral, type ResolvedMap } from '../../utils/format'
 import { moveInOrder, orderedByConfig, sinkAlwaysLast, toggleInList } from '../../utils/propertyOrder'
 import type { PropertyGroup, ResourceObject } from '../../composables'
 
@@ -281,9 +281,10 @@ const objText = (o: ResourceObject, predicate?: string) =>
   o.termType === 'uri' ? objectText(o.value, predicate) : o.value
 
 // A literal's display text: grouped with thousands separators when its predicate
-// is ticked `number` (and the value is a plain number), else the raw value.
+// is ticked `number`, else an ISO dateTime is humanized (T/Z stripped); other
+// values pass through raw.
 const literalText = (o: ResourceObject, predicate: string) =>
-  isNumber(predicate) ? groupNumber(o.value) ?? o.value : o.value
+  formatLiteral(o.value, isNumber(predicate))
 
 // Cap a literal to a readable reading measure (~72ch) — for long prose
 // (abstract/description). EXPLICIT opt-in only (the `capWidth` per-field toggle);

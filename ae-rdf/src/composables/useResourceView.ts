@@ -14,7 +14,7 @@ import { useEndpointStore, useLanguageStore, useBrowseStore, useTypeConfigStore 
 import { executeSparql, resolveUris, logger, buildResourceTriplesQuery, buildEmbeddedTriplesQuery, buildBlankNodeTriplesQuery, buildInverseEmbedQuery, resolveGraphStrategy, LABEL_PREDICATES, DEFAULT_DEPRECATED_PREDICATES, EMBED_BATCH } from '../services'
 import { labelLangs as computeLabelLangs, pickByLangs } from '../utils/labelLang'
 import { headingParts } from '../utils/propertyOrder'
-import { groupNumber } from '../utils/format'
+import { formatLiteral } from '../utils/format'
 import { composeLabels, composeViaLabels, resolveLabels, resolveDeprecated } from './composeLabels'
 
 const RDF_TYPE = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'
@@ -112,7 +112,7 @@ export function useResourceView() {
         const group = groups.find(g => g.predicate === p)
         let value = groupValue(group, objLabels)
         if (!value) continue
-        if (grp.has(p)) value = groupNumber(value) ?? value
+        value = formatLiteral(value, grp.has(p))
         items.push({ value, linked: !group?.objects.some(o => o.termType === 'literal') })
       }
       const full = !!(labelType && typeConfig.get(labelType).labelFull)

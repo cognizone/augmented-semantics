@@ -22,7 +22,7 @@
 import { executeSparql, buildValuesQuery, buildDeprecatedQuery, buildLabelValuesQuery, buildTypeQuery, buildTypeSubclassQuery, buildSkosxlLabelsQuery, LABEL_PREDICATES, LABEL_PREDICATE_BATCH } from '../services'
 import { useTypeConfigStore } from '../stores'
 import { pickByLangs } from '../utils/labelLang'
-import { groupNumber } from '../utils/format'
+import { formatLiteral } from '../utils/format'
 import type { SPARQLEndpoint } from '../types/endpoint'
 import type { AppError } from '../types/errors'
 
@@ -316,7 +316,7 @@ export async function composeLabels(
         .map(p => ({ p, r: resolve(s, p) }))
         .filter((x): x is { p: string; r: { v: string; lang?: string } } => !!x.r?.v)
       if (parts.length) {
-        labelMap.set(s, parts.map(({ p, r }) => (grp.has(p) ? groupNumber(r.v) ?? r.v : r.v)).join(' · '))
+        labelMap.set(s, parts.map(({ p, r }) => formatLiteral(r.v, grp.has(p))).join(' · '))
         labelLang.set(s, parts[0]!.r.lang)
       }
     }
@@ -352,7 +352,7 @@ export function composeParts(
     const lits = arr.filter(x => !x.uri)
     if (lits.length) {
       const pick = pickByLangs(lits.map(x => ({ v: x.v, lang: x.lang })), langs)
-      if (pick?.v) parts.push(groupFields.has(f) ? groupNumber(pick.v) ?? pick.v : pick.v)
+      if (pick?.v) parts.push(formatLiteral(pick.v, groupFields.has(f)))
       continue
     }
     // URI field: the referent's label, or — since the author explicitly chose this

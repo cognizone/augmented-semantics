@@ -74,6 +74,33 @@ export function groupNumber(value: string): string | null {
   return sign + BigInt(int!).toLocaleString('en-US') + frac
 }
 
+/**
+ * ISO 8601 dateTime → readable: drop the `T` date/time separator and the `Z`
+ * UTC marker (the "extra letters"), keeping the numbers. `2024-01-15T10:30:00Z`
+ * → `2024-01-15 10:30:00`; a numeric zone offset is kept, space-separated
+ * (`…T10:30:00+01:00` → `… 10:30:00 +01:00`). Returns null (caller keeps the raw
+ * value) when the string isn't an ISO dateTime — a plain `xsd:date`
+ * (`2024-01-15`) has no `T`, so it never matches and renders untouched.
+ *
+ * Datatype-BLIND like groupNumber: the `T…` shape is specific enough that no
+ * ordinary text matches, so it works regardless of how the value is typed.
+ */
+export function formatDateTime(value: string): string | null {
+  const m = /^(\d{4}-\d{2}-\d{2})T([\d:.]+)(?:Z|([+-]\d{2}:\d{2}))?$/.exec(value.trim())
+  if (!m) return null
+  return `${m[1]} ${m[2]}${m[3] ? ' ' + m[3] : ''}`
+}
+
+/**
+ * Display a literal value: thousands-group it when its field is ticked `number`,
+ * else humanize an ISO dateTime. The two are mutually exclusive (a dateTime is
+ * never a plain number), so one call covers every literal sink — table cell,
+ * heading, composed label, via-label.
+ */
+export function formatLiteral(value: string, group: boolean): string {
+  return (group ? groupNumber(value) : formatDateTime(value)) ?? value
+}
+
 // Tokens to keep upper-cased even when the source is lower/mixed case, so e.g.
 // `rcn` → "RCN" rather than "Rcn".
 const ACRONYMS = new Set([
