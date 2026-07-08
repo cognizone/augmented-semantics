@@ -82,7 +82,10 @@
       ]
     },
     "http://data.europa.eu/949/VehicleRegistrationCheck": {
-      "render": "embed"
+      "render": "embed",
+      "hide": [
+        "http://data.europa.eu/949/vehicleTechnicalObjCharacteristic"
+      ]
     },
     "http://www.w3.org/ns/prov#Activity": {
       "render": "embed"
