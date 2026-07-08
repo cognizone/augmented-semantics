@@ -452,7 +452,7 @@
       ]
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#Notification": {
-      "render": "link"
+      "render": "label"
     },
     "http://data.legilux.public.lu/resource/ontology/jolux#NotificationType": {
       "group": "Vocabularies",

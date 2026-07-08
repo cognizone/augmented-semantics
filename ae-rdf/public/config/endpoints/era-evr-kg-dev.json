@@ -75,7 +75,7 @@
       "render": "embed"
     },
     "http://data.europa.eu/949/NationalRegistrationProperty": {
-      "render": "link",
+      "render": "label",
       "label": [
         "http://data.europa.eu/949/nationalPropertyIdentifier",
         "http://data.europa.eu/949/nationalPropertyValue"

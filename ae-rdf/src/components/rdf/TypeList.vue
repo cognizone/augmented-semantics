@@ -85,7 +85,7 @@ const collapsed = ref<Set<string>>(new Set())
 
 // Auto "system" groups at the bottom of the list (collapsed by default).
 const SYS_EMBEDDED = 'Embedded'
-const SYS_LABELS = 'Labels'
+const SYS_LABELS = 'Value objects'
 const SYS_HIDDEN = 'Hidden'
 
 const typeName = (uri: string) => displayType(uri, resolved.value, settings.uriDisplay)
