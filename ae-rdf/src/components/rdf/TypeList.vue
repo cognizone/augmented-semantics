@@ -85,6 +85,7 @@ const collapsed = ref<Set<string>>(new Set())
 
 // Auto "system" groups at the bottom of the list (collapsed by default).
 const SYS_EMBEDDED = 'Embedded'
+const SYS_LABELS = 'Labels'
 const SYS_HIDDEN = 'Hidden'
 
 const typeName = (uri: string) => displayType(uri, resolved.value, settings.uriDisplay)
@@ -117,6 +118,11 @@ function toggleCollapse(uri: string) {
 // still inline via the resource view's always-on blank-node pass, not this set).
 const embedSet = computed(() => new Set(types.value.filter(t => renderOf(t.uri) === 'embed' && !isBlank(t.uri)).map(t => t.uri)))
 
+// render:label types (composed value-object identities shown inline, not browsed)
+// go to their own system "Labels" group — mirrors embedSet so they don't clutter
+// the main tree. Blank types stay hidden (no browsable view).
+const labelSet = computed(() => new Set(types.value.filter(t => renderOf(t.uri) === 'label' && !isBlank(t.uri)).map(t => t.uri)))
+
 // Embed children of a class, each with a count scoped to that class (not the
 // global type total), commonest first.
 const childrenOf = (parentUri: string): { uri: string; count: number }[] =>
@@ -146,7 +152,7 @@ function embedRows(parentUri: string, depth = 1, seen = new Set<string>([parentU
 // Navigable types in the main tree: not hidden, not embedded (those go to their
 // own system groups at the bottom).
 const baseTypes = computed(() =>
-  types.value.filter(t => !isHidden(t.uri) && !embedSet.value.has(t.uri)),
+  types.value.filter(t => !isHidden(t.uri) && !embedSet.value.has(t.uri) && !labelSet.value.has(t.uri)),
 )
 // Optional sidebar group a type is assigned to (trimmed; '' = none).
 const groupOf = (uri: string): string => (cfg(uri).group ?? '').trim()
@@ -155,7 +161,7 @@ const isGrouped = (uri: string) => groupOf(uri) !== ''
 // commonest first. (A grouped type leaves its parent's subtree for its group.)
 const subChildren = (uri: string): string[] =>
   (subclasses.value.get(uri) ?? [])
-    .filter(s => !embedSet.value.has(s) && !isGrouped(s) && !isHidden(s))
+    .filter(s => !embedSet.value.has(s) && !labelSet.value.has(s) && !isGrouped(s) && !isHidden(s))
     .sort((a, b) => countOf(b) - countOf(a))
 // Subclasses that nest under a parent → never top-level. Grouped types are
 // promoted to roots (shown under their group), so they're excluded here. Only
@@ -166,7 +172,7 @@ const nestedSubs = computed(() => {
   const s = new Set<string>()
   for (const [parent, subs] of subclasses.value) {
     if (!navigable.has(parent)) continue
-    for (const sub of subs) if (!embedSet.value.has(sub) && !isGrouped(sub)) s.add(sub)
+    for (const sub of subs) if (!embedSet.value.has(sub) && !labelSet.value.has(sub) && !isGrouped(sub)) s.add(sub)
   }
   return s
 })
@@ -206,11 +212,14 @@ const groupOverrides = ref<Map<string, boolean>>(new Map())
 const embeddedGroupTypes = computed(() =>
   types.value.filter(t => embedSet.value.has(t.uri)).map(t => t.uri).sort((a, b) => countOf(b) - countOf(a)),
 )
+const labelGroupTypes = computed(() =>
+  types.value.filter(t => labelSet.value.has(t.uri)).map(t => t.uri).sort((a, b) => countOf(b) - countOf(a)),
+)
 const hiddenGroupTypes = computed(() =>
-  types.value.filter(t => isHidden(t.uri) && !embedSet.value.has(t.uri)).map(t => t.uri).sort((a, b) => countOf(b) - countOf(a)),
+  types.value.filter(t => isHidden(t.uri) && !embedSet.value.has(t.uri) && !labelSet.value.has(t.uri)).map(t => t.uri).sort((a, b) => countOf(b) - countOf(a)),
 )
 const defaultCollapsed = (name: string) =>
-  name === SYS_EMBEDDED ? false : name === SYS_HIDDEN ? true : settings.groupsCollapsed
+  name === SYS_EMBEDDED ? false : name === SYS_HIDDEN || name === SYS_LABELS ? true : settings.groupsCollapsed
 const isGroupCollapsed = (name: string) =>
   groupOverrides.value.has(name) ? groupOverrides.value.get(name)! : defaultCollapsed(name)
 function toggleGroup(name: string) {
@@ -265,6 +274,10 @@ const rows = computed<Row[]>(() => {
   if (embeddedGroupTypes.value.length) {
     out.push({ uri: SYS_EMBEDDED, depth: 0, kind: 'group', count: embeddedGroupTypes.value.length, group: SYS_EMBEDDED, system: true })
     if (!isGroupCollapsed(SYS_EMBEDDED)) for (const u of embeddedGroupTypes.value) out.push({ uri: u, depth: 1, kind: 'embed', count: countOf(u), scoped: true, global: true })
+  }
+  if (labelGroupTypes.value.length) {
+    out.push({ uri: SYS_LABELS, depth: 0, kind: 'group', count: labelGroupTypes.value.length, group: SYS_LABELS, system: true })
+    if (!isGroupCollapsed(SYS_LABELS)) for (const u of labelGroupTypes.value) out.push({ uri: u, depth: 1, kind: 'class', count: countOf(u), leaf: true })
   }
   if (hiddenGroupTypes.value.length) {
     out.push({ uri: SYS_HIDDEN, depth: 0, kind: 'group', count: hiddenGroupTypes.value.length, group: SYS_HIDDEN, system: true })

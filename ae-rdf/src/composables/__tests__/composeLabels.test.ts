@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { mostSpecificTypes, fetchInChunks, composeParts } from '../composeLabels'
+import { mostSpecificTypes, fetchInChunks, composeParts, isOpaqueLabel } from '../composeLabels'
 
 // mostSpecificTypes is the client-side narrowing that replaced the server-side
 // FILTER NOT EXISTS { ?s a ?more . ?more rdfs:subClassOf+ ?t } — which times out on
@@ -9,6 +9,14 @@ const JOLUX = 'http://data.legilux.public.lu/resource/ontology/jolux#Language'
 const ELI = 'http://data.europa.eu/eli/ontology#Language'
 const COLL = 'http://publications.europa.eu/resource/authority/language'
 const set = (...xs: string[]) => new Set(xs)
+
+describe('isOpaqueLabel', () => {
+  it('treats a bare UUID as opaque (R17) but keeps a real name', () => {
+    expect(isOpaqueLabel('8f02b279-37b4-5112-9c0b-387211605eab')).toBe(true)
+    expect(isOpaqueLabel('NVR Vehicle ID')).toBe(false)
+    expect(isOpaqueLabel('100000027546')).toBe(false)
+  })
+})
 
 describe('mostSpecificTypes', () => {
   it('keeps everything when there are no subclass edges', () => {

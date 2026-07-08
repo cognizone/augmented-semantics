@@ -29,6 +29,14 @@ import type { AppError } from '../types/errors'
 // ponytail: cap the label graph walk at 3 hops (payment→role→org is 2).
 const MAX_LABEL_HOPS = 3
 
+// A referent whose resolved label is a bare UUID carries no more meaning than its
+// URI (R17: rdfs:label is highest-precedence here, so a UUID there beats a good
+// prefLabel and would pollute the parent's composed label). Keep the pattern narrow
+// on purpose — a real name like "NVR Vehicle ID" passes.
+// ponytail: UUID-shaped only; widen if other opaque id shapes appear in the wild.
+const UUID_LABEL = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+export const isOpaqueLabel = (v: string): boolean => UUID_LABEL.test(v.trim())
+
 // Subject VALUES-list chunk size. Big enough that ordinary resources fetch in one
 // request; larger sets chunk, and a WAF-rejected chunk split-retries below.
 // ponytail: tune down if a WAF blocks even 20 subjects; split-retry self-heals anyway.
@@ -286,14 +294,16 @@ export async function composeLabels(
     if (!arr?.length) return undefined
     const lits = arr.filter(x => !x.uri)
     if (lits.length) return pickByLang(lits.map(x => ({ v: x.v, lang: x.lang })))
-    // URI fields: drop the self-reference (never repeat the viewed resource), and
-    // only emit targets that are THEMSELVES a composed-label type. `labelMap.has`
-    // alone let through a referent whose only label is an opaque raw rdfs:label
-    // (e.g. a UUID) with no composed type — surfacing UUIDs in headings/links.
-    // URI label fields are configured to point at composed entities (role → org,
-    // role → project); a non-composed referent renders as a link, not inlined.
+    // URI fields: drop the self-reference (never repeat the viewed resource), then
+    // emit a referent's label when it HAS one — a composed-label type (role → org)
+    // OR a plainly-named entity (a Concept's prefLabel: "NVR Vehicle ID"). The old
+    // rule required composeType, which assumed URI label fields only point at
+    // composed entities — wrong for a plain Concept referent, dropping it so the
+    // parent's label lost that part. R17's concern (an opaque raw rdfs:label, e.g. a
+    // UUID, polluting headings/links) is kept via isOpaqueLabel; composed-label
+    // referents bypass it (their label is already the clean composed one).
     const targets = arr
-      .filter(x => x.v !== selfUri && composeType.has(x.v) && labelMap.has(x.v))
+      .filter(x => x.v !== selfUri && labelMap.has(x.v) && (composeType.has(x.v) || !isOpaqueLabel(labelMap.get(x.v)!)))
       .map(x => ({ v: labelMap.get(x.v)!, lang: labelLang.get(x.v) }))
     return targets.length ? pickByLang(targets) : undefined
   }

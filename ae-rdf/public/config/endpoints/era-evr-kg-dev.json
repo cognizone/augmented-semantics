@@ -55,10 +55,18 @@
       "render": "embed"
     },
     "http://www.w3.org/2006/time#Instant": {
-      "render": "embed"
+      "render": "label",
+      "label": [
+        "http://www.w3.org/2006/time#inXSDDate"
+      ]
     },
     "http://www.w3.org/2006/time#ProperInterval": {
-      "render": "embed"
+      "render": "label",
+      "labelFull": true,
+      "label": [
+        "http://www.w3.org/2006/time#hasBeginning",
+        "http://www.w3.org/2006/time#hasEnd"
+      ]
     },
     "http://www.w3.org/2006/time#TemporalEntity": {
       "render": "embed"
@@ -67,8 +75,11 @@
       "render": "embed"
     },
     "http://data.europa.eu/949/NationalRegistrationProperty": {
-      "render": "embed",
-      "embedVia": "http://data.europa.eu/949/hasNationalRegistrationProperty"
+      "render": "link",
+      "label": [
+        "http://data.europa.eu/949/nationalPropertyIdentifier",
+        "http://data.europa.eu/949/nationalPropertyValue"
+      ]
     },
     "http://data.europa.eu/949/VehicleRegistrationCheck": {
       "render": "embed"
@@ -80,10 +91,26 @@
       "group": "Ontology"
     },
     "http://data.europa.eu/949/VehicleRegistration": {
-      "render": "embed"
+      "render": "embed",
+      "hide": [
+        "http://www.w3.org/ns/prov#activity"
+      ]
     },
     "http://data.europa.eu/949/VehicleAuthorisation": {
-      "render": "embed"
+      "render": "embed",
+      "hide": [
+        "http://www.w3.org/ns/prov#activity"
+      ]
+    },
+    "http://data.europa.eu/949/Certificate": {
+      "hide": [
+        "http://www.w3.org/ns/prov#activity"
+      ]
+    },
+    "http://data.europa.eu/949/VehicleRegistrationApplication": {
+      "hide": [
+        "http://www.w3.org/ns/prov#activity"
+      ]
     },
     "http://data.europa.eu/949/Compliance": {
       "sidebar": "hide"

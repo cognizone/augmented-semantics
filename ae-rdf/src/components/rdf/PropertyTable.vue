@@ -398,8 +398,12 @@ function displayRows(group: PropertyGroup): DisplayRow[] {
 }
 
 // Graphs are always KNOWN; this controls whether they're painted. Multi-graph
-// triples are always surfaced (silence there would mislead).
+// triples are always surfaced (silence there would mislead) — EXCEPT inside an
+// embed: provenance belongs to the top-level subject, and an inlined value
+// object repeats its owner's graphs on every field (dozens of identical chips).
+// Hover still reveals them via graphTitle.
 function showGraphsFor(o: ResourceObject): boolean {
+  if (props.embed) return false
   return !!props.showGraphs || o.graphs.length > 1
 }
 
