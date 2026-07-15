@@ -114,6 +114,7 @@
       ]
     },
     "http://data.europa.eu/949/VehicleRegistrationApplication": {
+      "sidebar": "pin",
       "hide": [
         "http://www.w3.org/ns/prov#activity"
       ]
@@ -143,6 +144,7 @@
       "sidebar": "hide"
     },
     "http://data.europa.eu/949/Vehicle": {
+      "sidebar": "pin",
       "label": [
         "http://data.europa.eu/949/vehicleNumber"
       ],

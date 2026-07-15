@@ -1,5 +1,5 @@
 {
-  "appName": "ERA EVR-KG Browser",
+  "appName": "ERA RDF Browser",
   "endpoints": ["era-evr-kg-dev", "era-ocr-kg-uat", "era-eradis-kg-uat", "era-vkm-kg-uat", "rinf"],
   "prefixes": {
     "era": "http://data.europa.eu/949/"

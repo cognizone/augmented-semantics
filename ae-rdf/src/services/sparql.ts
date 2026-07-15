@@ -12,6 +12,7 @@
 import type { SPARQLEndpoint, AppError, ErrorCode, LabelPredicateCapabilities, LabelPredicatesByResourceType } from '../types'
 import { logger } from './logger'
 import { sanitizeIri } from './rdfQueries'
+import { sparqlFetch } from './http'
 
 // SPARQL result types
 export interface SPARQLBinding {
@@ -310,7 +311,7 @@ export async function executeSparql(
     }
 
     try {
-      const response = await fetch(endpointUrl(endpoint.url), {
+      const response = await sparqlFetch(endpointUrl(endpoint.url), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
@@ -1011,7 +1012,7 @@ export async function fetchRawRdf(
   const timeoutId = setTimeout(() => controller.abort(), timeout)
 
   try {
-    const response = await fetch(endpointUrl(endpoint.url), {
+    const response = await sparqlFetch(endpointUrl(endpoint.url), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',

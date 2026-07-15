@@ -123,6 +123,20 @@ const endpointStatusClass = computed(() => {
   return endpointStore.current ? 'connected' : 'disconnected'
 })
 
+// In the Tauri desktop app the webview ignores <a target="_blank"> (no browser
+// tab to open into), so every external link — docs, GitHub, resource URIs —
+// silently does nothing. Intercept those clicks once, at the document level, and
+// hand the URL to the OS via the opener plugin. No-op on the web build.
+const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
+async function handleExternalLink(event: MouseEvent) {
+  const anchor = (event.target as HTMLElement)?.closest?.('a[target="_blank"]') as HTMLAnchorElement | null
+  const href = anchor?.href
+  if (!href || !/^https?:/i.test(href)) return
+  event.preventDefault()
+  const { openUrl } = await import('@tauri-apps/plugin-opener')
+  await openUrl(href)
+}
+
 function handleKeydown(event: KeyboardEvent) {
   if (event.key === 'Escape') {
     if (showEndpointManager.value) showEndpointManager.value = false
@@ -134,6 +148,7 @@ function handleKeydown(event: KeyboardEvent) {
 onMounted(() => {
   uiStore.initResponsive()
   window.addEventListener('keydown', handleKeydown)
+  if (isTauri) document.addEventListener('click', handleExternalLink)
   // Auto-open endpoint manager when nothing is configured (and not in config mode)
   if (!endpointStore.configMode && endpointStore.endpoints.length === 0) {
     showEndpointManager.value = true
@@ -143,6 +158,7 @@ onMounted(() => {
 onUnmounted(() => {
   uiStore.destroyResponsive()
   window.removeEventListener('keydown', handleKeydown)
+  if (isTauri) document.removeEventListener('click', handleExternalLink)
 })
 </script>
 

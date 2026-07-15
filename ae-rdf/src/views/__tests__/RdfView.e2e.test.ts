@@ -120,4 +120,37 @@ describe('RdfView e2e: type → resource → type', () => {
     expect(wrapper.find('.resource-title').exists(), 'resource view is shown').toBe(true)
     expect(wrapper.find('.resource-title').text()).toContain('Instance Y')
   })
+
+  // Switching endpoints must clear the selection: the previous endpoint's
+  // ?type/?resource must not be queried against (or shown next to) the new one.
+  it('clears ?resource/?type and the right panel on endpoint switch', async () => {
+    const router = createRouter({ history: createMemoryHistory(), routes: [{ path: '/', component: RdfView }] })
+    router.push({ path: '/', query: { type: TYPE, resource: INSTANCE } })
+    await router.isReady()
+
+    const endpoint = useEndpointStore()
+    endpoint.endpoints = [
+      { id: 'e1', name: 'Test', url: 'http://x/sparql', accessCount: 0 } as any,
+      { id: 'e2', name: 'Other', url: 'http://y/sparql', accessCount: 0 } as any,
+    ]
+    ;(endpoint as any).currentId = 'e1'
+
+    const wrapper = mount(RdfView, {
+      global: {
+        plugins: [router, PrimeVue, ToastService, ConfirmationService],
+        directives: { tooltip: Tooltip },
+      },
+    })
+    await flushPromises()
+    expect(wrapper.find('.resource-title').exists(), 'resource shown on e1').toBe(true)
+
+    endpoint.selectEndpoint('e2')
+    await flushPromises()
+
+    expect(router.currentRoute.value.query.resource, '?resource dropped').toBeUndefined()
+    expect(router.currentRoute.value.query.type, '?type dropped').toBeUndefined()
+    expect(wrapper.find('.resource-title').exists(), 'right panel cleared').toBe(false)
+    expect(wrapper.find('.instance-list').exists(), 'no stale instance list').toBe(false)
+    expect(wrapper.text()).toContain('Pick a type on the left')
+  })
 })

@@ -55,6 +55,19 @@ watch(
   { immediate: true }
 )
 
+// Switching endpoints invalidates the whole selection: drop ?resource/?type so
+// the param watchers clear the browse store (and URI input) instead of querying
+// the previous endpoint's selection against the new one. Guarded on a real
+// switch (prev && next) so startup auto-select keeps deep links intact.
+watch(
+  () => endpointStore.currentId,
+  (id, prev) => {
+    if (!id || !prev || id === prev) return
+    const { [URL_PARAMS.RESOURCE]: _r, [URL_PARAMS.TYPE]: _t, ...rest } = route.query
+    router.replace({ query: rest })
+  }
+)
+
 function go() {
   const uri = uriInput.value.trim()
   if (!uri) return
@@ -71,7 +84,9 @@ function go() {
     </div>
 
     <template v-else>
-      <TypeList />
+      <!-- Keyed per endpoint so the sidebar's local state (collapse sets, type
+           inventory) tears down on switch instead of leaking across endpoints. -->
+      <TypeList :key="endpointStore.currentId ?? 'none'" />
 
       <div class="browser">
         <!-- Jump-to-URI: relevant on the landing screen and when viewing a
