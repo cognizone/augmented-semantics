@@ -108,19 +108,6 @@ jobs:
           cp _site/rdf-era-vkm/index.html _site/rdf-era-vkm/404.html
           cp apps/vkm-rdf/app.json _site/rdf-era-vkm/config/app.json
 
-      # Build AE RDF — ERA EVR-KG variant (EVR default, other ERA endpoints in dropdown)
-      - name: Build AE RDF EVR
-        run: pnpm --filter ae-rdf build
-        env:
-          BASE_URL: /augmented-semantics/rdf-era-evr/
-
-      - name: Add RDF EVR to site
-        run: |
-          mkdir -p _site/rdf-era-evr
-          cp -r ae-rdf/dist/* _site/rdf-era-evr/
-          cp _site/rdf-era-evr/index.html _site/rdf-era-evr/404.html
-          cp apps/evr-rdf/app.json _site/rdf-era-evr/config/app.json
-
       # Build documentation
       - name: Build docs
         run: pnpm docs:build
