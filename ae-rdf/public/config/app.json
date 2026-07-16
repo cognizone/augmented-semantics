@@ -26,6 +26,7 @@
       "url": "https://data-interop.era.europa.eu/api/sparql"
     },
     "era-evr-kg-dev",
+    "era-evr-kg-dev-noinf",
     "era-ocr-kg-uat",
     "era-eradis-kg-uat",
     "era-vkm-kg-uat",
@@ -43,6 +44,7 @@
       "name": "Legilux",
       "url": "https://data.legilux.public.lu/sparqlendpoint"
     },
+    "lindas",
     {
       "name": "Linked Open Vocabularies",
       "url": "https://lov.linkeddata.es/dataset/lov/sparql"

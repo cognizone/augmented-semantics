@@ -86,6 +86,12 @@ export function endpointHasCollections(endpoint?: SPARQLEndpoint | null): boolea
   return (totalCollections ?? 0) > 0 || (totalOrdered ?? 0) > 0
 }
 
+/** GraphDB: `&infer=<value>` for the POST body when the endpoint sets `infer`
+ *  (false disables inferred triples); empty string when unset (send nothing). */
+function inferParam(endpoint: SPARQLEndpoint): string {
+  return endpoint.infer !== undefined ? `&infer=${endpoint.infer}` : ''
+}
+
 /**
  * Create Authorization header based on endpoint auth config
  */
@@ -318,7 +324,7 @@ export async function executeSparql(
           Accept: 'application/sparql-results+json',
           ...getAuthHeaders(endpoint),
         },
-        body: `query=${encodeURIComponent(query)}`,
+        body: `query=${encodeURIComponent(query)}${inferParam(endpoint)}`,
         signal: controller.signal,
         // Don't follow cross-origin redirects: fetch would re-send our custom
         // auth headers (e.g. X-API-Key) to the redirect target (R03).
@@ -1019,7 +1025,7 @@ export async function fetchRawRdf(
         Accept: RDF_ACCEPT_HEADERS[format],
         ...getAuthHeaders(endpoint),
       },
-      body: `query=${encodeURIComponent(query)}`,
+      body: `query=${encodeURIComponent(query)}${inferParam(endpoint)}`,
       signal: controller.signal,
       redirect: 'error', // don't leak auth headers to a redirect target (R03)
     })

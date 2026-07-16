@@ -13,6 +13,16 @@
  *                        per-instance `min`/`max` cardinality (`sampled` means the
  *                        property LIST fell back to a sample, so it may be missing
  *                        rare predicates — the measured counts are still full).
+ *                        Each property also carries value FACTS: `nodeKinds`
+ *                        (iri/literal/bnode counts over its distinct (s,o) pairs —
+ *                        Σ === count, and its PRESENCE is the "facts measured" marker),
+ *                        `datatypes` (literal datatype counts; an rdf:langString entry
+ *                        ⇒ language-tagged text), `languages` (lang-tag distribution),
+ *                        `ranges` (object classes of IRI values — distinct (s,o)-pair
+ *                        count per class, top RANGES_MAX) and `untyped` (pairs whose IRI
+ *                        object has no rdf:type; written even when 0 once ranges were
+ *                        measured, so its presence marks "ranges measured" vs "timed out").
+ *                        Facts skipped under `--fast`.
  *                        Also `embed` — per-type EMBED CANDIDACY: the max instances
  *                        of the type that inline under ONE owner through each edge,
  *                        `forward` (as an object → `embedVia:"<p>"`) and `inverse`
@@ -50,6 +60,13 @@
  *   node scripts/profile-endpoint.ts                      # defaults to cordis
  *   SPARQL_USER=… SPARQL_PASS=… node scripts/profile-endpoint.ts <cfg>  # secured (Basic auth)
  *   node scripts/profile-endpoint.ts <cfg> --fast         # skip heavy scans (huge endpoints)
+ *   node scripts/profile-endpoint.ts <cfg> --resume       # continue an interrupted run
+ * The config is CHECKPOINTED to disk (ATOMICally: write .tmp, rename over — a kill
+ * mid-write can't truncate the config) after every measured PROPERTY and every facts
+ * step, and after every type (which covers list-only / --fast runs), so a killed run
+ * loses at most the step in flight. --resume is PER-PROPERTY: it reuses each type's
+ * prior property LIST (no re-listing) and re-queries ONLY the properties still missing
+ * a count OR the facts marker (an old counts-only config gets facts-only queries).
  * Per-property counts + cardinality and embed fan-in are computed by default for all
  * backends, on types up to HEAVY_TYPE_MAX instances; `--fast` skips them entirely.
  * The config's `backend` ("graphdb" | "virtuoso", default virtuoso) picks the query
@@ -62,7 +79,7 @@
  *
  * @see /spec/ae-rdf  — mirrors the typeInventory caching pattern (useRdfTypes.ts)
  */
-import { readFile, writeFile } from 'node:fs/promises'
+import { readFile, writeFile, rename } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
 
@@ -83,6 +100,9 @@ const SAMPLE_SIZE = 2000 // distinct-subject cap when the full listing times out
 // shape and can afford the full scans. GraphDB → flat COMPLETE property LISTS, and we
 // skip cardinality / embed fan-in / defaultView (they time out on its gateway).
 let GRAPHDB = false
+// GraphDB: send `infer=<value>` with every query (set from cfg.infer in main) —
+// false disables inferred triples. undefined → send nothing.
+let INFER: boolean | undefined
 // Heavy per-subject scans (per-property count + cardinality, embed fan-in) run for
 // EVERY backend by default. Types are processed SMALLEST-first, and once the heavy
 // scan has TIMED OUT on HEAVY_TIMEOUT_LIMIT types in a row we stop attempting it
@@ -96,12 +116,21 @@ const argNum = (name: string, def: number): number => {
   return Number.isFinite(n) && n > 0 ? n : def
 }
 const SKIP_HEAVY = process.argv.includes('--fast')
+const RESUME = process.argv.includes('--resume')
 // Optional hard ceiling on instance count for heavy scans (default: no cap — let
 // the timeout streak decide). Consecutive-timeout budget before we stop scanning.
 const HEAVY_TYPE_MAX = argNum('heavy-max', Infinity)
 const HEAVY_TIMEOUT_LIMIT = argNum('heavy-timeouts', 5)
 const RETRIES = 2
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms))
+
+// Atomic checkpoint write: write a sibling .tmp then rename over the target, so a
+// kill mid-write can't leave a truncated (unparseable) config on disk.
+const atomicWrite = async (p: string, data: string) => {
+  const tmp = `${p}.tmp`
+  await writeFile(tmp, data)
+  await rename(tmp, p)
+}
 
 // Optional HTTP Basic auth for secured endpoints (e.g. ERA EVR-KG). Credentials
 // come from the environment ONLY — never the config file or the command line — so
@@ -117,7 +146,21 @@ const HEADERS: Record<string, string> = {
   ...AUTH_HEADER,
 }
 
-interface PropEntry { uri: string; count: number; min?: number; max?: number; maxLen?: number }
+interface PropEntry {
+  uri: string; count: number; min?: number; max?: number; maxLen?: number
+  // Value facts (mirror TypeProperty in src/types/endpoint.ts — keep in sync).
+  // nodeKinds counts distinct (s,o) pairs (Σ === count); its PRESENCE (even {}) marks
+  // FACTS as measured. ranges counts distinct (s,o) pairs per object class (count-desc,
+  // top RANGES_MAX): a multi-typed object counts once per class, so Σranges + untyped ≥
+  // nodeKinds.iri, with equality when objects are single-typed. untyped = pairs whose IRI
+  // object has NO rdf:type; always present (even 0) once ranges were measured — its
+  // presence distinguishes "ranges measured" from "ranges timed out".
+  nodeKinds?: { iri?: number; literal?: number; bnode?: number }
+  datatypes?: { uri: string; count: number }[]
+  languages?: Record<string, number>
+  ranges?: { uri: string; count: number }[]
+  untyped?: number
+}
 /** An owning edge + the max instances of a type that hang off ONE owner through it. */
 interface FanEdge { via: string; max: number }
 /** Embed candidacy: which edges this type can be embedded through, worst-case count.
@@ -179,6 +222,36 @@ const flatPropListQuery = (t: string) =>
 // min = havers < typeTotal ? 0 : lo (some instance lacks it ⇒ optional); max = hi.
 const propCardQuery = (t: string, p: string) =>
   `SELECT (SUM(?c) AS ?n) (COUNT(?s) AS ?havers) (MIN(?c) AS ?lo) (MAX(?c) AS ?hi) (MAX(?ml) AS ?maxlen) WHERE { SELECT ?s (COUNT(DISTINCT ?o) AS ?c) (MAX(IF(isLiteral(?o), STRLEN(STR(?o)), 0)) AS ?ml) WHERE { { SELECT DISTINCT ?s WHERE { ?s a <${t}> } } ?s <${p}> ?o } GROUP BY ?s }`
+// Full datatype IRIs for the JS-side langString hardening (see profileType facts step).
+const RDF_LANGSTRING = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#langString'
+const XSD_STRING = 'http://www.w3.org/2001/XMLSchema#string'
+const RANGES_MAX = 20 // top object-type ranges kept per property (count-desc)
+// Distinct (s,o) pairs for a type's property — the shared body of the facts + ranges
+// queries. Nested DISTINCT-?s on Virtuoso (collapses the graph-multiplied join, same
+// quad-safe trick as propCardQuery, so Σ node-kinds === count); flat on GraphDB (the
+// nested subquery times out on its gateway).
+const subjObjBlock = (t: string, p: string) =>
+  GRAPHDB
+    ? `{ SELECT DISTINCT ?s ?o WHERE { ?s a <${t}> . ?s <${p}> ?o } }`
+    : `{ SELECT DISTINCT ?s ?o WHERE { { SELECT DISTINCT ?s WHERE { ?s a <${t}> } } ?s <${p}> ?o } }`
+// Facts a+b+c in ONE query per property: node-kind (iri/literal/bnode), literal
+// datatype, language tag — grouped counts over the distinct (s,o) pairs. Full TIMEOUT_MS
+// like propCardQuery. JS side hardens langString bucketing + safeIri-filters datatypes.
+const propFactsQuery = (t: string, p: string) =>
+  `SELECT ?kind ?dt ?lang (COUNT(*) AS ?n) WHERE { ${subjObjBlock(t, p)} BIND(IF(isIRI(?o),"iri",IF(isBlank(?o),"bnode","literal")) AS ?kind) BIND(IF(isLiteral(?o), STR(DATATYPE(?o)), "") AS ?dt) BIND(IF(isLiteral(?o), LANG(?o), "") AS ?lang) } GROUP BY ?kind ?dt ?lang`
+// Object classes of a property's IRI values — top RANGES_MAX by distinct (s,o)-pair
+// count (SAME basis as `count`/`nodeKinds`, so directly comparable). The `?o a ?t2`
+// join can graph-multiply, so dedupe over (s,o,t2) rows FIRST in the inner DISTINCT
+// wrapper (with the isIRI FILTER + the type join outside subjObjBlock), then COUNT(*)
+// per class counts distinct pairs — a multi-typed object counts once per class.
+// Optional hint — run on the short leash, so a timeout just leaves ranges absent.
+const propRangesQuery = (t: string, p: string) =>
+  `SELECT ?t2 (COUNT(*) AS ?n) WHERE { { SELECT DISTINCT ?s ?o ?t2 WHERE { ${subjObjBlock(t, p)} FILTER(isIRI(?o)) ?o a ?t2 } } } GROUP BY ?t2 ORDER BY DESC(?n) LIMIT ${RANGES_MAX}`
+// Distinct (s,o) pairs whose IRI object has NO rdf:type at all. subjObjBlock already
+// collapses to distinct pairs, so counting its rows post-FILTER is pair-exact. Same
+// short leash as ranges; its result is the ranges-step marker (written even when 0).
+const propUntypedQuery = (t: string, p: string) =>
+  `SELECT (COUNT(*) AS ?n) WHERE { ${subjObjBlock(t, p)} FILTER(isIRI(?o)) FILTER NOT EXISTS { ?o a ?t2 } }`
 // Type discovery = the inventory query (types + instance counts). Count-based GROUP BY,
 // NOT a bare `SELECT DISTINCT ?t` — that can 500 on big endpoints (RINF) — and it also
 // yields the per-type totals the min=0 cardinality derivation needs.
@@ -222,7 +295,7 @@ async function sparql(url: string, query: string, retries = RETRIES, timeoutMs =
       const res = await fetch(url, {
         method: 'POST',
         headers: HEADERS,
-        body: `query=${encodeURIComponent(query)}`,
+        body: `query=${encodeURIComponent(query)}${INFER !== undefined ? `&infer=${INFER}` : ''}`,
         signal: ctrl.signal,
       })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
@@ -253,7 +326,7 @@ async function ask(url: string, query: string): Promise<boolean | undefined> {
       const res = await fetch(url, {
         method: 'POST',
         headers: HEADERS,
-        body: `query=${encodeURIComponent(query)}`,
+        body: `query=${encodeURIComponent(query)}${INFER !== undefined ? `&infer=${INFER}` : ''}`,
         signal: ctrl.signal,
       })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
@@ -301,7 +374,7 @@ const safeIri = (u: string) => /^https?:\/\/[^\s<>"{}|\\^`]+$/.test(u)
  * called with 'listing properties', 'sampled property list' (on list fallback),
  * and `property k/N: <name>` as each is measured.
  */
-async function profileType(url: string, type: string, total: number, heavy: boolean, onStep?: (step: string) => void, prior?: TypeProfile): Promise<{ profile: TypeProfile | null; timedOut: boolean }> {
+async function profileType(url: string, type: string, total: number, heavy: boolean, resume: boolean, onStep?: (step: string) => void, prior?: TypeProfile, onPartial?: (profile: TypeProfile) => Promise<void>): Promise<{ profile: TypeProfile | null; timedOut: boolean }> {
   // 1. List the type's distinct properties (over DISTINCT subjects — quad-safe).
   // Fast unless the type has a genuinely huge distinct-subject count, so give it a
   // short leash (no retry, LIST_TIMEOUT_MS) and fall back to a distinct-subject
@@ -309,26 +382,33 @@ async function profileType(url: string, type: string, total: number, heavy: bool
   onStep?.('listing properties')
   let sampled = false
   let props: string[] = []
-  // GraphDB: the FLAT join lists all properties fast (the nested subquery times out
-  // there) — give it the full TIMEOUT_MS since the biggest types run ~90s. Virtuoso:
-  // the nested quad-safe shape on a short leash (LIST_TIMEOUT_MS). Either way, fall
-  // back to the LIMITed sample below if the primary shape is too slow.
-  try {
-    props = (await sparql(
-      url,
-      GRAPHDB ? flatPropListQuery(type) : propListQuery(type),
-      0,
-      GRAPHDB ? TIMEOUT_MS : LIST_TIMEOUT_MS,
-    )).map(b => b.p?.value ?? '')
-  } catch { /* too big / slow to list fully — fall back to the sample below */ }
-  if (!props.length) {
-    onStep?.('sampled property list')
+  // RESUME: a prior OK profile already carries the full property LIST — reuse it and
+  // skip the listing queries entirely (only the unmeasured properties re-query below).
+  if (resume && prior?.ok && prior.properties.length > 0) {
+    props = prior.properties.map(p => p.uri)
+    sampled = prior.sampled ?? false
+  } else {
+    // GraphDB: the FLAT join lists all properties fast (the nested subquery times out
+    // there) — give it the full TIMEOUT_MS since the biggest types run ~90s. Virtuoso:
+    // the nested quad-safe shape on a short leash (LIST_TIMEOUT_MS). Either way, fall
+    // back to the LIMITed sample below if the primary shape is too slow.
     try {
-      props = (await sparql(url, sampledPropListQuery(type))).map(b => b.p?.value ?? '')
-      sampled = true // list may be incomplete (rare properties missed)
-    } catch (e) {
-      console.error(`  ✗ ${type} — ${(e as Error).message}`)
-      return { profile: null, timedOut: false }
+      props = (await sparql(
+        url,
+        GRAPHDB ? flatPropListQuery(type) : propListQuery(type),
+        0,
+        GRAPHDB ? TIMEOUT_MS : LIST_TIMEOUT_MS,
+      )).map(b => b.p?.value ?? '')
+    } catch { /* too big / slow to list fully — fall back to the sample below */ }
+    if (!props.length) {
+      onStep?.('sampled property list')
+      try {
+        props = (await sparql(url, sampledPropListQuery(type))).map(b => b.p?.value ?? '')
+        sampled = true // list may be incomplete (rare properties missed)
+      } catch (e) {
+        console.error(`  ✗ ${type} — ${(e as Error).message}`)
+        return { profile: null, timedOut: false }
+      }
     }
   }
   props = props.filter(safeIri)
@@ -339,36 +419,59 @@ async function profileType(url: string, type: string, total: number, heavy: bool
   // (same subject set ⇒ they'd all time out) — remaining props keep their PRIOR
   // count. Report `timedOut` so the caller can grow the consecutive-timeout streak.
   let measure = heavy
+  let measureFacts = heavy // facts ride the same heavy gate; --fast skips both
   let timedOut = false
-  const entries: PropEntry[] = []
-  for (let i = 0; i < props.length; i++) {
-    const p = props[i]
-    const e: PropEntry = { uri: p, count: 0 }
-    if (measure) {
-      onStep?.(`property ${i + 1}/${props.length}: ${shortIri(p)}`)
+  // Seed every entry from its PRIOR values up front, so the entries array shape is
+  // complete for onPartial and a skipped/failed/timed-out property keeps good prior
+  // data. A successful measurement below OVERWRITES the seeded fields from scratch.
+  const entries: PropEntry[] = props.map(p => {
+    const pe = prior?.properties.find(x => x.uri === p)
+    return pe ? { ...pe } : { uri: p, count: 0 }
+  })
+  const profile: TypeProfile = { ok: true, sampled: sampled || undefined, properties: entries }
+  // Bug A: carry PRIOR type-level hints into the freshly-built profile. onPartial saves
+  // this object after every step, so without this the embed/blank hints computed on an
+  // earlier run would vanish at the first checkpoint. The embed phase's resume skip
+  // (RESUME && out[type].embed) then still fires; the blank phase recomputes when it runs.
+  if (prior?.embed) profile.embed = prior.embed
+  if (prior?.blank !== undefined) profile.blank = prior.blank
+  if (prior?.bnodeCount !== undefined) profile.bnodeCount = prior.bnodeCount
+  for (let i = 0; i < entries.length; i++) {
+    const e = entries[i]
+    // RESUME: an entry with a real count was already measured on a prior run — skip its
+    // query and keep the seeded values (a listed property always occurs ≥1×, so
+    // count>0 ⇒ measured). NON-resume runs re-measure every property.
+    if (measure && !(resume && e.count > 0)) {
+      onStep?.(`property ${i + 1}/${entries.length}: ${shortIri(e.uri)}`)
       try {
-        const b = (await sparql(url, propCardQuery(type, p)))[0] ?? {}
+        const b = (await sparql(url, propCardQuery(type, e.uri)))[0] ?? {}
         const havers = parseInt(b.havers?.value ?? '0', 10)
         const lo = parseInt(b.lo?.value ?? '0', 10)
         const hi = parseInt(b.hi?.value ?? '0', 10)
         const maxlen = parseInt(b.maxlen?.value ?? '0', 10)
+        // Build the measured fields FROM SCRATCH — clear the seeded prior min/max/maxLen
+        // so a fresh result that lacks them doesn't leave stale values behind.
         e.count = parseInt(b.n?.value ?? '0', 10)
+        delete e.min; delete e.max; delete e.maxLen
         if (hi > 0) e.max = hi
         if (total > 0 && havers > 0) e.min = havers < total ? 0 : lo
         if (maxlen > 0) e.maxLen = maxlen
+        // Checkpoint after every measured property (in-progress profile; entries unsorted).
+        await onPartial?.(profile)
       } catch (err) {
-        // Timeout ⇒ this type is too big; stop measuring its remaining props (they'd
-        // time out too) and flag it so the caller counts the streak. A non-timeout
-        // failure just leaves this one property uri-only and keeps going.
-        if ((err as { isTimeout?: boolean }).isTimeout) { timedOut = true; measure = false }
+        // Timeout ⇒ this type is too big; stop BOTH the card and facts scans for its
+        // remaining props (they'd time out too) and flag it so the caller counts the
+        // streak. A non-timeout failure just leaves this property on its seeded prior
+        // values and keeps going.
+        if ((err as { isTimeout?: boolean }).isTimeout) { timedOut = true; measure = false; measureFacts = false }
       }
     }
     // A listed property always occurs ≥1×, so count 0 means "not measured THIS run"
-    // (heavy skipped, --fast, this type timed out, or one property failed) — never a
-    // real zero. Reuse the previous profile's value so a re-run never downgrades good
-    // counts to 0 (the recurring Virtuoso "counts went to 0" on big types).
+    // (heavy skipped, --fast, this type timed out, or a measurement returned/failed 0) —
+    // never a real zero. Reuse the previous profile's value so a re-run never downgrades
+    // good counts to 0 (the recurring Virtuoso "counts went to 0" on big types).
     if (e.count === 0 && prior) {
-      const pe = prior.properties.find(x => x.uri === p)
+      const pe = prior.properties.find(x => x.uri === e.uri)
       if (pe && pe.count > 0) {
         e.count = pe.count
         if (pe.min !== undefined) e.min = pe.min
@@ -376,10 +479,73 @@ async function profileType(url: string, type: string, total: number, heavy: bool
         if (pe.maxLen !== undefined) e.maxLen = pe.maxLen
       }
     }
-    entries.push(e)
+    // FACTS step: node-kind / datatype / language distribution (+ ranges/untyped when
+    // IRI objects exist). Same heavy gate as the card scan. RESUME skips a property only
+    // when the facts marker is present (nodeKinds !== undefined) AND the ranges marker
+    // (untyped !== undefined) is present OR moot (no IRI values ⇒ the ranges step never
+    // runs, so untyped can never appear — without the iri check literal-only properties
+    // would re-measure on EVERY resume). non-resume, old counts-only configs (no
+    // nodeKinds), and old ranges-basis configs (IRI-bearing nodeKinds but no untyped,
+    // from before the pair-count basis) all re-enter and re-measure — the latter
+    // migration is deliberate. A facts-query timeout drops both scans for the type's
+    // remaining props and grows the shared streak.
+    if (measureFacts && !(resume && e.nodeKinds !== undefined && (e.untyped !== undefined || !e.nodeKinds.iri))) {
+      onStep?.(`facts ${i + 1}/${entries.length}: ${shortIri(e.uri)}`)
+      try {
+        const rows = await sparql(url, propFactsQuery(type, e.uri))
+        // Rebuild all five facts fields FROM SCRATCH (mirrors the min/max/maxLen pattern).
+        delete e.nodeKinds; delete e.datatypes; delete e.languages; delete e.ranges; delete e.untyped
+        const kinds: { iri?: number; literal?: number; bnode?: number } = {}
+        const dts: Record<string, number> = {}
+        const langs: Record<string, number> = {}
+        for (const r of rows) {
+          const n = parseInt(r.n?.value ?? '0', 10)
+          if (!n) continue
+          const kind = r.kind?.value
+          if (kind === 'iri' || kind === 'literal' || kind === 'bnode') kinds[kind] = (kinds[kind] ?? 0) + n
+          if (kind !== 'literal') continue
+          const lang = r.lang?.value ?? ''
+          // langString hardening: a language tag ⇒ rdf:langString regardless of the
+          // reported datatype; an untyped literal ⇒ xsd:string (RDF 1.1).
+          let dt = r.dt?.value ?? ''
+          if (lang !== '') { dt = RDF_LANGSTRING; langs[lang] = (langs[lang] ?? 0) + n }
+          else if (dt === '') dt = XSD_STRING
+          if (safeIri(dt)) dts[dt] = (dts[dt] ?? 0) + n
+        }
+        // Always record nodeKinds ({} = measured, genuinely empty) — the facts marker.
+        e.nodeKinds = kinds
+        const dtList = Object.entries(dts).map(([uri, count]) => ({ uri, count })).sort((a, b) => b.count - a.count)
+        if (dtList.length) e.datatypes = dtList
+        if (Object.keys(langs).length) e.languages = sortKeys(langs)
+        // RANGES + UNTYPED: only when this property actually HAS IRI objects, and (on
+        // resume) only when untyped isn't already recorded — an existing untyped marks the
+        // ranges step done. Short leash (1 retry, LIST_TIMEOUT_MS) on BOTH queries: if
+        // either times out/errors, leave ranges AND untyped absent (no marker) but still
+        // commit nodeKinds + the other facts, and do NOT set timedOut / grow the streak.
+        // On success ALWAYS write untyped (even 0 — the ranges-step marker); omit ranges
+        // when empty. Both counts share `count`'s (s,o)-pair basis.
+        if ((kinds.iri ?? 0) > 0 && !(resume && e.untyped !== undefined)) {
+          onStep?.(`ranges ${i + 1}/${entries.length}: ${shortIri(e.uri)}`)
+          try {
+            const rr = (await sparql(url, propRangesQuery(type, e.uri), 1, LIST_TIMEOUT_MS))
+              .map(r => ({ uri: r.t2?.value ?? '', count: parseInt(r.n?.value ?? '0', 10) }))
+              .filter(r => safeIri(r.uri) && r.count > 0)
+            const ut = (await sparql(url, propUntypedQuery(type, e.uri), 1, LIST_TIMEOUT_MS))[0] ?? {}
+            if (rr.length) e.ranges = rr
+            e.untyped = parseInt(ut.n?.value ?? '0', 10)
+          } catch { /* optional hint — ranges+untyped both absent on timeout/error, the facts marker still commits */ }
+        }
+        // Checkpoint after every committed facts step (in-progress profile; entries unsorted).
+        await onPartial?.(profile)
+      } catch (err) {
+        // A facts-query timeout ⇒ same verdict as a card timeout: stop BOTH scans for
+        // this type's remaining props and flag it so the caller grows the shared streak.
+        if ((err as { isTimeout?: boolean }).isTimeout) { timedOut = true; measure = false; measureFacts = false }
+      }
+    }
   }
   if (entries.some(e => e.count > 0)) entries.sort((a, b) => b.count - a.count)
-  return { profile: { ok: true, sampled: sampled || undefined, properties: entries }, timedOut }
+  return { profile, timedOut }
 }
 
 /** rdfs:subClassOf hierarchy among the inventory types → { super: [subs] }. */
@@ -504,6 +670,8 @@ async function main() {
   if (!url) throw new Error(`No "url" in ${path}`)
   GRAPHDB = cfg.backend === 'graphdb'
   if (GRAPHDB) console.error(`backend: graphdb — flat COMPLETE property lists${SKIP_HEAVY ? ', skipping heavy scans (--fast)' : ''}`)
+  INFER = cfg.infer
+  if (INFER !== undefined) console.error(`inference: ${INFER ? 'ON' : 'OFF'} (infer=${INFER} sent with every query)`)
   if (AUTH_HEADER.Authorization) console.error(`auth: HTTP Basic (SPARQL_USER=${process.env.SPARQL_USER})`)
 
   // Type list: prefer the cached inventory; else discover it live AND cache it (with
@@ -547,6 +715,25 @@ async function main() {
   // ── Properties + per-instance cardinality ──────────────────────────────
   p = phase(`Properties${SKIP_HEAVY ? '' : ' + cardinality'} — ${typeUris.length} types`)
   const out: Record<string, TypeProfile> = { ...(cfg.typeProperties ?? {}) }
+  // Checkpoint: persist everything gathered so far (inventory, graph, profiles)
+  // after every type, so a killed run loses at most the type in flight.
+  const save = () => {
+    cfg.typeProperties = sortKeys(out)
+    return atomicWrite(path, JSON.stringify(cfg, null, 2) + '\n')
+  }
+  // --resume skip test. Fully "measured" = EVERY listed property carries a real count
+  // AND a facts marker (nodeKinds present) — a listed property always occurs ≥1×, so
+  // count 0 means the heavy scan never ran on it (see profileType), and a missing
+  // nodeKinds means its facts step never ran. A PARTIALLY-measured type re-enters
+  // profileType and fills only the gaps (covers an old counts-only config → facts-only
+  // resume, and a --fast → full --resume that measures both). Under --fast the property
+  // LIST alone is done. A streak-stopped tail re-enters but heavy=false is a no-op that
+  // keeps its priors.
+  const done = (t: string) => {
+    const e = out[t]
+    if (!e?.ok) return false
+    return SKIP_HEAVY || !e.properties.length || e.properties.every(pr => pr.count > 0 && pr.nodeKinds !== undefined)
+  }
   let okCount = 0, sampledCount = 0
   // Heavy scans run smallest-first and stop for good once HEAVY_TIMEOUT_LIMIT types
   // in a row time out — past that ceiling every bigger type would too. Larger types
@@ -560,6 +747,12 @@ async function main() {
     const short = type.replace(/^.*[#/]/, '') || type
     const total = totals[type] ?? 0
     const nfmt = total.toLocaleString('en-US') // instance count — readable, and shows the ascending climb
+    if (RESUME && done(type)) {
+      okCount++
+      if (out[type].sampled) sampledCount++
+      console.error(`  ${tag} ↷ ${type} (${nfmt} instances — already profiled, skipped)`)
+      continue
+    }
     const heavy = !SKIP_HEAVY && !heavyStopped && total <= HEAVY_TYPE_MAX
     // Live progress: on a TTY, tick elapsed + current step (which property is
     // being measured) in place so a slow type isn't a silent gap. Off a TTY
@@ -570,11 +763,15 @@ async function main() {
     const beat = () => process.stderr.write(`${CLEAR}  ${tag} ⏳ ${short} (${nfmt}) — ${step} (${secs(tt)})`)
     let timer: ReturnType<typeof setInterval> | undefined
     if (isTTY) { beat(); timer = setInterval(beat, 1000) }
-    const { profile, timedOut } = await profileType(url, type, total, heavy, (s) => {
+    // Checkpoint after every measured property — finer than the per-type save below
+    // (which still covers list-only / --fast runs). Fired only on a real measurement,
+    // so a heavy===false type (streak stopped / --fast) triggers no writes here.
+    const onPartial = async (partial: TypeProfile) => { out[type] = partial; await save() }
+    const { profile, timedOut } = await profileType(url, type, total, heavy, RESUME, (s) => {
       step = s
       if (isTTY) beat()
       else if (s === 'sampled property list') console.error(`  ${tag}   ↳ ${short}: ${s}`)
-    }, out[type])
+    }, out[type], onPartial)
     if (timer) clearInterval(timer)
     if (isTTY) process.stderr.write(CLEAR) // wipe the heartbeat before the result line
     // Grow / reset the consecutive-timeout streak (only while we're still measuring).
@@ -596,6 +793,7 @@ async function main() {
       // keep any prior good entry; only record a failure if we have nothing
       out[type] = { ok: false, properties: [] }
     }
+    await save()
   }
   // Sort by type URI so key order is deterministic — clean git diffs across
   // runs, instead of tracking typeInventory's count-order (which drifts).
@@ -613,6 +811,9 @@ async function main() {
   for (const [i, type] of typeUris.entries()) {
     if (SKIP_HEAVY) break // --fast: skip the per-subject fan-in scans
     if (!out[type]?.ok || (totals[type] ?? 0) > EMBED_PROFILE_MAX) continue
+    // ponytail: only types WITH an edge are marked done — no-edge types re-scan on
+    // resume (2×30s leash each); add a done-marker if that ever dominates a resume.
+    if (RESUME && out[type].embed) { embedCount++; continue }
     const selfMax = Math.max(0, ...out[type].properties.map(pr => pr.max ?? 0))
     const tt = Date.now()
     const tag = `[${i + 1}/${typeUris.length}]`
@@ -632,6 +833,7 @@ async function main() {
       const warn = selfMax > EMBED_SELF_MAX ? ` ⚠selfMax:${selfMax}` : ''
       if (warn) floodFlag++
       console.error(`  ${tag} ✓ ${short} —${f}${inv}${warn} (${secs(tt)})`)
+      await save()
     }
   }
   console.error(`  → ${SKIP_HEAVY ? 'skipped (--fast)' : `${embedCount} types with an embeddable edge (${floodFlag} flagged ⚠ flood-risk: selfMax > ${EMBED_SELF_MAX})`} in ${secs(p)}`)
@@ -700,7 +902,7 @@ async function main() {
   if (orphans) { cfg.orphanCounts = sortKeys(orphans); console.error(`  → ${Object.keys(orphans).length} types with orphans in ${secs(p)}`) }
 
   cfg.profiledAt = new Date().toISOString()
-  await writeFile(path, JSON.stringify(cfg, null, 2) + '\n')
+  await atomicWrite(path, JSON.stringify(cfg, null, 2) + '\n')
   console.error(`\n✓ Done in ${secs(t0)}: ${okCount}/${typeUris.length} types → ${path}`)
 }
 

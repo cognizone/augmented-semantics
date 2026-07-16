@@ -30,6 +30,7 @@ export function buildEndpointConfig(e: SPARQLEndpoint): ConfigEndpoint {
   // static file — the deployer supplies them at runtime.
   if (e.auth && e.auth.type !== 'none') ce.auth = { type: e.auth.type }
   if (e.graph && (e.graph.quads !== undefined || e.graph.defaultView !== undefined)) ce.graph = e.graph
+  if (e.infer !== undefined) ce.infer = e.infer
   if (e.types && Object.keys(e.types).length) ce.types = e.types
   if (e.typeInventory?.length) ce.typeInventory = e.typeInventory
   if (e.typeProperties && Object.keys(e.typeProperties).length) ce.typeProperties = e.typeProperties

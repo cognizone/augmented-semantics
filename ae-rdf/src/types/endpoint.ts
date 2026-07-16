@@ -11,6 +11,7 @@ export interface SPARQLEndpoint {
   auth?: EndpointAuth
   analysis?: EndpointAnalysis
   graph?: EndpointGraph
+  infer?: boolean                               // GraphDB: send `infer=<value>` with every query — false disables inferred triples. Omit to send nothing.
   types?: Record<string, TypeConfig>           // per-type display config, keyed by type IRI
   typeInventory?: TypeCount[]                   // cached type inventory for instant sidebar
   typeProperties?: Record<string, TypeProfile> // discovered per-type property schema (script-generated)
@@ -147,6 +148,24 @@ export interface TypeProperty extends UriCount {
    *  properties). A display-config size hint: high maxLen ⇒ long prose (suggest
    *  `capWidth`); many short repeated values ⇒ suggest `columns`. */
   maxLen?: number
+  /** Value node-kind distribution over the property's distinct (s,o) pairs — same
+   *  dedup basis as `count`, so `iri+literal+bnode === count`; zero kinds omitted.
+   *  PRESENCE of this object (even `{}`) is the "facts measured" marker. */
+  nodeKinds?: { iri?: number; literal?: number; bnode?: number }
+  /** Literal datatype distribution (full IRIs, count-desc). An `rdf:langString`
+   *  entry ⇒ language-tagged text. Omitted when the property has no literal values. */
+  datatypes?: UriCount[]
+  /** Language-tag → count over langString values, keys sorted. Omitted if none. */
+  languages?: Record<string, number>
+  /** Object classes of IRI values: distinct (s,o) pairs per object class, count-desc,
+   *  top RANGES_MAX (SAME basis as `count`/`nodeKinds`). A multi-typed object counts once
+   *  per class, so Σ`ranges` + `untyped` ≥ `nodeKinds.iri`, with equality when objects are
+   *  single-typed. Omitted when empty (no typed IRI objects). */
+  ranges?: UriCount[]
+  /** Distinct (s,o) pairs whose IRI object has NO rdf:type at all. Always present (even 0)
+   *  once ranges were measured — its presence distinguishes "ranges measured" from "ranges
+   *  timed out" (both `ranges` and `untyped` are absent when the ranges step timed out). */
+  untyped?: number
 }
 
 /** One owning edge and the max instances of a type that inline under a SINGLE owner

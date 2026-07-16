@@ -144,6 +144,7 @@ export const useEndpointStore = defineStore('endpoint', () => {
       auth: ce.auth,
       analysis: ce.analysis,
       graph: ce.graph,
+      infer: ce.infer,
       types: ce.types,
       typeInventory: ce.typeInventory,
       typeProperties: ce.typeProperties,
@@ -246,6 +247,7 @@ export const useEndpointStore = defineStore('endpoint', () => {
       analysis: updates.analysis ?? existing.analysis,
       // 'graph' present (even undefined) overwrites, so it can be reset to auto.
       graph: 'graph' in updates ? updates.graph : existing.graph,
+      infer: 'infer' in updates ? updates.infer : existing.infer,
       types: 'types' in updates ? updates.types : existing.types,
       typeInventory: 'typeInventory' in updates ? updates.typeInventory : existing.typeInventory,
       typeProperties: 'typeProperties' in updates ? updates.typeProperties : existing.typeProperties,
