@@ -10,7 +10,7 @@
 import { computed, ref } from 'vue'
 import { isNavigableIri, validateURI } from '../../services'
 import { useSettingsStore, useTypeConfigStore } from '../../stores'
-import { qname as toQname, displayPredicate, displayObject, displayType, formatLiteral, mediaKind, doiId, doiUrl, type ResolvedMap } from '../../utils/format'
+import { qname as toQname, displayPredicate, displayObject, displayType, formatLiteral, mediaKind, doiId, doiUrl, parseWkt, type ResolvedMap } from '../../utils/format'
 import { moveInOrder, orderedByConfig, sinkAlwaysLast, toggleInList } from '../../utils/propertyOrder'
 import type { PropertyGroup, ResourceObject } from '../../composables'
 import DoiCite from './DoiCite.vue'
@@ -278,6 +278,9 @@ function isDangling(uri: string): boolean {
 
 // Bare DOI for a value that is a DOI (URI or literal), else null.
 const doiOf = (o: ResourceObject) => doiId(o.value)
+
+// WKT geometry info for a literal value (map link when WGS84), else null.
+const wktOf = (o: ResourceObject) => (o.termType === 'literal' ? parseWkt(o.value, o.datatype) : null)
 
 // Media kind for a URI object value, if it's an http(s) media file — for an
 // inline thumbnail. Bound to the validated URL, mirroring ResourceView.
@@ -629,6 +632,9 @@ function graphTitle(o: ResourceObject): string {
                 <a :href="doiUrl(doiOf(row.o)!)" target="_blank" rel="noopener" class="tag doi-badge" v-tooltip.top="{ value: 'Open at doi.org', showDelay: 120 }">DOI ↗</a>
                 <DoiCite v-if="settings.doiCitations" :id="doiOf(row.o)!" />
               </template>
+
+              <!-- WKT geometry: map link (WGS84) — raw literal still shows above. -->
+              <a v-if="wktOf(row.o)?.mapUrl" :href="wktOf(row.o)!.mapUrl!" target="_blank" rel="noopener" class="tag wkt-badge" v-tooltip.top="{ value: 'View on OpenStreetMap', showDelay: 120 }">map ↗</a>
 
               <!-- Deprecated flag on a linked resource -->
               <span v-if="row.o.termType === 'uri' && deprecated?.has(row.o.value)" class="deprecated-badge" v-tooltip.top="'Deprecated'">deprecated</span>
@@ -1045,6 +1051,19 @@ function graphTitle(o: ResourceObject): string {
 .doi-badge:hover {
   background: #2c62c9;
   border-color: #2c62c9;
+}
+
+/* WKT geometry map link — neutral outline, accent on hover. */
+.wkt-badge {
+  border: 1px solid var(--ae-border-color);
+  background: var(--ae-bg-elevated);
+  color: var(--ae-text-secondary);
+  text-decoration: none;
+  cursor: pointer;
+}
+.wkt-badge:hover {
+  color: var(--ae-accent);
+  border-color: var(--ae-accent);
 }
 
 /* Click-through badge on an embedded object → its own resource page. */

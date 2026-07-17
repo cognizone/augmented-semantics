@@ -1,5 +1,29 @@
 import { describe, it, expect } from 'vitest'
-import { localName, humanizeLocalName, qname, displayPredicate, displayObject, displayType, guessPrefix, mediaKind, doiId } from '../format'
+import { localName, humanizeLocalName, qname, displayPredicate, displayObject, displayType, guessPrefix, mediaKind, doiId, parseWkt } from '../format'
+
+const WKT = 'http://www.opengis.net/ont/geosparql#wktLiteral'
+
+describe('parseWkt', () => {
+  it('maps a WGS84 point, swapping X Y to lat/lon', () => {
+    const w = parseWkt('POINT(9.0175 47.6754)', WKT)
+    expect(w?.type).toBe('POINT')
+    expect(w?.lat).toBeCloseTo(47.6754); expect(w?.lon).toBeCloseTo(9.0175)
+    expect(w?.mapUrl).toContain('mlat=47.6754')
+    expect(w?.mapUrl).toContain('mlon=9.0175')
+  })
+  it('centroids a polygon', () => {
+    const w = parseWkt('POLYGON((0 0, 0 10, 10 10, 10 0))', WKT)
+    expect(w?.type).toBe('POLYGON'); expect(w?.lat).toBeCloseTo(5); expect(w?.lon).toBeCloseTo(5)
+  })
+  it('gives no map link for a non-WGS84 CRS or out-of-range (projected) coords', () => {
+    expect(parseWkt('<http://www.opengis.net/def/crs/EPSG/0/2056> POINT(2600000 1200000)', WKT)?.mapUrl).toBeUndefined()
+    expect(parseWkt('POINT(2600000 1200000)', WKT)?.mapUrl).toBeUndefined() // out of lat/lon range
+  })
+  it('detects WKT by datatype or by text, null otherwise', () => {
+    expect(parseWkt('LINESTRING(1 2, 3 4)')?.type).toBe('LINESTRING') // no datatype, pattern match
+    expect(parseWkt('just a string', WKT === 'x' ? WKT : undefined)).toBeNull()
+  })
+})
 
 describe('doiId', () => {
   it('extracts the bare DOI from URL, dx, doi:, and bare forms', () => {

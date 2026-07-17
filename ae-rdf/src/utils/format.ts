@@ -50,6 +50,50 @@ function shorten(seg: string): string {
   return seg.replace(/[^a-zA-Z0-9]/g, '').toLowerCase().slice(0, 12)
 }
 
+export interface WktInfo {
+  type: string // POINT, POLYGON, … (uppercased)
+  lat?: number // centroid, only when WGS84 and in range
+  lon?: number
+  mapUrl?: string // OpenStreetMap link, only when mappable
+}
+
+const WKT_TYPE = /^\s*(?:<[^>]*>\s+)?(POINT|LINESTRING|POLYGON|MULTIPOINT|MULTILINESTRING|MULTIPOLYGON|GEOMETRYCOLLECTION|TRIANGLE)\b/i
+
+/**
+ * Parse a WKT geometry literal for display. Returns the geometry type and — only
+ * when the coordinates are WGS84 lon/lat and in range — a centroid + an
+ * OpenStreetMap link. Null if the value isn't WKT.
+ *
+ * Deliberately conservative on CRS: a geo:wktLiteral may carry a leading CRS URI
+ * (admin.ch often uses EPSG:2056, meters — NOT lat/lon). We only offer a map link
+ * for CRS84/EPSG:4326 (or no CRS) AND coordinates within WGS84 range; anything
+ * else returns just the type (raw value still shown), since reprojection needs proj4.
+ * WKT axis order is X Y = lon lat; the OSM link swaps them to lat/lon.
+ */
+export function parseWkt(value: string, datatype?: string): WktInfo | null {
+  const m = WKT_TYPE.exec(value)
+  if (!datatype?.endsWith('wktLiteral') && !m) return null
+  const type = (m?.[1] ?? '').toUpperCase()
+
+  const crs = /^\s*<([^>]+)>/.exec(value)?.[1]
+  const isWgs84 = !crs || /CRS84|EPSG[/:0]*4326/i.test(crs)
+  if (!isWgs84) return { type }
+
+  // Average all coordinate tuples (comma-separated; first two numbers = lon lat,
+  // ignoring any Z). Works uniformly for point / line / polygon / multi-*.
+  const body = value.replace(/^\s*<[^>]*>\s*/, '').replace(/^[A-Za-z]+/, '').replace(/[()]/g, ' ')
+  let sumLon = 0, sumLat = 0, n = 0
+  for (const tuple of body.split(',')) {
+    const nums = tuple.trim().match(/-?\d+(?:\.\d+)?/g)
+    if (nums && nums.length >= 2) { sumLon += parseFloat(nums[0]!); sumLat += parseFloat(nums[1]!); n++ }
+  }
+  if (!n) return { type }
+  const lon = sumLon / n, lat = sumLat / n
+  if (lat < -90 || lat > 90 || lon < -180 || lon > 180) return { type } // out of WGS84 range → likely projected coords
+  const zoom = type === 'POINT' ? 13 : 10
+  return { type, lat, lon, mapUrl: `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lon}#map=${zoom}/${lat}/${lon}` }
+}
+
 export type MediaKind = 'image' | 'video' | 'audio'
 const MEDIA_EXT: Record<string, MediaKind> = {
   png: 'image', jpg: 'image', jpeg: 'image', gif: 'image', webp: 'image', avif: 'image', bmp: 'image', svg: 'image',
