@@ -10,7 +10,7 @@
 import { computed, ref } from 'vue'
 import { isNavigableIri, validateURI } from '../../services'
 import { useSettingsStore, useTypeConfigStore } from '../../stores'
-import { qname as toQname, displayPredicate, displayObject, displayType, formatLiteral, mediaKind, type ResolvedMap } from '../../utils/format'
+import { qname as toQname, displayPredicate, displayObject, displayType, formatLiteral, mediaKind, doiId, doiUrl, type ResolvedMap } from '../../utils/format'
 import { moveInOrder, orderedByConfig, sinkAlwaysLast, toggleInList } from '../../utils/propertyOrder'
 import type { PropertyGroup, ResourceObject } from '../../composables'
 
@@ -274,6 +274,9 @@ function isDangling(uri: string): boolean {
     !props.objectTypes?.get(uri)
   )
 }
+
+// DOI resolver link for a value that is a DOI (URI or literal), else null.
+const doiHref = (o: ResourceObject) => { const id = doiId(o.value); return id ? doiUrl(id) : null }
 
 // Media kind for a URI object value, if it's an http(s) media file — for an
 // inline thumbnail. Bound to the validated URL, mirroring ResourceView.
@@ -618,6 +621,9 @@ function graphTitle(o: ResourceObject): string {
                    resource; a link still needs its badge. Grouped lists show the
                    type as the section heading, so no per-row badge there. -->
               <span v-if="row.o.termType === 'uri' && !embedGroups(row.o, group.predicate) && !isGrouped(group.predicate) && objectBadge(row.o.value)" class="tag type-badge">{{ objectBadge(row.o.value) }}</span>
+
+              <!-- DOI resolver badge for a DOI value (URI or literal). -->
+              <a v-if="row.o && doiHref(row.o)" :href="doiHref(row.o)!" target="_blank" rel="noopener" class="tag doi-badge" v-tooltip.top="{ value: 'Open at doi.org', showDelay: 120 }">DOI ↗</a>
 
               <!-- Deprecated flag on a linked resource -->
               <span v-if="row.o.termType === 'uri' && deprecated?.has(row.o.value)" class="deprecated-badge" v-tooltip.top="'Deprecated'">deprecated</span>
@@ -1018,6 +1024,19 @@ function graphTitle(o: ResourceObject): string {
   border: 1px solid var(--ae-border-color);
   background: var(--ae-bg-elevated);
   color: var(--ae-text-secondary);
+}
+
+/* DOI resolver badge — links out to doi.org. */
+.doi-badge {
+  border: 1px solid var(--ae-border-color);
+  background: var(--ae-bg-elevated);
+  color: var(--ae-text-secondary);
+  text-decoration: none;
+  cursor: pointer;
+}
+.doi-badge:hover {
+  color: var(--ae-accent);
+  border-color: var(--ae-accent);
 }
 
 /* Click-through badge on an embedded object → its own resource page. */

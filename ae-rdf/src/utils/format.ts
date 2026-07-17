@@ -68,6 +68,27 @@ export function mediaKind(url: string): MediaKind | null {
   return m ? (MEDIA_EXT[m[1]!.toLowerCase()] ?? null) : null
 }
 
+/**
+ * Extract a bare DOI (`10.5281/zenodo.255473`) from a value in any of its common
+ * shapes — resolver URL (`https://doi.org/…`, `dx.doi.org`), CURIE literal
+ * (`doi:…`), or bare literal — or null if it isn't a DOI. Anchored end-to-end so a
+ * bare `10.x/y` only matches when it's the whole value (avoids false positives).
+ */
+export function doiId(value: string): string | null {
+  const v = value.trim()
+  return (
+    /^https?:\/\/(?:dx\.)?doi\.org\/(10\.\d{4,9}\/\S+)$/i.exec(v)?.[1] ??
+    /^doi:(10\.\d{4,9}\/\S+)$/i.exec(v)?.[1] ??
+    /^(10\.\d{4,9}\/\S+)$/.exec(v)?.[1] ??
+    null
+  )
+}
+
+/** Canonical resolver URL for a bare DOI. */
+export function doiUrl(id: string): string {
+  return `https://doi.org/${id}`
+}
+
 /** Qualified name (`prefix:local`) from a resolution map, falling back to the IRI. */
 export function qname(uri: string, resolved: ResolvedMap): string {
   const r = resolved.get(uri)

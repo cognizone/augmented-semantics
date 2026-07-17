@@ -13,7 +13,7 @@ import ProgressSpinner from 'primevue/progressspinner'
 import { useBrowseStore, useSettingsStore, useTypeConfigStore } from '../../stores'
 import { useResourceView, useIncomingRelations, useClipboard, useDelayedLoading } from '../../composables'
 import { LABEL_PREDICATES, validateURI } from '../../services'
-import { localName as localNameOf, humanizeLocalName, qname as toQname, displayType, mediaKind } from '../../utils/format'
+import { localName as localNameOf, humanizeLocalName, qname as toQname, displayType, mediaKind, doiId, doiUrl } from '../../utils/format'
 import { isAlwaysLast, orderedByConfig, toggleInList } from '../../utils/propertyOrder'
 import { URL_PARAMS } from '../../router'
 import type { PropertyGroup, ResourceObject } from '../../composables'
@@ -57,6 +57,8 @@ const safeHref = computed(() => validateURI(uri.value ?? '') ?? undefined)
 const mediaPreview = computed(() =>
   safeHref.value && /^https?:/i.test(safeHref.value) ? mediaKind(safeHref.value) : null,
 )
+// DOI resolver link when the resource itself is a DOI.
+const doiHref = computed(() => { const id = uri.value ? doiId(uri.value) : null; return id ? doiUrl(id) : null })
 const showGraphs = ref(false)
 
 function toggleIncoming() {
@@ -247,6 +249,7 @@ onUnmounted(() => scrollEl.value?.removeEventListener('scroll', onScroll))
       <!-- URI + copy (left) share a row with graph provenance (right) -->
       <div class="rh-sub-row">
         <a :href="safeHref" target="_blank" rel="noopener" class="resource-uri" v-tooltip.top="{ value: uri, showDelay: 120 }">{{ uri }}</a>
+        <a v-if="doiHref" :href="doiHref" target="_blank" rel="noopener" class="tag doi-badge" v-tooltip.top="{ value: 'Open at doi.org', showDelay: 120 }">DOI ↗</a>
         <button class="copy-btn" aria-label="Copy URI" title="Copy URI" @click="copyToClipboard(uri, 'URI')">
           <span class="material-symbols-outlined">content_copy</span>
         </button>
@@ -395,6 +398,22 @@ onUnmounted(() => scrollEl.value?.removeEventListener('scroll', onScroll))
 /* Graph provenance pushed to the right of the URI row. */
 .rh-sub-row .resource-graphs {
   margin-left: auto;
+}
+
+/* DOI resolver badge on the URI row. */
+.doi-badge {
+  flex: none;
+  padding: 0.05rem 0.35rem;
+  font-size: 0.6875rem;
+  border: 1px solid var(--ae-border-color);
+  border-radius: 4px;
+  background: var(--ae-bg-elevated);
+  color: var(--ae-text-secondary);
+  text-decoration: none;
+}
+.doi-badge:hover {
+  color: var(--ae-accent);
+  border-color: var(--ae-accent);
 }
 
 /* Inline media preview for a resource that is itself a media file. */

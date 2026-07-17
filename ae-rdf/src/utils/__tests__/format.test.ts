@@ -1,5 +1,19 @@
 import { describe, it, expect } from 'vitest'
-import { localName, humanizeLocalName, qname, displayPredicate, displayObject, displayType, guessPrefix, mediaKind } from '../format'
+import { localName, humanizeLocalName, qname, displayPredicate, displayObject, displayType, guessPrefix, mediaKind, doiId } from '../format'
+
+describe('doiId', () => {
+  it('extracts the bare DOI from URL, dx, doi:, and bare forms', () => {
+    expect(doiId('http://dx.doi.org/10.5281/zenodo.255473')).toBe('10.5281/zenodo.255473')
+    expect(doiId('https://doi.org/10.1000/xyz')).toBe('10.1000/xyz')
+    expect(doiId('doi:10.5281/zenodo.255473')).toBe('10.5281/zenodo.255473')
+    expect(doiId('10.5281/zenodo.255473')).toBe('10.5281/zenodo.255473')
+  })
+  it('returns null for non-DOIs', () => {
+    expect(doiId('https://zenodo.org/records/255473')).toBeNull()
+    expect(doiId('see 10.5281/zenodo.255473 for details')).toBeNull() // not the whole value
+    expect(doiId('10.5/x')).toBeNull() // registrant too short
+  })
+})
 
 describe('mediaKind', () => {
   it('detects images, video, audio by extension', () => {
