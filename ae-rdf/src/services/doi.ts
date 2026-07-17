@@ -14,6 +14,7 @@ export interface DoiCitation {
   year: string
   type: string // CSL type, e.g. "graphic", "article-journal"
   container?: string // journal / dataset title
+  publisher?: string
 }
 
 const cache = new Map<string, DoiCitation | null>()
@@ -55,6 +56,7 @@ export async function fetchDoiCitation(id: string): Promise<DoiCitation | null> 
       year: d.issued?.['date-parts']?.[0]?.[0]?.toString() ?? '',
       type: typeof d.type === 'string' ? d.type : '',
       container: (Array.isArray(d['container-title']) ? d['container-title'][0] : d['container-title']) || undefined,
+      publisher: typeof d.publisher === 'string' ? d.publisher : undefined,
     }
     cache.set(id, citation)
     logger.info('DoiService', 'Citation resolved', { id, title: citation.title })

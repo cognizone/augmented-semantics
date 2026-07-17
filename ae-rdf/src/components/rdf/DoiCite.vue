@@ -1,61 +1,62 @@
 <script setup lang="ts">
 /**
- * "cite" toggle next to a DOI badge: on click, lazily fetches the DOI's citation
- * from doi.org (cached) and shows it inline. Rendered only when the `doiCitations`
- * setting is on. Fetch is per-click, so enabling the setting never bulk-fetches.
+ * Citation shown inline under a DOI badge. Rendered only when the `doiCitations`
+ * setting is on; the fetch is deferred until the element scrolls into view
+ * (IntersectionObserver), so a resource citing hundreds of DOIs only fetches the
+ * ones actually looked at. Result is cached per DOI in the service.
  *
  * @see /spec/ae-rdf — DOI value rendering
  */
-import { ref } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { fetchDoiCitation, type DoiCitation } from '../../services'
 
 const props = defineProps<{ id: string }>()
 
-const open = ref(false)
+const el = ref<HTMLElement>()
 const loading = ref(false)
 const failed = ref(false)
 const citation = ref<DoiCitation | null>(null)
+let observer: IntersectionObserver | undefined
 
-async function toggle() {
-  if (open.value) { open.value = false; return }
-  open.value = true
-  if (citation.value || failed.value) return // already resolved (cached in state)
+async function load() {
+  if (loading.value || citation.value || failed.value) return
   loading.value = true
   const c = await fetchDoiCitation(props.id)
   loading.value = false
   if (c) citation.value = c
   else failed.value = true
 }
+
+onMounted(() => {
+  if (!el.value) return
+  observer = new IntersectionObserver((entries) => {
+    if (entries.some((e) => e.isIntersecting)) {
+      observer?.disconnect()
+      void load()
+    }
+  })
+  observer.observe(el.value)
+})
+onBeforeUnmount(() => observer?.disconnect())
 </script>
 
 <template>
-  <span class="doi-cite">
-    <button class="doi-cite-btn" @click.stop="toggle">{{ open ? 'hide' : 'cite' }}</button>
-
-    <span v-if="open && loading" class="doi-cite-card muted">Loading citation…</span>
-    <span v-else-if="open && failed" class="doi-cite-card muted">Citation unavailable</span>
-    <span v-else-if="open && citation" class="doi-cite-card">
+  <span ref="el" class="doi-cite">
+    <span v-if="loading" class="doi-cite-card muted">Loading citation…</span>
+    <span v-else-if="failed" class="doi-cite-card muted">Citation unavailable</span>
+    <span v-else-if="citation" class="doi-cite-card">
       <span v-if="citation.authors" class="ci-auth">{{ citation.authors }}</span><span v-if="citation.year" class="ci-year"> ({{ citation.year }}).</span>
       <span class="ci-title"> {{ citation.title }}</span>
       <span v-if="citation.container" class="ci-cont"> — {{ citation.container }}</span>
-      <span v-if="citation.type" class="tag ci-type">{{ citation.type }}</span>
+      <span v-if="citation.publisher" class="ci-pub"> · {{ citation.publisher }}</span>
+      <span v-if="citation.type" class="ci-type">{{ citation.type }}</span>
     </span>
   </span>
 </template>
 
 <style scoped>
 .doi-cite {
-  display: inline;
-}
-.doi-cite-btn {
-  margin-left: 0.3rem;
-  padding: 0;
-  border: none;
-  background: none;
-  font-size: 0.6875rem;
-  color: var(--ae-accent);
-  cursor: pointer;
-  text-decoration: underline;
+  display: block;
 }
 .doi-cite-card {
   display: block;
@@ -74,7 +75,8 @@ async function toggle() {
 }
 .ci-auth { font-weight: 600; }
 .ci-title { font-style: italic; }
-.ci-cont { color: var(--ae-text-secondary); }
+.ci-cont,
+.ci-pub { color: var(--ae-text-secondary); }
 .ci-type {
   display: inline-block;
   margin-left: 0.4rem;

@@ -11,6 +11,7 @@ const CSL = {
   issued: { 'date-parts': [[2016, 12, 31]] },
   type: 'graphic',
   'container-title': 'Zootaxa',
+  publisher: 'Zenodo',
 }
 
 const mockFetch = (ok: boolean, body?: unknown) =>
@@ -22,7 +23,7 @@ describe('fetchDoiCitation', () => {
 
   it('parses CSL-JSON into a citation, truncating authors past 5 with et al.', async () => {
     const c = await fetchDoiCitation('10.5281/zenodo.a')
-    expect(c).toMatchObject({ title: 'FIGURE 2 in A new species', year: '2016', type: 'graphic', container: 'Zootaxa' })
+    expect(c).toMatchObject({ title: 'FIGURE 2 in A new species', year: '2016', type: 'graphic', container: 'Zootaxa', publisher: 'Zenodo' })
     expect(c!.authors).toBe('Grismer, L.; Wood, P.; Anuar, S.; Davis, H.; Cobos, A. et al.')
   })
 
