@@ -7,10 +7,17 @@
  *
  * @see /spec/ae-rdf — DOI value rendering
  */
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { fetchDoiCitation, type DoiCitation } from '../../services'
 
 const props = defineProps<{ id: string }>()
+
+const CATEGORY_SHOWN = 8
+const catsExpanded = ref(false)
+const shownCategories = computed(() =>
+  catsExpanded.value ? citation.value?.categories ?? [] : (citation.value?.categories ?? []).slice(0, CATEGORY_SHOWN),
+)
+const hiddenCategoryCount = computed(() => Math.max(0, (citation.value?.categories.length ?? 0) - CATEGORY_SHOWN))
 
 const el = ref<HTMLElement>()
 const loading = ref(false)
@@ -51,7 +58,8 @@ onBeforeUnmount(() => observer?.disconnect())
       <span v-if="citation.publisher" class="ci-pub"> · {{ citation.publisher }}</span>
       <span v-if="citation.type" class="ci-type">{{ citation.type }}</span>
       <span v-if="citation.categories.length" class="ci-cats">
-        <span v-for="c in citation.categories" :key="c" class="ci-cat">{{ c }}</span>
+        <span v-for="c in shownCategories" :key="c" class="ci-cat">{{ c }}</span>
+        <button v-if="hiddenCategoryCount && !catsExpanded" class="ci-cat ci-cat-more" @click.stop="catsExpanded = true">+{{ hiddenCategoryCount }} more</button>
       </span>
     </span>
   </span>
@@ -97,11 +105,18 @@ onBeforeUnmount(() => observer?.disconnect())
   margin-top: 0.35rem;
 }
 .ci-cat {
-  padding: 0.02rem 0.35rem;
-  font-size: 0.625rem;
+  padding: 0.05rem 0.45rem;
+  font-size: 0.75rem;
   border-radius: 999px;
   background: var(--ae-bg-page);
   color: var(--ae-text-secondary);
   border: 1px solid var(--ae-border-color);
+}
+.ci-cat-more {
+  cursor: pointer;
+  color: var(--ae-accent);
+}
+.ci-cat-more:hover {
+  border-color: var(--ae-accent);
 }
 </style>

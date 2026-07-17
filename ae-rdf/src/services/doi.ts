@@ -20,7 +20,6 @@ export interface DoiCitation {
 
 const cache = new Map<string, DoiCitation | null>()
 const AUTHOR_CAP = 5
-const CATEGORY_CAP = 8
 
 function formatAuthors(author: unknown): string {
   if (!Array.isArray(author)) return ''
@@ -59,7 +58,7 @@ export async function fetchDoiCitation(id: string): Promise<DoiCitation | null> 
       type: typeof d.type === 'string' ? d.type : '',
       container: (Array.isArray(d['container-title']) ? d['container-title'][0] : d['container-title']) || undefined,
       publisher: typeof d.publisher === 'string' ? d.publisher : undefined,
-      categories: Array.isArray(d.categories) ? d.categories.filter((c: unknown) => typeof c === 'string').slice(0, CATEGORY_CAP) : [],
+      categories: Array.isArray(d.categories) ? d.categories.filter((c: unknown) => typeof c === 'string') : [],
     }
     cache.set(id, citation)
     logger.info('DoiService', 'Citation resolved', { id, title: citation.title })
