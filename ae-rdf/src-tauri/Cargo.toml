@@ -1,6 +1,6 @@
 [package]
 name = "era-rdf-browser"
-version = "0.2.1"
+version = "0.3.0"
 description = "ERA RDF Browser"
 authors = ["Cognizone"]
 license = ""
