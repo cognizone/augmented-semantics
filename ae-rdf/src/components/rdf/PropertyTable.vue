@@ -13,6 +13,7 @@ import { useSettingsStore, useTypeConfigStore } from '../../stores'
 import { qname as toQname, displayPredicate, displayObject, displayType, formatLiteral, mediaKind, doiId, doiUrl, type ResolvedMap } from '../../utils/format'
 import { moveInOrder, orderedByConfig, sinkAlwaysLast, toggleInList } from '../../utils/propertyOrder'
 import type { PropertyGroup, ResourceObject } from '../../composables'
+import DoiCite from './DoiCite.vue'
 
 const props = defineProps<{
   groups: PropertyGroup[]
@@ -275,8 +276,8 @@ function isDangling(uri: string): boolean {
   )
 }
 
-// DOI resolver link for a value that is a DOI (URI or literal), else null.
-const doiHref = (o: ResourceObject) => { const id = doiId(o.value); return id ? doiUrl(id) : null }
+// Bare DOI for a value that is a DOI (URI or literal), else null.
+const doiOf = (o: ResourceObject) => doiId(o.value)
 
 // Media kind for a URI object value, if it's an http(s) media file — for an
 // inline thumbnail. Bound to the validated URL, mirroring ResourceView.
@@ -622,8 +623,12 @@ function graphTitle(o: ResourceObject): string {
                    type as the section heading, so no per-row badge there. -->
               <span v-if="row.o.termType === 'uri' && !embedGroups(row.o, group.predicate) && !isGrouped(group.predicate) && objectBadge(row.o.value)" class="tag type-badge">{{ objectBadge(row.o.value) }}</span>
 
-              <!-- DOI resolver badge for a DOI value (URI or literal). -->
-              <a v-if="row.o && doiHref(row.o)" :href="doiHref(row.o)!" target="_blank" rel="noopener" class="tag doi-badge" v-tooltip.top="{ value: 'Open at doi.org', showDelay: 120 }">DOI ↗</a>
+              <!-- DOI resolver badge for a DOI value (URI or literal), + optional
+                   citation (setting-gated, lazy fetch on click). -->
+              <template v-if="row.o && doiOf(row.o)">
+                <a :href="doiUrl(doiOf(row.o)!)" target="_blank" rel="noopener" class="tag doi-badge" v-tooltip.top="{ value: 'Open at doi.org', showDelay: 120 }">DOI ↗</a>
+                <DoiCite v-if="settings.doiCitations" :id="doiOf(row.o)!" />
+              </template>
 
               <!-- Deprecated flag on a linked resource -->
               <span v-if="row.o.termType === 'uri' && deprecated?.has(row.o.value)" class="deprecated-badge" v-tooltip.top="'Deprecated'">deprecated</span>

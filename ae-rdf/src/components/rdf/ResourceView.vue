@@ -18,6 +18,7 @@ import { isAlwaysLast, orderedByConfig, toggleInList } from '../../utils/propert
 import { URL_PARAMS } from '../../router'
 import type { PropertyGroup, ResourceObject } from '../../composables'
 import PropertyTable from './PropertyTable.vue'
+import DoiCite from './DoiCite.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -57,8 +58,8 @@ const safeHref = computed(() => validateURI(uri.value ?? '') ?? undefined)
 const mediaPreview = computed(() =>
   safeHref.value && /^https?:/i.test(safeHref.value) ? mediaKind(safeHref.value) : null,
 )
-// DOI resolver link when the resource itself is a DOI.
-const doiHref = computed(() => { const id = uri.value ? doiId(uri.value) : null; return id ? doiUrl(id) : null })
+// Bare DOI when the resource itself is a DOI.
+const resourceDoi = computed(() => (uri.value ? doiId(uri.value) : null))
 const showGraphs = ref(false)
 
 function toggleIncoming() {
@@ -249,7 +250,10 @@ onUnmounted(() => scrollEl.value?.removeEventListener('scroll', onScroll))
       <!-- URI + copy (left) share a row with graph provenance (right) -->
       <div class="rh-sub-row">
         <a :href="safeHref" target="_blank" rel="noopener" class="resource-uri" v-tooltip.top="{ value: uri, showDelay: 120 }">{{ uri }}</a>
-        <a v-if="doiHref" :href="doiHref" target="_blank" rel="noopener" class="tag doi-badge" v-tooltip.top="{ value: 'Open at doi.org', showDelay: 120 }">DOI ↗</a>
+        <template v-if="resourceDoi">
+          <a :href="doiUrl(resourceDoi)" target="_blank" rel="noopener" class="tag doi-badge" v-tooltip.top="{ value: 'Open at doi.org', showDelay: 120 }">DOI ↗</a>
+          <DoiCite v-if="settings.doiCitations" :id="resourceDoi" />
+        </template>
         <button class="copy-btn" aria-label="Copy URI" title="Copy URI" @click="copyToClipboard(uri, 'URI')">
           <span class="material-symbols-outlined">content_copy</span>
         </button>

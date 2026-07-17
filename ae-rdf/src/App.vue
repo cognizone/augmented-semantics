@@ -253,6 +253,11 @@ onUnmounted(() => {
         </label>
 
         <label class="checkbox-label">
+          <Checkbox v-model="settingsStore.doiCitations" :binary="true" />
+          <span class="checkbox-text">DOI citations<small>Fetch citation metadata (title, authors, year) from doi.org for DOI values — an external request per DOI, on demand. Off by default.</small></span>
+        </label>
+
+        <label class="checkbox-label">
           <Checkbox v-model="settingsStore.editMode" :binary="true" />
           <span class="checkbox-text">Config authoring mode<small>Show per-type gears and the export button — works even on a deployed config, so you can tweak and re-export</small></span>
         </label>

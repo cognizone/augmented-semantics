@@ -16,6 +16,7 @@ export interface AppSettings {
   editMode: boolean // config authoring mode: reveals per-type gears + export
   showHidden: boolean // reveal fields hidden by per-type config (greyed), without editing
   groupsCollapsed: boolean // default-collapse named sidebar groups (Ontology, custom groups)
+  doiCitations: boolean // fetch citation metadata from doi.org for DOI values (external call, opt-in)
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -24,6 +25,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   editMode: false,
   showHidden: false,
   groupsCollapsed: true,
+  doiCitations: false,
 }
 
 export const useSettingsStore = defineStore('settings', () => {
@@ -32,6 +34,7 @@ export const useSettingsStore = defineStore('settings', () => {
   const editMode = ref(DEFAULT_SETTINGS.editMode)
   const showHidden = ref(DEFAULT_SETTINGS.showHidden)
   const groupsCollapsed = ref(DEFAULT_SETTINGS.groupsCollapsed)
+  const doiCitations = ref(DEFAULT_SETTINGS.doiCitations)
 
   function applyDarkMode(isDark: boolean) {
     document.documentElement.classList.toggle('dark-mode', isDark)
@@ -50,6 +53,7 @@ export const useSettingsStore = defineStore('settings', () => {
       if (s.editMode !== undefined) editMode.value = s.editMode
       if (s.showHidden !== undefined) showHidden.value = s.showHidden
       if (s.groupsCollapsed !== undefined) groupsCollapsed.value = s.groupsCollapsed
+      if (s.doiCitations !== undefined) doiCitations.value = s.doiCitations
     } catch (e) {
       logger.error('SettingsStore', 'Failed to load settings', { error: e })
     }
@@ -57,7 +61,7 @@ export const useSettingsStore = defineStore('settings', () => {
 
   function saveSettings() {
     try {
-      const settings: AppSettings = { darkMode: darkMode.value, uriDisplay: uriDisplay.value, editMode: editMode.value, showHidden: showHidden.value, groupsCollapsed: groupsCollapsed.value }
+      const settings: AppSettings = { darkMode: darkMode.value, uriDisplay: uriDisplay.value, editMode: editMode.value, showHidden: showHidden.value, groupsCollapsed: groupsCollapsed.value, doiCitations: doiCitations.value }
       localStorage.setItem(STORAGE_KEY, JSON.stringify(settings))
     } catch (e) {
       logger.error('SettingsStore', 'Failed to save settings', { error: e })
@@ -77,8 +81,9 @@ export const useSettingsStore = defineStore('settings', () => {
   watch(editMode, () => saveSettings())
   watch(showHidden, () => saveSettings())
   watch(groupsCollapsed, () => saveSettings())
+  watch(doiCitations, () => saveSettings())
 
   loadSettings()
 
-  return { darkMode, uriDisplay, editMode, showHidden, groupsCollapsed, setDarkMode }
+  return { darkMode, uriDisplay, editMode, showHidden, groupsCollapsed, doiCitations, setDarkMode }
 })
