@@ -1026,17 +1026,20 @@ function graphTitle(o: ResourceObject): string {
   color: var(--ae-text-secondary);
 }
 
-/* DOI resolver badge — links out to doi.org. */
+/* DOI resolver badge — links out to doi.org. Filled DOI-blue so it stands out
+   from the neutral outline tags (type/graph/lang) around it. */
 .doi-badge {
-  border: 1px solid var(--ae-border-color);
-  background: var(--ae-bg-elevated);
-  color: var(--ae-text-secondary);
+  border: 1px solid #234fa2;
+  background: #234fa2;
+  color: #fff;
+  font-weight: 600;
+  letter-spacing: 0.02em;
   text-decoration: none;
   cursor: pointer;
 }
 .doi-badge:hover {
-  color: var(--ae-accent);
-  border-color: var(--ae-accent);
+  background: #2c62c9;
+  border-color: #2c62c9;
 }
 
 /* Click-through badge on an embedded object → its own resource page. */

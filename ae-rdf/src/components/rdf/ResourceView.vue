@@ -400,20 +400,22 @@ onUnmounted(() => scrollEl.value?.removeEventListener('scroll', onScroll))
   margin-left: auto;
 }
 
-/* DOI resolver badge on the URI row. */
+/* DOI resolver badge on the URI row — filled DOI-blue to stand out. */
 .doi-badge {
   flex: none;
-  padding: 0.05rem 0.35rem;
+  padding: 0.05rem 0.4rem;
   font-size: 0.6875rem;
-  border: 1px solid var(--ae-border-color);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  border: 1px solid #234fa2;
   border-radius: 4px;
-  background: var(--ae-bg-elevated);
-  color: var(--ae-text-secondary);
+  background: #234fa2;
+  color: #fff;
   text-decoration: none;
 }
 .doi-badge:hover {
-  color: var(--ae-accent);
-  border-color: var(--ae-accent);
+  background: #2c62c9;
+  border-color: #2c62c9;
 }
 
 /* Inline media preview for a resource that is itself a media file. */
