@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { localName, humanizeLocalName, qname, displayPredicate, displayObject, displayType, guessPrefix, mediaKind, doiId, parseWkt } from '../format'
+import { localName, humanizeLocalName, qname, displayPredicate, displayObject, displayType, guessPrefix, mediaKind, doiId, parseWkt, wktToGeoJson } from '../format'
 
 const WKT = 'http://www.opengis.net/ont/geosparql#wktLiteral'
 
@@ -22,6 +22,18 @@ describe('parseWkt', () => {
   it('detects WKT by datatype or by text, null otherwise', () => {
     expect(parseWkt('LINESTRING(1 2, 3 4)')?.type).toBe('LINESTRING') // no datatype, pattern match
     expect(parseWkt('just a string', WKT === 'x' ? WKT : undefined)).toBeNull()
+  })
+})
+
+describe('wktToGeoJson', () => {
+  it('converts point / linestring / polygon to GeoJSON (lon lat preserved)', () => {
+    expect(wktToGeoJson('POINT(9.02 47.68)', WKT)).toEqual({ type: 'Point', coordinates: [9.02, 47.68] })
+    expect(wktToGeoJson('LINESTRING(1 2, 3 4)', WKT)).toEqual({ type: 'LineString', coordinates: [[1, 2], [3, 4]] })
+    expect(wktToGeoJson('POLYGON((0 0, 0 1, 1 1, 0 0))', WKT)).toEqual({ type: 'Polygon', coordinates: [[[0, 0], [0, 1], [1, 1], [0, 0]]] })
+  })
+  it('returns null for non-WGS84 / non-WKT', () => {
+    expect(wktToGeoJson('<http://www.opengis.net/def/crs/EPSG/0/2056> POINT(2600000 1200000)', WKT)).toBeNull()
+    expect(wktToGeoJson('nope')).toBeNull()
   })
 })
 

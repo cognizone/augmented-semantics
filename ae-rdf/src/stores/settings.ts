@@ -17,6 +17,7 @@ export interface AppSettings {
   showHidden: boolean // reveal fields hidden by per-type config (greyed), without editing
   groupsCollapsed: boolean // default-collapse named sidebar groups (Ontology, custom groups)
   doiCitations: boolean // fetch citation metadata from doi.org for DOI values (external call, opt-in)
+  wktMaps: boolean // render an embedded map for WKT geometry values (external tiles, opt-in)
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -26,6 +27,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   showHidden: false,
   groupsCollapsed: true,
   doiCitations: false,
+  wktMaps: false,
 }
 
 export const useSettingsStore = defineStore('settings', () => {
@@ -35,6 +37,7 @@ export const useSettingsStore = defineStore('settings', () => {
   const showHidden = ref(DEFAULT_SETTINGS.showHidden)
   const groupsCollapsed = ref(DEFAULT_SETTINGS.groupsCollapsed)
   const doiCitations = ref(DEFAULT_SETTINGS.doiCitations)
+  const wktMaps = ref(DEFAULT_SETTINGS.wktMaps)
 
   function applyDarkMode(isDark: boolean) {
     document.documentElement.classList.toggle('dark-mode', isDark)
@@ -54,6 +57,7 @@ export const useSettingsStore = defineStore('settings', () => {
       if (s.showHidden !== undefined) showHidden.value = s.showHidden
       if (s.groupsCollapsed !== undefined) groupsCollapsed.value = s.groupsCollapsed
       if (s.doiCitations !== undefined) doiCitations.value = s.doiCitations
+      if (s.wktMaps !== undefined) wktMaps.value = s.wktMaps
     } catch (e) {
       logger.error('SettingsStore', 'Failed to load settings', { error: e })
     }
@@ -61,7 +65,7 @@ export const useSettingsStore = defineStore('settings', () => {
 
   function saveSettings() {
     try {
-      const settings: AppSettings = { darkMode: darkMode.value, uriDisplay: uriDisplay.value, editMode: editMode.value, showHidden: showHidden.value, groupsCollapsed: groupsCollapsed.value, doiCitations: doiCitations.value }
+      const settings: AppSettings = { darkMode: darkMode.value, uriDisplay: uriDisplay.value, editMode: editMode.value, showHidden: showHidden.value, groupsCollapsed: groupsCollapsed.value, doiCitations: doiCitations.value, wktMaps: wktMaps.value }
       localStorage.setItem(STORAGE_KEY, JSON.stringify(settings))
     } catch (e) {
       logger.error('SettingsStore', 'Failed to save settings', { error: e })
@@ -82,8 +86,9 @@ export const useSettingsStore = defineStore('settings', () => {
   watch(showHidden, () => saveSettings())
   watch(groupsCollapsed, () => saveSettings())
   watch(doiCitations, () => saveSettings())
+  watch(wktMaps, () => saveSettings())
 
   loadSettings()
 
-  return { darkMode, uriDisplay, editMode, showHidden, groupsCollapsed, doiCitations, setDarkMode }
+  return { darkMode, uriDisplay, editMode, showHidden, groupsCollapsed, doiCitations, wktMaps, setDarkMode }
 })

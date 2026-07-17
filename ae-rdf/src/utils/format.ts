@@ -94,6 +94,60 @@ export function parseWkt(value: string, datatype?: string): WktInfo | null {
   return { type, lat, lon, mapUrl: `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lon}#map=${zoom}/${lat}/${lon}` }
 }
 
+/**
+ * Convert a WGS84 WKT geometry literal to a GeoJSON geometry (Leaflet consumes
+ * GeoJSON directly). Supports POINT / LINESTRING / POLYGON and their MULTI*
+ * forms. Returns null for non-WKT, an unsupported type, or a non-WGS84 CRS —
+ * GeoJSON is defined in lon/lat (CRS84), so projected coords can't be plotted
+ * without reprojection (proj4). WKT axis order is already lon lat, matching GeoJSON.
+ */
+export function wktToGeoJson(value: string, datatype?: string): GeoJsonGeometry | null {
+  const info = parseWkt(value, datatype)
+  if (!info || info.lat === undefined) return null // not WKT, or non-WGS84/out-of-range
+  const body = value.replace(/^\s*<[^>]*>\s*/, '')
+  const m = /^\s*([A-Za-z]+)\s*(.*)$/s.exec(body)
+  if (!m) return null
+  const type = m[1]!.toUpperCase()
+  const coords = m[2]! // includes surrounding parens
+
+  // Parse a flat "lon lat[, lon lat …]" list into [[lon,lat], …].
+  const pts = (s: string): number[][] =>
+    s.split(',').map((t) => {
+      const n = t.trim().match(/-?\d+(?:\.\d+)?/g)
+      return n && n.length >= 2 ? [parseFloat(n[0]!), parseFloat(n[1]!)] : []
+    }).filter((p) => p.length === 2)
+  // Split nested "(…)(…)" groups at depth 1 (rings / sub-geometries).
+  const groups = (s: string): string[] => {
+    const out: string[] = []
+    let depth = 0, start = -1
+    for (let i = 0; i < s.length; i++) {
+      if (s[i] === '(') { if (depth === 0) start = i + 1; depth++ }
+      else if (s[i] === ')') { depth--; if (depth === 0 && start >= 0) out.push(s.slice(start, i)) }
+    }
+    return out
+  }
+  const inner = coords.replace(/^\s*\(|\)\s*$/g, '') // strip one outer paren layer
+
+  try {
+    switch (type) {
+      case 'POINT': { const [p] = pts(inner); return p ? { type: 'Point', coordinates: p } : null }
+      case 'LINESTRING': return { type: 'LineString', coordinates: pts(inner) }
+      case 'POLYGON': return { type: 'Polygon', coordinates: groups(coords).map(pts) }
+      case 'MULTIPOINT': return { type: 'MultiPoint', coordinates: pts(inner) }
+      case 'MULTILINESTRING': return { type: 'MultiLineString', coordinates: groups(coords).map(pts) }
+      case 'MULTIPOLYGON': return { type: 'MultiPolygon', coordinates: groups(coords).map((poly) => groups(poly).map(pts)) }
+      default: return null
+    }
+  } catch {
+    return null
+  }
+}
+
+export interface GeoJsonGeometry {
+  type: 'Point' | 'LineString' | 'Polygon' | 'MultiPoint' | 'MultiLineString' | 'MultiPolygon'
+  coordinates: unknown
+}
+
 export type MediaKind = 'image' | 'video' | 'audio'
 const MEDIA_EXT: Record<string, MediaKind> = {
   png: 'image', jpg: 'image', jpeg: 'image', gif: 'image', webp: 'image', avif: 'image', bmp: 'image', svg: 'image',

@@ -14,6 +14,7 @@ import { qname as toQname, displayPredicate, displayObject, displayType, formatL
 import { moveInOrder, orderedByConfig, sinkAlwaysLast, toggleInList } from '../../utils/propertyOrder'
 import type { PropertyGroup, ResourceObject } from '../../composables'
 import DoiCite from './DoiCite.vue'
+import GeoMap from './GeoMap.vue'
 
 const props = defineProps<{
   groups: PropertyGroup[]
@@ -663,6 +664,9 @@ function graphTitle(o: ResourceObject): string {
                 <video v-else-if="mediaKindOf(row.o) === 'video'" :src="mediaSrc(row.o)!" controls preload="metadata" />
                 <audio v-else-if="mediaKindOf(row.o) === 'audio'" :src="mediaSrc(row.o)!" controls preload="metadata" />
               </div>
+
+              <!-- Embedded map for a WGS84 WKT geometry (setting-gated, lazy). -->
+              <GeoMap v-if="row.o && settings.wktMaps && wktOf(row.o)?.lat !== undefined" :value="row.o.value" :datatype="row.o.datatype" />
             </div>
           </template>
           </div>

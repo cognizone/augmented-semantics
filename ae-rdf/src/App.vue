@@ -259,6 +259,11 @@ onUnmounted(() => {
         </label>
 
         <label class="checkbox-label">
+          <Checkbox v-model="settingsStore.wktMaps" :binary="true" />
+          <span class="checkbox-text">Geometry maps<small>Show an embedded map (Leaflet + swisstopo tiles) for WGS84 WKT geometry values — loads map tiles from geo.admin.ch on demand. Off by default.</small></span>
+        </label>
+
+        <label class="checkbox-label">
           <Checkbox v-model="settingsStore.editMode" :binary="true" />
           <span class="checkbox-text">Config authoring mode<small>Show per-type gears and the export button — works even on a deployed config, so you can tweak and re-export</small></span>
         </label>
