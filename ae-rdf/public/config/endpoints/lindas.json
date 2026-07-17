@@ -129675,7 +129675,9 @@
       "group": "Plazi Treatment"
     },
     "http://schema.org/PostalAddress": {
-      "group": "schema.org"
+      "group": "schema.org",
+      "render": "embed",
+      "embedVia": "http://schema.org/address"
     },
     "http://schema.org/Organization": {
       "group": "schema.org"
@@ -129684,7 +129686,9 @@
       "group": "schema.ld.admin.ch"
     },
     "http://www.w3.org/ns/locn#Address": {
-      "group": "Location (LOCN)"
+      "group": "Location (LOCN)",
+      "render": "embed",
+      "embedVia": "http://schema.org/address"
     },
     "https://lod.opentransportdata.swiss/vocab/Relation": {
       "group": "lod.opentransportdata.swiss / vocab"
@@ -129735,7 +129739,8 @@
       "group": "schema.org"
     },
     "http://schema.org/QuantitativeValue": {
-      "group": "schema.org"
+      "group": "schema.org",
+      "render": "embed"
     },
     "https://version.link/Deprecated": {
       "group": "version.link"
@@ -129765,7 +129770,8 @@
       "group": "schema.org"
     },
     "http://www.w3.org/2006/time#Instant": {
-      "group": "Time"
+      "group": "Time",
+      "render": "embed"
     },
     "https://schema.ld.admin.ch/Abbreviation": {
       "group": "schema.ld.admin.ch"
@@ -129777,22 +129783,23 @@
       "group": "Records in Contexts (RiC)"
     },
     "http://www.w3.org/1999/02/22-rdf-syntax-ns#List": {
-      "group": "RDF"
+      "group": "Ontology"
     },
     "https://agriculture.ld.admin.ch/plant-protection/Indication": {
       "group": "agriculture / plant-protection"
     },
     "http://www.w3.org/2002/07/owl#NamedIndividual": {
-      "group": "OWL"
+      "group": "Ontology"
     },
     "http://www.w3.org/2002/07/owl#Thing": {
-      "group": "OWL"
+      "group": "Ontology"
     },
     "https://cube.link/KeyDimension": {
       "group": "Cube"
     },
     "http://www.w3.org/2006/time#Interval": {
-      "group": "Time"
+      "group": "Time",
+      "render": "embed"
     },
     "https://lod.opentransportdata.swiss/vocab/Tarifwertpreisauspraegung": {
       "group": "lod.opentransportdata.swiss / vocab"
@@ -129807,7 +129814,8 @@
       "group": "schema.ld.admin.ch"
     },
     "http://www.w3.org/2006/time#ProperInterval": {
-      "group": "Time"
+      "group": "Time",
+      "render": "embed"
     },
     "http://qudt.org/schema/qudt/FactorUnit": {
       "group": "QUDT"
@@ -129879,7 +129887,7 @@
       "group": "schema.ld.admin.ch"
     },
     "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property": {
-      "group": "RDF"
+      "group": "Ontology"
     },
     "http://www.w3.org/ns/dcat#Dataset": {
       "group": "DCAT"
@@ -129906,7 +129914,9 @@
       "group": "Cube"
     },
     "http://schema.org/ContactPoint": {
-      "group": "schema.org"
+      "group": "schema.org",
+      "render": "embed",
+      "embedVia": "http://schema.org/contactPoint"
     },
     "http://rdfs.org/ns/void#Dataset": {
       "group": "VoID"
@@ -129939,10 +129949,10 @@
       "group": "agriculture / plant-protection"
     },
     "http://www.w3.org/2002/07/owl#Class": {
-      "group": "OWL"
+      "group": "Ontology"
     },
     "http://www.w3.org/2000/01/rdf-schema#Class": {
-      "group": "RDFS"
+      "group": "Ontology"
     },
     "https://ch.paf.link/ParliamentaryAffairIdentifierEntity": {
       "group": "paf.link"
@@ -129981,7 +129991,8 @@
       "group": "lod.opentransportdata.swiss / vocab"
     },
     "http://schema.org/GeoShape": {
-      "group": "schema.org"
+      "group": "schema.org",
+      "render": "embed"
     },
     "https://ch.paf.link/ProceduralRequestProposalActivity": {
       "group": "paf.link"
@@ -129999,7 +130010,7 @@
       "group": "agriculture / plant-protection"
     },
     "http://www.w3.org/2002/07/owl#ObjectProperty": {
-      "group": "OWL"
+      "group": "Ontology"
     },
     "https://agriculture.ld.admin.ch/plant-protection/ParallelImport": {
       "group": "agriculture / plant-protection"
@@ -130011,7 +130022,7 @@
       "group": "agriculture / plant-protection"
     },
     "http://www.w3.org/2002/07/owl#Restriction": {
-      "group": "OWL"
+      "group": "Ontology"
     },
     "https://ch.paf.link/ProceduralRequestConnex": {
       "group": "paf.link"
@@ -130020,7 +130031,7 @@
       "group": "agriculture / plant-protection"
     },
     "http://www.w3.org/ns/hydra/core#Resource": {
-      "group": "DCAT"
+      "group": "Ontology"
     },
     "https://cube-creator.zazuko.com/shared-dimensions/vocab#SharedDimensionTerm": {
       "group": "Shared Dimensions"
@@ -130059,7 +130070,8 @@
       "group": "QUDT"
     },
     "http://qudt.org/schema/qudt/ConstantValue": {
-      "group": "QUDT"
+      "group": "QUDT",
+      "render": "embed"
     },
     "http://schema.org/AdministrativeArea": {
       "group": "schema.org"
@@ -130098,7 +130110,8 @@
       "group": "schema.ld.admin.ch"
     },
     "http://qudt.org/schema/qudt/QuantityKindDimensionVector": {
-      "group": "QUDT"
+      "group": "QUDT",
+      "render": "embed"
     },
     "https://agriculture.ld.admin.ch/foag/ProductSubgroup": {
       "group": "agriculture / foag"
@@ -130113,16 +130126,19 @@
       "group": "schema.ld.admin.ch"
     },
     "http://qudt.org/schema/qudt/QuantityKindDimensionVector_SI": {
-      "group": "QUDT"
+      "group": "QUDT",
+      "render": "embed"
     },
     "http://qudt.org/schema/qudt/QuantityKindDimensionVector_ISO": {
-      "group": "QUDT"
+      "group": "QUDT",
+      "render": "embed"
     },
     "http://qudt.org/schema/qudt/QuantityKindDimensionVector_Imperial": {
-      "group": "QUDT"
+      "group": "QUDT",
+      "render": "embed"
     },
     "http://www.w3.org/2002/07/owl#DatatypeProperty": {
-      "group": "OWL"
+      "group": "Ontology"
     },
     "http://schema.org/ParliamentaryCommittee": {
       "group": "schema.org"
@@ -130134,7 +130150,7 @@
       "group": "schema.ld.admin.ch"
     },
     "http://www.w3.org/2002/07/owl#AnnotationProperty": {
-      "group": "OWL"
+      "group": "Ontology"
     },
     "https://lod.opentransportdata.swiss/vocab/Anwendungsbereich": {
       "group": "lod.opentransportdata.swiss / vocab"
@@ -130173,10 +130189,11 @@
       "group": "schema.ld.admin.ch"
     },
     "http://www.w3.org/2002/07/owl#FunctionalProperty": {
-      "group": "OWL"
+      "group": "Ontology"
     },
     "http://qudt.org/schema/qudt/QuantityKindDimensionVector_CGS": {
-      "group": "QUDT"
+      "group": "QUDT",
+      "render": "embed"
     },
     "https://cube.link/meta/SharedDimension": {
       "group": "Cube"
@@ -130248,7 +130265,7 @@
       "group": "agriculture / crops"
     },
     "http://www.w3.org/2000/01/rdf-schema#Datatype": {
-      "group": "RDFS"
+      "group": "Ontology"
     },
     "https://agriculture.ld.admin.ch/plant-protection/WAA": {
       "group": "agriculture / plant-protection"
@@ -130284,7 +130301,7 @@
       "group": "lod.opentransportdata.swiss / vocab"
     },
     "http://www.w3.org/2002/07/owl#Ontology": {
-      "group": "OWL"
+      "group": "Ontology"
     },
     "https://agriculture.ld.admin.ch/plant-protection/STP": {
       "group": "agriculture / plant-protection"
@@ -130293,7 +130310,7 @@
       "group": "QUDT"
     },
     "http://www.w3.org/2002/07/owl#AllDisjointClasses": {
-      "group": "OWL"
+      "group": "Ontology"
     },
     "http://schema.org/ParliamentaryGroup": {
       "group": "schema.org"
@@ -130317,7 +130334,8 @@
       "group": "DCAT"
     },
     "http://schema.org/GeoCoordinates": {
-      "group": "schema.org"
+      "group": "schema.org",
+      "render": "embed"
     },
     "https://agriculture.ld.admin.ch/foag/ProductOrigin": {
       "group": "agriculture / foag"
@@ -130410,7 +130428,7 @@
       "group": "schema.org"
     },
     "http://www.w3.org/2002/07/owl#SymmetricProperty": {
-      "group": "OWL"
+      "group": "Ontology"
     },
     "https://schema.ld.admin.ch/LegislaturePeriod": {
       "group": "schema.ld.admin.ch"
@@ -130419,7 +130437,7 @@
       "group": "environment / foen / nfi / ClassificationUnit"
     },
     "http://www.w3.org/2002/07/owl#DeprecatedClass": {
-      "group": "OWL"
+      "group": "Ontology"
     },
     "https://cube-creator.zazuko.com/shared-dimensions/vocab#Hierarchy": {
       "group": "Shared Dimensions"
@@ -130776,10 +130794,11 @@
       "group": "agriculture / plant-protection"
     },
     "http://www.w3.org/2002/07/owl#Axiom": {
-      "group": "OWL"
+      "group": "Ontology"
     },
     "http://www.w3.org/2006/time#TemporalUnit": {
-      "group": "Time"
+      "group": "Time",
+      "render": "label"
     },
     "https://agriculture.ld.admin.ch/foag/Currency": {
       "group": "agriculture / foag"
@@ -131025,7 +131044,7 @@
       "group": "agriculture / plant-protection"
     },
     "http://www.w3.org/2002/07/owl#TransitiveProperty": {
-      "group": "OWL"
+      "group": "Ontology"
     },
     "https://ch.paf.link/ProceduralRequestReportActivity": {
       "group": "paf.link"
@@ -131124,7 +131143,8 @@
       "group": "environment / foen / nfi / ClassificationUnit"
     },
     "http://www.w3.org/2006/time#DurationDescription": {
-      "group": "Time"
+      "group": "Time",
+      "render": "embed"
     },
     "http://schema.org/EventStatusType": {
       "group": "schema.org"
@@ -131568,7 +131588,7 @@
       "group": "schema.org"
     },
     "http://www.w3.org/2002/07/owl#DeprecatedProperty": {
-      "group": "OWL"
+      "group": "Ontology"
     },
     "http://schema.org/SizeSystemEnumeration": {
       "group": "schema.org"
@@ -131616,7 +131636,7 @@
       "group": "HTTP"
     },
     "http://www.w3.org/2002/07/owl#FunctionalDataProperty": {
-      "group": "OWL"
+      "group": "Ontology"
     },
     "https://environment.ld.admin.ch/foen/nfi/InventoryRegion": {
       "group": "environment / foen / nfi"
@@ -131625,7 +131645,7 @@
       "group": "environment / foen / nfi"
     },
     "http://www.w3.org/2000/01/rdf-schema#Property": {
-      "group": "RDFS"
+      "group": "Ontology"
     },
     "https://schema.org/Consortium": {
       "group": "schema.org"
@@ -131643,7 +131663,7 @@
       "group": "QUDT"
     },
     "http://www.w3.org/2002/07/owl#InverseFunctionalProperty": {
-      "group": "OWL"
+      "group": "Ontology"
     },
     "http://qudt.org/schema/qudt/ParameterModifiabilityType": {
       "group": "QUDT"
@@ -131666,5 +131686,70 @@
     "http://www.w3.org/ns/shacl#SPARQLConstraint": {
       "group": "SHACL"
     }
+  },
+  "extraLabelPredicates": [
+    "http://xmlns.com/foaf/0.1/name",
+    "http://schema.org/name"
+  ],
+  "prefixes": {
+    "71": "https://ld.admin.ch/ech/71/",
+    "example": "http://example.com/",
+    "example2": "http://example.org/",
+    "dwcFP": "http://filteredpush.org/ontologies/oa/dwcFP#",
+    "trt": "http://plazi.org/vocab/treatment#",
+    "euvoc": "http://publications.europa.eu/ontology/euvoc#",
+    "dcmitype": "http://purl.org/dc/dcmitype/",
+    "dct": "http://purl.org/dc/terms/",
+    "qb": "http://purl.org/linked-data/cube#",
+    "service": "http://purl.org/ontology/service#",
+    "fabio": "http://purl.org/spar/fabio/",
+    "voaf": "http://purl.org/vocommons/voaf#",
+    "qudt": "http://qudt.org/schema/qudt/",
+    "xkos": "http://rdf-vocabulary.ddialliance.org/xkos#",
+    "void": "http://rdfs.org/ns/void#",
+    "dwc": "http://rs.tdwg.org/dwc/terms/",
+    "schema": "http://schema.org/",
+    "vocab": "http://vocab.gtfs.org/terms#",
+    "vaem": "http://www.linkedmodel.org/schema/vaem#",
+    "geosparql": "http://www.opengis.net/ont/geosparql#",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "owl": "http://www.w3.org/2002/07/owl#",
+    "skos": "http://www.w3.org/2004/02/skos/core#",
+    "http": "http://www.w3.org/2006/http#",
+    "time": "http://www.w3.org/2006/time#",
+    "vcard": "http://www.w3.org/2006/vcard/ns#",
+    "content": "http://www.w3.org/2011/content#",
+    "dcat": "http://www.w3.org/ns/dcat#",
+    "hydra": "http://www.w3.org/ns/hydra/core#",
+    "locn": "http://www.w3.org/ns/locn#",
+    "prov": "http://www.w3.org/ns/prov#",
+    "sh": "http://www.w3.org/ns/shacl#",
+    "shacl": "http://www.w3.org/shacl#",
+    "foaf": "http://xmlns.com/foaf/0.1/",
+    "crops": "https://agriculture.ld.admin.ch/crops/",
+    "foag": "https://agriculture.ld.admin.ch/foag/",
+    "inspection": "https://agriculture.ld.admin.ch/inspection/",
+    "plantprotect": "https://agriculture.ld.admin.ch/plant-protection/",
+    "systemmap": "https://agriculture.ld.admin.ch/system-map/",
+    "paf": "https://ch.paf.link/",
+    "sh-dim": "https://cube-creator.zazuko.com/shared-dimensions/vocab#",
+    "cube": "https://cube.link/",
+    "meta": "https://cube.link/meta/",
+    "relation": "https://cube.link/relation/",
+    "spex": "https://described.at/spex/",
+    "gefahrenwald": "https://environment.ld.admin.ch/foen/gefahren-waldbrand/",
+    "nfi": "https://environment.ld.admin.ch/foen/nfi/",
+    "cu": "https://environment.ld.admin.ch/foen/nfi/ClassificationUnit/",
+    "grid": "https://environment.ld.admin.ch/foen/nfi/Grid/",
+    "uoe": "https://environment.ld.admin.ch/foen/nfi/UnitOfEvaluation/",
+    "uor": "https://environment.ld.admin.ch/foen/nfi/UnitOfReference/",
+    "lod": "https://lod.opentransportdata.swiss/vocab/",
+    "termdat": "https://register.ld.admin.ch/termdat/",
+    "schema2": "https://schema.ld.admin.ch/",
+    "schema3": "https://schema.org/",
+    "vl": "https://version.link/",
+    "ric": "https://www.ica.org/standards/RiC/ontology#",
+    "oa": "https://www.w3.org/ns/oa#"
   }
 }

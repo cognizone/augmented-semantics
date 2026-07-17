@@ -13,6 +13,61 @@ export function localName(uri: string): string {
   return seg || uri
 }
 
+// Path segments too generic to make a useful prefix — skip them when guessing.
+const GENERIC_NS_SEG = new Set([
+  'terms', 'term', 'ontology', 'ontologies', 'schema', 'vocab', 'vocabulary',
+  'ns', 'core', 'rdf', 'owl', 'def', 'resource', 'id', 'data', 'meta', 'model',
+])
+
+/**
+ * Guess a short, human-ish prefix from an IRI's namespace, for when no registered
+ * prefix (config / common list / prefix.cc) exists — so an exotic vocab still gets
+ * an orientation tag instead of nothing. Last meaningful path segment, else the
+ * first host label; lowercased, alphanumerics only, capped at 12 chars.
+ * Orientation only — NOT a real qname (don't use for copy/serialization).
+ */
+export function guessPrefix(uri: string): string {
+  let host: string, path: string
+  try { const u = new URL(uri); host = u.hostname.replace(/^www\./, ''); path = u.pathname }
+  catch { return '' }
+  let segs = path.split('/').filter(Boolean)
+  // For '/'-separated IRIs the last segment is the local name — drop it. For
+  // '#'-separated the local name is in the fragment, so the last path seg is the ns.
+  if (!uri.includes('#') && segs.length) segs = segs.slice(0, -1)
+  for (let i = segs.length - 1; i >= 0; i--) {
+    const raw = segs[i]!
+    if (!raw.replace(/[^a-zA-Z0-9]/g, '') || GENERIC_NS_SEG.has(raw.toLowerCase())) continue
+    return shorten(raw)
+  }
+  return (host.split('.')[0] ?? '').slice(0, 12)
+}
+
+// A long CamelCase segment (ClassificationUnit) reads better as its initials
+// (cu) than a mid-word truncation (classificati); short segments pass through.
+function shorten(seg: string): string {
+  const caps = seg.match(/[A-Z]/g)
+  if (seg.length > 8 && caps && caps.length >= 2) return caps.join('').toLowerCase().slice(0, 12)
+  return seg.replace(/[^a-zA-Z0-9]/g, '').toLowerCase().slice(0, 12)
+}
+
+export type MediaKind = 'image' | 'video' | 'audio'
+const MEDIA_EXT: Record<string, MediaKind> = {
+  png: 'image', jpg: 'image', jpeg: 'image', gif: 'image', webp: 'image', avif: 'image', bmp: 'image', svg: 'image',
+  mp4: 'video', webm: 'video', ogv: 'video', mov: 'video',
+  mp3: 'audio', wav: 'audio', ogg: 'audio', m4a: 'audio', flac: 'audio', aac: 'audio',
+}
+
+/**
+ * Media kind implied by a URL's file extension (query/fragment ignored), or null
+ * if it's not a recognised media file. Extension-only by design: a `Content-Type`
+ * HEAD is CORS-gated and unreliable across file hosts. The CALLER must restrict to
+ * http(s) and validate the URL before binding it to a src.
+ */
+export function mediaKind(url: string): MediaKind | null {
+  const m = /\.([a-z0-9]{2,5})(?:[?#].*)?$/i.exec(url)
+  return m ? (MEDIA_EXT[m[1]!.toLowerCase()] ?? null) : null
+}
+
 /** Qualified name (`prefix:local`) from a resolution map, falling back to the IRI. */
 export function qname(uri: string, resolved: ResolvedMap): string {
   const r = resolved.get(uri)

@@ -11,7 +11,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { SPARQLEndpoint, EndpointStatus, AppError, SuggestedEndpoint, EndpointAuth } from '../types'
 import suggestedEndpointsData from '../data/endpoints.json'
-import { logger, isConfigMode, getConfig, eventBus } from '../services'
+import { logger, isConfigMode, getConfig, eventBus, setEndpointPrefixes } from '../services'
 
 const STORAGE_KEY = 'ae-endpoints'
 
@@ -152,6 +152,8 @@ export const useEndpointStore = defineStore('endpoint', () => {
       composition: ce.composition,
       orphanCounts: ce.orphanCounts,
       deprecatedPredicates: ce.deprecatedPredicates,
+      extraLabelPredicates: ce.extraLabelPredicates,
+      prefixes: ce.prefixes,
       profiledAt: ce.profiledAt,
       languagePriorities: ce.suggestedLanguagePriorities,
       createdAt: new Date().toISOString(),
@@ -165,7 +167,7 @@ export const useEndpointStore = defineStore('endpoint', () => {
     const first = endpoints.value[0]
     if (first) {
       if (needsCredentials(first)) pendingCredentialsId.value = first.id
-      else currentId.value = first.id
+      else { setEndpointPrefixes(first.prefixes); currentId.value = first.id }
     }
   }
 
@@ -299,6 +301,9 @@ export const useEndpointStore = defineStore('endpoint', () => {
           accessCount: endpoint.accessCount + 1,
         })
         status.value = 'connected'
+        // Swap in this endpoint's declared prefixes so prefix display is dynamic
+        // per endpoint (highest precedence over app.json / common prefixes).
+        setEndpointPrefixes(endpoint.prefixes)
         // Notify consumers (type discovery in T3 subscribes to this).
         void eventBus.emit('endpoint:changed', endpoint)
       }

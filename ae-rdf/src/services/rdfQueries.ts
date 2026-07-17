@@ -22,8 +22,17 @@ export const LABEL_PREDICATES: readonly string[] = [
   'http://purl.org/dc/terms/title',
   'http://purl.org/dc/elements/1.1/title',
   // ponytail: dropped foaf:name / schema:name — lowest precedence, and Fedlex's
-  // WAF blocks that vocab pair anyway. Re-add if an endpoint labels only via them.
+  // WAF blocks that vocab pair anyway. Re-add PER ENDPOINT via the config's
+  // `extraLabelPredicates` (labelPredicatesFor) when an endpoint labels only via them.
 ]
+
+/** Effective label predicates for an endpoint: the built-in precedence plus any
+ *  `extraLabelPredicates` from config, appended at lowest precedence. Keeps the
+ *  default set lean (Fedlex WAF) while letting e.g. LINDAS opt into foaf:name. */
+export function labelPredicatesFor(endpoint: { extraLabelPredicates?: string[] }): readonly string[] {
+  const extra = endpoint.extraLabelPredicates
+  return extra?.length ? [...LABEL_PREDICATES, ...extra] : LABEL_PREDICATES
+}
 
 // SKOS-XL reifies labels: ?s skosxl:prefLabel ?label . ?label skosxl:literalForm "…".
 // The text is one hop away, so generic label resolution must follow it.

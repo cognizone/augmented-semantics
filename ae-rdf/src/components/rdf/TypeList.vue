@@ -89,6 +89,8 @@ const SYS_LABELS = 'Value objects'
 const SYS_HIDDEN = 'Hidden'
 
 const typeName = (uri: string) => displayType(uri, resolved.value, settings.uriDisplay)
+// Namespace prefix shown small in front of a class (e.g. "schema"); '' when unresolved.
+const typePrefix = (uri: string) => resolved.value.get(uri)?.prefix ?? ''
 const cfg = (uri: string) => typeConfig.get(uri)
 // Blank-node types have no navigable instance view (anonymous nodes) — always
 // hidden and never clickable, regardless of per-type config.
@@ -456,6 +458,7 @@ function selectType(uri: string) {
             class="type-item type-item-static"
             :title="row.uri + ' — blank-node type: instances are anonymous, no page to open'"
           >
+            <span v-if="typePrefix(row.uri)" class="type-prefix">{{ typePrefix(row.uri) }}</span>
             <span class="type-name">{{ typeName(row.uri) }}</span>
             <span class="type-ind">
               <span class="material-symbols-outlined ind" title="Blank-node type — reachable only inline">data_object</span>
@@ -471,6 +474,7 @@ function selectType(uri: string) {
             :title="row.uri"
             @click="selectType(row.uri)"
           >
+            <span v-if="typePrefix(row.uri)" class="type-prefix">{{ typePrefix(row.uri) }}</span>
             <span class="type-name">{{ typeName(row.uri) }}</span>
             <span class="type-ind">
               <span v-if="isPinned(row.uri)" class="material-symbols-outlined ind" title="Pinned to top">push_pin</span>
@@ -490,6 +494,7 @@ function selectType(uri: string) {
             @mouseenter="onEmbedEnter(row)"
             @click="selectType(row.uri)"
           >
+            <span v-if="typePrefix(row.uri)" class="type-prefix">{{ typePrefix(row.uri) }}</span>
             <span class="type-name">{{ typeName(row.uri) }}</span>
             <span class="type-ind">
               <span class="material-symbols-outlined ind" title="Embedded inline as a value — click to browse instances">data_object</span>
@@ -830,6 +835,20 @@ function selectType(uri: string) {
   min-width: 0;
   font-family: var(--ae-font-mono);
   font-size: 0.8125rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Namespace prefix, small and muted, in a fixed-width column so the class names
+   after it align into a clean column within a group. */
+.type-prefix {
+  flex: none;
+  width: 3rem;
+  margin-right: 0.45rem;
+  font-family: var(--ae-font-mono);
+  font-size: 0.6875rem;
+  color: var(--ae-text-secondary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

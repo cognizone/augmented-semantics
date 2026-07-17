@@ -19,6 +19,8 @@ export interface SPARQLEndpoint {
   composition?: Record<string, CompositionEntry[]> // cached embed composition: class IRI → embed types it contains
   orphanCounts?: Record<string, number>         // cached embed-orphan counts: embed type IRI → instances with no owner
   deprecatedPredicates?: string[]               // predicates that flag a resource deprecated when asserted `true` (profiler-detected)
+  extraLabelPredicates?: string[]               // endpoint-specific label predicates, appended to LABEL_PREDICATES at lowest precedence (e.g. foaf:name on LINDAS)
+  prefixes?: Record<string, string>             // endpoint-declared prefix → namespace, seeded into the resolver at highest precedence when this endpoint is active
   profiledAt?: string                           // ISO timestamp of the last property-profiling run
   selectedGraphs?: string[]
   languagePriorities?: string[]  // User-ordered language codes

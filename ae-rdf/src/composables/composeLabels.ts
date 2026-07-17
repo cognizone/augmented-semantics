@@ -19,7 +19,7 @@
  *
  * @see /spec/ae-rdf
  */
-import { executeSparql, buildValuesQuery, buildDeprecatedQuery, buildLabelValuesQuery, buildTypeQuery, buildTypeSubclassQuery, buildSkosxlLabelsQuery, LABEL_PREDICATES, LABEL_PREDICATE_BATCH } from '../services'
+import { executeSparql, buildValuesQuery, buildDeprecatedQuery, buildLabelValuesQuery, buildTypeQuery, buildTypeSubclassQuery, buildSkosxlLabelsQuery, labelPredicatesFor, LABEL_PREDICATE_BATCH } from '../services'
 import { useTypeConfigStore } from '../stores'
 import { pickByLangs } from '../utils/labelLang'
 import { formatLiteral } from '../utils/format'
@@ -143,9 +143,10 @@ export async function resolveLabels(
   // or VALUES. Type and SKOS-XL are separate queries. Precedence + language are
   // picked HERE, client-side, preserving the LABEL_PREDICATES order (never an
   // arbitrary SAMPLE). All queries run in parallel.
+  const preds = labelPredicatesFor(endpoint)
   const batches: string[][] = []
-  for (let i = 0; i < LABEL_PREDICATES.length; i += LABEL_PREDICATE_BATCH)
-    batches.push(LABEL_PREDICATES.slice(i, i + LABEL_PREDICATE_BATCH))
+  for (let i = 0; i < preds.length; i += LABEL_PREDICATE_BATCH)
+    batches.push(preds.slice(i, i + LABEL_PREDICATE_BATCH))
   // Predicate batching (above) caps the vocab URLs per request; the SUBJECT VALUES
   // list needs capping too. A resource with many object URIs — e.g. Fedlex file
   // URLs — otherwise builds ONE oversized VALUES list that the cumulative-anomaly
@@ -198,7 +199,7 @@ export async function resolveLabels(
   // Label: gather every (predicate, value) row, then per subject take the value of
   // the HIGHEST-PRECEDENCE predicate (LABEL_PREDICATES order), then the best
   // language — the client-side equivalent of the old COALESCE precedence.
-  const rank = new Map(LABEL_PREDICATES.map((p, i) => [p, i]))
+  const rank = new Map(preds.map((p, i) => [p, i]))
   const cands = new Map<string, { p: string; v: string; lang?: string }[]>()
   for (const arr of labelB) for (const b of arr) {
     const s = b.s?.value, p = b.p?.value, l = b.l

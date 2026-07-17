@@ -8,9 +8,9 @@
  * @see /spec/ae-rdf
  */
 import { computed, ref } from 'vue'
-import { isNavigableIri } from '../../services'
+import { isNavigableIri, validateURI } from '../../services'
 import { useSettingsStore, useTypeConfigStore } from '../../stores'
-import { qname as toQname, displayPredicate, displayObject, displayType, formatLiteral, type ResolvedMap } from '../../utils/format'
+import { qname as toQname, displayPredicate, displayObject, displayType, formatLiteral, mediaKind, type ResolvedMap } from '../../utils/format'
 import { moveInOrder, orderedByConfig, sinkAlwaysLast, toggleInList } from '../../utils/propertyOrder'
 import type { PropertyGroup, ResourceObject } from '../../composables'
 
@@ -275,6 +275,14 @@ function isDangling(uri: string): boolean {
   )
 }
 
+// Media kind for a URI object value, if it's an http(s) media file — for an
+// inline thumbnail. Bound to the validated URL, mirroring ResourceView.
+const mediaSrc = (o: ResourceObject) => (o.termType === 'uri' ? validateURI(o.value) : null)
+const mediaKindOf = (o: ResourceObject): 'image' | 'video' | 'audio' | null => {
+  const src = mediaSrc(o)
+  return src && /^https?:/i.test(src) ? mediaKind(src) : null
+}
+
 /** An object's display text: its resolved label/qname (URIs) or literal value.
  *  `predicate` lets a URI object pick up its contextual (viaLabels) label. */
 const objText = (o: ResourceObject, predicate?: string) =>
@@ -292,9 +300,12 @@ const literalText = (o: ResourceObject, predicate: string) =>
 const isCapped = (o: ResourceObject, predicate: string) =>
   o.termType === 'literal' && isCapWidth(predicate)
 
-/** Objects of a predicate, sorted by display text (label/qname, else literal). */
+/** Objects of a predicate, sorted by language tag then display text — so
+ *  multilingual literals cluster by language (untagged first) instead of
+ *  interleaving. URI objects have no lang, so they still sort purely by text. */
 function sortedObjects(group: PropertyGroup): ResourceObject[] {
   return [...group.objects].sort((a, b) =>
+    (a.lang ?? '').localeCompare(b.lang ?? '') ||
     objText(a, group.predicate).toLowerCase().localeCompare(objText(b, group.predicate).toLowerCase()),
   )
 }
@@ -624,6 +635,17 @@ function graphTitle(o: ResourceObject): string {
                 </template>
                 <span v-else class="tag graph-tag default" title="Default graph">default graph</span>
               </span>
+
+              <!-- Inline media thumbnail when the value is a media file URL. Kept
+                   out of the value v-if chain (separate v-if) so the navigable link
+                   still renders above it. -->
+              <div v-if="row.o && mediaKindOf(row.o)" class="inline-media">
+                <a v-if="mediaKindOf(row.o) === 'image'" :href="mediaSrc(row.o)!" target="_blank" rel="noopener" title="Open full image in new tab">
+                  <img :src="mediaSrc(row.o)!" :alt="objText(row.o, group.predicate)" loading="lazy" />
+                </a>
+                <video v-else-if="mediaKindOf(row.o) === 'video'" :src="mediaSrc(row.o)!" controls preload="metadata" />
+                <audio v-else-if="mediaKindOf(row.o) === 'audio'" :src="mediaSrc(row.o)!" controls preload="metadata" />
+              </div>
             </div>
           </template>
           </div>
@@ -687,6 +709,26 @@ function graphTitle(o: ResourceObject): string {
 .prop-value {
   padding: 0.125rem 0;
   word-break: break-word;
+}
+
+/* Inline media thumbnail under a media-file value (below its link). */
+.inline-media {
+  margin-top: 0.35rem;
+}
+.inline-media img,
+.inline-media video {
+  max-width: 100%;
+  max-height: 220px;
+  height: auto;
+  border: 1px solid var(--ae-border-color);
+  border-radius: 4px;
+  background: var(--ae-bg-elevated);
+}
+.inline-media a:hover img {
+  opacity: 0.9;
+}
+.inline-media audio {
+  max-width: 100%;
 }
 
 /* Cap the reading measure for long PROSE only (abstracts/descriptions ran

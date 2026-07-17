@@ -13,7 +13,7 @@ import ProgressSpinner from 'primevue/progressspinner'
 import { useBrowseStore, useSettingsStore, useTypeConfigStore } from '../../stores'
 import { useResourceView, useIncomingRelations, useClipboard, useDelayedLoading } from '../../composables'
 import { LABEL_PREDICATES, validateURI } from '../../services'
-import { localName as localNameOf, humanizeLocalName, qname as toQname, displayType } from '../../utils/format'
+import { localName as localNameOf, humanizeLocalName, qname as toQname, displayType, mediaKind } from '../../utils/format'
 import { isAlwaysLast, orderedByConfig, toggleInList } from '../../utils/propertyOrder'
 import { URL_PARAMS } from '../../router'
 import type { PropertyGroup, ResourceObject } from '../../composables'
@@ -51,6 +51,12 @@ const uri = computed(() => browseStore.currentResource)
 // Protocol-check before it hits the href sink — a ?resource=javascript:… deep
 // link would otherwise be a clickable script sink in the app origin (R01).
 const safeHref = computed(() => validateURI(uri.value ?? '') ?? undefined)
+// Inline media preview when the resource IS a fetchable media file (by extension).
+// Only http(s) — safeHref is already protocol-validated; media renders cross-origin
+// without CORS. null ⇒ no preview (plain resource).
+const mediaPreview = computed(() =>
+  safeHref.value && /^https?:/i.test(safeHref.value) ? mediaKind(safeHref.value) : null,
+)
 const showGraphs = ref(false)
 
 function toggleIncoming() {
@@ -261,6 +267,14 @@ onUnmounted(() => scrollEl.value?.removeEventListener('scroll', onScroll))
       </div>
     </header>
 
+    <figure v-if="mediaPreview" class="resource-media">
+      <a v-if="mediaPreview === 'image'" :href="safeHref" target="_blank" rel="noopener" title="Open full image in new tab">
+        <img :src="safeHref" :alt="heading" loading="lazy" />
+      </a>
+      <video v-else-if="mediaPreview === 'video'" :src="safeHref" controls preload="metadata" />
+      <audio v-else-if="mediaPreview === 'audio'" :src="safeHref" controls preload="metadata" />
+    </figure>
+
     <div v-if="showLoading" class="state">
       <ProgressSpinner style="width: 32px; height: 32px" strokeWidth="4" />
     </div>
@@ -381,6 +395,30 @@ onUnmounted(() => scrollEl.value?.removeEventListener('scroll', onScroll))
 /* Graph provenance pushed to the right of the URI row. */
 .rh-sub-row .resource-graphs {
   margin-left: auto;
+}
+
+/* Inline media preview for a resource that is itself a media file. */
+.resource-media {
+  margin: 0.75rem 0 0.25rem;
+  padding: 0.5rem;
+  background: var(--ae-bg-elevated);
+  border: 1px solid var(--ae-border-color);
+  border-radius: 6px;
+  display: flex;
+  justify-content: center;
+}
+.resource-media img,
+.resource-media video {
+  max-width: 100%;
+  max-height: 60vh;
+  height: auto;
+  border-radius: 4px;
+}
+.resource-media a:hover img {
+  opacity: 0.9;
+}
+.resource-media audio {
+  width: 100%;
 }
 
 .resource-uri {

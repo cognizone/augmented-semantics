@@ -56,6 +56,14 @@ export interface ConfigEndpoint extends SuggestedEndpointSource {
    *  (profiler-detected from a seed of common flags, e.g. owl:deprecated). The
    *  app badges such resources. Unset → the app's built-in default. */
   deprecatedPredicates?: string[]
+  /** Endpoint-specific label predicates appended to the built-in LABEL_PREDICATES
+   *  at lowest precedence — for endpoints that label only via a vocab dropped from
+   *  the default set (e.g. foaf:name / schema:name on LINDAS agents). */
+  extraLabelPredicates?: string[]
+  /** Endpoint-declared prefix → namespace map, seeded into the prefix resolver at
+   *  highest precedence while this endpoint is active — keeps custom-vocab qnames
+   *  correct per endpoint without bloating the global app.json prefixes. */
+  prefixes?: Record<string, string>
   /** Language priorities (same as SuggestedEndpoint) */
   suggestedLanguagePriorities?: string[]
 }

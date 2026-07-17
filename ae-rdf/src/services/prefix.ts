@@ -76,13 +76,26 @@ let cacheLoaded = false
 // app.json at boot (setConfigPrefixes), so deployments render custom-vocab qnames
 // correctly and without depending on prefix.cc at runtime.
 let configNsToPrefix: Record<string, string> = {}
+// Prefixes declared by the ACTIVE endpoint (namespace → prefix), highest
+// precedence. Swapped whenever the current endpoint changes, so prefix display
+// is dynamic per endpoint instead of bloating the global app.json.
+let endpointNsToPrefix: Record<string, string> = {}
+
+function invert(prefixToNs: Record<string, string> | undefined): Record<string, string> {
+  const out: Record<string, string> = {}
+  for (const [prefix, ns] of Object.entries(prefixToNs ?? {})) if (prefix && ns) out[ns] = prefix
+  return out
+}
 
 /** Seed config-declared prefixes (prefix → namespace) from app.json. */
 export function setConfigPrefixes(prefixToNs: Record<string, string> | undefined): void {
-  configNsToPrefix = {}
-  for (const [prefix, ns] of Object.entries(prefixToNs ?? {})) {
-    if (prefix && ns) configNsToPrefix[ns] = prefix
-  }
+  configNsToPrefix = invert(prefixToNs)
+}
+
+/** Seed the active endpoint's declared prefixes (prefix → namespace). Replaces
+ *  the previous endpoint's set — call on every endpoint switch. */
+export function setEndpointPrefixes(prefixToNs: Record<string, string> | undefined): void {
+  endpointNsToPrefix = invert(prefixToNs)
 }
 
 /**
@@ -135,11 +148,11 @@ function extractNamespace(uri: string): { namespace: string; localName: string }
 }
 
 /**
- * Get a declared prefix for a namespace: config-declared (app.json) take
- * precedence over the built-in common prefixes.
+ * Get a declared prefix for a namespace. Precedence: active-endpoint prefixes >
+ * app.json config prefixes > built-in common prefixes.
  */
 function getCommonPrefix(namespace: string): string | null {
-  return configNsToPrefix[namespace] ?? COMMON_PREFIXES[namespace] ?? null
+  return endpointNsToPrefix[namespace] ?? configNsToPrefix[namespace] ?? COMMON_PREFIXES[namespace] ?? null
 }
 
 /**

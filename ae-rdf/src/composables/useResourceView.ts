@@ -11,7 +11,7 @@
  */
 import { ref, computed, type Ref } from 'vue'
 import { useEndpointStore, useLanguageStore, useBrowseStore, useTypeConfigStore } from '../stores'
-import { executeSparql, resolveUris, logger, buildResourceTriplesQuery, buildEmbeddedTriplesQuery, buildBlankNodeTriplesQuery, buildInverseEmbedQuery, resolveGraphStrategy, LABEL_PREDICATES, DEFAULT_DEPRECATED_PREDICATES, EMBED_BATCH } from '../services'
+import { executeSparql, resolveUris, logger, buildResourceTriplesQuery, buildEmbeddedTriplesQuery, buildBlankNodeTriplesQuery, buildInverseEmbedQuery, resolveGraphStrategy, labelPredicatesFor, DEFAULT_DEPRECATED_PREDICATES, EMBED_BATCH } from '../services'
 import { labelLangs as computeLabelLangs, pickByLangs } from '../utils/labelLang'
 import { headingParts } from '../utils/propertyOrder'
 import { formatLiteral } from '../utils/format'
@@ -121,7 +121,7 @@ export function useResourceView() {
     }
 
     const langs = labelLangs()
-    for (const pred of LABEL_PREDICATES) {
+    for (const pred of labelPredicatesFor(endpointStore.current ?? {})) {
       const group = groups.find(g => g.predicate === pred)
       if (!group) continue
       const literals = group.objects.filter(o => o.termType === 'literal')

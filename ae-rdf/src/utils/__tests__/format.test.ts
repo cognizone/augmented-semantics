@@ -1,5 +1,43 @@
 import { describe, it, expect } from 'vitest'
-import { localName, humanizeLocalName, qname, displayPredicate, displayObject, displayType } from '../format'
+import { localName, humanizeLocalName, qname, displayPredicate, displayObject, displayType, guessPrefix, mediaKind } from '../format'
+
+describe('mediaKind', () => {
+  it('detects images, video, audio by extension', () => {
+    expect(mediaKind('https://zenodo.org/record/255473/files/figure.png')).toBe('image')
+    expect(mediaKind('http://x/a.JPEG')).toBe('image')
+    expect(mediaKind('http://x/clip.mp4')).toBe('video')
+    expect(mediaKind('http://x/track.mp3')).toBe('audio')
+  })
+  it('ignores query/fragment after the extension', () => {
+    expect(mediaKind('http://x/a.png?v=2#frag')).toBe('image')
+  })
+  it('returns null for non-media and extensionless URLs', () => {
+    expect(mediaKind('http://dx.doi.org/10.5281/zenodo.255473')).toBeNull()
+    expect(mediaKind('https://zenodo.org/records/255473')).toBeNull()
+    expect(mediaKind('http://x/report.pdf')).toBeNull() // pdf intentionally excluded
+  })
+})
+
+describe('guessPrefix', () => {
+  it('drops the local name and skips generic segments', () => {
+    expect(guessPrefix('http://rs.tdwg.org/dwc/terms/TaxonName')).toBe('dwc') // "terms" is generic → "dwc"
+    expect(guessPrefix('http://qudt.org/schema/qudt/Unit')).toBe('qudt') // "schema" generic → "qudt"
+  })
+  it('uses the fragment-side namespace for # URIs', () => {
+    expect(guessPrefix('http://filteredpush.org/ontologies/oa/dwcFP#MaterialCitation')).toBe('dwcfp')
+  })
+  it('falls back to the first host label when no usable path segment', () => {
+    expect(guessPrefix('https://cube.link/Observation')).toBe('cube')
+  })
+  it('acronyms long CamelCase segments', () => {
+    expect(guessPrefix('https://environment.ld.admin.ch/foen/nfi/ClassificationUnit/X')).toBe('cu')
+    expect(guessPrefix('https://environment.ld.admin.ch/foen/nfi/UnitOfEvaluation/X')).toBe('uoe')
+  })
+  it('caps length and returns empty for junk', () => {
+    expect(guessPrefix('https://x/verylonglowercasesegmenthere/X').length).toBeLessThanOrEqual(12)
+    expect(guessPrefix('not a uri')).toBe('')
+  })
+})
 
 describe('localName', () => {
   it('takes the segment after the last # or /', () => {
