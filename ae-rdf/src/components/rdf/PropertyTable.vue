@@ -1057,17 +1057,20 @@ function graphTitle(o: ResourceObject): string {
   border-color: #2c62c9;
 }
 
-/* WKT geometry map link — neutral outline, accent on hover. */
+/* WKT geometry map link — filled green (as prominent as the DOI badge, distinct
+   colour so map ≠ DOI). */
 .wkt-badge {
-  border: 1px solid var(--ae-border-color);
-  background: var(--ae-bg-elevated);
-  color: var(--ae-text-secondary);
+  border: 1px solid #2e7d46;
+  background: #2e7d46;
+  color: #fff;
+  font-weight: 600;
+  letter-spacing: 0.02em;
   text-decoration: none;
   cursor: pointer;
 }
 .wkt-badge:hover {
-  color: var(--ae-accent);
-  border-color: var(--ae-accent);
+  background: #37974f;
+  border-color: #37974f;
 }
 
 /* Click-through badge on an embedded object → its own resource page. */
