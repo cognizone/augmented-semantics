@@ -8,9 +8,19 @@
  * @see /spec/ae-rdf — DOI value rendering
  */
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
-import { fetchDoiCitation, type DoiCitation } from '../../services'
+import { fetchDoiCitation, getConfig, type DoiCitation } from '../../services'
 
 const props = defineProps<{ id: string }>()
+
+// Per-field visibility from app.json (omitted field ⇒ shown).
+const doiCfg = computed(() => getConfig()?.doi ?? {})
+const show = (field: string) => (doiCfg.value as Record<string, unknown>)[field] !== false
+const abstractText = computed(() => {
+  const a = citation.value?.abstract
+  if (!a) return ''
+  const max = doiCfg.value.abstractMaxChars ?? 280
+  return a.length > max ? a.slice(0, max).trimEnd() + '…' : a
+})
 
 const CATEGORY_SHOWN = 8
 const catsExpanded = ref(false)
@@ -52,14 +62,22 @@ onBeforeUnmount(() => observer?.disconnect())
     <span v-if="loading" class="doi-cite-card muted">Loading citation…</span>
     <span v-else-if="failed" class="doi-cite-card muted">Citation unavailable</span>
     <span v-else-if="citation" class="doi-cite-card">
-      <span v-if="citation.authors" class="ci-auth">{{ citation.authors }}</span><span v-if="citation.year" class="ci-year"> ({{ citation.year }}).</span>
-      <span class="ci-title"> {{ citation.title }}</span>
-      <span v-if="citation.container" class="ci-cont"> — {{ citation.container }}</span>
-      <span v-if="citation.publisher" class="ci-pub"> · {{ citation.publisher }}</span>
-      <span v-if="citation.type" class="ci-type">{{ citation.type }}</span>
-      <span v-if="citation.categories.length" class="ci-cats">
+      <span v-if="show('authors') && citation.authors" class="ci-auth">{{ citation.authors }}</span><span v-if="show('year') && citation.year" class="ci-year"> ({{ citation.year }}).</span>
+      <span v-if="show('title')" class="ci-title"> {{ citation.title }}</span>
+      <span v-if="show('container') && citation.container" class="ci-cont"> — {{ citation.container }}</span>
+      <span v-if="show('publisher') && citation.publisher" class="ci-pub"> · {{ citation.publisher }}</span>
+      <span v-if="show('type') && citation.type" class="ci-type">{{ citation.type }}</span>
+
+      <span v-if="show('abstract') && abstractText" class="ci-abstract">{{ abstractText }}</span>
+
+      <span v-if="show('categories') && citation.categories.length" class="ci-cats">
         <span v-for="c in shownCategories" :key="c" class="ci-cat">{{ c }}</span>
         <button v-if="hiddenCategoryCount && !catsExpanded" class="ci-cat ci-cat-more" @click.stop="catsExpanded = true">+{{ hiddenCategoryCount }} more</button>
+      </span>
+
+      <span v-if="(show('copyright') && citation.copyright) || (show('url') && citation.url)" class="ci-foot">
+        <span v-if="show('copyright') && citation.copyright" class="ci-copyright">{{ citation.copyright }}</span>
+        <a v-if="show('url') && citation.url" :href="citation.url" target="_blank" rel="noopener" class="ci-url">landing page ↗</a>
       </span>
     </span>
   </span>
@@ -118,5 +136,26 @@ onBeforeUnmount(() => observer?.disconnect())
 }
 .ci-cat-more:hover {
   border-color: var(--ae-accent);
+}
+.ci-abstract {
+  display: block;
+  margin-top: 0.4rem;
+  color: var(--ae-text-secondary);
+}
+.ci-foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+  margin-top: 0.4rem;
+  font-size: 0.6875rem;
+  color: var(--ae-text-secondary);
+}
+.ci-url {
+  color: var(--ae-accent);
+  text-decoration: none;
+}
+.ci-url:hover {
+  text-decoration: underline;
 }
 </style>

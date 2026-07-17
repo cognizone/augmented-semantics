@@ -87,6 +87,25 @@ export interface AppConfig {
   /** Global prefix → namespace map (a prefix is a global IRI-shortening, so it's
    *  shared across endpoints, not per-endpoint). */
   prefixes?: Record<string, string>
+  /** Which parts of the DOI citation card to show (when the doiCitations setting
+   *  is on). Any omitted field defaults to shown; set false to hide. */
+  doi?: DoiDisplayConfig
+}
+
+/** Per-field toggles for the DOI citation card. Omitted = shown. */
+export interface DoiDisplayConfig {
+  authors?: boolean
+  year?: boolean
+  title?: boolean
+  container?: boolean
+  publisher?: boolean
+  type?: boolean
+  categories?: boolean
+  abstract?: boolean
+  copyright?: boolean
+  url?: boolean
+  /** Truncate the abstract to this many characters (default 280). */
+  abstractMaxChars?: number
 }
 
 /**

@@ -11,6 +11,8 @@ export interface ExportInput {
   endpoints: SPARQLEndpoint[]
   /** Global prefix → namespace map (prefixes are shared, not per-endpoint). */
   prefixes?: Record<string, string>
+  /** DOI citation-card field toggles (global). */
+  doi?: AppConfig['doi']
   appName?: string
   logoUrl?: string
   documentationUrl?: string
@@ -55,6 +57,7 @@ export function buildAppConfig(input: ExportInput): AppConfig {
   }
 
   if (input.prefixes && Object.keys(input.prefixes).length) config.prefixes = input.prefixes
+  if (input.doi && Object.keys(input.doi).length) config.doi = input.doi
   return config
 }
 

@@ -68,5 +68,18 @@
   ],
   "prefixes": {
     "eurio": "http://data.europa.eu/s66#"
+  },
+  "doi": {
+    "authors": true,
+    "year": true,
+    "title": true,
+    "container": true,
+    "publisher": true,
+    "type": true,
+    "categories": true,
+    "abstract": true,
+    "copyright": true,
+    "url": true,
+    "abstractMaxChars": 280
   }
 }

@@ -15,11 +15,20 @@ export interface DoiCitation {
   type: string // CSL type, e.g. "graphic", "article-journal"
   container?: string // journal / dataset title
   publisher?: string
-  categories: string[] // subject keywords (capped)
+  categories: string[] // subject keywords
+  abstract?: string // tag-stripped, full length (caller truncates for display)
+  copyright?: string
+  url?: string // landing page
 }
 
 const cache = new Map<string, DoiCitation | null>()
 const AUTHOR_CAP = 5
+
+// Abstracts sometimes carry JATS/HTML tags (<jats:p>…). Strip them and collapse
+// whitespace — Vue escapes text so this isn't for safety, just readability.
+function stripTags(s: string): string {
+  return s.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim()
+}
 
 function formatAuthors(author: unknown): string {
   if (!Array.isArray(author)) return ''
@@ -59,6 +68,9 @@ export async function fetchDoiCitation(id: string): Promise<DoiCitation | null> 
       container: (Array.isArray(d['container-title']) ? d['container-title'][0] : d['container-title']) || undefined,
       publisher: typeof d.publisher === 'string' ? d.publisher : undefined,
       categories: Array.isArray(d.categories) ? d.categories.filter((c: unknown) => typeof c === 'string') : [],
+      abstract: typeof d.abstract === 'string' ? stripTags(d.abstract) : undefined,
+      copyright: typeof d.copyright === 'string' ? d.copyright : undefined,
+      url: typeof d.URL === 'string' ? d.URL : undefined,
     }
     cache.set(id, citation)
     logger.info('DoiService', 'Citation resolved', { id, title: citation.title })

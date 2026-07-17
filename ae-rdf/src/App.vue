@@ -32,6 +32,7 @@ function exportConfig() {
   const appConfig = buildAppConfig({
     endpoints: endpointStore.endpoints, // each carries its own graph / types / typeInventory
     prefixes: getKnownPrefixes(),
+    doi: config.value.config?.doi,
     appName: config.value.config?.appName,
     logoUrl: config.value.config?.logoUrl,
     documentationUrl: config.value.config?.documentationUrl,
