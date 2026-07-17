@@ -50,6 +50,9 @@ onBeforeUnmount(() => observer?.disconnect())
       <span v-if="citation.container" class="ci-cont"> — {{ citation.container }}</span>
       <span v-if="citation.publisher" class="ci-pub"> · {{ citation.publisher }}</span>
       <span v-if="citation.type" class="ci-type">{{ citation.type }}</span>
+      <span v-if="citation.categories.length" class="ci-cats">
+        <span v-for="c in citation.categories" :key="c" class="ci-cat">{{ c }}</span>
+      </span>
     </span>
   </span>
 </template>
@@ -86,5 +89,19 @@ onBeforeUnmount(() => observer?.disconnect())
   border-radius: 4px;
   background: var(--ae-bg-page);
   color: var(--ae-text-secondary);
+}
+.ci-cats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-top: 0.35rem;
+}
+.ci-cat {
+  padding: 0.02rem 0.35rem;
+  font-size: 0.625rem;
+  border-radius: 999px;
+  background: var(--ae-bg-page);
+  color: var(--ae-text-secondary);
+  border: 1px solid var(--ae-border-color);
 }
 </style>
