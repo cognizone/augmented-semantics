@@ -129724,7 +129724,9 @@
       "group": "schema.ld.admin.ch"
     },
     "http://www.opengis.net/ont/geosparql#Geometry": {
-      "group": "example.com"
+      "group": "GeoSPARQL",
+      "render": "embed",
+      "embedVia": "http://www.opengis.net/ont/geosparql#hasGeometry"
     },
     "http://schema.org/CivicStructure": {
       "group": "schema.org"
@@ -131711,7 +131713,7 @@
     "schema": "http://schema.org/",
     "vocab": "http://vocab.gtfs.org/terms#",
     "vaem": "http://www.linkedmodel.org/schema/vaem#",
-    "geosparql": "http://www.opengis.net/ont/geosparql#",
+    "gsp": "http://www.opengis.net/ont/geosparql#",
     "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
     "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
     "owl": "http://www.w3.org/2002/07/owl#",

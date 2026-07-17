@@ -51,6 +51,7 @@ const EMBED_TIER1 = {
   'http://qudt.org/schema/qudt/QuantityKindDimensionVector_ISO': null,
   'http://qudt.org/schema/qudt/QuantityKindDimensionVector_Imperial': null,
   'http://qudt.org/schema/qudt/QuantityKindDimensionVector_CGS': null,
+  'http://www.opengis.net/ont/geosparql#Geometry': 'http://www.opengis.net/ont/geosparql#hasGeometry',
 }
 
 // Conventional prefixes for well-known namespaces (prefix.cc style). Everything
@@ -86,6 +87,7 @@ const NS_PREFIX = {
   'http://filteredpush.org/ontologies/oa/dwcFP#': 'dwcFP',
   'http://plazi.org/vocab/treatment#': 'trt',
   'https://cube-creator.zazuko.com/shared-dimensions/vocab#': 'sh-dim',
+  'http://www.opengis.net/ont/geosparql#': 'gsp',
 }
 
 const GENERIC_NS_SEG = new Set(['terms', 'term', 'ontology', 'ontologies', 'schema', 'vocab', 'vocabulary', 'ns', 'core', 'rdf', 'owl', 'def', 'resource', 'id', 'data', 'meta', 'model'])
@@ -137,6 +139,7 @@ const KNOWN_VOCABS = {
   'http://filteredpush.org/ontologies/oa/dwcFP#': 'Darwin Core',
   'http://plazi.org/vocab/treatment#': 'Plazi Treatment',
   'https://cube-creator.zazuko.com/shared-dimensions/vocab#': 'Shared Dimensions',
+  'http://www.opengis.net/ont/geosparql#': 'GeoSPARQL',
 }
 
 const ns = uri => uri.replace(/[^/#]+$/, '')
