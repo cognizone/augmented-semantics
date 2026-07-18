@@ -175,6 +175,22 @@ function selectType(typeUri: string) {
   router.push({ query: { [URL_PARAMS.TYPE]: typeUri } })
 }
 
+// The instance list this resource was opened from (?type present). Back-to-list
+// drops ?resource but keeps ?type + ?filters, so the filtered list is restored
+// (paging is not in the URL, so it lands on the first page — same as browser Back).
+// Absent when the resource was reached by a pasted URI / bare deep link.
+const listType = computed(() => {
+  const t = route.query[URL_PARAMS.TYPE]
+  return typeof t === 'string' && t ? t : null
+})
+const backLabel = computed(() =>
+  listType.value ? displayType(listType.value, resolved.value, mode.value) : '',
+)
+function backToList() {
+  const { [URL_PARAMS.RESOURCE]: _r, ...rest } = route.query
+  router.push({ query: rest })
+}
+
 // Union of graphs the resource asserts in (provenance summary).
 const graphSummary = computed(() => {
   const set = new Set<string>()
@@ -232,6 +248,12 @@ onUnmounted(() => scrollEl.value?.removeEventListener('scroll', onScroll))
 <template>
   <div v-if="uri" class="resource-view" ref="scrollEl">
     <header class="resource-header" :class="{ stuck }">
+      <!-- Back to the filtered instance list we came from (keeps ?type + ?filters). -->
+      <button v-if="listType" class="back-link" @click="backToList">
+        <span class="material-symbols-outlined">arrow_back</span>
+        <span>Back to {{ backLabel }}</span>
+      </button>
+
       <!-- Title + type chip(s) on one line -->
       <div class="rh-title-row">
         <h2 class="resource-title">{{ heading }}</h2>
@@ -375,6 +397,32 @@ onUnmounted(() => scrollEl.value?.removeEventListener('scroll', onScroll))
 
 .resource-header.stuck .rh-sub-row {
   display: none;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-bottom: 0.4rem;
+  padding: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.75rem;
+  color: var(--ae-text-secondary);
+}
+
+.back-link:hover {
+  color: var(--ae-accent);
+}
+
+.back-link .material-symbols-outlined {
+  font-size: 16px;
+}
+
+/* Keep the back link visible in the compact (scrolled) header. */
+.resource-header.stuck .back-link {
+  margin-bottom: 0.2rem;
 }
 
 .rh-title-row {
