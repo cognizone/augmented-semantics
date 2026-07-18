@@ -36,6 +36,10 @@ const endpointStore = useEndpointStore()
 const endpoint = computed(() => endpointStore.current)
 const hasEndpoint = computed(() => !!endpoint.value)
 
+// Both Cmd+Enter and Ctrl+Enter always run (the handler checks metaKey||ctrlKey);
+// the HINT just shows the modifier native to the OS so it reads right per platform.
+const runKey = /Mac|iPhone|iPad/i.test(navigator.platform || navigator.userAgent) ? '⌘' : 'Ctrl'
+
 // Persist the last query per endpoint. Keyed by endpoint URL (stable across the
 // index-based config ids and the uuid user ids).
 const STORAGE_KEY = 'ae-rdf-sparql'
@@ -113,6 +117,7 @@ watch(query, v => {
 // Result state
 const running = ref(false)
 const error = ref<string | null>(null)
+const errorDetail = ref<string | null>(null)
 const notice = ref<string | null>(null)
 const durationMs = ref<number | null>(null)
 const truncated = ref(false)
@@ -135,6 +140,7 @@ function clearResults() {
   askResult.value = null
   resolved.value = new Map()
   error.value = null
+  errorDetail.value = null
   notice.value = null
   durationMs.value = null
   truncated.value = false
@@ -214,11 +220,12 @@ async function run() {
   } catch (e) {
     if (!isCurrent()) return
     const appErr = e as Partial<AppError>
-    error.value = appErr?.message
-      ? appErr.details
-        ? `${appErr.message} — ${appErr.details}`
-        : appErr.message
-      : String(e)
+    error.value = appErr?.message ?? String(e)
+    // The detail (e.g. Virtuoso's message) echoes the whole submitted query back
+    // after "SPARQL query:" / "define sql:" — drop that noise, keep the diagnostic.
+    errorDetail.value = appErr?.details
+      ? appErr.details.split(/\n\s*(?:SPARQL query:|define sql:)/)[0]!.trim()
+      : null
     ran.value = true
     logger.error('SparqlView', 'Query failed', { error: e })
   } finally {
@@ -260,7 +267,7 @@ function openResource(uri: string) {
       <div class="editor-pane">
         <div class="editor-head">
           <h2 class="pane-title">SPARQL — <span class="mono">{{ endpoint?.name }}</span></h2>
-          <span class="editor-hint">Read-only · SELECT / ASK · <kbd>⌘/Ctrl</kbd>+<kbd>Enter</kbd> to run</span>
+          <span class="editor-hint">Read-only · SELECT / ASK · <kbd>{{ runKey }}</kbd>+<kbd>Enter</kbd> to run</span>
         </div>
         <div
           ref="editorEl"
@@ -294,7 +301,8 @@ function openResource(uri: string) {
 
         <div v-else-if="error" class="state error">
           <span class="material-symbols-outlined">error</span>
-          <p>{{ error }}</p>
+          <p class="error-msg">{{ error }}</p>
+          <pre v-if="errorDetail" class="error-detail">{{ errorDetail }}</pre>
         </div>
 
         <!-- ASK result -->
@@ -661,6 +669,33 @@ function openResource(uri: string) {
 
 .state.error {
   color: var(--ae-status-error);
+}
+
+/* Constrain the error so a long endpoint message doesn't run edge-to-edge. */
+.error-msg {
+  margin: 0;
+  max-width: 640px;
+  font-weight: 600;
+}
+
+/* The endpoint's raw diagnostic: monospace, wrapped, width-capped, scrollable if
+   still too tall. Left-aligned (error text isn't prose). */
+.error-detail {
+  margin: 0;
+  max-width: min(720px, 100%);
+  max-height: 240px;
+  overflow: auto;
+  text-align: left;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: var(--ae-font-mono);
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: var(--ae-text-secondary);
+  background: var(--ae-bg-elevated);
+  border: 1px solid var(--ae-border-color);
+  border-radius: 6px;
+  padding: 0.6rem 0.75rem;
 }
 
 .empty-icon {
