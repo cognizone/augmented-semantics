@@ -450,24 +450,34 @@ describe('facet 2-hop (via) + date ranges', () => {
 
   it('via range facet: dot-separated 2-hop, range casts the SECOND-hop value', () => {
     const frag = buildFacetConstraints([{ predicate: COST, via: VALUE, ranges: [{ min: 1000000 }] }], DEFAULT)
-    expect(frag).toContain(`?s <${COST}> ?f0_m . ?f0_m <${VALUE}> ?f0`)
+    expect(frag).toContain(`?s <${COST}> ?f0_m0 . ?f0_m0 <${VALUE}> ?f0`)
     expect(frag).toContain(`${DEC}(?f0) >= 1000000`)
   })
 
   it('via value facet: VALUES on the second-hop value var, 2-hop path', () => {
     const frag = buildFacetConstraints([{ predicate: COST, via: VALUE, terms: [{ value: 'EUR', isUri: false }] }], DEFAULT)
     expect(frag).toContain('VALUES ?f0 { "EUR" }')
-    expect(frag).toContain(`?s <${COST}> ?f0_m . ?f0_m <${VALUE}> ?f0`)
+    expect(frag).toContain(`?s <${COST}> ?f0_m0 . ?f0_m0 <${VALUE}> ?f0`)
   })
 
   it('via scopes BOTH hops per strategy (distinct graph vars)', () => {
     const frag = buildFacetConstraints([{ predicate: COST, via: VALUE, ranges: [{ min: 0 }] }], NAMED)
-    expect(frag).toContain(`GRAPH ?fg0a { ?s <${COST}> ?f0_m }`)
-    expect(frag).toContain(`GRAPH ?fg0b { ?f0_m <${VALUE}> ?f0 }`)
+    expect(frag).toContain(`GRAPH ?fg0a { ?s <${COST}> ?f0_m0 }`)
+    expect(frag).toContain(`GRAPH ?fg0b { ?f0_m0 <${VALUE}> ?f0 }`)
   })
 
   it('unsafe via → whole facet dropped (never facets on the wrapper node)', () => {
     expect(buildFacetConstraints([{ predicate: COST, via: 'bad > } DROP', ranges: [{ min: 0 }] }], DEFAULT)).toBe('')
+  })
+
+  it('via as a PATH walks every hop (Organisation → site → address → country)', () => {
+    const SITE = 'http://data.europa.eu/s66#hasSite'
+    const ADDR = 'http://data.europa.eu/s66#hasAddress'
+    const CTRY = 'http://data.europa.eu/s66#addressCountry'
+    const frag = buildFacetConstraints([{ predicate: SITE, via: [ADDR, CTRY], terms: [{ value: 'DE', isUri: false }] }], DEFAULT)
+    expect(frag).toContain(`?s <${SITE}> ?f0_m0 . ?f0_m0 <${ADDR}> ?f0_m1 . ?f0_m1 <${CTRY}> ?f0`)
+    // any unsafe hop in the path drops the whole facet
+    expect(buildFacetConstraints([{ predicate: SITE, via: [ADDR, 'x > } DROP'], terms: [{ value: 'DE', isUri: false }] }], DEFAULT)).toBe('')
   })
 
   it('date range: bands are YEARs compared as xsd:date, no decimal cast', () => {
@@ -480,7 +490,7 @@ describe('facet 2-hop (via) + date ranges', () => {
 
   it('buildFacetRangesQuery threads via + date through to the aggregate', () => {
     const q = buildFacetRangesQuery(TYPE, COST, [{ min: 1000000 }], '', DEFAULT, VALUE)
-    expect(q).toContain(`?s <${COST}> ?v_m . ?v_m <${VALUE}> ?v`)
+    expect(q).toContain(`?s <${COST}> ?v_m0 . ?v_m0 <${VALUE}> ?v`)
     expect(q).toContain(`SUM(IF(${DEC}(?v) >= 1000000, 1, 0))`)
     const qd = buildFacetRangesQuery(TYPE, DATE, [{ max: 2015 }], '', DEFAULT, undefined, true)
     expect(qd).toContain(`?v < "2015-01-01"^^${XDATE}`)
@@ -488,7 +498,7 @@ describe('facet 2-hop (via) + date ranges', () => {
 
   it('buildFacetValuesQuery threads via (2-hop value listing)', () => {
     const q = buildFacetValuesQuery(TYPE, COST, '', DEFAULT, 15, VALUE)
-    expect(q).toContain(`?s <${COST}> ?v_m . ?v_m <${VALUE}> ?v`)
+    expect(q).toContain(`?s <${COST}> ?v_m0 . ?v_m0 <${VALUE}> ?v`)
   })
 })
 

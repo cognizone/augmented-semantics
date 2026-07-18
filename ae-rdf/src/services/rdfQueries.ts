@@ -293,16 +293,16 @@ export interface FacetValueTerm {
 export interface FacetValueSelection {
   predicate: string
   terms: FacetValueTerm[]
-  /** Second-hop predicate to the value (see FacetConfig.via). */
-  via?: string
+  /** Hop predicate(s) to the value (see FacetConfig.via). */
+  via?: string | string[]
 }
 
 /** A RANGE facet's current selection: the property + the chosen bands (OR'd). */
 export interface FacetRangeSelection {
   predicate: string
   ranges: { min?: number; max?: number }[]
-  /** Second-hop predicate to the value (see FacetConfig.via). */
-  via?: string
+  /** Hop predicate(s) to the value (see FacetConfig.via). */
+  via?: string | string[]
   /** `date` → bands are YEARs compared as xsd:date; else numeric (decimal cast). */
   datatype?: 'date'
 }
@@ -341,18 +341,30 @@ function rangeCond(v: string, r: { min?: number; max?: number }, date = false): 
 }
 
 /** Graph-scoped pattern(s) binding `valueVar` to the facet value of `subj`: the
- *  direct object of `pred` (`?s <pred> ?v`), or one node further when `via` is set
- *  (`?s <pred> ?mid . ?mid <via> ?v`). Each triple is scoped() per strategy with its
- *  own graph var. Returns null when `via` is present but unsafe — the caller then
- *  skips the whole facet rather than silently faceting on the wrapper node. `pred` is
- *  pre-sanitized by callers; `via` is sanitized here. */
-function facetPath(subj: string, pred: string, via: string | undefined, valueVar: string, s: GraphStrategy, gvar: string): string | null {
-  if (!via) return scoped(`${subj} <${pred}> ${valueVar}`, s, gvar)
-  if (!isNavigableIri(via)) return null
-  let v2: string
-  try { v2 = sanitizeIri(via) } catch { return null }
-  const mid = `${valueVar}_m`
-  return `${scoped(`${subj} <${pred}> ${mid}`, s, `${gvar}a`)} . ${scoped(`${mid} <${v2}> ${valueVar}`, s, `${gvar}b`)}`
+ *  direct object of `pred` (`?s <pred> ?v`), or N nodes further when `via` names a
+ *  path of predicates (`?s <pred> ?m0 . ?m0 <via0> ?m1 . … . ?mk <viaK> ?v`). `via`
+ *  may be a single predicate or an ordered array (a walk to a value that lives
+ *  several hops away, e.g. Organisation hasSite→hasAddress→addressCountry). Each
+ *  triple is scoped() per strategy with its own graph var. Returns null when any via
+ *  hop is unsafe — the caller then skips the whole facet rather than silently
+ *  faceting on an intermediate node. `pred` is pre-sanitized by callers; via hops are
+ *  sanitized here. */
+function facetPath(subj: string, pred: string, via: string | string[] | undefined, valueVar: string, s: GraphStrategy, gvar: string): string | null {
+  const hops = via == null ? [] : (Array.isArray(via) ? via : [via])
+  if (!hops.length) return scoped(`${subj} <${pred}> ${valueVar}`, s, gvar)
+  const preds = [pred] // pred is caller-sanitized; via hops sanitized below
+  for (const h of hops) {
+    if (!isNavigableIri(h)) return null
+    try { preds.push(sanitizeIri(h)) } catch { return null }
+  }
+  const parts: string[] = []
+  let cur = subj
+  preds.forEach((p, i) => {
+    const next = i === preds.length - 1 ? valueVar : `${valueVar}_m${i}`
+    parts.push(scoped(`${cur} <${p}> ${next}`, s, `${gvar}${String.fromCharCode(97 + i)}`))
+    cur = next
+  })
+  return parts.join(' . ')
 }
 
 /**
@@ -408,7 +420,7 @@ export function buildFacetValuesQuery(
   constraintFragment: string,
   s: GraphStrategy,
   limit = 15,
-  via?: string,
+  via?: string | string[],
 ): string {
   const iri = sanitizeIri(typeUri)
   const pred = sanitizeIri(predicate)
@@ -433,7 +445,7 @@ export function buildFacetRangesQuery(
   buckets: { min?: number; max?: number }[],
   constraintFragment: string,
   s: GraphStrategy,
-  via?: string,
+  via?: string | string[],
   date = false,
 ): string {
   const iri = sanitizeIri(typeUri)

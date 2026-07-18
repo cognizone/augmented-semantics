@@ -286,6 +286,27 @@
         "http://data.europa.eu/s66#identifier",
         "http://data.europa.eu/s66#rcn"
       ],
+      "facets": [
+        {
+          "predicate": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "label": "Organisation type",
+          "limit": 12
+        },
+        {
+          "predicate": "http://data.europa.eu/s66#hasRole",
+          "via": "http://data.europa.eu/s66#roleLabel",
+          "label": "Role"
+        },
+        {
+          "predicate": "http://data.europa.eu/s66#hasSite",
+          "via": [
+            "http://data.europa.eu/s66#hasAddress",
+            "http://data.europa.eu/s66#addressCountry"
+          ],
+          "label": "Country",
+          "limit": 20
+        }
+      ],
       "sidebar": "pin",
       "label": [
         "http://data.europa.eu/s66#legalName"

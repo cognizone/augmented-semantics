@@ -148,11 +148,12 @@ export interface FacetConfig {
   /** The faceted property IRI. With `via` set, this is the FIRST hop (to an
    *  intermediate node); the faceted value is then reached via `via`. */
   predicate: string
-  /** Second-hop predicate for a value that lives one node away — the facet matches
-   *  `?s <predicate> ?node . ?node <via> ?value` and facets on `?value`. Use for
-   *  wrapper nodes like CORDIS `hasTotalCost` → MonetaryAmount → `value`. Unset = the
-   *  value is the direct object of `predicate`. */
-  via?: string
+  /** Hop predicate(s) to a value that lives one or more nodes away. A single
+   *  predicate — `?s <predicate> ?node . ?node <via> ?value` — for a wrapper node
+   *  like CORDIS `hasTotalCost` → MonetaryAmount → `value`; or an ORDERED ARRAY to
+   *  walk further, e.g. Organisation `["hasSite","hasAddress","addressCountry"]`.
+   *  Unset = the value is the direct object of `predicate`. */
+  via?: string | string[]
   /** Facet heading. Default: the humanized local name of `predicate`. */
   label?: string
   /** Numeric buckets. Presence makes this a RANGE facet; each band counts values
