@@ -17,6 +17,7 @@
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import ProgressSpinner from 'primevue/progressspinner'
+import Paginator from 'primevue/paginator'
 import { CodeJar } from 'codejar'
 import Prism from 'prismjs'
 // SPARQL grammar builds on Turtle — import Turtle first so `extend('turtle', …)` resolves.
@@ -26,7 +27,7 @@ import { useEndpointStore } from '../stores'
 import { useDelayedLoading, useElapsedTime } from '../composables'
 import { executeSparql, isNavigableIri, logger, resolveUris, type SPARQLBinding, type SPARQLResults } from '../services'
 import { qname as toQname, type ResolvedMap } from '../utils/format'
-import { prepareQuery } from '../utils/sparqlGuard'
+import { prepareQuery, DEFAULT_LIMIT } from '../utils/sparqlGuard'
 import { takeSparqlHandoff } from '../utils/sparqlHandoff'
 import { initTabs, persistTabs, makeTab, nextName, type QueryTab } from '../utils/sparqlTabs'
 import { URL_PARAMS } from '../router'
@@ -57,11 +58,19 @@ const tabs = ref<QueryTab[]>(initial.tabs)
 const activeId = ref<string>(initial.activeId)
 const activeTab = computed(() => tabs.value.find(t => t.id === activeId.value) ?? tabs.value[0])
 
-// The active tab's query, as a writable ref, so the editor/run code below is
-// unchanged: reads flow from the active tab, writes (typing) into it.
-const query = computed<string>({
-  get: () => activeTab.value?.query ?? '',
-  set: (v) => { const t = activeTab.value; if (t) t.query = v },
+// The editor binds to a PLAIN ref (caret-stable with CodeJar — a computed with a
+// side-effecting setter fought the editor and froze typing). It mirrors the active
+// tab both ways: typing persists into the tab (watch(query) below), switching tabs
+// loads the tab's query (watch(activeTab) below).
+const query = ref<string>(activeTab.value?.query ?? '')
+
+// Switch/replace the active tab → load its query into the editor. Fires only when
+// the active tab OBJECT changes (switch/add/close/endpoint-swap), NOT when the
+// current tab's text mutates (that keeps the same object ref), so typing never
+// reloads the editor from under the caret.
+watch(activeTab, t => {
+  const q = t?.query ?? ''
+  if (q !== query.value) query.value = q
 })
 
 // Persist tabs on any change (debounced — this also fires per keystroke via query).
@@ -124,20 +133,34 @@ function onEditorKeydown(e: KeyboardEvent) {
   }
 }
 
-onMounted(() => {
-  const el = editorEl.value
-  if (!el) return
+function attachEditor(el: HTMLDivElement) {
   el.addEventListener('keydown', onEditorKeydown)
   jar = CodeJar(el, highlight, { tab: '  ' })
   jar.updateCode(query.value) // seed content before onUpdate is wired (no self-trigger)
   jar.onUpdate(code => {
     query.value = code
   })
+}
+
+onMounted(() => {
+  if (editorEl.value) attachEditor(editorEl.value)
 })
 
-// External reassignments (endpoint switch loads the persisted/default query) push into
-// the editor. The guard skips self-originated edits, preserving the caret.
+// The editor lives inside v-if="hasEndpoint": on a cold load the endpoint config
+// isn't resolved at mount, so the element appears LATER and onMounted misses it —
+// CodeJar would never attach and the field stays inert. Attach (and re-attach on
+// remount) whenever the element itself appears/disappears.
+watch(editorEl, el => {
+  if (!el) { jar?.destroy(); jar = null; return }
+  if (!jar) attachEditor(el)
+})
+
+// Typing (jar.onUpdate → query) persists into the active tab; programmatic changes
+// (tab switch) push into the editor. The `!==` guards skip self-originated work so
+// the caret never resets and there's no update loop.
 watch(query, v => {
+  const t = activeTab.value
+  if (t && t.query !== v) t.query = v
   if (jar && v !== jar.toString()) jar.updateCode(v)
 })
 
@@ -150,6 +173,13 @@ const durationMs = ref<number | null>(null)
 const truncated = ref(false)
 const vars = ref<string[]>([])
 const rows = ref<SPARQLBinding[]>([])
+
+// Client-side paging over the fetched rows (≤ MAX_ROWS). ponytail: page what we
+// already have — no LIMIT/OFFSET re-query, which can't paginate an arbitrary
+// user query safely. Raise MAX_ROWS / DEFAULT_LIMIT if server paging is needed.
+const RESULT_PAGE_SIZE = 50
+const pageFirst = ref(0)
+const pagedRows = computed(() => rows.value.slice(pageFirst.value, pageFirst.value + RESULT_PAGE_SIZE))
 const askResult = ref<boolean | null>(null)
 const resolved = ref<ResolvedMap>(new Map())
 const ran = ref(false) // a query has completed at least once (drives empty state)
@@ -164,6 +194,7 @@ const reqId = ref(0)
 function clearResults() {
   vars.value = []
   rows.value = []
+  pageFirst.value = 0
   askResult.value = null
   resolved.value = new Map()
   error.value = null
@@ -221,7 +252,7 @@ async function run() {
     }
 
     const notes: string[] = []
-    if (prepared.limitAdded) notes.push('No LIMIT found — added LIMIT 100.')
+    if (prepared.limitAdded) notes.push(`No LIMIT found — added LIMIT ${DEFAULT_LIMIT}.`)
 
     if (typeof res.boolean === 'boolean') {
       askResult.value = res.boolean
@@ -383,7 +414,8 @@ function openResource(uri: string) {
         </div>
 
         <!-- SELECT results -->
-        <div v-else-if="rows.length" class="table-scroll">
+        <div v-else-if="rows.length" class="result-block">
+          <div class="table-scroll">
           <table class="result-table">
             <thead>
               <tr>
@@ -391,7 +423,7 @@ function openResource(uri: string) {
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(row, ri) in rows" :key="ri">
+              <tr v-for="(row, ri) in pagedRows" :key="ri">
                 <td v-for="v in vars" :key="v">
                   <template v-if="row[v]">
                     <!-- URI: navigable → link to the resource view, else plain text -->
@@ -425,6 +457,14 @@ function openResource(uri: string) {
               </tr>
             </tbody>
           </table>
+          </div>
+          <Paginator
+            v-if="rows.length > RESULT_PAGE_SIZE"
+            :rows="RESULT_PAGE_SIZE"
+            :totalRecords="rows.length"
+            :first="pageFirst"
+            @page="(e: { first: number }) => (pageFirst = e.first)"
+          />
         </div>
 
         <!-- Empty result set (after a successful run) -->
@@ -730,9 +770,18 @@ function openResource(uri: string) {
   min-height: 0;
 }
 
+.result-block {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
 .table-scroll {
-  overflow-x: auto;
+  overflow: auto;
   width: 100%;
+  flex: 1;
+  min-height: 0;
 }
 
 .result-table {

@@ -14,7 +14,7 @@ export const READ_ONLY_KEYWORDS = ['SELECT', 'ASK'] as const
 export type ReadOnlyKeyword = (typeof READ_ONLY_KEYWORDS)[number]
 
 /** Default LIMIT appended to a SELECT that declares none. */
-export const DEFAULT_LIMIT = 100
+export const DEFAULT_LIMIT = 1000
 
 // One scanner that matches (in priority order) a triple-quoted string, a quoted
 // string, an <IRI>, or a `#` line comment. Strings and IRIs are matched FIRST and

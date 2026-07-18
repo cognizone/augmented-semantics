@@ -6,6 +6,7 @@ import {
   hasTopLevelLimit,
   ensureLimit,
   prepareQuery,
+  DEFAULT_LIMIT,
 } from '../sparqlGuard'
 
 describe('stripComments', () => {
@@ -53,7 +54,7 @@ describe('hasTopLevelLimit / ensureLimit', () => {
   it('appends LIMIT when none is present', () => {
     const r = ensureLimit('SELECT * WHERE { ?s ?p ?o }')
     expect(r.added).toBe(true)
-    expect(r.query).toMatch(/LIMIT 100$/)
+    expect(r.query).toMatch(new RegExp(`LIMIT ${DEFAULT_LIMIT}$`))
   })
   it('leaves an existing LIMIT untouched', () => {
     const r = ensureLimit('SELECT * WHERE { ?s ?p ?o } LIMIT 3')
@@ -69,19 +70,19 @@ describe('prepareQuery', () => {
     expect(r.error).toBeTruthy()
   })
 
-  it('allows SELECT and appends LIMIT 100 when missing', () => {
+  it('allows SELECT and appends the default LIMIT when missing', () => {
     const r = prepareQuery('SELECT ?s ?p ?o WHERE { ?s ?p ?o }')
     expect(r.ok).toBe(true)
     expect(r.keyword).toBe('SELECT')
     expect(r.limitAdded).toBe(true)
-    expect(r.query).toMatch(/LIMIT 100$/)
+    expect(r.query).toMatch(new RegExp(`LIMIT ${DEFAULT_LIMIT}$`))
   })
 
   it('allows SELECT and keeps an existing LIMIT', () => {
     const r = prepareQuery('SELECT * WHERE { ?s ?p ?o } LIMIT 5')
     expect(r.ok).toBe(true)
     expect(r.limitAdded).toBe(false)
-    expect(r.query).not.toMatch(/LIMIT 100/)
+    expect(r.query).not.toMatch(new RegExp(`LIMIT ${DEFAULT_LIMIT}`))
   })
 
   it('allows ASK without adding a LIMIT', () => {
