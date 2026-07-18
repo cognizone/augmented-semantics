@@ -20,6 +20,73 @@ Turn on **Config authoring mode** in [Settings](index.md#settings) to reveal a p
 
 Without authoring mode the sidebar is read-only, but the configured effects still apply.
 
+### Type config reference
+
+Everything the gear (and the resource-view edit tools) author lands in the endpoint's `types` map, keyed by type IRI:
+
+| Field | Meaning |
+|-------|---------|
+| `render` | How an instance shows as a *value*: `link` (default), `embed` (inline its properties), `label` (identity only, no navigation — for shared value objects like unit vocabularies). |
+| `embedVia` | For `render: embed` — only inline the object where it's reached via **this** predicate (its owning relationship). `^predicate` inverts it (embed the referrer). |
+| `sidebar` | `show` / `hide` / `pin`. |
+| `group` | Sidebar group label — types with the same label collect under one collapsible header. |
+| `order` | Predicate IRIs in display order for this type's resource view. |
+| `hide` | Predicate IRIs hidden from the resource view. |
+| `label` / `labelFull` | Predicates composing the display label; `labelFull` keeps all parts in the heading. |
+| `search` | Predicates the instance-list filter matches (overrides the default label fields). |
+| `foldAfter`, `groupByType`, `boolean`, `number`, `columns`, `capWidth`, `viaLabels` | Per-field display formatting, all authored via the gear/edit tools. |
+
+### Embedding safely
+
+`render: embed` inlines an object's properties recursively — use it for **low-cardinality value objects** (amounts, addresses, coordinates, time instants, geometries). Two rules keep it safe:
+
+- **Never blanket-embed a high-cardinality type.** A resource pointing at hundreds of embedded objects inlines them all; the loader caps depth and total, but the page becomes a wall. Check the worst-case *copies under a single parent* (the profiler records this as `embed.selfMax` in `typeProperties`) — single digits is fine, hundreds is not.
+- **Scope with `embedVia`.** Many value objects are *also* the range of a high-fan-out predicate (a "defined term" list, a shared unit). Pinning the owning predicate means the object only inlines under its owner, and everywhere else stays a link. For genuinely shared vocabulary terms, prefer `render: label` over embed.
+
+## Endpoint configuration file
+
+A deployed endpoint (`config/endpoints/<slug>.json`, or embedded in `app.json`) carries, besides `name` and `url`:
+
+| Field | Meaning |
+|-------|---------|
+| `auth` | Authentication *type* (basic / apikey / bearer). Credentials are never stored — users are prompted on connect. |
+| `graph` | [Graph behaviour](#graph-behaviour): `quads` and `defaultView` (`own` / `merged`). |
+| `infer` | GraphDB only: send `infer=<value>` with every query (`false` disables inferred triples). |
+| `types` | The per-type config map (above). |
+| `prefixes` | Endpoint-declared `prefix → namespace` map, loaded at highest precedence while this endpoint is active — keeps exotic-vocab qnames readable without bloating the global `app.json` prefixes. |
+| `extraLabelPredicates` | Extra label predicates appended at lowest precedence (e.g. `foaf:name` / `schema:name` for endpoints that label agents only via those). |
+| `typeInventory`, `typeProperties`, `subclasses`, `composition`, `orphanCounts`, `deprecatedPredicates`, `profiledAt` | Cached profiler output for an instant sidebar and informed embedding — generated, not hand-written (see the script below). |
+
+## app.json reference
+
+The manifest at `config/app.json`:
+
+| Field | Meaning |
+|-------|---------|
+| `appName`, `logoUrl`, `documentationUrl` | Branding: header name, logo, and docs link. |
+| `endpoints` | The endpoint list — inline objects and/or `"<slug>"` strings referencing `config/endpoints/<slug>.json`. |
+| `prefixes` | Global `prefix → namespace` map (shared across endpoints). |
+| `doi` | Per-field toggles for the [DOI citation card](02-browsing.md#rich-values-media-dois-geometry): `authors`, `year`, `title`, `container`, `publisher`, `type`, `categories`, `abstract`, `copyright`, `url` (omitted = shown; `false` hides) and `abstractMaxChars` (truncation length, default 280). |
+
+## Generating groups, embeds & prefixes (`group-types.mjs`)
+
+Hand-assigning groups to hundreds of classes doesn't scale. `ae-rdf/scripts/group-types.mjs` writes them into a profiled endpoint config:
+
+```bash
+node scripts/group-types.mjs public/config/endpoints/<slug>.json [flags]
+```
+
+| Flag | Effect |
+|------|--------|
+| *(none)* | Mechanical clustering: well-known vocabularies get canonical group names; everything else groups by dataset (host + path), oversized groups split a path segment deeper, tiny groups fold into their dominant linker. |
+| `--smart` | Sends the inventory (class URIs, counts, property-range links) to Claude (`claude -p`) for **thematic** clustering — classes group by what they mean and link to, not just their namespace. The mechanical pass remains the fallback for anything uncovered. |
+| `--embed` | Marks a curated list of well-known value objects (`schema:PostalAddress`, `time:Instant`, `geo:Geometry`, …) `render: embed`, gated by the profiler's `selfMax` so a fan-out type is refused loudly. |
+| `--prefixes` | Generates the endpoint's `prefixes` map (conventional prefixes for known vocabularies, sensible guesses for the rest). |
+| `--dry-run` | Report only, write nothing. |
+| `--force` | Overwrite existing `group` / `render` / `prefixes` values (default: hand-authored values win). |
+
+It requires a profiled config (`typeInventory` + `typeProperties`); run the profiler first (`scripts/profile-endpoint.ts`).
+
 ## Graph behaviour
 
 With [Config authoring mode](index.md#settings) on, the endpoint edit form gains a **Graph

@@ -61,7 +61,8 @@ export default defineConfig({
         {
           text: 'Administration',
           items: [
-            { text: 'Configuration Guide', link: '/ae-rdf/configuration' }
+            { text: 'Configuration Guide', link: '/ae-rdf/configuration' },
+            { text: 'Deployment & Releases', link: '/ae-rdf/deployment' }
           ]
         }
       ],

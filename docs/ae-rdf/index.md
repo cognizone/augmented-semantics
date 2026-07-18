@@ -50,6 +50,8 @@ Open the settings dialog from the <img src="./icons/icon-settings.svg" height="1
   - *Full URI* — the raw IRI.
 - **Show hidden fields** — reveal properties hidden by the endpoint config (shown greyed), without entering authoring mode.
 - **Collapse groups by default** — named sidebar groups (e.g. "Ontology") start collapsed. The built-in **Hidden** group always starts collapsed and **Embedded** always starts expanded, regardless of this setting.
+- **DOI citations** — off by default. When on, DOI values show an inline citation card (authors, year, title, …) fetched from doi.org on demand — an external request per DOI you scroll to. See [Rich values](02-browsing.md#rich-values-media-dois-geometry).
+- **Geometry maps** — off by default. When on, WKT geometry values render an embedded map (swisstopo / OpenStreetMap tiles — external tile requests). See [Rich values](02-browsing.md#rich-values-media-dois-geometry).
 - **Config authoring mode** — off by default (clean, read-only browsing). Turn it on to reveal the per-type gears in the Types sidebar and the export buttons below. The configured effects (embed/hide/pin) apply either way; this just shows the editing tools. Authoring — per-type configuration, graph behaviour, and exporting a deployment config — is covered in the [Configuration Guide](configuration.md).
 
 Settings are saved in your browser (localStorage).
@@ -64,6 +66,7 @@ Settings are saved in your browser (localStorage).
 ## Administration
 
 - [Configuration Guide](configuration.md) — Authoring mode, per-type configuration, graph behaviour, and exporting a deployment config
+- [Deployment & Releases](deployment.md) — GitHub Pages variants and the ERA standalone release process
 
 ---
 
