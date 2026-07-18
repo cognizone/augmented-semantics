@@ -244,64 +244,80 @@ onUnmounted(() => {
     <!-- Settings (minimal: dark mode + build info) -->
     <Dialog v-model:visible="showSettings" header="Settings" :modal="true" :style="{ width: '420px' }" position="top">
       <div class="settings-body">
-        <label class="checkbox-label">
-          <Checkbox v-model="settingsStore.darkMode" :binary="true" />
-          <span class="checkbox-text">Dark mode</span>
-        </label>
+        <section class="settings-section">
+          <h3 class="settings-section-title">Appearance</h3>
+          <label class="checkbox-label">
+            <Checkbox v-model="settingsStore.darkMode" :binary="true" />
+            <span class="checkbox-text">Dark mode</span>
+          </label>
 
-        <div class="setting-field">
-          <span class="setting-label">URI display</span>
-          <Select
-            v-model="settingsStore.uriDisplay"
-            :options="uriDisplayOptions"
-            optionLabel="label"
-            optionValue="value"
-            class="full-width"
-          />
-          <small class="setting-hint">How predicates and resource links are shown.</small>
-        </div>
-
-        <label class="checkbox-label">
-          <Checkbox v-model="settingsStore.showHidden" :binary="true" />
-          <span class="checkbox-text">Show hidden fields<small>Reveal properties hidden by the endpoint config (greyed), without entering edit mode</small></span>
-        </label>
-
-        <label class="checkbox-label">
-          <Checkbox v-model="settingsStore.groupsCollapsed" :binary="true" />
-          <span class="checkbox-text">Collapse groups by default<small>Named sidebar groups (e.g. Ontology) start collapsed. “Hidden” always starts collapsed, “Embedded” expanded.</small></span>
-        </label>
-
-        <label class="checkbox-label">
-          <Checkbox v-model="settingsStore.doiCitations" :binary="true" />
-          <span class="checkbox-text">DOI citations<small>Fetch citation metadata (title, authors, year) from doi.org for DOI values — an external request per DOI, on demand. Off by default.</small></span>
-        </label>
-
-        <label class="checkbox-label">
-          <Checkbox v-model="settingsStore.wktMaps" :binary="true" />
-          <span class="checkbox-text">Geometry maps<small>Show an embedded map (Leaflet + swisstopo tiles) for WGS84 WKT geometry values — loads map tiles from geo.admin.ch on demand. Off by default.</small></span>
-        </label>
-
-        <label class="checkbox-label">
-          <Checkbox v-model="settingsStore.editMode" :binary="true" />
-          <span class="checkbox-text">Config authoring mode<small>Show per-type gears and the export button — works even on a deployed config, so you can tweak and re-export</small></span>
-        </label>
-
-        <div v-if="settingsStore.editMode" class="setting-field">
-          <span class="setting-label">Deployment</span>
-          <Button label="Export app.json" icon="pi pi-download" severity="secondary" outlined @click="exportConfig" />
-          <Button v-if="endpointStore.current" :label="`Export ${endpointStore.current.name} endpoint`" icon="pi pi-download" severity="secondary" outlined @click="exportEndpoint" />
-          <small class="setting-hint">Export app.json (the manifest) or a single endpoint file → drop it in <code>config/endpoints/</code> and add its slug to the manifest. Credentials are never included.</small>
-        </div>
-
-        <div class="about-info">
-          <div class="about-row"><span class="about-label">Version</span><span class="about-value">{{ appVersion }}</span></div>
-          <div class="about-row"><span class="about-label">Build</span><span class="about-value mono">{{ gitCommit }}</span></div>
-          <div class="about-row"><span class="about-label">Built</span><span class="about-value">{{ buildDateFormatted }}</span></div>
-          <div class="about-row">
-            <span class="about-label">Source</span>
-            <a href="https://github.com/cognizone/augmented-semantics/tree/main/ae-rdf" target="_blank" class="about-link">GitHub</a>
+          <div class="setting-field">
+            <span class="setting-label">URI display</span>
+            <Select
+              v-model="settingsStore.uriDisplay"
+              :options="uriDisplayOptions"
+              optionLabel="label"
+              optionValue="value"
+              class="full-width"
+            />
+            <small class="setting-hint">How predicates and resource links are shown.</small>
           </div>
-        </div>
+        </section>
+
+        <section class="settings-section">
+          <h3 class="settings-section-title">Sidebar</h3>
+          <label class="checkbox-label">
+            <Checkbox v-model="settingsStore.showHidden" :binary="true" />
+            <span class="checkbox-text">Show hidden fields<small>Reveal properties hidden by the endpoint config (greyed), without entering edit mode</small></span>
+          </label>
+
+          <label class="checkbox-label">
+            <Checkbox v-model="settingsStore.groupsCollapsed" :binary="true" />
+            <span class="checkbox-text">Collapse groups by default<small>Named sidebar groups (e.g. Ontology) start collapsed. “Hidden” always starts collapsed, “Embedded” expanded.</small></span>
+          </label>
+        </section>
+
+        <section class="settings-section">
+          <h3 class="settings-section-title">Rich content</h3>
+          <p class="settings-section-hint">Off by default — each fetches from an external service on demand as you scroll.</p>
+          <label class="checkbox-label">
+            <Checkbox v-model="settingsStore.doiCitations" :binary="true" />
+            <span class="checkbox-text">DOI citations<small>Fetch citation metadata (title, authors, year) from doi.org for DOI values — an external request per DOI, on demand.</small></span>
+          </label>
+
+          <label class="checkbox-label">
+            <Checkbox v-model="settingsStore.wktMaps" :binary="true" />
+            <span class="checkbox-text">Geometry maps<small>Show an embedded map (Leaflet + swisstopo tiles) for WGS84 WKT geometry values — loads map tiles from geo.admin.ch on demand.</small></span>
+          </label>
+        </section>
+
+        <section class="settings-section">
+          <h3 class="settings-section-title">Curation</h3>
+          <label class="checkbox-label">
+            <Checkbox v-model="settingsStore.editMode" :binary="true" />
+            <span class="checkbox-text">Config authoring mode<small>Show per-type gears and the export button — works even on a deployed config, so you can tweak and re-export</small></span>
+          </label>
+
+          <div v-if="settingsStore.editMode" class="setting-field">
+            <span class="setting-label">Deployment</span>
+            <Button label="Export app.json" icon="pi pi-download" severity="secondary" outlined @click="exportConfig" />
+            <Button v-if="endpointStore.current" :label="`Export ${endpointStore.current.name} endpoint`" icon="pi pi-download" severity="secondary" outlined @click="exportEndpoint" />
+            <small class="setting-hint">Export app.json (the manifest) or a single endpoint file → drop it in <code>config/endpoints/</code> and add its slug to the manifest. Credentials are never included.</small>
+          </div>
+        </section>
+
+        <section class="settings-section">
+          <h3 class="settings-section-title">About</h3>
+          <div class="about-info">
+            <div class="about-row"><span class="about-label">Version</span><span class="about-value">{{ appVersion }}</span></div>
+            <div class="about-row"><span class="about-label">Build</span><span class="about-value mono">{{ gitCommit }}</span></div>
+            <div class="about-row"><span class="about-label">Built</span><span class="about-value">{{ buildDateFormatted }}</span></div>
+            <div class="about-row">
+              <span class="about-label">Source</span>
+              <a href="https://github.com/cognizone/augmented-semantics/tree/main/ae-rdf" target="_blank" class="about-link">GitHub</a>
+            </div>
+          </div>
+        </section>
       </div>
       <template #footer>
         <Button label="Close" @click="showSettings = false" />
@@ -439,7 +455,30 @@ onUnmounted(() => {
 .settings-body {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.5rem;
+}
+
+.settings-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.settings-section-title {
+  margin: 0;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ae-text-secondary);
+  padding-bottom: 0.375rem;
+  border-bottom: 1px solid var(--ae-border-color);
+}
+
+.settings-section-hint {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--ae-text-secondary);
 }
 
 .checkbox-label {
