@@ -13,20 +13,14 @@ The left sidebar lists the dataset's `rdf:type`s, most common first, with a **di
 It's a **tree**, not a flat list:
 
 - **Subclasses tuck under their general type.** Where the data says one type is a kind of another (`rdfs:subClassOf`), it nests beneath it — e.g. `Result › ProjectPublication › JournalPaper` — indented, with a chevron to collapse/expand. (Only relationships the data actually states are nested; if the endpoint doesn't declare them, the list stays flat.)
-- **Value objects nest under the class that uses them.** A type set to **Embed** (see below) appears beneath the class that composes it — e.g. `PublicBody › Site › PostalAddress` — with a `{}` icon. The count next to a direct child is scoped to that class; for deeper ones, **hover** the row to fetch the exact path-scoped count.
+- **Value objects nest under the class that uses them.** A type set to **Embed** (see the [Configuration Guide](configuration.md#per-type-configuration)) appears beneath the class that composes it — e.g. `PublicBody › Site › PostalAddress` — with a `{}` icon. The count next to a direct child is scoped to that class; for deeper ones, **hover** the row to fetch the exact path-scoped count.
 - **Groups.** Types can be collected under a named, collapsible **group** header (e.g. an "Ontology" group for schema classes). Two groups are built in and sit at the bottom: **Embedded** (all value-object types, **expanded** by default) and **Hidden** (all hidden types, **collapsed** by default).
 
 Pinned types float to the top; configured types show small indicator icons (pinned, embedded, label).
 
 The **Types** header has a `{}` toggle to show or hide embedded types nested under their class (they always stay listed in the **Embedded** group either way). Drag the sidebar's right edge to resize it — the width is remembered.
 
-Turn on **Config authoring mode** in [Settings](index.md#settings) to reveal a per-type **gear**:
-
-- **Pin** to the top, or **Hide** (hidden types move into the **Hidden** group, where you can unhide them).
-- **Render as object** — how it shows when it's a *value* of another resource: **Link** (default), **Embed** (inline its properties — for value objects like amounts, addresses, coordinates), or **Label only**.
-- **Group** — assign to an existing group, create a new one, or remove.
-
-Without authoring mode the sidebar is read-only, but the configured effects still apply. The gear and **Export** stay available even when running a deployed config, so you can tweak and re-export.
+Types can be **configured** — pinned, hidden, grouped, or rendered as embedded value objects / labels. That's curator work, done via a per-type gear in authoring mode; see the [Configuration Guide](configuration.md#per-type-configuration). Without authoring mode the sidebar is read-only, but the configured effects still apply.
 
 ::: tip Counts are distinct
 Counts are the number of *distinct* subjects of that type. On large datasets the sidebar may take a few seconds to compute — that's the price of a correct count rather than an inflated one.
@@ -45,7 +39,7 @@ A **filter box** sits above the list — type to narrow it to instances whose **
 - Press **Esc** or the **✕** to clear it. The box stays visible as you switch types, so a filter is never a hidden constraint.
 
 ::: tip Custom search fields
-A type can pin exactly which predicates the filter searches via its **search** fields in the [config](index.md#settings) — useful when the default label fields aren't what you want to match on.
+A type can pin exactly which predicates the filter searches via its **search** fields in the [config](configuration.md#per-type-configuration) — useful when the default label fields aren't what you want to match on.
 :::
 
 ### Unreferenced instances (orphans)

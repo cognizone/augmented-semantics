@@ -7,7 +7,7 @@ outline: deep
 AE RDF talks directly to SPARQL endpoints from your browser. On a **deployed instance** the available endpoints come from the app's bundled configuration (`config/app.json`) — pick one and connect. Adding, editing, and testing endpoints is part of the **standalone / authoring** build, where you assemble the config you then export and deploy.
 
 ::: info Deployed vs. authoring
-A deployed AE RDF runs in **config mode**: its endpoint list is fixed by `config/app.json`. The add / edit / delete controls below don't persist there (a custom URL you type lasts only for the current session), and each tool ships its own config — so endpoints are **not** shared between AE SKOS and AE RDF. To change the shipped endpoints, edit the config and redeploy (see [Exporting a deployment config](index.md#exporting-a-deployment-config-authoring-mode)). The rest of this page describes the full manager as it works in the standalone / authoring build.
+A deployed AE RDF runs in **config mode**: its endpoint list is fixed by `config/app.json`. The add / edit / delete controls below don't persist there (a custom URL you type lasts only for the current session), and each tool ships its own config — so endpoints are **not** shared between AE SKOS and AE RDF. To change the shipped endpoints, edit the config and redeploy (see [Exporting a deployment config](configuration.md#exporting-a-deployment-config)). The rest of this page describes the full manager as it works in the standalone / authoring build.
 :::
 
 ## The Endpoint Manager
@@ -46,11 +46,8 @@ Credentials are **never saved** — leave them blank and AE RDF asks for them wh
 
 ### Graph behaviour (authoring mode)
 
-With [Config authoring mode](index.md#settings) on, the edit form gains a **Graph
-behaviour** section: whether the endpoint uses **named graphs (quads)** and what
-its **default (no-`GRAPH`) view** is — *Own* triples or a *Merged* view of the
-quads. Leave both **Auto** unless you know the endpoint; see [Graphs](03-graphs.md).
-It's saved with the endpoint and exported in `app.json`.
+With authoring mode on, the edit form gains a **Graph behaviour** section — see
+the [Configuration Guide](configuration.md#graph-behaviour) and [Graphs](03-graphs.md).
 
 ### Test before saving
 

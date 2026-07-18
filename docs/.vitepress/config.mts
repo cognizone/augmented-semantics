@@ -57,6 +57,12 @@ export default defineConfig({
             { text: '3. Graphs', link: '/ae-rdf/03-graphs' },
             { text: '4. Troubleshooting', link: '/ae-rdf/04-troubleshooting' }
           ]
+        },
+        {
+          text: 'Administration',
+          items: [
+            { text: 'Configuration Guide', link: '/ae-rdf/configuration' }
+          ]
         }
       ],
       '/ae-owl/': [

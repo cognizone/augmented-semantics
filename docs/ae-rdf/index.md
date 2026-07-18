@@ -50,16 +50,7 @@ Open the settings dialog from the <img src="./icons/icon-settings.svg" height="1
   - *Full URI* — the raw IRI.
 - **Show hidden fields** — reveal properties hidden by the endpoint config (shown greyed), without entering authoring mode.
 - **Collapse groups by default** — named sidebar groups (e.g. "Ontology") start collapsed. The built-in **Hidden** group always starts collapsed and **Embedded** always starts expanded, regardless of this setting.
-- **Config authoring mode** — off by default (clean, read-only browsing). Turn it on to reveal the per-type gears in the Types sidebar and the export buttons below. The configured effects (embed/hide/pin) apply either way; this just shows the editing tools.
-
-### Exporting a deployment config (authoring mode)
-
-With authoring mode on, two export buttons appear under **Deployment**:
-
-- **Export app.json** — the manifest: app name, prefix mappings (so qnames render offline, without prefix.cc), and the endpoint list. Each endpoint carries its graph behaviour, per-type config (sidebar visibility, embed/link/label, order), and a cached snapshot of the type inventory (for an instant Types sidebar on deploy).
-- **Export &lt;endpoint&gt;** — the currently selected endpoint as its own file.
-
-To deploy: drop the manifest at `config/app.json`. Endpoints can be embedded in the manifest, or split into `config/endpoints/<slug>.json` files referenced from the manifest by slug — export each with the per-endpoint button and add its slug to the manifest's `endpoints` list. Tweak everything live, export, deploy, and end users get a pre-configured, locked AE RDF. **Credentials are never included in any export.**
+- **Config authoring mode** — off by default (clean, read-only browsing). Turn it on to reveal the per-type gears in the Types sidebar and the export buttons below. The configured effects (embed/hide/pin) apply either way; this just shows the editing tools. Authoring — per-type configuration, graph behaviour, and exporting a deployment config — is covered in the [Configuration Guide](configuration.md).
 
 Settings are saved in your browser (localStorage).
 
@@ -69,6 +60,10 @@ Settings are saved in your browser (localStorage).
 2. [Browsing](02-browsing.md) — Types, instances, the resource view, and walking links
 3. [Graphs](03-graphs.md) — How AE RDF shows which named graph each fact lives in
 4. [Troubleshooting](04-troubleshooting.md) — CORS, empty results, slow queries
+
+## Administration
+
+- [Configuration Guide](configuration.md) — Authoring mode, per-type configuration, graph behaviour, and exporting a deployment config
 
 ---
 
