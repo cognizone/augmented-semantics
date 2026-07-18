@@ -90,6 +90,7 @@ A deployed endpoint (`config/endpoints/<slug>.json`, or embedded in `app.json`) 
 | `infer` | GraphDB only: send `infer=<value>` with every query (`false` disables inferred triples). |
 | `types` | The per-type config map (above). |
 | `prefixes` | Endpoint-declared `prefix → namespace` map, loaded at highest precedence while this endpoint is active — keeps exotic-vocab qnames readable without bloating the global `app.json` prefixes. |
+| `resourceNamespaces` | URI prefixes whose **resources** this endpoint serves (its data hosts, e.g. `https://energy.ld.admin.ch/` for LINDAS, `http://data.europa.eu/s66/` for CORDIS). Drives [URL auto-switch](02-browsing.md#opening-a-resource-uri): entering/opening a resource URI under one of these switches the active endpoint to this one and loads the resource there. Distinct from `prefixes`, which only shapes qname *display* for vocabularies. |
 | `extraLabelPredicates` | Extra label predicates appended at lowest precedence (e.g. `foaf:name` / `schema:name` for endpoints that label agents only via those). |
 | `typeInventory`, `typeProperties`, `subclasses`, `composition`, `orphanCounts`, `deprecatedPredicates`, `profiledAt` | Cached profiler output for an instant sidebar and informed embedding — generated, not hand-written (see the script below). |
 

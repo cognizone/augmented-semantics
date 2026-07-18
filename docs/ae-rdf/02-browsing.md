@@ -54,6 +54,10 @@ For a **value-object type** (one set to **Embed** with an owning predicate — e
 
 ## The resource view
 
+### Opening a resource URI
+
+Paste a resource URI in the top bar and press **Go** to inspect it. If the URI belongs to a *different* configured dataset (matched against each endpoint's [`resourceNamespaces`](configuration.md#endpoint-configuration-file)), the app **switches to that endpoint automatically** and opens the resource there — a brief "Switched to …" note confirms the change. For example, pasting a `https://energy.ld.admin.ch/…` URI while on CORDIS switches to LINDAS and loads it. Deep links (a shared `?resource=` URL) switch the same way.
+
 Opening an instance — or pasting a URI in the top bar and pressing **Go** — shows the resource:
 
 - **Header** — the resource's label (or local name if it has none), its full URI (click it to dereference — opens in a new tab) with a copy <img src="./icons/icon-copy.svg" height="14"> button next to it, plus its **type chips** and a [graph summary](03-graphs.md).

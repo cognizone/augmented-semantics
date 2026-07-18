@@ -21,6 +21,7 @@ export interface SPARQLEndpoint {
   deprecatedPredicates?: string[]               // predicates that flag a resource deprecated when asserted `true` (profiler-detected)
   extraLabelPredicates?: string[]               // endpoint-specific label predicates, appended to LABEL_PREDICATES at lowest precedence (e.g. foaf:name on LINDAS)
   prefixes?: Record<string, string>             // endpoint-declared prefix → namespace, seeded into the resolver at highest precedence when this endpoint is active
+  resourceNamespaces?: string[]                 // URI prefixes whose RESOURCES belong to THIS endpoint (e.g. the data hosts it serves). Drives URL-aware endpoint auto-switch: pasting/opening a resource URI under one of these activates this endpoint. Distinct from `prefixes` (vocab qname display) — these are resource-identity hosts, not vocabulary namespaces.
   profiledAt?: string                           // ISO timestamp of the last property-profiling run
   selectedGraphs?: string[]
   languagePriorities?: string[]  // User-ordered language codes

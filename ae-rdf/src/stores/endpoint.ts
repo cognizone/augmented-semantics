@@ -154,6 +154,7 @@ export const useEndpointStore = defineStore('endpoint', () => {
       deprecatedPredicates: ce.deprecatedPredicates,
       extraLabelPredicates: ce.extraLabelPredicates,
       prefixes: ce.prefixes,
+      resourceNamespaces: ce.resourceNamespaces,
       profiledAt: ce.profiledAt,
       languagePriorities: ce.suggestedLanguagePriorities,
       createdAt: new Date().toISOString(),

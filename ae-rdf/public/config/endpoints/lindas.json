@@ -1,6 +1,14 @@
 {
   "name": "LINDAS (Swiss Linked Data)",
   "url": "https://lindas.admin.ch/query",
+  "resourceNamespaces": [
+    "https://ld.admin.ch/",
+    "https://energy.ld.admin.ch/",
+    "https://environment.ld.admin.ch/",
+    "https://agriculture.ld.admin.ch/",
+    "https://register.ld.admin.ch/",
+    "https://schema.ld.admin.ch/"
+  ],
   "typeInventory": [
     {
       "uri": "https://cube.link/Observation",

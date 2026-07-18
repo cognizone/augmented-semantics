@@ -64,6 +64,12 @@ export interface ConfigEndpoint extends SuggestedEndpointSource {
    *  highest precedence while this endpoint is active — keeps custom-vocab qnames
    *  correct per endpoint without bloating the global app.json prefixes. */
   prefixes?: Record<string, string>
+  /** URI prefixes whose RESOURCES this endpoint serves (e.g. its data hosts).
+   *  Drives URL-aware endpoint auto-switch: when a resource URI under one of these
+   *  is entered/opened while another endpoint is active, the app switches to this
+   *  endpoint and loads the resource there. Unlike `prefixes` (which shapes qname
+   *  DISPLAY for vocabularies), these are resource-identity hosts. */
+  resourceNamespaces?: string[]
   /** Language priorities (same as SuggestedEndpoint) */
   suggestedLanguagePriorities?: string[]
 }

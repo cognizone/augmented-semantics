@@ -8,21 +8,25 @@
  *
  * @see /spec/ae-rdf
  */
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useToast } from 'primevue/usetoast'
 import InputText from 'primevue/inputtext'
 import Button from 'primevue/button'
-import { useEndpointStore, useBrowseStore } from '../stores'
+import { useEndpointStore, useBrowseStore, useUIStore } from '../stores'
 import { useGraphMode } from '../composables'
 import { URL_PARAMS } from '../router'
+import { endpointForUri } from '../utils/endpointMatch'
 import ResourceView from '../components/rdf/ResourceView.vue'
 import InstanceList from '../components/rdf/InstanceList.vue'
 import TypeList from '../components/rdf/TypeList.vue'
 
 const route = useRoute()
 const router = useRouter()
+const toast = useToast()
 const endpointStore = useEndpointStore()
 const browseStore = useBrowseStore()
+const uiStore = useUIStore()
 
 // Detect once per endpoint whether it uses named graphs (gates query shape).
 useGraphMode()
@@ -30,11 +34,55 @@ useGraphMode()
 const hasEndpoint = computed(() => !!endpointStore.current)
 const uriInput = ref('')
 
+/**
+ * URL-aware endpoint auto-switch. A resource URI that belongs to a DIFFERENT
+ * configured endpoint (by its declared resourceNamespaces / prefixes / host)
+ * activates that endpoint, then loads the resource there.
+ *
+ * Sequencing (the SELECTION-INVALIDATION gotcha): switching endpoints fires the
+ * currentId watcher below, which strips ?resource/?type so the old selection
+ * never queries the new endpoint. So we must switch FIRST, let that watcher
+ * settle, THEN re-apply ?resource — otherwise the resource either loads against
+ * the old endpoint or gets stripped away. We re-apply on nextTick (after the
+ * pre-flush currentId watcher has run its strip) so the load fires against the
+ * NEW endpoint. Returns true when a switch was initiated (caller must NOT set
+ * the resource on the current endpoint).
+ *
+ * @see /Users/.../ae-rdf/CLAUDE.md — "Selection changes must invalidate…"
+ */
+function maybeSwitchEndpoint(uri: string): boolean {
+  // A single configured endpoint owns everything — never switch.
+  if (endpointStore.isSingleEndpoint) return false
+  const owner = endpointForUri(uri, endpointStore.endpoints)
+  // No confident owner, or the current endpoint already owns it → load as usual.
+  if (!owner || owner.id === endpointStore.currentId) return false
+
+  endpointStore.selectEndpoint(owner.id)
+  // Secured target with no in-memory credentials: selectEndpoint opened the
+  // credential prompt instead of switching. Let that flow own it — don't load
+  // the resource against the old (still-current) endpoint.
+  if (endpointStore.currentId !== owner.id) return true
+
+  toast.add({ severity: 'info', summary: `Switched to ${owner.name}`, life: 2500 })
+  uiStore.announceSuccess(`Switched to ${owner.name}`)
+  // The currentId watcher (pre-flush) strips ?resource/?type on switch; re-apply
+  // the resource after it runs so the load keys on the NEW endpoint. Drop ?type —
+  // it belonged to the previous endpoint.
+  const { [URL_PARAMS.TYPE]: _t, ...rest } = route.query
+  nextTick(() => {
+    void router.replace({ query: { ...rest, [URL_PARAMS.RESOURCE]: uri } })
+  })
+  return true
+}
+
 // Keep the browse store in sync with the URL (?resource, ?type)
 watch(
   () => route.query[URL_PARAMS.RESOURCE],
   (r) => {
     const uri = typeof r === 'string' ? r : null
+    // Foreign resource URI (Go submit OR ?resource deep link) → switch endpoints
+    // and reload there instead of setting it on the current one.
+    if (uri && maybeSwitchEndpoint(uri)) return
     browseStore.setResource(uri)
     uriInput.value = uri ?? '' // clear stale input when ?resource is dropped (R34)
   },
