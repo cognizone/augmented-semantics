@@ -15,6 +15,7 @@ import {
   buildTypeInventoryQuery,
   buildInstanceCountQuery,
   buildInstanceListQuery,
+  buildInstanceColumnsQuery,
   resolveSearchPredicates,
   buildLabelValuesQuery,
   buildTypeQuery,
@@ -438,6 +439,40 @@ describe('buildFacetRangesQuery', () => {
     const q = buildFacetRangesQuery(TYPE, AMOUNT, [{ min: 0 }], 'FRAG_HERE', NAMED)
     expect(q).toContain('FRAG_HERE')
     expect(q).toContain(`GRAPH ?g { ?s a <${TYPE}> }`)
+  })
+})
+
+describe('buildInstanceColumnsQuery (instance-list columns)', () => {
+  const U = ['http://r/a', 'http://r/b']
+  const STATUS = 'http://p/status'
+  const COST = 'http://p/cost'
+  const VALUE = 'http://p/value'
+
+  it('one SAMPLE per column under GROUP BY ?s, direct + via', () => {
+    const q = buildInstanceColumnsQuery(U, [{ predicate: STATUS }, { predicate: COST, via: VALUE }], DEFAULT)
+    expect(q).toContain('VALUES ?s { <http://r/a> <http://r/b> }')
+    expect(q).toContain('(SAMPLE(?c0) AS ?v0)')
+    expect(q).toContain(`OPTIONAL { ?s <${STATUS}> ?c0 }`)          // direct
+    expect(q).toContain(`OPTIONAL { ?s <${COST}> ?c1_m0 . ?c1_m0 <${VALUE}> ?c1 }`) // via
+    expect(q).toContain('GROUP BY ?s')
+  })
+
+  it('drops an unsafe column but keeps the rest (var index stays with the column)', () => {
+    const q = buildInstanceColumnsQuery(U, [{ predicate: 'bad > } DROP' }, { predicate: STATUS }], DEFAULT)
+    expect(q).not.toContain('?v0')                                  // unsafe col0 omitted
+    expect(q).toContain('(SAMPLE(?c1) AS ?v1)')                     // col1 keeps its index
+  })
+
+  it('empty when no uris or no safe columns', () => {
+    expect(buildInstanceColumnsQuery([], [{ predicate: STATUS }], DEFAULT)).toBe('')
+    expect(buildInstanceColumnsQuery(U, [], DEFAULT)).toBe('')
+    expect(buildInstanceColumnsQuery(U, [{ predicate: 'bad > }' }], DEFAULT)).toBe('')
+  })
+
+  it('sanitizes the subject URIs (no injection via a crafted uri)', () => {
+    const q = buildInstanceColumnsQuery(['http://r/a> } DROP', 'http://r/ok'], [{ predicate: STATUS }], DEFAULT)
+    expect(q).toContain('<http://r/ok>')
+    expect(q).not.toContain('DROP')
   })
 })
 

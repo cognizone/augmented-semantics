@@ -30,6 +30,8 @@ Counts are the number of *distinct* subjects of that type. On large datasets the
 
 Selecting a type shows a paged list of its instances (25 per page), each with its best available label (falling back to the URI). Use the pager at the bottom to move through pages. Click an instance to open it.
 
+When a type configures [list columns](configuration.md#instance-list-columns), the list becomes a compact **table** — the name plus a column per configured property (e.g. a Project's acronym, status, start/end, total cost), each filled in just after the rows appear. Click any row to open it.
+
 ### Filtering the list
 
 A **filter box** sits above the list — type to narrow it to instances whose **name or URI** contains what you type. It matches the same label fields AE RDF uses to name things (a type's configured **label** fields if set, otherwise the usual `rdfs:label` / `skos:prefLabel` / `dcterms:title` / `foaf:name` family), plus the URI itself — so you can find a resource by a word in its title *or* by a fragment of its identifier.

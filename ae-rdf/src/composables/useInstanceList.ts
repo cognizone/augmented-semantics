@@ -23,6 +23,7 @@ import {
   logger,
   buildInstanceListQuery,
   buildInstanceCountQuery,
+  buildInstanceColumnsQuery,
   buildFacetConstraints,
   resolveGraphStrategy,
   resolveSearchPredicates,
@@ -35,6 +36,9 @@ export interface Instance {
   uri: string
   label: string
   deprecated?: boolean
+  /** Extra column values (display strings), aligned to the type's `columns` config;
+   *  filled in after the row loads (empty string = no value / not yet loaded). */
+  cells?: string[]
 }
 
 export const PAGE_SIZE = 25
@@ -66,6 +70,11 @@ export function useInstanceList() {
     return cfg.render === 'embed' && cfg.embedVia ? cfg.embedVia : ''
   })
   const canFilterOrphans = computed(() => !!orphanVia.value)
+  // Configured extra columns for the current type (headings for the list table).
+  const columns = computed(() => {
+    const type = browseStore.currentType
+    return type ? (typeConfig.get(type).listColumns ?? []) : []
+  })
   let countedFor: string | null = null // `${endpointId}|${type}|${filter}|…` the total is valid for
 
   async function load(): Promise<void> {
@@ -133,6 +142,50 @@ export function useInstanceList() {
       await resolveDeprecated(endpoint, uris, endpoint.deprecatedPredicates ?? [...DEFAULT_DEPRECATED_PREDICATES], depSet, isCurrent)
       if (!isCurrent()) return
       instances.value = uris.map(u => ({ uri: u, label: labelMap.get(u) ?? u, deprecated: depSet.has(u) }))
+
+      // Extra columns (config-driven): one SAMPLE'd value per (instance, column)
+      // for this page. Fire-and-forget like the count — the rows render immediately
+      // and the cells fill in when this lands. URI cells resolve to a qname.
+      const columnDefs = typeConfig.get(type).listColumns ?? []
+      if (columnDefs.length && uris.length) {
+        const colQuery = buildInstanceColumnsQuery(uris, columnDefs, strategy)
+        if (colQuery) {
+          executeSparql(endpoint, colQuery, { retries: 1 })
+            .then(async colRes => {
+              if (!isCurrent()) return
+              const rowByUri = new Map<string, Record<number, { value: string; isUri: boolean }>>()
+              const uriCells: string[] = []
+              for (const b of colRes.results.bindings) {
+                const sv = b.s?.value
+                if (!sv) continue
+                const row: Record<number, { value: string; isUri: boolean }> = {}
+                columnDefs.forEach((_, i) => {
+                  const cell = b[`v${i}`]
+                  if (cell?.value != null) {
+                    const isUri = cell.type === 'uri'
+                    row[i] = { value: cell.value, isUri }
+                    if (isUri) uriCells.push(cell.value)
+                  }
+                })
+                rowByUri.set(sv, row)
+              }
+              const qn = uriCells.length ? await resolveUris([...new Set(uriCells)]) : new Map()
+              if (!isCurrent()) return
+              instances.value = instances.value.map(inst => {
+                const row = rowByUri.get(inst.uri)
+                const cells = columnDefs.map((_, i) => {
+                  const c = row?.[i]
+                  if (!c) return ''
+                  if (!c.isUri) return c.value
+                  const r = qn.get(c.value)
+                  return r ? `${r.prefix}:${r.localName}` : c.value
+                })
+                return { ...inst, cells }
+              })
+            })
+            .catch(e => logger.warn('useInstanceList', 'Columns failed', { type, error: e }))
+        }
+      }
 
       if (needCount) {
         executeSparql(endpoint, buildInstanceCountQuery(type, strategy, term, searchPredicates, via, facetFragment), { retries: 1 })
@@ -238,6 +291,6 @@ export function useInstanceList() {
 
   return {
     instances, total, loading, error, page, pageSize: PAGE_SIZE, typeLabel, filter,
-    orphansOnly, canFilterOrphans, setPage, currentListQuery,
+    orphansOnly, canFilterOrphans, columns, setPage, currentListQuery,
   }
 }

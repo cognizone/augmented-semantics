@@ -35,6 +35,7 @@ Everything the gear (and the resource-view edit tools) author lands in the endpo
 | `label` / `labelFull` | Predicates composing the display label; `labelFull` keeps all parts in the heading. |
 | `search` | Predicates the instance-list filter matches (overrides the default label fields). |
 | `facets` | [Faceted-browsing](#facets) filters for the instance list — one entry per faceted property (value or range). Config-file-authored only. |
+| `listColumns` | Extra [columns](#instance-list-columns) in this type's instance list — one entry per column (`predicate`, optional `label`, optional `via` path). Turns the plain list into a small table. Config-file-authored only. |
 | `foldAfter`, `groupByType`, `boolean`, `number`, `columns`, `capWidth`, `viaLabels` | Per-field display formatting, all authored via the gear/edit tools. |
 
 ### Embedding safely
@@ -73,6 +74,27 @@ A facet's own counts are computed with the **other** facets' selections applied 
             { "label": "≥ €1M", "min": 1000000 }
           ]
         }
+      ]
+    }
+  }
+}
+```
+
+### Instance-list columns
+
+By default the instance list shows each row's name (label) and URI. Give a type a **`listColumns`** array and the list becomes a small **table**: the name plus one column per entry, each showing that property's value for the row. It's the same `via` path mechanism as facets, so a column can reach a value one or more hops away (a wrapper node like `hasTotalCost` → `value`, or an acronym node's `shortForm`).
+
+Each column: `predicate` (the property, first hop when `via` is set), optional `label` (heading; defaults to the humanized predicate name), optional `via` (a single predicate or an ordered path array). One value per cell (sampled — meant for near-functional properties like status, dates, amounts); URI values render as a qname, literals as-is. Cells fill in just after the rows appear.
+
+```json
+{
+  "types": {
+    "http://data.europa.eu/s66#Project": {
+      "listColumns": [
+        { "predicate": "http://data.europa.eu/s66#hasAcronym", "via": "http://data.europa.eu/s66#shortForm", "label": "Acronym" },
+        { "predicate": "http://data.europa.eu/s66#projectStatus", "label": "Status" },
+        { "predicate": "http://data.europa.eu/s66#startDate", "label": "Start" },
+        { "predicate": "http://data.europa.eu/s66#hasTotalCost", "via": "http://data.europa.eu/s66#value", "label": "Total cost" }
       ]
     }
   }

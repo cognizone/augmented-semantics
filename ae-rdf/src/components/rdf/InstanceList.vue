@@ -14,14 +14,18 @@ import Paginator from 'primevue/paginator'
 import InputText from 'primevue/inputtext'
 import { useInstanceList, useDelayedLoading } from '../../composables'
 import { setSparqlHandoff } from '../../utils/sparqlHandoff'
+import { humanizeLocalName } from '../../utils/format'
 import { URL_PARAMS } from '../../router'
 
 const route = useRoute()
 const router = useRouter()
 const {
-  instances, total, loading, error, page, pageSize, typeLabel, filter, orphansOnly, canFilterOrphans, setPage, currentListQuery,
+  instances, total, loading, error, page, pageSize, typeLabel, filter, orphansOnly, canFilterOrphans, columns, setPage, currentListQuery,
 } = useInstanceList()
 const showLoading = useDelayedLoading(loading)
+
+// Column headings: explicit label, else the humanized predicate local name.
+const columnHeaders = computed(() => columns.value.map(c => c.label?.trim() || humanizeLocalName(c.predicate)))
 
 const rangeLabel = computed(() => {
   const shown = instances.value.length
@@ -119,7 +123,25 @@ function onPage(e: { page: number }) {
     </div>
 
     <template v-else>
-      <ul v-if="instances.length" class="il-items">
+      <!-- Configured columns → a compact table; otherwise the plain label + URI list. -->
+      <div v-if="columns.length && instances.length" class="il-table-wrap">
+        <table class="il-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th v-for="(h, i) in columnHeaders" :key="i">{{ h }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="inst in instances" :key="inst.uri" class="il-row" :title="inst.uri" @click="open(inst.uri)">
+              <td class="il-cell-name">{{ inst.label }}<span v-if="inst.deprecated" class="deprecated-badge">deprecated</span></td>
+              <td v-for="(header, i) in columnHeaders" :key="i" :title="header" class="il-cell">{{ inst.cells?.[i] || '—' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <ul v-else-if="instances.length" class="il-items">
         <li v-for="inst in instances" :key="inst.uri">
           <button class="il-item" :title="inst.uri" @click="open(inst.uri)">
             <span class="il-label">{{ inst.label }}<span v-if="inst.deprecated" class="deprecated-badge">deprecated</span></span>
@@ -280,6 +302,61 @@ function onPage(e: { page: number }) {
   padding: 0.5rem;
   overflow-y: auto;
   flex: 1;
+}
+
+/* Column table (configured instance-list columns) */
+.il-table-wrap {
+  flex: 1;
+  overflow: auto;
+  padding: 0.25rem 0.5rem;
+}
+
+.il-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+.il-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  text-align: left;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--ae-text-secondary);
+  background: var(--ae-bg-elevated);
+  padding: 0.4rem 0.6rem;
+  border-bottom: 1px solid var(--ae-border-color);
+  white-space: nowrap;
+}
+
+.il-row {
+  cursor: pointer;
+  border-bottom: 1px solid var(--ae-border-color);
+  transition: background-color 0.12s;
+}
+
+.il-row:hover {
+  background: var(--ae-bg-hover);
+}
+
+.il-table td {
+  padding: 0.4rem 0.6rem;
+  vertical-align: top;
+}
+
+.il-cell-name {
+  color: var(--ae-text-primary);
+  font-weight: 500;
+  min-width: 12rem;
+}
+
+.il-cell {
+  color: var(--ae-text-secondary);
+  white-space: nowrap;
 }
 
 .il-item {

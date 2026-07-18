@@ -127,6 +127,28 @@ export interface TypeConfig {
    *  configured bands. Config-file-authored only for v1 (no gear UI). Absent/empty
    *  → no facet panel. @see FacetConfig, /spec/ae-rdf */
   facets?: FacetConfig[]
+  /** Extra columns for this type's instance LIST, beyond the name/label. Each
+   *  column shows one property's value per row (a small table replaces the plain
+   *  list). Config-file-authored. Absent/empty → the plain label + URI list.
+   *  (Distinct from `columns`, which lays out ONE property's objects in a resource
+   *  view.) @see ColumnConfig */
+  listColumns?: ColumnConfig[]
+}
+
+/**
+ * One extra column in a type's instance list. Shows the value of `predicate`
+ * (or a value one/more hops away via `via`, same path semantics as a facet's
+ * `via` — e.g. CORDIS `hasTotalCost` → `value`) for each listed instance.
+ * One value per cell (SAMPLE'd — meant for near-functional properties like
+ * status, dates, amounts). URI values render as a qname, literals as-is.
+ */
+export interface ColumnConfig {
+  /** The property IRI whose value fills the column (first hop when `via` is set). */
+  predicate: string
+  /** Column heading. Default: the humanized local name of `predicate`. */
+  label?: string
+  /** Hop predicate(s) to a value one or more nodes away (see FacetConfig.via). */
+  via?: string | string[]
 }
 
 /**

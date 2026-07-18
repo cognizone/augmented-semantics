@@ -271,6 +271,31 @@ export function buildInstanceListQuery(typeUri: string, s: GraphStrategy, limit 
   return `SELECT DISTINCT ?s WHERE { ${instanceMatch(iri, s, filter, predicates, orphanVia, facetConstraint)} } LIMIT ${lim} OFFSET ${off}`
 }
 
+/**
+ * One value per (instance, column) for a page of instances — powers the instance
+ * list's extra columns. Each column is an OPTIONAL graph-scoped path (direct or
+ * `via` multi-hop, reusing facetPath), SAMPLE'd under GROUP BY ?s so a subject
+ * yields at most one row and one value per column (columns target near-functional
+ * properties). Result vars: ?s plus ?v{i} per column (missing when that column's
+ * predicate/via is unsafe — its OPTIONAL is dropped, so the cell is just empty).
+ * Returns '' when no uris or no safe columns (caller then renders the plain list).
+ */
+export function buildInstanceColumnsQuery(
+  uris: string[],
+  columns: { predicate: string; via?: string | string[] }[],
+  s: GraphStrategy,
+): string {
+  const values = uris.map(u => { try { return `<${sanitizeIri(u)}>` } catch { return '' } }).filter(Boolean).join(' ')
+  const cols = columns.map((c, i) => {
+    let pred: string
+    try { pred = sanitizeIri(c.predicate) } catch { return null }
+    const path = facetPath('?s', pred, c.via, `?c${i}`, s, `?cg${i}`)
+    return path ? { sel: `(SAMPLE(?c${i}) AS ?v${i})`, opt: `OPTIONAL { ${path} }` } : null
+  }).filter((x): x is { sel: string; opt: string } => !!x)
+  if (!values || !cols.length) return ''
+  return `SELECT ?s ${cols.map(c => c.sel).join(' ')} WHERE { VALUES ?s { ${values} } ${cols.map(c => c.opt).join(' ')} } GROUP BY ?s`
+}
+
 /* ───────────────────────── Faceted browsing ───────────────────────── */
 
 /** Full IRI cast so the range FILTER needs no `xsd:` prefix declaration. */

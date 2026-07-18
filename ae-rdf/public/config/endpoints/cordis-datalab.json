@@ -16,6 +16,30 @@
   },
   "types": {
     "http://data.europa.eu/s66#Project": {
+      "listColumns": [
+        {
+          "predicate": "http://data.europa.eu/s66#hasAcronym",
+          "via": "http://data.europa.eu/s66#shortForm",
+          "label": "Acronym"
+        },
+        {
+          "predicate": "http://data.europa.eu/s66#projectStatus",
+          "label": "Status"
+        },
+        {
+          "predicate": "http://data.europa.eu/s66#startDate",
+          "label": "Start"
+        },
+        {
+          "predicate": "http://data.europa.eu/s66#endDate",
+          "label": "End"
+        },
+        {
+          "predicate": "http://data.europa.eu/s66#hasTotalCost",
+          "via": "http://data.europa.eu/s66#value",
+          "label": "Total cost"
+        }
+      ],
       "capWidth": [
         "http://data.europa.eu/s66#abstract"
       ],
