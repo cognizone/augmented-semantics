@@ -18,7 +18,7 @@ import Menu from 'primevue/menu'
 import { useUIStore, useSettingsStore, useEndpointStore } from './stores'
 import { useConfig, validateURI } from './services'
 import { buildAppConfig, buildEndpointConfig, endpointSlug, downloadJson } from './utils/configExport'
-import { getKnownPrefixes, getDisplayPrefixes } from './services'
+import { getKnownPrefixes, getEndpointDisplayPrefixes } from './services'
 import EndpointManager from './components/common/EndpointManager.vue'
 import CredentialsPrompt from './components/common/CredentialsPrompt.vue'
 import ErrorBoundary from './components/common/ErrorBoundary.vue'
@@ -56,8 +56,44 @@ function exportEndpoint() {
 
 const showPrefixes = ref(false)
 const prefixList = ref<{ prefix: string; namespace: string }[]>([])
+
+// Namespace of a URI (up to and including the last # or /).
+function nsOf(uri: string): string {
+  const h = uri.lastIndexOf('#')
+  if (h >= 0) return uri.slice(0, h + 1)
+  const s = uri.lastIndexOf('/')
+  return s >= 0 ? uri.slice(0, s + 1) : uri
+}
+// Structural vocab present on essentially every graph, shown even if the profile
+// didn't surface them explicitly.
+const CORE_NS = [
+  'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
+  'http://www.w3.org/2000/01/rdf-schema#',
+  'http://www.w3.org/2002/07/owl#',
+  'http://www.w3.org/2001/XMLSchema#',
+]
+
+/** Namespaces the active endpoint actually references — from its profiled types,
+ *  predicates, datatypes and object-class ranges, plus its declared prefixes and
+ *  the structural core. Scopes the prefix legend to what's relevant here. */
+function usedNamespaces(): Set<string> {
+  const used = new Set<string>(CORE_NS)
+  const ep = endpointStore.current
+  if (!ep) return used
+  for (const t of ep.typeInventory ?? []) used.add(nsOf(t.uri))
+  for (const tp of Object.values(ep.typeProperties ?? {})) {
+    for (const p of tp.properties ?? []) {
+      used.add(nsOf(p.uri))
+      for (const d of p.datatypes ?? []) used.add(nsOf(d.uri))
+      for (const r of p.ranges ?? []) used.add(nsOf(r.uri))
+    }
+  }
+  for (const ns of Object.values(ep.prefixes ?? {})) used.add(ns)
+  return used
+}
+
 function openPrefixes() {
-  prefixList.value = Object.entries(getDisplayPrefixes())
+  prefixList.value = Object.entries(getEndpointDisplayPrefixes(usedNamespaces()))
     .map(([prefix, namespace]) => ({ prefix, namespace }))
     .sort((a, b) => a.prefix.localeCompare(b.prefix))
   showPrefixes.value = true
@@ -326,7 +362,7 @@ onUnmounted(() => {
 
     <!-- Prefixes legend -->
     <Dialog v-model:visible="showPrefixes" header="Prefixes" :modal="true" :style="{ width: '560px' }" position="top">
-      <p class="prefixes-hint">Prefix → namespace mappings used to render qnames (built-in, config-declared, and resolved).</p>
+      <p class="prefixes-hint">Prefix → namespace mappings used to render qnames — scoped to <strong>{{ endpointStore.current?.name ?? 'this endpoint' }}</strong>: the vocabularies it actually uses, plus any it declares and any resolved while browsing.</p>
       <table class="prefixes-table">
         <tbody>
           <tr v-for="p in prefixList" :key="p.prefix + p.namespace">

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { setConfigPrefixes, getKnownPrefixes, getDisplayPrefixes, resolveUris, clearPrefixCache } from '../prefix'
+import { setConfigPrefixes, getKnownPrefixes, getDisplayPrefixes, getEndpointDisplayPrefixes, resolveUris, clearPrefixCache } from '../prefix'
 
 beforeEach(() => {
   clearPrefixCache()
@@ -27,5 +27,15 @@ describe('config-declared prefixes', () => {
 
   it('getDisplayPrefixes includes built-in common prefixes (e.g. xsd)', () => {
     expect(getDisplayPrefixes().xsd).toBe('http://www.w3.org/2001/XMLSchema#')
+  })
+
+  it('getEndpointDisplayPrefixes keeps only USED common prefixes, always keeps declared', () => {
+    setConfigPrefixes({ eurio: 'http://data.europa.eu/s66#' })
+    const used = new Set(['http://www.w3.org/2001/XMLSchema#']) // xsd used, skos/foaf/etc not
+    const legend = getEndpointDisplayPrefixes(used)
+    expect(legend.xsd).toBe('http://www.w3.org/2001/XMLSchema#') // used common → kept
+    expect(legend.skos).toBeUndefined()                         // unused common → dropped
+    expect(legend.foaf).toBeUndefined()
+    expect(legend.eurio).toBe('http://data.europa.eu/s66#')      // config-declared → always kept
   })
 })

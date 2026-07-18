@@ -334,6 +334,24 @@ export function getDisplayPrefixes(): Record<string, string> {
 }
 
 /**
+ * Legend prefixes SCOPED to the active endpoint: the built-in common prefixes are
+ * kept only when their namespace is in `used` — the set of namespaces the endpoint
+ * actually references (derived by the caller from its profiled types/predicates/
+ * datatypes/ranges, plus a structural core). Runtime-resolved prefixes (empirically
+ * seen in data) and config/endpoint-declared prefixes are always kept. This avoids
+ * dumping the ~40 generic common prefixes an endpoint never uses.
+ */
+export function getEndpointDisplayPrefixes(used: Set<string>): Record<string, string> {
+  loadCache()
+  const out: Record<string, string> = {}
+  for (const [ns, p] of Object.entries(COMMON_PREFIXES)) if (used.has(ns)) out[p] = ns
+  for (const [ns, p] of Object.entries(cache)) if (p) out[p] = ns
+  for (const [ns, p] of Object.entries(configNsToPrefix)) out[p] = ns
+  for (const [ns, p] of Object.entries(endpointNsToPrefix)) out[p] = ns
+  return out
+}
+
+/**
  * Clear the prefix cache (for testing)
  */
 export function clearPrefixCache(): void {
