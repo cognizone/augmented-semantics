@@ -25,10 +25,8 @@ standalone releases are tagged `rdf-vX.Y.Z`.
 
 ## [0.2.1] — 2026-07-17
 
+### Added
+- EVR *no-inference* endpoint, and made it the default. *(First tagged v0.2.0, whose build was problematic; the changes ship in v0.2.1.)*
+
 ### Fixed
 - Auto-clear the stale WebView cache on update, so a rebuilt app no longer shows the previous install's assets.
-
-## [0.2.0] — 2026-07-17
-
-### Added
-- EVR *no-inference* endpoint, and made it the default.
