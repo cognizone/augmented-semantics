@@ -1,21 +1,29 @@
 /**
  * useInstanceList - paged list of a type's instances (the T5 navigation index).
  *
- * Reads the selected type from the browse store, loads one page of instances
- * plus the total count, both graph-mode-gated and DISTINCT (see rdfQueries).
- * requestId race-guard per com02. Reloads on type, page, or graph change.
+ * Reads the selected type from the browse store, loads one page of instances plus
+ * the total count, both graph-mode-gated and DISTINCT (see rdfQueries). Faceted
+ * browsing lives in the FACET STORE (the sidebar's Filters rail owns the panel and
+ * the counts); this composable READS the store's `activeSelections` to narrow the
+ * list + count, and folds its `selectionVersion` into a watcher so a facet toggle
+ * re-queries the list. The list's shown total stays the FILTERED total.
+ *
+ * requestId race-guard per com02 — ONE token for the list + count loads, so
+ * switching type / endpoint / graph / facet invalidates every in-flight write
+ * (see ae-rdf/CLAUDE.md: a reset must bump the token the load actually checks).
  *
  * @see /spec/ae-rdf
  * @see /spec/common/com02-StateManagement.md
  */
 import { ref, computed, watch, onScopeDispose, type Ref } from 'vue'
-import { useEndpointStore, useBrowseStore, useTypeConfigStore, useLanguageStore } from '../stores'
+import { useEndpointStore, useBrowseStore, useTypeConfigStore, useLanguageStore, useFacetStore } from '../stores'
 import {
   executeSparql,
   resolveUris,
   logger,
   buildInstanceListQuery,
   buildInstanceCountQuery,
+  buildFacetConstraints,
   resolveGraphStrategy,
   resolveSearchPredicates,
 } from '../services'
@@ -36,6 +44,7 @@ export function useInstanceList() {
   const browseStore = useBrowseStore()
   const typeConfig = useTypeConfigStore()
   const languageStore = useLanguageStore()
+  const facetStore = useFacetStore()
 
   const instances: Ref<Instance[]> = ref([])
   const total = ref(0)
@@ -57,7 +66,7 @@ export function useInstanceList() {
     return cfg.render === 'embed' && cfg.embedVia ? cfg.embedVia : ''
   })
   const canFilterOrphans = computed(() => !!orphanVia.value)
-  let countedFor: string | null = null // `${endpointId}|${type}|${filter}` the total is valid for
+  let countedFor: string | null = null // `${endpointId}|${type}|${filter}|…` the total is valid for
 
   async function load(): Promise<void> {
     const type = browseStore.currentType
@@ -80,7 +89,10 @@ export function useInstanceList() {
     // tracks the filtered set (and any config change to the searchable fields).
     const searchPredicates = resolveSearchPredicates(typeConfig.get(type), endpoint.typeProperties?.[type])
     const via = orphansOnly.value ? orphanVia.value : ''
-    const countKey = `${endpointId}|${strategy.useNamed}${strategy.useDefault}|${type}|${term}|${searchPredicates.join(',')}|${via}`
+    // Facet selections (owned by the facet store) narrow the list AND its total —
+    // ALL of them (no exclude; the exclude is only for a facet's own value counts).
+    const facetFragment = buildFacetConstraints(facetStore.activeSelections, strategy)
+    const countKey = `${endpointId}|${strategy.useNamed}${strategy.useDefault}|${type}|${term}|${searchPredicates.join(',')}|${via}|${facetFragment}`
     const needCount = countedFor !== countKey
 
     logger.info('useInstanceList', 'Loading instances', { type, page: page.value, strategy })
@@ -92,7 +104,7 @@ export function useInstanceList() {
 
     try {
       const [listRes, typeResolved] = await Promise.all([
-        executeSparql(endpoint, buildInstanceListQuery(type, strategy, PAGE_SIZE, page.value * PAGE_SIZE, term, searchPredicates, via), { retries: 1 }),
+        executeSparql(endpoint, buildInstanceListQuery(type, strategy, PAGE_SIZE, page.value * PAGE_SIZE, term, searchPredicates, via, facetFragment), { retries: 1 }),
         resolveUris([type]),
       ])
       if (!isCurrent()) return
@@ -123,7 +135,7 @@ export function useInstanceList() {
       instances.value = uris.map(u => ({ uri: u, label: labelMap.get(u) ?? u, deprecated: depSet.has(u) }))
 
       if (needCount) {
-        executeSparql(endpoint, buildInstanceCountQuery(type, strategy, term, searchPredicates, via), { retries: 1 })
+        executeSparql(endpoint, buildInstanceCountQuery(type, strategy, term, searchPredicates, via, facetFragment), { retries: 1 })
           .then(countRes => {
             if (!isCurrent()) return
             total.value = parseInt(countRes.results.bindings[0]?.total?.value ?? '0', 10)
@@ -144,7 +156,17 @@ export function useInstanceList() {
     }
   }
 
-  // New type → reset to page 0 and (re)load. Page / graph changes reload too.
+  // Reset page to 0 without a double load: the page watcher is suppressed for the
+  // programmatic reset, then we drive the load ourselves.
+  let suppressPageWatch = false
+  function reloadFromFirstPage() {
+    if (!browseStore.currentType) return
+    if (page.value !== 0) { suppressPageWatch = true; page.value = 0 }
+    load()
+  }
+
+  // New type → reset paging and (re)load the list. Facet selections/results reset
+  // in the facet store (its own type watcher).
   watch(
     () => browseStore.currentType,
     (t) => {
@@ -156,23 +178,27 @@ export function useInstanceList() {
     },
     { immediate: true }
   )
-  watch(page, () => { if (browseStore.currentType) load() })
-  // Graph scope changed → the result set differs, so return to page 0; a deep
-  // OFFSET would otherwise land past the new (smaller) total and show an empty
-  // page. Already on page 0 → load() directly; else let the page watcher fire
-  // (setting page here reloads via that watcher — avoids a double load).
-  watch(() => browseStore.graph, () => {
-    if (!browseStore.currentType) return
-    if (page.value === 0) load()
-    else page.value = 0
+  // Endpoint change → reload from page 0 (the facet store resets its own state).
+  watch(() => endpointStore.current?.id, () => {
+    countedFor = null
+    if (browseStore.currentType) reloadFromFirstPage()
   })
+  watch(page, () => {
+    if (suppressPageWatch) { suppressPageWatch = false; return }
+    if (browseStore.currentType) load()
+  })
+  // Graph scope changed → the result set differs, so reload from page 0 (a deep
+  // OFFSET would land past the new, smaller total). Facet store reloads its counts.
+  watch(() => browseStore.graph, () => reloadFromFirstPage())
+
+  // Facet selection toggled (in the sidebar Filters rail) → the filtered set + its
+  // total change, so re-query the list from page 0. selectionVersion bumps on every
+  // toggle/clear; load()'s requestId guard drops any in-flight page load.
+  watch(() => facetStore.selectionVersion, () => reloadFromFirstPage())
 
   // Filter changed → debounce (no query per keystroke), then reset to page 0 and
-  // reload. The new term makes a new result set AND a new count (countKey folds
-  // the term in, so needCount re-fires). load()'s requestId guard drops any
-  // in-flight page load, so a fast typist never lands stale rows on a new term.
-  // Filter is kept across type changes — the box stays visible so it's not a
-  // hidden constraint, and the type watcher's load() already picks up the term.
+  // reload. load()'s requestId guard drops any in-flight page load, so a fast typist
+  // never lands stale rows on a new term. Filter is kept across type changes.
   let filterTimer: ReturnType<typeof setTimeout> | undefined
   watch(filter, () => {
     clearTimeout(filterTimer)
@@ -184,7 +210,7 @@ export function useInstanceList() {
   })
   onScopeDispose(() => clearTimeout(filterTimer))
 
-  // Orphan toggle → new result set + count, back to page 0 (same reason as graph).
+  // Orphan toggle → new result set + count, back to page 0 (list only).
   watch(orphansOnly, () => {
     if (!browseStore.currentType) return
     if (page.value === 0) load()
@@ -195,5 +221,8 @@ export function useInstanceList() {
     page.value = n
   }
 
-  return { instances, total, loading, error, page, pageSize: PAGE_SIZE, typeLabel, filter, orphansOnly, canFilterOrphans, setPage }
+  return {
+    instances, total, loading, error, page, pageSize: PAGE_SIZE, typeLabel, filter,
+    orphansOnly, canFilterOrphans, setPage,
+  }
 }

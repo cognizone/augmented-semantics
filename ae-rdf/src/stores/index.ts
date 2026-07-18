@@ -1,4 +1,6 @@
 export { useBrowseStore } from './browse'
+export { useFacetStore } from './facets'
+export type { FacetView, FacetValueItem, FacetRangeItem } from './facets'
 export { useTypeConfigStore } from './typeConfig'
 export { useEndpointStore } from './endpoint'
 export { useLanguageStore } from './language'

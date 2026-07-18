@@ -9,23 +9,35 @@
  *
  * @see /spec/ae-rdf
  */
-import { ref, computed, onBeforeUnmount } from 'vue'
+import { ref, computed, watch, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import ProgressSpinner from 'primevue/progressspinner'
 import Menu from 'primevue/menu'
 import Dialog from 'primevue/dialog'
 import InputText from 'primevue/inputtext'
 import Button from 'primevue/button'
-import { useBrowseStore, useSettingsStore, useTypeConfigStore } from '../../stores'
+import { useBrowseStore, useSettingsStore, useTypeConfigStore, useFacetStore } from '../../stores'
 import { useRdfTypes, useDelayedLoading } from '../../composables'
 import { INCOMING_PREDICATES_SAMPLE } from '../../services'
 import { displayType, localName } from '../../utils/format'
 import { URL_PARAMS } from '../../router'
+import FacetPanel from './FacetPanel.vue'
 
 const router = useRouter()
 const browseStore = useBrowseStore()
 const settings = useSettingsStore()
 const typeConfig = useTypeConfigStore()
+const facetStore = useFacetStore()
+
+// Switchable sidebar rail: the type tree ('types') or the facet panel ('filters').
+// The Filters tab is enabled only when the current type has facets configured. We
+// never auto-switch to Filters on type selection (avoids surprise) — but if the
+// user is ON Filters and moves to a type WITHOUT facets, fall back to Types so the
+// rail is never stuck empty.
+const rail = ref<'types' | 'filters'>('types')
+watch(() => facetStore.hasFacets, (has) => {
+  if (!has && rail.value === 'filters') rail.value = 'types'
+})
 const { types, loading, error, resolved, composition, subclasses, pathCounts, orphanCounts, requestPathCount, fetchIncomingPredicates } = useRdfTypes()
 const showLoading = useDelayedLoading(loading)
 
@@ -82,6 +94,14 @@ const embedSelected = ref('') // '' = any predicate (inline everywhere)
 const embedSampled = computed(() => countOf(embedDialogUri.value ?? '') > INCOMING_PREDICATES_SAMPLE)
 // Collapsed superclasses (default expanded). A Set, replaced wholesale to stay reactive.
 const collapsed = ref<Set<string>>(new Set())
+
+// Client-side type filter. Non-empty → the tree is replaced by a flat, count-
+// sorted list of matching types (no SPARQL, purely over types.value). Reset when
+// the endpoint reloads `types` so a stale query never carries across endpoints.
+const filter = ref('')
+const filterQuery = computed(() => filter.value.trim().toLowerCase())
+const filtering = computed(() => filterQuery.value !== '')
+watch(types, () => { filter.value = '' })
 
 // Auto "system" groups at the bottom of the list (collapsed by default).
 const SYS_EMBEDDED = 'Embedded'
@@ -288,6 +308,36 @@ const rows = computed<Row[]>(() => {
   return out
 })
 
+// A type matches when the query is a substring of its local name, its namespace
+// prefix, or its full URI (case-insensitive). Local name/prefix are what a row
+// shows; the URI is included so a namespace search (e.g. "purl.org") still hits.
+function matchesFilter(uri: string): boolean {
+  const q = filterQuery.value
+  return localName(uri).toLowerCase().includes(q)
+    || typePrefix(uri).toLowerCase().includes(q)
+    || uri.toLowerCase().includes(q)
+}
+
+// Filtered view: a flat depth-0 list, commonest first, replacing the tree. Embed
+// types mirror the Embedded-group row (data_object icon, class-scoped count);
+// every other match is a plain class row. Hidden/blank types are included only
+// when showHidden is on. `leaf: true` on class rows suppresses disclosure
+// chevrons — no nesting is shown while filtering, so toggling can't mutate
+// collapse state (the tree must return unchanged once cleared).
+const filteredRows = computed<Row[]>(() =>
+  !filtering.value
+    ? []
+    : types.value
+        .filter(t => matchesFilter(t.uri) && (settings.showHidden || !isHidden(t.uri)))
+        .sort((a, b) => b.count - a.count)
+        .map((t): Row => embedSet.value.has(t.uri)
+          ? { uri: t.uri, depth: 0, kind: 'embed', count: t.count, scoped: true, global: true }
+          : { uri: t.uri, depth: 0, kind: 'class', count: t.count, leaf: true }),
+)
+
+// The list source: filtered flat rows while filtering, else the normal tree.
+const displayRows = computed<Row[]>(() => (filtering.value ? filteredRows.value : rows.value))
+
 // Nested-embed counts aren't path-scoped up front; fetch on hover, show once in.
 const pathKey = (row: Row) => (row.chain ?? []).join('>')
 function onEmbedEnter(row: Row) {
@@ -390,8 +440,32 @@ function selectType(uri: string) {
 <template>
   <aside class="type-list" :style="{ width: sidebarWidth + 'px' }">
     <div class="type-list-header">
-      <span>Types</span>
+      <!-- Switchable rail: the type tree or the facet filters. The Filters tab is
+           disabled (greyed) when the current type has no facets; when it has
+           selections active, the count shows on the tab so filters are discoverable
+           from the tree side. -->
+      <div class="rail-toggle" role="tablist" aria-label="Sidebar view">
+        <button
+          class="rail-tab"
+          role="tab"
+          :class="{ active: rail === 'types' }"
+          :aria-selected="rail === 'types'"
+          @click="rail = 'types'"
+        >Types</button>
+        <button
+          class="rail-tab"
+          role="tab"
+          :class="{ active: rail === 'filters' }"
+          :aria-selected="rail === 'filters'"
+          :disabled="!facetStore.hasFacets"
+          :title="facetStore.hasFacets ? 'Filter instances by facet' : 'No facets configured for this type'"
+          @click="rail = 'filters'"
+        >
+          Filters<span v-if="facetStore.activeCount" class="rail-badge">{{ facetStore.activeCount }}</span>
+        </button>
+      </div>
       <button
+        v-if="rail === 'types'"
         class="header-toggle"
         :class="{ off: !showEmbeds }"
         :aria-pressed="showEmbeds"
@@ -399,6 +473,26 @@ function selectType(uri: string) {
         @click="toggleEmbeds"
       >
         <span class="material-symbols-outlined">data_object</span>
+      </button>
+    </div>
+
+    <FacetPanel v-if="rail === 'filters'" />
+
+    <template v-else>
+    <!-- Client-side filter: replaces the tree with matching types while typed in.
+         Esc or the ✕ clears it. Hidden while there's nothing to filter. -->
+    <div v-if="types.length" class="type-filter">
+      <span class="material-symbols-outlined type-filter-icon">filter_list</span>
+      <input
+        v-model="filter"
+        class="type-filter-input"
+        type="text"
+        placeholder="Filter types…"
+        aria-label="Filter types"
+        @keydown.esc="filter = ''"
+      />
+      <button v-if="filter" class="type-filter-clear" type="button" aria-label="Clear filter" @click="filter = ''">
+        <span class="material-symbols-outlined">close</span>
       </button>
     </div>
 
@@ -413,10 +507,13 @@ function selectType(uri: string) {
 
     <p v-else-if="!types.length" class="state">No types found.</p>
 
+    <p v-else-if="filtering && !filteredRows.length" class="state">No types match.</p>
+
     <template v-else>
+      <div v-if="filtering" class="type-filter-status">{{ filteredRows.length }} of {{ types.length }} types</div>
       <ul class="type-items">
         <li
-          v-for="(row, i) in rows"
+          v-for="(row, i) in displayRows"
           :key="i"
           class="type-row"
           :class="{ 'is-hidden': row.kind !== 'group' && !row.leaf && isHidden(row.uri), 'type-child': row.kind === 'embed', 'is-group': row.kind === 'group' }"
@@ -512,6 +609,7 @@ function selectType(uri: string) {
           </button>
         </li>
       </ul>
+    </template>
     </template>
 
     <Menu ref="typeMenu" :model="menuItems" :popup="true" />
@@ -622,6 +720,63 @@ function selectType(uri: string) {
   justify-content: space-between;
 }
 
+/* Segmented Types | Filters rail switch. */
+.rail-toggle {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  background: var(--ae-bg-base);
+  border: 1px solid var(--ae-border-color);
+  border-radius: 6px;
+}
+
+.rail-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.15rem 0.55rem;
+  border-radius: 4px;
+  font: inherit;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ae-text-secondary);
+}
+
+.rail-tab:hover:not(:disabled) {
+  color: var(--ae-text-primary);
+}
+
+.rail-tab.active {
+  background: var(--ae-bg-elevated);
+  color: var(--ae-text-primary);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.08);
+}
+
+.rail-tab:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.rail-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.05rem;
+  height: 1.05rem;
+  padding: 0 0.25rem;
+  border-radius: 9px;
+  background: var(--ae-accent);
+  color: #fff;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
 .header-toggle {
   display: flex;
   align-items: center;
@@ -644,6 +799,68 @@ function selectType(uri: string) {
 
 .header-toggle .material-symbols-outlined {
   font-size: 16px;
+}
+
+/* Filter box: sits between the header and the list, doesn't scroll with it. */
+.type-filter {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--ae-border-color);
+  flex-shrink: 0;
+}
+
+.type-filter-icon {
+  font-size: 16px;
+  color: var(--ae-text-muted);
+  flex-shrink: 0;
+}
+
+.type-filter-input {
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: none;
+  outline: none;
+  padding: 0;
+  color: var(--ae-text-primary);
+  font-family: var(--ae-font-sans);
+  font-size: 0.8125rem;
+}
+
+.type-filter-input::placeholder {
+  color: var(--ae-text-muted);
+}
+
+.type-filter-clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.1rem;
+  border-radius: 4px;
+  color: var(--ae-text-muted);
+  flex-shrink: 0;
+}
+
+.type-filter-clear:hover {
+  color: var(--ae-text-primary);
+  background: var(--ae-bg-hover);
+}
+
+.type-filter-clear .material-symbols-outlined {
+  font-size: 16px;
+}
+
+/* Match-count line above the filtered list. */
+.type-filter-status {
+  padding: 0.375rem 0.75rem 0.25rem;
+  font-size: 0.6875rem;
+  color: var(--ae-text-muted);
+  flex-shrink: 0;
 }
 
 .type-items {

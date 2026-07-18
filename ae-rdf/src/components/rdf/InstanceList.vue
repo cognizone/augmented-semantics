@@ -17,7 +17,9 @@ import { URL_PARAMS } from '../../router'
 
 const route = useRoute()
 const router = useRouter()
-const { instances, total, loading, error, page, pageSize, typeLabel, filter, orphansOnly, canFilterOrphans, setPage } = useInstanceList()
+const {
+  instances, total, loading, error, page, pageSize, typeLabel, filter, orphansOnly, canFilterOrphans, setPage,
+} = useInstanceList()
 const showLoading = useDelayedLoading(loading)
 
 const rangeLabel = computed(() => {
