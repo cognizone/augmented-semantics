@@ -31,6 +31,10 @@ import {
   buildIncomingBlankNodeQuery,
   buildIncomingPredicatesQuery,
   buildEmbedOrphanQuery,
+  buildFacetConstraints,
+  buildFacetValuesQuery,
+  buildFacetRangesQuery,
+  type FacetSelection,
 } from '../rdfQueries'
 
 const RES = 'http://data.europa.eu/s66#endDate'
@@ -316,6 +320,140 @@ describe('orphan filter (unreferenced-only)', () => {
   it('list and count apply the IDENTICAL orphan body', () => {
     expect(bodyOf(buildInstanceListQuery(TYPE, BOTH, 25, 0, 'acme', undefined, VIA)))
       .toBe(bodyOf(buildInstanceCountQuery(TYPE, BOTH, 'acme', undefined, VIA)))
+  })
+})
+
+describe('buildFacetConstraints (selection serialization)', () => {
+  const P1 = 'http://data.europa.eu/s66#status'
+  const P2 = 'http://data.europa.eu/s66#country'
+  const AMOUNT = 'http://data.europa.eu/s66#totalCost'
+  const uri = (v: string) => ({ value: v, isUri: true })
+
+  it('value facet → a VALUES list + a scoped triple (single-select)', () => {
+    const sel: FacetSelection[] = [{ predicate: P1, terms: [uri('http://x/OPEN')] }]
+    const frag = buildFacetConstraints(sel, DEFAULT)
+    expect(frag).toBe('{ VALUES ?f0 { <http://x/OPEN> } ?s <' + P1 + '> ?f0 }')
+  })
+
+  it('multi-select within a facet = OR (all terms in one VALUES list)', () => {
+    const frag = buildFacetConstraints([{ predicate: P1, terms: [uri('http://x/A'), uri('http://x/B')] }], DEFAULT)
+    expect(frag).toContain('VALUES ?f0 { <http://x/A> <http://x/B> }')
+  })
+
+  it('across facets = AND (fragments concatenated, distinct vars per facet)', () => {
+    const frag = buildFacetConstraints([
+      { predicate: P1, terms: [uri('http://x/A')] },
+      { predicate: P2, terms: [uri('http://x/CH')] },
+    ], DEFAULT)
+    expect(frag).toContain('VALUES ?f0 { <http://x/A> }')
+    expect(frag).toContain(`?s <${P1}> ?f0`)
+    expect(frag).toContain('VALUES ?f1 { <http://x/CH> }')
+    expect(frag).toContain(`?s <${P2}> ?f1`)
+  })
+
+  it('literal terms: escape quotes/backslash, preserve lang and datatype', () => {
+    const frag = buildFacetConstraints([{
+      predicate: P1,
+      terms: [
+        { value: 'a"b\\c', isUri: false },
+        { value: 'active', isUri: false, lang: 'en' },
+        { value: '2020', isUri: false, datatype: 'http://www.w3.org/2001/XMLSchema#gYear' },
+      ],
+    }], DEFAULT)
+    expect(frag).toContain('"a\\"b\\\\c"')                       // escaped, no lang/datatype
+    expect(frag).toContain('"active"@en')                        // language tag
+    expect(frag).toContain('"2020"^^<http://www.w3.org/2001/XMLSchema#gYear>') // datatype
+  })
+
+  it('range facet → decimal-cast FILTER, both bounds, OR of bands', () => {
+    const DEC = '<http://www.w3.org/2001/XMLSchema#decimal>'
+    const frag = buildFacetConstraints([{
+      predicate: AMOUNT,
+      ranges: [{ min: 0, max: 1000 }, { min: 1000 }],
+    }], DEFAULT)
+    expect(frag).toContain(`?s <${AMOUNT}> ?f0`)
+    expect(frag).toContain(`(${DEC}(?f0) >= 0 && ${DEC}(?f0) < 1000)`)
+    expect(frag).toContain(`(${DEC}(?f0) >= 1000)`)  // open-ended: no upper bound term
+    expect(frag).toContain(' || ')                   // multi-band OR
+  })
+
+  it('range facet: omits whichever bound is absent', () => {
+    const DEC = '<http://www.w3.org/2001/XMLSchema#decimal>'
+    const only = buildFacetConstraints([{ predicate: AMOUNT, ranges: [{ max: 500 }] }], DEFAULT)
+    expect(only).toContain(`${DEC}(?f0) < 500`)
+    expect(only).not.toContain('>=')
+  })
+
+  it('scopes the constraint triple per strategy (mirrors instanceMatch)', () => {
+    const sel: FacetSelection[] = [{ predicate: P1, terms: [uri('http://x/A')] }]
+    expect(buildFacetConstraints(sel, NAMED)).toContain(`GRAPH ?fg0 { ?s <${P1}> ?f0 }`)
+    expect(buildFacetConstraints(sel, BOTH))
+      .toContain(`{ GRAPH ?fg0 { ?s <${P1}> ?f0 } } UNION { ?s <${P1}> ?f0 }`)
+  })
+
+  it('drops unsafe predicates and unsafe URI terms; empty when nothing selectable', () => {
+    expect(buildFacetConstraints([], DEFAULT)).toBe('')
+    expect(buildFacetConstraints([{ predicate: 'not safe > }', terms: [uri('http://x/A')] }], DEFAULT)).toBe('')
+    // unsafe URI term dropped → no safe terms → whole facet dropped
+    expect(buildFacetConstraints([{ predicate: P1, terms: [uri('http://x/a> } DROP')] }], DEFAULT)).toBe('')
+  })
+})
+
+describe('buildFacetValuesQuery', () => {
+  const PRED = 'http://data.europa.eu/s66#status'
+  it('distinct-subject counts per value, commonest first, limit+1 to detect truncation', () => {
+    const q = buildFacetValuesQuery(TYPE, PRED, '', DEFAULT, 15)
+    expect(q).toContain('SELECT ?v (COUNT(DISTINCT ?s) AS ?n)')
+    expect(q).toContain(`?s a <${TYPE}>`)          // membership (default strategy)
+    expect(q).toContain(`?s <${PRED}> ?v`)          // the faceted value triple
+    expect(q).toContain('GROUP BY ?v')
+    expect(q).toContain('ORDER BY DESC(?n)')
+    expect(q).toContain('LIMIT 16')                 // 15 + 1
+  })
+  it('embeds the constraint fragment (other facets) and scopes per strategy', () => {
+    const frag = buildFacetConstraints([{ predicate: 'http://x/p', terms: [{ value: 'http://x/A', isUri: true }] }], NAMED)
+    const q = buildFacetValuesQuery(TYPE, PRED, frag, NAMED, 10)
+    expect(q).toContain(frag)
+    expect(q).toContain(`GRAPH ?g { ?s a <${TYPE}> }`) // membership scoped
+    expect(q).toContain(`GRAPH ?vg { ?s <${PRED}> ?v }`) // value triple scoped
+    expect(q).toContain('LIMIT 11')
+  })
+  it('refuses unsafe type / predicate IRIs', () => {
+    expect(() => buildFacetValuesQuery('http://e.org/x> } DROP', PRED, '', DEFAULT)).toThrow()
+    expect(() => buildFacetValuesQuery(TYPE, 'http://e.org/x> } DROP', '', DEFAULT)).toThrow()
+  })
+})
+
+describe('buildFacetRangesQuery', () => {
+  const AMOUNT = 'http://data.europa.eu/s66#totalCost'
+  const DEC = '<http://www.w3.org/2001/XMLSchema#decimal>'
+  it('one query, a SUM(IF(cond,1,0)) aggregate per bucket', () => {
+    const q = buildFacetRangesQuery(TYPE, AMOUNT, [{ max: 1000 }, { min: 1000, max: 5000 }], '', DEFAULT)
+    expect(q).toContain(`(SUM(IF(${DEC}(?v) < 1000, 1, 0)) AS ?b0)`)
+    expect(q).toContain(`(SUM(IF(${DEC}(?v) >= 1000 && ${DEC}(?v) < 5000, 1, 0)) AS ?b1)`)
+    expect(q).toContain(`?s a <${TYPE}>`)
+    expect(q).toContain(`?s <${AMOUNT}> ?v`)
+  })
+  it('embeds the constraint fragment and scopes membership per strategy', () => {
+    const q = buildFacetRangesQuery(TYPE, AMOUNT, [{ min: 0 }], 'FRAG_HERE', NAMED)
+    expect(q).toContain('FRAG_HERE')
+    expect(q).toContain(`GRAPH ?g { ?s a <${TYPE}> }`)
+  })
+})
+
+describe('facet constraints thread through the instance list + count', () => {
+  const PRED = 'http://data.europa.eu/s66#status'
+  const bodyOf = (q: string) => q.substring(q.indexOf('WHERE { ') + 8, q.lastIndexOf(' }'))
+  it('list and count share the IDENTICAL facet-constrained body', () => {
+    const frag = buildFacetConstraints([{ predicate: PRED, terms: [{ value: 'http://x/OPEN', isUri: true }] }], BOTH)
+    const list = buildInstanceListQuery(TYPE, BOTH, 25, 0, 'acme', undefined, undefined, frag)
+    const count = buildInstanceCountQuery(TYPE, BOTH, 'acme', undefined, undefined, frag)
+    expect(list).toContain(frag)
+    expect(bodyOf(list)).toBe(bodyOf(count))
+  })
+  it('no facet constraint → identical to the pre-facet query (backwards compatible)', () => {
+    expect(buildInstanceListQuery(TYPE, NAMED, 25, 0))
+      .toBe(buildInstanceListQuery(TYPE, NAMED, 25, 0, undefined, undefined, undefined, ''))
   })
 })
 

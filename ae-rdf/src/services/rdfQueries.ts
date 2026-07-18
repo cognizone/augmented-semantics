@@ -168,7 +168,7 @@ function scoped(body: string, s: GraphStrategy, gvar: string): string {
  * ponytail: no SKOS-XL reified labels and no multi-hop composed labels — direct
  * literals + URI only, to start with.
  */
-function instanceMatch(iri: string, s: GraphStrategy, filter?: string, predicates: readonly string[] = LABEL_PREDICATES, orphanVia?: string): string {
+function instanceMatch(iri: string, s: GraphStrategy, filter?: string, predicates: readonly string[] = LABEL_PREDICATES, orphanVia?: string, facetConstraint?: string): string {
   const base = membership(`<${iri}>`, s)
   const term = (filter ?? '').trim().slice(0, 200)
   let core: string
@@ -199,12 +199,16 @@ function instanceMatch(iri: string, s: GraphStrategy, filter?: string, predicate
   if (orphanVia && isNavigableIri(orphanVia)) {
     core = `{ ${core} } FILTER NOT EXISTS { ${scoped(`?owner <${sanitizeIri(orphanVia)}> ?s`, s, '?og')} }`
   }
+  // Facet selections (buildFacetConstraints) narrow ?s further — self-contained
+  // braced groups, so they concatenate next to core with AND semantics. Empty when
+  // nothing is selected. In instanceMatch so the list and count share IDENTICALLY.
+  const facet = facetConstraint ? ` ${facetConstraint}` : ''
   // Blank-node instances have no standalone view — they're only ever reached inline
   // via a parent (see useResourceView's bnode pass). Drop them from the navigable
   // index so a mixed type (some named, some bnode instances — e.g. owl:Class,
   // foaf:Document) doesn't list anonymous rows that navigate to a broken resource.
   // In instanceMatch so the list and count filter IDENTICALLY.
-  return `${core} FILTER(!isBlank(?s))`
+  return `${core}${facet} FILTER(!isBlank(?s))`
 }
 
 /* ───────────────────────── Discovery / list ───────────────────────── */
@@ -242,9 +246,9 @@ export function resolveSearchPredicates(cfg: TypeConfig, profile?: TypeProfile):
 
 /** Total distinct instances of a type (instance-list header / paging), optionally
  *  narrowed by the same label/URI filter (and predicate set) the list uses. */
-export function buildInstanceCountQuery(typeUri: string, s: GraphStrategy, filter?: string, predicates?: readonly string[], orphanVia?: string): string {
+export function buildInstanceCountQuery(typeUri: string, s: GraphStrategy, filter?: string, predicates?: readonly string[], orphanVia?: string, facetConstraint?: string): string {
   const iri = sanitizeIri(typeUri)
-  return `SELECT (COUNT(DISTINCT ?s) AS ?total) WHERE { ${instanceMatch(iri, s, filter, predicates, orphanVia)} }`
+  return `SELECT (COUNT(DISTINCT ?s) AS ?total) WHERE { ${instanceMatch(iri, s, filter, predicates, orphanVia, facetConstraint)} }`
 }
 
 /**
@@ -260,11 +264,152 @@ export function buildInstanceCountQuery(typeUri: string, s: GraphStrategy, filte
  * We take the engine's natural order; this is a navigation index, not a report
  * (so paging is by the engine's order, not a stable key — acceptable here).
  */
-export function buildInstanceListQuery(typeUri: string, s: GraphStrategy, limit = 100, offset = 0, filter?: string, predicates?: readonly string[], orphanVia?: string): string {
+export function buildInstanceListQuery(typeUri: string, s: GraphStrategy, limit = 100, offset = 0, filter?: string, predicates?: readonly string[], orphanVia?: string, facetConstraint?: string): string {
   const iri = sanitizeIri(typeUri)
   const lim = Math.max(1, Math.floor(limit))
   const off = Math.max(0, Math.floor(offset))
-  return `SELECT DISTINCT ?s WHERE { ${instanceMatch(iri, s, filter, predicates, orphanVia)} } LIMIT ${lim} OFFSET ${off}`
+  return `SELECT DISTINCT ?s WHERE { ${instanceMatch(iri, s, filter, predicates, orphanVia, facetConstraint)} } LIMIT ${lim} OFFSET ${off}`
+}
+
+/* ───────────────────────── Faceted browsing ───────────────────────── */
+
+/** Full IRI cast so the range FILTER needs no `xsd:` prefix declaration. */
+const XSD_DECIMAL = '<http://www.w3.org/2001/XMLSchema#decimal>'
+
+/** One selected value of a VALUE facet — a URI object, or a literal with its
+ *  datatype/language preserved so the constraint matches the exact stored term. */
+export interface FacetValueTerm {
+  value: string
+  /** True → interpolate as `<uri>`; false → a `"literal"` (with datatype/lang). */
+  isUri: boolean
+  /** Datatype IRI for a typed literal (ignored when `lang` is set or `isUri`). */
+  datatype?: string
+  /** Language tag for a lang-tagged literal (wins over `datatype`). */
+  lang?: string
+}
+
+/** A VALUE facet's current selection: the property + the chosen terms (OR'd). */
+export interface FacetValueSelection {
+  predicate: string
+  terms: FacetValueTerm[]
+}
+
+/** A RANGE facet's current selection: the property + the chosen bands (OR'd). */
+export interface FacetRangeSelection {
+  predicate: string
+  ranges: { min?: number; max?: number }[]
+}
+
+export type FacetSelection = FacetValueSelection | FacetRangeSelection
+
+const isRangeSelection = (s: FacetSelection): s is FacetRangeSelection =>
+  Array.isArray((s as FacetRangeSelection).ranges)
+
+/** Serialize one facet value term for a VALUES list, or '' when the URI is unsafe
+ *  (dropped rather than throwing the whole query). Literals are escaped; a
+ *  lang-tag/datatype is appended when known and safe. */
+function renderFacetTerm(t: FacetValueTerm): string {
+  if (t.isUri) {
+    try { return `<${sanitizeIri(t.value)}>` } catch { return '' }
+  }
+  const lit = `"${sparqlString(t.value)}"`
+  if (t.lang && /^[a-zA-Z]+(-[a-zA-Z0-9]+)*$/.test(t.lang)) return `${lit}@${t.lang}`
+  if (t.datatype) {
+    try { return `${lit}^^<${sanitizeIri(t.datatype)}>` } catch { return lit }
+  }
+  return lit
+}
+
+/** `min <= v < max` as a decimal-cast SPARQL condition (either bound optional). */
+function rangeCond(v: string, r: { min?: number; max?: number }): string {
+  const c: string[] = []
+  if (Number.isFinite(r.min)) c.push(`${XSD_DECIMAL}(${v}) >= ${r.min}`)
+  if (Number.isFinite(r.max)) c.push(`${XSD_DECIMAL}(${v}) < ${r.max}`)
+  return c.length ? c.join(' && ') : 'true'
+}
+
+/**
+ * Serialize the current facet selections into SPARQL patterns that narrow `?s`.
+ * ACROSS facets the fragments concatenate = AND; WITHIN a facet, multi-select = OR
+ * (a VALUES list of terms, or `||`'d range bands). Each fragment is a self-contained
+ * braced group with its OWN value/graph var (`?fN` / `?fgN`) so several facets never
+ * collide, and a group can be dot- or space-joined next to the membership/aggregate
+ * patterns. Value terms go through renderFacetTerm (sanitized URIs, escaped literals);
+ * an unsafe predicate or a facet with no safe terms is skipped. Graph scoping mirrors
+ * instanceMatch (the constraint triple is `scoped()` per strategy). Returns '' when
+ * nothing is selected — the caller then emits the unconstrained query.
+ *
+ * FACETING CORRECTNESS: this only serializes what it is given; the caller computes a
+ * facet's OWN values with the other facets' selections but NOT its own (excludes the
+ * self predicate), and applies ALL selections for the instance list + total.
+ */
+export function buildFacetConstraints(selections: FacetSelection[], s: GraphStrategy): string {
+  const parts: string[] = []
+  let i = 0
+  for (const sel of selections) {
+    if (!isNavigableIri(sel.predicate)) continue
+    const pred = sanitizeIri(sel.predicate)
+    const v = `?f${i}`
+    const triple = scoped(`?s <${pred}> ${v}`, s, `?fg${i}`)
+    if (isRangeSelection(sel)) {
+      const bands = sel.ranges.map(r => `(${rangeCond(v, r)})`)
+      if (!bands.length) continue
+      parts.push(`{ ${triple} FILTER(${bands.join(' || ')}) }`)
+    } else {
+      const terms = sel.terms.map(renderFacetTerm).filter(Boolean)
+      if (!terms.length) continue
+      parts.push(`{ VALUES ${v} { ${terms.join(' ')} } ${triple} }`)
+    }
+    i++
+  }
+  return parts.join(' ')
+}
+
+/**
+ * A VALUE facet's values with per-value distinct-instance counts, commonest first.
+ * `constraintFragment` (from buildFacetConstraints, the OTHER facets' selections)
+ * narrows `?s`; membership + the value triple are graph-scoped per strategy the way
+ * instanceMatch is. LIMIT is `limit + 1` so the caller detects truncation (drop the
+ * extra row, show a "top N" note). COUNT(DISTINCT ?s) so cross-graph multiplicity
+ * never inflates a value's count.
+ */
+export function buildFacetValuesQuery(
+  typeUri: string,
+  predicate: string,
+  constraintFragment: string,
+  s: GraphStrategy,
+  limit = 15,
+): string {
+  const iri = sanitizeIri(typeUri)
+  const pred = sanitizeIri(predicate)
+  const lim = Math.max(1, Math.floor(limit)) + 1
+  const frag = constraintFragment ? `${constraintFragment} ` : ''
+  const valTriple = scoped(`?s <${pred}> ?v`, s, '?vg')
+  return `SELECT ?v (COUNT(DISTINCT ?s) AS ?n) WHERE { ${membership(`<${iri}>`, s)} . ${frag}${valTriple} } GROUP BY ?v ORDER BY DESC(?n) LIMIT ${lim}`
+}
+
+/**
+ * A RANGE facet's bucket counts in ONE query: a per-bucket `SUM(IF(cond, 1, 0))`
+ * aggregate (`?b0`, `?b1`, …) over the type's (constrained) values. Graph-scoped
+ * per strategy like buildFacetValuesQuery.
+ *
+ * NOTE: this counts value OCCURRENCES, not distinct subjects — correct for a
+ * max-1 (functional) numeric property, which is what range facets target; a
+ * multi-valued property would count a subject once per value in a band.
+ */
+export function buildFacetRangesQuery(
+  typeUri: string,
+  predicate: string,
+  buckets: { min?: number; max?: number }[],
+  constraintFragment: string,
+  s: GraphStrategy,
+): string {
+  const iri = sanitizeIri(typeUri)
+  const pred = sanitizeIri(predicate)
+  const frag = constraintFragment ? `${constraintFragment} ` : ''
+  const valTriple = scoped(`?s <${pred}> ?v`, s, '?vg')
+  const aggs = buckets.map((b, i) => `(SUM(IF(${rangeCond('?v', b)}, 1, 0)) AS ?b${i})`).join(' ')
+  return `SELECT ${aggs} WHERE { ${membership(`<${iri}>`, s)} . ${frag}${valTriple} }`
 }
 
 /**

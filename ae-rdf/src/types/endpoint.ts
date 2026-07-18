@@ -120,6 +120,40 @@ export interface TypeConfig {
    *  the referent's label). E.g. on Grant, `hasBeneficiary` → [roleLabel,
    *  isRoleOf]. Applies to LINKED objects only (embeds render their properties). */
   viaLabels?: Record<string, string[]>
+  /** Faceted-browsing filters for this type's instance list. Each entry facets a
+   *  property: a VALUE facet lists that property's distinct values with counts
+   *  (click to narrow the list), a RANGE facet buckets a numeric property into
+   *  configured bands. Config-file-authored only for v1 (no gear UI). Absent/empty
+   *  → no facet panel. @see FacetConfig, /spec/ae-rdf */
+  facets?: FacetConfig[]
+}
+
+/**
+ * One faceted-browsing filter over a type's instances (see TypeConfig.facets).
+ *
+ * The presence of `ranges` decides the KIND:
+ * - no `ranges` → a VALUE facet: lists the property's distinct values with a
+ *   per-value distinct-instance count, most common first; clicking values narrows
+ *   the instance list (multi-select within a facet = OR).
+ * - `ranges` set → a RANGE facet: the numeric property is bucketed into the given
+ *   bands, each shown with a count; clicking bands narrows the list.
+ *
+ * Across facets, selections combine with AND (all must hold); within one facet,
+ * with OR. A facet's OWN counts are computed with the OTHER facets' selections
+ * applied but NOT its own (classic faceted search), so its values always show what
+ * ADDING them would yield.
+ */
+export interface FacetConfig {
+  /** The faceted property IRI. */
+  predicate: string
+  /** Facet heading. Default: the humanized local name of `predicate`. */
+  label?: string
+  /** Numeric buckets. Presence makes this a RANGE facet; each band counts values
+   *  where `min <= v < max` (either bound may be omitted for an open-ended band). */
+  ranges?: { label: string; min?: number; max?: number }[]
+  /** Max distinct values listed for a VALUE facet (default 15). One extra is
+   *  fetched to detect (and note) truncation. Ignored for range facets. */
+  limit?: number
 }
 
 /** A URI paired with a count — the shared shape behind the cached inventory,
