@@ -17,6 +17,7 @@ import { useEndpointStore, useBrowseStore, useUIStore } from '../stores'
 import { useGraphMode } from '../composables'
 import { URL_PARAMS } from '../router'
 import { endpointForUri } from '../utils/endpointMatch'
+import { endpointSlug } from '../utils/configExport'
 import ResourceView from '../components/rdf/ResourceView.vue'
 import InstanceList from '../components/rdf/InstanceList.vue'
 import TypeList from '../components/rdf/TypeList.vue'
@@ -66,14 +67,48 @@ function maybeSwitchEndpoint(uri: string): boolean {
   toast.add({ severity: 'info', summary: `Switched to ${owner.name}`, life: 2500 })
   uiStore.announceSuccess(`Switched to ${owner.name}`)
   // The currentId watcher (pre-flush) strips ?resource/?type on switch; re-apply
-  // the resource after it runs so the load keys on the NEW endpoint. Drop ?type —
-  // it belonged to the previous endpoint.
+  // the resource after it runs so the load keys on the NEW endpoint. Drop ?type
+  // (belonged to the previous endpoint) and stamp the NEW endpoint slug — `rest`
+  // still carries the OLD one, and leaving it would fight the currentId watcher.
   const { [URL_PARAMS.TYPE]: _t, ...rest } = route.query
   nextTick(() => {
-    void router.replace({ query: { ...rest, [URL_PARAMS.RESOURCE]: uri } })
+    void router.replace({ query: { ...rest, [URL_PARAMS.ENDPOINT]: endpointSlug(owner.name), [URL_PARAMS.RESOURCE]: uri } })
   })
   return true
 }
+
+// --- Endpoint <-> URL (?endpoint=<slug>) ------------------------------------
+// The active endpoint is reflected in the URL so links are shareable and
+// back/forward crosses endpoints. The slug is endpointSlug(name) (readable,
+// e.g. "cordis-datalab"). Startup deep links are handled earlier, in the store's
+// loadFromConfig (it reads ?endpoint before the first paint); here we cover the
+// runtime: writing the slug on switch, and reconciling on back/forward.
+const slugForId = (id: string | null) => {
+  const e = endpointStore.endpoints.find(x => x.id === id)
+  return e ? endpointSlug(e.name) : null
+}
+const endpointForSlug = (slug: unknown) =>
+  typeof slug === 'string'
+    ? endpointStore.endpoints.find(e => endpointSlug(e.name) === slug) ?? null
+    : null
+
+// True while a ?endpoint URL change (deep link / back-forward) is driving the
+// selection — tells the currentId watcher NOT to strip ?type/?resource, since
+// those belong to the URL we're reconciling to (a USER switch still strips).
+let fromUrlNav = false
+
+// ?endpoint param -> select that endpoint (deep link arriving late, back/forward).
+// Registered before the resource/type watchers so the endpoint settles first.
+watch(
+  () => route.query[URL_PARAMS.ENDPOINT],
+  (slug) => {
+    const target = endpointForSlug(slug)
+    if (!target || target.id === endpointStore.currentId) return
+    fromUrlNav = true
+    endpointStore.selectEndpoint(target.id)
+  },
+  { immediate: true }
+)
 
 // Keep the browse store in sync with the URL (?resource, ?type)
 watch(
@@ -103,16 +138,20 @@ watch(
   { immediate: true }
 )
 
-// Switching endpoints invalidates the whole selection: drop ?resource/?type so
-// the param watchers clear the browse store (and URI input) instead of querying
-// the previous endpoint's selection against the new one. Guarded on a real
-// switch (prev && next) so startup auto-select keeps deep links intact.
+// A USER switch (dropdown / resource-URI auto-switch) overwrites ?endpoint with
+// the new slug AND drops ?resource/?type, so the param watchers clear the browse
+// store instead of querying the previous endpoint's selection against the new one.
+// A URL-driven change (fromUrlNav: deep link / back-forward) is skipped — the URL
+// already carries the right endpoint + selection. Filling ?endpoint on a plain
+// type/resource navigation (which drops it) is the router's afterEach job.
 watch(
   () => endpointStore.currentId,
   (id, prev) => {
+    if (fromUrlNav) { fromUrlNav = false; return }
     if (!id || !prev || id === prev) return
+    const slug = slugForId(id)
     const { [URL_PARAMS.RESOURCE]: _r, [URL_PARAMS.TYPE]: _t, ...rest } = route.query
-    router.replace({ query: rest })
+    router.replace({ query: slug ? { ...rest, [URL_PARAMS.ENDPOINT]: slug } : rest })
   }
 )
 

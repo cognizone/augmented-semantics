@@ -91,7 +91,7 @@ The two features that call external services — DOI citations and geometry maps
 
 ## Walking links & deep-linking
 
-Clicking a relationship value opens that resource; the type and resource you're viewing are kept in the URL (`?type=…`, `?resource=…`). That means **browser back/forward work**, and you can **bookmark or share** any resource view — opening the link restores exactly what you were looking at.
+Clicking a relationship value opens that resource; the active endpoint, type, and resource you're viewing are all kept in the URL (`?endpoint=…`, `?type=…`, `?resource=…`). The **endpoint** appears as a short readable slug (e.g. `?endpoint=cordis-datalab`), so a shared link opens on the right dataset — not whatever the recipient last had selected. That means **browser back/forward work** (including across endpoints), and you can **bookmark or share** any view — opening the link restores exactly what you were looking at. Switching endpoints from the dropdown updates the slug and clears the previous dataset's type/resource (they don't exist in the new one). *(A single-endpoint deployment omits the param — there's nothing to disambiguate.)*
 
 ---
 

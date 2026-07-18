@@ -11,8 +11,10 @@ import ToastService from 'primevue/toastservice'
 import ConfirmationService from 'primevue/confirmationservice'
 import Tooltip from 'primevue/tooltip'
 
-import router from './router'
+import router, { URL_PARAMS } from './router'
 import App from './App.vue'
+import { useEndpointStore } from './stores'
+import { endpointSlug } from './utils/configExport'
 import { logger, loadConfig, getConfig, setConfigPrefixes } from './services'
 
 import 'primeicons/primeicons.css'
@@ -29,6 +31,18 @@ async function bootstrap() {
 
   app.use(createPinia())
   app.use(router)
+
+  // Keep ?endpoint=<slug> present on every browse URL so links are self-contained.
+  // Fill-ONLY-when-missing (never overwrite): a URL-driven endpoint change (deep
+  // link / back-forward) already carries its own ?endpoint and is left untouched;
+  // this only backfills navigations that drop it (e.g. selecting a type). Skipped
+  // for a single-endpoint deploy, where the param would be noise.
+  router.beforeEach((to) => {
+    if (to.query[URL_PARAMS.ENDPOINT] != null) return true
+    const store = useEndpointStore()
+    if (store.isSingleEndpoint || !store.current) return true
+    return { ...to, query: { ...to.query, [URL_PARAMS.ENDPOINT]: endpointSlug(store.current.name) }, replace: true }
+  })
   app.use(PrimeVue, {
     theme: {
       preset: Aura,

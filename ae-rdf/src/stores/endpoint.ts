@@ -12,6 +12,7 @@ import { ref, computed } from 'vue'
 import type { SPARQLEndpoint, EndpointStatus, AppError, SuggestedEndpoint, EndpointAuth } from '../types'
 import suggestedEndpointsData from '../data/endpoints.json'
 import { logger, isConfigMode, getConfig, eventBus, setEndpointPrefixes } from '../services'
+import { endpointSlug } from '../utils/configExport'
 
 const STORAGE_KEY = 'ae-endpoints'
 
@@ -161,11 +162,16 @@ export const useEndpointStore = defineStore('endpoint', () => {
       accessCount: 0,
     }))
 
-    // Auto-select first endpoint. A secured endpoint must go through the
-    // credential gate (prompt) — setting currentId directly would connect it
-    // with no credentials in memory, so the first query 401s and the prompt
-    // never appears.
-    const first = endpoints.value[0]
+    // Auto-select an endpoint. A `?endpoint=<slug>` deep link picks that one
+    // (so a shared link opens on the right endpoint AND its ?type/?resource load
+    // against it from the first paint); otherwise the first endpoint. A secured
+    // endpoint must go through the credential gate (prompt) — setting currentId
+    // directly would connect it with no credentials in memory, so the first query
+    // 401s and the prompt never appears.
+    const wanted = typeof window !== 'undefined'
+      ? new URLSearchParams(window.location.search).get('endpoint')
+      : null
+    const first = (wanted && endpoints.value.find(e => endpointSlug(e.name) === wanted)) || endpoints.value[0]
     if (first) {
       if (needsCredentials(first)) pendingCredentialsId.value = first.id
       else { setEndpointPrefixes(first.prefixes); currentId.value = first.id }
