@@ -28,6 +28,7 @@ import { executeSparql, isNavigableIri, logger, resolveUris, type SPARQLBinding,
 import { qname as toQname, type ResolvedMap } from '../utils/format'
 import { prepareQuery } from '../utils/sparqlGuard'
 import { takeSparqlHandoff } from '../utils/sparqlHandoff'
+import { initTabs, persistTabs, makeTab, nextName, type QueryTab } from '../utils/sparqlTabs'
 import { URL_PARAMS } from '../router'
 import type { AppError } from '../types'
 
@@ -41,9 +42,6 @@ const hasEndpoint = computed(() => !!endpoint.value)
 // the HINT just shows the modifier native to the OS so it reads right per platform.
 const runKey = /Mac|iPhone|iPad/i.test(navigator.platform || navigator.userAgent) ? '⌘' : 'Ctrl'
 
-// Persist the last query per endpoint. Keyed by endpoint URL (stable across the
-// index-based config ids and the uuid user ids).
-const STORAGE_KEY = 'ae-rdf-sparql'
 const DEFAULT_QUERY = `# Read-only SPARQL. Only SELECT and ASK queries run.
 # Press Cmd/Ctrl+Enter to run.
 SELECT ?s ?p ?o WHERE { ?s ?p ?o } LIMIT 25`
@@ -51,34 +49,59 @@ SELECT ?s ?p ?o WHERE { ?s ?p ?o } LIMIT 25`
 const MAX_ROWS = 1000
 const XSD_STRING = 'http://www.w3.org/2001/XMLSchema#string'
 
-function loadPersisted(url: string | undefined): string | null {
-  if (!url) return null
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return null
-    const map = JSON.parse(raw) as Record<string, string>
-    return typeof map[url] === 'string' ? map[url]! : null
-  } catch {
-    return null
-  }
+// ── Query tabs (per endpoint) ───────────────────────────────────────────────
+// Many named tabs, each its own query; the active tab drives the editor. Storage
+// + legacy migration live in utils/sparqlTabs (pure, unit-tested).
+const initial = initTabs(endpoint.value?.url, DEFAULT_QUERY, takeSparqlHandoff())
+const tabs = ref<QueryTab[]>(initial.tabs)
+const activeId = ref<string>(initial.activeId)
+const activeTab = computed(() => tabs.value.find(t => t.id === activeId.value) ?? tabs.value[0])
+
+// The active tab's query, as a writable ref, so the editor/run code below is
+// unchanged: reads flow from the active tab, writes (typing) into it.
+const query = computed<string>({
+  get: () => activeTab.value?.query ?? '',
+  set: (v) => { const t = activeTab.value; if (t) t.query = v },
+})
+
+// Persist tabs on any change (debounced — this also fires per keystroke via query).
+let persistTimer: ReturnType<typeof setTimeout> | undefined
+const saveTabs = (url = endpoint.value?.url) => persistTabs(url, tabs.value, activeId.value)
+watch([tabs, activeId], () => {
+  clearTimeout(persistTimer)
+  persistTimer = setTimeout(() => saveTabs(), 400)
+}, { deep: true })
+
+function selectTab(id: string) { activeId.value = id }
+function addTab() {
+  const t = makeTab(nextName(tabs.value), DEFAULT_QUERY)
+  tabs.value = [...tabs.value, t]
+  activeId.value = t.id
+}
+function closeTab(id: string) {
+  if (tabs.value.length <= 1) return // never zero tabs
+  const idx = tabs.value.findIndex(t => t.id === id)
+  tabs.value = tabs.value.filter(t => t.id !== id)
+  if (activeId.value === id) activeId.value = tabs.value[Math.max(0, idx - 1)]!.id
 }
 
-function persist(url: string | undefined, q: string) {
-  if (!url) return
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    const map = (raw ? JSON.parse(raw) : {}) as Record<string, string>
-    map[url] = q
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(map))
-  } catch (e) {
-    logger.warn('SparqlView', 'Failed to persist query', { error: e })
-  }
+// Inline rename: double-click a tab → edit its name in place.
+const editingId = ref<string | null>(null)
+const editingName = ref('')
+function startRename(t: QueryTab) { editingId.value = t.id; editingName.value = t.name }
+function commitRename() {
+  const t = tabs.value.find(x => x.id === editingId.value)
+  const n = editingName.value.trim()
+  if (t && n) t.name = n
+  editingId.value = null
 }
+function cancelRename() { editingId.value = null }
 
-// A query handed off from the browser ("Open in SPARQL") wins for this mount,
-// seeding the editor with the current filtered list query; otherwise the
-// per-endpoint persisted query, else the default.
-const query = ref<string>(takeSparqlHandoff() ?? loadPersisted(endpoint.value?.url) ?? DEFAULT_QUERY)
+// Autofocus + select the rename input when it appears (script-setup exposes this
+// as the v-focus directive).
+const vFocus = {
+  mounted: (el: HTMLInputElement) => { el.focus(); el.select() },
+}
 
 // CodeJar highlighting editor. `query` stays the single source of truth: user edits
 // flow query←editor via jar.onUpdate; external reassignments (endpoint switch) flow
@@ -151,16 +174,20 @@ function clearResults() {
   ran.value = false
 }
 
-// Endpoint switch: invalidate any in-flight query, clear results, and swap in the
-// query persisted for the newly-selected endpoint.
+// Endpoint switch: save the tabs of the endpoint we're leaving, invalidate any
+// in-flight query, clear results, and swap in the newly-selected endpoint's tabs.
 watch(
   () => endpointStore.currentId,
   (id, prev) => {
     if (id === prev) return
+    const prevUrl = endpointStore.endpoints.find(e => e.id === prev)?.url
+    if (prevUrl) saveTabs(prevUrl)
     reqId.value++
     running.value = false
     clearResults()
-    query.value = loadPersisted(endpoint.value?.url) ?? DEFAULT_QUERY
+    const next = initTabs(endpoint.value?.url, DEFAULT_QUERY)
+    tabs.value = next.tabs
+    activeId.value = next.activeId
   },
 )
 
@@ -175,7 +202,7 @@ async function run() {
     return
   }
 
-  persist(ep.url, query.value)
+  saveTabs(ep.url)
 
   const id = ++reqId.value
   const startedUrl = ep.url
@@ -244,7 +271,8 @@ onBeforeUnmount(() => {
   editorEl.value?.removeEventListener('keydown', onEditorKeydown)
   jar?.destroy()
   jar = null
-  persist(endpoint.value?.url, query.value)
+  clearTimeout(persistTimer)
+  saveTabs()
 })
 
 const qname = (uri: string) => toQname(uri, resolved.value)
@@ -269,6 +297,43 @@ function openResource(uri: string) {
 
     <template v-else>
       <div class="editor-pane">
+        <div class="tab-bar" role="tablist">
+          <div
+            v-for="t in tabs"
+            :key="t.id"
+            class="tab"
+            :class="{ active: t.id === activeId }"
+            role="tab"
+            :aria-selected="t.id === activeId"
+            @click="selectTab(t.id)"
+          >
+            <input
+              v-if="editingId === t.id"
+              v-model="editingName"
+              class="tab-rename"
+              :aria-label="`Rename ${t.name}`"
+              @click.stop
+              @keyup.enter="commitRename"
+              @keyup.escape="cancelRename"
+              @blur="commitRename"
+              v-focus
+            />
+            <template v-else>
+              <span class="tab-name" :title="'Double-click to rename'" @dblclick.stop="startRename(t)">{{ t.name }}</span>
+              <button
+                v-if="tabs.length > 1"
+                class="tab-close"
+                :aria-label="`Close ${t.name}`"
+                @click.stop="closeTab(t.id)"
+              >
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            </template>
+          </div>
+          <button class="tab-add" aria-label="New query tab" title="New query tab" @click="addTab">
+            <span class="material-symbols-outlined">add</span>
+          </button>
+        </div>
         <div class="editor-head">
           <h2 class="pane-title">SPARQL — <span class="mono">{{ endpoint?.name }}</span></h2>
           <span class="editor-hint">Read-only · SELECT / ASK · <kbd>{{ runKey }}</kbd>+<kbd>Enter</kbd> to run</span>
@@ -395,6 +460,108 @@ function openResource(uri: string) {
   padding: 0.75rem 1.5rem;
   border-bottom: 1px solid var(--ae-border-color);
   flex-shrink: 0;
+}
+
+.tab-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-shrink: 0;
+  max-width: 16rem;
+  padding: 0.25rem 0.35rem 0.25rem 0.6rem;
+  font-size: 0.75rem;
+  color: var(--ae-text-secondary);
+  background: var(--ae-bg-elevated);
+  border: 1px solid var(--ae-border-color);
+  border-radius: 6px 6px 0 0;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.tab:hover {
+  color: var(--ae-text-primary);
+  background: var(--ae-bg-hover);
+}
+
+.tab.active {
+  color: var(--ae-text-primary);
+  background: var(--ae-bg-base, var(--ae-bg-elevated));
+  border-bottom-color: var(--ae-accent);
+  box-shadow: inset 0 -2px 0 var(--ae-accent);
+}
+
+.tab-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 12rem;
+}
+
+.tab-rename {
+  font: inherit;
+  color: var(--ae-text-primary);
+  background: var(--ae-bg-base, var(--ae-bg-elevated));
+  border: 1px solid var(--ae-accent);
+  border-radius: 3px;
+  padding: 0 0.25rem;
+  width: 8rem;
+}
+
+.tab-rename:focus {
+  outline: none;
+}
+
+.tab-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  width: 16px;
+  height: 16px;
+  border: none;
+  background: none;
+  color: var(--ae-text-muted);
+  cursor: pointer;
+  border-radius: 3px;
+}
+
+.tab-close:hover {
+  color: var(--ae-text-primary);
+  background: var(--ae-bg-hover);
+}
+
+.tab-close .material-symbols-outlined {
+  font-size: 14px;
+}
+
+.tab-add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--ae-border-color);
+  background: var(--ae-bg-elevated);
+  color: var(--ae-text-secondary);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.tab-add:hover {
+  color: var(--ae-text-primary);
+  background: var(--ae-bg-hover);
+}
+
+.tab-add .material-symbols-outlined {
+  font-size: 16px;
 }
 
 .editor-head {

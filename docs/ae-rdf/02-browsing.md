@@ -50,7 +50,9 @@ When a type has facets configured, the sidebar's header gains a **Filters** tab 
 
 ### Open in SPARQL
 
-Above the instance list, a **SPARQL** button hands the current list — with its type, graph scope, text filter, and every active facet applied — to the **SPARQL panel** as the exact query behind it. Use it to see how the filtered view is built, then refine it by hand.
+Above the instance list, a **SPARQL** button hands the current list — with its type, graph scope, text filter, and every active facet applied — to the **SPARQL panel** as the exact query behind it, opened in a fresh tab. Use it to see how the filtered view is built, then refine it by hand.
+
+The panel keeps **multiple query tabs** per endpoint: **+** opens a new one, **double-click** a tab to rename it, and each tab's query is remembered (so are the tabs themselves) across reloads and endpoint switches.
 
 The **Filters** tab is greyed out for types with no facets, and shows a small **count badge** when filters are active — so you can see from the **Types** side that a filter is narrowing the list. Selecting a type never yanks you off the tab you're on; switching to a type with no facets simply drops you back to **Types**. Which types have facets — and over which properties — is set by the curator in the [config](configuration.md#facets).
 
