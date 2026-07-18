@@ -129871,7 +129871,37 @@
       "group": "lod.opentransportdata.swiss / vocab"
     },
     "http://qudt.org/schema/qudt/Unit": {
-      "group": "QUDT"
+      "group": "QUDT",
+      "facets": [
+        {
+          "predicate": "http://qudt.org/schema/qudt/applicableSystem",
+          "label": "Unit system"
+        },
+        {
+          "predicate": "http://qudt.org/schema/qudt/conversionMultiplier",
+          "label": "Conversion factor",
+          "ranges": [
+            {
+              "label": "< 0.001",
+              "max": 0.001
+            },
+            {
+              "label": "0.001 – 1",
+              "min": 0.001,
+              "max": 1
+            },
+            {
+              "label": "1 – 1000",
+              "min": 1,
+              "max": 1000
+            },
+            {
+              "label": "≥ 1000",
+              "min": 1000
+            }
+          ]
+        }
+      ]
     },
     "https://ld.admin.ch/ech/71/MunicipalityChangeEvent": {
       "group": "ld.admin.ch / ech / 71"
@@ -130060,7 +130090,13 @@
       "group": "schema.org"
     },
     "http://publications.europa.eu/ontology/euvoc#Country": {
-      "group": "EU Vocabularies"
+      "group": "EU Vocabularies",
+      "facets": [
+        {
+          "predicate": "http://www.opengis.net/ont/geosparql#sfWithin",
+          "label": "Continent"
+        }
+      ]
     },
     "https://agriculture.ld.admin.ch/plant-protection/ActiveSubstance": {
       "group": "agriculture / plant-protection"
