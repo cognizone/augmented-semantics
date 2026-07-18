@@ -8,7 +8,7 @@
  * concept breadcrumb and SKOS settings sections (display/search/deprecation).
  */
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
-import { RouterView } from 'vue-router'
+import { RouterView, useRoute, useRouter } from 'vue-router'
 import Toast from 'primevue/toast'
 import Button from 'primevue/button'
 import Dialog from 'primevue/dialog'
@@ -27,6 +27,14 @@ const uiStore = useUIStore()
 const settingsStore = useSettingsStore()
 const endpointStore = useEndpointStore()
 const config = useConfig()
+const route = useRoute()
+const router = useRouter()
+
+// SPARQL panel toggle: to /sparql from the browser, back to / from the panel.
+const onSparql = computed(() => route.path === '/sparql')
+function toggleSparql() {
+  router.push(onSparql.value ? '/' : '/sparql')
+}
 
 function exportConfig() {
   const appConfig = buildAppConfig({
@@ -191,6 +199,16 @@ onUnmounted(() => {
 
       <div class="header-right">
         <div class="header-icons">
+          <button
+            class="header-icon-btn"
+            :class="{ active: onSparql }"
+            :aria-label="onSparql ? 'Back to browser' : 'SPARQL query panel'"
+            :aria-pressed="onSparql"
+            :title="onSparql ? 'Back to browser' : 'SPARQL query panel'"
+            @click="toggleSparql"
+          >
+            <span class="material-symbols-outlined">terminal</span>
+          </button>
           <a :href="docsUrl" target="_blank" class="header-icon-btn" aria-label="Documentation" title="Documentation">
             <span class="material-symbols-outlined">help_outline</span>
           </a>
@@ -401,6 +419,11 @@ onUnmounted(() => {
 .header-icon-btn:hover {
   background: var(--ae-bg-hover);
   color: var(--ae-text-primary);
+}
+
+.header-icon-btn.active {
+  background: var(--ae-bg-hover);
+  color: var(--ae-accent);
 }
 
 .header-icon-btn .material-symbols-outlined {

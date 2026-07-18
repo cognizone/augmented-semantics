@@ -11,7 +11,7 @@ outline: deep
 A fast, browser-only explorer for **any** RDF dataset behind a SPARQL endpoint. Connect, see what types of things exist, drill into a type's instances, open any resource, and follow its links — all live, all in your browser. No backend, no precomputed indexes, no data leaves your machine.
 
 ::: info Early days
-AE RDF is intentionally barebones: live queries only. Endpoint connection, type discovery, filterable instance lists, incoming links ("Referenced by"), and a graph-aware resource view work today. A raw SPARQL panel is planned.
+AE RDF is intentionally barebones: live queries only. Endpoint connection, type discovery, filterable instance lists, incoming links ("Referenced by"), a graph-aware resource view, and a read-only raw SPARQL panel (the <img src="./icons/icon-terminal.svg" height="14"> button in the header) work today.
 :::
 
 > **Want your endpoint on the list?** If you maintain a public SPARQL endpoint and would like it included as a suggested endpoint, [open an issue on GitHub](https://github.com/cognizone/augmented-semantics/issues).
@@ -34,6 +34,7 @@ On a deployed instance the endpoints come from the app's bundled configuration; 
 | Button | | Description |
 |--------|---|-------------|
 | **Endpoint** | badge | Shows the active endpoint. Click to switch endpoints or open the [Endpoint Manager](01-endpoints.md). |
+| **SPARQL** | <img src="./icons/icon-terminal.svg" height="16"> | Opens the read-only raw SPARQL panel — run SELECT / ASK queries against the current endpoint. See [SPARQL panel](#sparql-panel). |
 | **Documentation** | <img src="./icons/icon-help.svg" height="16"> | Opens the AE RDF documentation (this manual). |
 | **Prefixes** | <img src="./icons/icon-tag.svg" height="16"> | The active `prefix → namespace` mappings used to render qnames. |
 | **Dark mode** | <img src="./icons/icon-dark-mode.svg" height="16"> | Toggle light/dark theme. |
@@ -55,6 +56,16 @@ Open the settings dialog from the <img src="./icons/icon-settings.svg" height="1
 - **Config authoring mode** — off by default (clean, read-only browsing). Turn it on to reveal the per-type gears in the Types sidebar and the export buttons below. The configured effects (embed/hide/pin) apply either way; this just shows the editing tools. Authoring — per-type configuration, graph behaviour, and exporting a deployment config — is covered in the [Configuration Guide](configuration.md).
 
 Settings are saved in your browser (localStorage).
+
+## SPARQL panel
+
+The <img src="./icons/icon-terminal.svg" height="14"> button in the header opens a **read-only raw SPARQL panel** — a plain editor for running your own queries against the current endpoint.
+
+- **Read-only.** Only `SELECT` and `ASK` queries run. Anything else (`CONSTRUCT`, `DESCRIBE`, `INSERT`, `DELETE`, `LOAD`, …) is refused before any request is sent.
+- **Automatic LIMIT.** A `SELECT` with no top-level `LIMIT` gets `LIMIT 100` appended, and the panel tells you when it did. At most **1,000 rows** render regardless.
+- **Run it.** Press **Run**, or <kbd>⌘</kbd>/<kbd>Ctrl</kbd>+<kbd>Enter</kbd>. The query duration is shown on success.
+- **Clickable results.** In a `SELECT` table, URI cells are links — click one to open that resource in the browser. `ASK` shows a simple `true` / `false`.
+- **Per-endpoint memory.** Your last query is saved (in your browser) per endpoint, so switching endpoints swaps in the query you last ran there.
 
 ## User Guide
 

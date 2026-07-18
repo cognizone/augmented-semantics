@@ -20,6 +20,12 @@ const router = createRouter({
       name: 'rdf',
       component: RdfView,
     },
+    {
+      // Raw SPARQL panel — read-only SELECT/ASK against the current endpoint.
+      path: '/sparql',
+      name: 'sparql',
+      component: () => import('../views/SparqlView.vue'),
+    },
   ],
 })
 
