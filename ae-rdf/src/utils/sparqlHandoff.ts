@@ -5,10 +5,12 @@
  * value only needs to survive one in-app navigation, so no store/reactivity.
  * ponytail: a plain module var, not a Pinia store — it's a single transient string.
  */
+import { formatSparql } from './formatSparql'
+
 let pending: string | null = null
 
 export function setSparqlHandoff(query: string): void {
-  pending = query
+  pending = formatSparql(query)
 }
 
 /** Return the pending query (once) and clear it. Null when there is none. */
