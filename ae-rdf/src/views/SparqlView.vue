@@ -25,7 +25,8 @@ import 'prismjs/components/prism-turtle'
 import 'prismjs/components/prism-sparql'
 import { useEndpointStore } from '../stores'
 import { useDelayedLoading, useElapsedTime } from '../composables'
-import { executeSparql, isNavigableIri, logger, resolveUris, type SPARQLBinding, type SPARQLResults } from '../services'
+import { executeSparql, isNavigableIri, logger, resolveUris, getDisplayPrefixes, type SPARQLBinding, type SPARQLResults } from '../services'
+import { injectPrefixes } from '../utils/injectPrefixes'
 import { qname as toQname, type ResolvedMap } from '../utils/format'
 import { prepareQuery, DEFAULT_LIMIT } from '../utils/sparqlGuard'
 import { takeSparqlHandoff } from '../utils/sparqlHandoff'
@@ -225,6 +226,12 @@ watch(
 async function run() {
   const ep = endpoint.value
   if (!ep) return
+
+  // Materialize any missing PREFIX declarations INTO the editor (era:, skos:, …) so
+  // what you see and copy is a self-contained query that runs anywhere — not only
+  // here. On Run, not per-keystroke, so it never fights the caret while you type.
+  const withPrefixes = injectPrefixes(query.value, getDisplayPrefixes())
+  if (withPrefixes !== query.value) query.value = withPrefixes
 
   const prepared = prepareQuery(query.value)
   if (!prepared.ok) {

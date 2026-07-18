@@ -323,13 +323,14 @@ export function getKnownPrefixes(): Record<string, string> {
   return out
 }
 
-/** All active prefix → namespace mappings (common + config + resolved), for the legend. */
+/** All active prefix → namespace mappings (common + config + endpoint + resolved). */
 export function getDisplayPrefixes(): Record<string, string> {
   loadCache()
   const out: Record<string, string> = {}
   for (const [ns, p] of Object.entries(COMMON_PREFIXES)) out[p] = ns
   for (const [ns, p] of Object.entries(cache)) if (p) out[p] = ns
   for (const [ns, p] of Object.entries(configNsToPrefix)) out[p] = ns
+  for (const [ns, p] of Object.entries(endpointNsToPrefix)) out[p] = ns // endpoint-declared wins
   return out
 }
 

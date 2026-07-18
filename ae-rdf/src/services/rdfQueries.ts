@@ -132,8 +132,8 @@ export function resolveGraphStrategy(graph?: EndpointGraph): GraphStrategy {
 
 /** `?s a <TYPE>` (or `?s a ?type`) scoped per strategy, for the aggregate queries. */
 function membership(typeTerm: string, s: GraphStrategy): string {
-  const named = `GRAPH ?g { ?s a ${typeTerm} }`
-  const def = `?s a ${typeTerm}`
+  const named = `GRAPH ?g { ?s a ${typeTerm} . }`
+  const def = `?s a ${typeTerm} .`
   if (s.useNamed && s.useDefault) return `{ ${named} } UNION { ${def} }`
   return s.useNamed ? named : def
 }
@@ -189,7 +189,7 @@ function instanceMatch(iri: string, s: GraphStrategy, filter?: string, predicate
     // on a 700k-instance type). DISTINCT ?s (in the caller) collapses a resource
     // with several matching labels. isLiteral drops composed URI-hop fields; the URI
     // branch keeps unlabeled resources findable.
-    const labelBranch = `{ ${base} VALUES ?lp { ${labelValues} } ${scoped('?s ?lp ?lbl', s, '?lg')} FILTER(isLiteral(?lbl) && ${allContain('?lbl')}) }`
+    const labelBranch = `{ ${base} VALUES ?lp { ${labelValues} } ${scoped('?s ?lp ?lbl .', s, '?lg')} FILTER(isLiteral(?lbl) && ${allContain('?lbl')}) }`
     const uriBranch = `{ ${base} FILTER(${allContain('?s')}) }`
     core = `${labelBranch} UNION ${uriBranch}`
   }
@@ -197,7 +197,7 @@ function instanceMatch(iri: string, s: GraphStrategy, filter?: string, predicate
   // predicate — the ones that surface ONLY in this list, never inline under a
   // parent. Wraps the (possibly union) core so the FILTER applies to every branch.
   if (orphanVia && isNavigableIri(orphanVia)) {
-    core = `{ ${core} } FILTER NOT EXISTS { ${scoped(`?owner <${sanitizeIri(orphanVia)}> ?s`, s, '?og')} }`
+    core = `{ ${core} } FILTER NOT EXISTS { ${scoped(`?owner <${sanitizeIri(orphanVia)}> ?s .`, s, '?og')} }`
   }
   // Facet selections (buildFacetConstraints) narrow ?s further — self-contained
   // braced groups, so they concatenate next to core with AND semantics. Empty when
@@ -376,20 +376,22 @@ function rangeCond(v: string, r: { min?: number; max?: number }, date = false): 
  *  sanitized here. */
 function facetPath(subj: string, pred: string, via: string | string[] | undefined, valueVar: string, s: GraphStrategy, gvar: string): string | null {
   const hops = via == null ? [] : (Array.isArray(via) ? via : [via])
-  if (!hops.length) return scoped(`${subj} <${pred}> ${valueVar}`, s, gvar)
+  if (!hops.length) return scoped(`${subj} <${pred}> ${valueVar} .`, s, gvar)
   const preds = [pred] // pred is caller-sanitized; via hops sanitized below
   for (const h of hops) {
     if (!isNavigableIri(h)) return null
     try { preds.push(sanitizeIri(h)) } catch { return null }
   }
+  // Intermediate hop vars derive from gvar (always a ?var) — never valueVar, which
+  // may be an inlined term (`<uri>`/literal) for a single-value facet.
   const parts: string[] = []
   let cur = subj
   preds.forEach((p, i) => {
-    const next = i === preds.length - 1 ? valueVar : `${valueVar}_m${i}`
-    parts.push(scoped(`${cur} <${p}> ${next}`, s, `${gvar}${String.fromCharCode(97 + i)}`))
+    const next = i === preds.length - 1 ? valueVar : `${gvar}_m${i}`
+    parts.push(scoped(`${cur} <${p}> ${next} .`, s, `${gvar}${String.fromCharCode(97 + i)}`))
     cur = next
   })
-  return parts.join(' . ')
+  return parts.join(' ')
 }
 
 /**
@@ -414,9 +416,9 @@ export function buildFacetConstraints(selections: FacetSelection[], s: GraphStra
     if (!isNavigableIri(sel.predicate)) continue
     const pred = sanitizeIri(sel.predicate)
     const v = `?f${i}`
-    const path = facetPath('?s', pred, sel.via, v, s, `?fg${i}`)
-    if (!path) continue
     if (isRangeSelection(sel)) {
+      const path = facetPath('?s', pred, sel.via, v, s, `?fg${i}`)
+      if (!path) continue
       const isDate = sel.datatype === 'date'
       const bands = sel.ranges.map(r => `(${rangeCond(v, r, isDate)})`)
       if (!bands.length) continue
@@ -424,7 +426,17 @@ export function buildFacetConstraints(selections: FacetSelection[], s: GraphStra
     } else {
       const terms = sel.terms.map(renderFacetTerm).filter(Boolean)
       if (!terms.length) continue
-      parts.push(`{ VALUES ${v} { ${terms.join(' ')} } ${path} }`)
+      // A single value goes straight into the object position (`?s <p> <v>`); only
+      // a multi-select needs a VALUES list bound to the facet var to OR the terms.
+      if (terms.length === 1) {
+        const path = facetPath('?s', pred, sel.via, terms[0]!, s, `?fg${i}`)
+        if (!path) continue
+        parts.push(`{ ${path} }`)
+      } else {
+        const path = facetPath('?s', pred, sel.via, v, s, `?fg${i}`)
+        if (!path) continue
+        parts.push(`{ VALUES ${v} { ${terms.join(' ')} } ${path} }`)
+      }
     }
     i++
   }
@@ -452,7 +464,7 @@ export function buildFacetValuesQuery(
   const lim = Math.max(1, Math.floor(limit)) + 1
   const frag = constraintFragment ? `${constraintFragment} ` : ''
   const valTriple = facetPath('?s', pred, via, '?v', s, '?vg') ?? 'FILTER(false)'
-  return `SELECT ?v (COUNT(DISTINCT ?s) AS ?n) WHERE { ${membership(`<${iri}>`, s)} . ${frag}${valTriple} } GROUP BY ?v ORDER BY DESC(?n) LIMIT ${lim}`
+  return `SELECT ?v (COUNT(DISTINCT ?s) AS ?n) WHERE { ${membership(`<${iri}>`, s)} ${frag}${valTriple} } GROUP BY ?v ORDER BY DESC(?n) LIMIT ${lim}`
 }
 
 /**
@@ -478,7 +490,7 @@ export function buildFacetRangesQuery(
   const frag = constraintFragment ? `${constraintFragment} ` : ''
   const valTriple = facetPath('?s', pred, via, '?v', s, '?vg') ?? 'FILTER(false)'
   const aggs = buckets.map((b, i) => `(SUM(IF(${rangeCond('?v', b, date)}, 1, 0)) AS ?b${i})`).join(' ')
-  return `SELECT ${aggs} WHERE { ${membership(`<${iri}>`, s)} . ${frag}${valTriple} }`
+  return `SELECT ${aggs} WHERE { ${membership(`<${iri}>`, s)} ${frag}${valTriple} }`
 }
 
 /**

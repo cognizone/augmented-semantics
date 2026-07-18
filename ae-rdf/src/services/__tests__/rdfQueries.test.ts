@@ -178,8 +178,8 @@ describe('buildResourceTriplesQuery', () => {
 describe('membership-driven aggregates always COUNT(DISTINCT ?s)', () => {
   it('type inventory: distinct count + membership per strategy', () => {
     expect(buildTypeInventoryQuery(BOTH)).toContain('COUNT(DISTINCT ?s)')
-    expect(buildTypeInventoryQuery(BOTH)).toContain('{ GRAPH ?g { ?s a ?type } } UNION { ?s a ?type }')
-    expect(buildTypeInventoryQuery(NAMED)).toContain('GRAPH ?g { ?s a ?type }')
+    expect(buildTypeInventoryQuery(BOTH)).toContain('{ GRAPH ?g { ?s a ?type . } } UNION { ?s a ?type . }')
+    expect(buildTypeInventoryQuery(NAMED)).toContain('GRAPH ?g { ?s a ?type . }')
     expect(buildTypeInventoryQuery(NAMED)).not.toContain('UNION')
     const def = buildTypeInventoryQuery(DEFAULT)
     expect(def).toContain('?s a ?type')
@@ -188,10 +188,10 @@ describe('membership-driven aggregates always COUNT(DISTINCT ?s)', () => {
 
   it('instance count: distinct, graph-scoped per strategy, bnodes excluded', () => {
     expect(buildInstanceCountQuery(TYPE, NAMED)).toBe(
-      `SELECT (COUNT(DISTINCT ?s) AS ?total) WHERE { GRAPH ?g { ?s a <${TYPE}> } FILTER(!isBlank(?s)) }`
+      `SELECT (COUNT(DISTINCT ?s) AS ?total) WHERE { GRAPH ?g { ?s a <${TYPE}> . } FILTER(!isBlank(?s)) }`
     )
     expect(buildInstanceCountQuery(TYPE, DEFAULT)).toBe(
-      `SELECT (COUNT(DISTINCT ?s) AS ?total) WHERE { ?s a <${TYPE}> FILTER(!isBlank(?s)) }`
+      `SELECT (COUNT(DISTINCT ?s) AS ?total) WHERE { ?s a <${TYPE}> . FILTER(!isBlank(?s)) }`
     )
     expect(buildInstanceCountQuery(TYPE, BOTH)).toContain('UNION')
     expect(() => buildInstanceCountQuery('http://e.org/x> }', BOTH)).toThrow()
@@ -211,7 +211,7 @@ describe('membership-driven aggregates always COUNT(DISTINCT ?s)', () => {
 describe('buildInstanceListQuery', () => {
   it('one distinct instance per row, page-bounded — labels resolved separately', () => {
     const q = buildInstanceListQuery(TYPE, NAMED, 100, 0)
-    expect(q).toContain(`SELECT DISTINCT ?s WHERE { GRAPH ?g { ?s a <${TYPE}> } FILTER(!isBlank(?s)) } LIMIT 100 OFFSET 0`)
+    expect(q).toContain(`SELECT DISTINCT ?s WHERE { GRAPH ?g { ?s a <${TYPE}> . } FILTER(!isBlank(?s)) } LIMIT 100 OFFSET 0`)
     // Labels are NOT hand-rolled here anymore — the caller resolves them via the
     // shared resolveLabels (precedence + SKOS-XL + language) so they match the heading.
     expect(q).not.toContain('SAMPLE')
@@ -261,12 +261,12 @@ describe('instance filter (label OR URI)', () => {
   })
 
   it('scopes the label triple with a DISTINCT graph var per strategy (not ?g)', () => {
-    expect(buildInstanceListQuery(TYPE, NAMED, 25, 0, 'x')).toContain('GRAPH ?lg { ?s ?lp ?lbl }')
+    expect(buildInstanceListQuery(TYPE, NAMED, 25, 0, 'x')).toContain('GRAPH ?lg { ?s ?lp ?lbl . }')
     const def = buildInstanceListQuery(TYPE, DEFAULT, 25, 0, 'x')
     expect(def).toContain('?s ?lp ?lbl')
     expect(def).not.toContain('GRAPH ?lg')
     expect(buildInstanceListQuery(TYPE, BOTH, 25, 0, 'x'))
-      .toContain('{ GRAPH ?lg { ?s ?lp ?lbl } } UNION { ?s ?lp ?lbl }')
+      .toContain('{ GRAPH ?lg { ?s ?lp ?lbl . } } UNION { ?s ?lp ?lbl . }')
   })
 
   it('escapes each token so a crafted string cannot break out of the literal (injection)', () => {
@@ -302,7 +302,7 @@ describe('orphan filter (unreferenced-only)', () => {
 
   it('adds FILTER NOT EXISTS { ?owner <via> ?s } when an orphanVia is given', () => {
     const q = buildInstanceListQuery(TYPE, DEFAULT, 25, 0, undefined, undefined, VIA)
-    expect(q).toContain(`FILTER NOT EXISTS { ?owner <${VIA}> ?s }`)
+    expect(q).toContain(`FILTER NOT EXISTS { ?owner <${VIA}> ?s . }`)
   })
 
   it('omits the orphan filter when no via (or an unsafe one) is given', () => {
@@ -314,7 +314,7 @@ describe('orphan filter (unreferenced-only)', () => {
     // BOTH: owner triple gets its own graph var, and the orphan FILTER wraps the
     // search union so it applies to every branch.
     const q = buildInstanceListQuery(TYPE, BOTH, 25, 0, 'acme', undefined, VIA)
-    expect(q).toContain(`{ GRAPH ?og { ?owner <${VIA}> ?s } } UNION { ?owner <${VIA}> ?s }`)
+    expect(q).toContain(`{ GRAPH ?og { ?owner <${VIA}> ?s . } } UNION { ?owner <${VIA}> ?s . }`)
     expect(q).toContain('} UNION {') // the search branches survive inside the wrap
   })
 
@@ -330,26 +330,27 @@ describe('buildFacetConstraints (selection serialization)', () => {
   const AMOUNT = 'http://data.europa.eu/s66#totalCost'
   const uri = (v: string) => ({ value: v, isUri: true })
 
-  it('value facet → a VALUES list + a scoped triple (single-select)', () => {
+  it('single-select → the value inlined into the object position (no VALUES/var)', () => {
     const sel: FacetSelection[] = [{ predicate: P1, terms: [uri('http://x/OPEN')] }]
     const frag = buildFacetConstraints(sel, DEFAULT)
-    expect(frag).toBe('{ VALUES ?f0 { <http://x/OPEN> } ?s <' + P1 + '> ?f0 }')
+    expect(frag).toBe(`{ ?s <${P1}> <http://x/OPEN> . }`)
+    expect(frag).not.toContain('VALUES')
   })
 
   it('multi-select within a facet = OR (all terms in one VALUES list)', () => {
     const frag = buildFacetConstraints([{ predicate: P1, terms: [uri('http://x/A'), uri('http://x/B')] }], DEFAULT)
     expect(frag).toContain('VALUES ?f0 { <http://x/A> <http://x/B> }')
+    expect(frag).toContain(`?s <${P1}> ?f0 .`)
   })
 
   it('across facets = AND (fragments concatenated, distinct vars per facet)', () => {
     const frag = buildFacetConstraints([
-      { predicate: P1, terms: [uri('http://x/A')] },
+      { predicate: P1, terms: [uri('http://x/A'), uri('http://x/B')] },
       { predicate: P2, terms: [uri('http://x/CH')] },
     ], DEFAULT)
-    expect(frag).toContain('VALUES ?f0 { <http://x/A> }')
-    expect(frag).toContain(`?s <${P1}> ?f0`)
-    expect(frag).toContain('VALUES ?f1 { <http://x/CH> }')
-    expect(frag).toContain(`?s <${P2}> ?f1`)
+    expect(frag).toContain('VALUES ?f0 { <http://x/A> <http://x/B> }')
+    expect(frag).toContain(`?s <${P1}> ?f0 .`)
+    expect(frag).toContain(`?s <${P2}> <http://x/CH> .`) // second facet single → inlined
   })
 
   it('literal terms: escape quotes/backslash, preserve lang and datatype', () => {
@@ -386,10 +387,11 @@ describe('buildFacetConstraints (selection serialization)', () => {
   })
 
   it('scopes the constraint triple per strategy (mirrors instanceMatch)', () => {
-    const sel: FacetSelection[] = [{ predicate: P1, terms: [uri('http://x/A')] }]
-    expect(buildFacetConstraints(sel, NAMED)).toContain(`GRAPH ?fg0 { ?s <${P1}> ?f0 }`)
+    // Two terms so the facet var survives (a single term inlines the object).
+    const sel: FacetSelection[] = [{ predicate: P1, terms: [uri('http://x/A'), uri('http://x/B')] }]
+    expect(buildFacetConstraints(sel, NAMED)).toContain(`GRAPH ?fg0 { ?s <${P1}> ?f0 . }`)
     expect(buildFacetConstraints(sel, BOTH))
-      .toContain(`{ GRAPH ?fg0 { ?s <${P1}> ?f0 } } UNION { ?s <${P1}> ?f0 }`)
+      .toContain(`{ GRAPH ?fg0 { ?s <${P1}> ?f0 . } } UNION { ?s <${P1}> ?f0 . }`)
   })
 
   it('drops unsafe predicates and unsafe URI terms; empty when nothing selectable', () => {
@@ -415,8 +417,8 @@ describe('buildFacetValuesQuery', () => {
     const frag = buildFacetConstraints([{ predicate: 'http://x/p', terms: [{ value: 'http://x/A', isUri: true }] }], NAMED)
     const q = buildFacetValuesQuery(TYPE, PRED, frag, NAMED, 10)
     expect(q).toContain(frag)
-    expect(q).toContain(`GRAPH ?g { ?s a <${TYPE}> }`) // membership scoped
-    expect(q).toContain(`GRAPH ?vg { ?s <${PRED}> ?v }`) // value triple scoped
+    expect(q).toContain(`GRAPH ?g { ?s a <${TYPE}> . }`) // membership scoped
+    expect(q).toContain(`GRAPH ?vg { ?s <${PRED}> ?v . }`) // value triple scoped
     expect(q).toContain('LIMIT 11')
   })
   it('refuses unsafe type / predicate IRIs', () => {
@@ -438,7 +440,7 @@ describe('buildFacetRangesQuery', () => {
   it('embeds the constraint fragment and scopes membership per strategy', () => {
     const q = buildFacetRangesQuery(TYPE, AMOUNT, [{ min: 0 }], 'FRAG_HERE', NAMED)
     expect(q).toContain('FRAG_HERE')
-    expect(q).toContain(`GRAPH ?g { ?s a <${TYPE}> }`)
+    expect(q).toContain(`GRAPH ?g { ?s a <${TYPE}> . }`)
   })
 })
 
@@ -452,8 +454,8 @@ describe('buildInstanceColumnsQuery (instance-list columns)', () => {
     const q = buildInstanceColumnsQuery(U, [{ predicate: STATUS }, { predicate: COST, via: VALUE }], DEFAULT)
     expect(q).toContain('VALUES ?s { <http://r/a> <http://r/b> }')
     expect(q).toContain('(SAMPLE(?c0) AS ?v0)')
-    expect(q).toContain(`OPTIONAL { ?s <${STATUS}> ?c0 }`)          // direct
-    expect(q).toContain(`OPTIONAL { ?s <${COST}> ?c1_m0 . ?c1_m0 <${VALUE}> ?c1 }`) // via
+    expect(q).toContain(`OPTIONAL { ?s <${STATUS}> ?c0 . }`)          // direct
+    expect(q).toContain(`OPTIONAL { ?s <${COST}> ?cg1_m0 . ?cg1_m0 <${VALUE}> ?c1 . }`) // via
     expect(q).toContain('GROUP BY ?s')
   })
 
@@ -485,20 +487,26 @@ describe('facet 2-hop (via) + date ranges', () => {
 
   it('via range facet: dot-separated 2-hop, range casts the SECOND-hop value', () => {
     const frag = buildFacetConstraints([{ predicate: COST, via: VALUE, ranges: [{ min: 1000000 }] }], DEFAULT)
-    expect(frag).toContain(`?s <${COST}> ?f0_m0 . ?f0_m0 <${VALUE}> ?f0`)
+    expect(frag).toContain(`?s <${COST}> ?fg0_m0 . ?fg0_m0 <${VALUE}> ?f0 .`)
     expect(frag).toContain(`${DEC}(?f0) >= 1000000`)
   })
 
-  it('via value facet: VALUES on the second-hop value var, 2-hop path', () => {
+  it('via value facet (multi-select): VALUES on the second-hop value var, 2-hop path', () => {
+    const frag = buildFacetConstraints([{ predicate: COST, via: VALUE, terms: [{ value: 'EUR', isUri: false }, { value: 'USD', isUri: false }] }], DEFAULT)
+    expect(frag).toContain('VALUES ?f0 { "EUR" "USD" }')
+    expect(frag).toContain(`?s <${COST}> ?fg0_m0 . ?fg0_m0 <${VALUE}> ?f0 .`)
+  })
+
+  it('via single value: inlined at the second hop, no VALUES/var', () => {
     const frag = buildFacetConstraints([{ predicate: COST, via: VALUE, terms: [{ value: 'EUR', isUri: false }] }], DEFAULT)
-    expect(frag).toContain('VALUES ?f0 { "EUR" }')
-    expect(frag).toContain(`?s <${COST}> ?f0_m0 . ?f0_m0 <${VALUE}> ?f0`)
+    expect(frag).not.toContain('VALUES')
+    expect(frag).toContain(`?s <${COST}> ?fg0_m0 . ?fg0_m0 <${VALUE}> "EUR" .`)
   })
 
   it('via scopes BOTH hops per strategy (distinct graph vars)', () => {
     const frag = buildFacetConstraints([{ predicate: COST, via: VALUE, ranges: [{ min: 0 }] }], NAMED)
-    expect(frag).toContain(`GRAPH ?fg0a { ?s <${COST}> ?f0_m0 }`)
-    expect(frag).toContain(`GRAPH ?fg0b { ?f0_m0 <${VALUE}> ?f0 }`)
+    expect(frag).toContain(`GRAPH ?fg0a { ?s <${COST}> ?fg0_m0 . }`)
+    expect(frag).toContain(`GRAPH ?fg0b { ?fg0_m0 <${VALUE}> ?f0 . }`)
   })
 
   it('unsafe via → whole facet dropped (never facets on the wrapper node)', () => {
@@ -510,7 +518,7 @@ describe('facet 2-hop (via) + date ranges', () => {
     const ADDR = 'http://data.europa.eu/s66#hasAddress'
     const CTRY = 'http://data.europa.eu/s66#addressCountry'
     const frag = buildFacetConstraints([{ predicate: SITE, via: [ADDR, CTRY], terms: [{ value: 'DE', isUri: false }] }], DEFAULT)
-    expect(frag).toContain(`?s <${SITE}> ?f0_m0 . ?f0_m0 <${ADDR}> ?f0_m1 . ?f0_m1 <${CTRY}> ?f0`)
+    expect(frag).toContain(`?s <${SITE}> ?fg0_m0 . ?fg0_m0 <${ADDR}> ?fg0_m1 . ?fg0_m1 <${CTRY}> "DE" .`) // single value inlined at the terminal hop
     // any unsafe hop in the path drops the whole facet
     expect(buildFacetConstraints([{ predicate: SITE, via: [ADDR, 'x > } DROP'], terms: [{ value: 'DE', isUri: false }] }], DEFAULT)).toBe('')
   })
@@ -525,7 +533,7 @@ describe('facet 2-hop (via) + date ranges', () => {
 
   it('buildFacetRangesQuery threads via + date through to the aggregate', () => {
     const q = buildFacetRangesQuery(TYPE, COST, [{ min: 1000000 }], '', DEFAULT, VALUE)
-    expect(q).toContain(`?s <${COST}> ?v_m0 . ?v_m0 <${VALUE}> ?v`)
+    expect(q).toContain(`?s <${COST}> ?vg_m0 . ?vg_m0 <${VALUE}> ?v .`)
     expect(q).toContain(`SUM(IF(${DEC}(?v) >= 1000000, 1, 0))`)
     const qd = buildFacetRangesQuery(TYPE, DATE, [{ max: 2015 }], '', DEFAULT, undefined, true)
     expect(qd).toContain(`?v < "2015-01-01"^^${XDATE}`)
@@ -533,7 +541,7 @@ describe('facet 2-hop (via) + date ranges', () => {
 
   it('buildFacetValuesQuery threads via (2-hop value listing)', () => {
     const q = buildFacetValuesQuery(TYPE, COST, '', DEFAULT, 15, VALUE)
-    expect(q).toContain(`?s <${COST}> ?v_m0 . ?v_m0 <${VALUE}> ?v`)
+    expect(q).toContain(`?s <${COST}> ?vg_m0 . ?vg_m0 <${VALUE}> ?v .`)
   })
 })
 

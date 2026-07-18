@@ -6,11 +6,15 @@
  * ponytail: a plain module var, not a Pinia store — it's a single transient string.
  */
 import { formatSparql } from './formatSparql'
+import { prefixifyQuery } from './prefixifyQuery'
+import { getDisplayPrefixes } from '../services/prefix'
 
 let pending: string | null = null
 
 export function setSparqlHandoff(query: string): void {
-  pending = formatSparql(query)
+  // Format first (indent on the full-IRI text), then collapse IRIs to qnames +
+  // PREFIX prologue — prefixify is whitespace-preserving, so it keeps the layout.
+  pending = prefixifyQuery(formatSparql(query), getDisplayPrefixes())
 }
 
 /** Return the pending query (once) and clear it. Null when there is none. */
