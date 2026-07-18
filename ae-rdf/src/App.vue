@@ -456,6 +456,7 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  padding-top: 0.5rem;
 }
 
 .settings-section {
