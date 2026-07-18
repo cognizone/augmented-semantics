@@ -117,6 +117,35 @@
       "sidebar": "pin",
       "hide": [
         "http://www.w3.org/ns/prov#activity"
+      ],
+      "facets": [
+        {
+          "predicate": "http://data.europa.eu/949/state",
+          "label": "State"
+        },
+        {
+          "predicate": "http://purl.org/dc/terms/audience",
+          "label": "Register",
+          "limit": 25
+        }
+      ]
+    },
+    "http://data.europa.eu/949/VehicleRegistrationCase": {
+      "facets": [
+        {
+          "predicate": "http://data.europa.eu/949/registeringMemberState",
+          "label": "Registering member state",
+          "limit": 30
+        },
+        {
+          "predicate": "http://data.europa.eu/949/registrationCaseType",
+          "label": "Case type",
+          "limit": 20
+        },
+        {
+          "predicate": "http://data.europa.eu/949/vehicleRegistrationMethod",
+          "label": "Registration method"
+        }
       ]
     },
     "http://data.europa.eu/949/Compliance": {
@@ -135,7 +164,43 @@
       "sidebar": "hide"
     },
     "http://www.w3.org/ns/org#Organization": {
-      "sidebar": "hide"
+      "sidebar": "hide",
+      "facets": [
+        {
+          "predicate": "http://data.europa.eu/949/role",
+          "via": "http://data.europa.eu/949/hasOrganisationRole",
+          "label": "Role",
+          "limit": 20
+        },
+        {
+          "predicate": "http://www.w3.org/ns/org#hasSite",
+          "via": [
+            "http://www.w3.org/ns/org#siteAddress",
+            "http://www.w3.org/ns/locn#adminUnitL1"
+          ],
+          "label": "Country",
+          "limit": 30
+        }
+      ]
+    },
+    "http://data.europa.eu/949/Body": {
+      "facets": [
+        {
+          "predicate": "http://data.europa.eu/949/role",
+          "via": "http://data.europa.eu/949/hasOrganisationRole",
+          "label": "Role",
+          "limit": 20
+        },
+        {
+          "predicate": "http://www.w3.org/ns/org#hasSite",
+          "via": [
+            "http://www.w3.org/ns/org#siteAddress",
+            "http://www.w3.org/ns/locn#adminUnitL1"
+          ],
+          "label": "Country",
+          "limit": 30
+        }
+      ]
     },
     "http://www.w3.org/2000/01/rdf-schema#Bag": {
       "sidebar": "hide"
