@@ -335,18 +335,30 @@ export async function executeSparql(
 
       if (!response.ok) {
         const { code, message } = mapHttpError(response.status, response.statusText)
+        // The body carries the endpoint's real diagnostic — e.g. Virtuoso's
+        // "37000 Error SP030: SPARQL compiler … syntax error at '…'" — which the
+        // generic statusText ("Bad Request") drops. Surface it so a broken query
+        // shows WHAT's wrong, not just "HTTP 400".
+        const body = await response.text().catch(() => '')
+        const detail = body.trim().slice(0, 600) || undefined
         logger.warn('SPARQL', `HTTP ${response.status}: ${message}`, {
           status: response.status,
           statusText: response.statusText,
+          detail,
         })
 
-        // Don't retry auth errors
-        if (code === 'AUTH_REQUIRED' || code === 'AUTH_FAILED') {
-          throw createError(code, message)
+        // Only TRANSIENT failures are worth retrying. A 4xx (except 408 timeout /
+        // 429 rate-limit) means the REQUEST itself is wrong — a malformed query, a
+        // bad IRI, a missing graph — so an identical retry fails identically. Fail
+        // fast instead of burning ~7s of exponential backoff. 5xx / 408 / 429 (and
+        // network/timeout errors in the catch below) stay retriable. Auth is fatal.
+        const retriable = response.status >= 500 || response.status === 408 || response.status === 429
+        if (!retriable || code === 'AUTH_REQUIRED' || code === 'AUTH_FAILED') {
+          throw createError(code, message, detail)
         }
 
-        lastError = createError(code, message)
-        continue // Retry
+        lastError = createError(code, message, detail)
+        continue // Retry (transient)
       }
 
       const contentType = response.headers.get('content-type') || ''
