@@ -57,6 +57,29 @@
         {
           "predicate": "http://data.europa.eu/s66#projectStatus",
           "label": "Status"
+        },
+        {
+          "predicate": "http://data.europa.eu/s66#hasTotalCost",
+          "via": "http://data.europa.eu/s66#value",
+          "label": "Total cost",
+          "ranges": [
+            { "label": "< €500k", "max": 500000 },
+            { "label": "€500k – €2M", "min": 500000, "max": 2000000 },
+            { "label": "€2M – €5M", "min": 2000000, "max": 5000000 },
+            { "label": "€5M – €20M", "min": 5000000, "max": 20000000 },
+            { "label": "≥ €20M", "min": 20000000 }
+          ]
+        },
+        {
+          "predicate": "http://data.europa.eu/s66#startDate",
+          "datatype": "date",
+          "label": "Start year",
+          "ranges": [
+            { "label": "Before 2007", "max": 2007 },
+            { "label": "2007 – 2013 (FP7)", "min": 2007, "max": 2014 },
+            { "label": "2014 – 2020 (H2020)", "min": 2014, "max": 2021 },
+            { "label": "2021 + (Horizon Europe)", "min": 2021 }
+          ]
         }
       ]
     },

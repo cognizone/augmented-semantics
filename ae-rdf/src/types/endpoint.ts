@@ -144,13 +144,23 @@ export interface TypeConfig {
  * ADDING them would yield.
  */
 export interface FacetConfig {
-  /** The faceted property IRI. */
+  /** The faceted property IRI. With `via` set, this is the FIRST hop (to an
+   *  intermediate node); the faceted value is then reached via `via`. */
   predicate: string
+  /** Second-hop predicate for a value that lives one node away — the facet matches
+   *  `?s <predicate> ?node . ?node <via> ?value` and facets on `?value`. Use for
+   *  wrapper nodes like CORDIS `hasTotalCost` → MonetaryAmount → `value`. Unset = the
+   *  value is the direct object of `predicate`. */
+  via?: string
   /** Facet heading. Default: the humanized local name of `predicate`. */
   label?: string
   /** Numeric buckets. Presence makes this a RANGE facet; each band counts values
    *  where `min <= v < max` (either bound may be omitted for an open-ended band). */
   ranges?: { label: string; min?: number; max?: number }[]
+  /** RANGE facets only. `date` treats each band's `min`/`max` as a YEAR and compares
+   *  the value as an `xsd:date` (`>= "min-01-01"`, `< "max-01-01"`); default treats
+   *  the value as numeric (`xsd:decimal` cast). */
+  datatype?: 'date'
   /** Max distinct values listed for a VALUE facet (default 15). One extra is
    *  fetched to detect (and note) truncation. Ignored for range facets. */
   limit?: number

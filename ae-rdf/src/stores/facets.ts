@@ -133,10 +133,12 @@ export const useFacetStore = defineStore('facets', () => {
         if (set?.size) out.push({
           predicate: def.predicate,
           ranges: [...set].map(i => def.ranges![i]).filter((r): r is { label: string; min?: number; max?: number } => !!r),
+          via: def.via,
+          datatype: def.datatype,
         })
       } else {
         const sel = valueSelections.value.get(def.predicate)
-        if (sel?.size) out.push({ predicate: def.predicate, terms: [...sel.values()] })
+        if (sel?.size) out.push({ predicate: def.predicate, terms: [...sel.values()], via: def.via })
       }
     }
     return out
@@ -197,14 +199,14 @@ export const useFacetStore = defineStore('facets', () => {
     const raw = await Promise.all(defs.map(async def => {
       const fragment = buildFacetConstraints(collectSelections(def.predicate), strategy)
       if (def.ranges?.length) {
-        const q = buildFacetRangesQuery(type, def.predicate, def.ranges, fragment, strategy)
+        const q = buildFacetRangesQuery(type, def.predicate, def.ranges, fragment, strategy, def.via, def.datatype === 'date')
         const res = await executeSparql(endpoint, q, { retries: 1 })
         const b = res.results.bindings[0] ?? {}
         const counts = def.ranges.map((_, i) => parseInt(b[`b${i}`]?.value ?? '0', 10))
         return { def, kind: 'range' as const, counts }
       }
       const limit = def.limit ?? DEFAULT_FACET_LIMIT
-      const q = buildFacetValuesQuery(type, def.predicate, fragment, strategy, limit)
+      const q = buildFacetValuesQuery(type, def.predicate, fragment, strategy, limit, def.via)
       const res = await executeSparql(endpoint, q, { retries: 1 })
       const rows = res.results.bindings
         .map(bd => {

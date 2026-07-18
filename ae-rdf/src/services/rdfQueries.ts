@@ -275,6 +275,7 @@ export function buildInstanceListQuery(typeUri: string, s: GraphStrategy, limit 
 
 /** Full IRI cast so the range FILTER needs no `xsd:` prefix declaration. */
 const XSD_DECIMAL = '<http://www.w3.org/2001/XMLSchema#decimal>'
+const XSD_DATE = '<http://www.w3.org/2001/XMLSchema#date>'
 
 /** One selected value of a VALUE facet — a URI object, or a literal with its
  *  datatype/language preserved so the constraint matches the exact stored term. */
@@ -292,12 +293,18 @@ export interface FacetValueTerm {
 export interface FacetValueSelection {
   predicate: string
   terms: FacetValueTerm[]
+  /** Second-hop predicate to the value (see FacetConfig.via). */
+  via?: string
 }
 
 /** A RANGE facet's current selection: the property + the chosen bands (OR'd). */
 export interface FacetRangeSelection {
   predicate: string
   ranges: { min?: number; max?: number }[]
+  /** Second-hop predicate to the value (see FacetConfig.via). */
+  via?: string
+  /** `date` → bands are YEARs compared as xsd:date; else numeric (decimal cast). */
+  datatype?: 'date'
 }
 
 export type FacetSelection = FacetValueSelection | FacetRangeSelection
@@ -320,12 +327,32 @@ function renderFacetTerm(t: FacetValueTerm): string {
   return lit
 }
 
-/** `min <= v < max` as a decimal-cast SPARQL condition (either bound optional). */
-function rangeCond(v: string, r: { min?: number; max?: number }): string {
+/** `min <= v < max` as a SPARQL condition (either bound optional). Numeric by
+ *  default (decimal cast, so a string like "1499837" compares numerically); when
+ *  `date`, min/max are YEARs compared as xsd:date (`>= "Y-01-01"`, `< "Y-01-01"`).
+ *  ponytail: date granularity is whole years — finer bands would need real dates. */
+function rangeCond(v: string, r: { min?: number; max?: number }, date = false): string {
   const c: string[] = []
-  if (Number.isFinite(r.min)) c.push(`${XSD_DECIMAL}(${v}) >= ${r.min}`)
-  if (Number.isFinite(r.max)) c.push(`${XSD_DECIMAL}(${v}) < ${r.max}`)
+  const lhs = date ? v : `${XSD_DECIMAL}(${v})`
+  const bound = (n: number) => (date ? `"${Math.trunc(n)}-01-01"^^${XSD_DATE}` : `${n}`)
+  if (Number.isFinite(r.min)) c.push(`${lhs} >= ${bound(r.min!)}`)
+  if (Number.isFinite(r.max)) c.push(`${lhs} < ${bound(r.max!)}`)
   return c.length ? c.join(' && ') : 'true'
+}
+
+/** Graph-scoped pattern(s) binding `valueVar` to the facet value of `subj`: the
+ *  direct object of `pred` (`?s <pred> ?v`), or one node further when `via` is set
+ *  (`?s <pred> ?mid . ?mid <via> ?v`). Each triple is scoped() per strategy with its
+ *  own graph var. Returns null when `via` is present but unsafe — the caller then
+ *  skips the whole facet rather than silently faceting on the wrapper node. `pred` is
+ *  pre-sanitized by callers; `via` is sanitized here. */
+function facetPath(subj: string, pred: string, via: string | undefined, valueVar: string, s: GraphStrategy, gvar: string): string | null {
+  if (!via) return scoped(`${subj} <${pred}> ${valueVar}`, s, gvar)
+  if (!isNavigableIri(via)) return null
+  let v2: string
+  try { v2 = sanitizeIri(via) } catch { return null }
+  const mid = `${valueVar}_m`
+  return `${scoped(`${subj} <${pred}> ${mid}`, s, `${gvar}a`)} . ${scoped(`${mid} <${v2}> ${valueVar}`, s, `${gvar}b`)}`
 }
 
 /**
@@ -350,15 +377,17 @@ export function buildFacetConstraints(selections: FacetSelection[], s: GraphStra
     if (!isNavigableIri(sel.predicate)) continue
     const pred = sanitizeIri(sel.predicate)
     const v = `?f${i}`
-    const triple = scoped(`?s <${pred}> ${v}`, s, `?fg${i}`)
+    const path = facetPath('?s', pred, sel.via, v, s, `?fg${i}`)
+    if (!path) continue
     if (isRangeSelection(sel)) {
-      const bands = sel.ranges.map(r => `(${rangeCond(v, r)})`)
+      const isDate = sel.datatype === 'date'
+      const bands = sel.ranges.map(r => `(${rangeCond(v, r, isDate)})`)
       if (!bands.length) continue
-      parts.push(`{ ${triple} FILTER(${bands.join(' || ')}) }`)
+      parts.push(`{ ${path} FILTER(${bands.join(' || ')}) }`)
     } else {
       const terms = sel.terms.map(renderFacetTerm).filter(Boolean)
       if (!terms.length) continue
-      parts.push(`{ VALUES ${v} { ${terms.join(' ')} } ${triple} }`)
+      parts.push(`{ VALUES ${v} { ${terms.join(' ')} } ${path} }`)
     }
     i++
   }
@@ -379,12 +408,13 @@ export function buildFacetValuesQuery(
   constraintFragment: string,
   s: GraphStrategy,
   limit = 15,
+  via?: string,
 ): string {
   const iri = sanitizeIri(typeUri)
   const pred = sanitizeIri(predicate)
   const lim = Math.max(1, Math.floor(limit)) + 1
   const frag = constraintFragment ? `${constraintFragment} ` : ''
-  const valTriple = scoped(`?s <${pred}> ?v`, s, '?vg')
+  const valTriple = facetPath('?s', pred, via, '?v', s, '?vg') ?? 'FILTER(false)'
   return `SELECT ?v (COUNT(DISTINCT ?s) AS ?n) WHERE { ${membership(`<${iri}>`, s)} . ${frag}${valTriple} } GROUP BY ?v ORDER BY DESC(?n) LIMIT ${lim}`
 }
 
@@ -403,12 +433,14 @@ export function buildFacetRangesQuery(
   buckets: { min?: number; max?: number }[],
   constraintFragment: string,
   s: GraphStrategy,
+  via?: string,
+  date = false,
 ): string {
   const iri = sanitizeIri(typeUri)
   const pred = sanitizeIri(predicate)
   const frag = constraintFragment ? `${constraintFragment} ` : ''
-  const valTriple = scoped(`?s <${pred}> ?v`, s, '?vg')
-  const aggs = buckets.map((b, i) => `(SUM(IF(${rangeCond('?v', b)}, 1, 0)) AS ?b${i})`).join(' ')
+  const valTriple = facetPath('?s', pred, via, '?v', s, '?vg') ?? 'FILTER(false)'
+  const aggs = buckets.map((b, i) => `(SUM(IF(${rangeCond('?v', b, date)}, 1, 0)) AS ?b${i})`).join(' ')
   return `SELECT ${aggs} WHERE { ${membership(`<${iri}>`, s)} . ${frag}${valTriple} }`
 }
 
