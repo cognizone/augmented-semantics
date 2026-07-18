@@ -34,6 +34,7 @@ export const URL_PARAMS = {
   ENDPOINT: 'endpoint',
   TYPE: 'type',
   RESOURCE: 'resource',
+  FILTERS: 'filters',
 } as const
 
 export default router

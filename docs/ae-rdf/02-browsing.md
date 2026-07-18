@@ -44,7 +44,11 @@ A type can pin exactly which predicates the filter searches via its **search** f
 
 ### Facets
 
-When a type has facets configured, the sidebar's header gains a **Filters** tab next to **Types** — switch to it for a full-height panel of clickable **facets** over chosen properties. A *value* facet lists a property's most common values (each with a count); a *range* facet offers numeric bands (e.g. total cost). Click a value or band to narrow the list; click again to deselect. You can pick several values in one facet (matches **any** of them) and combine facets (matches **all** of them). Each facet's counts update to show what you'd get by adding it, and the instance count tracks the filtered total. Use **Clear filters** to reset.
+When a type has facets configured, the sidebar's header gains a **Filters** tab next to **Types** — switch to it for a full-height panel of clickable **facets** over chosen properties. A *value* facet lists a property's most common values (each with a count); a *range* facet offers numeric bands (e.g. total cost). Click a value or band to narrow the list; click again to deselect. You can pick several values in one facet (matches **any** of them) and combine facets (matches **all** of them). Each facet's counts update to show what you'd get by adding it, and the instance count tracks the filtered total. Use **Clear filters** to reset. Your selections are kept in the URL (`?filters=…`), so a filtered list is **bookmarkable and shareable** — and back/forward step through them.
+
+### Open in SPARQL
+
+Above the instance list, a **SPARQL** button hands the current list — with its type, graph scope, text filter, and every active facet applied — to the **SPARQL panel** as the exact query behind it. Use it to see how the filtered view is built, then refine it by hand.
 
 The **Filters** tab is greyed out for types with no facets, and shows a small **count badge** when filters are active — so you can see from the **Types** side that a filter is narrowing the list. Selecting a type never yanks you off the tab you're on; switching to a type with no facets simply drops you back to **Types**. Which types have facets — and over which properties — is set by the curator in the [config](configuration.md#facets).
 

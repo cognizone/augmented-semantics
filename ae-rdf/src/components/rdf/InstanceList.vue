@@ -13,12 +13,13 @@ import ProgressSpinner from 'primevue/progressspinner'
 import Paginator from 'primevue/paginator'
 import InputText from 'primevue/inputtext'
 import { useInstanceList, useDelayedLoading } from '../../composables'
+import { setSparqlHandoff } from '../../utils/sparqlHandoff'
 import { URL_PARAMS } from '../../router'
 
 const route = useRoute()
 const router = useRouter()
 const {
-  instances, total, loading, error, page, pageSize, typeLabel, filter, orphansOnly, canFilterOrphans, setPage,
+  instances, total, loading, error, page, pageSize, typeLabel, filter, orphansOnly, canFilterOrphans, setPage, currentListQuery,
 } = useInstanceList()
 const showLoading = useDelayedLoading(loading)
 
@@ -48,6 +49,15 @@ const effectiveTotal = computed(() => {
 
 function open(uri: string) {
   router.push({ query: { ...route.query, [URL_PARAMS.RESOURCE]: uri } })
+}
+
+// Hand the current filtered list off to the SPARQL panel as the query behind it
+// (same type / graph / search / facets), so you can inspect or refine it.
+function openInSparql() {
+  const q = currentListQuery()
+  if (!q) return
+  setSparqlHandoff(q)
+  router.push({ path: '/sparql' })
 }
 
 function onPage(e: { page: number }) {
@@ -86,6 +96,15 @@ function onPage(e: { page: number }) {
       >
         <span class="material-symbols-outlined">link_off</span>
         Unreferenced
+      </button>
+      <button
+        class="il-sparql-btn"
+        title="Open this list as a SPARQL query"
+        aria-label="Open this list as a SPARQL query"
+        @click="openInSparql"
+      >
+        <span class="material-symbols-outlined">code</span>
+        SPARQL
       </button>
       <span class="il-range">{{ rangeLabel }}</span>
     </header>
@@ -209,6 +228,31 @@ function onPage(e: { page: number }) {
 }
 
 .il-orphan-toggle .material-symbols-outlined {
+  font-size: 14px;
+}
+
+.il-sparql-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-shrink: 0;
+  font-size: 0.6875rem;
+  padding: 0.2rem 0.5rem;
+  background: var(--ae-bg-elevated);
+  border: 1px solid var(--ae-border-color);
+  border-radius: 10px;
+  cursor: pointer;
+  color: var(--ae-text-secondary);
+  white-space: nowrap;
+}
+
+.il-sparql-btn:hover {
+  color: var(--ae-accent);
+  border-color: var(--ae-accent);
+  background: var(--ae-bg-hover);
+}
+
+.il-sparql-btn .material-symbols-outlined {
   font-size: 14px;
 }
 

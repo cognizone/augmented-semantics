@@ -52,7 +52,7 @@ A type can expose **faceted filters** in the sidebar's **Filters** tab (next to 
 - **Range facet** (`ranges` set) — buckets a numeric property into the bands you define (`min` ≤ value < `max`; either bound may be omitted for an open-ended band). Each band shows a count. By default the value is compared numerically (a decimal cast, so a number stored as a string still sorts right). Set **`datatype: "date"`** to treat each band's `min`/`max` as a **year** and compare the value as an `xsd:date` (`≥ "min-01-01"`, `< "max-01-01"`) — a year/date range facet.
 - **Two-hop value** (`via` set) — when the faceted value lives one node away (a wrapper node, not a direct literal), give the second-hop predicate in **`via`**: the facet then matches `?s <predicate> ?node . ?node <via> ?value` and facets on `?value`. Works for both value and range facets. Example: CORDIS `hasTotalCost` points at a `MonetaryAmount` node whose number is under `value`, so `predicate: hasTotalCost, via: value` ranges over the actual cost.
 
-A facet's own counts are computed with the **other** facets' selections applied but not its own — so an unselected value always shows what *adding* it would yield (classic faceted search). The instance list and its total reflect **all** selections. A **Clear filters** link resets them. Selections are not yet saved in the URL.
+A facet's own counts are computed with the **other** facets' selections applied but not its own — so an unselected value always shows what *adding* it would yield (classic faceted search). The instance list and its total reflect **all** selections. A **Clear filters** link resets them. Selections are saved in the URL (`?filters=`), so a filtered list is bookmarkable and shareable.
 
 ```json
 {

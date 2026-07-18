@@ -221,8 +221,23 @@ export function useInstanceList() {
     page.value = n
   }
 
+  /** The SELECT behind the CURRENT list — same type / graph / search / facets /
+   *  orphan constraints load() uses, at page 0 with a plain LIMIT — for handing off
+   *  to the SPARQL panel ("Open in SPARQL"). Null when nothing is selected. */
+  function currentListQuery(limit = 100): string | null {
+    const type = browseStore.currentType
+    const endpoint = endpointStore.current
+    if (!type || !endpoint) return null
+    const strategy = resolveGraphStrategy(browseStore.graph)
+    const term = filter.value.trim()
+    const searchPredicates = resolveSearchPredicates(typeConfig.get(type), endpoint.typeProperties?.[type])
+    const via = orphansOnly.value ? orphanVia.value : ''
+    const facetFragment = buildFacetConstraints(facetStore.activeSelections, strategy)
+    return buildInstanceListQuery(type, strategy, limit, 0, term, searchPredicates, via, facetFragment)
+  }
+
   return {
     instances, total, loading, error, page, pageSize: PAGE_SIZE, typeLabel, filter,
-    orphansOnly, canFilterOrphans, setPage,
+    orphansOnly, canFilterOrphans, setPage, currentListQuery,
   }
 }

@@ -311,6 +311,75 @@ export const useFacetStore = defineStore('facets', () => {
     load()
   }
 
+  // ── URL round-trip (?filters) ───────────────────────────────────────────────
+  // Selections serialize to a compact array keyed by the facet's INDEX in the
+  // current type's config (not its long predicate URI), so a shared/bookmarked
+  // list carries its filters. Range facet → [i,'r',[bandIdx…]]; value facet →
+  // [i,'v',[term…]] with term ['u',uri] or ['l',value,lang,datatype]. Index-keyed,
+  // so a config reorder degrades gracefully (out-of-range/kind-mismatch entries
+  // are skipped, never misapplied). RdfView owns reading/writing the URL param.
+  const termTuple = (t: FacetValueTerm): (string)[] =>
+    t.isUri ? ['u', t.value] : ['l', t.value, t.lang ?? '', t.datatype ?? '']
+  function tupleTerm(tup: unknown): FacetValueTerm | null {
+    if (!Array.isArray(tup) || typeof tup[1] !== 'string') return null
+    if (tup[0] === 'u') return { value: tup[1], isUri: true }
+    if (tup[0] === 'l') return { value: tup[1], isUri: false, lang: tup[2] || undefined, datatype: tup[3] || undefined }
+    return null
+  }
+
+  /** Current selections as a compact string, or null when nothing is selected. */
+  function serialize(): string | null {
+    const out: unknown[] = []
+    definitions.value.forEach((def, i) => {
+      if (def.ranges?.length) {
+        const set = rangeSelections.value.get(def.predicate)
+        if (set?.size) out.push([i, 'r', [...set].sort((a, b) => a - b)])
+      } else {
+        const sel = valueSelections.value.get(def.predicate)
+        if (sel?.size) out.push([i, 'v', [...sel.values()].map(termTuple)])
+      }
+    })
+    return out.length ? JSON.stringify(out) : null
+  }
+
+  /** Replace selections from a serialized string (empty/invalid → cleared), then
+   *  reload counts. Entries are matched to the current type's facets by index and
+   *  validated against the facet's kind/bands — anything that doesn't fit is dropped. */
+  function applyEncoded(enc: string): void {
+    const defs = definitions.value
+    const vNext = new Map<string, Map<string, FacetValueTerm>>()
+    const rNext = new Map<string, Set<number>>()
+    try {
+      const parsed = enc ? JSON.parse(enc) : []
+      if (Array.isArray(parsed)) {
+        for (const entry of parsed) {
+          if (!Array.isArray(entry) || entry.length < 3) continue
+          const [i, kind, payload] = entry
+          const def = defs[i as number]
+          if (!def || !Array.isArray(payload)) continue
+          if (kind === 'r' && def.ranges?.length) {
+            const set = new Set<number>()
+            for (const idx of payload) if (Number.isInteger(idx) && idx >= 0 && idx < def.ranges.length) set.add(idx)
+            if (set.size) rNext.set(def.predicate, set)
+          } else if (kind === 'v' && !def.ranges?.length) {
+            const m = new Map<string, FacetValueTerm>()
+            for (const tup of payload) {
+              const term = tupleTerm(tup)
+              if (term) m.set(facetTermKey(term), term)
+            }
+            if (m.size) vNext.set(def.predicate, m)
+          }
+        }
+      }
+    } catch (e) {
+      logger.warn('facetStore', 'Bad ?filters payload, ignoring', { error: e })
+    }
+    valueSelections.value = vNext
+    rangeSelections.value = rNext
+    selectionVersion.value++
+    load()
+  }
+
   // Type or endpoint change → selections/results are meaningless on a new type or
   // dataset: reset, then load the new type's counts. One watcher over both keys so
   // a same-type endpoint switch is still clean. Immediate so the first type loads.
@@ -332,5 +401,7 @@ export const useFacetStore = defineStore('facets', () => {
     selectionVersion, activeSelections,
     // interactions
     toggleValue, toggleRange, isValueSelected, isRangeSelected, clearAll, syncType,
+    // URL round-trip
+    serialize, applyEncoded,
   }
 })

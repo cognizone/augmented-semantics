@@ -27,6 +27,7 @@ import { useDelayedLoading, useElapsedTime } from '../composables'
 import { executeSparql, isNavigableIri, logger, resolveUris, type SPARQLBinding, type SPARQLResults } from '../services'
 import { qname as toQname, type ResolvedMap } from '../utils/format'
 import { prepareQuery } from '../utils/sparqlGuard'
+import { takeSparqlHandoff } from '../utils/sparqlHandoff'
 import { URL_PARAMS } from '../router'
 import type { AppError } from '../types'
 
@@ -74,7 +75,10 @@ function persist(url: string | undefined, q: string) {
   }
 }
 
-const query = ref<string>(loadPersisted(endpoint.value?.url) ?? DEFAULT_QUERY)
+// A query handed off from the browser ("Open in SPARQL") wins for this mount,
+// seeding the editor with the current filtered list query; otherwise the
+// per-endpoint persisted query, else the default.
+const query = ref<string>(takeSparqlHandoff() ?? loadPersisted(endpoint.value?.url) ?? DEFAULT_QUERY)
 
 // CodeJar highlighting editor. `query` stays the single source of truth: user edits
 // flow query←editor via jar.onUpdate; external reassignments (endpoint switch) flow

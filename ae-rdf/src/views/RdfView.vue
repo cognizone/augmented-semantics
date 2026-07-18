@@ -13,7 +13,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
 import InputText from 'primevue/inputtext'
 import Button from 'primevue/button'
-import { useEndpointStore, useBrowseStore, useUIStore } from '../stores'
+import { useEndpointStore, useBrowseStore, useUIStore, useFacetStore } from '../stores'
 import { useGraphMode } from '../composables'
 import { URL_PARAMS } from '../router'
 import { endpointForUri } from '../utils/endpointMatch'
@@ -28,6 +28,7 @@ const toast = useToast()
 const endpointStore = useEndpointStore()
 const browseStore = useBrowseStore()
 const uiStore = useUIStore()
+const facetStore = useFacetStore()
 
 // Detect once per endpoint whether it uses named graphs (gates query shape).
 useGraphMode()
@@ -136,6 +137,37 @@ watch(
     // the instance list instead of the resource. Resource has precedence (template). (R33)
   },
   { immediate: true }
+)
+
+// --- Facet selections <-> URL (?filters) ------------------------------------
+// Read: reconcile the facet store to ?filters. Registered AFTER the facet store's
+// own type/endpoint reset watcher, so on a type change the store resets first and
+// this re-applies the URL's filters (a deep link's ?filters apply; a plain type
+// navigation dropped the param, so nothing re-applies — no stale cross-type filter).
+// A ?filters-only change (back/forward, same type) reconciles here too.
+const filtersInUrl = () =>
+  typeof route.query[URL_PARAMS.FILTERS] === 'string' ? (route.query[URL_PARAMS.FILTERS] as string) : null
+watch(
+  () => [browseStore.currentType, route.query[URL_PARAMS.FILTERS]],
+  () => {
+    if (!browseStore.currentType) return
+    const url = filtersInUrl()
+    if ((facetStore.serialize() ?? null) !== url) facetStore.applyEncoded(url ?? '')
+  },
+  { immediate: true }
+)
+// Write: a selection change stamps ?filters (or drops it when cleared). Idempotent
+// against the read watcher — writing a value equal to the current param is skipped.
+watch(
+  () => facetStore.selectionVersion,
+  () => {
+    const enc = facetStore.serialize()
+    if ((enc ?? null) === filtersInUrl()) return
+    const q = { ...route.query }
+    if (enc) q[URL_PARAMS.FILTERS] = enc
+    else delete q[URL_PARAMS.FILTERS]
+    router.replace({ query: q })
+  }
 )
 
 // A USER switch (dropdown / resource-URI auto-switch) overwrites ?endpoint with
