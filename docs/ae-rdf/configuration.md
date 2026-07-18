@@ -34,6 +34,7 @@ Everything the gear (and the resource-view edit tools) author lands in the endpo
 | `hide` | Predicate IRIs hidden from the resource view. |
 | `label` / `labelFull` | Predicates composing the display label; `labelFull` keeps all parts in the heading. |
 | `search` | Predicates the instance-list filter matches (overrides the default label fields). |
+| `facets` | [Faceted-browsing](#facets) filters for the instance list — one entry per faceted property (value or range). Config-file-authored only. |
 | `foldAfter`, `groupByType`, `boolean`, `number`, `columns`, `capWidth`, `viaLabels` | Per-field display formatting, all authored via the gear/edit tools. |
 
 ### Embedding safely
@@ -42,6 +43,40 @@ Everything the gear (and the resource-view edit tools) author lands in the endpo
 
 - **Never blanket-embed a high-cardinality type.** A resource pointing at hundreds of embedded objects inlines them all; the loader caps depth and total, but the page becomes a wall. Check the worst-case *copies under a single parent* (the profiler records this as `embed.selfMax` in `typeProperties`) — single digits is fine, hundreds is not.
 - **Scope with `embedVia`.** Many value objects are *also* the range of a high-fan-out predicate (a "defined term" list, a shared unit). Pinning the owning predicate means the object only inlines under its owner, and everywhere else stays a link. For genuinely shared vocabulary terms, prefer `render: label` over embed.
+
+### Facets
+
+A type can expose **faceted filters** in the sidebar's **Filters** tab (next to **Types**): click values to narrow the instance list without typing. Facets are **config-file-authored** — there's no gear for them in v1. Add a `facets` array to the type's config, one entry per faceted property:
+
+- **Value facet** (no `ranges`) — lists that property's distinct values, most common first, each with a count. Clicking values narrows the list; multi-select within one facet is **OR**, and selecting across several facets is **AND**. `limit` caps how many values are listed (default 15; a "top N shown" note appears when there are more). URI values are shown with their resolved label; literals as-is.
+- **Range facet** (`ranges` set) — buckets a numeric property into the bands you define (`min` ≤ value < `max`; either bound may be omitted for an open-ended band). Each band shows a count.
+
+A facet's own counts are computed with the **other** facets' selections applied but not its own — so an unselected value always shows what *adding* it would yield (classic faceted search). The instance list and its total reflect **all** selections. A **Clear filters** link resets them. Selections are not yet saved in the URL.
+
+```json
+{
+  "types": {
+    "http://data.europa.eu/s66#Grant": {
+      "facets": [
+        {
+          "predicate": "http://data.europa.eu/s66#status",
+          "label": "Status",
+          "limit": 10
+        },
+        {
+          "predicate": "http://data.europa.eu/s66#totalCost",
+          "label": "Total cost",
+          "ranges": [
+            { "label": "< €100k", "max": 100000 },
+            { "label": "€100k – €1M", "min": 100000, "max": 1000000 },
+            { "label": "≥ €1M", "min": 1000000 }
+          ]
+        }
+      ]
+    }
+  }
+}
+```
 
 ## Endpoint configuration file
 

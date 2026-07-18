@@ -42,6 +42,12 @@ A **filter box** sits above the list — type to narrow it to instances whose **
 A type can pin exactly which predicates the filter searches via its **search** fields in the [config](configuration.md#per-type-configuration) — useful when the default label fields aren't what you want to match on.
 :::
 
+### Facets
+
+When a type has facets configured, the sidebar's header gains a **Filters** tab next to **Types** — switch to it for a full-height panel of clickable **facets** over chosen properties. A *value* facet lists a property's most common values (each with a count); a *range* facet offers numeric bands (e.g. total cost). Click a value or band to narrow the list; click again to deselect. You can pick several values in one facet (matches **any** of them) and combine facets (matches **all** of them). Each facet's counts update to show what you'd get by adding it, and the instance count tracks the filtered total. Use **Clear filters** to reset.
+
+The **Filters** tab is greyed out for types with no facets, and shows a small **count badge** when filters are active — so you can see from the **Types** side that a filter is narrowing the list. Selecting a type never yanks you off the tab you're on; switching to a type with no facets simply drops you back to **Types**. Which types have facets — and over which properties — is set by the curator in the [config](configuration.md#facets).
+
 ### Unreferenced instances (orphans)
 
 For a **value-object type** (one set to **Embed** with an owning predicate — e.g. a `PostalAddress` reached via `hasAddress`), an **Unreferenced** toggle appears. Turn it on to list just the instances that *no* resource points at through that predicate — the dangling value objects with no owner. It's off by default and resets when you switch types.
