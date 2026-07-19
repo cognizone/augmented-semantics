@@ -256,6 +256,24 @@
       "sidebar": "hide"
     },
     "http://data.europa.eu/s66#Result": {
+      "listColumns": [
+        {
+          "predicate": "http://data.europa.eu/s66#publishedYear",
+          "label": "Year"
+        },
+        {
+          "predicate": "http://data.europa.eu/s66#author",
+          "label": "Authors"
+        },
+        {
+          "predicate": "http://data.europa.eu/s66#journalTitle",
+          "label": "Journal"
+        },
+        {
+          "predicate": "http://data.europa.eu/s66#doi",
+          "label": "DOI"
+        }
+      ],
       "capWidth": [
         "http://data.europa.eu/s66#abstract",
         "http://data.europa.eu/s66#description",
@@ -304,6 +322,25 @@
       ]
     },
     "http://data.europa.eu/s66#Organisation": {
+      "listColumns": [
+        {
+          "predicate": "http://data.europa.eu/s66#hasAcronym",
+          "via": "http://data.europa.eu/s66#shortForm",
+          "label": "Acronym"
+        },
+        {
+          "predicate": "http://data.europa.eu/s66#hasSite",
+          "via": [
+            "http://data.europa.eu/s66#hasAddress",
+            "http://data.europa.eu/s66#addressCountry"
+          ],
+          "label": "Country"
+        },
+        {
+          "predicate": "http://data.europa.eu/s66#vatNumber",
+          "label": "VAT"
+        }
+      ],
       "search": [
         "http://data.europa.eu/s66#legalName",
         "http://data.europa.eu/s66#vatNumber",
@@ -507,6 +544,24 @@
       ]
     },
     "http://data.europa.eu/s66#ProjectPublication": {
+      "listColumns": [
+        {
+          "predicate": "http://data.europa.eu/s66#publishedYear",
+          "label": "Year"
+        },
+        {
+          "predicate": "http://data.europa.eu/s66#author",
+          "label": "Authors"
+        },
+        {
+          "predicate": "http://data.europa.eu/s66#journalTitle",
+          "label": "Journal"
+        },
+        {
+          "predicate": "http://data.europa.eu/s66#doi",
+          "label": "DOI"
+        }
+      ],
       "search": [
         "http://data.europa.eu/s66#title",
         "http://data.europa.eu/s66#author",
@@ -642,6 +697,24 @@
       ]
     },
     "http://data.europa.eu/s66#JournalPaper": {
+      "listColumns": [
+        {
+          "predicate": "http://data.europa.eu/s66#publishedYear",
+          "label": "Year"
+        },
+        {
+          "predicate": "http://data.europa.eu/s66#author",
+          "label": "Authors"
+        },
+        {
+          "predicate": "http://data.europa.eu/s66#journalTitle",
+          "label": "Journal"
+        },
+        {
+          "predicate": "http://data.europa.eu/s66#doi",
+          "label": "DOI"
+        }
+      ],
       "search": [
         "http://data.europa.eu/s66#title",
         "http://data.europa.eu/s66#author",
@@ -674,6 +747,16 @@
       ]
     },
     "http://data.europa.eu/s66#ProjectDeliverable": {
+      "listColumns": [
+        {
+          "predicate": "http://data.europa.eu/s66#hasResultType",
+          "label": "Type"
+        },
+        {
+          "predicate": "http://data.europa.eu/s66#language",
+          "label": "Language"
+        }
+      ],
       "capWidth": [
         "http://data.europa.eu/s66#description"
       ],
@@ -701,6 +784,24 @@
       ]
     },
     "http://data.europa.eu/s66#ProceedingsPaper": {
+      "listColumns": [
+        {
+          "predicate": "http://data.europa.eu/s66#publishedYear",
+          "label": "Year"
+        },
+        {
+          "predicate": "http://data.europa.eu/s66#author",
+          "label": "Authors"
+        },
+        {
+          "predicate": "http://data.europa.eu/s66#journalTitle",
+          "label": "Journal"
+        },
+        {
+          "predicate": "http://data.europa.eu/s66#doi",
+          "label": "DOI"
+        }
+      ],
       "search": [
         "http://data.europa.eu/s66#title",
         "http://data.europa.eu/s66#author",

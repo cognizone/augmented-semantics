@@ -115,7 +115,7 @@ function onPage(e: { page: number }) {
         <span class="material-symbols-outlined">code</span>
         SPARQL
       </button>
-      <div class="il-view-toggle" role="group" aria-label="Result layout">
+      <div v-if="columns.length" class="il-view-toggle" role="group" aria-label="Result layout">
         <button
           :class="{ active: viewMode === 'list' }"
           :aria-pressed="viewMode === 'list'"
@@ -142,8 +142,8 @@ function onPage(e: { page: number }) {
     </div>
 
     <template v-else>
-      <!-- Card / box layout: title + configured columns as labelled fields (or the URI). -->
-      <div v-if="viewMode === 'cards' && instances.length" class="il-cards">
+      <!-- Card / box layout — only for types that configure columns (else plain list). -->
+      <div v-if="viewMode === 'cards' && columns.length && instances.length" class="il-cards">
         <button
           v-for="inst in instances"
           :key="inst.uri"
@@ -152,13 +152,12 @@ function onPage(e: { page: number }) {
           @click="open(inst.uri)"
         >
           <span class="il-card-title">{{ inst.label }}<span v-if="inst.deprecated" class="deprecated-badge">deprecated</span></span>
-          <span v-if="columns.length" class="il-card-meta">
+          <span class="il-card-meta">
             <span v-for="(header, i) in columnHeaders" :key="i" class="il-card-field">
               <span class="il-card-key">{{ header }}</span>
               <span class="il-card-val">{{ inst.cells?.[i] || '—' }}</span>
             </span>
           </span>
-          <span v-else class="il-card-uri">{{ inst.uri }}</span>
         </button>
       </div>
 
