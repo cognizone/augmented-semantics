@@ -258,6 +258,14 @@
     "http://data.europa.eu/s66#Result": {
       "listColumns": [
         {
+          "predicate": "http://data.europa.eu/s66#isResultOf",
+          "via": [
+            "http://data.europa.eu/s66#hasAcronym",
+            "http://data.europa.eu/s66#shortForm"
+          ],
+          "label": "Project"
+        },
+        {
           "predicate": "http://data.europa.eu/s66#publishedYear",
           "label": "Year"
         },
@@ -512,6 +520,32 @@
       ]
     },
     "http://data.europa.eu/s66#Book": {
+      "listColumns": [
+        {
+          "predicate": "http://data.europa.eu/s66#isResultOf",
+          "via": [
+            "http://data.europa.eu/s66#hasAcronym",
+            "http://data.europa.eu/s66#shortForm"
+          ],
+          "label": "Project"
+        },
+        {
+          "predicate": "http://data.europa.eu/s66#publishedYear",
+          "label": "Year"
+        },
+        {
+          "predicate": "http://data.europa.eu/s66#author",
+          "label": "Authors"
+        },
+        {
+          "predicate": "http://data.europa.eu/s66#publisher",
+          "label": "Publisher"
+        },
+        {
+          "predicate": "http://data.europa.eu/s66#isbn",
+          "label": "ISBN"
+        }
+      ],
       "search": [
         "http://data.europa.eu/s66#title",
         "http://data.europa.eu/s66#author",
@@ -545,6 +579,14 @@
     },
     "http://data.europa.eu/s66#ProjectPublication": {
       "listColumns": [
+        {
+          "predicate": "http://data.europa.eu/s66#isResultOf",
+          "via": [
+            "http://data.europa.eu/s66#hasAcronym",
+            "http://data.europa.eu/s66#shortForm"
+          ],
+          "label": "Project"
+        },
         {
           "predicate": "http://data.europa.eu/s66#publishedYear",
           "label": "Year"
@@ -594,6 +636,28 @@
       ]
     },
     "http://data.europa.eu/s66#ProjectReportSummary": {
+      "listColumns": [
+        {
+          "predicate": "http://data.europa.eu/s66#isResultOf",
+          "via": [
+            "http://data.europa.eu/s66#hasAcronym",
+            "http://data.europa.eu/s66#shortForm"
+          ],
+          "label": "Project"
+        },
+        {
+          "predicate": "http://data.europa.eu/s66#periodNumber",
+          "label": "Period"
+        },
+        {
+          "predicate": "http://data.europa.eu/s66#periodFrom",
+          "label": "From"
+        },
+        {
+          "predicate": "http://data.europa.eu/s66#periodTo",
+          "label": "To"
+        }
+      ],
       "capWidth": [
         "http://data.europa.eu/s66#abstract",
         "http://data.europa.eu/s66#description",
@@ -699,6 +763,14 @@
     "http://data.europa.eu/s66#JournalPaper": {
       "listColumns": [
         {
+          "predicate": "http://data.europa.eu/s66#isResultOf",
+          "via": [
+            "http://data.europa.eu/s66#hasAcronym",
+            "http://data.europa.eu/s66#shortForm"
+          ],
+          "label": "Project"
+        },
+        {
           "predicate": "http://data.europa.eu/s66#publishedYear",
           "label": "Year"
         },
@@ -749,12 +821,12 @@
     "http://data.europa.eu/s66#ProjectDeliverable": {
       "listColumns": [
         {
-          "predicate": "http://data.europa.eu/s66#hasResultType",
-          "label": "Type"
-        },
-        {
-          "predicate": "http://data.europa.eu/s66#language",
-          "label": "Language"
+          "predicate": "http://data.europa.eu/s66#isResultOf",
+          "via": [
+            "http://data.europa.eu/s66#hasAcronym",
+            "http://data.europa.eu/s66#shortForm"
+          ],
+          "label": "Project"
         }
       ],
       "capWidth": [
@@ -785,6 +857,14 @@
     },
     "http://data.europa.eu/s66#ProceedingsPaper": {
       "listColumns": [
+        {
+          "predicate": "http://data.europa.eu/s66#isResultOf",
+          "via": [
+            "http://data.europa.eu/s66#hasAcronym",
+            "http://data.europa.eu/s66#shortForm"
+          ],
+          "label": "Project"
+        },
         {
           "predicate": "http://data.europa.eu/s66#publishedYear",
           "label": "Year"
@@ -834,6 +914,28 @@
       ]
     },
     "http://data.europa.eu/s66#ThesisDissertation": {
+      "listColumns": [
+        {
+          "predicate": "http://data.europa.eu/s66#isResultOf",
+          "via": [
+            "http://data.europa.eu/s66#hasAcronym",
+            "http://data.europa.eu/s66#shortForm"
+          ],
+          "label": "Project"
+        },
+        {
+          "predicate": "http://data.europa.eu/s66#publishedYear",
+          "label": "Year"
+        },
+        {
+          "predicate": "http://data.europa.eu/s66#author",
+          "label": "Authors"
+        },
+        {
+          "predicate": "http://data.europa.eu/s66#publisher",
+          "label": "Publisher"
+        }
+      ],
       "search": [
         "http://data.europa.eu/s66#title",
         "http://data.europa.eu/s66#author",
@@ -866,6 +968,32 @@
       ]
     },
     "http://data.europa.eu/s66#BookChapter": {
+      "listColumns": [
+        {
+          "predicate": "http://data.europa.eu/s66#isResultOf",
+          "via": [
+            "http://data.europa.eu/s66#hasAcronym",
+            "http://data.europa.eu/s66#shortForm"
+          ],
+          "label": "Project"
+        },
+        {
+          "predicate": "http://data.europa.eu/s66#publishedYear",
+          "label": "Year"
+        },
+        {
+          "predicate": "http://data.europa.eu/s66#author",
+          "label": "Authors"
+        },
+        {
+          "predicate": "http://data.europa.eu/s66#publisher",
+          "label": "Publisher"
+        },
+        {
+          "predicate": "http://data.europa.eu/s66#isbn",
+          "label": "ISBN"
+        }
+      ],
       "search": [
         "http://data.europa.eu/s66#title",
         "http://data.europa.eu/s66#author",

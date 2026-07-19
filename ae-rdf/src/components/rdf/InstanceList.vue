@@ -172,8 +172,8 @@ function onPage(e: { page: number }) {
           </thead>
           <tbody>
             <tr v-for="inst in instances" :key="inst.uri" class="il-row" :title="inst.uri" @click="open(inst.uri)">
-              <td class="il-cell-name">{{ inst.label }}<span v-if="inst.deprecated" class="deprecated-badge">deprecated</span></td>
-              <td v-for="(header, i) in columnHeaders" :key="i" :title="header" class="il-cell">{{ inst.cells?.[i] || '—' }}</td>
+              <td class="il-cell-name" :title="inst.label">{{ inst.label }}<span v-if="inst.deprecated" class="deprecated-badge">deprecated</span></td>
+              <td v-for="(header, i) in columnHeaders" :key="i" :title="inst.cells?.[i] || header" class="il-cell">{{ inst.cells?.[i] || '—' }}</td>
             </tr>
           </tbody>
         </table>
@@ -495,11 +495,17 @@ function onPage(e: { page: number }) {
 .il-cell-name {
   color: var(--ae-text-primary);
   font-weight: 500;
-  min-width: 12rem;
+  max-width: 22rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .il-cell {
   color: var(--ae-text-secondary);
+  max-width: 14rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
