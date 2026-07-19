@@ -7,7 +7,7 @@
  *
  * @see /spec/ae-rdf
  */
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ProgressSpinner from 'primevue/progressspinner'
 import Paginator from 'primevue/paginator'
@@ -23,6 +23,11 @@ const {
   instances, total, loading, error, page, pageSize, typeLabel, filter, orphansOnly, canFilterOrphans, columns, setPage, currentListQuery,
 } = useInstanceList()
 const showLoading = useDelayedLoading(loading)
+
+// List (table) vs. card/box layout — persisted so the choice sticks.
+const VIEW_KEY = 'ae-rdf-list-view'
+const viewMode = ref<'list' | 'cards'>(localStorage.getItem(VIEW_KEY) === 'cards' ? 'cards' : 'list')
+watch(viewMode, v => localStorage.setItem(VIEW_KEY, v))
 
 // Column headings: explicit label, else the humanized predicate local name.
 const columnHeaders = computed(() => columns.value.map(c => c.label?.trim() || humanizeLocalName(c.predicate)))
@@ -110,6 +115,20 @@ function onPage(e: { page: number }) {
         <span class="material-symbols-outlined">code</span>
         SPARQL
       </button>
+      <div class="il-view-toggle" role="group" aria-label="Result layout">
+        <button
+          :class="{ active: viewMode === 'list' }"
+          :aria-pressed="viewMode === 'list'"
+          title="Table view"
+          @click="viewMode = 'list'"
+        ><span class="material-symbols-outlined">table_rows</span></button>
+        <button
+          :class="{ active: viewMode === 'cards' }"
+          :aria-pressed="viewMode === 'cards'"
+          title="Card view"
+          @click="viewMode = 'cards'"
+        ><span class="material-symbols-outlined">view_agenda</span></button>
+      </div>
       <span class="il-range">{{ rangeLabel }}</span>
     </header>
 
@@ -123,8 +142,28 @@ function onPage(e: { page: number }) {
     </div>
 
     <template v-else>
+      <!-- Card / box layout: title + configured columns as labelled fields (or the URI). -->
+      <div v-if="viewMode === 'cards' && instances.length" class="il-cards">
+        <button
+          v-for="inst in instances"
+          :key="inst.uri"
+          class="il-card"
+          :title="inst.uri"
+          @click="open(inst.uri)"
+        >
+          <span class="il-card-title">{{ inst.label }}<span v-if="inst.deprecated" class="deprecated-badge">deprecated</span></span>
+          <span v-if="columns.length" class="il-card-meta">
+            <span v-for="(header, i) in columnHeaders" :key="i" class="il-card-field">
+              <span class="il-card-key">{{ header }}</span>
+              <span class="il-card-val">{{ inst.cells?.[i] || '—' }}</span>
+            </span>
+          </span>
+          <span v-else class="il-card-uri">{{ inst.uri }}</span>
+        </button>
+      </div>
+
       <!-- Configured columns → a compact table; otherwise the plain label + URI list. -->
-      <div v-if="columns.length && instances.length" class="il-table-wrap">
+      <div v-else-if="columns.length && instances.length" class="il-table-wrap">
         <table class="il-table">
           <thead>
             <tr>
@@ -276,6 +315,112 @@ function onPage(e: { page: number }) {
 
 .il-sparql-btn .material-symbols-outlined {
   font-size: 14px;
+}
+
+.il-view-toggle {
+  display: inline-flex;
+  flex-shrink: 0;
+  border: 1px solid var(--ae-border-color);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.il-view-toggle button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.2rem 0.4rem;
+  background: var(--ae-bg-elevated);
+  border: none;
+  cursor: pointer;
+  color: var(--ae-text-secondary);
+}
+
+.il-view-toggle button + button {
+  border-left: 1px solid var(--ae-border-color);
+}
+
+.il-view-toggle button:hover {
+  color: var(--ae-text-primary);
+  background: var(--ae-bg-hover);
+}
+
+.il-view-toggle button.active {
+  color: var(--ae-accent);
+  background: var(--ae-bg-hover);
+}
+
+.il-view-toggle .material-symbols-outlined {
+  font-size: 16px;
+}
+
+/* Card / box layout */
+.il-cards {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.il-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  width: 100%;
+  text-align: left;
+  padding: 0.75rem 0.9rem;
+  background: var(--ae-bg-elevated);
+  border: 1px solid var(--ae-border-color);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.12s, border-color 0.12s;
+}
+
+.il-card:hover {
+  background: var(--ae-bg-hover);
+  border-color: var(--ae-accent);
+}
+
+.il-card-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--ae-text-primary);
+  line-height: 1.35;
+}
+
+.il-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1.25rem;
+}
+
+.il-card-field {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+}
+
+.il-card-key {
+  color: var(--ae-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  font-size: 0.6875rem;
+}
+
+.il-card-val {
+  color: var(--ae-text-secondary);
+}
+
+.il-card-uri {
+  font-size: 0.6875rem;
+  font-family: var(--ae-font-mono);
+  color: var(--ae-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .il-title {
