@@ -23,7 +23,7 @@ import Prism from 'prismjs'
 // SPARQL grammar builds on Turtle — import Turtle first so `extend('turtle', …)` resolves.
 import 'prismjs/components/prism-turtle'
 import 'prismjs/components/prism-sparql'
-import { useEndpointStore } from '../stores'
+import { useEndpointStore, useSettingsStore } from '../stores'
 import { useDelayedLoading, useElapsedTime } from '../composables'
 import { executeSparql, isNavigableIri, logger, resolveUris, getDisplayPrefixes, type SPARQLBinding, type SPARQLResults } from '../services'
 import { injectPrefixes } from '../utils/injectPrefixes'
@@ -183,10 +183,12 @@ const pageFirst = ref(0)
 const pagedRows = computed(() => rows.value.slice(pageFirst.value, pageFirst.value + RESULT_PAGE_SIZE))
 
 // Auto-LIMIT toggle: on (default) appends LIMIT to an unbounded SELECT; off runs it
-// verbatim. Persisted so the choice sticks across reloads.
-const AUTOLIMIT_KEY = 'ae-rdf-sparql-autolimit'
-const autoLimit = ref<boolean>(localStorage.getItem(AUTOLIMIT_KEY) !== '0')
-watch(autoLimit, v => localStorage.setItem(AUTOLIMIT_KEY, v ? '1' : '0'))
+// verbatim. The panel checkbox and the Settings panel both bind to the one setting.
+const settings = useSettingsStore()
+const autoLimit = computed({
+  get: () => settings.sparqlAutoLimit,
+  set: v => { settings.sparqlAutoLimit = v },
+})
 const askResult = ref<boolean | null>(null)
 const resolved = ref<ResolvedMap>(new Map())
 const ran = ref(false) // a query has completed at least once (drives empty state)

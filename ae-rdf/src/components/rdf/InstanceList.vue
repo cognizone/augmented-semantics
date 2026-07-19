@@ -7,8 +7,9 @@
  *
  * @see /spec/ae-rdf
  */
-import { computed, ref, watch } from 'vue'
+import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useSettingsStore } from '../../stores'
 import ProgressSpinner from 'primevue/progressspinner'
 import Paginator from 'primevue/paginator'
 import InputText from 'primevue/inputtext'
@@ -23,11 +24,14 @@ const {
   instances, total, loading, error, page, pageSize, typeLabel, filter, orphansOnly, canFilterOrphans, columns, setPage, currentListQuery,
 } = useInstanceList()
 const showLoading = useDelayedLoading(loading)
+const settings = useSettingsStore()
 
-// List (table) vs. card/box layout — persisted so the choice sticks.
-const VIEW_KEY = 'ae-rdf-list-view'
-const viewMode = ref<'list' | 'cards'>(localStorage.getItem(VIEW_KEY) === 'cards' ? 'cards' : 'list')
-watch(viewMode, v => localStorage.setItem(VIEW_KEY, v))
+// List (table) vs. card/box layout — the header toggle and the Settings panel both
+// bind to the one setting (default cards), so the choice is app-wide and consistent.
+const viewMode = computed({
+  get: () => settings.listView,
+  set: v => { settings.listView = v },
+})
 
 // Column headings: explicit label, else the humanized predicate local name.
 const columnHeaders = computed(() => columns.value.map(c => c.label?.trim() || humanizeLocalName(c.predicate)))

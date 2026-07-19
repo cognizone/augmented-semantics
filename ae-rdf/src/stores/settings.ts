@@ -16,6 +16,9 @@ export interface AppSettings {
   editMode: boolean // config authoring mode: reveals per-type gears + export
   showHidden: boolean // reveal fields hidden by per-type config (greyed), without editing
   groupsCollapsed: boolean // default-collapse named sidebar groups (Ontology, custom groups)
+  showEmbedsNested: boolean // nest embed value-object types inline under their composing class
+  listView: 'list' | 'cards' // instance-list layout when a type has columns: table rows or cards
+  sparqlAutoLimit: boolean // append LIMIT to an unbounded SELECT in the SPARQL panel
   doiCitations: boolean // fetch citation metadata from doi.org for DOI values (external call, opt-in)
   wktMaps: boolean // render an embedded map for WKT geometry values (external tiles, opt-in)
 }
@@ -26,6 +29,9 @@ const DEFAULT_SETTINGS: AppSettings = {
   editMode: false,
   showHidden: false,
   groupsCollapsed: true,
+  showEmbedsNested: false,
+  listView: 'cards',
+  sparqlAutoLimit: true,
   doiCitations: false,
   wktMaps: false,
 }
@@ -36,6 +42,9 @@ export const useSettingsStore = defineStore('settings', () => {
   const editMode = ref(DEFAULT_SETTINGS.editMode)
   const showHidden = ref(DEFAULT_SETTINGS.showHidden)
   const groupsCollapsed = ref(DEFAULT_SETTINGS.groupsCollapsed)
+  const showEmbedsNested = ref(DEFAULT_SETTINGS.showEmbedsNested)
+  const listView = ref<'list' | 'cards'>(DEFAULT_SETTINGS.listView)
+  const sparqlAutoLimit = ref(DEFAULT_SETTINGS.sparqlAutoLimit)
   const doiCitations = ref(DEFAULT_SETTINGS.doiCitations)
   const wktMaps = ref(DEFAULT_SETTINGS.wktMaps)
 
@@ -56,6 +65,9 @@ export const useSettingsStore = defineStore('settings', () => {
       if (s.editMode !== undefined) editMode.value = s.editMode
       if (s.showHidden !== undefined) showHidden.value = s.showHidden
       if (s.groupsCollapsed !== undefined) groupsCollapsed.value = s.groupsCollapsed
+      if (s.showEmbedsNested !== undefined) showEmbedsNested.value = s.showEmbedsNested
+      if (s.listView !== undefined) listView.value = s.listView
+      if (s.sparqlAutoLimit !== undefined) sparqlAutoLimit.value = s.sparqlAutoLimit
       if (s.doiCitations !== undefined) doiCitations.value = s.doiCitations
       if (s.wktMaps !== undefined) wktMaps.value = s.wktMaps
     } catch (e) {
@@ -65,7 +77,7 @@ export const useSettingsStore = defineStore('settings', () => {
 
   function saveSettings() {
     try {
-      const settings: AppSettings = { darkMode: darkMode.value, uriDisplay: uriDisplay.value, editMode: editMode.value, showHidden: showHidden.value, groupsCollapsed: groupsCollapsed.value, doiCitations: doiCitations.value, wktMaps: wktMaps.value }
+      const settings: AppSettings = { darkMode: darkMode.value, uriDisplay: uriDisplay.value, editMode: editMode.value, showHidden: showHidden.value, groupsCollapsed: groupsCollapsed.value, showEmbedsNested: showEmbedsNested.value, listView: listView.value, sparqlAutoLimit: sparqlAutoLimit.value, doiCitations: doiCitations.value, wktMaps: wktMaps.value }
       localStorage.setItem(STORAGE_KEY, JSON.stringify(settings))
     } catch (e) {
       logger.error('SettingsStore', 'Failed to save settings', { error: e })
@@ -85,10 +97,13 @@ export const useSettingsStore = defineStore('settings', () => {
   watch(editMode, () => saveSettings())
   watch(showHidden, () => saveSettings())
   watch(groupsCollapsed, () => saveSettings())
+  watch(showEmbedsNested, () => saveSettings())
+  watch(listView, () => saveSettings())
+  watch(sparqlAutoLimit, () => saveSettings())
   watch(doiCitations, () => saveSettings())
   watch(wktMaps, () => saveSettings())
 
   loadSettings()
 
-  return { darkMode, uriDisplay, editMode, showHidden, groupsCollapsed, doiCitations, wktMaps, setDarkMode }
+  return { darkMode, uriDisplay, editMode, showHidden, groupsCollapsed, showEmbedsNested, listView, sparqlAutoLimit, doiCitations, wktMaps, setDarkMode }
 })

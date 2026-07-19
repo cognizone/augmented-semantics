@@ -312,6 +312,24 @@ onUnmounted(() => {
             <Checkbox v-model="settingsStore.groupsCollapsed" :binary="true" />
             <span class="checkbox-text">Collapse groups by default<small>Named sidebar groups (e.g. Ontology) start collapsed. “Hidden” always starts collapsed, “Embedded” expanded.</small></span>
           </label>
+
+          <label class="checkbox-label">
+            <Checkbox v-model="settingsStore.showEmbedsNested" :binary="true" />
+            <span class="checkbox-text">Nest embedded types<small>Show embedded value-object types inline under their composing class in the Types tree (also toggled by the <code>{}</code> button). Off → they appear only in the collapsed “Embedded” group.</small></span>
+          </label>
+        </section>
+
+        <section class="settings-section">
+          <h3 class="settings-section-title">Results</h3>
+          <label class="checkbox-label">
+            <Checkbox :binary="true" :modelValue="settingsStore.listView === 'cards'" @update:modelValue="settingsStore.listView = $event ? 'cards' : 'list'" />
+            <span class="checkbox-text">Card view for search results<small>Show a type's instances as cards instead of a table (for types with configured columns). Also toggled from the list header.</small></span>
+          </label>
+
+          <label class="checkbox-label">
+            <Checkbox v-model="settingsStore.sparqlAutoLimit" :binary="true" />
+            <span class="checkbox-text">Auto-limit SPARQL results<small>Append a <code>LIMIT</code> to an unbounded <code>SELECT</code> in the SPARQL panel. Off → run the full result set.</small></span>
+          </label>
         </section>
 
         <section class="settings-section">

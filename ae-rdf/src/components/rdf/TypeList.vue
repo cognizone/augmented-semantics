@@ -50,13 +50,10 @@ const clampW = (w: number) => Math.min(MAX_W, Math.max(MIN_W, w))
 const sidebarWidth = ref(clampW(Number(localStorage.getItem(SIDEBAR_WIDTH_KEY)) || 280))
 
 // Show/hide embed types nested inline under their composing class. Off → they
-// only appear in the collapsed "Embedded" system group at the bottom. Persisted.
-const SHOW_EMBEDS_KEY = 'ae-rdf-show-embeds'
-const showEmbeds = ref(localStorage.getItem(SHOW_EMBEDS_KEY) !== '0')
-function toggleEmbeds() {
-  showEmbeds.value = !showEmbeds.value
-  localStorage.setItem(SHOW_EMBEDS_KEY, showEmbeds.value ? '1' : '0')
-}
+// only appear in the collapsed "Embedded" system group at the bottom. Lives in the
+// settings store (Settings panel + this {} header button, both bound to it).
+const showEmbeds = computed(() => settings.showEmbedsNested)
+function toggleEmbeds() { settings.showEmbedsNested = !settings.showEmbedsNested }
 const dragging = ref(false)
 let dragStartX = 0, dragStartW = 0
 function startDrag(e: PointerEvent) {
