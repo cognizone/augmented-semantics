@@ -70,10 +70,31 @@ export function useInstanceList() {
     return cfg.render === 'embed' && cfg.embedVia ? cfg.embedVia : ''
   })
   const canFilterOrphans = computed(() => !!orphanVia.value)
+
+  // A type's list columns, inheriting the nearest ancestor's when this exact type
+  // configures none — so a superclass (Result) is configured once and its subclasses
+  // (JournalPaper, …) get it for free. A subclass with its OWN listColumns overrides.
+  // The subclass map (super → subs) ships in the config, so this needs no query.
+  function resolveListColumns(type: string) {
+    const own = typeConfig.get(type).listColumns
+    if (own) return own
+    const subs = endpointStore.current?.subclasses
+    if (!subs) return []
+    const parentOf = new Map<string, string>()
+    for (const [sup, kids] of Object.entries(subs)) for (const k of kids ?? []) parentOf.set(k, sup)
+    const seen = new Set<string>([type])
+    for (let cur = parentOf.get(type); cur && !seen.has(cur); cur = parentOf.get(cur)) {
+      seen.add(cur)
+      const inherited = typeConfig.get(cur).listColumns
+      if (inherited) return inherited
+    }
+    return []
+  }
+
   // Configured extra columns for the current type (headings for the list table).
   const columns = computed(() => {
     const type = browseStore.currentType
-    return type ? (typeConfig.get(type).listColumns ?? []) : []
+    return type ? resolveListColumns(type) : []
   })
   let countedFor: string | null = null // `${endpointId}|${type}|${filter}|…` the total is valid for
 
@@ -146,7 +167,7 @@ export function useInstanceList() {
       // Extra columns (config-driven): one SAMPLE'd value per (instance, column)
       // for this page. Fire-and-forget like the count — the rows render immediately
       // and the cells fill in when this lands. URI cells resolve to a qname.
-      const columnDefs = typeConfig.get(type).listColumns ?? []
+      const columnDefs = resolveListColumns(type)
       if (columnDefs.length && uris.length) {
         const colQuery = buildInstanceColumnsQuery(uris, columnDefs, strategy)
         if (colQuery) {

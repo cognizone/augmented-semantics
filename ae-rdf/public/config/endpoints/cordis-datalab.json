@@ -578,32 +578,6 @@
       ]
     },
     "http://data.europa.eu/s66#ProjectPublication": {
-      "listColumns": [
-        {
-          "predicate": "http://data.europa.eu/s66#isResultOf",
-          "via": [
-            "http://data.europa.eu/s66#hasAcronym",
-            "http://data.europa.eu/s66#shortForm"
-          ],
-          "label": "Project"
-        },
-        {
-          "predicate": "http://data.europa.eu/s66#publishedYear",
-          "label": "Year"
-        },
-        {
-          "predicate": "http://data.europa.eu/s66#author",
-          "label": "Authors"
-        },
-        {
-          "predicate": "http://data.europa.eu/s66#journalTitle",
-          "label": "Journal"
-        },
-        {
-          "predicate": "http://data.europa.eu/s66#doi",
-          "label": "DOI"
-        }
-      ],
       "search": [
         "http://data.europa.eu/s66#title",
         "http://data.europa.eu/s66#author",
@@ -761,32 +735,6 @@
       ]
     },
     "http://data.europa.eu/s66#JournalPaper": {
-      "listColumns": [
-        {
-          "predicate": "http://data.europa.eu/s66#isResultOf",
-          "via": [
-            "http://data.europa.eu/s66#hasAcronym",
-            "http://data.europa.eu/s66#shortForm"
-          ],
-          "label": "Project"
-        },
-        {
-          "predicate": "http://data.europa.eu/s66#publishedYear",
-          "label": "Year"
-        },
-        {
-          "predicate": "http://data.europa.eu/s66#author",
-          "label": "Authors"
-        },
-        {
-          "predicate": "http://data.europa.eu/s66#journalTitle",
-          "label": "Journal"
-        },
-        {
-          "predicate": "http://data.europa.eu/s66#doi",
-          "label": "DOI"
-        }
-      ],
       "search": [
         "http://data.europa.eu/s66#title",
         "http://data.europa.eu/s66#author",
@@ -856,32 +804,6 @@
       ]
     },
     "http://data.europa.eu/s66#ProceedingsPaper": {
-      "listColumns": [
-        {
-          "predicate": "http://data.europa.eu/s66#isResultOf",
-          "via": [
-            "http://data.europa.eu/s66#hasAcronym",
-            "http://data.europa.eu/s66#shortForm"
-          ],
-          "label": "Project"
-        },
-        {
-          "predicate": "http://data.europa.eu/s66#publishedYear",
-          "label": "Year"
-        },
-        {
-          "predicate": "http://data.europa.eu/s66#author",
-          "label": "Authors"
-        },
-        {
-          "predicate": "http://data.europa.eu/s66#journalTitle",
-          "label": "Journal"
-        },
-        {
-          "predicate": "http://data.europa.eu/s66#doi",
-          "label": "DOI"
-        }
-      ],
       "search": [
         "http://data.europa.eu/s66#title",
         "http://data.europa.eu/s66#author",
