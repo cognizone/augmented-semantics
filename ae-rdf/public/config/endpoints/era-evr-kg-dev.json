@@ -114,6 +114,21 @@
       ]
     },
     "http://data.europa.eu/949/VehicleRegistrationApplication": {
+      "listColumns": [
+        {
+          "predicate": "http://purl.org/dc/terms/identifier",
+          "label": "Identifier"
+        },
+        {
+          "predicate": "http://data.europa.eu/949/state",
+          "via": "http://www.w3.org/2004/02/skos/core#prefLabel",
+          "label": "State"
+        },
+        {
+          "predicate": "http://purl.org/dc/terms/dateAccepted",
+          "label": "Accepted"
+        }
+      ],
       "sidebar": "pin",
       "hide": [
         "http://www.w3.org/ns/prov#activity"
@@ -131,6 +146,21 @@
       ]
     },
     "http://data.europa.eu/949/VehicleRegistrationCase": {
+      "listColumns": [
+        {
+          "predicate": "http://data.europa.eu/949/registrationCaseType",
+          "via": "http://www.w3.org/2004/02/skos/core#prefLabel",
+          "label": "Case type"
+        },
+        {
+          "predicate": "http://data.europa.eu/949/verificationRSTWAG",
+          "label": "RST WAG"
+        },
+        {
+          "predicate": "http://data.europa.eu/949/verificationCCS",
+          "label": "CCS"
+        }
+      ],
       "facets": [
         {
           "predicate": "http://data.europa.eu/949/registeringMemberState",
@@ -209,6 +239,20 @@
       "sidebar": "hide"
     },
     "http://data.europa.eu/949/Vehicle": {
+      "listColumns": [
+        {
+          "predicate": "http://data.europa.eu/949/manufacturingYear",
+          "label": "Mfg year"
+        },
+        {
+          "predicate": "http://data.europa.eu/949/manufacturingSerialNumber",
+          "label": "Serial no."
+        },
+        {
+          "predicate": "http://data.europa.eu/949/previousVehicleNumber",
+          "label": "Prev. number"
+        }
+      ],
       "sidebar": "pin",
       "label": [
         "http://data.europa.eu/949/vehicleNumber"

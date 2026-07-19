@@ -40,9 +40,11 @@
   "http://data.europa.eu/eli/ontology#": "eli",
   "http://data.europa.eu/m8g/": "cv",
   "http://data.europa.eu/949/": "era",
+  "https://w3id.org/vpa#": "vpa",
   "http://data.europa.eu/s66#": "eurio",
   "http://data.europa.eu/s66/v#": "eurio-versioning",
   "http://publications.europa.eu/resource/authority/": "at",
+  "http://publications.europa.eu/ontology/authority/": "authority",
   "http://eurovoc.europa.eu/": "eurovoc",
   "http://www.openlinksw.com/schemas/DAV#": "openlink-dav",
   "http://www.openlinksw.com/schemas/virtrdf#": "openlink-virtrdf"
