@@ -85,7 +85,7 @@ export interface PreparedQuery {
  * - first verb must be SELECT or ASK → else error, nothing sent
  * - SELECT with no top-level LIMIT → append one
  */
-export function prepareQuery(raw: string): PreparedQuery {
+export function prepareQuery(raw: string, autoLimit = true): PreparedQuery {
   const trimmed = raw.trim()
   if (!trimmed) {
     return { ok: false, error: 'Enter a query to run.', query: raw, limitAdded: false }
@@ -93,6 +93,9 @@ export function prepareQuery(raw: string): PreparedQuery {
 
   const keyword = firstKeyword(raw)
   if (keyword === 'SELECT') {
+    // autoLimit off → send the SELECT verbatim (the caller opted into an unbounded
+    // result set); still capped at the display MAX_ROWS on the way in.
+    if (!autoLimit) return { ok: true, query: raw, limitAdded: false, keyword: 'SELECT' }
     const { query, added } = ensureLimit(raw)
     return { ok: true, query, limitAdded: added, keyword: 'SELECT' }
   }

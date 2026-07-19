@@ -181,6 +181,12 @@ const rows = ref<SPARQLBinding[]>([])
 const RESULT_PAGE_SIZE = 50
 const pageFirst = ref(0)
 const pagedRows = computed(() => rows.value.slice(pageFirst.value, pageFirst.value + RESULT_PAGE_SIZE))
+
+// Auto-LIMIT toggle: on (default) appends LIMIT to an unbounded SELECT; off runs it
+// verbatim. Persisted so the choice sticks across reloads.
+const AUTOLIMIT_KEY = 'ae-rdf-sparql-autolimit'
+const autoLimit = ref<boolean>(localStorage.getItem(AUTOLIMIT_KEY) !== '0')
+watch(autoLimit, v => localStorage.setItem(AUTOLIMIT_KEY, v ? '1' : '0'))
 const askResult = ref<boolean | null>(null)
 const resolved = ref<ResolvedMap>(new Map())
 const ran = ref(false) // a query has completed at least once (drives empty state)
@@ -233,7 +239,7 @@ async function run() {
   const withPrefixes = injectPrefixes(query.value, getDisplayPrefixes())
   if (withPrefixes !== query.value) query.value = withPrefixes
 
-  const prepared = prepareQuery(query.value)
+  const prepared = prepareQuery(query.value, autoLimit.value)
   if (!prepared.ok) {
     clearResults()
     error.value = prepared.error ?? 'Invalid query.'
@@ -397,6 +403,10 @@ function openResource(uri: string) {
             Running{{ elapsedText() ? ` (${elapsedText()})` : '' }}…
           </span>
           <span v-else-if="durationLabel" class="run-status">Ran in {{ durationLabel }}</span>
+          <label class="autolimit" :title="`When on, an unbounded SELECT gets LIMIT ${DEFAULT_LIMIT} appended`">
+            <input type="checkbox" v-model="autoLimit" />
+            Auto-limit {{ DEFAULT_LIMIT }}
+          </label>
         </div>
         <p v-if="notice" class="query-notice">{{ notice }}</p>
       </div>
@@ -763,6 +773,21 @@ function openResource(uri: string) {
 .run-status {
   font-size: 0.75rem;
   color: var(--ae-text-secondary);
+}
+
+.autolimit {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  color: var(--ae-text-secondary);
+  cursor: pointer;
+  user-select: none;
+}
+
+.autolimit input {
+  cursor: pointer;
 }
 
 .query-notice {

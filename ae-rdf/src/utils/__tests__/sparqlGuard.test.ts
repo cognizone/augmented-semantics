@@ -85,6 +85,14 @@ describe('prepareQuery', () => {
     expect(r.query).not.toMatch(new RegExp(`LIMIT ${DEFAULT_LIMIT}`))
   })
 
+  it('autoLimit=false sends an unbounded SELECT verbatim (no LIMIT appended)', () => {
+    const r = prepareQuery('SELECT ?s ?p ?o WHERE { ?s ?p ?o }', false)
+    expect(r.ok).toBe(true)
+    expect(r.keyword).toBe('SELECT')
+    expect(r.limitAdded).toBe(false)
+    expect(r.query).not.toMatch(/LIMIT/)
+  })
+
   it('allows ASK without adding a LIMIT', () => {
     const r = prepareQuery('ASK { ?s ?p ?o }')
     expect(r.ok).toBe(true)
