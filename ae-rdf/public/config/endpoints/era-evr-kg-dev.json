@@ -5,9 +5,6 @@
   "auth": {
     "type": "basic"
   },
-  "prefixes": {
-    "era": "http://data.europa.eu/949/"
-  },
   "types": {
     "http://www.w3.org/2000/01/rdf-schema#Datatype": {
       "group": "Ontology"

@@ -66,9 +66,7 @@
       "url": "https://vocab.getty.edu/sparql"
     }
   ],
-  "prefixes": {
-    "eurio": "http://data.europa.eu/s66#"
-  },
+  "prefixes": {},
   "doi": {
     "authors": true,
     "year": true,

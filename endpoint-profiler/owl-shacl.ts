@@ -280,7 +280,7 @@ if (existsSync(typesDir)) {
   }
 }
 
-const prefixesFromConfigPath = join(endpointDir, '..', 'prefix-map.json')
+const prefixesFromConfigPath = join(import.meta.dirname, '..', 'ae-rdf', 'src', 'services', 'prefix-map.json')
 let prefixMap: Record<string, string> = {}
 if (existsSync(prefixesFromConfigPath)) {
   try {

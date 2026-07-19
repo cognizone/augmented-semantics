@@ -7,57 +7,16 @@
  * @see /spec/ideas.md
  */
 import { logger } from './logger'
+// The single, committed namespace→prefix map — the ONE source of truth shared by
+// the app (rendering / legend / injection), the gen-prefixes script, and the
+// endpoint profiler, so a namespace resolves to the SAME prefix everywhere.
+// Edit prefix-map.json to add a prefix; never hard-code one here.
+import prefixMap from './prefix-map.json'
 
 const STORAGE_KEY = 'ae-prefixes'
 const PREFIX_CC_API = 'https://prefix.cc/reverse'
 
-// Common RDF prefixes (fallback when prefix.cc is unavailable)
-const COMMON_PREFIXES: Record<string, string> = {
-  // W3C standards
-  'http://www.w3.org/2000/01/rdf-schema#': 'rdfs',
-  'http://www.w3.org/1999/02/22-rdf-syntax-ns#': 'rdf',
-  'http://www.w3.org/2002/07/owl#': 'owl',
-  'http://www.w3.org/2001/XMLSchema#': 'xsd',
-  'http://www.w3.org/2004/02/skos/core#': 'skos',
-  'http://www.w3.org/2008/05/skos-xl#': 'skosxl',
-  'http://www.w3.org/ns/shacl#': 'sh',
-  'http://www.w3.org/ns/prov#': 'prov',
-  'http://www.w3.org/ns/dcat#': 'dcat',
-  'http://www.w3.org/ns/adms#': 'adms',
-  'http://www.w3.org/ns/org#': 'org',
-  'http://www.w3.org/ns/locn#': 'locn',
-  'http://www.w3.org/ns/person#': 'person',
-  'http://www.w3.org/2006/vcard/ns#': 'vcard',
-  'http://www.w3.org/ns/sparql-service-description#': 'sd',
-  'http://www.w3.org/2007/05/powder-s#': 'wdrs',
-  'http://www.w3.org/2003/01/geo/wgs84_pos#': 'geo',
-  // Dublin Core
-  'http://purl.org/dc/terms/': 'dct',
-  'http://purl.org/dc/elements/1.1/': 'dc',
-  // Common vocabularies
-  'http://xmlns.com/foaf/0.1/': 'foaf',
-  'http://schema.org/': 'schema',
-  'https://schema.org/': 'schema',
-  'http://rdfs.org/ns/void#': 'void',
-  'http://purl.org/vocab/vann/': 'vann',
-  'http://creativecommons.org/ns#': 'cc',
-  'http://www.opengis.net/ont/geosparql#': 'gsp',
-  'http://purl.org/linked-data/cube#': 'qb',
-  // EU vocabularies
-  'http://publications.europa.eu/ontology/euvoc#': 'euvoc',
-  'http://data.europa.eu/eli/ontology#': 'eli',
-  'http://data.europa.eu/m8g/': 'cv',
-  'http://publications.europa.eu/resource/authority/': 'at',
-  'http://eurovoc.europa.eu/': 'eurovoc',
-  // Other common
-  'http://purl.org/ontology/bibo/': 'bibo',
-  'http://www.w3.org/2006/time#': 'time',
-  'http://purl.org/NET/c4dm/event.owl#': 'event',
-  'http://www.w3.org/ns/oa#': 'oa',
-  'http://www.w3.org/ns/ldp#': 'ldp',
-  'http://www.w3.org/ns/hydra/core#': 'hydra',
-  'http://www.w3.org/ns/solid/terms#': 'solid',
-}
+const COMMON_PREFIXES: Record<string, string> = prefixMap
 
 interface PrefixCache {
   [namespace: string]: string | null // namespace → prefix (null = not found)
@@ -345,9 +304,13 @@ export function getDisplayPrefixes(): Record<string, string> {
 export function getEndpointDisplayPrefixes(used: Set<string>): Record<string, string> {
   loadCache()
   const out: Record<string, string> = {}
+  // Built-in, globally-configured, and prefix.cc-resolved prefixes only count when
+  // THIS endpoint actually references the namespace — no global list bleeds across
+  // endpoints (a prefix resolved while browsing another dataset stays out of here).
   for (const [ns, p] of Object.entries(COMMON_PREFIXES)) if (used.has(ns)) out[p] = ns
-  for (const [ns, p] of Object.entries(cache)) if (p) out[p] = ns
-  for (const [ns, p] of Object.entries(configNsToPrefix)) out[p] = ns
+  for (const [ns, p] of Object.entries(cache)) if (p && used.has(ns)) out[p] = ns
+  for (const [ns, p] of Object.entries(configNsToPrefix)) if (used.has(ns)) out[p] = ns
+  // Prefixes the endpoint itself declares are always kept — they're intentional.
   for (const [ns, p] of Object.entries(endpointNsToPrefix)) out[p] = ns
   return out
 }

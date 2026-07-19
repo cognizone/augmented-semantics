@@ -1,6 +1,10 @@
 {
   "name": "ERA RINF",
   "url": "https://rinf.data.era.europa.eu/api/v1/sparql/rinf",
+  "prefixes": {
+    "sf": "http://www.opengis.net/ont/sf#",
+    "xkos": "http://rdf-vocabulary.ddialliance.org/xkos#"
+  },
   "deprecatedPredicates": [
     "http://www.w3.org/2002/07/owl#deprecated",
     "http://publications.europa.eu/ontology/authority/deprecated"

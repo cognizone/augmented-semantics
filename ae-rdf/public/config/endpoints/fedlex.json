@@ -1,6 +1,9 @@
 {
   "name": "Fedlex",
   "url": "https://fedlex.data.admin.ch/sparqlendpoint",
+  "prefixes": {
+    "jolux": "http://data.legilux.public.lu/resource/ontology/jolux#"
+  },
   "deprecatedPredicates": [
     "http://www.w3.org/2002/07/owl#deprecated"
   ],

@@ -20,7 +20,7 @@ const endpointPath = join(outputDir, 'endpoint.json')
 const typesDir = join(outputDir, 'types')
 const typesIndexPath = join(typesDir, 'index.json')
 const namespacesPath = join(outputDir, 'namespaces.json')
-const prefixMapPath = join(baseDir, '..', 'prefix-map.json')
+const prefixMapPath = join(baseDir, '..', '..', 'ae-rdf', 'src', 'services', 'prefix-map.json')
 
 const config = JSON.parse(readFileSync(configPath, 'utf-8'))
 const rules = JSON.parse(readFileSync(rulesPath, 'utf-8'))

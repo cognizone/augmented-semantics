@@ -1,9 +1,10 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { setConfigPrefixes, getKnownPrefixes, getDisplayPrefixes, getEndpointDisplayPrefixes, resolveUris, clearPrefixCache } from '../prefix'
+import { setConfigPrefixes, setEndpointPrefixes, getKnownPrefixes, getDisplayPrefixes, getEndpointDisplayPrefixes, resolveUris, clearPrefixCache } from '../prefix'
 
 beforeEach(() => {
   clearPrefixCache()
   setConfigPrefixes({})
+  setEndpointPrefixes(undefined)
 })
 
 describe('config-declared prefixes', () => {
@@ -29,13 +30,22 @@ describe('config-declared prefixes', () => {
     expect(getDisplayPrefixes().xsd).toBe('http://www.w3.org/2001/XMLSchema#')
   })
 
-  it('getEndpointDisplayPrefixes keeps only USED common prefixes, always keeps declared', () => {
-    setConfigPrefixes({ eurio: 'http://data.europa.eu/s66#' })
-    const used = new Set(['http://www.w3.org/2001/XMLSchema#']) // xsd used, skos/foaf/etc not
+  it('getEndpointDisplayPrefixes: common + global-config prefixes only when the endpoint USES the namespace', () => {
+    setConfigPrefixes({ eurio: 'http://data.europa.eu/s66#' })     // global (app.json) list
+    const used = new Set(['http://www.w3.org/2001/XMLSchema#'])    // xsd used; skos/foaf/eurio not
     const legend = getEndpointDisplayPrefixes(used)
-    expect(legend.xsd).toBe('http://www.w3.org/2001/XMLSchema#') // used common → kept
-    expect(legend.skos).toBeUndefined()                         // unused common → dropped
+    expect(legend.xsd).toBe('http://www.w3.org/2001/XMLSchema#')   // used common → kept
+    expect(legend.skos).toBeUndefined()                           // unused common → dropped
     expect(legend.foaf).toBeUndefined()
-    expect(legend.eurio).toBe('http://data.europa.eu/s66#')      // config-declared → always kept
+    expect(legend.eurio).toBeUndefined()                          // unused global-config → dropped (no cross-endpoint bleed)
+  })
+
+  it('getEndpointDisplayPrefixes: used global-config prefix shows; endpoint-declared always shows', () => {
+    setConfigPrefixes({ eurio: 'http://data.europa.eu/s66#' })
+    setEndpointPrefixes({ era: 'http://data.europa.eu/949/' })
+    const used = new Set(['http://data.europa.eu/s66#'])           // s66 now referenced here
+    const legend = getEndpointDisplayPrefixes(used)
+    expect(legend.eurio).toBe('http://data.europa.eu/s66#')        // used → shown
+    expect(legend.era).toBe('http://data.europa.eu/949/')          // endpoint-declared → shown even though ns not in `used`
   })
 })

@@ -71,6 +71,7 @@ const CORE_NS = [
   'http://www.w3.org/2000/01/rdf-schema#',
   'http://www.w3.org/2002/07/owl#',
   'http://www.w3.org/2001/XMLSchema#',
+  'http://www.w3.org/2004/02/skos/core#',
 ]
 
 /** Namespaces the active endpoint actually references — from its profiled types,
