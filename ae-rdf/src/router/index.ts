@@ -29,6 +29,21 @@ const router = createRouter({
   ],
 })
 
+// After a redeploy, a page still running the previous build may navigate to a
+// lazy route whose chunk hash no longer exists — the dynamic import rejects and the
+// navigation silently fails (e.g. Open-in-SPARQL / the header SPARQL button appear
+// dead). Reload to the intended URL so the fresh bundle loads. One-shot per session
+// (cleared on the next successful navigation) so a genuine load failure can't loop.
+const CHUNK_RELOAD_KEY = 'ae-rdf-chunk-reload'
+router.onError((err, to) => {
+  const msg = String((err as Error)?.message || '')
+  const staleChunk = /dynamically imported module|module script failed|Failed to fetch dynamically/i.test(msg)
+  if (!staleChunk || sessionStorage.getItem(CHUNK_RELOAD_KEY)) return
+  sessionStorage.setItem(CHUNK_RELOAD_KEY, '1')
+  window.location.assign(to.fullPath)
+})
+router.afterEach(() => sessionStorage.removeItem(CHUNK_RELOAD_KEY))
+
 // URL parameter keys per com04-URLRouting
 export const URL_PARAMS = {
   ENDPOINT: 'endpoint',
