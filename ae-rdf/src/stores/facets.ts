@@ -504,6 +504,13 @@ export const useFacetStore = defineStore('facets', () => {
   watch(
     () => [browseStore.currentType, endpointStore.current?.id] as const,
     (next, prev) => {
+      // The getter builds a FRESH tuple each evaluation, so Vue also fires this when a
+      // dependency merely RECOMPUTES to the same values — e.g. updateEndpoint replacing
+      // the endpoints array (typeInventory cache write on a first-ever type load)
+      // recomputes `current` to the same id. Identical values = nothing changed =
+      // nothing to reset; without this bail the spurious fire wiped ?filters selections
+      // freshly restored from a deep link.
+      if (prev && next[0] === prev[0] && next[1] === prev[1]) return
       resetState(!prev || next[1] !== prev[1])
       load()
     },

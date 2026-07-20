@@ -183,6 +183,31 @@ describe('RdfView e2e: type → resource → type', () => {
     expect(wrapper.find('.instance-list').exists()).toBe(false)
   })
 
+  // Fresh-mount restore race: the ?filters READ watcher used to be `immediate`, firing
+  // SYNCHRONOUSLY at registration — after setType had queued the facet store's
+  // type-reset callback but before that queue flushed. applyEncoded restored the
+  // selections… then the queued reset wiped them (URL kept ?filters; memory lost it).
+  it('restores ?filters selections on a fresh ?type+?filters mount (reset race)', async () => {
+    const ENC = JSON.stringify([[0, 'v', [['l', 'CLOSED', '', '']]]])
+    const router = createRouter({ history: createMemoryHistory(), routes: [{ path: '/', component: RdfView }] })
+    router.push({ path: '/', query: { type: TYPE, filters: ENC } })
+    await router.isReady()
+
+    const endpoint = useEndpointStore()
+    endpoint.endpoints = [{ id: 'e1', name: 'Test', url: 'http://x/sparql', types: { [TYPE]: { facets: [{ predicate: FACET_P, label: 'Status' }] } } } as any]
+    ;(endpoint as any).currentId = 'e1'
+
+    mount(RdfView, {
+      global: { plugins: [router, PrimeVue, ToastService, ConfirmationService], directives: { tooltip: Tooltip } },
+    })
+    await flushPromises()
+
+    // The URL param survived either way — the bug was the IN-MEMORY selection being
+    // wiped, so the store must still serialize back to exactly the deep-linked value.
+    expect(router.currentRoute.value.query.filters, '?filters kept in URL').toBe(ENC)
+    expect(useFacetStore().serialize(), 'selections restored in the store').toBe(ENC)
+  })
+
   // The UX gap: while a resource is open, a USER facet interaction must navigate back
   // to the instance list (drop ?resource) so the filtered results are visible.
   it('closes the open resource when the user toggles a facet', async () => {

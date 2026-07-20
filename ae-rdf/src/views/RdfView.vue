@@ -147,15 +147,19 @@ watch(
 // A ?filters-only change (back/forward, same type) reconciles here too.
 const filtersInUrl = () =>
   typeof route.query[URL_PARAMS.FILTERS] === 'string' ? (route.query[URL_PARAMS.FILTERS] as string) : null
-watch(
-  () => [browseStore.currentType, route.query[URL_PARAMS.FILTERS]],
-  () => {
-    if (!browseStore.currentType) return
-    const url = filtersInUrl()
-    if ((facetStore.serialize() ?? null) !== url) facetStore.applyEncoded(url ?? '')
-  },
-  { immediate: true }
-)
+const reconcileFilters = () => {
+  if (!browseStore.currentType) return
+  const url = filtersInUrl()
+  if ((facetStore.serialize() ?? null) !== url) facetStore.applyEncoded(url ?? '')
+}
+watch(() => [browseStore.currentType, route.query[URL_PARAMS.FILTERS]], reconcileFilters)
+// Initial restore runs on nextTick, NOT via `immediate`: an immediate watcher fires
+// synchronously at registration — AFTER setType above already QUEUED the facet
+// store's type-reset callback but BEFORE that queue flushes — so on a fresh
+// ?type+?filters load the reset wiped the selections applyEncoded had just restored
+// (the URL kept ?filters; the checkboxes lost it). nextTick lands after that flush,
+// giving the first restore the same reset-first ordering every later change gets.
+void nextTick(reconcileFilters)
 // Write: a selection change stamps ?filters (or drops it when cleared). Idempotent
 // against the read watcher — writing a value equal to the current param is skipped.
 // That early-return is also what makes this the RIGHT place to close an open resource
