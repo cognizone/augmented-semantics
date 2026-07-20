@@ -17,7 +17,7 @@ doesn't, queries fail with a **CORS** error and the Types sidebar stays empty.
 
 - **CORS / connection** — see above; check the browser console (F12) for a `CORS_BLOCKED` or network error.
 - **Authentication** — a protected endpoint needs credentials set on the endpoint ([Authentication](configuration.md#authentication)).
-- **Graph config mismatch** — if the endpoint's [graph config](06-graphs.md#how-it-works)
+- **Graph config mismatch** — if the endpoint's [graph config](07-graphs.md#how-it-works)
   is wrong (e.g. its default view is declared *merged* but actually holds unique
   triples), some items can be missed. Open a known resource by URI to confirm the
   data is reachable, then correct the endpoint's graph setting. Left unset, AE RDF

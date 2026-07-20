@@ -8,7 +8,7 @@ This page is for **curators and deployers**: people who shape how a deployed AE 
 
 ## Authoring mode
 
-Everything on this page happens in **Config authoring mode** — a toggle in [Settings](08-settings.md), off by default. Turning it on reveals the per-type gears in the Types sidebar and the export buttons; the configured effects (embed/hide/pin) apply either way. The gear and **Export** stay available even when running a deployed config, so you can tweak and re-export.
+Everything on this page happens in **Config authoring mode** — a toggle in [Settings](09-settings.md), off by default. Turning it on reveals the per-type gears in the Types sidebar and the export buttons; the configured effects (embed/hide/pin) apply either way. The gear and **Export** stay available even when running a deployed config, so you can tweak and re-export.
 
 ## The Endpoint Manager
 
@@ -46,17 +46,34 @@ Credentials are **never saved**: leave them blank and AE RDF asks for them when 
 
 ### Test before saving
 
-Click **Test** to run a tiny `SELECT … LIMIT 1` against the endpoint. You'll get a green success (with response time) or a clear error, most often a [CORS](09-troubleshooting.md#cors-the-endpoint-wont-load) or authentication problem. Then **Save**.
+Click **Test** to run a tiny `SELECT … LIMIT 1` against the endpoint. You'll get a green success (with response time) or a clear error, most often a [CORS](10-troubleshooting.md#cors-the-endpoint-wont-load) or authentication problem. Then **Save**.
 
 ## Per-type configuration
 
-Turn on **Config authoring mode** in [Settings](08-settings.md) to reveal a per-type **gear** in the Types sidebar:
+Turn on **Config authoring mode** in [Settings](09-settings.md) to reveal a per-type **gear** in the Types sidebar:
 
 - **Pin** to the top, or **Hide** (hidden types move into the **Hidden** group, where you can unhide them).
 - **Render as object** — how it shows when it's a *value* of another resource: **Link** (default), **Embed** (inline its properties — for value objects like amounts, addresses, coordinates), or **Label only**.
 - **Group** — assign to an existing group, create a new one, or remove.
 
 Without authoring mode the sidebar is read-only, but the configured effects still apply.
+
+### System groups and sidebar icons
+
+Types are collected into three built-in groups at the bottom of the Types sidebar by their **render** strategy, each with its own icon:
+
+<table>
+<tr>
+<td width="50%" valign="top"><strong>Embedded</strong> (<code>{}</code> icon)<br>Types with <code>render: embed</code>: their properties are inlined under the resources that reference them. Expanded by default.<br><img src="./screenshots/embedded-group.png" alt="The Embedded system group listing eurio value-object types such as PostalAddress, Site, and Coordinates, each with a braces icon" width="100%" loading="lazy"></td>
+<td width="50%" valign="top"><strong>Value objects</strong> (tag icon)<br>Types with <code>render: label</code>: shown as a single composed identity (e.g. a MonetaryAmount as <code>337472.95 · EUR</code>) rather than a browsable page. Collapsed by default.<br><img src="./screenshots/value-objects-group.png" alt="The Value objects system group listing MonetaryAmount, GrantPayment, Acronym, and Label, each with a tag icon" width="100%" loading="lazy"></td>
+</tr>
+</table>
+
+The third group, **Hidden**, collects hidden and blank-node types (collapsed by default). The **Types** header has a `{}` toggle that also nests embedded types under their composing class; either way they stay listed in the **Embedded** group.
+
+<img src="./screenshots/types-toggle.png" alt="The Types sidebar header with Types and Filters tabs and the braces toggle button" width="320" loading="lazy">
+
+A **warning icon on the Embedded group**, with a **red count** on a member, flags **orphaned** embedded instances: instances with no owner to inline them under (see [Embedding safely](#embedding-safely)), so they only ever appear in the group. Hover the count for the exact number; a high-cardinality entity with a large red orphan count usually should not be set to `embed`.
 
 ### Type config reference
 
@@ -165,7 +182,7 @@ The manifest at `config/app.json`:
 | `appName`, `logoUrl`, `documentationUrl` | Branding: header name, logo, and docs link. |
 | `endpoints` | The endpoint list — inline objects and/or `"<slug>"` strings referencing `config/endpoints/<slug>.json`. |
 | `prefixes` | Global `prefix → namespace` map (shared across endpoints). |
-| `doi` | Per-field toggles for the [DOI citation card](05-rich-values.md#rich-values-media-dois-geometry): `authors`, `year`, `title`, `container`, `publisher`, `type`, `categories`, `abstract`, `copyright`, `url` (omitted = shown; `false` hides) and `abstractMaxChars` (truncation length, default 280). |
+| `doi` | Per-field toggles for the [DOI citation card](06-rich-values.md#rich-values-media-dois-geometry): `authors`, `year`, `title`, `container`, `publisher`, `type`, `categories`, `abstract`, `copyright`, `url` (omitted = shown; `false` hides) and `abstractMaxChars` (truncation length, default 280). |
 
 ## Generating groups, embeds & prefixes (`group-types.mjs`)
 
@@ -188,10 +205,10 @@ It requires a profiled config (`typeInventory` + `typeProperties`); run the prof
 
 ## Graph behaviour
 
-With [Config authoring mode](08-settings.md) on, the endpoint edit form gains a **Graph
+With [Config authoring mode](09-settings.md) on, the endpoint edit form gains a **Graph
 behaviour** section: whether the endpoint uses **named graphs (quads)** and what
 its **default (no-`GRAPH`) view** is — *Own* triples or a *Merged* view of the
-quads. Leave both **Auto** unless you know the endpoint; see [Graphs](06-graphs.md).
+quads. Leave both **Auto** unless you know the endpoint; see [Graphs](07-graphs.md).
 It's saved with the endpoint and exported in `app.json`.
 
 ## Exporting a deployment config

@@ -69,3 +69,16 @@
 .vp-doc td {
   padding: 0.75rem;
 }
+
+/* Inline UI icons (SVGs are inlined as data: URIs; screenshots are PNG assets).
+   Keep them text-sized and flush inline — the screenshot box-shadow/radius above
+   is wrong for an icon, and the SVG's intrinsic 24px would break the line. */
+.vp-doc img[src^="data:image/svg+xml"] {
+  display: inline-block;
+  height: 1.1em;
+  width: auto;
+  vertical-align: -0.15em;
+  margin: 0 0.15em;
+  border-radius: 0;
+  box-shadow: none;
+}

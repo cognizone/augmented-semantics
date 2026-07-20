@@ -10,7 +10,7 @@ AE RDF talks directly to SPARQL endpoints from your browser. On a **deployed ins
 
 ## Choosing and switching endpoints
 
-Click the endpoint badge in the header to open the endpoint menu, then pick one. Selecting an endpoint connects to it and (re)loads its [Types](02-browsing.md) sidebar. Switching later works the same way. The active endpoint is kept in the URL as a short slug, so a shared or bookmarked link opens on the right dataset (see [Shareable URLs](07-sharing.md)).
+Click the endpoint badge in the header to open the endpoint menu, then pick one. Selecting an endpoint connects to it and (re)loads its [Types](02-browsing.md) sidebar. Switching later works the same way. The active endpoint is kept in the URL as a short slug, so a shared or bookmarked link opens on the right dataset (see [Shareable URLs](08-sharing.md)).
 
 <img src="./screenshots/endpoint-switcher.png" alt="The header endpoint dropdown open, listing the bundled endpoints with a checkmark on the currently selected LINDAS" width="560" loading="lazy">
 
