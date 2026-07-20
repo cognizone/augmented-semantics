@@ -6,6 +6,10 @@ outline: deep
 
 For types the curator has configured with facets, AE RDF turns the instance list into a **faceted search**: a rail of clickable filters over chosen properties, with live counts, that narrows the list as you click. Everything is still a live query — no precomputed index.
 
+<img src="./screenshots/facets.png" alt="The Filters rail on CORDIS Organisations — Organisation type, Role, and Country facets with five active selections, narrowing the card list beside it" width="800">
+
+<em>See it live → <a href="https://cognizone.github.io/augmented-semantics/rdf-cordis/?type=http://data.europa.eu/s66%23Organisation&filters=[[0,%22v%22,[[%22u%22,%22http://data.europa.eu/s66%23HigherOrSecondaryEducation%22]]],[1,%22v%22,[[%22l%22,%22partner%22,%22%22,%22%22]]],[2,%22v%22,[[%22l%22,%22ES%22,%22%22,%22%22]]]]">Spanish higher-education organisations that were project partners</a> — the exact filtered view above.</em>
+
 ## The Filters rail
 
 When a type has facets configured, the sidebar's header gains a **Filters** tab next to **Types** — switch to it for a full-height panel of clickable **facets** over chosen properties. A *value* facet lists a property's most common values (each with a count); a *range* facet offers numeric bands (e.g. total cost). Click a value or band to narrow the list; click again to deselect. You can pick several values in one facet (matches **any** of them) and combine facets (matches **all** of them). Each facet's counts update to show what you'd get by adding it, and the instance count tracks the filtered total. Use **Clear filters** to reset. Your selections are kept in the URL (`?filters=…`), so a filtered list is **bookmarkable and shareable** — and back/forward step through them (see [Shareable URLs](07-sharing.md)).

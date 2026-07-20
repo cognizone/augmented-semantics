@@ -10,6 +10,8 @@ A fast, browser-only explorer for **any** RDF dataset behind a SPARQL endpoint. 
 
 <img src="./screenshots/overview.png" alt="CORDIS RDF Browser — the type sidebar with counts, and an open Organisation resource showing attributes, relationships, and deeply embedded site / address / coordinates" width="900">
 
+*See it live → [this organisation in the CORDIS edition](https://cognizone.github.io/augmented-semantics/rdf-cordis/?type=http://data.europa.eu/s66%23Organisation&resource=http://data.europa.eu/s66/resource/organisations/0174d385-a624-3c4f-adf7-efbb84c4cdf9) — the exact view above, live.*
+
 
 > **Live queries only** — AE RDF runs entirely on live SPARQL: no backend, no precomputed indexes, no data leaves your machine. Endpoint connection, type discovery, instance lists, the resource view with incoming links, and everything in **Highlights** below all run as live queries against the endpoint.
 
@@ -38,17 +40,6 @@ AE RDF connects directly to SPARQL endpoints from your browser — the endpoint 
 4. Or paste any **resource URI** into the bar at the top and press **Go**.
 
 On a deployed instance the endpoints come from the app's bundled configuration; AE SKOS and AE RDF each ship their own, so the endpoint lists are **not** shared between the tools.
-
-### Header Toolbar
-
-| Button | | Description |
-|--------|---|-------------|
-| **Endpoint** | badge | Shows the active endpoint. Click to switch endpoints or open the [Endpoint Manager](01-endpoints.md). |
-| **SPARQL** | <img src="./icons/icon-terminal.svg" height="16"> | Opens the read-only SPARQL panel — run SELECT / ASK queries against the current endpoint. See [SPARQL panel](04-sparql.md). |
-| **Documentation** | <img src="./icons/icon-help.svg" height="16"> | Opens the AE RDF documentation (this manual). |
-| **Prefixes** | <img src="./icons/icon-tag.svg" height="16"> | The active `prefix → namespace` mappings used to render qnames. |
-| **Dark mode** | <img src="./icons/icon-dark-mode.svg" height="16"> | Toggle light/dark theme. |
-| **Settings** | <img src="./icons/icon-settings.svg" height="16"> | Display, sidebar behaviour, authoring mode, export, and build info. See [Settings](08-settings.md). |
 
 ## User Guide
 

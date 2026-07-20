@@ -6,6 +6,19 @@ outline: deep
 
 Once you're connected, AE RDF gives you two ways into the data: **browse by type**, or **jump straight to a URI**. Everything is a live query against the endpoint.
 
+## Header toolbar
+
+The header holds the app-wide controls:
+
+| Button | | Description |
+|--------|---|-------------|
+| **Endpoint** | badge | Shows the active endpoint. Click to switch endpoints or open the [Endpoint Manager](01-endpoints.md). |
+| **SPARQL** | <img src="./icons/icon-terminal.svg" height="16"> | Opens the read-only SPARQL panel — run SELECT / ASK queries against the current endpoint. See [SPARQL panel](04-sparql.md). |
+| **Documentation** | <img src="./icons/icon-help.svg" height="16"> | Opens the AE RDF documentation (this manual). |
+| **Prefixes** | <img src="./icons/icon-tag.svg" height="16"> | The active `prefix → namespace` mappings used to render qnames. |
+| **Dark mode** | <img src="./icons/icon-dark-mode.svg" height="16"> | Toggle light/dark theme. |
+| **Settings** | <img src="./icons/icon-settings.svg" height="16"> | Display, sidebar behaviour, authoring mode, export, and build info. See [Settings](08-settings.md). |
+
 ## Types sidebar
 
 The left sidebar lists the dataset's `rdf:type`s, most common first, with a **distinct-instance count** next to each. Click any navigable type — including embedded ones — to list its instances in the main pane. (Blank-node types — whose instances are anonymous nodes with no page — sit in the **Hidden** group and aren't clickable; you only ever see them inlined under a resource that uses them.)
