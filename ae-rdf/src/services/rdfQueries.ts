@@ -325,7 +325,7 @@ export interface FacetValueSelection {
 /** A RANGE facet's current selection: the property + the chosen bands (OR'd). */
 export interface FacetRangeSelection {
   predicate: string
-  ranges: { min?: number; max?: number }[]
+  ranges: { min?: number; max?: number; missing?: boolean }[]
   /** Hop predicate(s) to the value (see FacetConfig.via). */
   via?: string | string[]
   /** `date` → bands are YEARs compared as xsd:date; else numeric (decimal cast). */
@@ -420,9 +420,21 @@ export function buildFacetConstraints(selections: FacetSelection[], s: GraphStra
       const path = facetPath('?s', pred, sel.via, v, s, `?fg${i}`)
       if (!path) continue
       const isDate = sel.datatype === 'date'
-      const bands = sel.ranges.map(r => `(${rangeCond(v, r, isDate)})`)
-      if (!bands.length) continue
-      parts.push(`{ ${path} FILTER(${bands.join(' || ')}) }`)
+      const ranged = sel.ranges.filter(r => !r.missing)
+      const wantMissing = sel.ranges.some(r => r.missing)
+      if (!ranged.length && !wantMissing) continue
+      if (!wantMissing) {
+        // Value-in-band only: inner-join the value, OR the bands. (unchanged path)
+        parts.push(`{ ${path} FILTER(${ranged.map(r => `(${rangeCond(v, r, isDate)})`).join(' || ')}) }`)
+      } else {
+        // A "No date" band is selected (± value bands): OPTIONAL-bind the value so
+        // the constraint also matches type instances that HAVE NO value. Emitted at
+        // group level (unbraced) so ?s (bound by the caller's membership/core) anchors
+        // the OPTIONAL and the group FILTER — mirrors the orphanVia NOT-EXISTS pattern.
+        const alts = ranged.map(r => `(BOUND(${v}) && (${rangeCond(v, r, isDate)}))`)
+        alts.push(`!BOUND(${v})`)
+        parts.push(`OPTIONAL { ${path} } FILTER(${alts.join(' || ')})`)
+      }
     } else {
       const terms = sel.terms.map(renderFacetTerm).filter(Boolean)
       if (!terms.length) continue
@@ -468,9 +480,15 @@ export function buildFacetValuesQuery(
 }
 
 /**
- * A RANGE facet's bucket counts in ONE query: a per-bucket `SUM(IF(cond, 1, 0))`
- * aggregate (`?b0`, `?b1`, …) over the type's (constrained) values. Graph-scoped
- * per strategy like buildFacetValuesQuery.
+ * A RANGE facet's VALUE-bucket counts in ONE query: a per-bucket `SUM(IF(cond, 1, 0))`
+ * aggregate (`?b0`, `?b1`, …) over the type's (constrained) values, INNER-joined on the
+ * value so the value index stays usable and the query is fast. Graph-scoped per strategy
+ * like buildFacetValuesQuery.
+ *
+ * A "no value" (missing) bucket is NOT counted here: it needs an OPTIONAL/NOT-EXISTS
+ * full-type scan that would drag EVERY bucket down to that speed. It's a SEPARATE query
+ * (buildFacetMissingCountQuery) so the fast value buckets render without waiting on the
+ * slow scan — callers pass only value bands here and run the missing count on the side.
  *
  * NOTE: this counts value OCCURRENCES, not distinct subjects — correct for a
  * max-1 (functional) numeric property, which is what range facets target; a
@@ -491,6 +509,31 @@ export function buildFacetRangesQuery(
   const valTriple = facetPath('?s', pred, via, '?v', s, '?vg') ?? 'FILTER(false)'
   const aggs = buckets.map((b, i) => `(SUM(IF(${rangeCond('?v', b, date)}, 1, 0)) AS ?b${i})`).join(' ')
   return `SELECT ${aggs} WHERE { ${membership(`<${iri}>`, s)} ${frag}${valTriple} }`
+}
+
+/**
+ * Count of a type's instances that have NO value for a range facet's property — the
+ * "no value" bucket, run SEPARATELY from the value buckets (buildFacetRangesQuery) so
+ * that fast, index-friendly query renders first while this full-type scan fills in late.
+ * `constraintFragment` (other facets) narrows `?s` the same way; the value path is scoped
+ * per strategy and negated with a group-level NOT EXISTS (?s bound by membership —
+ * mirrors the orphanVia pattern in instanceMatch). COUNT(DISTINCT ?s) counts SUBJECTS,
+ * which is exactly right for "has no value at all". Returns '' when the via path is
+ * unsafe (caller then leaves the bucket at 0 rather than emitting a broken query).
+ */
+export function buildFacetMissingCountQuery(
+  typeUri: string,
+  predicate: string,
+  constraintFragment: string,
+  s: GraphStrategy,
+  via?: string | string[],
+): string {
+  const iri = sanitizeIri(typeUri)
+  const pred = sanitizeIri(predicate)
+  const valTriple = facetPath('?s', pred, via, '?v', s, '?vg')
+  if (!valTriple) return ''
+  const frag = constraintFragment ? `${constraintFragment} ` : ''
+  return `SELECT (COUNT(DISTINCT ?s) AS ?n) WHERE { ${membership(`<${iri}>`, s)} ${frag}FILTER NOT EXISTS { ${valTriple} } }`
 }
 
 /**

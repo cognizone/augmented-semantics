@@ -179,8 +179,10 @@ export interface FacetConfig {
   /** Facet heading. Default: the humanized local name of `predicate`. */
   label?: string
   /** Numeric buckets. Presence makes this a RANGE facet; each band counts values
-   *  where `min <= v < max` (either bound may be omitted for an open-ended band). */
-  ranges?: { label: string; min?: number; max?: number }[]
+   *  where `min <= v < max` (either bound may be omitted for an open-ended band).
+   *  A band with `missing: true` instead matches instances that have NO value for
+   *  the predicate (e.g. a "No date" bucket) — min/max are ignored on that band. */
+  ranges?: { label: string; min?: number; max?: number; missing?: boolean }[]
   /** RANGE facets only. `date` treats each band's `min`/`max` as a YEAR and compares
    *  the value as an `xsd:date` (`>= "min-01-01"`, `< "max-01-01"`); default treats
    *  the value as numeric (`xsd:decimal` cast). */

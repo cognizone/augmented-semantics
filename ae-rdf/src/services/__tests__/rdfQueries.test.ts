@@ -35,6 +35,7 @@ import {
   buildFacetConstraints,
   buildFacetValuesQuery,
   buildFacetRangesQuery,
+  buildFacetMissingCountQuery,
   type FacetSelection,
 } from '../rdfQueries'
 
@@ -386,6 +387,20 @@ describe('buildFacetConstraints (selection serialization)', () => {
     expect(only).not.toContain('>=')
   })
 
+  it('missing band → OPTIONAL-bind value + group FILTER so instances with NO value match', () => {
+    const DATE = 'http://purl.org/dc/terms/dateAccepted'
+    const XDATE = '<http://www.w3.org/2001/XMLSchema#date>'
+    // missing only: match instances lacking the value entirely
+    const only = buildFacetConstraints([{ predicate: DATE, datatype: 'date', ranges: [{ missing: true }] }], DEFAULT)
+    expect(only).toContain(`OPTIONAL { ?s <${DATE}> ?f0 . }`)
+    expect(only).toContain('FILTER(!BOUND(?f0))')
+    // missing + a value band → guarded band OR'd with !BOUND
+    const mixed = buildFacetConstraints([{ predicate: DATE, datatype: 'date', ranges: [{ min: 2022, max: 2023 }, { missing: true }] }], DEFAULT)
+    expect(mixed).toContain(`OPTIONAL { ?s <${DATE}> ?f0 . }`)
+    expect(mixed).toContain(`(BOUND(?f0) && (?f0 >= "2022-01-01"^^${XDATE} && ?f0 < "2023-01-01"^^${XDATE}))`)
+    expect(mixed).toContain('|| !BOUND(?f0)')
+  })
+
   it('scopes the constraint triple per strategy (mirrors instanceMatch)', () => {
     // Two terms so the facet var survives (a single term inlines the object).
     const sel: FacetSelection[] = [{ predicate: P1, terms: [uri('http://x/A'), uri('http://x/B')] }]
@@ -441,6 +456,34 @@ describe('buildFacetRangesQuery', () => {
     const q = buildFacetRangesQuery(TYPE, AMOUNT, [{ min: 0 }], 'FRAG_HERE', NAMED)
     expect(q).toContain('FRAG_HERE')
     expect(q).toContain(`GRAPH ?g { ?s a <${TYPE}> . }`)
+  })
+  it('counts value bands with a plain inner join (no OPTIONAL — keeps the value index usable)', () => {
+    const DATE = 'http://purl.org/dc/terms/dateAccepted'
+    const XDATE = '<http://www.w3.org/2001/XMLSchema#date>'
+    const q = buildFacetRangesQuery(TYPE, DATE, [{ min: 2022, max: 2023 }], '', DEFAULT, undefined, true)
+    expect(q).not.toContain('OPTIONAL')
+    expect(q).not.toContain('BOUND')
+    expect(q).toContain(`?s <${DATE}> ?v`)
+    expect(q).toContain(`(SUM(IF(?v >= "2022-01-01"^^${XDATE} && ?v < "2023-01-01"^^${XDATE}, 1, 0)) AS ?b0)`)
+  })
+})
+
+describe('buildFacetMissingCountQuery ("no value" bucket, run separately)', () => {
+  const DATE = 'http://purl.org/dc/terms/dateAccepted'
+  it('counts distinct subjects with NO value via a group-level NOT EXISTS', () => {
+    const q = buildFacetMissingCountQuery(TYPE, DATE, '', DEFAULT)
+    expect(q).toContain('SELECT (COUNT(DISTINCT ?s) AS ?n)')
+    expect(q).toContain(`?s a <${TYPE}>`)              // membership binds ?s
+    expect(q).toContain(`FILTER NOT EXISTS { ?s <${DATE}> ?v . }`)
+  })
+  it('embeds the constraint fragment (other facets) and scopes per strategy', () => {
+    const q = buildFacetMissingCountQuery(TYPE, DATE, 'FRAG_HERE', NAMED)
+    expect(q).toContain('FRAG_HERE')
+    expect(q).toContain(`GRAPH ?g { ?s a <${TYPE}> . }`)
+    expect(q).toContain(`GRAPH ?vg { ?s <${DATE}> ?v . }`)
+  })
+  it('returns "" when the via path is unsafe (caller then leaves the bucket at 0)', () => {
+    expect(buildFacetMissingCountQuery(TYPE, DATE, '', DEFAULT, 'bad > } DROP')).toBe('')
   })
 })
 

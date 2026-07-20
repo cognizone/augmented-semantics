@@ -37,10 +37,12 @@ import {
   buildFacetConstraints,
   buildFacetValuesQuery,
   buildFacetRangesQuery,
+  buildFacetMissingCountQuery,
   resolveGraphStrategy,
   type GraphStrategy,
   type FacetSelection,
   type FacetValueTerm,
+  type SPARQLResults,
 } from '../services'
 import { resolveLabels } from '../composables/composeLabels'
 import { labelLangs } from '../utils/labelLang'
@@ -57,11 +59,12 @@ export interface FacetValueItem {
   count: number
 }
 
-/** One selectable band in a RANGE facet. */
+/** One selectable band in a RANGE facet. `count` is null while its count is still
+ *  loading (bands appear from config immediately; counts fill in per query). */
 export interface FacetRangeItem {
   index: number
   label: string
-  count: number
+  count: number | null
 }
 
 /** A facet ready for the panel: heading + its value rows or range bands. */
@@ -69,6 +72,8 @@ export interface FacetView {
   predicate: string
   label: string
   kind: 'value' | 'range'
+  /** This facet still has a count query in flight (progressive load). */
+  pending?: boolean
   /** VALUE facets: values, count-desc (zero-count hidden by the UI). */
   values?: FacetValueItem[]
   /** VALUE facets: more values exist than `limit` (show a "top N" note). */
@@ -105,6 +110,26 @@ export const useFacetStore = defineStore('facets', () => {
 
   let requestId = 0
 
+  // Session cache of facet-count query results, keyed by the full query STRING — which
+  // encodes type + graph strategy + every constraint fragment + bands/predicate, so an
+  // identical selection state maps to the identical key. Check→uncheck (and re-selecting
+  // any state already seen) is served from here instead of re-hitting the endpoint — the
+  // point being the slow "No value" scan is computed once per constraint state, not per
+  // toggle. MUST be cleared on type/endpoint/graph change (resetState + the graph
+  // watcher): two endpoints can share a type IRI and thus a query string. In-memory only,
+  // so a page reload always gets fresh counts. Unbounded within a type — the number of
+  // selection combinations a user explores in one session is small.
+  // ponytail: no eviction; add an LRU cap only if a session ever explores enough facet
+  // combinations to matter (it won't).
+  const countCache = new Map<string, SPARQLResults>()
+  async function runCached(endpoint: SPARQLEndpoint, query: string): Promise<SPARQLResults> {
+    const hit = countCache.get(query)
+    if (hit) return hit
+    const res = await executeSparql(endpoint, query, { retries: 1 })
+    countCache.set(query, res)
+    return res
+  }
+
   // Definitions for the current type, straight from its config (reactive to the
   // endpoint's type map). Empty when no type is selected or none are configured.
   const definitions = computed<FacetConfig[]>(() => {
@@ -132,7 +157,7 @@ export const useFacetStore = defineStore('facets', () => {
         const set = rangeSelections.value.get(def.predicate)
         if (set?.size) out.push({
           predicate: def.predicate,
-          ranges: [...set].map(i => def.ranges![i]).filter((r): r is { label: string; min?: number; max?: number } => !!r),
+          ranges: [...set].map(i => def.ranges![i]).filter((r): r is { label: string; min?: number; max?: number; missing?: boolean } => !!r),
           via: def.via,
           datatype: def.datatype,
         })
@@ -155,12 +180,12 @@ export const useFacetStore = defineStore('facets', () => {
   })
 
   /**
-   * Load every configured facet's counts. Each facet's counts apply the OTHER
-   * facets' selections but NOT its own (collectSelections(def.predicate)), so an
-   * unselected value shows what narrowing to it would yield. URI value labels come
-   * from the canonical resolver (batched), falling back to a qname; literals render
-   * as-is. Guarded by isCurrent (token + endpoint + type). Facet failures are warned,
-   * never surfaced as an error — the list stays usable.
+   * Load every configured facet's counts PROGRESSIVELY — the whole rail (headings +
+   * range bands from config) appears at once, then each facet's counts fill in as its
+   * own query returns, so one slow facet never blocks the fast ones. Each facet's counts
+   * apply the OTHER facets' selections but NOT its own (collectSelections(def.predicate)),
+   * so an unselected value shows what narrowing to it would yield. Guarded by isCurrent
+   * (token + endpoint + type). Facet failures are warned, never surfaced as an error.
    */
   async function load(): Promise<void> {
     const type = browseStore.currentType
@@ -180,53 +205,117 @@ export const useFacetStore = defineStore('facets', () => {
 
     loading.value = true
     logger.info('facetStore', 'Loading facet counts', { type, active: activeCount.value })
+
+    // Seed placeholders in config order so the rail structure shows immediately: range
+    // bands come from config (counts null = "loading"), value facets start empty+pending.
+    // But a reload over the SAME facets (a toggle / clear / graph switch) keeps the
+    // current counts ON SCREEN — just flags them pending — so interacting never blanks
+    // the rail to "…"; the per-facet patches overwrite counts in place as they land.
+    const samePreds =
+      results.value.length === defs.length &&
+      results.value.every((v, i) => v.predicate === defs[i]!.predicate)
+    results.value = samePreds
+      ? results.value.map(v => ({ ...v, pending: true }))
+      : defs.map((def): FacetView => {
+          const heading = def.label?.trim() || humanizeLocalName(def.predicate)
+          return def.ranges?.length
+            ? { predicate: def.predicate, label: heading, kind: 'range', pending: true, ranges: def.ranges.map((b, i) => ({ index: i, label: b.label, count: null })) }
+            : { predicate: def.predicate, label: heading, kind: 'value', pending: true, values: [] }
+        })
+
     try {
-      await loadCounts(endpoint, type, defs, strategy, isCurrent)
-    } catch (e) {
-      logger.warn('facetStore', 'Facet load failed', { type, error: e })
+      // Each facet loads independently and writes only its own slot.
+      await Promise.all(defs.map((def, idx) => loadFacet(endpoint, type, def, idx, strategy, isCurrent)))
     } finally {
       if (isCurrent()) loading.value = false
     }
   }
 
-  async function loadCounts(
+  /** Replace facet `idx`'s view with `next(current)`, but only if still current AND the
+   *  slot still holds the same facet — a stale write from a superseded load is dropped. */
+  function patch(idx: number, predicate: string, next: (v: FacetView) => FacetView, isCurrent: () => boolean) {
+    if (!isCurrent()) return
+    const cur = results.value[idx]
+    if (cur?.predicate === predicate) results.value[idx] = next(cur)
+  }
+
+  async function loadFacet(
     endpoint: SPARQLEndpoint,
     type: string,
-    defs: FacetConfig[],
+    def: FacetConfig,
+    idx: number,
     strategy: GraphStrategy,
     isCurrent: () => boolean,
   ): Promise<void> {
-    const raw = await Promise.all(defs.map(async def => {
-      const fragment = buildFacetConstraints(collectSelections(def.predicate), strategy)
-      if (def.ranges?.length) {
-        const q = buildFacetRangesQuery(type, def.predicate, def.ranges, fragment, strategy, def.via, def.datatype === 'date')
-        const res = await executeSparql(endpoint, q, { retries: 1 })
-        const b = res.results.bindings[0] ?? {}
-        const counts = def.ranges.map((_, i) => parseInt(b[`b${i}`]?.value ?? '0', 10))
-        return { def, kind: 'range' as const, counts }
-      }
-      const limit = def.limit ?? DEFAULT_FACET_LIMIT
-      const q = buildFacetValuesQuery(type, def.predicate, fragment, strategy, limit, def.via)
-      const res = await executeSparql(endpoint, q, { retries: 1 })
-      const rows = res.results.bindings
-        .map(bd => {
-          const v = bd.v
-          const term: FacetValueTerm = {
-            value: v?.value ?? '',
-            isUri: v?.type === 'uri',
-            datatype: v?.datatype,
-            lang: v?.['xml:lang'],
-          }
-          return { term, key: facetTermKey(term), count: parseInt(bd.n?.value ?? '0', 10) }
-        })
-        .filter(row => row.term.value)
-      const truncated = rows.length > limit
-      return { def, kind: 'value' as const, rows: rows.slice(0, limit), truncated, limit }
-    }))
-    if (!isCurrent()) return
+    const fragment = buildFacetConstraints(collectSelections(def.predicate), strategy)
+    try {
+      if (def.ranges?.length) await loadRangeFacet(endpoint, type, def, idx, fragment, strategy, isCurrent)
+      else await loadValueFacet(endpoint, type, def, idx, fragment, strategy, isCurrent)
+    } catch (e) {
+      logger.warn('facetStore', 'Facet failed', { predicate: def.predicate, error: e })
+      patch(idx, def.predicate, v => ({ ...v, pending: false }), isCurrent)
+    }
+  }
 
-    // Batch-resolve URI value labels (canonical resolver + qname fallback).
-    const uriValues = [...new Set(raw.flatMap(r => (r.kind === 'value' ? r.rows.filter(x => x.term.isUri).map(x => x.term.value) : [])))]
+  /** RANGE facet: fast value-band counts first (one inner-join query), then the slow
+   *  "no value" count separately (a full-type NOT-EXISTS scan) so it never blocks the
+   *  value bands. Each result patches only the bands it covers. */
+  async function loadRangeFacet(
+    endpoint: SPARQLEndpoint, type: string, def: FacetConfig, idx: number,
+    fragment: string, strategy: GraphStrategy, isCurrent: () => boolean,
+  ): Promise<void> {
+    const bands = def.ranges!
+    const isDate = def.datatype === 'date'
+    const missingIdx = bands.findIndex(b => b.missing)
+    // Config band index → its aggregate var index (?b0, ?b1, …), value bands only.
+    const valueBands = bands.map((b, i) => ({ b, i })).filter(x => !x.b.missing)
+
+    if (valueBands.length) {
+      const q = buildFacetRangesQuery(type, def.predicate, valueBands.map(x => x.b), fragment, strategy, def.via, isDate)
+      const res = await runCached(endpoint, q)
+      const row = res.results.bindings[0] ?? {}
+      const counts = new Map(valueBands.map((x, k) => [x.i, parseInt(row[`b${k}`]?.value ?? '0', 10)]))
+      patch(idx, def.predicate, v => ({
+        ...v,
+        pending: missingIdx >= 0, // still one query (the missing count) to go
+        ranges: v.ranges!.map(r => (counts.has(r.index) ? { ...r, count: counts.get(r.index)! } : r)),
+      }), isCurrent)
+    }
+
+    if (missingIdx >= 0) {
+      const mq = buildFacetMissingCountQuery(type, def.predicate, fragment, strategy, def.via)
+      const n = mq ? parseInt((await runCached(endpoint, mq)).results.bindings[0]?.n?.value ?? '0', 10) : 0
+      patch(idx, def.predicate, v => ({
+        ...v, pending: false,
+        ranges: v.ranges!.map(r => (r.index === missingIdx ? { ...r, count: n } : r)),
+      }), isCurrent)
+    }
+  }
+
+  /** VALUE facet: top-N values with counts, then resolve THIS facet's URI value labels
+   *  (canonical resolver + qname fallback) so the facet renders as soon as its own
+   *  labels land — no cross-facet barrier. */
+  async function loadValueFacet(
+    endpoint: SPARQLEndpoint, type: string, def: FacetConfig, idx: number,
+    fragment: string, strategy: GraphStrategy, isCurrent: () => boolean,
+  ): Promise<void> {
+    const limit = def.limit ?? DEFAULT_FACET_LIMIT
+    const q = buildFacetValuesQuery(type, def.predicate, fragment, strategy, limit, def.via)
+    const res = await runCached(endpoint, q)
+    if (!isCurrent()) return
+    const rows = res.results.bindings
+      .map(bd => {
+        const v = bd.v
+        const term: FacetValueTerm = {
+          value: v?.value ?? '', isUri: v?.type === 'uri', datatype: v?.datatype, lang: v?.['xml:lang'],
+        }
+        return { term, key: facetTermKey(term), count: parseInt(bd.n?.value ?? '0', 10) }
+      })
+      .filter(row => row.term.value)
+    const truncated = rows.length > limit
+    const top = rows.slice(0, limit)
+
+    const uriValues = [...new Set(top.filter(x => x.term.isUri).map(x => x.term.value))]
     const labelMap = new Map<string, string>()
     const langs = labelLangs(endpoint.languagePriorities, languageStore.preferred)
     if (uriValues.length) {
@@ -234,33 +323,24 @@ export const useFacetStore = defineStore('facets', () => {
       if (!isCurrent()) return
     }
     const resolved = uriValues.length ? await resolveUris(uriValues) : new Map()
-    if (!isCurrent()) return
 
-    results.value = raw.map((r): FacetView => {
-      const heading = r.def.label?.trim() || humanizeLocalName(r.def.predicate)
-      if (r.kind === 'range') {
-        return {
-          predicate: r.def.predicate, label: heading, kind: 'range',
-          ranges: r.def.ranges!.map((band, i) => ({ index: i, label: band.label, count: r.counts[i] ?? 0 })),
-        }
-      }
-      return {
-        predicate: r.def.predicate, label: heading, kind: 'value', truncated: r.truncated, limit: r.limit,
-        values: r.rows.map(x => ({
-          key: x.key,
-          term: x.term,
-          count: x.count,
-          label: x.term.isUri ? (labelMap.get(x.term.value) ?? qname(x.term.value, resolved)) : formatLiteral(x.term.value, false),
-        })),
-      }
-    })
+    patch(idx, def.predicate, v => ({
+      ...v, pending: false, truncated, limit,
+      values: top.map(x => ({
+        key: x.key, term: x.term, count: x.count,
+        label: x.term.isUri ? (labelMap.get(x.term.value) ?? qname(x.term.value, resolved)) : formatLiteral(x.term.value, false),
+      })),
+    }), isCurrent)
   }
 
-  /** Drop all selections + results (a fresh type/endpoint carries no filters). */
+  /** Drop all selections + results (a fresh type/endpoint carries no filters). Also
+   *  clears the count cache — its keys belong to the old type/endpoint (a shared type
+   *  IRI across endpoints could otherwise return the wrong endpoint's counts). */
   function resetState() {
     valueSelections.value = new Map()
     rangeSelections.value = new Map()
     results.value = []
+    countCache.clear()
   }
 
   // ── Interactions ───────────────────────────────────────────────────────────
@@ -391,9 +471,10 @@ export const useFacetStore = defineStore('facets', () => {
     },
     { immediate: true },
   )
-  // Graph scope change → the counts differ but the selections still apply; reload
-  // counts in place (keep selections), same as the instance list reloads its list.
-  watch(() => browseStore.graph, () => load())
+  // Graph scope change → the counts differ but the selections still apply; drop the
+  // cache (its counts were for the old scope) and reload in place (keep selections),
+  // same as the instance list reloads its list.
+  watch(() => browseStore.graph, () => { countCache.clear(); load() })
 
   return {
     // state / getters

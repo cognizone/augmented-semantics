@@ -27,7 +27,10 @@ const showLoading = useDelayedLoading(computed(() => facetStore.loading))
     </div>
 
     <div v-for="f in facetStore.results" :key="f.predicate" class="facet-block">
-      <div class="facet-heading">{{ f.label }}</div>
+      <div class="facet-heading">
+        <span>{{ f.label }}</span>
+        <span v-if="f.pending" class="facet-spinner" aria-label="updating" />
+      </div>
       <div class="facet-chips">
         <template v-if="f.kind === 'value'">
           <button
@@ -42,6 +45,7 @@ const showLoading = useDelayedLoading(computed(() => facetStore.loading))
             <span class="facet-chip-label">{{ v.label }}</span>
             <span class="facet-chip-count">{{ v.count.toLocaleString('en-US') }}</span>
           </button>
+          <span v-if="f.pending" class="facet-note">…</span>
           <span v-if="f.truncated" class="facet-note">top {{ f.limit }} shown</span>
         </template>
         <template v-else>
@@ -49,12 +53,12 @@ const showLoading = useDelayedLoading(computed(() => facetStore.loading))
             v-for="b in f.ranges!"
             :key="b.index"
             class="facet-chip"
-            :class="{ active: facetStore.isRangeSelected(f.predicate, b.index) }"
+            :class="{ active: facetStore.isRangeSelected(f.predicate, b.index), loading: b.count === null }"
             :aria-pressed="facetStore.isRangeSelected(f.predicate, b.index)"
             @click="facetStore.toggleRange(f.predicate, b.index)"
           >
             <span class="facet-chip-label">{{ b.label }}</span>
-            <span class="facet-chip-count">{{ b.count.toLocaleString('en-US') }}</span>
+            <span class="facet-chip-count">{{ b.count === null ? '…' : b.count.toLocaleString('en-US') }}</span>
           </button>
         </template>
       </div>
@@ -113,10 +117,28 @@ const showLoading = useDelayedLoading(computed(() => facetStore.loading))
 }
 
 .facet-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
   font-size: 0.6875rem;
   font-weight: 600;
   color: var(--ae-text-primary);
   margin-bottom: 0.3rem;
+}
+
+/* Tiny spinner beside the heading while this facet's counts are still loading —
+   shown on first load AND on refresh (when the old counts stay on screen). */
+.facet-spinner {
+  width: 9px;
+  height: 9px;
+  border: 1.5px solid var(--ae-border-color);
+  border-top-color: var(--ae-accent);
+  border-radius: 50%;
+  animation: facet-spin 0.6s linear infinite;
+}
+
+@keyframes facet-spin {
+  to { transform: rotate(360deg); }
 }
 
 .facet-chips {
@@ -166,6 +188,11 @@ const showLoading = useDelayedLoading(computed(() => facetStore.loading))
 
 .facet-chip.active .facet-chip-count {
   color: var(--ae-accent);
+}
+
+/* Band whose count is still loading — dimmed until its number lands. */
+.facet-chip.loading {
+  opacity: 0.55;
 }
 
 .facet-note {
