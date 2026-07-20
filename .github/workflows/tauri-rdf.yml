@@ -1,34 +1,54 @@
-name: Build ERA RDF Browser
+name: Build RDF Browser
 
+# Split tags pick the app: rdf-era-v* → ERA RDF Browser, rdf-cordis-v* → CORDIS
+# RDF Browser. Both build from ae-rdf; the app-specific config is merged in via
+# --config for CORDIS (the base tauri.conf.json is ERA).
 on:
   push:
     tags:
-      - 'rdf-v*'
+      - 'rdf-era-v*'
+      - 'rdf-cordis-v*'
   workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
-  # Create ONE draft release up front and hand its id to the matrix build jobs.
-  # Without this, parallel matrix jobs each create a release for the same tag and
-  # the artifacts scatter across duplicates (happened on rdf-v0.1.0).
+  # Parse the tag → app product name + the extra tauri --config arg, and create ONE
+  # draft release up front (parallel matrix jobs must share it, else artifacts
+  # scatter across duplicate releases for the same tag).
   create-release:
     runs-on: ubuntu-latest
     outputs:
       release_id: ${{ steps.create.outputs.result }}
+      config_arg: ${{ steps.app.outputs.config_arg }}
+      product: ${{ steps.app.outputs.product }}
     steps:
+      - name: Resolve app from tag
+        id: app
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          if [[ "$TAG" == rdf-cordis-* ]]; then
+            echo "product=CORDIS RDF Browser" >> "$GITHUB_OUTPUT"
+            echo "config_arg=--config src-tauri/tauri.cordis.conf.json" >> "$GITHUB_OUTPUT"
+          else
+            echo "product=ERA RDF Browser" >> "$GITHUB_OUTPUT"
+            echo "config_arg=" >> "$GITHUB_OUTPUT"
+          fi
       - name: Create draft release
         id: create
         uses: actions/github-script@v7
+        env:
+          PRODUCT: ${{ steps.app.outputs.product }}
         with:
           script: |
             const tag = context.ref.replace('refs/tags/', '')
+            const product = process.env.PRODUCT
             const { data } = await github.rest.repos.createRelease({
               owner: context.repo.owner,
               repo: context.repo.repo,
               tag_name: tag,
-              name: `ERA RDF Browser ${tag}`,
+              name: `${product} ${tag}`,
               body: 'Download the installer for your platform below.',
               draft: true,
               prerelease: false,
@@ -82,13 +102,14 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # tauri build runs beforeBuildCommand: `npm run build && node scripts/bundle-era-config.mjs`,
-      # which bakes apps/era-rdf/app.json (EVR default + ERA endpoints) and logo into dist/config.
-      - name: Build ERA RDF Browser
+      # tauri build runs beforeBuildCommand, which bakes the app's config
+      # (apps/<app>/app.json + optional logo) into dist/config via bundle-app-config.mjs.
+      # config_arg merges the CORDIS override onto the base (ERA) tauri.conf.json.
+      - name: Build ${{ needs.create-release.outputs.product }}
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           projectPath: ae-rdf
           releaseId: ${{ needs.create-release.outputs.release_id }}
-          args: ${{ matrix.args }}
+          args: ${{ matrix.args }} ${{ needs.create-release.outputs.config_arg }}

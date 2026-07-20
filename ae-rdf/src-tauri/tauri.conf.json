@@ -1,13 +1,13 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "ERA RDF Browser",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "identifier": "com.augmented-semantics.era-rdf",
   "build": {
     "frontendDist": "../dist",
     "devUrl": "http://localhost:5173",
     "beforeDevCommand": "npm run dev",
-    "beforeBuildCommand": "npm run build && node scripts/bundle-era-config.mjs"
+    "beforeBuildCommand": "npm run build && node scripts/bundle-app-config.mjs era-rdf"
   },
   "app": {
     "windows": [

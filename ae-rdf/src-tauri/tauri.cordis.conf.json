@@ -1,0 +1,20 @@
+{
+  "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
+  "productName": "CORDIS RDF Browser",
+  "version": "0.4.0",
+  "identifier": "com.augmented-semantics.cordis-rdf",
+  "build": {
+    "beforeBuildCommand": "npm run build && node scripts/bundle-app-config.mjs cordis-rdf"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "CORDIS RDF Browser",
+        "width": 1200,
+        "height": 800,
+        "resizable": true,
+        "fullscreen": false
+      }
+    ]
+  }
+}
