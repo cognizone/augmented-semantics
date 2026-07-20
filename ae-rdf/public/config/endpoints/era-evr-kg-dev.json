@@ -1,5 +1,5 @@
 {
-  "name": "ERA EVR-KG (dev)",
+  "name": "ERA EVR (dev)",
   "url": "https://graph.dev.data.test-era.europa.eu/repositories/EVR-KG",
   "backend": "graphdb",
   "auth": {
@@ -142,6 +142,23 @@
           "predicate": "http://purl.org/dc/terms/audience",
           "label": "Register",
           "limit": 25
+        },
+        {
+          "predicate": "http://purl.org/dc/terms/dateAccepted",
+          "label": "Accepted",
+          "datatype": "date",
+          "ranges": [
+            { "label": "2026", "min": 2026, "max": 2027 },
+            { "label": "2025", "min": 2025, "max": 2026 },
+            { "label": "2024", "min": 2024, "max": 2025 },
+            { "label": "2023", "min": 2023, "max": 2024 },
+            { "label": "2022", "min": 2022, "max": 2023 },
+            { "label": "2020–2021", "min": 2020, "max": 2022 },
+            { "label": "2010s", "min": 2010, "max": 2020 },
+            { "label": "2000s", "min": 2000, "max": 2010 },
+            { "label": "Before 2000", "max": 2000 },
+            { "label": "No date", "missing": true }
+          ]
         }
       ]
     },

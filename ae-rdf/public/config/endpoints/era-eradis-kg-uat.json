@@ -1,5 +1,5 @@
 {
-  "name": "ERA ERADIS-KG (UAT)",
+  "name": "ERA ERADIS (UAT)",
   "url": "https://graph.uat.data.test-era.europa.eu/repositories/ERADIS-KG",
   "deprecatedPredicates": [
     "http://www.w3.org/2002/07/owl#deprecated"

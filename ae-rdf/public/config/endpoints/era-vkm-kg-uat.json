@@ -1,5 +1,5 @@
 {
-  "name": "ERA VKM-KG (UAT)",
+  "name": "ERA VKM (UAT)",
   "url": "https://graph.uat.data.test-era.europa.eu/repositories/VKM-KG",
   "backend": "graphdb",
   "typeInventory": [

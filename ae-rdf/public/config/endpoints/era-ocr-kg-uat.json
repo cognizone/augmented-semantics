@@ -1,5 +1,5 @@
 {
-  "name": "ERA OCR-KG (UAT)",
+  "name": "ERA OCR (UAT)",
   "url": "https://graph.uat.data.test-era.europa.eu/repositories/OCR-KG",
   "backend": "graphdb",
   "typeInventory": [

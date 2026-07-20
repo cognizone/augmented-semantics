@@ -1,5 +1,5 @@
 {
-  "name": "ERA RINF",
+  "name": "ERA RINF (prod)",
   "url": "https://rinf.data.era.europa.eu/api/v1/sparql/rinf",
   "prefixes": {
     "sf": "http://www.opengis.net/ont/sf#",
