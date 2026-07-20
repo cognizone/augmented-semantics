@@ -4,7 +4,9 @@ outline: deep
 
 # SPARQL panel
 
-The <img src="./icons/icon-terminal.svg" height="14"> button in the header opens a **read-only SPARQL panel** — a syntax-highlighting editor for running your own queries against the current endpoint.
+The <img src="./icons/icon-terminal.svg" height="14"> button in the header opens a **read-only SPARQL panel**, a syntax-highlighting editor for running your own queries against the current endpoint.
+
+<img src="./screenshots/sparql-panel.png" alt="The SPARQL panel with named query tabs, a highlighted SELECT over CORDIS organisations using property paths, and a paginated results table of URIs, acronyms, countries, and VAT numbers" loading="lazy">
 
 - **Read-only.** Only `SELECT` and `ASK` queries run. Anything else (`CONSTRUCT`, `DESCRIBE`, `INSERT`, `DELETE`, `LOAD`, …) is refused before any request is sent.
 - **Many named tabs.** Keep several queries side by side: **+** opens a new tab, **double-click** a tab to rename it, **✕** closes it. Tabs (and their queries) are remembered per endpoint across reloads and endpoint switches.
@@ -19,7 +21,3 @@ The <img src="./icons/icon-terminal.svg" height="14"> button in the header opens
 You don't have to write the query yourself. Above every instance list, a **SPARQL** button hands the current list — with its type, graph scope, text filter, and every active [facet](03-facets.md) applied — to the panel as the exact query behind it, opened in a fresh tab. Use it to see how the filtered view is built, then refine it by hand.
 
 Because the handed-off query is [portable](#sparql-panel) (qnames + `PREFIX` header, dotted triples), you can copy it straight out into another SPARQL client.
-
----
-
-*Next: [Rich values](05-rich-values.md) →*

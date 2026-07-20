@@ -4,9 +4,9 @@ outline: deep
 
 # AE RDF User Manual
 
-> **Try it now** — [Open AE RDF](https://cognizone.github.io/augmented-semantics/rdf/) in your browser, no installation required.
+A fast, browser-only explorer for **any** RDF dataset behind a SPARQL endpoint. Connect, see what types of things exist, drill into a type's instances, open any resource, and follow its links, all live, all in your browser. No backend, no precomputed indexes, no data leaves your machine.
 
-A fast, browser-only explorer for **any** RDF dataset behind a SPARQL endpoint. Connect, see what types of things exist, drill into a type's instances, open any resource, and follow its links — all live, all in your browser. No backend, no precomputed indexes, no data leaves your machine.
+> **Try it now**: [Open AE RDF](https://cognizone.github.io/augmented-semantics/rdf/) in your browser, no installation required.
 
 <img src="./screenshots/overview.png" alt="CORDIS RDF Browser — the type sidebar with counts, and an open Organisation resource showing attributes, relationships, and deeply embedded site / address / coordinates" width="900">
 
@@ -28,13 +28,39 @@ A fast, browser-only explorer for **any** RDF dataset behind a SPARQL endpoint. 
 
 ## See it in action
 
-<img src="./screenshots/facets.png" alt="The Filters rail narrowing CORDIS organisations by type, role, and country with live counts" width="800" loading="lazy">
-
-*Faceted search — narrow a type by its values, ranges, and dates (even values a hop away), with live counts. → [Faceted browsing](03-facets.md)*
-
-<img src="./screenshots/rich-map.png" alt="A WKT geometry value rendered inline as an embedded map" width="640" loading="lazy">
-
-*Rich values — media inline, DOI citation cards, and WKT geometry as maps. → [Rich values](05-rich-values.md)*
+<table>
+<tr>
+<td width="50%" valign="top">
+<strong><a href="02-browsing.md">Browse by type</a></strong><br>
+The Types sidebar tree: subclasses and value objects nest under their parent, each with a live instance count.<br>
+<a href="https://cognizone.github.io/augmented-semantics/rdf-cordis/">See it live →</a>
+</td>
+<td width="50%" valign="top">
+<strong><a href="03-facets.md">Faceted browsing</a></strong><br>
+Narrow a type by its values, ranges, and dates (even values a hop away), with live counts.<br>
+<a href="https://cognizone.github.io/augmented-semantics/rdf-cordis/?type=http%3A%2F%2Fdata.europa.eu%2Fs66%23Organisation&filters=%5B%5B0%2C%22v%22%2C%5B%5B%22u%22%2C%22http%3A%2F%2Fdata.europa.eu%2Fs66%23HigherOrSecondaryEducation%22%5D%5D%5D%2C%5B1%2C%22v%22%2C%5B%5B%22l%22%2C%22partner%22%2C%22%22%2C%22%22%5D%5D%5D%2C%5B2%2C%22v%22%2C%5B%5B%22l%22%2C%22ES%22%2C%22%22%2C%22%22%5D%5D%5D%5D">See it live →</a>
+</td>
+</tr>
+<tr>
+<td valign="top"><img src="./screenshots/types-sidebar.png" alt="The CORDIS Types sidebar tree with Project and Result pinned, Result expanded to its subclasses, and per-type instance counts" width="160" loading="lazy"></td>
+<td valign="top"><img src="./screenshots/facets.png" alt="The Filters rail narrowing CORDIS organisations by type, role, and country with live counts" width="100%" loading="lazy"></td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+<strong><a href="04-sparql.md">SPARQL panel</a></strong><br>
+A read-only SELECT / ASK console with named tabs, auto-<code>LIMIT</code>, paginated results, and portable prefixed queries.
+</td>
+<td width="50%" valign="top">
+<strong><a href="05-rich-values.md">Rich values</a></strong><br>
+Media inline, DOI citation cards, and WKT geometry as maps.<br>
+<a href="https://cognizone.github.io/augmented-semantics/rdf/?endpoint=lindas-swiss-linked-data&resource=http%3A%2F%2Fdx.doi.org%2F10.5281%2Fzenodo.259276">See it live →</a>
+</td>
+</tr>
+<tr>
+<td valign="top"><img src="./screenshots/sparql-panel.png" alt="The SPARQL panel with named tabs, a property-path SELECT over CORDIS organisations, and a paginated results table" width="100%" loading="lazy"></td>
+<td valign="top"><img src="./screenshots/rich-showcase.png" alt="A plazi Figure resource showing a DOI citation card and an inline media image" width="100%" loading="lazy"></td>
+</tr>
+</table>
 
 > **Want your endpoint on the list?** If you maintain a public SPARQL endpoint and would like it included as a suggested endpoint, [open an issue on GitHub](https://github.com/cognizone/augmented-semantics/issues).
 
@@ -44,7 +70,7 @@ AE RDF connects directly to SPARQL endpoints from your browser — the endpoint 
 
 ### Quick Start
 
-1. Open the endpoint menu in the header and pick an endpoint. (In the standalone / authoring build you can also **Add endpoint** for a custom URL — see [Managing Endpoints](01-endpoints.md).)
+1. Open the endpoint menu in the header and pick an endpoint. (In the standalone / authoring build you can also **Add endpoint** for a custom URL, see [The Endpoint Manager](configuration.md#the-endpoint-manager).)
 2. Once connected, the **Types** sidebar lists every `rdf:type` in the dataset with an instance count.
 3. Click a type to see its instances, then click an instance to open it.
 4. Or paste any **resource URI** into the bar at the top and press **Go**.
@@ -53,7 +79,7 @@ On a deployed instance the endpoints come from the app's bundled configuration; 
 
 ## User Guide
 
-1. [Managing Endpoints](01-endpoints.md) — Add, test, switch, and remove SPARQL endpoints
+1. [Endpoints](01-endpoints.md) — Choosing and switching endpoints (adding your own is in the [Configuration Guide](configuration.md#the-endpoint-manager))
 2. [Browsing](02-browsing.md) — Types, instance lists, and the resource view
 3. [Faceted browsing](03-facets.md) — Filter a type by its values, ranges, and dates
 4. [SPARQL panel](04-sparql.md) — The read-only query console

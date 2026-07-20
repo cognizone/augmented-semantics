@@ -2,59 +2,26 @@
 outline: deep
 ---
 
-# Managing Endpoints
+# Endpoints
 
-AE RDF talks directly to SPARQL endpoints from your browser. On a **deployed instance** the available endpoints come from the app's bundled configuration (`config/app.json`) — pick one and connect. Adding, editing, and testing endpoints is part of the **standalone / authoring** build, where you assemble the config you then export and deploy.
+AE RDF talks directly to SPARQL endpoints from your browser. On a **deployed instance** the available endpoints come from the app's bundled configuration (`config/app.json`): pick one from the header and connect. No data leaves your machine; queries go straight from the browser to the endpoint.
 
-> **Deployed vs. authoring** — A deployed AE RDF runs in **config mode**: its endpoint list is fixed by `config/app.json`. The add / edit / delete controls below don't persist there (a custom URL you type lasts only for the current session), and each tool ships its own config — so endpoints are **not** shared between AE SKOS and AE RDF. To change the shipped endpoints, edit the config and redeploy (see [Exporting a deployment config](configuration.md#exporting-a-deployment-config)). The rest of this page describes the full manager as it works in the standalone / authoring build.
+> **Deployed vs. authoring**: A deployed AE RDF runs in **config mode**, with its endpoint list fixed by `config/app.json`. Each tool ships its own config, so endpoints are **not** shared between AE SKOS and AE RDF. Adding, editing, testing, and authenticating endpoints is part of the **standalone / authoring** build, where you assemble the list you then export and deploy (see [The Endpoint Manager](configuration.md#the-endpoint-manager) and [Exporting a deployment config](configuration.md#exporting-a-deployment-config) in the Configuration Guide). To change the endpoints on a deployed instance, edit the config and redeploy.
 
-## The Endpoint Manager
+## Choosing and switching endpoints
 
-Open it from the endpoint badge in the header → **Manage endpoints…**. From here you can add, edit, test, select, and remove endpoints.
+Click the endpoint badge in the header to open the endpoint menu, then pick one. Selecting an endpoint connects to it and (re)loads its [Types](02-browsing.md) sidebar. Switching later works the same way. The active endpoint is kept in the URL as a short slug, so a shared or bookmarked link opens on the right dataset (see [Shareable URLs](07-sharing.md)).
 
-- **Suggested endpoints** — curated public endpoints appear as one-click entries. Click one to add and connect to it immediately.
-- **Add endpoint** — opens a small form for a custom endpoint (see below).
-- Each saved endpoint shows a status dot (green = currently selected) and **edit** / **delete** actions. Delete asks for a quick confirm.
+<img src="./screenshots/endpoint-switcher.png" alt="The header endpoint dropdown open, listing the bundled endpoints with a checkmark on the currently selected LINDAS" width="560" loading="lazy">
 
-Selecting an endpoint connects to it and loads its [type inventory](02-browsing.md).
+*The header endpoint dropdown, with a checkmark on the currently selected endpoint.*
 
-## Adding a custom endpoint
+## Adding your own endpoints
 
-The form needs just two things:
+Custom endpoints, authentication, connection testing, and named-graph behaviour live in the **authoring build**, documented in the Configuration Guide:
 
-| Field | Notes |
-|-------|-------|
-| **Name** | A label for your own reference. |
-| **SPARQL endpoint URL** | The full query URL, e.g. `https://example.org/sparql`. |
-
-A warning appears if the URL is plain `http://` (your queries could be intercepted) — fine for `localhost`, risky for public endpoints.
-
-### Authentication
-
-If the endpoint is protected, choose an **Authentication** type:
-
-| Type | Fields |
-|------|--------|
-| None | — (default) |
-| Basic | Username + password |
-| API key | Header name + key |
-| Bearer token | Token |
-
-Credentials are **never saved** — leave them blank and AE RDF asks for them when it connects, holding them in memory for that session only. They're sent only to the endpoint, with each query.
-
-### Graph behaviour (authoring mode)
-
-With authoring mode on, the edit form gains a **Graph behaviour** section — see
-the [Configuration Guide](configuration.md#graph-behaviour) and [Graphs](06-graphs.md).
-
-### Test before saving
-
-Click **Test** to run a tiny `SELECT … LIMIT 1` against the endpoint. You'll get a green success (with response time) or a clear error — most often a [CORS](09-troubleshooting.md#cors-the-endpoint-wont-load) or authentication problem. Then **Save**.
-
-## Switching endpoints
-
-Click the endpoint badge in the header to switch between saved endpoints. Switching reloads the [Types](02-browsing.md) sidebar for the newly selected endpoint.
-
----
-
-*Next: [Browsing](02-browsing.md) →*
+- [The Endpoint Manager](configuration.md#the-endpoint-manager): add, edit, test, select, and remove endpoints
+- [Adding a custom endpoint](configuration.md#adding-a-custom-endpoint): name and SPARQL URL
+- [Authentication](configuration.md#authentication): Basic, API key, or Bearer token
+- [Graph behaviour](configuration.md#graph-behaviour): named graphs (quads) and default view
+- [Exporting a deployment config](configuration.md#exporting-a-deployment-config): bake your list into `config/app.json`

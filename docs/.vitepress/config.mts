@@ -52,7 +52,7 @@ export default defineConfig({
           text: 'User Guide',
           items: [
             { text: 'Overview', link: '/ae-rdf/' },
-            { text: '1. Managing Endpoints', link: '/ae-rdf/01-endpoints' },
+            { text: '1. Endpoints', link: '/ae-rdf/01-endpoints' },
             { text: '2. Browsing', link: '/ae-rdf/02-browsing' },
             { text: '3. Faceted Browsing', link: '/ae-rdf/03-facets' },
             { text: '4. SPARQL Panel', link: '/ae-rdf/04-sparql' },

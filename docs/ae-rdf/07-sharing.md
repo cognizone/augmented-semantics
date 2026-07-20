@@ -15,7 +15,3 @@ Active [facet](03-facets.md) selections are kept in the URL too (`?filters=…`)
 ## Auto-switch across datasets
 
 Because the endpoint is in the URL and each endpoint declares which resource namespaces it serves, opening a resource URI that belongs to a *different* configured dataset **switches to that endpoint automatically** — whether you paste it in the top bar or follow a shared `?resource=` link. See [Opening a resource URI](02-browsing.md#opening-a-resource-uri) for the details.
-
----
-
-*Next: [Settings](08-settings.md) →*

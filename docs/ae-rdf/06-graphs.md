@@ -34,8 +34,8 @@ AE RDF understands an endpoint on two simple axes, and builds every query from t
 
 The second axis isn't something a tool can reliably guess, so it's part of the
 **endpoint config**. With [Config authoring mode](configuration.md#authoring-mode) on, edit an
-endpoint in the [Endpoint Manager](01-endpoints.md) → **Graph behaviour** to set
-*Named graphs (quads)* and *Default view* (Auto / Own / Merged); it's saved with
+endpoint in the [Endpoint Manager](configuration.md#the-endpoint-manager) and use its **Graph behaviour**
+section to set *Named graphs (quads)* and *Default view* (Auto / Own / Merged); it's saved with
 the endpoint and included in the [exported `app.json`](configuration.md#exporting-a-deployment-config).
 Declare it once per deployment and every query is correct and fast. Unset, AE RDF
 plays it safe (queries everything and de-duplicates).
@@ -44,7 +44,3 @@ plays it safe (queries everything and de-duplicates).
 
 - **Picking/filtering by graph** (show only one graph, hide others) — AE RDF
   shows provenance, it doesn't yet let you scope *to* a graph.
-
----
-
-*Next: [Shareable URLs](07-sharing.md) →*

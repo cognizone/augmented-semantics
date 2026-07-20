@@ -6,6 +6,9 @@ outline: deep
 
 Open the settings dialog from the <img src="./icons/icon-settings.svg" height="14"> button in the header. Settings are saved in your browser (localStorage).
 
+<img src="./screenshots/settings-dialog.png" alt="The Settings dialog with Appearance (dark mode, URI display), Sidebar, Results, and Rich content sections, DOI citations and Geometry maps toggled on" width="440" loading="lazy">
+
+
 - **Dark mode** — toggle light/dark theme.
 - **URI display** — how predicates, links, and type names render:
   - *Humanized names* (default) — friendly labels (e.g. "Date end applicability").
@@ -19,7 +22,3 @@ Open the settings dialog from the <img src="./icons/icon-settings.svg" height="1
 - **DOI citations** — off by default. When on, DOI values show an inline citation card (authors, year, title, …) fetched from doi.org on demand — an external request per DOI you scroll to. See [Rich values](05-rich-values.md).
 - **Geometry maps** — off by default. When on, WKT geometry values render an embedded map (swisstopo / OpenStreetMap tiles — external tile requests). See [Rich values](05-rich-values.md).
 - **Config authoring mode** — off by default (clean, read-only browsing). Turn it on to reveal the per-type gears in the Types sidebar and the export buttons below. The configured effects (embed/hide/pin) apply either way; this just shows the editing tools. Authoring — per-type configuration, graph behaviour, and exporting a deployment config — is covered in the [Configuration Guide](configuration.md).
-
----
-
-*Next: [Troubleshooting](09-troubleshooting.md) →*

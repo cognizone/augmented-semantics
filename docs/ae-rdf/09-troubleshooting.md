@@ -10,13 +10,13 @@ The most common issue. AE RDF runs **in your browser**, so the endpoint must sen
 CORS headers (`Access-Control-Allow-Origin`) permitting browser access. If it
 doesn't, queries fail with a **CORS** error and the Types sidebar stays empty.
 
-- A successful **Test** in the [Endpoint Manager](01-endpoints.md#test-before-saving) (or a populated Types sidebar) means CORS is fine.
+- A successful **Test** in the [Endpoint Manager](configuration.md#test-before-saving) (or a populated Types sidebar) means CORS is fine.
 - If it fails: the endpoint owner needs to enable CORS, or you need to reach it through a CORS-enabled proxy. This isn't something AE RDF can work around from the browser.
 
 ## The Types sidebar is empty
 
 - **CORS / connection** — see above; check the browser console (F12) for a `CORS_BLOCKED` or network error.
-- **Authentication** — a protected endpoint needs credentials set on the endpoint ([Authentication](01-endpoints.md#authentication)).
+- **Authentication** — a protected endpoint needs credentials set on the endpoint ([Authentication](configuration.md#authentication)).
 - **Graph config mismatch** — if the endpoint's [graph config](06-graphs.md#how-it-works)
   is wrong (e.g. its default view is declared *merged* but actually holds unique
   triples), some items can be missed. Open a known resource by URI to confirm the

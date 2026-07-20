@@ -10,6 +10,44 @@ This page is for **curators and deployers**: people who shape how a deployed AE 
 
 Everything on this page happens in **Config authoring mode** — a toggle in [Settings](08-settings.md), off by default. Turning it on reveals the per-type gears in the Types sidebar and the export buttons; the configured effects (embed/hide/pin) apply either way. The gear and **Export** stay available even when running a deployed config, so you can tweak and re-export.
 
+## The Endpoint Manager
+
+In the standalone / authoring build you assemble the endpoint list by hand. Open the manager from the endpoint badge in the header, then **Manage endpoints…**. From here you can add, edit, test, select, and remove endpoints. (A deployed instance has no manager: its list is fixed by `config/app.json`, and a custom URL you type there lasts only for the current session. See [Exporting a deployment config](#exporting-a-deployment-config).)
+
+- **Suggested endpoints**: curated public endpoints appear as one-click entries. Click one to add and connect to it immediately.
+- **Add endpoint**: opens a small form for a custom endpoint (below).
+- Each saved endpoint shows a status dot (green = currently selected) and **edit** / **delete** actions. Delete asks for a quick confirm.
+
+Selecting an endpoint connects to it and loads its [type inventory](02-browsing.md). The edit form also has a **Graph behaviour** section, covered in [Graph behaviour](#graph-behaviour) below.
+
+### Adding a custom endpoint
+
+The form needs just two things:
+
+| Field | Notes |
+|-------|-------|
+| **Name** | A label for your own reference. |
+| **SPARQL endpoint URL** | The full query URL, e.g. `https://example.org/sparql`. |
+
+A warning appears if the URL is plain `http://` (your queries could be intercepted): fine for `localhost`, risky for public endpoints.
+
+### Authentication
+
+If the endpoint is protected, choose an **Authentication** type:
+
+| Type | Fields |
+|------|--------|
+| None | (default) |
+| Basic | Username + password |
+| API key | Header name + key |
+| Bearer token | Token |
+
+Credentials are **never saved**: leave them blank and AE RDF asks for them when it connects, holding them in memory for that session only. They're sent only to the endpoint, with each query. The endpoint file stores only the auth *type* (see [Endpoint configuration file](#endpoint-configuration-file)).
+
+### Test before saving
+
+Click **Test** to run a tiny `SELECT … LIMIT 1` against the endpoint. You'll get a green success (with response time) or a clear error, most often a [CORS](09-troubleshooting.md#cors-the-endpoint-wont-load) or authentication problem. Then **Save**.
+
 ## Per-type configuration
 
 Turn on **Config authoring mode** in [Settings](08-settings.md) to reveal a per-type **gear** in the Types sidebar:
