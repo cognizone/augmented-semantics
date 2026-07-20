@@ -10,8 +10,8 @@ outline: deep
 
 A fast, browser-only explorer for **any** RDF dataset behind a SPARQL endpoint. Connect, see what types of things exist, drill into a type's instances, open any resource, and follow its links — all live, all in your browser. No backend, no precomputed indexes, no data leaves your machine.
 
-::: info Early days
-AE RDF is intentionally barebones: live queries only. Endpoint connection, type discovery, filterable instance lists, incoming links ("Referenced by"), a graph-aware resource view, and a read-only raw SPARQL panel (the <img src="./icons/icon-terminal.svg" height="14"> button in the header) work today.
+::: info Live queries only
+AE RDF runs entirely on live SPARQL — no backend, no precomputed indexes. Today it does endpoint connection and type discovery, filterable instance lists with optional [columns](02-browsing.md#instance-list) and a card/table view, [faceted filtering](02-browsing.md#facets), incoming links ("Referenced by"), a graph-aware resource view, [rich values](02-browsing.md#rich-values-media-dois-geometry) (media, DOIs, geometry), shareable URLs, and a read-only [SPARQL panel](#sparql-panel) with multiple tabs (the <img src="./icons/icon-terminal.svg" height="14"> button in the header).
 :::
 
 > **Want your endpoint on the list?** If you maintain a public SPARQL endpoint and would like it included as a suggested endpoint, [open an issue on GitHub](https://github.com/cognizone/augmented-semantics/issues).
@@ -51,6 +51,9 @@ Open the settings dialog from the <img src="./icons/icon-settings.svg" height="1
   - *Full URI* — the raw IRI.
 - **Show hidden fields** — reveal properties hidden by the endpoint config (shown greyed), without entering authoring mode.
 - **Collapse groups by default** — named sidebar groups (e.g. "Ontology") start collapsed. The built-in **Hidden** group always starts collapsed and **Embedded** always starts expanded, regardless of this setting.
+- **Nest embedded types** — off by default. When on, embedded value-object types show nested inline under their composing class in the Types tree (also toggled by the `{}` button in the Types header). Off → they appear only in the collapsed **Embedded** group.
+- **Card view for search results** — on by default. Shows a type's instances as cards instead of a table (for types with [configured columns](02-browsing.md#instance-list)); also toggled from the list header.
+- **Auto-limit SPARQL results** — on by default. Appends a `LIMIT` to an unbounded `SELECT` in the [SPARQL panel](#sparql-panel); turn off to run the full result set.
 - **DOI citations** — off by default. When on, DOI values show an inline citation card (authors, year, title, …) fetched from doi.org on demand — an external request per DOI you scroll to. See [Rich values](02-browsing.md#rich-values-media-dois-geometry).
 - **Geometry maps** — off by default. When on, WKT geometry values render an embedded map (swisstopo / OpenStreetMap tiles — external tile requests). See [Rich values](02-browsing.md#rich-values-media-dois-geometry).
 - **Config authoring mode** — off by default (clean, read-only browsing). Turn it on to reveal the per-type gears in the Types sidebar and the export buttons below. The configured effects (embed/hide/pin) apply either way; this just shows the editing tools. Authoring — per-type configuration, graph behaviour, and exporting a deployment config — is covered in the [Configuration Guide](configuration.md).
@@ -59,13 +62,16 @@ Settings are saved in your browser (localStorage).
 
 ## SPARQL panel
 
-The <img src="./icons/icon-terminal.svg" height="14"> button in the header opens a **read-only raw SPARQL panel** — a plain editor for running your own queries against the current endpoint.
+The <img src="./icons/icon-terminal.svg" height="14"> button in the header opens a **read-only SPARQL panel** — a syntax-highlighting editor for running your own queries against the current endpoint.
 
 - **Read-only.** Only `SELECT` and `ASK` queries run. Anything else (`CONSTRUCT`, `DESCRIBE`, `INSERT`, `DELETE`, `LOAD`, …) is refused before any request is sent.
-- **Automatic LIMIT.** A `SELECT` with no top-level `LIMIT` gets `LIMIT 100` appended, and the panel tells you when it did. At most **1,000 rows** render regardless.
+- **Many named tabs.** Keep several queries side by side: **+** opens a new tab, **double-click** a tab to rename it, **✕** closes it. Tabs (and their queries) are remembered per endpoint across reloads and endpoint switches.
+- **Automatic LIMIT.** A `SELECT` with no top-level `LIMIT` gets `LIMIT 1000` appended, and the panel tells you when it did. Turn this off with the **Auto-limit** toggle (or in [Settings](#settings)) to run the full result set. At most **1,000 rows** render regardless.
+- **Paginated results.** The results table pages (50 per page) so a large result stays navigable.
+- **Portable queries.** Full IRIs are written as `prefix:local` with a `PREFIX` prologue, and any prefix you type is auto-declared on **Run** — so the query in the editor is a complete, standalone query you can copy into any SPARQL tool.
 - **Run it.** Press **Run**, or <kbd>⌘</kbd>/<kbd>Ctrl</kbd>+<kbd>Enter</kbd>. The query duration is shown on success.
 - **Clickable results.** In a `SELECT` table, URI cells are links — click one to open that resource in the browser. `ASK` shows a simple `true` / `false`.
-- **Per-endpoint memory.** Your last query is saved (in your browser) per endpoint, so switching endpoints swaps in the query you last ran there.
+- **Open in SPARQL.** From any instance list, the **SPARQL** button hands you the exact query behind the current filtered view in a fresh tab — see [Browsing → Open in SPARQL](02-browsing.md#open-in-sparql).
 
 ## User Guide
 

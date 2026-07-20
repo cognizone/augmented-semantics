@@ -86,6 +86,8 @@ By default the instance list shows each row's name (label) and URI. Give a type 
 
 Each column: `predicate` (the property, first hop when `via` is set), optional `label` (heading; defaults to the humanized predicate name), optional `via` (a single predicate or an ordered path array). One value per cell (sampled — meant for near-functional properties like status, dates, amounts); URI values render as a qname, literals as-is. Cells fill in just after the rows appear.
 
+Users can switch a columned list between a **table** and a **card** layout from the list header (cards by default). Columns **inherit down the subclass hierarchy**: a type with no `listColumns` of its own uses the nearest ancestor's (via the `subclasses` map), so you configure a superclass (e.g. `Result`) once and its subclasses (JournalPaper, ProjectPublication, …) get the same columns unless they set their own.
+
 ```json
 {
   "types": {

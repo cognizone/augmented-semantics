@@ -30,7 +30,9 @@ Counts are the number of *distinct* subjects of that type. On large datasets the
 
 Selecting a type shows a paged list of its instances (25 per page), each with its best available label (falling back to the URI). Use the pager at the bottom to move through pages. Click an instance to open it.
 
-When a type configures [list columns](configuration.md#instance-list-columns), the list becomes a compact **table** — the name plus a column per configured property (e.g. a Project's acronym, status, start/end, total cost), each filled in just after the rows appear. Click any row to open it.
+When a type configures [list columns](configuration.md#instance-list-columns), the list gains extra columns — the name plus one per configured property (e.g. a Project's acronym, status, start/end, total cost), each filled in just after the rows appear. Click any row to open it.
+
+A **layout toggle** in the list header switches between a compact **table** and a **card** view (cards are the default — see [Settings](index.md#settings)); the toggle only appears for types that configure columns. Columns are **inherited down the subclass hierarchy** — configure a superclass (e.g. CORDIS `Result`) once and its subclasses (JournalPaper, ProjectPublication, …) show the same columns, unless a subclass sets its own.
 
 ### Filtering the list
 
