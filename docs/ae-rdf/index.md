@@ -8,8 +8,8 @@ outline: deep
 
 A fast, browser-only explorer for **any** RDF dataset behind a SPARQL endpoint. Connect, see what types of things exist, drill into a type's instances, open any resource, and follow its links — all live, all in your browser. No backend, no precomputed indexes, no data leaves your machine.
 
-<!-- HERO: add screenshots/overview.png, then embed here:
-<img src="./screenshots/overview.png" alt="AE RDF browsing a dataset — type sidebar, instance list, and an open resource" width="900"> -->
+<img src="./screenshots/overview.png" alt="CORDIS RDF Browser — the type sidebar with counts, and an open Organisation resource showing attributes, relationships, and deeply embedded site / address / coordinates" width="900">
+
 
 > **Live queries only** — AE RDF runs entirely on live SPARQL: no backend, no precomputed indexes, no data leaves your machine. Endpoint connection, type discovery, instance lists, the resource view with incoming links, and everything in **Highlights** below all run as live queries against the endpoint.
 
