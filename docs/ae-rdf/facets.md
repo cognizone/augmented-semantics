@@ -25,7 +25,6 @@ The **Filters** tab is greyed out for types with no facets, and shows a small **
 - **Across facets** — every active facet must match (AND).
 - **Self-excluding counts** — a facet's own value counts are computed with the *other* facets applied but not itself, so the numbers show what each value would add rather than dropping to what's already selected.
 
-> [!TIP]
 > **Curator-configured** — Which types have facets — and over which properties, with what ranges and hops — is set by the curator in the [config](configuration.md#facets). Facets don't appear until they're configured.
 
 ---

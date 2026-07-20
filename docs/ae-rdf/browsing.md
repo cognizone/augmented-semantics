@@ -22,7 +22,6 @@ The **Types** header has a `{}` toggle to show or hide embedded types nested und
 
 Types can be **configured** — pinned, hidden, grouped, or rendered as embedded value objects / labels. That's curator work, done via a per-type gear in authoring mode; see the [Configuration Guide](configuration.md#per-type-configuration). Without authoring mode the sidebar is read-only, but the configured effects still apply.
 
-> [!TIP]
 > **Counts are distinct** — Counts are the number of *distinct* subjects of that type. On large datasets the sidebar may take a few seconds to compute — that's the price of a correct count rather than an inflated one.
 
 ## Instance list
@@ -41,7 +40,6 @@ A **filter box** sits above the list — type to narrow it to instances whose **
 - It's **debounced** — AE RDF waits until you pause typing before querying, so a fast typist doesn't fire a query per keystroke.
 - Press **Esc** or the **✕** to clear it. The box stays visible as you switch types, so a filter is never a hidden constraint.
 
-> [!TIP]
 > **Custom search fields** — A type can pin exactly which predicates the filter searches via its **search** fields in the [config](configuration.md#per-type-configuration) — useful when the default label fields aren't what you want to match on.
 
 ### Facets

@@ -4,12 +4,10 @@ outline: deep
 
 # AE RDF User Manual
 
-> [!TIP]
 > **Try it now** — [Open AE RDF](https://cognizone.github.io/augmented-semantics/rdf/) in your browser, no installation required.
 
 A fast, browser-only explorer for **any** RDF dataset behind a SPARQL endpoint. Connect, see what types of things exist, drill into a type's instances, open any resource, and follow its links — all live, all in your browser. No backend, no precomputed indexes, no data leaves your machine.
 
-> [!NOTE]
 > **Live queries only** — AE RDF runs entirely on live SPARQL: no backend, no precomputed indexes, no data leaves your machine. Endpoint connection, type discovery, instance lists, the resource view with incoming links, and everything in **Highlights** below all run as live queries against the endpoint.
 
 ## Highlights
