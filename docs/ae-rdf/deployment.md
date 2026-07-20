@@ -4,7 +4,7 @@ outline: deep
 
 # Deployment & Releases
 
-How AE RDF ships: branded **web deployments** on GitHub Pages, and the **ERA RDF Browser** standalone desktop app. (The generic build/host mechanics — Vite `BASE_URL`, config mode, proxying — are shared with AE SKOS; see its [Deployment Guide](../ae-skos/deployment.md) for those details.)
+How AE RDF ships: branded **web deployments** on GitHub Pages, and the **ERA** and **CORDIS RDF Browser** standalone desktop apps. (The generic build/host mechanics — Vite `BASE_URL`, config mode, proxying — are shared with AE SKOS; see its [Deployment Guide](../ae-skos/deployment.md) for those details.)
 
 ## Web deployments (GitHub Pages)
 
@@ -21,19 +21,30 @@ All under `https://cognizone.github.io/augmented-semantics/`. Each variant is a 
 
 **To change a deployed variant:** edit its `apps/<name>/app.json` (or the endpoint file it references), push to `main`, and the workflow redeploys everything in ~2 minutes. Adding a variant = a new `apps/<name>/app.json` + a build/copy step pair in the workflow.
 
-## ERA RDF Browser (standalone desktop)
+## Standalone desktop apps (ERA + CORDIS)
 
-A [Tauri](https://tauri.app) app built from `ae-rdf` with the ERA endpoints bundled (`ae-rdf/scripts/bundle-era-config.mjs` bakes `apps/era-rdf/app.json` into the build). Releases are tag-driven: pushing an `rdf-v*` tag runs `tauri-rdf.yml`, which builds installers for macOS (universal), Windows (exe + msi), and Linux (AppImage, deb, rpm) and attaches them to a **draft** GitHub release.
+Two [Tauri](https://tauri.app) desktop apps build from the same `ae-rdf` code, each with its own endpoints baked in. The tag prefix picks which one:
+
+| App | Tag prefix | Bundled config |
+|-----|-----------|----------------|
+| **ERA RDF Browser** | `rdf-era-v*` | `apps/era-rdf/app.json` (EVR, OCR, ERADIS, VKM, RINF) |
+| **CORDIS RDF Browser** | `rdf-cordis-v*` | `apps/cordis-rdf/app.json` (CORDIS Datalab) |
+
+Pushing a matching tag runs `tauri-rdf.yml`, which builds installers for macOS (universal), Windows (exe + msi), and Linux (AppImage, deb, rpm) and attaches them to a **draft** GitHub release named after the app. `scripts/bundle-app-config.mjs <app>` bakes the chosen `apps/<app>/app.json` into the build; the base `src-tauri/tauri.conf.json` *is* the ERA app, and CORDIS is a thin `tauri.cordis.conf.json` override merged in via `tauri build --config` (the workflow adds it for `rdf-cordis-*` tags).
 
 ### Release runbook
 
-1. **Bump the version** — in three places, all under `ae-rdf/src-tauri/`: `tauri.conf.json`, `Cargo.toml`, and the `era-rdf-browser` entry in `Cargo.lock`.
+1. **Bump the version** in the relevant tauri config to match the tag — ERA → `src-tauri/tauri.conf.json`, CORDIS → `src-tauri/tauri.cordis.conf.json`. This field is the source of truth for the installer version.
 2. Update `CHANGELOG.md` (repo root) with the release entry.
-3. Commit, then tag and push:
+3. Commit and push `main` first — the tag build checks out the repo, so the config and workflow must already be on `origin`.
+4. Tag and push; the two apps release independently:
    ```bash
-   git tag rdf-vX.Y.Z && git push origin main rdf-vX.Y.Z
+   git tag rdf-era-v0.4.0    && git push origin rdf-era-v0.4.0     # ERA
+   git tag rdf-cordis-v0.4.0 && git push origin rdf-cordis-v0.4.0  # CORDIS
    ```
-4. CI builds ~8 minutes and attaches all installers to a draft release.
-5. Write the release notes (from the CHANGELOG entry) and **publish** the draft.
+5. CI builds (~8 minutes) and attaches all installers to a **draft** release.
+6. Write the release notes (from the CHANGELOG entry) and **publish** the draft from the Releases page.
+
+The canonical runbook — including how to add a third app — lives in [`ae-rdf/RELEASE.md`](https://github.com/cognizone/augmented-semantics/blob/main/ae-rdf/RELEASE.md).
 
 > **The version bump is not cosmetic** — On update, the app clears the WebView's cached assets **only when the app version changed** since the last launch (`src-tauri/src/lib.rs`). Skip the bump and updated users keep seeing the previous build's cached files. Bumping the version is what guarantees a clean update — `localStorage` (theme, history) survives; only the asset cache is wiped.
