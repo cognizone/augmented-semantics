@@ -12,6 +12,7 @@ export interface SPARQLEndpoint {
   analysis?: EndpointAnalysis
   graph?: EndpointGraph
   infer?: boolean                               // GraphDB: send `infer=<value>` with every query — false disables inferred triples. Omit to send nothing.
+  maxConcurrency?: number                       // Max in-flight SPARQL requests to this endpoint at once (default 4). Raise for a DB that handles parallelism well, lower for a fragile one. See services/http.ts.
   types?: Record<string, TypeConfig>           // per-type display config, keyed by type IRI
   typeInventory?: TypeCount[]                   // cached type inventory for instant sidebar
   typeProperties?: Record<string, TypeProfile> // discovered per-type property schema (script-generated)

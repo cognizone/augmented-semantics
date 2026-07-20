@@ -12,7 +12,7 @@
 import type { SPARQLEndpoint, AppError, ErrorCode, LabelPredicateCapabilities, LabelPredicatesByResourceType } from '../types'
 import { logger } from './logger'
 import { sanitizeIri } from './rdfQueries'
-import { sparqlFetch } from './http'
+import { sparqlFetch, setEndpointConcurrency } from './http'
 
 // SPARQL result types
 export interface SPARQLBinding {
@@ -61,6 +61,16 @@ const DEV_ENDPOINT_PROXY: Record<string, string> = {
 }
 const endpointUrl = (url: string): string =>
   import.meta.env.DEV ? (DEV_ENDPOINT_PROXY[url] ?? url) : url
+
+/** sparqlFetch bound to an endpoint: resolves the (dev-proxied) URL AND registers the
+ *  endpoint's concurrency cap under that same URL — so the per-endpoint gate keys match
+ *  whether we're on the real origin (prod) or a dev proxy path. Every query path uses
+ *  this, so registration can't be missed. */
+function fetchForEndpoint(endpoint: SPARQLEndpoint, init: RequestInit): Promise<Response> {
+  const url = endpointUrl(endpoint.url)
+  if (endpoint.maxConcurrency != null) setEndpointConcurrency(url, endpoint.maxConcurrency)
+  return sparqlFetch(url, init)
+}
 
 const DEFAULT_CONFIG: Required<Omit<SPARQLRequestConfig, 'signal'>> = {
   timeout: SPARQL_TIMEOUT_MS,
@@ -320,7 +330,7 @@ export async function executeSparql(
     }
 
     try {
-      const response = await sparqlFetch(endpointUrl(endpoint.url), {
+      const response = await fetchForEndpoint(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
@@ -1033,7 +1043,7 @@ export async function fetchRawRdf(
   const timeoutId = setTimeout(() => controller.abort(), timeout)
 
   try {
-    const response = await sparqlFetch(endpointUrl(endpoint.url), {
+    const response = await fetchForEndpoint(endpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -1144,7 +1154,7 @@ export async function executeConstruct(
   if (config.signal) config.signal.addEventListener('abort', () => controller.abort())
 
   try {
-    const response = await sparqlFetch(endpointUrl(endpoint.url), {
+    const response = await fetchForEndpoint(endpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
