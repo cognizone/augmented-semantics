@@ -109,6 +109,25 @@ export const useFacetStore = defineStore('facets', () => {
   const rangeSelections = ref<Map<string, Set<number>>>(new Map())
 
   let requestId = 0
+  // The current load's abort handle. A new load (or leaving the type) ABORTS the
+  // previous one — dropping its still-QUEUED queries from the concurrency gate before
+  // they ever hit the endpoint. Without this, navigating away leaves the superseded
+  // burst (esp. the heavy background date scans) draining against the DB, stealing
+  // slots from what the user is looking at now.
+  let loadController: AbortController | null = null
+
+  // LAZY COUNTS: the heavy count queries run ONLY while the Filters panel is mounted
+  // (FacetPanel sets this on mount/unmount). Counts have exactly one consumer — the
+  // panel; the instance list applies `activeSelections` (pure state, no queries) and
+  // the tab badge reads `activeCount` (selections only). So while the user is on the
+  // TYPES rail or just browsing the list, a type/graph change marks the counts dirty
+  // instead of firing four full-type scans nobody can see; opening Filters settles up.
+  let panelVisible = false
+  let countsDirty = false
+  function setPanelVisible(visible: boolean): void {
+    panelVisible = visible
+    if (visible && countsDirty) load()
+  }
 
   // Session cache of facet-count query results, keyed by the full query STRING — which
   // encodes type + graph strategy + every constraint fragment + bands/predicate, so an
@@ -122,10 +141,10 @@ export const useFacetStore = defineStore('facets', () => {
   // ponytail: no eviction; add an LRU cap only if a session ever explores enough facet
   // combinations to matter (it won't).
   const countCache = new Map<string, SPARQLResults>()
-  async function runCached(endpoint: SPARQLEndpoint, query: string): Promise<SPARQLResults> {
+  async function runCached(endpoint: SPARQLEndpoint, query: string, background = false, signal?: AbortSignal): Promise<SPARQLResults> {
     const hit = countCache.get(query)
     if (hit) return hit
-    const res = await executeSparql(endpoint, query, { retries: 1 })
+    const res = await executeSparql(endpoint, query, { retries: 1, background, signal })
     countCache.set(query, res)
     return res
   }
@@ -188,6 +207,9 @@ export const useFacetStore = defineStore('facets', () => {
    * (token + endpoint + type). Facet failures are warned, never surfaced as an error.
    */
   async function load(): Promise<void> {
+    // Cancel the superseded load unconditionally — INCLUDING when this one bails out
+    // (type cleared → types view): its queued queries must die, not drain.
+    loadController?.abort()
     const type = browseStore.currentType
     const endpoint = endpointStore.current
     const defs = definitions.value
@@ -195,6 +217,14 @@ export const useFacetStore = defineStore('facets', () => {
       results.value = []
       return
     }
+    // Panel hidden → don't pay for invisible counts; remember to load on reveal.
+    if (!panelVisible) {
+      countsDirty = true
+      return
+    }
+    countsDirty = false
+    loadController = new AbortController()
+    const signal = loadController.signal
     const endpointId = endpoint.id
     const strategy = resolveGraphStrategy(browseStore.graph)
     const id = ++requestId
@@ -225,7 +255,7 @@ export const useFacetStore = defineStore('facets', () => {
 
     try {
       // Each facet loads independently and writes only its own slot.
-      await Promise.all(defs.map((def, idx) => loadFacet(endpoint, type, def, idx, strategy, isCurrent)))
+      await Promise.all(defs.map((def, idx) => loadFacet(endpoint, type, def, idx, strategy, isCurrent, signal)))
     } finally {
       if (isCurrent()) loading.value = false
     }
@@ -246,33 +276,37 @@ export const useFacetStore = defineStore('facets', () => {
     idx: number,
     strategy: GraphStrategy,
     isCurrent: () => boolean,
+    signal: AbortSignal,
   ): Promise<void> {
     const fragment = buildFacetConstraints(collectSelections(def.predicate), strategy)
     try {
-      if (def.ranges?.length) await loadRangeFacet(endpoint, type, def, idx, fragment, strategy, isCurrent)
-      else await loadValueFacet(endpoint, type, def, idx, fragment, strategy, isCurrent)
+      if (def.ranges?.length) await loadRangeFacet(endpoint, type, def, idx, fragment, strategy, isCurrent, signal)
+      else await loadValueFacet(endpoint, type, def, idx, fragment, strategy, isCurrent, signal)
     } catch (e) {
-      logger.warn('facetStore', 'Facet failed', { predicate: def.predicate, error: e })
+      // A superseded (aborted) load failing is by design — only warn when current.
+      if (isCurrent()) logger.warn('facetStore', 'Facet failed', { predicate: def.predicate, error: e })
       patch(idx, def.predicate, v => ({ ...v, pending: false }), isCurrent)
     }
   }
 
-  /** RANGE facet: fast value-band counts first (one inner-join query), then the slow
-   *  "no value" count separately (a full-type NOT-EXISTS scan) so it never blocks the
-   *  value bands. Each result patches only the bands it covers. */
+  /** RANGE facet: value-band counts first (one inner-join query), then the "no value"
+   *  count separately (a full-type NOT-EXISTS scan) so it never blocks the value bands.
+   *  BOTH run in the gate's background lane — they're heavy aggregate scans, and must
+   *  yield their slots to the instance list and the cheap value facets (state, audience)
+   *  instead of hogging the gate because they sit first in the config. Bands still beat
+   *  the missing count (FIFO within the lane). Each result patches only its own bands. */
   async function loadRangeFacet(
     endpoint: SPARQLEndpoint, type: string, def: FacetConfig, idx: number,
-    fragment: string, strategy: GraphStrategy, isCurrent: () => boolean,
+    fragment: string, strategy: GraphStrategy, isCurrent: () => boolean, signal: AbortSignal,
   ): Promise<void> {
     const bands = def.ranges!
-    const isDate = def.datatype === 'date'
     const missingIdx = bands.findIndex(b => b.missing)
     // Config band index → its aggregate var index (?b0, ?b1, …), value bands only.
     const valueBands = bands.map((b, i) => ({ b, i })).filter(x => !x.b.missing)
 
     if (valueBands.length) {
-      const q = buildFacetRangesQuery(type, def.predicate, valueBands.map(x => x.b), fragment, strategy, def.via, isDate)
-      const res = await runCached(endpoint, q)
+      const q = buildFacetRangesQuery(type, def.predicate, valueBands.map(x => x.b), fragment, strategy, def.via, def.datatype)
+      const res = await runCached(endpoint, q, true, signal)
       const row = res.results.bindings[0] ?? {}
       const counts = new Map(valueBands.map((x, k) => [x.i, parseInt(row[`b${k}`]?.value ?? '0', 10)]))
       patch(idx, def.predicate, v => ({
@@ -284,7 +318,7 @@ export const useFacetStore = defineStore('facets', () => {
 
     if (missingIdx >= 0) {
       const mq = buildFacetMissingCountQuery(type, def.predicate, fragment, strategy, def.via)
-      const n = mq ? parseInt((await runCached(endpoint, mq)).results.bindings[0]?.n?.value ?? '0', 10) : 0
+      const n = mq ? parseInt((await runCached(endpoint, mq, true, signal)).results.bindings[0]?.n?.value ?? '0', 10) : 0
       patch(idx, def.predicate, v => ({
         ...v, pending: false,
         ranges: v.ranges!.map(r => (r.index === missingIdx ? { ...r, count: n } : r)),
@@ -297,11 +331,11 @@ export const useFacetStore = defineStore('facets', () => {
    *  labels land — no cross-facet barrier. */
   async function loadValueFacet(
     endpoint: SPARQLEndpoint, type: string, def: FacetConfig, idx: number,
-    fragment: string, strategy: GraphStrategy, isCurrent: () => boolean,
+    fragment: string, strategy: GraphStrategy, isCurrent: () => boolean, signal: AbortSignal,
   ): Promise<void> {
     const limit = def.limit ?? DEFAULT_FACET_LIMIT
     const q = buildFacetValuesQuery(type, def.predicate, fragment, strategy, limit, def.via)
-    const res = await runCached(endpoint, q)
+    const res = await runCached(endpoint, q, false, signal)
     if (!isCurrent()) return
     const rows = res.results.bindings
       .map(bd => {
@@ -333,14 +367,17 @@ export const useFacetStore = defineStore('facets', () => {
     }), isCurrent)
   }
 
-  /** Drop all selections + results (a fresh type/endpoint carries no filters). Also
-   *  clears the count cache — its keys belong to the old type/endpoint (a shared type
-   *  IRI across endpoints could otherwise return the wrong endpoint's counts). */
-  function resetState() {
+  /** Drop all selections + results (a fresh type/endpoint carries no filters).
+   *  `clearCache` — count-cache keys are full query STRINGS (type IRI + graph shape +
+   *  constraints baked in), so entries from different TYPES can never collide: a
+   *  type-only change passes false and keeps the cache, making A→B→A show A's counts
+   *  instantly instead of re-running its heavy scans. Only an ENDPOINT switch can
+   *  alias a key (identical query, different data) — that clears. */
+  function resetState(clearCache = true) {
     valueSelections.value = new Map()
     rangeSelections.value = new Map()
     results.value = []
-    countCache.clear()
+    if (clearCache) countCache.clear()
   }
 
   // ── Interactions ───────────────────────────────────────────────────────────
@@ -463,10 +500,11 @@ export const useFacetStore = defineStore('facets', () => {
   // Type or endpoint change → selections/results are meaningless on a new type or
   // dataset: reset, then load the new type's counts. One watcher over both keys so
   // a same-type endpoint switch is still clean. Immediate so the first type loads.
+  // The count cache is dropped ONLY on an endpoint change (see resetState).
   watch(
-    () => [browseStore.currentType, endpointStore.current?.id],
-    () => {
-      resetState()
+    () => [browseStore.currentType, endpointStore.current?.id] as const,
+    (next, prev) => {
+      resetState(!prev || next[1] !== prev[1])
       load()
     },
     { immediate: true },
@@ -482,6 +520,7 @@ export const useFacetStore = defineStore('facets', () => {
     selectionVersion, activeSelections,
     // interactions
     toggleValue, toggleRange, isValueSelected, isRangeSelected, clearAll, syncType,
+    setPanelVisible,
     // URL round-trip
     serialize, applyEncoded,
   }

@@ -10,12 +10,17 @@
  *
  * @see /spec/ae-rdf
  */
-import { computed } from 'vue'
+import { computed, onMounted, onBeforeUnmount } from 'vue'
 import { useFacetStore } from '../../stores'
 import { useDelayedLoading } from '../../composables'
 
 const facetStore = useFacetStore()
 const showLoading = useDelayedLoading(computed(() => facetStore.loading))
+
+// Counts are LAZY: the store only runs its (heavy) count queries while this panel
+// is mounted — the rail's Types tab must never trigger full-type facet scans.
+onMounted(() => facetStore.setPanelVisible(true))
+onBeforeUnmount(() => facetStore.setPanelVisible(false))
 </script>
 
 <template>

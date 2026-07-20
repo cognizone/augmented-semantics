@@ -1,10 +1,13 @@
 /**
- * Facet selections <-> ?filters round-trip (the store half of B).
+ * Facet selections <-> ?filters round-trip (the store half of B),
+ * plus lazy count loading (panel visibility) and count-cache retention.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { nextTick } from 'vue'
 import { setActivePinia, createPinia } from 'pinia'
 import { useFacetStore, useEndpointStore, useBrowseStore } from '../index'
 import { facetTermKey } from '../facets'
+import { executeSparql } from '../../services'
 
 vi.mock('../../services', async (orig) => {
   const actual = await orig<typeof import('../../services')>()
@@ -15,9 +18,13 @@ vi.mock('../../services', async (orig) => {
   }
 })
 
+const execMock = vi.mocked(executeSparql)
+
 const TYPE = 'http://t/Org'
+const TYPE_B = 'http://t/Project'
 const P_STATUS = 'http://p/status'
 const P_COST = 'http://p/cost'
+const P_KIND = 'http://p/kind'
 
 function setup() {
   const endpoint = useEndpointStore()
@@ -30,11 +37,21 @@ function setup() {
           { predicate: P_COST, label: 'Cost', ranges: [{ max: 100 }, { min: 100 }] },
         ],
       },
+      [TYPE_B]: {
+        facets: [{ predicate: P_KIND, label: 'Kind' }],
+      },
     },
   } as any]
   ;(endpoint as any).currentId = 'e1'
   useBrowseStore().setType(TYPE)
   return useFacetStore()
+}
+
+/** Settle watcher flushes + the store's async load chain. */
+async function settle() {
+  await nextTick()
+  await new Promise(r => setTimeout(r, 0))
+  await new Promise(r => setTimeout(r, 0))
 }
 
 describe('facet ?filters round-trip', () => {
@@ -85,5 +102,56 @@ describe('facet ?filters round-trip', () => {
     store.applyEncoded(JSON.stringify([[1, 'r', [5]]]))
     expect(store.isRangeSelected(P_COST, 5)).toBe(false)
     expect(store.serialize()).toBeNull()
+  })
+})
+
+describe('lazy facet counts (panel visibility) + count-cache retention', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    execMock.mockClear()
+  })
+
+  it('runs NO count queries while the panel is hidden; loads on reveal', async () => {
+    const store = setup() // panel hidden by default → immediate watcher load is deferred
+    await settle()
+    expect(execMock).not.toHaveBeenCalled()
+
+    store.setPanelVisible(true) // dirty → settles up: status values + cost bands
+    await settle()
+    expect(execMock).toHaveBeenCalledTimes(2)
+
+    // Hidden again: a type change must stay silent…
+    store.setPanelVisible(false)
+    useBrowseStore().setType(TYPE_B)
+    await settle()
+    expect(execMock).toHaveBeenCalledTimes(2)
+
+    // …until the panel reopens (loads B's single facet).
+    store.setPanelVisible(true)
+    await settle()
+    expect(execMock).toHaveBeenCalledTimes(3)
+  })
+
+  it('keeps the count cache across TYPE changes, clears it on ENDPOINT change', async () => {
+    const store = setup()
+    const browse = useBrowseStore()
+    store.setPanelVisible(true)
+    await settle()
+    expect(execMock).toHaveBeenCalledTimes(2) // type A: status + cost bands
+
+    browse.setType(TYPE_B)
+    await settle()
+    expect(execMock).toHaveBeenCalledTimes(3) // + B's kind facet
+
+    browse.setType(TYPE) // back to A → all of A's queries served from cache
+    await settle()
+    expect(execMock).toHaveBeenCalledTimes(3)
+
+    // Endpoint switch → same query strings would alias different data → cache dropped.
+    const endpoint = useEndpointStore()
+    endpoint.endpoints = [...endpoint.endpoints, { ...endpoint.endpoints[0]!, id: 'e2' }]
+    ;(endpoint as any).currentId = 'e2'
+    await settle()
+    expect(execMock).toHaveBeenCalledTimes(5) // A's two queries re-run for e2
   })
 })
