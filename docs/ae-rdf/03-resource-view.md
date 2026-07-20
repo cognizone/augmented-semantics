@@ -12,20 +12,27 @@ Paste a resource URI in the top bar and press **Go** to inspect it. If the URI b
 
 ## Attributes and relationships
 
-Opening an instance (from a list, a link, or the top bar) shows the resource:
+Opening an instance (from a list, a link, or the top bar) shows the resource.
 
-- **Header**: the resource's label (or local name if it has none), its full URI (click it to dereference, opens in a new tab) with a copy <img src="./icons/icon-copy.svg" height="14"> button next to it, plus its **type chips** and a [graph summary](07-graphs.md).
-- **Type chips**: the resource's `rdf:type`s, lifted out of the property list. Click a chip to browse all instances of that type.
-- **Attributes**: properties whose values are literals (dates, statuses, text), shown with language and datatype tags.
-- **Relationships**: properties whose values are other resources, shown as **clickable links** <img src="./icons/icon-link.svg" height="14">. Each link carries a small **type badge** showing the *most specific* type (e.g. `[JournalPaper]`, not the generic `[Result]`), so you can see exactly what it points at.
+The **header** gives the resource's label (or local name if it has none), its full URI (click it to dereference, opens in a new tab) with a copy <img src="./icons/icon-copy.svg" height="14"> button, its **type chips** (most specific first; click one to browse all instances of that type), and a [graph summary](07-graphs.md).
+
+<img src="./screenshots/resource-header.png" alt="A resource header: the title 'Mobility-as-a-Service research trends of 5G-based vehicle platooning', type chips JournalPaper, ProjectPublication, Result, the full URI with a copy button, and a graph summary with a Show graphs link" width="100%" loading="lazy">
+
+**Attributes** are properties whose values are literals (dates, statuses, text), each shown with its language or datatype tag.
+
+<img src="./screenshots/attributes.png" alt="The Attributes section of a CORDIS project: Title, Abstract, multi-valued Keyword, Project status, Signature/Start/End date tagged xsd:date, Duration and RCN tagged xsd:nonNegativeInteger, and Identifier" width="100%" loading="lazy">
+
+**Relationships** are properties whose values are other resources. How each value renders depends on the target type's [render config](configuration.md#per-type-configuration):
+
+- **Link** (default): a clickable link <img src="./icons/icon-link.svg" height="14"> to that resource, shown with its label and a **type badge** for the *most specific* type (e.g. `[Concept]`).
+- **Label**: a value object shown as a single composed identity in place (e.g. an `Acronym` as `GIVE RIGHTS`, a `MonetaryAmount` as `1499837 · EUR`). It still links to the object, which has no page worth browsing on its own.
+- **Embed**: a value object with its own properties inlined in place (e.g. a `Grant` showing its start date, end date, and beneficiary), nested as deep as the data goes.
+
+<img src="./screenshots/relations.png" alt="The Relationships section of a CORDIS project: Has acronym as a labeled Acronym, Has total cost as a MonetaryAmount, Has euro sci voc classification linking a Concept, and Is funded by an embedded Grant showing its start date, end date, and beneficiary" width="100%" loading="lazy">
 
 A property with a huge number of values (say a funding scheme linking thousands of grants) starts collapsed to a count with a **Show first 100** link, so the page stays manageable. Once expanded, a **filter box** appears above the values: type to narrow the list by name or URI (matched against every value, not just the 100 shown, since they're all already loaded). The status line reports how many match; **Esc** or the **✕** clears it.
 
-Value objects show inline rather than as a plain link. A type set to **Embed** (in the [Types sidebar](02-browsing.md#types-sidebar)) has its properties inlined in place, nested as deep as the data goes; a type set to **Label** shows a single composed identity (e.g. a `MonetaryAmount` as `337472.95 · EUR`). A link whose target has **no data** in the endpoint shows its bare local name with a warning marker (see [Readable values](#readable-values)). Properties the endpoint config **hides** are omitted; reveal them (greyed) with **Show hidden fields** in [Settings](09-settings.md).
-
-<img src="./screenshots/value-object-example.png" alt="A CORDIS grant resource: Start and End date attributes; funding-scheme relationship links with FundingScheme type badges; a Has funding amount value of 337472.95 EUR as a MonetaryAmount; and a Has funding scheme programme link showing a bare id with a warning marker" width="100%" loading="lazy">
-
-*A CORDIS grant: labeled relationship links with type badges, a `MonetaryAmount` value object shown as `337472.95 · EUR`, and a dangling reference (`0c77a094…`) whose target has no data.*
+A link whose target has **no data** in the endpoint shows its bare local name with a warning marker (see [Readable values](#readable-values)). Properties the endpoint config **hides** are omitted; reveal them (greyed) with **Show hidden fields** in [Settings](09-settings.md).
 
 ## Referenced by (incoming links)
 

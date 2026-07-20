@@ -1,18 +1,25 @@
 # Augmented Semantics
 
-Browser-based tools for exploring Semantic Web data. Connect directly to SPARQL endpoints - no backend required.
-
-## Quick Links
-
-- **[Documentation](https://cognizone.github.io/augmented-semantics/)** - User guides and deployment instructions
-- **[Try AE SKOS](https://cognizone.github.io/augmented-semantics/)** - Live demo
-- **[Downloads](https://cognizone.github.io/augmented-semantics/downloads.html)** - Desktop apps and releases
+Browser-only tools for exploring Semantic Web data: SKOS vocabularies and any RDF, live from SPARQL endpoints. No backend, and no data leaves your browser.
 
 ## Tools
 
-| Tool | Description | Status |
-|------|-------------|--------|
-| [AE SKOS](./ae-skos/) | Browse SKOS vocabularies and thesauri | [Available](https://cognizone.github.io/augmented-semantics/) |
-| [AE RDF](./ae-rdf/) | Explore RDF data | In Development |
-| AE OWL | View OWL ontologies | Planned |
-| AE SHACL | Validate with SHACL shapes | Planned |
+| Tool | Description | Live | Docs | Status |
+|------|-------------|------|------|--------|
+| **AE SKOS** | Browse SKOS vocabularies and thesauri | [Open](https://cognizone.github.io/augmented-semantics/skos/) | [Manual](https://cognizone.github.io/augmented-semantics/ae-skos/) | Available |
+| **AE RDF** | Explore any RDF dataset: types, resources, faceted browsing, and a read-only SPARQL console | [Open](https://cognizone.github.io/augmented-semantics/rdf/) | [Manual](https://cognizone.github.io/augmented-semantics/ae-rdf/) | Available |
+| AE OWL | View OWL ontologies | | | Planned |
+| AE SHACL | Validate with SHACL shapes | | | Planned |
+
+## Links
+
+- [Documentation](https://cognizone.github.io/augmented-semantics/): user guides, configuration, and deployment
+- [Downloads](https://cognizone.github.io/augmented-semantics/downloads.html): desktop apps and releases
+
+## Development
+
+TypeScript / Vue 3 monorepo managed with pnpm workspaces. Each tool lives in its own folder ([`ae-skos/`](./ae-skos/), [`ae-rdf/`](./ae-rdf/)); see the [documentation](https://cognizone.github.io/augmented-semantics/) for configuration and deployment.
+
+---
+
+Built by [Cognizone](https://cogni.zone).

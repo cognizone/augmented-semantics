@@ -23,15 +23,9 @@ The header holds the app-wide controls:
 
 The **Prefixes** dialog (the <img src="./icons/icon-tag.svg" height="14"> button) lists the active `prefix → namespace` mappings, scoped to the current endpoint: the vocabularies it actually uses, plus any it declares and any resolved while browsing.
 
-<img src="./screenshots/prefixes.png" alt="The Prefixes dialog scoped to Cordis Datalab, listing prefix to namespace mappings such as eurio, dct, foaf, owl, skos, and xsd" width="440" loading="lazy">
-
 ## Types sidebar
 
 The left sidebar lists the dataset's `rdf:type`s, most common first, with a **distinct-instance count** next to each. Click any navigable type (including embedded ones) to list its instances in the main pane. Blank-node types, whose instances are anonymous nodes with no page, sit in the **Hidden** group and aren't clickable; you only ever see them inlined under a resource that uses them.
-
-Type in the **Filter types…** box at the top to narrow the list by name; the header shows how many of the total types match.
-
-<img src="./screenshots/types-filter.png" alt="The Types sidebar filter box with 'Proj' typed, narrowing to 4 of 61 types: ProjectPublication, ProjectDeliverable, Project, and ProjectReportSummary" width="300" loading="lazy">
 
 It's a **tree**, not a flat list:
 
@@ -42,6 +36,10 @@ It's a **tree**, not a flat list:
 - **Groups** collect types under a named, collapsible header (e.g. an "Ontology" group for schema classes).
 
 Three groups are built in at the bottom, sorted by how a type renders as a *value* of another resource: **Embedded** (properties inlined, `{}` icon), **Value objects** (a single composed label, tag icon), and **Hidden** (hidden and blank-node types). See the [Configuration Guide](configuration.md#per-type-configuration) for how the render config drives these, what the icons mean, and the orphaned-instance warning.
+
+Type in the **Filter types…** box at the top to narrow the type list by name; the header shows how many of the total types match.
+
+<img src="./screenshots/types-filter.png" alt="The Types sidebar filter box with 'Proj' typed, narrowing to 4 of 61 types: ProjectPublication, ProjectDeliverable, Project, and ProjectReportSummary" width="300" loading="lazy">
 
 **Pinned** types float to the top, and configured types show small indicator icons (pinned, embedded, label). The **Types** header has **Types** and **Filters** tabs and a `{}` toggle that nests embedded types under their class (they stay listed in the **Embedded** group either way). Drag the sidebar's right edge to resize it, and the width is remembered.
 
