@@ -1,16 +1,17 @@
 /**
  * Pure guard helpers for the raw SPARQL panel.
  *
- * The panel is READ-ONLY and defensive: it must let SELECT / ASK through, block
- * everything else (CONSTRUCT, DESCRIBE, INSERT, DELETE, LOAD, …) before any
- * request is sent, and never ship an unbounded SELECT (append a LIMIT when none
- * is present). All logic here is pure so it can be unit-tested in isolation.
+ * The panel is READ-ONLY and defensive: it lets the four SPARQL read forms
+ * through (SELECT / ASK / CONSTRUCT / DESCRIBE), blocks every write/update verb
+ * (INSERT, DELETE, LOAD, CLEAR, DROP, …) before any request is sent, and never
+ * ships an unbounded result set (appends a LIMIT when none is present). All
+ * logic here is pure so it can be unit-tested in isolation.
  *
  * @see /spec/ae-rdf
  */
 
-/** Keywords allowed to run in the read-only panel. */
-export const READ_ONLY_KEYWORDS = ['SELECT', 'ASK'] as const
+/** Keywords allowed to run in the read-only panel (the SPARQL read forms). */
+export const READ_ONLY_KEYWORDS = ['SELECT', 'ASK', 'CONSTRUCT', 'DESCRIBE'] as const
 export type ReadOnlyKeyword = (typeof READ_ONLY_KEYWORDS)[number]
 
 /** Default LIMIT appended to a SELECT that declares none. */
@@ -92,22 +93,29 @@ export function prepareQuery(raw: string, autoLimit = true): PreparedQuery {
   }
 
   const keyword = firstKeyword(raw)
-  if (keyword === 'SELECT') {
-    // autoLimit off → send the SELECT verbatim (the caller opted into an unbounded
-    // result set); still capped at the display MAX_ROWS on the way in.
-    if (!autoLimit) return { ok: true, query: raw, limitAdded: false, keyword: 'SELECT' }
-    const { query, added } = ensureLimit(raw)
-    return { ok: true, query, limitAdded: added, keyword: 'SELECT' }
-  }
+
+  // ASK returns a boolean; a LIMIT is meaningless, so send verbatim.
   if (keyword === 'ASK') {
-    // ASK returns a boolean; LIMIT is meaningless, so send verbatim.
     return { ok: true, query: raw, limitAdded: false, keyword: 'ASK' }
+  }
+
+  // SELECT / CONSTRUCT / DESCRIBE all return a bounded-able result set. Append a
+  // safety LIMIT when auto-limit is on and none is present; autoLimit off sends
+  // verbatim (the caller opted into an unbounded set, still capped at MAX_ROWS on
+  // the way in). One exception: a bare `DESCRIBE <uri>` with no WHERE block takes
+  // no LIMIT — a solution modifier there is invalid on many engines — so it is
+  // always sent verbatim.
+  if (keyword === 'SELECT' || keyword === 'CONSTRUCT' || keyword === 'DESCRIBE') {
+    const canLimit = keyword !== 'DESCRIBE' || /}/.test(stripComments(raw))
+    if (!autoLimit || !canLimit) return { ok: true, query: raw, limitAdded: false, keyword }
+    const { query, added } = ensureLimit(raw)
+    return { ok: true, query, limitAdded: added, keyword }
   }
 
   const found = keyword ? `“${keyword}” ` : ''
   return {
     ok: false,
-    error: `Only SELECT and ASK queries can run here — this panel is read-only. ${found}is not allowed.`.replace(
+    error: `Only SELECT, ASK, CONSTRUCT and DESCRIBE queries can run here — this panel is read-only. ${found}is not allowed.`.replace(
       '  ',
       ' ',
     ),

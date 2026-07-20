@@ -32,7 +32,7 @@ describe('stripPrologue / firstKeyword', () => {
     const q = '# note\nPREFIX ex: <http://ex/>\n\nselect ?s WHERE {}'
     expect(firstKeyword(q)).toBe('SELECT')
   })
-  it('finds a blocked verb by name', () => {
+  it('finds the CONSTRUCT verb', () => {
     expect(firstKeyword('CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o }')).toBe('CONSTRUCT')
   })
   it('returns null when there is no verb', () => {
@@ -107,8 +107,31 @@ describe('prepareQuery', () => {
     expect(r.keyword).toBe('SELECT')
   })
 
-  it.each(['CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o }', 'DESCRIBE <http://x>', 'INSERT DATA { <a> <b> <c> }', 'DELETE WHERE { ?s ?p ?o }', 'LOAD <http://x>'])(
-    'blocks non read-only query: %s',
+  it('allows CONSTRUCT and appends the default LIMIT when missing', () => {
+    const r = prepareQuery('CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o }')
+    expect(r.ok).toBe(true)
+    expect(r.keyword).toBe('CONSTRUCT')
+    expect(r.limitAdded).toBe(true)
+    expect(r.query).toMatch(new RegExp(`LIMIT ${DEFAULT_LIMIT}$`))
+  })
+
+  it('allows DESCRIBE with a WHERE and appends a LIMIT', () => {
+    const r = prepareQuery('DESCRIBE ?s WHERE { ?s a <http://x/T> }')
+    expect(r.ok).toBe(true)
+    expect(r.keyword).toBe('DESCRIBE')
+    expect(r.limitAdded).toBe(true)
+  })
+
+  it('sends a bare DESCRIBE <uri> verbatim — a LIMIT there is invalid on many engines', () => {
+    const r = prepareQuery('DESCRIBE <http://x/thing>')
+    expect(r.ok).toBe(true)
+    expect(r.keyword).toBe('DESCRIBE')
+    expect(r.limitAdded).toBe(false)
+    expect(r.query).not.toMatch(/LIMIT/)
+  })
+
+  it.each(['INSERT DATA { <a> <b> <c> }', 'DELETE WHERE { ?s ?p ?o }', 'LOAD <http://x>', 'DROP GRAPH <http://g>'])(
+    'blocks write/update verb: %s',
     (q) => {
       const r = prepareQuery(q)
       expect(r.ok).toBe(false)

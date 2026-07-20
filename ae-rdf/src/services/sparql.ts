@@ -32,6 +32,9 @@ export interface SPARQLResults {
     bindings: SPARQLBinding[]
   }
   boolean?: boolean  // For ASK queries
+  /** CONSTRUCT/DESCRIBE only: the raw N-Triples body as returned, for download.
+   *  The full graph — not truncated to the rows the table renders. */
+  raw?: string
 }
 
 // Request configuration
@@ -1064,5 +1067,137 @@ export async function fetchRawRdf(
     }
 
     throw createError('UNKNOWN', 'Failed to fetch RDF', String(error))
+  }
+}
+
+// ── CONSTRUCT / DESCRIBE (graph results) ────────────────────────────────────
+// The read-only panel runs these too. Endpoints return an RDF graph, not a
+// bindings table, so executeSparql (SPARQL-results JSON only) can't consume them.
+// We request N-Triples — the one RDF syntax that parses line-by-line without a
+// parser library — and reshape it into subject/predicate/object bindings the
+// existing results table already renders (clickable URIs, lang/datatype tags).
+
+/** Decode N-Triples string-escape sequences (\", \\, \n, \t, \uXXXX, \UXXXXXXXX, …). */
+function unescapeNt(s: string): string {
+  return s.replace(/\\(u[0-9A-Fa-f]{4}|U[0-9A-Fa-f]{8}|[tbnrf"'\\])/g, (_m, esc: string) => {
+    const c = esc[0]!
+    if (c === 'u' || c === 'U') return String.fromCodePoint(parseInt(esc.slice(1), 16))
+    return ({ t: '\t', b: '\b', n: '\n', r: '\r', f: '\f', '"': '"', "'": "'", '\\': '\\' } as Record<string, string>)[c] ?? esc
+  })
+}
+
+/** Parse one N-Triples term: <IRI>, _:bnode, or "literal"(@lang|^^<datatype>). */
+function parseNtTerm(tok: string): SPARQLBinding[string] | null {
+  if (tok.startsWith('<') && tok.endsWith('>')) {
+    return { type: 'uri', value: unescapeNt(tok.slice(1, -1)) }
+  }
+  if (tok.startsWith('_:')) {
+    return { type: 'bnode', value: tok }
+  }
+  const lit = /^"((?:\\.|[^"\\])*)"(?:@([A-Za-z][A-Za-z0-9-]*)|\^\^<([^>]*)>)?$/.exec(tok)
+  if (lit) {
+    const value: SPARQLBinding[string] = { type: 'literal', value: unescapeNt(lit[1]!) }
+    if (lit[2]) value['xml:lang'] = lit[2]
+    if (lit[3]) value.datatype = unescapeNt(lit[3])
+    return value
+  }
+  return null
+}
+
+// subject (IRI|bnode)  predicate (IRI)  object (IRI|bnode|literal)  '.'  — the
+// object is lazy so an interior '.'/quote survives; only the trailing ' .' ends it.
+const NT_LINE = /^(<[^>]*>|_:\S+)\s+(<[^>]*>)\s+(.+?)\s*\.\s*$/
+
+/** Parse an N-Triples document into subject/predicate/object bindings. */
+export function parseNTriples(text: string): SPARQLBinding[] {
+  const out: SPARQLBinding[] = []
+  for (const raw of text.split('\n')) {
+    const line = raw.trim()
+    if (!line || line.startsWith('#')) continue
+    const m = NT_LINE.exec(line)
+    if (!m) continue
+    const subject = parseNtTerm(m[1]!)
+    const predicate = parseNtTerm(m[2]!)
+    const object = parseNtTerm(m[3]!)
+    if (subject && predicate && object) out.push({ subject, predicate, object })
+  }
+  return out
+}
+
+/**
+ * Execute a CONSTRUCT/DESCRIBE query and return its graph as subject/predicate/
+ * object bindings (via N-Triples). Separate from executeSparql because that path
+ * only consumes SPARQL-results JSON (SELECT/ASK) and rejects a graph body.
+ *
+ * ponytail: N-Triples only, single attempt (no retry — re-run to retry, like
+ * fetchRawRdf). An endpoint that ignores the Accept header and returns
+ * Turtle/RDF-XML surfaces as INVALID_RESPONSE rather than being mis-parsed.
+ */
+export async function executeConstruct(
+  endpoint: SPARQLEndpoint,
+  query: string,
+  config: SPARQLRequestConfig = {}
+): Promise<SPARQLResults> {
+  const { timeout } = { ...DEFAULT_CONFIG, ...config }
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), timeout)
+  if (config.signal) config.signal.addEventListener('abort', () => controller.abort())
+
+  try {
+    const response = await sparqlFetch(endpointUrl(endpoint.url), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        Accept: 'application/n-triples, text/plain;q=0.9',
+        ...getAuthHeaders(endpoint),
+      },
+      body: `query=${encodeURIComponent(query)}${inferParam(endpoint)}`,
+      signal: controller.signal,
+      redirect: 'error', // don't leak auth headers to a redirect target (R03)
+    })
+
+    clearTimeout(timeoutId)
+
+    if (!response.ok) {
+      const { code, message } = mapHttpError(response.status, response.statusText)
+      const body = await response.text().catch(() => '')
+      const detail = body.trim().slice(0, 600) || undefined
+      logger.warn('SPARQL', `Graph query HTTP ${response.status}: ${message}`, { detail })
+      throw createError(code, message, detail)
+    }
+
+    const text = await response.text()
+    const bindings = parseNTriples(text)
+
+    // Nothing parsed but the body clearly carries triples in another syntax → the
+    // endpoint ignored our N-Triples Accept. Say so instead of a bare "No results".
+    if (bindings.length === 0 && /@prefix|@base|<\?xml|<rdf:RDF/i.test(text)) {
+      throw createError(
+        'INVALID_RESPONSE',
+        'Unsupported RDF serialization',
+        'The endpoint returned the graph in a format this panel can’t display (expected N-Triples).'
+      )
+    }
+
+    logger.info('SPARQL', `Graph query parsed ${bindings.length} triples`)
+    return { head: { vars: ['subject', 'predicate', 'object'] }, results: { bindings }, raw: text }
+  } catch (error) {
+    clearTimeout(timeoutId)
+
+    if (error && typeof error === 'object' && 'code' in error) throw error
+
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      throw createError('TIMEOUT', 'Request timed out')
+    }
+
+    if (error instanceof TypeError) {
+      throw createError(
+        'CORS_BLOCKED',
+        'Endpoint unreachable or blocks browser access (CORS)',
+        String((error as Error).message)
+      )
+    }
+
+    throw createError('UNKNOWN', 'Failed to run graph query', String(error))
   }
 }

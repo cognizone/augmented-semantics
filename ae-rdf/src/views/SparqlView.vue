@@ -3,10 +3,11 @@
  * SparqlView - raw, read-only SPARQL panel.
  *
  * A lightweight CodeJar + Prism syntax-highlighting editor (no CodeMirror/Monaco)
- * + a results table. Only SELECT and
- * ASK run (see utils/sparqlGuard); an unbounded SELECT gets a LIMIT appended and
- * at most 1000 rows render. URI cells link into the resource view exactly like
- * PropertyTable. The last query is persisted per endpoint.
+ * + a results table. The four SPARQL read forms run (SELECT / ASK / CONSTRUCT /
+ * DESCRIBE, see utils/sparqlGuard); CONSTRUCT/DESCRIBE come back as N-Triples and
+ * render as a subject/predicate/object table. An unbounded query gets a LIMIT
+ * appended and at most 1000 rows render. URI cells link into the resource view
+ * exactly like PropertyTable. The last query is persisted per endpoint.
  *
  * Selection-invalidation (ae-rdf/CLAUDE.md): every async result is guarded by a
  * request id AND the endpoint it started on, and switching endpoints bumps the
@@ -25,7 +26,7 @@ import 'prismjs/components/prism-turtle'
 import 'prismjs/components/prism-sparql'
 import { useEndpointStore, useSettingsStore } from '../stores'
 import { useDelayedLoading, useElapsedTime } from '../composables'
-import { executeSparql, isNavigableIri, logger, resolveUris, getDisplayPrefixes, type SPARQLBinding, type SPARQLResults } from '../services'
+import { executeSparql, executeConstruct, isNavigableIri, logger, resolveUris, getDisplayPrefixes, type SPARQLBinding, type SPARQLResults } from '../services'
 import { injectPrefixes } from '../utils/injectPrefixes'
 import { qname as toQname, type ResolvedMap } from '../utils/format'
 import { prepareQuery, DEFAULT_LIMIT } from '../utils/sparqlGuard'
@@ -44,7 +45,7 @@ const hasEndpoint = computed(() => !!endpoint.value)
 // the HINT just shows the modifier native to the OS so it reads right per platform.
 const runKey = /Mac|iPhone|iPad/i.test(navigator.platform || navigator.userAgent) ? '⌘' : 'Ctrl'
 
-const DEFAULT_QUERY = `# Read-only SPARQL. Only SELECT and ASK queries run.
+const DEFAULT_QUERY = `# Read-only SPARQL — SELECT, ASK, CONSTRUCT, DESCRIBE.
 # Press Cmd/Ctrl+Enter to run.
 SELECT ?s ?p ?o WHERE { ?s ?p ?o } LIMIT 25`
 
@@ -190,6 +191,9 @@ const autoLimit = computed({
   set: v => { settings.sparqlAutoLimit = v },
 })
 const askResult = ref<boolean | null>(null)
+// CONSTRUCT/DESCRIBE only: the raw N-Triples body, for download. The FULL graph —
+// the table truncates to MAX_ROWS but the file gets everything the endpoint returned.
+const rdfText = ref<string | null>(null)
 const resolved = ref<ResolvedMap>(new Map())
 const ran = ref(false) // a query has completed at least once (drives empty state)
 
@@ -205,6 +209,7 @@ function clearResults() {
   rows.value = []
   pageFirst.value = 0
   askResult.value = null
+  rdfText.value = null
   resolved.value = new Map()
   error.value = null
   errorDetail.value = null
@@ -260,7 +265,12 @@ async function run() {
   logger.info('SparqlView', 'Running query', { endpoint: ep.url, keyword: prepared.keyword, limitAdded: prepared.limitAdded })
 
   try {
-    const res: SPARQLResults = await executeSparql(ep, prepared.query)
+    // CONSTRUCT/DESCRIBE return an RDF graph — fetched as N-Triples and reshaped
+    // into subject/predicate/object bindings so the same table renders them.
+    const graph = prepared.keyword === 'CONSTRUCT' || prepared.keyword === 'DESCRIBE'
+    const res: SPARQLResults = graph
+      ? await executeConstruct(ep, prepared.query)
+      : await executeSparql(ep, prepared.query)
     if (!isCurrent()) {
       logger.debug('SparqlView', 'Discarding stale result (endpoint/selection changed)')
       return
@@ -288,6 +298,8 @@ async function run() {
       resolved.value = rmap as ResolvedMap
       vars.value = res.head?.vars ?? []
       rows.value = shown
+      // Keep the full graph body (untruncated) so a CONSTRUCT/DESCRIBE can be downloaded.
+      rdfText.value = graph ? (res.raw ?? null) : null
     }
 
     durationMs.value = performance.now() - started
@@ -330,6 +342,17 @@ const durationLabel = computed(() =>
 /** Navigate a URI cell into the resource view (same target as PropertyTable). */
 function openResource(uri: string) {
   router.push({ path: '/', query: { [URL_PARAMS.RESOURCE]: uri } })
+}
+
+/** Download the CONSTRUCT/DESCRIBE graph verbatim as an N-Triples (.nt) file. */
+function downloadRdf() {
+  const text = rdfText.value
+  if (!text) return
+  const name = (endpoint.value?.name || 'graph').replace(/[^\w.-]+/g, '-')
+  const url = URL.createObjectURL(new Blob([text], { type: 'application/n-triples' }))
+  const a = Object.assign(document.createElement('a'), { href: url, download: `${name}.nt` })
+  a.click()
+  URL.revokeObjectURL(url)
 }
 </script>
 
@@ -382,7 +405,7 @@ function openResource(uri: string) {
         </div>
         <div class="editor-head">
           <h2 class="pane-title">SPARQL — <span class="mono">{{ endpoint?.name }}</span></h2>
-          <span class="editor-hint">Read-only · SELECT / ASK · <kbd>{{ runKey }}</kbd>+<kbd>Enter</kbd> to run</span>
+          <span class="editor-hint">Read-only · SELECT / ASK / CONSTRUCT / DESCRIBE · <kbd>{{ runKey }}</kbd>+<kbd>Enter</kbd> to run</span>
         </div>
         <div
           ref="editorEl"
@@ -432,8 +455,15 @@ function openResource(uri: string) {
           <span class="ask-value">{{ askResult }}</span>
         </div>
 
-        <!-- SELECT results -->
+        <!-- SELECT / CONSTRUCT / DESCRIBE results -->
         <div v-else-if="rows.length" class="result-block">
+          <!-- Graph queries: offer the full returned graph as a download (N-Triples). -->
+          <div v-if="rdfText" class="result-toolbar">
+            <button class="download-btn" title="Download the full graph as N-Triples (.nt)" @click="downloadRdf">
+              <span class="material-symbols-outlined">download</span>
+              Download RDF
+            </button>
+          </div>
           <div class="table-scroll">
           <table class="result-table">
             <thead>
@@ -495,7 +525,7 @@ function openResource(uri: string) {
         <!-- Nothing run yet -->
         <div v-else class="state">
           <span class="material-symbols-outlined empty-icon">terminal</span>
-          <p>Write a SELECT or ASK query and run it.</p>
+          <p>Write a SELECT, ASK, CONSTRUCT or DESCRIBE query and run it.</p>
         </div>
       </div>
     </template>
@@ -809,6 +839,38 @@ function openResource(uri: string) {
   flex-direction: column;
   height: 100%;
   min-height: 0;
+}
+
+.result-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0.4rem 1rem;
+  border-bottom: 1px solid var(--ae-border-color);
+  flex-shrink: 0;
+}
+
+.download-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.3rem 0.7rem;
+  color: var(--ae-accent);
+  background: var(--ae-bg-elevated);
+  border: 1px solid var(--ae-border-color);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.download-btn:hover {
+  background: var(--ae-bg-hover);
+  border-color: var(--ae-accent);
+}
+
+.download-btn .material-symbols-outlined {
+  font-size: 16px;
 }
 
 .table-scroll {
