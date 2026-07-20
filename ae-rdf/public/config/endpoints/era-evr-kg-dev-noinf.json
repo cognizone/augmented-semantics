@@ -147,7 +147,7 @@
         {
           "predicate": "http://purl.org/dc/terms/dateAccepted",
           "label": "Accepted",
-          "datatype": "date",
+          "datatype": "dateTime",
           "ranges": [
             { "label": "2026", "min": 2026, "max": 2027 },
             { "label": "2025", "min": 2025, "max": 2026 },
@@ -319,7 +319,8 @@
     }
   },
   "graph": {
-    "quads": true
+    "quads": true,
+    "defaultView": "merged"
   },
   "typeInventory": [
     {

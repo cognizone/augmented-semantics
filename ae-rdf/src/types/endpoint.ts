@@ -12,7 +12,7 @@ export interface SPARQLEndpoint {
   analysis?: EndpointAnalysis
   graph?: EndpointGraph
   infer?: boolean                               // GraphDB: send `infer=<value>` with every query — false disables inferred triples. Omit to send nothing.
-  maxConcurrency?: number                       // Max in-flight SPARQL requests to this endpoint at once (default 4). Raise for a DB that handles parallelism well, lower for a fragile one. See services/http.ts.
+  maxConcurrency?: number                       // Max in-flight SPARQL requests to this endpoint at once (default 4, ceiling 8). Raise for a DB that handles parallelism well, lower for a fragile one. See services/http.ts.
   types?: Record<string, TypeConfig>           // per-type display config, keyed by type IRI
   typeInventory?: TypeCount[]                   // cached type inventory for instant sidebar
   typeProperties?: Record<string, TypeProfile> // discovered per-type property schema (script-generated)
@@ -185,9 +185,12 @@ export interface FacetConfig {
    *  the predicate (e.g. a "No date" bucket) — min/max are ignored on that band. */
   ranges?: { label: string; min?: number; max?: number; missing?: boolean }[]
   /** RANGE facets only. `date` treats each band's `min`/`max` as a YEAR and compares
-   *  the value as an `xsd:date` (`>= "min-01-01"`, `< "max-01-01"`); default treats
-   *  the value as numeric (`xsd:decimal` cast). */
-  datatype?: 'date'
+   *  the value as an `xsd:date` (`>= "min-01-01"`, `< "max-01-01"`); `dateTime`
+   *  compares as `xsd:dateTime` ("min-01-01T00:00:00Z") — declare whichever matches
+   *  the DATA's actual datatype: a matching constant lets the store's literal index
+   *  answer the range instead of coercing per row. Default treats the value as
+   *  numeric (`xsd:decimal` cast). */
+  datatype?: 'date' | 'dateTime'
   /** Max distinct values listed for a VALUE facet (default 15). One extra is
    *  fetched to detect (and note) truncation. Ignored for range facets. */
   limit?: number

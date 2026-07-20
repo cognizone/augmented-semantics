@@ -445,26 +445,37 @@ describe('buildFacetValuesQuery', () => {
 describe('buildFacetRangesQuery', () => {
   const AMOUNT = 'http://data.europa.eu/s66#totalCost'
   const DEC = '<http://www.w3.org/2001/XMLSchema#decimal>'
-  it('one query, a SUM(IF(cond,1,0)) aggregate per bucket', () => {
+  it('one query, a COUNT subselect with a range FILTER per bucket (literal-index friendly)', () => {
     const q = buildFacetRangesQuery(TYPE, AMOUNT, [{ max: 1000 }, { min: 1000, max: 5000 }], '', DEFAULT)
-    expect(q).toContain(`(SUM(IF(${DEC}(?v) < 1000, 1, 0)) AS ?b0)`)
-    expect(q).toContain(`(SUM(IF(${DEC}(?v) >= 1000 && ${DEC}(?v) < 5000, 1, 0)) AS ?b1)`)
-    expect(q).toContain(`?s a <${TYPE}>`)
-    expect(q).toContain(`?s <${AMOUNT}> ?v`)
+    expect(q).toContain(`{ SELECT (COUNT(*) AS ?b0) WHERE { ?s a <${TYPE}> . ?s <${AMOUNT}> ?v . FILTER(${DEC}(?v) < 1000) } }`)
+    expect(q).toContain(`{ SELECT (COUNT(*) AS ?b1) WHERE { ?s a <${TYPE}> . ?s <${AMOUNT}> ?v . FILTER(${DEC}(?v) >= 1000 && ${DEC}(?v) < 5000) } }`)
+    expect(q.startsWith('SELECT ?b0 ?b1 WHERE {')).toBe(true)
+    // SUM(IF) is the shape the optimizer can't index — it must be gone.
+    expect(q).not.toContain('SUM(IF')
   })
   it('embeds the constraint fragment and scopes membership per strategy', () => {
     const q = buildFacetRangesQuery(TYPE, AMOUNT, [{ min: 0 }], 'FRAG_HERE', NAMED)
     expect(q).toContain('FRAG_HERE')
     expect(q).toContain(`GRAPH ?g { ?s a <${TYPE}> . }`)
   })
-  it('counts value bands with a plain inner join (no OPTIONAL — keeps the value index usable)', () => {
+  it('date bands: ONE year-grouped scan folded into bands (xsd:date has no literal-index help)', () => {
     const DATE = 'http://purl.org/dc/terms/dateAccepted'
-    const XDATE = '<http://www.w3.org/2001/XMLSchema#date>'
-    const q = buildFacetRangesQuery(TYPE, DATE, [{ min: 2022, max: 2023 }], '', DEFAULT, undefined, true)
+    const q = buildFacetRangesQuery(TYPE, DATE, [{ min: 2022, max: 2023 }, { max: 2000 }], '', DEFAULT, undefined, 'date')
     expect(q).not.toContain('OPTIONAL')
-    expect(q).not.toContain('BOUND')
     expect(q).toContain(`?s <${DATE}> ?v`)
-    expect(q).toContain(`(SUM(IF(?v >= "2022-01-01"^^${XDATE} && ?v < "2023-01-01"^^${XDATE}, 1, 0)) AS ?b0)`)
+    // inner scan groups by year ONCE…
+    expect(q).toContain('GROUP BY (YEAR(?v) AS ?y)')
+    // …outer aggregate folds year rows into the config bands (BOUND-guarded).
+    expect(q).toContain('(SUM(IF(BOUND(?y) && ?y >= 2022 && ?y < 2023, ?n, 0)) AS ?b0)')
+    expect(q).toContain('(SUM(IF(BOUND(?y) && ?y < 2000, ?n, 0)) AS ?b1)')
+    // exactly one scan of the type join — not one per band
+    expect(q.match(/a <http/g)!.length).toBe(1)
+  })
+  it('dateTime bands compare as xsd:dateTime constants (match the data, keep the index)', () => {
+    const DATE = 'http://purl.org/dc/terms/dateAccepted'
+    const XDT = '<http://www.w3.org/2001/XMLSchema#dateTime>'
+    const q = buildFacetRangesQuery(TYPE, DATE, [{ min: 2022, max: 2023 }], '', DEFAULT, undefined, 'dateTime')
+    expect(q).toContain(`FILTER(?v >= "2022-01-01T00:00:00Z"^^${XDT} && ?v < "2023-01-01T00:00:00Z"^^${XDT})`)
   })
 })
 
@@ -574,12 +585,13 @@ describe('facet 2-hop (via) + date ranges', () => {
     expect(frag).not.toContain(DEC)
   })
 
-  it('buildFacetRangesQuery threads via + date through to the aggregate', () => {
+  it('buildFacetRangesQuery threads via + datatype through to the band subselects', () => {
     const q = buildFacetRangesQuery(TYPE, COST, [{ min: 1000000 }], '', DEFAULT, VALUE)
     expect(q).toContain(`?s <${COST}> ?vg_m0 . ?vg_m0 <${VALUE}> ?v .`)
-    expect(q).toContain(`SUM(IF(${DEC}(?v) >= 1000000, 1, 0))`)
-    const qd = buildFacetRangesQuery(TYPE, DATE, [{ max: 2015 }], '', DEFAULT, undefined, true)
-    expect(qd).toContain(`?v < "2015-01-01"^^${XDATE}`)
+    expect(q).toContain(`FILTER(${DEC}(?v) >= 1000000)`)
+    const qd = buildFacetRangesQuery(TYPE, DATE, [{ max: 2015 }], '', DEFAULT, undefined, 'date')
+    expect(qd).toContain('?y < 2015')
+    expect(qd).toContain('GROUP BY (YEAR(?v) AS ?y)')
   })
 
   it('buildFacetValuesQuery threads via (2-hop value listing)', () => {

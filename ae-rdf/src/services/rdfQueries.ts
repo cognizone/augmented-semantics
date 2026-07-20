@@ -301,6 +301,12 @@ export function buildInstanceColumnsQuery(
 /** Full IRI cast so the range FILTER needs no `xsd:` prefix declaration. */
 const XSD_DECIMAL = '<http://www.w3.org/2001/XMLSchema#decimal>'
 const XSD_DATE = '<http://www.w3.org/2001/XMLSchema#date>'
+const XSD_DATETIME = '<http://www.w3.org/2001/XMLSchema#dateTime>'
+
+/** How a range facet's YEAR bands compare against the stored value — must match the
+ *  DATA's datatype (see FacetConfig.datatype): a matching typed constant lets GraphDB
+ *  answer the FILTER from its literals index; a mismatched one coerces per row. */
+export type FacetRangeDatatype = 'date' | 'dateTime'
 
 /** One selected value of a VALUE facet — a URI object, or a literal with its
  *  datatype/language preserved so the constraint matches the exact stored term. */
@@ -328,8 +334,9 @@ export interface FacetRangeSelection {
   ranges: { min?: number; max?: number; missing?: boolean }[]
   /** Hop predicate(s) to the value (see FacetConfig.via). */
   via?: string | string[]
-  /** `date` → bands are YEARs compared as xsd:date; else numeric (decimal cast). */
-  datatype?: 'date'
+  /** `date`/`dateTime` → bands are YEARs compared as that xsd type (match the
+   *  data's actual datatype); else numeric (decimal cast). */
+  datatype?: FacetRangeDatatype
 }
 
 export type FacetSelection = FacetValueSelection | FacetRangeSelection
@@ -354,12 +361,18 @@ function renderFacetTerm(t: FacetValueTerm): string {
 
 /** `min <= v < max` as a SPARQL condition (either bound optional). Numeric by
  *  default (decimal cast, so a string like "1499837" compares numerically); when
- *  `date`, min/max are YEARs compared as xsd:date (`>= "Y-01-01"`, `< "Y-01-01"`).
+ *  `date`/`dateTime`, min/max are YEARs compared as that xsd type (`>= "Y-01-01"` /
+ *  `>= "Y-01-01T00:00:00Z"`). The constant's type should MATCH the data's (config
+ *  datatype): on GraphDB a matched typed range is answered from the literals index,
+ *  a mismatched one coerces per row (measured 2s vs <1s per band on 666k EVR rows).
  *  ponytail: date granularity is whole years — finer bands would need real dates. */
-function rangeCond(v: string, r: { min?: number; max?: number }, date = false): string {
+function rangeCond(v: string, r: { min?: number; max?: number }, datatype?: FacetRangeDatatype): string {
   const c: string[] = []
-  const lhs = date ? v : `${XSD_DECIMAL}(${v})`
-  const bound = (n: number) => (date ? `"${Math.trunc(n)}-01-01"^^${XSD_DATE}` : `${n}`)
+  const lhs = datatype ? v : `${XSD_DECIMAL}(${v})`
+  const bound = (n: number) =>
+    datatype === 'dateTime' ? `"${Math.trunc(n)}-01-01T00:00:00Z"^^${XSD_DATETIME}`
+    : datatype === 'date' ? `"${Math.trunc(n)}-01-01"^^${XSD_DATE}`
+    : `${n}`
   if (Number.isFinite(r.min)) c.push(`${lhs} >= ${bound(r.min!)}`)
   if (Number.isFinite(r.max)) c.push(`${lhs} < ${bound(r.max!)}`)
   return c.length ? c.join(' && ') : 'true'
@@ -419,19 +432,18 @@ export function buildFacetConstraints(selections: FacetSelection[], s: GraphStra
     if (isRangeSelection(sel)) {
       const path = facetPath('?s', pred, sel.via, v, s, `?fg${i}`)
       if (!path) continue
-      const isDate = sel.datatype === 'date'
       const ranged = sel.ranges.filter(r => !r.missing)
       const wantMissing = sel.ranges.some(r => r.missing)
       if (!ranged.length && !wantMissing) continue
       if (!wantMissing) {
         // Value-in-band only: inner-join the value, OR the bands. (unchanged path)
-        parts.push(`{ ${path} FILTER(${ranged.map(r => `(${rangeCond(v, r, isDate)})`).join(' || ')}) }`)
+        parts.push(`{ ${path} FILTER(${ranged.map(r => `(${rangeCond(v, r, sel.datatype)})`).join(' || ')}) }`)
       } else {
         // A "No date" band is selected (± value bands): OPTIONAL-bind the value so
         // the constraint also matches type instances that HAVE NO value. Emitted at
         // group level (unbraced) so ?s (bound by the caller's membership/core) anchors
         // the OPTIONAL and the group FILTER — mirrors the orphanVia NOT-EXISTS pattern.
-        const alts = ranged.map(r => `(BOUND(${v}) && (${rangeCond(v, r, isDate)}))`)
+        const alts = ranged.map(r => `(BOUND(${v}) && (${rangeCond(v, r, sel.datatype)}))`)
         alts.push(`!BOUND(${v})`)
         parts.push(`OPTIONAL { ${path} } FILTER(${alts.join(' || ')})`)
       }
@@ -480,10 +492,14 @@ export function buildFacetValuesQuery(
 }
 
 /**
- * A RANGE facet's VALUE-bucket counts in ONE query: a per-bucket `SUM(IF(cond, 1, 0))`
- * aggregate (`?b0`, `?b1`, …) over the type's (constrained) values, INNER-joined on the
- * value so the value index stays usable and the query is fast. Graph-scoped per strategy
- * like buildFacetValuesQuery.
+ * A RANGE facet's VALUE-bucket counts in ONE query: a per-bucket COUNT SUBSELECT
+ * (`?b0`, `?b1`, …) whose band condition is a plain range FILTER over the inner-joined
+ * value. One row out, same shape as before — but the FILTER form is what GraphDB's
+ * LITERALS INDEX can answer directly, unlike a `SUM(IF(cond,1,0))` aggregate whose
+ * conditions are opaque to the optimizer. Measured on EVR dev (666k applications,
+ * 9 date bands): SUM(IF) 26s → stacked FILTER subselects 3s. Subselects project only
+ * their count var, so `?s`/`?v`/graph vars stay scoped per band and never cross-join.
+ * Graph-scoped per strategy like buildFacetValuesQuery.
  *
  * A "no value" (missing) bucket is NOT counted here: it needs an OPTIONAL/NOT-EXISTS
  * full-type scan that would drag EVERY bucket down to that speed. It's a SEPARATE query
@@ -501,14 +517,34 @@ export function buildFacetRangesQuery(
   constraintFragment: string,
   s: GraphStrategy,
   via?: string | string[],
-  date = false,
+  datatype?: FacetRangeDatatype,
 ): string {
   const iri = sanitizeIri(typeUri)
   const pred = sanitizeIri(predicate)
   const frag = constraintFragment ? `${constraintFragment} ` : ''
   const valTriple = facetPath('?s', pred, via, '?v', s, '?vg') ?? 'FILTER(false)'
-  const aggs = buckets.map((b, i) => `(SUM(IF(${rangeCond('?v', b, date)}, 1, 0)) AS ?b${i})`).join(' ')
-  return `SELECT ${aggs} WHERE { ${membership(`<${iri}>`, s)} ${frag}${valTriple} }`
+  const core = `${membership(`<${iri}>`, s)} ${frag}${valTriple}`
+
+  // xsd:date values are NOT served by GraphDB's literals index (measured on EVR dev:
+  // 2s per band FILTER = 13s for 9 bands, vs <1s per dateTime band), so per-band
+  // subselects just re-scan the join 9×. Instead: ONE scan grouped by year, folded
+  // into the bands by an outer aggregate over the ~dozens of year rows (free). Same
+  // one-row ?b0..?bN result shape. 13s → 6s measured. BOUND-guarded so an unparseable
+  // value (YEAR errors → ?y unbound) counts in no band instead of erroring the SUM.
+  if (datatype === 'date') {
+    const aggs = buckets.map((b, i) => {
+      const c: string[] = []
+      if (Number.isFinite(b.min)) c.push(`?y >= ${Math.trunc(b.min!)}`)
+      if (Number.isFinite(b.max)) c.push(`?y < ${Math.trunc(b.max!)}`)
+      return `(SUM(IF(BOUND(?y)${c.length ? ` && ${c.join(' && ')}` : ''}, ?n, 0)) AS ?b${i})`
+    }).join(' ')
+    return `SELECT ${aggs} WHERE { { SELECT ?y (COUNT(*) AS ?n) WHERE { ${core} } GROUP BY (YEAR(?v) AS ?y) } }`
+  }
+
+  const subs = buckets.map((b, i) =>
+    `{ SELECT (COUNT(*) AS ?b${i}) WHERE { ${core} FILTER(${rangeCond('?v', b, datatype)}) } }`,
+  )
+  return `SELECT ${buckets.map((_, i) => `?b${i}`).join(' ')} WHERE { ${subs.join(' ')} }`
 }
 
 /**
