@@ -52,10 +52,14 @@ export default defineConfig({
           text: 'User Guide',
           items: [
             { text: 'Overview', link: '/ae-rdf/' },
-            { text: '1. Managing Endpoints', link: '/ae-rdf/01-endpoints' },
-            { text: '2. Browsing', link: '/ae-rdf/02-browsing' },
-            { text: '3. Graphs', link: '/ae-rdf/03-graphs' },
-            { text: '4. Troubleshooting', link: '/ae-rdf/04-troubleshooting' }
+            { text: 'Managing Endpoints', link: '/ae-rdf/endpoints' },
+            { text: 'Browsing', link: '/ae-rdf/browsing' },
+            { text: 'Faceted Browsing', link: '/ae-rdf/facets' },
+            { text: 'SPARQL Panel', link: '/ae-rdf/sparql' },
+            { text: 'Rich Values', link: '/ae-rdf/rich-values' },
+            { text: 'Graphs', link: '/ae-rdf/graphs' },
+            { text: 'Shareable URLs', link: '/ae-rdf/sharing' },
+            { text: 'Troubleshooting', link: '/ae-rdf/troubleshooting' }
           ]
         },
         {

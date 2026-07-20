@@ -22,9 +22,8 @@ The **Types** header has a `{}` toggle to show or hide embedded types nested und
 
 Types can be **configured** — pinned, hidden, grouped, or rendered as embedded value objects / labels. That's curator work, done via a per-type gear in authoring mode; see the [Configuration Guide](configuration.md#per-type-configuration). Without authoring mode the sidebar is read-only, but the configured effects still apply.
 
-::: tip Counts are distinct
-Counts are the number of *distinct* subjects of that type. On large datasets the sidebar may take a few seconds to compute — that's the price of a correct count rather than an inflated one.
-:::
+> [!TIP]
+> **Counts are distinct** — Counts are the number of *distinct* subjects of that type. On large datasets the sidebar may take a few seconds to compute — that's the price of a correct count rather than an inflated one.
 
 ## Instance list
 
@@ -42,21 +41,16 @@ A **filter box** sits above the list — type to narrow it to instances whose **
 - It's **debounced** — AE RDF waits until you pause typing before querying, so a fast typist doesn't fire a query per keystroke.
 - Press **Esc** or the **✕** to clear it. The box stays visible as you switch types, so a filter is never a hidden constraint.
 
-::: tip Custom search fields
-A type can pin exactly which predicates the filter searches via its **search** fields in the [config](configuration.md#per-type-configuration) — useful when the default label fields aren't what you want to match on.
-:::
+> [!TIP]
+> **Custom search fields** — A type can pin exactly which predicates the filter searches via its **search** fields in the [config](configuration.md#per-type-configuration) — useful when the default label fields aren't what you want to match on.
 
 ### Facets
 
-When a type has facets configured, the sidebar's header gains a **Filters** tab next to **Types** — switch to it for a full-height panel of clickable **facets** over chosen properties. A *value* facet lists a property's most common values (each with a count); a *range* facet offers numeric bands (e.g. total cost). Click a value or band to narrow the list; click again to deselect. You can pick several values in one facet (matches **any** of them) and combine facets (matches **all** of them). Each facet's counts update to show what you'd get by adding it, and the instance count tracks the filtered total. Use **Clear filters** to reset. Your selections are kept in the URL (`?filters=…`), so a filtered list is **bookmarkable and shareable** — and back/forward step through them.
+When a type has facets configured, the sidebar's header gains a **Filters** tab for narrowing the list by a property's values, numeric ranges, or dates (including values a hop or more away). See **[Faceted browsing](facets.md)** for the full rail.
 
 ### Open in SPARQL
 
-Above the instance list, a **SPARQL** button hands the current list — with its type, graph scope, text filter, and every active facet applied — to the **SPARQL panel** as the exact query behind it, opened in a fresh tab. Use it to see how the filtered view is built, then refine it by hand.
-
-The panel keeps **multiple query tabs** per endpoint: **+** opens a new one, **double-click** a tab to rename it, and each tab's query is remembered (so are the tabs themselves) across reloads and endpoint switches.
-
-The **Filters** tab is greyed out for types with no facets, and shows a small **count badge** when filters are active — so you can see from the **Types** side that a filter is narrowing the list. Selecting a type never yanks you off the tab you're on; switching to a type with no facets simply drops you back to **Types**. Which types have facets — and over which properties — is set by the curator in the [config](configuration.md#facets).
+Above the instance list, a **SPARQL** button hands the current filtered list — its type, graph scope, text filter, and every active facet — to the [SPARQL panel](sparql.md#open-in-sparql) as the exact query behind it, in a fresh tab.
 
 ### Unreferenced instances (orphans)
 
@@ -70,7 +64,7 @@ Paste a resource URI in the top bar and press **Go** to inspect it. If the URI b
 
 Opening an instance — or pasting a URI in the top bar and pressing **Go** — shows the resource:
 
-- **Header** — the resource's label (or local name if it has none), its full URI (click it to dereference — opens in a new tab) with a copy <img src="./icons/icon-copy.svg" height="14"> button next to it, plus its **type chips** and a [graph summary](03-graphs.md).
+- **Header** — the resource's label (or local name if it has none), its full URI (click it to dereference — opens in a new tab) with a copy <img src="./icons/icon-copy.svg" height="14"> button next to it, plus its **type chips** and a [graph summary](graphs.md).
 - **Type chips** — the resource's `rdf:type`s, lifted out of the property list. Click a chip to browse all instances of that type.
 - **Attributes** — properties whose values are literals (dates, statuses, text), shown with language and datatype tags.
 - **Relationships** — properties whose values are other resources. These are **clickable links** <img src="./icons/icon-link.svg" height="14"> — click to walk to that resource. Each link carries a small **type badge** showing the *most specific* type (e.g. `[JournalPaper]`, not the generic `[Result]`) so you can see exactly *what* it points at. Value-object types set to **Embed** (in the [Types gear](#types-sidebar)) show their properties inline instead of a link — e.g. a monetary amount renders as `value 1902.6 · currency EUR` in place, nested as deep as the data goes.
@@ -91,18 +85,12 @@ Prefer raw URIs or prefixed qnames? Switch the **URI display** mode in [Settings
 
 ### Rich values (media, DOIs, geometry)
 
-AE RDF recognises what certain values *are* and shows them richly, not just as links:
-
-- **Media files** — a value (or a viewed resource) whose URL is an image, video, or audio file renders **inline**: images as a thumbnail (click to open full size in a new tab), video/audio with player controls. Detected by file extension, `http(s)` only.
-- **DOIs** — a DOI in any form (a `doi.org` URL, `doi:10.…`, or a bare `10.…/…` literal) gets a blue **DOI ↗** badge linking to the resolver. With the **DOI citations** [setting](index.md#settings) on, an inline **citation card** appears as the value scrolls into view — authors, year, title, publisher, subject categories, a truncated abstract, and a landing-page link — fetched from doi.org on demand and cached. If a registrar has no metadata, the badge simply stays a link. Deployers can toggle individual card fields via the [`doi` config section](configuration.md#appjson-reference).
-- **Geometry (WKT)** — a `geo:wktLiteral` value gets a green **map ↗** badge opening the location on OpenStreetMap. With the **Geometry maps** [setting](index.md#settings) on, an **embedded map** renders the point/line/polygon itself — swisstopo basemap for Swiss coordinates, OpenStreetMap elsewhere, switchable in the map's corner. Only WGS84 (longitude/latitude) coordinates are mapped; projected coordinates (e.g. Swiss LV95) show the raw value, never a wrong pin.
-
-The two features that call external services — DOI citations and geometry maps — are **off by default** and fetch lazily (only what you actually scroll to), so browsing stays private and light unless you opt in.
+Certain values render richly rather than as bare links — inline images and audio/video players, **DOI ↗** badges with optional citation cards, and **map ↗** badges with optional embedded maps for WKT geometry. See **[Rich values](rich-values.md)**.
 
 ## Walking links & deep-linking
 
-Clicking a relationship value opens that resource; the active endpoint, type, and resource you're viewing are all kept in the URL (`?endpoint=…`, `?type=…`, `?resource=…`). The **endpoint** appears as a short readable slug (e.g. `?endpoint=cordis-datalab`), so a shared link opens on the right dataset — not whatever the recipient last had selected. That means **browser back/forward work** (including across endpoints), and you can **bookmark or share** any view — opening the link restores exactly what you were looking at. Switching endpoints from the dropdown updates the slug and clears the previous dataset's type/resource (they don't exist in the new one). *(A single-endpoint deployment omits the param — there's nothing to disambiguate.)*
+Clicking a relationship value opens that resource, and where you are — endpoint, type, resource, filters — is kept in the URL, so any view is bookmarkable and shareable and browser back/forward work. See **[Shareable URLs & deep-linking](sharing.md)**.
 
 ---
 
-*Next: [Graphs](03-graphs.md) →*
+*Next: [Faceted browsing](facets.md) →*

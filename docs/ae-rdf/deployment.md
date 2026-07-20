@@ -36,6 +36,5 @@ A [Tauri](https://tauri.app) app built from `ae-rdf` with the ERA endpoints bund
 4. CI builds ~8 minutes and attaches all installers to a draft release.
 5. Write the release notes (from the CHANGELOG entry) and **publish** the draft.
 
-::: warning The version bump is not cosmetic
-On update, the app clears the WebView's cached assets **only when the app version changed** since the last launch (`src-tauri/src/lib.rs`). Skip the bump and updated users keep seeing the previous build's cached files. Bumping the version is what guarantees a clean update — `localStorage` (theme, history) survives; only the asset cache is wiped.
-:::
+> [!WARNING]
+> **The version bump is not cosmetic** — On update, the app clears the WebView's cached assets **only when the app version changed** since the last launch (`src-tauri/src/lib.rs`). Skip the bump and updated users keep seeing the previous build's cached files. Bumping the version is what guarantees a clean update — `localStorage` (theme, history) survives; only the asset cache is wiped.
