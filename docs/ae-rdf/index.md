@@ -13,18 +13,7 @@ A fast, browser-only explorer for **any** RDF dataset behind a SPARQL endpoint. 
 *Above — a CORDIS organisation: the **Types** sidebar (left) for navigating the dataset, the resource's **attributes** and clickable **relationships**, and **nested value objects** inlined in place (site → postal address → coordinates), as deep as the data goes. [See this view live →](https://cognizone.github.io/augmented-semantics/rdf-cordis/?type=http%3A%2F%2Fdata.europa.eu%2Fs66%23Organisation&resource=http%3A%2F%2Fdata.europa.eu%2Fs66%2Fresource%2Forganisations%2F0174d385-a624-3c4f-adf7-efbb84c4cdf9)*
 
 
-> **Live queries only** — AE RDF runs entirely on live SPARQL: no backend, no precomputed indexes, no data leaves your machine. Endpoint connection, type discovery, instance lists, the resource view with incoming links, and everything in **Highlights** below all run as live queries against the endpoint.
-
-## Highlights
-
-| Feature | What it does |
-|---------|--------------|
-| **[Faceted browsing](04-facets.md)** | Filter a type by its values, numeric ranges, and dates — even values several hops away — with live, self-adjusting counts. |
-| **[SPARQL panel](05-sparql.md)** | A read-only query console: many named tabs, auto-`LIMIT`, paginated results, and portable prefixed queries. |
-| **[Rich values](06-rich-values.md)** | Media files inline, DOI citation cards, and embedded maps for WKT geometry. |
-| **[Graph provenance](07-graphs.md)** | Always know which named graph every fact comes from. |
-| **[Shareable URLs](08-sharing.md)** | Endpoint, type, resource, and filters live in the URL — bookmark, share, and step through with back/forward. |
-| **[Instance views](02-browsing.md#instance-list)** | Per-type columns in a table or card layout, with server-side text filtering. |
+> **Live queries only** — AE RDF runs entirely on live SPARQL: no backend, no precomputed indexes, no data leaves your machine. Endpoint connection, type discovery, instance lists, the resource view with incoming links, and everything you see below all run as live queries against the endpoint.
 
 ## See it in action
 
@@ -47,20 +36,44 @@ Narrow a type by its values, ranges, and dates (even values a hop away), with li
 </tr>
 <tr>
 <td width="50%" valign="top">
-<strong><a href="05-sparql.md">SPARQL panel</a></strong><br>
-A read-only SELECT / ASK console with named tabs, auto-<code>LIMIT</code>, paginated results, and portable prefixed queries.
-</td>
-<td width="50%" valign="top">
 <strong><a href="06-rich-values.md">Rich values</a></strong><br>
 Media inline, DOI citation cards, and WKT geometry as maps.<br>
 <a href="https://cognizone.github.io/augmented-semantics/rdf/?endpoint=lindas-swiss-linked-data&resource=http%3A%2F%2Fdx.doi.org%2F10.5281%2Fzenodo.259276">See it live →</a>
 </td>
+<td width="50%" valign="top">
+<strong><a href="03-resource-view.md#attributes-and-relationships">Deep embeds</a></strong><br>
+Value objects inlined with their own properties — a Grant's start date, end date, and beneficiary shown in place, nested as deep as the data goes.<br>
+<a href="https://cognizone.github.io/augmented-semantics/rdf-cordis/?type=http%3A%2F%2Fdata.europa.eu%2Fs66%23Organisation&resource=http%3A%2F%2Fdata.europa.eu%2Fs66%2Fresource%2Forganisations%2F0174d385-a624-3c4f-adf7-efbb84c4cdf9">See it live →</a>
+</td>
 </tr>
 <tr>
-<td valign="top"><img src="./screenshots/sparql-panel.png" alt="The SPARQL panel with named tabs, a property-path SELECT over CORDIS organisations, and a paginated results table" width="100%" loading="lazy"></td>
 <td valign="top"><img src="./screenshots/rich-showcase.png" alt="A plazi Figure resource showing a DOI citation card and an inline media image" width="100%" loading="lazy"></td>
+<td valign="top"><img src="./screenshots/relations.png" alt="The Relationships section of a CORDIS project: Has acronym as a labeled Acronym, Has total cost as a MonetaryAmount, Has euro sci voc classification linking a Concept, and Is funded by an embedded Grant showing its start date, end date, and beneficiary" width="100%" loading="lazy"></td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+<strong><a href="03-resource-view.md#referenced-by-incoming-links">Walk the graph backwards</a></strong><br>
+See what points <em>at</em> a resource — incoming links grouped by predicate, with blank-node restrictions inlined.
+</td>
+<td width="50%" valign="top">
+<strong><a href="05-sparql.md">SPARQL panel</a></strong><br>
+A read-only SELECT / ASK console with named tabs, auto-<code>LIMIT</code>, paginated results, and portable prefixed queries.
+</td>
+</tr>
+<tr>
+<td valign="top"><img src="./screenshots/referenced-by.png" alt="The Referenced by section on a plazi Figure: two incoming links grouped by inverse predicate, 'Cites' a Treatment and 'Has part' a journal article with an inline DOI citation card" width="100%" loading="lazy"></td>
+<td valign="top"><img src="./screenshots/sparql-panel.png" alt="The SPARQL panel with named tabs, a property-path SELECT over CORDIS organisations, and a paginated results table" width="100%" loading="lazy"></td>
 </tr>
 </table>
+
+## Why it's different
+
+Beyond running entirely on live queries, two things set AE RDF apart — and neither screenshots well:
+
+- **[Graph provenance](07-graphs.md), always.** Every fact shows which named graph it lives in, right next to the resource. Most browsers flatten the graph and lose that.
+- **[Cross-dataset auto-switch](08-sharing.md#auto-switch-across-datasets).** Paste or share any resource URI and AE RDF recognises which configured endpoint serves it, switches datasets, and opens it there — a link to a LINDAS resource just works even if you were on CORDIS.
+
+It also gives you **table or card** instance views with server-side text filtering, fully **[shareable deep-link URLs](08-sharing.md)** (endpoint, type, resource, and filters — with working back/forward), **warning markers** on links whose target has no data in the endpoint, and typed-value polish: humanized predicates, thousands separators, and deprecation badges.
 
 > **Want your endpoint on the list?** If you maintain a public SPARQL endpoint and would like it included as a suggested endpoint, [open an issue on GitHub](https://github.com/cognizone/augmented-semantics/issues).
 

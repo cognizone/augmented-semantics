@@ -6,6 +6,8 @@ outline: deep
 
 Once you're connected, AE RDF gives you two ways into the data: **browse by type**, or **jump straight to a URI**. Everything is a live query against the endpoint. This page covers finding your way around; reading a single resource is covered in [Resource view](03-resource-view.md).
 
+> The screenshots throughout this manual are taken from two public endpoints: [Cordis Datalab](https://cordis.europa.eu/datalab/sparql) and [LINDAS (Swiss Linked Data)](https://lindas.admin.ch/query).
+
 ## Header toolbar
 
 <img src="./screenshots/header-toolbar.png" alt="The AE RDF header: the app title, the endpoint badge showing LINDAS, and the SPARQL, documentation, dark-mode, prefixes, and settings icons" loading="lazy">
