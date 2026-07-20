@@ -12,10 +12,12 @@ import ToastService from 'primevue/toastservice'
 import ConfirmationService from 'primevue/confirmationservice'
 import Tooltip from 'primevue/tooltip'
 import RdfView from '../RdfView.vue'
-import { useEndpointStore } from '../../stores'
+import { useEndpointStore, useFacetStore } from '../../stores'
+import { facetTermKey } from '../../stores/facets'
 
 const TYPE = 'http://t/X'
 const INSTANCE = 'http://r/Y'
+const FACET_P = 'http://p/status'
 
 vi.mock('../../services', async (orig) => {
   const actual = await orig<typeof import('../../services')>()
@@ -152,5 +154,60 @@ describe('RdfView e2e: type → resource → type', () => {
     expect(wrapper.find('.resource-title').exists(), 'right panel cleared').toBe(false)
     expect(wrapper.find('.instance-list').exists(), 'no stale instance list').toBe(false)
     expect(wrapper.text()).toContain('Pick a type on the left')
+  })
+
+  // Deep-link constraint: a shared URL carrying BOTH ?resource and ?filters must
+  // still OPEN the resource. The ?filters read watcher restores the facet state via
+  // applyEncoded, which must NOT be treated as a user interaction (else it would close
+  // the very resource the link points at).
+  it('keeps the resource open for a shared ?resource + ?filters deep link', async () => {
+    const ENC = JSON.stringify([[0, 'v', [['l', 'CLOSED', '', '']]]])
+    const router = createRouter({ history: createMemoryHistory(), routes: [{ path: '/', component: RdfView }] })
+    router.push({ path: '/', query: { type: TYPE, resource: INSTANCE, filters: ENC } })
+    await router.isReady()
+
+    const endpoint = useEndpointStore()
+    endpoint.endpoints = [{ id: 'e1', name: 'Test', url: 'http://x/sparql', types: { [TYPE]: { facets: [{ predicate: FACET_P, label: 'Status' }] } } } as any]
+    ;(endpoint as any).currentId = 'e1'
+
+    const wrapper = mount(RdfView, {
+      global: { plugins: [router, PrimeVue, ToastService, ConfirmationService], directives: { tooltip: Tooltip } },
+    })
+    await flushPromises()
+
+    // The ?filters restore (applyEncoded) must NOT be treated as a user interaction:
+    // the resource stays shown and ?resource + ?filters are both kept in the URL.
+    expect(wrapper.find('.resource-title').exists(), 'resource stays open on deep link').toBe(true)
+    expect(router.currentRoute.value.query.resource, '?resource kept').toBe(INSTANCE)
+    expect(router.currentRoute.value.query.filters, '?filters kept').toBe(ENC)
+    expect(wrapper.find('.instance-list').exists()).toBe(false)
+  })
+
+  // The UX gap: while a resource is open, a USER facet interaction must navigate back
+  // to the instance list (drop ?resource) so the filtered results are visible.
+  it('closes the open resource when the user toggles a facet', async () => {
+    const router = createRouter({ history: createMemoryHistory(), routes: [{ path: '/', component: RdfView }] })
+    router.push({ path: '/', query: { type: TYPE, resource: INSTANCE } })
+    await router.isReady()
+
+    const endpoint = useEndpointStore()
+    endpoint.endpoints = [{ id: 'e1', name: 'Test', url: 'http://x/sparql', types: { [TYPE]: { facets: [{ predicate: FACET_P, label: 'Status' }] } } } as any]
+    ;(endpoint as any).currentId = 'e1'
+
+    const wrapper = mount(RdfView, {
+      global: { plugins: [router, PrimeVue, ToastService, ConfirmationService], directives: { tooltip: Tooltip } },
+    })
+    await flushPromises()
+    expect(wrapper.find('.resource-title').exists(), 'resource open initially').toBe(true)
+
+    // User picks a facet value (as the panel's click handler does).
+    const term = { value: 'CLOSED', isUri: false }
+    useFacetStore().toggleValue(FACET_P, { key: facetTermKey(term), term, label: 'CLOSED', count: 0 })
+    await flushPromises()
+
+    expect(router.currentRoute.value.query.resource, '?resource dropped on facet toggle').toBeUndefined()
+    expect(router.currentRoute.value.query.filters, '?filters stamped').toBeTruthy()
+    expect(wrapper.find('.resource-title').exists(), 'resource closed').toBe(false)
+    expect(wrapper.find('.instance-list').exists(), 'filtered instance list shown').toBe(true)
   })
 })

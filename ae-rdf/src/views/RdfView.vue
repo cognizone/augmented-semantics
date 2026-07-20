@@ -158,6 +158,12 @@ watch(
 )
 // Write: a selection change stamps ?filters (or drops it when cleared). Idempotent
 // against the read watcher — writing a value equal to the current param is skipped.
+// That early-return is also what makes this the RIGHT place to close an open resource
+// on a USER facet interaction: applyEncoded (deep-link ?filters restore) leaves
+// serialize() === the URL param, so the body below never runs for it — a shared
+// ?resource+?filters URL keeps the resource open. The body runs ONLY when the user
+// toggles a value/range or clears filters (serialize() now differs from the URL), and
+// in that case we also drop ?resource so the right pane shows the filtered list.
 watch(
   () => facetStore.selectionVersion,
   () => {
@@ -166,6 +172,7 @@ watch(
     const q = { ...route.query }
     if (enc) q[URL_PARAMS.FILTERS] = enc
     else delete q[URL_PARAMS.FILTERS]
+    delete q[URL_PARAMS.RESOURCE] // user changed filters → close the open resource (R35)
     router.replace({ query: q })
   }
 )
