@@ -22,6 +22,8 @@ The **header** gives the resource's label (or local name if it has none), its fu
 
 <img src="./screenshots/attributes.png" alt="The Attributes section of a CORDIS project: Title, Abstract, multi-valued Keyword, Project status, Signature/Start/End date tagged xsd:date, Duration and RCN tagged xsd:nonNegativeInteger, and Identifier" width="100%" loading="lazy">
 
+*Properties appear in the order the curator set for the type (the [`order` field](configuration.md#type-config-reference)); anything unlisted follows, labels and identifiers first.*
+
 **Relationships** are properties whose values are other resources. How each value renders depends on the target type's [render config](configuration.md#per-type-configuration):
 
 - **Link** (default): a clickable link <img src="./icons/icon-link.svg" height="14"> to that resource, shown with its label and a **type badge** for the *most specific* type (e.g. `[Concept]`).
