@@ -8,7 +8,7 @@ For types the curator has configured with facets, AE RDF turns the instance list
 
 <img src="./screenshots/facets.png" alt="The Filters rail on CORDIS Organisations — Organisation type, Role, and Country facets with five active selections, narrowing the card list beside it" width="800">
 
-<em>See it live → <a href="https://cognizone.github.io/augmented-semantics/rdf-cordis/?type=http://data.europa.eu/s66%23Organisation&filters=[[0,%22v%22,[[%22u%22,%22http://data.europa.eu/s66%23HigherOrSecondaryEducation%22]]],[1,%22v%22,[[%22l%22,%22partner%22,%22%22,%22%22]]],[2,%22v%22,[[%22l%22,%22ES%22,%22%22,%22%22]]]]">Spanish higher-education organisations that were project partners</a> — the exact filtered view above.</em>
+*See it live → [Spanish higher-education organisations that were project partners](https://cognizone.github.io/augmented-semantics/rdf-cordis/?type=http%3A%2F%2Fdata.europa.eu%2Fs66%23Organisation&filters=%5B%5B0%2C%22v%22%2C%5B%5B%22u%22%2C%22http%3A%2F%2Fdata.europa.eu%2Fs66%23HigherOrSecondaryEducation%22%5D%5D%5D%2C%5B1%2C%22v%22%2C%5B%5B%22l%22%2C%22partner%22%2C%22%22%2C%22%22%5D%5D%5D%2C%5B2%2C%22v%22%2C%5B%5B%22l%22%2C%22ES%22%2C%22%22%2C%22%22%5D%5D%5D%5D) — the exact filtered view above.*
 
 ## The Filters rail
 

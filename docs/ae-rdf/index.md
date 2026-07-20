@@ -10,7 +10,7 @@ A fast, browser-only explorer for **any** RDF dataset behind a SPARQL endpoint. 
 
 <img src="./screenshots/overview.png" alt="CORDIS RDF Browser — the type sidebar with counts, and an open Organisation resource showing attributes, relationships, and deeply embedded site / address / coordinates" width="900">
 
-*See it live → [this organisation in the CORDIS edition](https://cognizone.github.io/augmented-semantics/rdf-cordis/?type=http://data.europa.eu/s66%23Organisation&resource=http://data.europa.eu/s66/resource/organisations/0174d385-a624-3c4f-adf7-efbb84c4cdf9) — the exact view above, live.*
+*Above — a CORDIS organisation: the **Types** sidebar (left) for navigating the dataset, the resource's **attributes** and clickable **relationships**, and **nested value objects** inlined in place (site → postal address → coordinates), as deep as the data goes. [See this view live →](https://cognizone.github.io/augmented-semantics/rdf-cordis/?type=http%3A%2F%2Fdata.europa.eu%2Fs66%23Organisation&resource=http%3A%2F%2Fdata.europa.eu%2Fs66%2Fresource%2Forganisations%2F0174d385-a624-3c4f-adf7-efbb84c4cdf9)*
 
 
 > **Live queries only** — AE RDF runs entirely on live SPARQL: no backend, no precomputed indexes, no data leaves your machine. Endpoint connection, type discovery, instance lists, the resource view with incoming links, and everything in **Highlights** below all run as live queries against the endpoint.
@@ -25,6 +25,16 @@ A fast, browser-only explorer for **any** RDF dataset behind a SPARQL endpoint. 
 | **[Graph provenance](06-graphs.md)** | Always know which named graph every fact comes from. |
 | **[Shareable URLs](07-sharing.md)** | Endpoint, type, resource, and filters live in the URL — bookmark, share, and step through with back/forward. |
 | **[Instance views](02-browsing.md#instance-list)** | Per-type columns in a table or card layout, with server-side text filtering. |
+
+## See it in action
+
+<img src="./screenshots/facets.png" alt="The Filters rail narrowing CORDIS organisations by type, role, and country with live counts" width="800" loading="lazy">
+
+*Faceted search — narrow a type by its values, ranges, and dates (even values a hop away), with live counts. → [Faceted browsing](03-facets.md)*
+
+<img src="./screenshots/rich-map.png" alt="A WKT geometry value rendered inline as an embedded map" width="640" loading="lazy">
+
+*Rich values — media inline, DOI citation cards, and WKT geometry as maps. → [Rich values](05-rich-values.md)*
 
 > **Want your endpoint on the list?** If you maintain a public SPARQL endpoint and would like it included as a suggested endpoint, [open an issue on GitHub](https://github.com/cognizone/augmented-semantics/issues).
 
