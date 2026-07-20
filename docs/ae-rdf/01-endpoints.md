@@ -16,7 +16,7 @@ Open it from the endpoint badge in the header → **Manage endpoints…**. From 
 - **Add endpoint** — opens a small form for a custom endpoint (see below).
 - Each saved endpoint shows a status dot (green = currently selected) and **edit** / **delete** actions. Delete asks for a quick confirm.
 
-Selecting an endpoint connects to it and loads its [type inventory](browsing.md).
+Selecting an endpoint connects to it and loads its [type inventory](02-browsing.md).
 
 ## Adding a custom endpoint
 
@@ -45,16 +45,16 @@ Credentials are **never saved** — leave them blank and AE RDF asks for them wh
 ### Graph behaviour (authoring mode)
 
 With authoring mode on, the edit form gains a **Graph behaviour** section — see
-the [Configuration Guide](configuration.md#graph-behaviour) and [Graphs](graphs.md).
+the [Configuration Guide](configuration.md#graph-behaviour) and [Graphs](06-graphs.md).
 
 ### Test before saving
 
-Click **Test** to run a tiny `SELECT … LIMIT 1` against the endpoint. You'll get a green success (with response time) or a clear error — most often a [CORS](troubleshooting.md#cors-the-endpoint-wont-load) or authentication problem. Then **Save**.
+Click **Test** to run a tiny `SELECT … LIMIT 1` against the endpoint. You'll get a green success (with response time) or a clear error — most often a [CORS](09-troubleshooting.md#cors-the-endpoint-wont-load) or authentication problem. Then **Save**.
 
 ## Switching endpoints
 
-Click the endpoint badge in the header to switch between saved endpoints. Switching reloads the [Types](browsing.md) sidebar for the newly selected endpoint.
+Click the endpoint badge in the header to switch between saved endpoints. Switching reloads the [Types](02-browsing.md) sidebar for the newly selected endpoint.
 
 ---
 
-*Next: [Browsing](browsing.md) →*
+*Next: [Browsing](02-browsing.md) →*

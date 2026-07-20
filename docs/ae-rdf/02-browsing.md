@@ -30,7 +30,7 @@ Selecting a type shows a paged list of its instances (25 per page), each with it
 
 When a type configures [list columns](configuration.md#instance-list-columns), the list gains extra columns — the name plus one per configured property (e.g. a Project's acronym, status, start/end, total cost), each filled in just after the rows appear. Click any row to open it.
 
-A **layout toggle** in the list header switches between a compact **table** and a **card** view (cards are the default — see [Settings](index.md#settings)); the toggle only appears for types that configure columns. Columns are **inherited down the subclass hierarchy** — configure a superclass (e.g. CORDIS `Result`) once and its subclasses (JournalPaper, ProjectPublication, …) show the same columns, unless a subclass sets its own.
+A **layout toggle** in the list header switches between a compact **table** and a **card** view (cards are the default — see [Settings](08-settings.md)); the toggle only appears for types that configure columns. Columns are **inherited down the subclass hierarchy** — configure a superclass (e.g. CORDIS `Result`) once and its subclasses (JournalPaper, ProjectPublication, …) show the same columns, unless a subclass sets its own.
 
 ### Filtering the list
 
@@ -44,11 +44,11 @@ A **filter box** sits above the list — type to narrow it to instances whose **
 
 ### Facets
 
-When a type has facets configured, the sidebar's header gains a **Filters** tab for narrowing the list by a property's values, numeric ranges, or dates (including values a hop or more away). See **[Faceted browsing](facets.md)** for the full rail.
+When a type has facets configured, the sidebar's header gains a **Filters** tab for narrowing the list by a property's values, numeric ranges, or dates (including values a hop or more away). See **[Faceted browsing](03-facets.md)** for the full rail.
 
 ### Open in SPARQL
 
-Above the instance list, a **SPARQL** button hands the current filtered list — its type, graph scope, text filter, and every active facet — to the [SPARQL panel](sparql.md#open-in-sparql) as the exact query behind it, in a fresh tab.
+Above the instance list, a **SPARQL** button hands the current filtered list — its type, graph scope, text filter, and every active facet — to the [SPARQL panel](04-sparql.md#open-in-sparql) as the exact query behind it, in a fresh tab.
 
 ### Unreferenced instances (orphans)
 
@@ -62,7 +62,7 @@ Paste a resource URI in the top bar and press **Go** to inspect it. If the URI b
 
 Opening an instance — or pasting a URI in the top bar and pressing **Go** — shows the resource:
 
-- **Header** — the resource's label (or local name if it has none), its full URI (click it to dereference — opens in a new tab) with a copy <img src="./icons/icon-copy.svg" height="14"> button next to it, plus its **type chips** and a [graph summary](graphs.md).
+- **Header** — the resource's label (or local name if it has none), its full URI (click it to dereference — opens in a new tab) with a copy <img src="./icons/icon-copy.svg" height="14"> button next to it, plus its **type chips** and a [graph summary](06-graphs.md).
 - **Type chips** — the resource's `rdf:type`s, lifted out of the property list. Click a chip to browse all instances of that type.
 - **Attributes** — properties whose values are literals (dates, statuses, text), shown with language and datatype tags.
 - **Relationships** — properties whose values are other resources. These are **clickable links** <img src="./icons/icon-link.svg" height="14"> — click to walk to that resource. Each link carries a small **type badge** showing the *most specific* type (e.g. `[JournalPaper]`, not the generic `[Result]`) so you can see exactly *what* it points at. Value-object types set to **Embed** (in the [Types gear](#types-sidebar)) show their properties inline instead of a link — e.g. a monetary amount renders as `value 1902.6 · currency EUR` in place, nested as deep as the data goes.
@@ -79,16 +79,16 @@ Within each section, properties are ordered by usefulness: labels and identifier
 
 Where a related resource has its own label, AE RDF shows it instead of an opaque code — so `MENV` reads as its full name when the endpoint provides one. A resource with **no** label shows its `prefix:LocalName` (distinct) plus a type badge, so several unlabeled links stay distinguishable. Objects under a predicate are sorted by their display text.
 
-Prefer raw URIs or prefixed qnames? Switch the **URI display** mode in [Settings](index.md#settings) — *Humanized names* (default), *Prefixed* (`skos:Concept`), or *Full URI*. It applies to predicates, links, and type names.
+Prefer raw URIs or prefixed qnames? Switch the **URI display** mode in [Settings](08-settings.md) — *Humanized names* (default), *Prefixed* (`skos:Concept`), or *Full URI*. It applies to predicates, links, and type names.
 
 ### Rich values (media, DOIs, geometry)
 
-Certain values render richly rather than as bare links — inline images and audio/video players, **DOI ↗** badges with optional citation cards, and **map ↗** badges with optional embedded maps for WKT geometry. See **[Rich values](rich-values.md)**.
+Certain values render richly rather than as bare links — inline images and audio/video players, **DOI ↗** badges with optional citation cards, and **map ↗** badges with optional embedded maps for WKT geometry. See **[Rich values](05-rich-values.md)**.
 
 ## Walking links & deep-linking
 
-Clicking a relationship value opens that resource, and where you are — endpoint, type, resource, filters — is kept in the URL, so any view is bookmarkable and shareable and browser back/forward work. See **[Shareable URLs & deep-linking](sharing.md)**.
+Clicking a relationship value opens that resource, and where you are — endpoint, type, resource, filters — is kept in the URL, so any view is bookmarkable and shareable and browser back/forward work. See **[Shareable URLs & deep-linking](07-sharing.md)**.
 
 ---
 
-*Next: [Faceted browsing](facets.md) →*
+*Next: [Faceted browsing](03-facets.md) →*

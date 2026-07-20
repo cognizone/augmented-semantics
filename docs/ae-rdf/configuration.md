@@ -8,11 +8,11 @@ This page is for **curators and deployers**: people who shape how a deployed AE 
 
 ## Authoring mode
 
-Everything on this page happens in **Config authoring mode** — a toggle in [Settings](index.md#settings), off by default. Turning it on reveals the per-type gears in the Types sidebar and the export buttons; the configured effects (embed/hide/pin) apply either way. The gear and **Export** stay available even when running a deployed config, so you can tweak and re-export.
+Everything on this page happens in **Config authoring mode** — a toggle in [Settings](08-settings.md), off by default. Turning it on reveals the per-type gears in the Types sidebar and the export buttons; the configured effects (embed/hide/pin) apply either way. The gear and **Export** stay available even when running a deployed config, so you can tweak and re-export.
 
 ## Per-type configuration
 
-Turn on **Config authoring mode** in [Settings](index.md#settings) to reveal a per-type **gear** in the Types sidebar:
+Turn on **Config authoring mode** in [Settings](08-settings.md) to reveal a per-type **gear** in the Types sidebar:
 
 - **Pin** to the top, or **Hide** (hidden types move into the **Hidden** group, where you can unhide them).
 - **Render as object** — how it shows when it's a *value* of another resource: **Link** (default), **Embed** (inline its properties — for value objects like amounts, addresses, coordinates), or **Label only**.
@@ -114,7 +114,7 @@ A deployed endpoint (`config/endpoints/<slug>.json`, or embedded in `app.json`) 
 | `infer` | GraphDB only: send `infer=<value>` with every query (`false` disables inferred triples). |
 | `types` | The per-type config map (above). |
 | `prefixes` | Endpoint-declared `prefix → namespace` map, loaded at highest precedence while this endpoint is active — keeps exotic-vocab qnames readable without bloating the global `app.json` prefixes. |
-| `resourceNamespaces` | URI prefixes whose **resources** this endpoint serves (its data hosts, e.g. `https://energy.ld.admin.ch/` for LINDAS, `http://data.europa.eu/s66/` for CORDIS). Drives [URL auto-switch](browsing.md#opening-a-resource-uri): entering/opening a resource URI under one of these switches the active endpoint to this one and loads the resource there. Distinct from `prefixes`, which only shapes qname *display* for vocabularies. |
+| `resourceNamespaces` | URI prefixes whose **resources** this endpoint serves (its data hosts, e.g. `https://energy.ld.admin.ch/` for LINDAS, `http://data.europa.eu/s66/` for CORDIS). Drives [URL auto-switch](02-browsing.md#opening-a-resource-uri): entering/opening a resource URI under one of these switches the active endpoint to this one and loads the resource there. Distinct from `prefixes`, which only shapes qname *display* for vocabularies. |
 | `extraLabelPredicates` | Extra label predicates appended at lowest precedence (e.g. `foaf:name` / `schema:name` for endpoints that label agents only via those). |
 | `typeInventory`, `typeProperties`, `subclasses`, `composition`, `orphanCounts`, `deprecatedPredicates`, `profiledAt` | Cached profiler output for an instant sidebar and informed embedding — generated, not hand-written (see the script below). |
 
@@ -127,7 +127,7 @@ The manifest at `config/app.json`:
 | `appName`, `logoUrl`, `documentationUrl` | Branding: header name, logo, and docs link. |
 | `endpoints` | The endpoint list — inline objects and/or `"<slug>"` strings referencing `config/endpoints/<slug>.json`. |
 | `prefixes` | Global `prefix → namespace` map (shared across endpoints). |
-| `doi` | Per-field toggles for the [DOI citation card](rich-values.md#rich-values-media-dois-geometry): `authors`, `year`, `title`, `container`, `publisher`, `type`, `categories`, `abstract`, `copyright`, `url` (omitted = shown; `false` hides) and `abstractMaxChars` (truncation length, default 280). |
+| `doi` | Per-field toggles for the [DOI citation card](05-rich-values.md#rich-values-media-dois-geometry): `authors`, `year`, `title`, `container`, `publisher`, `type`, `categories`, `abstract`, `copyright`, `url` (omitted = shown; `false` hides) and `abstractMaxChars` (truncation length, default 280). |
 
 ## Generating groups, embeds & prefixes (`group-types.mjs`)
 
@@ -150,10 +150,10 @@ It requires a profiled config (`typeInventory` + `typeProperties`); run the prof
 
 ## Graph behaviour
 
-With [Config authoring mode](index.md#settings) on, the endpoint edit form gains a **Graph
+With [Config authoring mode](08-settings.md) on, the endpoint edit form gains a **Graph
 behaviour** section: whether the endpoint uses **named graphs (quads)** and what
 its **default (no-`GRAPH`) view** is — *Own* triples or a *Merged* view of the
-quads. Leave both **Auto** unless you know the endpoint; see [Graphs](graphs.md).
+quads. Leave both **Auto** unless you know the endpoint; see [Graphs](06-graphs.md).
 It's saved with the endpoint and exported in `app.json`.
 
 ## Exporting a deployment config

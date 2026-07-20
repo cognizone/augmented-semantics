@@ -52,14 +52,15 @@ export default defineConfig({
           text: 'User Guide',
           items: [
             { text: 'Overview', link: '/ae-rdf/' },
-            { text: 'Managing Endpoints', link: '/ae-rdf/endpoints' },
-            { text: 'Browsing', link: '/ae-rdf/browsing' },
-            { text: 'Faceted Browsing', link: '/ae-rdf/facets' },
-            { text: 'SPARQL Panel', link: '/ae-rdf/sparql' },
-            { text: 'Rich Values', link: '/ae-rdf/rich-values' },
-            { text: 'Graphs', link: '/ae-rdf/graphs' },
-            { text: 'Shareable URLs', link: '/ae-rdf/sharing' },
-            { text: 'Troubleshooting', link: '/ae-rdf/troubleshooting' }
+            { text: '1. Managing Endpoints', link: '/ae-rdf/01-endpoints' },
+            { text: '2. Browsing', link: '/ae-rdf/02-browsing' },
+            { text: '3. Faceted Browsing', link: '/ae-rdf/03-facets' },
+            { text: '4. SPARQL Panel', link: '/ae-rdf/04-sparql' },
+            { text: '5. Rich Values', link: '/ae-rdf/05-rich-values' },
+            { text: '6. Graphs', link: '/ae-rdf/06-graphs' },
+            { text: '7. Shareable URLs', link: '/ae-rdf/07-sharing' },
+            { text: '8. Settings', link: '/ae-rdf/08-settings' },
+            { text: '9. Troubleshooting', link: '/ae-rdf/09-troubleshooting' }
           ]
         },
         {
