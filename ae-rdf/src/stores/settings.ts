@@ -6,6 +6,7 @@
 import { defineStore } from 'pinia'
 import { ref, watch } from 'vue'
 import { logger } from '../services'
+import { setGlobalConcurrency } from '../services/http'
 import type { UriDisplayMode } from '../utils/format'
 
 const STORAGE_KEY = 'ae-rdf-settings'
@@ -21,6 +22,7 @@ export interface AppSettings {
   sparqlAutoLimit: boolean // append LIMIT to an unbounded SELECT in the SPARQL panel
   doiCitations: boolean // fetch citation metadata from doi.org for DOI values (external call, opt-in)
   wktMaps: boolean // render an embedded map for WKT geometry values (external tiles, opt-in)
+  maxConcurrency: number | null // cap on parallel SPARQL requests per endpoint; null = Auto (per-endpoint config, else 4)
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -34,6 +36,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   sparqlAutoLimit: true,
   doiCitations: false,
   wktMaps: false,
+  maxConcurrency: 4, // out-of-box default; slider ranges 1‥8 (8 = ceiling)
 }
 
 export const useSettingsStore = defineStore('settings', () => {
@@ -47,6 +50,7 @@ export const useSettingsStore = defineStore('settings', () => {
   const sparqlAutoLimit = ref(DEFAULT_SETTINGS.sparqlAutoLimit)
   const doiCitations = ref(DEFAULT_SETTINGS.doiCitations)
   const wktMaps = ref(DEFAULT_SETTINGS.wktMaps)
+  const maxConcurrency = ref<number | null>(DEFAULT_SETTINGS.maxConcurrency)
 
   function applyDarkMode(isDark: boolean) {
     document.documentElement.classList.toggle('dark-mode', isDark)
@@ -70,6 +74,7 @@ export const useSettingsStore = defineStore('settings', () => {
       if (s.sparqlAutoLimit !== undefined) sparqlAutoLimit.value = s.sparqlAutoLimit
       if (s.doiCitations !== undefined) doiCitations.value = s.doiCitations
       if (s.wktMaps !== undefined) wktMaps.value = s.wktMaps
+      if (s.maxConcurrency !== undefined) maxConcurrency.value = s.maxConcurrency
     } catch (e) {
       logger.error('SettingsStore', 'Failed to load settings', { error: e })
     }
@@ -77,7 +82,7 @@ export const useSettingsStore = defineStore('settings', () => {
 
   function saveSettings() {
     try {
-      const settings: AppSettings = { darkMode: darkMode.value, uriDisplay: uriDisplay.value, editMode: editMode.value, showHidden: showHidden.value, groupsCollapsed: groupsCollapsed.value, showEmbedsNested: showEmbedsNested.value, listView: listView.value, sparqlAutoLimit: sparqlAutoLimit.value, doiCitations: doiCitations.value, wktMaps: wktMaps.value }
+      const settings: AppSettings = { darkMode: darkMode.value, uriDisplay: uriDisplay.value, editMode: editMode.value, showHidden: showHidden.value, groupsCollapsed: groupsCollapsed.value, showEmbedsNested: showEmbedsNested.value, listView: listView.value, sparqlAutoLimit: sparqlAutoLimit.value, doiCitations: doiCitations.value, wktMaps: wktMaps.value, maxConcurrency: maxConcurrency.value }
       localStorage.setItem(STORAGE_KEY, JSON.stringify(settings))
     } catch (e) {
       logger.error('SettingsStore', 'Failed to save settings', { error: e })
@@ -102,8 +107,15 @@ export const useSettingsStore = defineStore('settings', () => {
   watch(sparqlAutoLimit, () => saveSettings())
   watch(doiCitations, () => saveSettings())
   watch(wktMaps, () => saveSettings())
+  // Apply the concurrency override to the SPARQL gate on every change (and persist).
+  watch(maxConcurrency, (v) => {
+    setGlobalConcurrency(v)
+    saveSettings()
+  })
 
   loadSettings()
+  // The watch only fires on change, so push the loaded value to the gate once now.
+  setGlobalConcurrency(maxConcurrency.value)
 
-  return { darkMode, uriDisplay, editMode, showHidden, groupsCollapsed, showEmbedsNested, listView, sparqlAutoLimit, doiCitations, wktMaps, setDarkMode }
+  return { darkMode, uriDisplay, editMode, showHidden, groupsCollapsed, showEmbedsNested, listView, sparqlAutoLimit, doiCitations, wktMaps, maxConcurrency, setDarkMode }
 })

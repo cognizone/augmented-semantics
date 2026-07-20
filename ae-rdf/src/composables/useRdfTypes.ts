@@ -68,7 +68,7 @@ export function useRdfTypes() {
       const res = await executeSparql(
         endpoint,
         buildCompositionQuery(embeds, resolveGraphStrategy(browseStore.graph)),
-        { retries: 1 },
+        { retries: 1, background: true },
       )
       if (endpointStore.current?.id !== endpointId) return
       const map = new Map<string, { uri: string; count: number }[]>()
@@ -100,7 +100,7 @@ export function useRdfTypes() {
     pathInflight.add(key)
     const endpointId = endpoint.id
     try {
-      const res = await executeSparql(endpoint, query, { retries: 1 })
+      const res = await executeSparql(endpoint, query, { retries: 1, background: true })
       if (endpointStore.current?.id !== endpointId) return
       const n = parseInt(res.results.bindings[0]?.n?.value ?? '0', 10)
       const next = new Map(pathCounts.value)
@@ -149,7 +149,7 @@ export function useRdfTypes() {
     if (!query) { orphanCounts.value = new Map(); return }
     const endpointId = endpoint.id
     try {
-      const res = await executeSparql(endpoint, query, { retries: 1 })
+      const res = await executeSparql(endpoint, query, { retries: 1, background: true })
       if (endpointStore.current?.id !== endpointId) return
       const linked = new Map<string, number>()
       for (const b of res.results.bindings) {
@@ -189,7 +189,7 @@ export function useRdfTypes() {
       const res = await executeSparql(
         endpoint,
         buildSubclassQuery([...inv], resolveGraphStrategy(browseStore.graph)),
-        { retries: 1 },
+        { retries: 1, background: true },
       )
       if (endpointStore.current?.id !== endpointId) return
       const map = new Map<string, string[]>()

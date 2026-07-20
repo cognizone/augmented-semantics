@@ -34,8 +34,9 @@ export interface ConfigEndpoint extends SuggestedEndpointSource {
   /** GraphDB: send `infer=<value>` with every query — false disables inferred
    *  triples. Omit to send nothing. */
   infer?: boolean
-  /** Max in-flight SPARQL requests to this endpoint at once (default 4). Raise for a
-   *  DB that handles parallelism well, lower for a fragile one. @see services/http.ts */
+  /** Max in-flight SPARQL requests to this endpoint at once (default 4, ceiling 8).
+   *  Raise for a DB that handles parallelism well, lower for a fragile one.
+   *  @see services/http.ts */
   maxConcurrency?: number
   /** Per-type display config, keyed by type IRI */
   types?: Record<string, TypeConfig>

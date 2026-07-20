@@ -43,6 +43,11 @@ export interface SPARQLRequestConfig {
   signal?: AbortSignal
   retries?: number
   retryDelay?: number
+  /** Queue this query in the BACKGROUND lane of the per-origin concurrency gate — it
+   *  yields its slot to foreground queries (instance list, facet counts, open resource).
+   *  For secondary, non-blocking work: type-tree discovery, orphan/composition counts,
+   *  the slow facet "no value" scan. Default (undefined/false) = foreground. */
+  background?: boolean
 }
 
 // Global timeout for SPARQL requests (1 minute)
@@ -66,10 +71,10 @@ const endpointUrl = (url: string): string =>
  *  endpoint's concurrency cap under that same URL — so the per-endpoint gate keys match
  *  whether we're on the real origin (prod) or a dev proxy path. Every query path uses
  *  this, so registration can't be missed. */
-function fetchForEndpoint(endpoint: SPARQLEndpoint, init: RequestInit): Promise<Response> {
+function fetchForEndpoint(endpoint: SPARQLEndpoint, init: RequestInit, onAcquire?: () => void, background?: boolean): Promise<Response> {
   const url = endpointUrl(endpoint.url)
   if (endpoint.maxConcurrency != null) setEndpointConcurrency(url, endpoint.maxConcurrency)
-  return sparqlFetch(url, init)
+  return sparqlFetch(url, init, onAcquire, background)
 }
 
 const DEFAULT_CONFIG: Required<Omit<SPARQLRequestConfig, 'signal'>> = {
@@ -320,9 +325,11 @@ export async function executeSparql(
       await sleep(retryDelay * Math.pow(2, attempt - 1))
     }
 
-    // Create abort controller for timeout
+    // Create abort controller for timeout. The timer is armed via onAcquire — only
+    // once the concurrency gate grants a slot and the request actually goes to the
+    // wire — so time spent WAITING IN THE QUEUE never counts against the timeout.
     const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), timeout)
+    let timeoutId: ReturnType<typeof setTimeout> | undefined
 
     // Merge with external signal if provided
     if (config.signal) {
@@ -342,7 +349,7 @@ export async function executeSparql(
         // Don't follow cross-origin redirects: fetch would re-send our custom
         // auth headers (e.g. X-API-Key) to the redirect target (R03).
         redirect: 'error',
-      })
+      }, () => { timeoutId = setTimeout(() => controller.abort(), timeout) }, config.background)
 
       clearTimeout(timeoutId)
 
@@ -436,16 +443,25 @@ export async function executeSparql(
     } catch (error) {
       clearTimeout(timeoutId)
 
+      // Check AbortError FIRST: a DOMException carries a numeric `.code`, so the
+      // generic `'code' in error` (AppError) test below would otherwise swallow a
+      // timeout and mislabel it "Query failed … signal aborted". Fail fast — a query
+      // that already burned the full timeout won't beat it on an identical retry.
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        // Caller-cancelled (superseded load, navigation) is NOT a timeout — it's the
+        // system working as intended; log quietly and don't alarm.
+        if (config.signal?.aborted) {
+          logger.debug('SPARQL', 'Request cancelled by caller')
+          throw createError('UNKNOWN', 'Cancelled')
+        }
+        logger.warn('SPARQL', 'Request timed out')
+        throw createError('TIMEOUT', 'Request timed out')
+      }
+
       if (error && typeof error === 'object' && 'code' in error) {
         // Already an AppError
         logger.error('SPARQL', 'Query failed', error)
         throw error
-      }
-
-      if (error instanceof DOMException && error.name === 'AbortError') {
-        logger.warn('SPARQL', 'Request timed out')
-        lastError = createError('TIMEOUT', 'Request timed out')
-        continue // Retry
       }
 
       if (error instanceof TypeError) {
@@ -1040,7 +1056,7 @@ export async function fetchRawRdf(
   logger.debug('SPARQL', `Fetching raw RDF for ${conceptUri}`, { format })
 
   const controller = new AbortController()
-  const timeoutId = setTimeout(() => controller.abort(), timeout)
+  let timeoutId: ReturnType<typeof setTimeout> | undefined
 
   try {
     const response = await fetchForEndpoint(endpoint, {
@@ -1053,7 +1069,7 @@ export async function fetchRawRdf(
       body: `query=${encodeURIComponent(query)}${inferParam(endpoint)}`,
       signal: controller.signal,
       redirect: 'error', // don't leak auth headers to a redirect target (R03)
-    })
+    }, () => { timeoutId = setTimeout(() => controller.abort(), timeout) }) // arm only once the slot is granted
 
     clearTimeout(timeoutId)
 
@@ -1150,7 +1166,7 @@ export async function executeConstruct(
 ): Promise<SPARQLResults> {
   const { timeout } = { ...DEFAULT_CONFIG, ...config }
   const controller = new AbortController()
-  const timeoutId = setTimeout(() => controller.abort(), timeout)
+  let timeoutId: ReturnType<typeof setTimeout> | undefined
   if (config.signal) config.signal.addEventListener('abort', () => controller.abort())
 
   try {
@@ -1164,7 +1180,7 @@ export async function executeConstruct(
       body: `query=${encodeURIComponent(query)}${inferParam(endpoint)}`,
       signal: controller.signal,
       redirect: 'error', // don't leak auth headers to a redirect target (R03)
-    })
+    }, () => { timeoutId = setTimeout(() => controller.abort(), timeout) }) // arm only once the slot is granted
 
     clearTimeout(timeoutId)
 

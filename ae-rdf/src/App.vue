@@ -14,6 +14,8 @@ import Button from 'primevue/button'
 import Dialog from 'primevue/dialog'
 import Checkbox from 'primevue/checkbox'
 import Select from 'primevue/select'
+import Slider from 'primevue/slider'
+import { SPARQL_MAX_CONCURRENT, SPARQL_DEFAULT_CONCURRENT } from './services/http'
 import Menu from 'primevue/menu'
 import { useUIStore, useSettingsStore, useEndpointStore } from './stores'
 import { useConfig, validateURI } from './services'
@@ -109,6 +111,11 @@ const uriDisplayOptions = [
   { label: 'Prefixed (skos:Concept)', value: 'prefixed' },
   { label: 'Full URI', value: 'full' },
 ]
+
+// Slider ranges 1‥MAX_CONCURRENCY (8 = ceiling); DEFAULT_CONCURRENCY (4) is the out-of-box
+// value. Single-sourced from the gate so UI + logic can't drift.
+const MAX_CONCURRENCY = SPARQL_MAX_CONCURRENT
+const DEFAULT_CONCURRENCY = SPARQL_DEFAULT_CONCURRENT
 
 const appName = computed(() => config.value.config?.appName ?? 'AE RDF Browser')
 watch(appName, (name) => { document.title = name }, { immediate: true })
@@ -330,6 +337,22 @@ onUnmounted(() => {
             <Checkbox v-model="settingsStore.sparqlAutoLimit" :binary="true" />
             <span class="checkbox-text">Auto-limit SPARQL results<small>Append a <code>LIMIT</code> to an unbounded <code>SELECT</code> in the SPARQL panel. Off → run the full result set.</small></span>
           </label>
+        </section>
+
+        <section class="settings-section">
+          <h3 class="settings-section-title">Performance</h3>
+          <div class="setting-field">
+            <span class="setting-label">Max parallel requests <strong>{{ settingsStore.maxConcurrency ?? DEFAULT_CONCURRENCY }}</strong></span>
+            <Slider
+              :modelValue="settingsStore.maxConcurrency ?? DEFAULT_CONCURRENCY"
+              @update:modelValue="settingsStore.maxConcurrency = Number($event)"
+              :min="1"
+              :max="MAX_CONCURRENCY"
+              :step="1"
+              class="full-width"
+            />
+            <small class="setting-hint">How many SPARQL queries run at once per endpoint (facets, lists, embeds all share this). {{ MAX_CONCURRENCY }} is the ceiling — dial it <strong>down</strong> if a slow endpoint stalls under load.</small>
+          </div>
         </section>
 
         <section class="settings-section">
