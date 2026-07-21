@@ -129656,7 +129656,7 @@
   "profiledAt": "2026-07-17T11:31:31.919Z",
   "types": {
     "https://cube.link/Observation": {
-      "group": "Cube observations & crops"
+      "group": "Cube observations"
     },
     "https://www.ica.org/standards/RiC/ontology#DateRange": {
       "group": "Records in Contexts (RiC)"
@@ -129989,7 +129989,7 @@
       "group": "agriculture / plant-protection"
     },
     "http://www.w3.org/2002/07/owl#Class": {
-      "group": "Cube observations & crops"
+      "group": "OWL/RDFS terms"
     },
     "http://www.w3.org/2000/01/rdf-schema#Class": {
       "group": "OWL/RDFS terms"
@@ -130038,7 +130038,7 @@
       "group": "paf.link"
     },
     "https://agriculture.ld.admin.ch/crops/CultivationType": {
-      "group": "Cube observations & crops"
+      "group": "Agriculture crops"
     },
     "http://purl.org/dc/terms/Collection": {
       "group": "Inspection points"
@@ -130126,13 +130126,13 @@
       "group": "Organizations, addresses & agents"
     },
     "https://agriculture.ld.admin.ch/crops/PlantProtectionCrop": {
-      "group": "Cube observations & crops"
+      "group": "Agriculture crops"
     },
     "https://agriculture.ld.admin.ch/plant-protection/Crop": {
       "group": "agriculture / plant-protection"
     },
     "https://agriculture.ld.admin.ch/crops/NutrientBalanceCrop": {
-      "group": "Cube observations & crops"
+      "group": "Agriculture crops"
     },
     "https://agriculture.ld.admin.ch/plant-protection/ACA": {
       "group": "agriculture / plant-protection"
@@ -130190,7 +130190,7 @@
       "group": "Organizations, addresses & agents"
     },
     "https://agriculture.ld.admin.ch/crops/DirectPaymentCrop": {
-      "group": "Cube observations & crops"
+      "group": "Agriculture crops"
     },
     "https://schema.ld.admin.ch/Session": {
       "group": "Organizations, addresses & agents"
@@ -130308,7 +130308,7 @@
       "group": "Data catalog & agri master-data"
     },
     "https://agriculture.ld.admin.ch/crops/CropTaxon": {
-      "group": "Cube observations & crops"
+      "group": "Agriculture crops"
     },
     "http://www.w3.org/2000/01/rdf-schema#Datatype": {
       "group": "OWL restriction terms"
