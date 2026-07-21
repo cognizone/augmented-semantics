@@ -65,7 +65,7 @@ describe('buildBlankNodeTriplesQuery', () => {
   it('binds the bnode relative to the resource and never in a VALUES list', () => {
     for (const s of [BOTH, NAMED, DEFAULT]) {
       const q = buildBlankNodeTriplesQuery(RES, s)
-      expect(q).toContain(`<${RES}> ?xp ?b`) // path-scoped from the resource
+      expect(q).toContain(`<${RES}> ?xp1 ?b`) // path-scoped from the resource (depth-1 reach)
       expect(q).toContain('FILTER(isBlank(?b))') // only blank-node objects
       expect(q).toContain('?b ?p ?o') // fetch the bnode's own triples
       expect(q).not.toContain('VALUES') // a bnode has no queryable id

@@ -856,30 +856,90 @@ export function buildResourceTriplesQuery(resourceUri: string, s: GraphStrategy)
   return `SELECT ?p ?o WHERE { <${iri}> ?p ?o } ORDER BY ?p`
 }
 
+/** How deep to follow blank-node → blank-node chains from a resource. Value objects
+ *  nest (e.g. Ingredient → schema:share → a QuantitativeValue bnode holding value +
+ *  unitCode), so a single hop misses the inner bnodes and they render as anonymous. */
+const MAX_BNODE_DEPTH = 4
+
 /**
- * Triples of a resource's BLANK-NODE objects, fetched PATH-SCOPED from the resource
- * (`<iri> ?x ?b . ?b ?p ?o`) — a blank node has no stable, queryable id, so it can't
- * go in a VALUES list like a URI embed; it's only reachable relative to a parent.
- * `?b` is the blank node (its label is consistent within this result set, and stable
- * across queries on RDF4J/GraphDB, so the caller correlates it to the parent triple's
- * bnode object). One hop — the value objects here (e.g. MappedCode) are flat. Graph
- * handling mirrors buildResourceTriplesQuery so provenance is preserved.
+ * Builds the reach graph pattern that binds `?b` to any blank node reachable from
+ * the resource through a chain of blank nodes, of length `depth` (1 = direct object).
+ * The chain is `<iri> ?xp1 ?i1 . ?i1 ?xp2 ?i2 . … ?i(n-1) ?xpn ?b`, with every
+ * intermediate `?i…` constrained to isBlank. Predicates are ?xp1.., intermediates ?i1..
+ */
+function bnodeReachChain(iri: string, depth: number): { chain: string; filter: string } {
+  const parts: string[] = []
+  for (let k = 1; k <= depth; k++) {
+    const subj = k === 1 ? `<${iri}>` : `?i${k - 1}`
+    const obj = k === depth ? '?b' : `?i${k}`
+    parts.push(`${subj} ?xp${k} ${obj} .`)
+  }
+  const intermediates = Array.from({ length: depth - 1 }, (_, i) => `isBlank(?i${i + 1})`)
+  return {
+    chain: parts.join(' '),
+    filter: intermediates.length ? ` FILTER(${intermediates.join(' && ')})` : '',
+  }
+}
+
+/**
+ * Triples of a resource's BLANK-NODE objects, fetched PATH-SCOPED from the resource.
+ * A blank node has no stable, queryable id, so it can't go in a VALUES list like a
+ * URI embed; it's only reachable relative to a parent. `?b` is the blank node (its
+ * label is consistent within this result set, and stable across queries on
+ * RDF4J/GraphDB, so the caller correlates it to the parent triple's bnode object).
+ *
+ * The reach follows blank-node CHAINS from the resource up to MAX_BNODE_DEPTH hops —
+ * not just one — because value objects nest (e.g. Ingredient → schema:share → a
+ * QuantitativeValue bnode). It's a UNION of depth-1..N chains, each intermediate
+ * constrained to isBlank; the emit (`?b ?p ?o`) fetches every reached bnode's own
+ * triples. Graph handling mirrors buildResourceTriplesQuery so provenance is preserved.
  */
 export function buildBlankNodeTriplesQuery(resourceUri: string, s: GraphStrategy): string {
   const iri = sanitizeIri(resourceUri)
-  const link = s.useNamed
-    ? `{ GRAPH ?gl { <${iri}> ?xp ?b } }${s.useDefault ? ` UNION { <${iri}> ?xp ?b }` : ''}`
-    : `<${iri}> ?xp ?b`
+  const depths = Array.from({ length: MAX_BNODE_DEPTH }, (_, i) => i + 1)
   if (s.useNamed && s.useDefault) {
+    const reach = depths
+      .map((d) => {
+        const { chain, filter } = bnodeReachChain(iri, d)
+        return `{ { GRAPH ?gl { ${chain} } } UNION { ${chain} }${filter} }`
+      })
+      .join('\n    UNION\n    ')
     return `SELECT ?g ?b ?p ?o WHERE {
-  ${link} FILTER(isBlank(?b))
+  {
+    ${reach}
+  }
+  FILTER(isBlank(?b))
   { GRAPH ?g { ?b ?p ?o } } UNION { ?b ?p ?o FILTER NOT EXISTS { GRAPH ?ng { ?b ?p ?o } } }
 } ORDER BY ?b ?p`
   }
   if (s.useNamed) {
-    return `SELECT ?g ?b ?p ?o WHERE { ${link} FILTER(isBlank(?b)) GRAPH ?g { ?b ?p ?o } } ORDER BY ?b ?p`
+    const reach = depths
+      .map((d) => {
+        const { chain, filter } = bnodeReachChain(iri, d)
+        return `{ GRAPH ?gl { ${chain} }${filter} }`
+      })
+      .join('\n    UNION\n    ')
+    return `SELECT ?g ?b ?p ?o WHERE {
+  {
+    ${reach}
   }
-  return `SELECT ?b ?p ?o WHERE { ${link} FILTER(isBlank(?b)) . ?b ?p ?o } ORDER BY ?b ?p`
+  FILTER(isBlank(?b))
+  GRAPH ?g { ?b ?p ?o }
+} ORDER BY ?b ?p`
+  }
+  const reach = depths
+    .map((d) => {
+      const { chain, filter } = bnodeReachChain(iri, d)
+      return `{ ${chain}${filter} }`
+    })
+    .join('\n    UNION\n    ')
+  return `SELECT ?b ?p ?o WHERE {
+  {
+    ${reach}
+  }
+  FILTER(isBlank(?b))
+  ?b ?p ?o
+} ORDER BY ?b ?p`
 }
 
 /* ───────────────────────── Incoming (inverse) relations ───────────────────────── */
