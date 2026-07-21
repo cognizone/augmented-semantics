@@ -129668,6 +129668,11 @@
       "group": "Organizations, addresses & agents"
     },
     "http://rs.tdwg.org/dwc/terms/MaterialCitation": {
+      "label": [
+        "http://rs.tdwg.org/dwc/terms/collectionCode",
+        "http://rs.tdwg.org/dwc/terms/typeStatus",
+        "http://rs.tdwg.org/dwc/terms/locality"
+      ],
       "group": "Darwin Core"
     },
     "http://schema.org/DefinedTerm": {
