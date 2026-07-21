@@ -101,7 +101,15 @@ function onPage(e: { page: number }) {
 <template>
   <div class="instance-list">
     <header class="il-header">
-      <h2 class="il-title" :title="typeLabel">{{ headingLabel }}</h2>
+      <h2 class="il-title" :title="typeLabel">
+        <button
+          v-if="browseStore.currentType"
+          class="il-title-link"
+          :aria-label="`View class ${headingLabel}`"
+          @click="browseStore.currentType && open(browseStore.currentType)"
+        >{{ headingLabel }}</button>
+        <template v-else>{{ headingLabel }}</template>
+      </h2>
       <div class="il-filter-wrap">
         <InputText
           v-model="filter"
@@ -452,6 +460,22 @@ function onPage(e: { page: number }) {
   font-weight: 700;
   font-family: var(--ae-font-mono);
   color: var(--ae-text-primary);
+}
+
+/* The heading label as a link to the selected class's own resource page. Only the
+   text is the hit target; inherits the heading's type so it reads as the heading. */
+.il-title-link {
+  padding: 0;
+  background: none;
+  border: none;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.il-title-link:hover {
+  color: var(--ae-accent);
+  text-decoration: underline;
 }
 
 .il-range {
