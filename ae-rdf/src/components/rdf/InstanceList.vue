@@ -9,13 +9,13 @@
  */
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useSettingsStore } from '../../stores'
+import { useSettingsStore, useBrowseStore } from '../../stores'
 import ProgressSpinner from 'primevue/progressspinner'
 import Paginator from 'primevue/paginator'
 import InputText from 'primevue/inputtext'
-import { useInstanceList, useDelayedLoading } from '../../composables'
+import { useInstanceList, useDelayedLoading, useClassLabels } from '../../composables'
 import { setSparqlHandoff } from '../../utils/sparqlHandoff'
-import { humanizeLocalName } from '../../utils/format'
+import { humanizeLocalName, localName } from '../../utils/format'
 import { URL_PARAMS } from '../../router'
 
 const route = useRoute()
@@ -25,6 +25,20 @@ const {
 } = useInstanceList()
 const showLoading = useDelayedLoading(loading)
 const settings = useSettingsStore()
+const browseStore = useBrowseStore()
+const classLabels = useClassLabels()
+
+// Heading: in humanized mode prefer the fetched human label for the selected class
+// (e.g. "Personal data") over its qname, matching the tree; prefixed/full keep the
+// qname/URI. `typeLabel` (the qname) stays available as the tooltip identifier.
+const headingLabel = computed(() => {
+  const type = browseStore.currentType
+  if (type && settings.uriDisplay === 'humanized') {
+    const label = classLabels.value.get(type)
+    if (label) return label
+  }
+  return typeLabel.value
+})
 
 // List (table) vs. card/box layout — the header toggle and the Settings panel both
 // bind to the one setting (default cards), so the choice is app-wide and consistent.
@@ -35,6 +49,12 @@ const viewMode = computed({
 
 // Column headings: explicit label, else the humanized predicate local name.
 const columnHeaders = computed(() => columns.value.map(c => c.label?.trim() || humanizeLocalName(c.predicate)))
+
+// Row title: the resolved label, or — when none resolved (label === uri) — the
+// URI's local name, so the row doesn't print the full URI twice (title + grey
+// subtitle). The subtitle stays the full URI.
+const displayLabel = (inst: { label: string; uri: string }) =>
+  inst.label === inst.uri ? localName(inst.uri) : inst.label
 
 const rangeLabel = computed(() => {
   const shown = instances.value.length
@@ -81,7 +101,7 @@ function onPage(e: { page: number }) {
 <template>
   <div class="instance-list">
     <header class="il-header">
-      <h2 class="il-title">{{ typeLabel }}</h2>
+      <h2 class="il-title" :title="typeLabel">{{ headingLabel }}</h2>
       <div class="il-filter-wrap">
         <InputText
           v-model="filter"
@@ -155,7 +175,7 @@ function onPage(e: { page: number }) {
           :title="inst.uri"
           @click="open(inst.uri)"
         >
-          <span class="il-card-title">{{ inst.label }}<span v-if="inst.deprecated" class="deprecated-badge">deprecated</span></span>
+          <span class="il-card-title">{{ displayLabel(inst) }}<span v-if="inst.deprecated" class="deprecated-badge">deprecated</span></span>
           <span class="il-card-meta">
             <span v-for="(header, i) in columnHeaders" :key="i" class="il-card-field">
               <span class="il-card-key">{{ header }}</span>
@@ -176,7 +196,7 @@ function onPage(e: { page: number }) {
           </thead>
           <tbody>
             <tr v-for="inst in instances" :key="inst.uri" class="il-row" :title="inst.uri" @click="open(inst.uri)">
-              <td class="il-cell-name" :title="inst.label">{{ inst.label }}<span v-if="inst.deprecated" class="deprecated-badge">deprecated</span></td>
+              <td class="il-cell-name" :title="displayLabel(inst)">{{ displayLabel(inst) }}<span v-if="inst.deprecated" class="deprecated-badge">deprecated</span></td>
               <td v-for="(header, i) in columnHeaders" :key="i" :title="inst.cells?.[i] || header" class="il-cell">{{ inst.cells?.[i] || '—' }}</td>
             </tr>
           </tbody>
@@ -186,7 +206,7 @@ function onPage(e: { page: number }) {
       <ul v-else-if="instances.length" class="il-items">
         <li v-for="inst in instances" :key="inst.uri">
           <button class="il-item" :title="inst.uri" @click="open(inst.uri)">
-            <span class="il-label">{{ inst.label }}<span v-if="inst.deprecated" class="deprecated-badge">deprecated</span></span>
+            <span class="il-label">{{ displayLabel(inst) }}<span v-if="inst.deprecated" class="deprecated-badge">deprecated</span></span>
             <span class="il-uri">{{ inst.uri }}</span>
           </button>
         </li>

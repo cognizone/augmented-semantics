@@ -38,7 +38,7 @@ const rail = ref<'types' | 'filters'>('types')
 watch(() => facetStore.hasFacets, (has) => {
   if (!has && rail.value === 'filters') rail.value = 'types'
 })
-const { types, loading, error, resolved, composition, subclasses, pathCounts, orphanCounts, requestPathCount, fetchIncomingPredicates } = useRdfTypes()
+const { types, loading, error, resolved, typeLabels, composition, subclasses, pathCounts, orphanCounts, requestPathCount, fetchIncomingPredicates } = useRdfTypes()
 const showLoading = useDelayedLoading(loading)
 
 // Draggable sidebar width, persisted. Pointer events + setPointerCapture so the
@@ -105,7 +105,15 @@ const SYS_EMBEDDED = 'Embedded'
 const SYS_LABELS = 'Value objects'
 const SYS_HIDDEN = 'Hidden'
 
-const typeName = (uri: string) => displayType(uri, resolved.value, settings.uriDisplay)
+// Humanized mode prefers a fetched human label for the class (e.g. "Personal data")
+// over its local name; prefixed/full stay pure qname/URI. Prefix tag is unaffected.
+const typeName = (uri: string) => {
+  if (settings.uriDisplay === 'humanized') {
+    const label = typeLabels.value.get(uri)
+    if (label) return label
+  }
+  return displayType(uri, resolved.value, settings.uriDisplay)
+}
 // Namespace prefix shown small in front of a class (e.g. "schema"); '' when unresolved.
 const typePrefix = (uri: string) => resolved.value.get(uri)?.prefix ?? ''
 const cfg = (uri: string) => typeConfig.get(uri)
@@ -305,12 +313,14 @@ const rows = computed<Row[]>(() => {
   return out
 })
 
-// A type matches when the query is a substring of its local name, its namespace
-// prefix, or its full URI (case-insensitive). Local name/prefix are what a row
-// shows; the URI is included so a namespace search (e.g. "purl.org") still hits.
+// A type matches when the query is a substring of its local name, its fetched human
+// label, its namespace prefix, or its full URI (case-insensitive). Local name/label/
+// prefix are what a row shows; the URI is included so a namespace search (e.g.
+// "purl.org") still hits.
 function matchesFilter(uri: string): boolean {
   const q = filterQuery.value
   return localName(uri).toLowerCase().includes(q)
+    || (typeLabels.value.get(uri) ?? '').toLowerCase().includes(q)
     || typePrefix(uri).toLowerCase().includes(q)
     || uri.toLowerCase().includes(q)
 }

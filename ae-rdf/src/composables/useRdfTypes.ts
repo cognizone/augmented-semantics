@@ -9,8 +9,10 @@
  * @see /spec/common/com02-StateManagement.md
  */
 import { ref, computed, watch, onMounted, onUnmounted, type Ref } from 'vue'
-import { useEndpointStore, useBrowseStore, useTypeConfigStore } from '../stores'
+import { useEndpointStore, useBrowseStore, useTypeConfigStore, useLanguageStore } from '../stores'
 import { executeSparql, resolveUris, logger, eventBus, buildTypeInventoryQuery, buildCompositionQuery, buildSubclassQuery, buildPathCountQuery, buildIncomingPredicatesQuery, buildEmbedOrphanQuery, resolveGraphStrategy } from '../services'
+import { resolveLabels } from './composeLabels'
+import { labelLangs } from '../utils/labelLang'
 
 export interface RdfType {
   uri: string
@@ -19,15 +21,39 @@ export interface RdfType {
 
 type ResolvedMap = Map<string, { prefix: string; localName: string }>
 
+// Human labels for the CLASS URIs themselves (not their instances), cached across
+// mounts/type switches per endpoint+language — the same lazy, in-memory shape the
+// facet-count cache uses. Keyed `${endpointId}|${langs}` so a language switch
+// re-resolves rather than showing a stale pick.
+const classLabelCache = new Map<string, Map<string, string>>()
+
+// Reactive view of the CURRENT endpoint's class labels, module-scoped so consumers
+// OUTSIDE the type tree — the instance-list heading in particular — read the same
+// map reactively without standing up a second (heavy) useRdfTypes instance. The
+// tree's useRdfTypes writes it on every (re)load; the heading only reads it.
+const classLabels: Ref<Map<string, string>> = ref(new Map())
+
+/** Reactive class-label map for the current endpoint (uri → human label), shared
+ *  with the type tree. Read-only for outside consumers (e.g. the heading). */
+export function useClassLabels(): Ref<Map<string, string>> {
+  return classLabels
+}
+
 export function useRdfTypes() {
   const endpointStore = useEndpointStore()
   const browseStore = useBrowseStore()
   const typeConfig = useTypeConfigStore()
+  const languageStore = useLanguageStore()
 
   const types: Ref<RdfType[]> = ref([])
   const loading = ref(false)
   const error = ref<string | null>(null)
   const resolved: Ref<ResolvedMap> = ref(new Map())
+  // Human labels for the class URIs themselves (uri → label), only shown in
+  // 'humanized' uriDisplay mode. Fills in async after the inventory paints. Aliases
+  // the module-scoped shared ref so the instance-list heading reads the same map.
+  const typeLabels = classLabels
+  let labelRequestId = 0
   // Embed-type composition: composing class → embed types it contains inline,
   // each with a count scoped to that class (not the global type total).
   const composition: Ref<Map<string, { uri: string; count: number }[]>> = ref(new Map())
@@ -208,6 +234,40 @@ export function useRdfTypes() {
     }
   }
 
+  // Fetch human labels for the CLASS URIs themselves so the tree can read
+  // "Personal data" instead of `termdat/52451` in humanized mode. Reuses THE
+  // shared resolver (resolveLabels: 6-predicate precedence + extraLabelPredicates +
+  // SKOS-XL + language pick, batched/WAF-safe and subject-chunked for LINDAS's 673
+  // classes) with a throwaway typeMap — classes need no most-specific-type step,
+  // only the label side. Background, non-fatal (tree falls back to local names),
+  // abort-safe on endpoint switch, and cached per endpoint+language.
+  async function loadTypeLabels(): Promise<void> {
+    const endpoint = endpointStore.current
+    if (!endpoint || !types.value.length) { typeLabels.value = new Map(); return }
+    const langs = labelLangs(endpoint.languagePriorities, languageStore.preferred)
+    const cacheKey = `${endpoint.id}|${langs.join(',')}`
+    const cached = classLabelCache.get(cacheKey)
+    if (cached) {
+      typeLabels.value = cached
+      logger.info('useRdfTypes', 'Seeded class labels from cache (no query)', { resolved: cached.size })
+      return
+    }
+    const endpointId = endpoint.id
+    const id = ++labelRequestId
+    const isCurrent = () => id === labelRequestId && endpointStore.current?.id === endpointId
+    logger.info('useRdfTypes', 'Loading class labels', { classes: types.value.length })
+    try {
+      const labelMap = new Map<string, string>()
+      await resolveLabels(endpoint, types.value.map(t => t.uri), langs, labelMap, new Map(), isCurrent)
+      if (!isCurrent()) return
+      classLabelCache.set(cacheKey, labelMap)
+      typeLabels.value = labelMap
+      logger.info('useRdfTypes', 'Loaded class labels', { resolved: labelMap.size })
+    } catch (e: unknown) {
+      logger.warn('useRdfTypes', 'Class-label fetch failed', { error: e })
+    }
+  }
+
   async function loadTypes(): Promise<void> {
     const endpoint = endpointStore.current
     if (!endpoint) {
@@ -283,10 +343,13 @@ export function useRdfTypes() {
   // Rediscover the subclass hierarchy when the inventory or graph scope changes.
   const inventoryKey = computed(() => types.value.map(t => t.uri).join('|'))
   watch([inventoryKey, () => browseStore.graph], () => loadSubclasses())
+  // (Re)fetch class labels when the inventory or the preferred language changes —
+  // the cache key folds in language, so a switch re-resolves rather than sticking.
+  watch([inventoryKey, () => languageStore.preferred], () => loadTypeLabels())
   onMounted(() => {
     if (endpointStore.current) loadTypes()
   })
   onUnmounted(() => sub.unsubscribe())
 
-  return { types, loading, error, resolved, composition, subclasses, pathCounts, orphanCounts, requestPathCount, fetchIncomingPredicates, loadTypes }
+  return { types, loading, error, resolved, typeLabels, composition, subclasses, pathCounts, orphanCounts, requestPathCount, fetchIncomingPredicates, loadTypes }
 }
