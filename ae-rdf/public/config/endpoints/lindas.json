@@ -129656,7 +129656,7 @@
   "profiledAt": "2026-07-17T11:31:31.919Z",
   "types": {
     "https://cube.link/Observation": {
-      "group": "Cube"
+      "group": "Cube observations & crops"
     },
     "https://www.ica.org/standards/RiC/ontology#DateRange": {
       "group": "Records in Contexts (RiC)"
@@ -129665,36 +129665,36 @@
       "group": "Records in Contexts (RiC)"
     },
     "http://schema.org/PropertyValue": {
-      "group": "schema.org"
+      "group": "Organizations, addresses & agents"
     },
     "http://rs.tdwg.org/dwc/terms/MaterialCitation": {
       "group": "Darwin Core"
     },
     "http://schema.org/DefinedTerm": {
-      "group": "schema.org"
+      "group": "environment / foen / nfi / ClassificationUnit"
     },
     "http://filteredpush.org/ontologies/oa/dwcFP#TaxonConcept": {
-      "group": "Darwin Core"
+      "group": "Biological taxa & treatments"
     },
     "http://filteredpush.org/ontologies/oa/dwcFP#TaxonName": {
-      "group": "Darwin Core"
+      "group": "Biological taxa & treatments"
     },
     "http://plazi.org/vocab/treatment#Treatment": {
-      "group": "Plazi Treatment"
+      "group": "Biological taxa & treatments"
     },
     "http://schema.org/PostalAddress": {
-      "group": "schema.org",
+      "group": "Organizations, addresses & agents",
       "render": "embed",
       "embedVia": "http://schema.org/address"
     },
     "http://schema.org/Organization": {
-      "group": "schema.org"
+      "group": "Organizations, addresses & agents"
     },
     "https://schema.ld.admin.ch/ZefixOrganisation": {
-      "group": "schema.ld.admin.ch"
+      "group": "Organizations, addresses & agents"
     },
     "http://www.w3.org/ns/locn#Address": {
-      "group": "Location (LOCN)",
+      "group": "Organizations, addresses & agents",
       "render": "embed",
       "embedVia": "http://schema.org/address"
     },
@@ -129702,22 +129702,22 @@
       "group": "lod.opentransportdata.swiss / vocab"
     },
     "http://www.w3.org/2004/02/skos/core#Concept": {
-      "group": "SKOS"
+      "group": "Concepts, datasets & media"
     },
     "http://purl.org/spar/fabio/Figure": {
       "group": "FaBiO"
     },
     "https://www.w3.org/ns/oa#Annotation": {
-      "group": "SKOS"
+      "group": "Municipality change events"
     },
     "https://version.link/Version": {
-      "group": "version.link"
+      "group": "Municipality change events"
     },
     "https://www.ica.org/standards/RiC/ontology#Record": {
       "group": "Records in Contexts (RiC)"
     },
     "https://version.link/Identity": {
-      "group": "version.link"
+      "group": "Municipalities & administrative geography"
     },
     "https://lod.opentransportdata.swiss/vocab/TransportEdge": {
       "group": "lod.opentransportdata.swiss / vocab"
@@ -129732,28 +129732,28 @@
       "group": "schema.ld.admin.ch"
     },
     "http://www.opengis.net/ont/geosparql#Geometry": {
-      "group": "GeoSPARQL",
+      "group": "Hydro stations & geometry",
       "render": "embed",
       "embedVia": "http://www.opengis.net/ont/geosparql#hasGeometry"
     },
     "http://schema.org/CivicStructure": {
-      "group": "schema.org"
+      "group": "lod.opentransportdata.swiss / vocab"
     },
     "http://vocab.gtfs.org/terms#Station": {
-      "group": "schema.ld.admin.ch"
+      "group": "lod.opentransportdata.swiss / vocab"
     },
     "https://www.ica.org/standards/RiC/ontology#Instantiation": {
       "group": "Records in Contexts (RiC)"
     },
     "http://schema.org/Offer": {
-      "group": "schema.org"
+      "group": "Municipalities & administrative geography"
     },
     "http://schema.org/QuantitativeValue": {
-      "group": "schema.org",
+      "group": "lod.opentransportdata.swiss / vocab",
       "render": "embed"
     },
     "https://version.link/Deprecated": {
-      "group": "version.link"
+      "group": "Organizations, addresses & agents"
     },
     "https://schema.ld.admin.ch/ValidatedEntry": {
       "group": "schema.ld.admin.ch"
@@ -129762,69 +129762,69 @@
       "group": "lod.opentransportdata.swiss / vocab"
     },
     "http://xmlns.com/foaf/0.1/Agent": {
-      "group": "FOAF"
+      "group": "Organizations, addresses & agents"
     },
     "http://xmlns.com/foaf/0.1/Organization": {
-      "group": "FOAF"
+      "group": "Organizations, addresses & agents"
     },
     "https://www.ica.org/standards/RiC/ontology#Activity": {
-      "group": "Records in Contexts (RiC)"
+      "group": "Concepts, datasets & media"
     },
     "https://schema.ld.admin.ch/Name": {
       "group": "schema.ld.admin.ch"
     },
     "http://schema.org/Person": {
-      "group": "schema.org"
+      "group": "Organizations, addresses & agents"
     },
     "http://schema.org/GovernmentOrganization": {
-      "group": "schema.org"
+      "group": "Organizations, addresses & agents"
     },
     "http://www.w3.org/2006/time#Instant": {
-      "group": "Time",
+      "group": "Time intervals & inventory",
       "render": "embed"
     },
     "https://schema.ld.admin.ch/Abbreviation": {
       "group": "schema.ld.admin.ch"
     },
     "http://schema.org/Role": {
-      "group": "schema.org"
+      "group": "Organizations, addresses & agents"
     },
     "https://www.ica.org/standards/RiC/ontology#RecordResourceToRecordResourceRelation": {
       "group": "Records in Contexts (RiC)"
     },
     "http://www.w3.org/1999/02/22-rdf-syntax-ns#List": {
-      "group": "Ontology"
+      "group": "Time intervals & inventory"
     },
     "https://agriculture.ld.admin.ch/plant-protection/Indication": {
       "group": "agriculture / plant-protection"
     },
     "http://www.w3.org/2002/07/owl#NamedIndividual": {
-      "group": "Ontology"
+      "group": "Concepts, datasets & media"
     },
     "http://www.w3.org/2002/07/owl#Thing": {
-      "group": "Ontology"
+      "group": "Concepts, datasets & media"
     },
     "https://cube.link/KeyDimension": {
-      "group": "Cube"
+      "group": "QUDT"
     },
     "http://www.w3.org/2006/time#Interval": {
-      "group": "Time",
+      "group": "Time intervals & inventory",
       "render": "embed"
     },
     "https://lod.opentransportdata.swiss/vocab/Tarifwertpreisauspraegung": {
       "group": "lod.opentransportdata.swiss / vocab"
     },
     "https://version.link/ChangeEvent": {
-      "group": "version.link"
+      "group": "Municipality change events"
     },
     "https://ld.admin.ch/ech/71/MunicipalityVersion": {
-      "group": "ld.admin.ch / ech / 71"
+      "group": "Municipalities & administrative geography"
     },
     "https://schema.ld.admin.ch/MunicipalityChangeEvent": {
-      "group": "schema.ld.admin.ch"
+      "group": "Municipality change events"
     },
     "http://www.w3.org/2006/time#ProperInterval": {
-      "group": "Time",
+      "group": "Time intervals & inventory",
       "render": "embed"
     },
     "http://qudt.org/schema/qudt/FactorUnit": {
@@ -129840,37 +129840,37 @@
       "group": "schema.ld.admin.ch"
     },
     "http://schema.org/CreativeWork": {
-      "group": "schema.org"
+      "group": "Data catalog & agri master-data"
     },
     "https://agriculture.ld.admin.ch/plant-protection/Ingredient": {
       "group": "agriculture / plant-protection"
     },
     "https://cube.link/MeasureDimension": {
-      "group": "Cube"
+      "group": "QUDT"
     },
     "https://agriculture.ld.admin.ch/inspection/InspectionPoint": {
-      "group": "agriculture / inspection"
+      "group": "Inspection points"
     },
     "http://schema.org/OrganizationRole": {
-      "group": "schema.org"
+      "group": "Organizations, addresses & agents"
     },
     "http://schema.org/MusicRecording": {
-      "group": "schema.org"
+      "group": "Concepts, datasets & media"
     },
     "https://schema.ld.admin.ch/Municipality": {
-      "group": "schema.ld.admin.ch"
+      "group": "Municipalities & administrative geography"
     },
     "https://ld.admin.ch/ech/71/Municipality": {
-      "group": "ld.admin.ch / ech / 71"
+      "group": "Municipalities & administrative geography"
     },
     "https://lod.opentransportdata.swiss/vocab/Relationsgebiet": {
       "group": "lod.opentransportdata.swiss / vocab"
     },
     "https://version.link/InitialRecording": {
-      "group": "version.link"
+      "group": "Municipality change events"
     },
     "https://schema.ld.admin.ch/PoliticalMunicipality": {
-      "group": "schema.ld.admin.ch"
+      "group": "Municipalities & administrative geography"
     },
     "http://purl.org/linked-data/cube#Observation": {
       "group": "RDF Data Cube"
@@ -129912,75 +129912,75 @@
       ]
     },
     "https://ld.admin.ch/ech/71/MunicipalityChangeEvent": {
-      "group": "ld.admin.ch / ech / 71"
+      "group": "Municipality change events"
     },
     "https://agriculture.ld.admin.ch/plant-protection/Product": {
       "group": "agriculture / plant-protection"
     },
     "http://www.w3.org/ns/prov#Association": {
-      "group": "PROV"
+      "group": "paf.link"
     },
     "http://schema.org/OrderItem": {
-      "group": "schema.org"
+      "group": "Concepts, datasets & media"
     },
     "https://schema.ld.admin.ch/Isil": {
-      "group": "schema.ld.admin.ch"
+      "group": "Organizations, addresses & agents"
     },
     "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property": {
-      "group": "Ontology"
+      "group": "OWL/RDFS terms"
     },
     "http://www.w3.org/ns/dcat#Dataset": {
-      "group": "DCAT"
+      "group": "Datasets & data classification"
     },
     "http://www.w3.org/ns/shacl#NodeShape": {
-      "group": "SHACL"
+      "group": "Data catalog & agri master-data"
     },
     "http://schema.org/LobbyOrganization": {
-      "group": "schema.org"
+      "group": "Organizations, addresses & agents"
     },
     "https://cube.link/Cube": {
-      "group": "Cube"
+      "group": "Data catalog & agri master-data"
     },
     "http://www.w3.org/2006/vcard/ns#Organization": {
-      "group": "DCAT"
+      "group": "Organizations, addresses & agents"
     },
     "https://cube.link/Constraint": {
-      "group": "Cube"
+      "group": "Data catalog & agri master-data"
     },
     "https://cube.link/ObservationSet": {
-      "group": "Cube"
+      "group": "Data catalog & agri master-data"
     },
     "https://cube.link/meta/Hierarchy": {
-      "group": "Cube"
+      "group": "Data catalog & agri master-data"
     },
     "http://schema.org/ContactPoint": {
-      "group": "schema.org",
+      "group": "Organizations, addresses & agents",
       "render": "embed",
       "embedVia": "http://schema.org/contactPoint"
     },
     "http://rdfs.org/ns/void#Dataset": {
-      "group": "VoID"
+      "group": "Data catalog & agri master-data"
     },
     "http://purl.org/dc/terms/Standard": {
-      "group": "Dublin Core"
+      "group": "Concepts, datasets & media"
     },
     "http://purl.org/dc/terms/MediaType": {
-      "group": "Dublin Core"
+      "group": "Concepts, datasets & media"
     },
     "http://schema.org/Dataset": {
-      "group": "schema.org"
+      "group": "Data catalog & agri master-data"
     },
     "https://agriculture.ld.admin.ch/foag/Product": {
-      "group": "agriculture / foag"
+      "group": "Data catalog & agri master-data"
     },
     "http://rdf-vocabulary.ddialliance.org/xkos#ClassificationLevel": {
-      "group": "rdf-vocabulary.ddialliance.org / xkos"
+      "group": "Concepts, datasets & media"
     },
     "https://ch.paf.link/ProceduralRequestInformationActivity": {
       "group": "paf.link"
     },
     "https://version.link/ChangeInHierarchy": {
-      "group": "version.link"
+      "group": "Municipality change events"
     },
     "http://www.w3.org/2006/time#GeneralDateTimeDescription": {
       "group": "Time"
@@ -129989,10 +129989,10 @@
       "group": "agriculture / plant-protection"
     },
     "http://www.w3.org/2002/07/owl#Class": {
-      "group": "Ontology"
+      "group": "Cube observations & crops"
     },
     "http://www.w3.org/2000/01/rdf-schema#Class": {
-      "group": "Ontology"
+      "group": "OWL/RDFS terms"
     },
     "https://ch.paf.link/ParliamentaryAffairIdentifierEntity": {
       "group": "paf.link"
@@ -130016,7 +130016,7 @@
       "group": "Cube"
     },
     "http://schema.org/DefinedTermSet": {
-      "group": "schema.org"
+      "group": "Data catalog & agri master-data"
     },
     "https://agriculture.ld.admin.ch/plant-protection/ApplicationComment": {
       "group": "agriculture / plant-protection"
@@ -130031,26 +130031,26 @@
       "group": "lod.opentransportdata.swiss / vocab"
     },
     "http://schema.org/GeoShape": {
-      "group": "schema.org",
+      "group": "environment / foen / nfi / ClassificationUnit",
       "render": "embed"
     },
     "https://ch.paf.link/ProceduralRequestProposalActivity": {
       "group": "paf.link"
     },
     "https://agriculture.ld.admin.ch/crops/CultivationType": {
-      "group": "agriculture / crops"
+      "group": "Cube observations & crops"
     },
     "http://purl.org/dc/terms/Collection": {
-      "group": "Dublin Core"
+      "group": "Inspection points"
     },
     "http://www.w3.org/2004/02/skos/core#ConceptScheme": {
-      "group": "SKOS"
+      "group": "Concepts, datasets & media"
     },
     "https://agriculture.ld.admin.ch/plant-protection/FUN": {
       "group": "agriculture / plant-protection"
     },
     "http://www.w3.org/2002/07/owl#ObjectProperty": {
-      "group": "Ontology"
+      "group": "OWL/RDFS terms"
     },
     "https://agriculture.ld.admin.ch/plant-protection/ParallelImport": {
       "group": "agriculture / plant-protection"
@@ -130062,7 +130062,7 @@
       "group": "agriculture / plant-protection"
     },
     "http://www.w3.org/2002/07/owl#Restriction": {
-      "group": "Ontology"
+      "group": "OWL restriction terms"
     },
     "https://ch.paf.link/ProceduralRequestConnex": {
       "group": "paf.link"
@@ -130071,10 +130071,10 @@
       "group": "agriculture / plant-protection"
     },
     "http://www.w3.org/ns/hydra/core#Resource": {
-      "group": "Ontology"
+      "group": "Data catalog & agri master-data"
     },
     "https://cube-creator.zazuko.com/shared-dimensions/vocab#SharedDimensionTerm": {
-      "group": "Shared Dimensions"
+      "group": "Data catalog & agri master-data"
     },
     "http://www.w3.org/ns/dcat#Relationship": {
       "group": "DCAT"
@@ -130083,7 +130083,7 @@
       "group": "agriculture / plant-protection"
     },
     "http://schema.org/Invoice": {
-      "group": "schema.org"
+      "group": "Concepts, datasets & media"
     },
     "http://qudt.org/schema/qudt/DerivedUnit": {
       "group": "QUDT"
@@ -130095,10 +130095,10 @@
       "group": "QUDT"
     },
     "http://schema.org/MusicAlbum": {
-      "group": "schema.org"
+      "group": "Concepts, datasets & media"
     },
     "http://publications.europa.eu/ontology/euvoc#Country": {
-      "group": "EU Vocabularies",
+      "group": "Concepts, datasets & media",
       "facets": [
         {
           "predicate": "http://www.opengis.net/ont/geosparql#sfWithin",
@@ -130120,19 +130120,19 @@
       "render": "embed"
     },
     "http://schema.org/AdministrativeArea": {
-      "group": "schema.org"
+      "group": "Municipalities & administrative geography"
     },
     "http://schema.org/Event": {
-      "group": "schema.org"
+      "group": "Organizations, addresses & agents"
     },
     "https://agriculture.ld.admin.ch/crops/PlantProtectionCrop": {
-      "group": "agriculture / crops"
+      "group": "Cube observations & crops"
     },
     "https://agriculture.ld.admin.ch/plant-protection/Crop": {
       "group": "agriculture / plant-protection"
     },
     "https://agriculture.ld.admin.ch/crops/NutrientBalanceCrop": {
-      "group": "agriculture / crops"
+      "group": "Cube observations & crops"
     },
     "https://agriculture.ld.admin.ch/plant-protection/ACA": {
       "group": "agriculture / plant-protection"
@@ -130141,32 +130141,32 @@
       "group": "ld.admin.ch / ech / 71"
     },
     "http://schema.org/Country": {
-      "group": "schema.org"
+      "group": "Municipalities & administrative geography"
     },
     "http://schema.org/MusicGroup": {
-      "group": "schema.org"
+      "group": "Concepts, datasets & media"
     },
     "https://schema.ld.admin.ch/District": {
-      "group": "schema.ld.admin.ch"
+      "group": "Municipalities & administrative geography"
     },
     "https://ld.admin.ch/ech/71/District": {
       "group": "ld.admin.ch / ech / 71"
     },
     "https://schema.ld.admin.ch/DistrictChangeEvent": {
-      "group": "schema.ld.admin.ch"
+      "group": "Municipality change events"
     },
     "http://qudt.org/schema/qudt/QuantityKindDimensionVector": {
       "group": "QUDT",
       "render": "embed"
     },
     "https://agriculture.ld.admin.ch/foag/ProductSubgroup": {
-      "group": "agriculture / foag"
+      "group": "Data catalog & agri master-data"
     },
     "http://example.com/HydroMeasuringStation": {
-      "group": "example.com"
+      "group": "Hydro stations & geometry"
     },
     "http://publications.europa.eu/ontology/euvoc#FileType": {
-      "group": "EU Vocabularies"
+      "group": "Concepts, datasets & media"
     },
     "https://schema.ld.admin.ch/TermSubDomain": {
       "group": "schema.ld.admin.ch"
@@ -130184,25 +130184,25 @@
       "render": "embed"
     },
     "http://www.w3.org/2002/07/owl#DatatypeProperty": {
-      "group": "Ontology"
+      "group": "OWL/RDFS terms"
     },
     "http://schema.org/ParliamentaryCommittee": {
-      "group": "schema.org"
+      "group": "Organizations, addresses & agents"
     },
     "https://agriculture.ld.admin.ch/crops/DirectPaymentCrop": {
-      "group": "agriculture / crops"
+      "group": "Cube observations & crops"
     },
     "https://schema.ld.admin.ch/Session": {
-      "group": "schema.ld.admin.ch"
+      "group": "Organizations, addresses & agents"
     },
     "http://www.w3.org/2002/07/owl#AnnotationProperty": {
-      "group": "Ontology"
+      "group": "OWL/RDFS terms"
     },
     "https://lod.opentransportdata.swiss/vocab/Anwendungsbereich": {
       "group": "lod.opentransportdata.swiss / vocab"
     },
     "http://schema.org/BodyOfWater": {
-      "group": "schema.org"
+      "group": "Hydro stations & geometry"
     },
     "http://purl.org/spar/fabio/Book": {
       "group": "FaBiO"
@@ -130214,35 +130214,35 @@
       "group": "lod.opentransportdata.swiss / vocab"
     },
     "http://schema.org/SoftwareApplication": {
-      "group": "schema.org"
+      "group": "Organizations, addresses & agents"
     },
     "https://agriculture.ld.admin.ch/plant-protection/PGR": {
       "group": "agriculture / plant-protection"
     },
     "https://environment.ld.admin.ch/foen/gefahren-waldbrand/Region": {
-      "group": "schema.ld.admin.ch"
+      "group": "Municipalities & administrative geography"
     },
     "http://www.w3.org/2011/content#ContentAsText": {
-      "group": "SKOS"
+      "group": "Municipality change events"
     },
     "https://agriculture.ld.admin.ch/plant-protection/BIA": {
       "group": "agriculture / plant-protection"
     },
     "http://www.w3.org/ns/dcat#Distribution": {
-      "group": "DCAT"
+      "group": "Concepts, datasets & media"
     },
     "https://schema.ld.admin.ch/TerminologyCollection": {
       "group": "schema.ld.admin.ch"
     },
     "http://www.w3.org/2002/07/owl#FunctionalProperty": {
-      "group": "Ontology"
+      "group": "OWL restriction terms"
     },
     "http://qudt.org/schema/qudt/QuantityKindDimensionVector_CGS": {
       "group": "QUDT",
       "render": "embed"
     },
     "https://cube.link/meta/SharedDimension": {
-      "group": "Cube"
+      "group": "Data catalog & agri master-data"
     },
     "https://environment.ld.admin.ch/foen/nfi/UnitOfReference/2777": {
       "group": "environment / foen / nfi / UnitOfReference"
@@ -130251,25 +130251,25 @@
       "group": "schema.org"
     },
     "https://schema.ld.admin.ch/ChemicalElement": {
-      "group": "schema.ld.admin.ch"
+      "group": "Data catalog & agri master-data"
     },
     "http://schema.org/DigitalDocument": {
-      "group": "schema.org"
+      "group": "Data catalog & agri master-data"
     },
     "http://schema.org/PoliticalParty": {
-      "group": "schema.org"
+      "group": "Organizations, addresses & agents"
     },
     "https://lod.opentransportdata.swiss/vocab/ZoningPlan": {
       "group": "lod.opentransportdata.swiss / vocab"
     },
     "https://version.link/ChangeOfName": {
-      "group": "version.link"
+      "group": "Municipality change events"
     },
     "https://agriculture.ld.admin.ch/plant-protection/GHSLabelElement": {
       "group": "agriculture / plant-protection"
     },
     "https://agriculture.ld.admin.ch/system-map/PrivateOrganization": {
-      "group": "agriculture / system-map"
+      "group": "Organizations, addresses & agents"
     },
     "http://qudt.org/schema/qudt/ContextualUnit": {
       "group": "QUDT"
@@ -130278,7 +130278,7 @@
       "group": "agriculture / plant-protection"
     },
     "https://agriculture.ld.admin.ch/foag/DataSource": {
-      "group": "agriculture / foag"
+      "group": "Data catalog & agri master-data"
     },
     "https://agriculture.ld.admin.ch/plant-protection/HazardStatement": {
       "group": "agriculture / plant-protection"
@@ -130293,7 +130293,7 @@
       "group": "ld.admin.ch / ech / 71"
     },
     "https://agriculture.ld.admin.ch/system-map/CantonalOrganization": {
-      "group": "agriculture / system-map"
+      "group": "Organizations, addresses & agents"
     },
     "https://environment.ld.admin.ch/foen/nfi/Unit": {
       "group": "environment / foen / nfi"
@@ -130305,13 +130305,13 @@
       "group": "SHACL"
     },
     "https://agriculture.ld.admin.ch/foag/ProductGroup": {
-      "group": "agriculture / foag"
+      "group": "Data catalog & agri master-data"
     },
     "https://agriculture.ld.admin.ch/crops/CropTaxon": {
-      "group": "agriculture / crops"
+      "group": "Cube observations & crops"
     },
     "http://www.w3.org/2000/01/rdf-schema#Datatype": {
-      "group": "Ontology"
+      "group": "OWL restriction terms"
     },
     "https://agriculture.ld.admin.ch/plant-protection/WAA": {
       "group": "agriculture / plant-protection"
@@ -130320,16 +130320,16 @@
       "group": "schema.org"
     },
     "https://agriculture.ld.admin.ch/system-map/FederalOrganization": {
-      "group": "agriculture / system-map"
+      "group": "Organizations, addresses & agents"
     },
     "https://schema.ld.admin.ch/TermDomain": {
       "group": "schema.ld.admin.ch"
     },
     "http://publications.europa.eu/ontology/euvoc#Frequency": {
-      "group": "EU Vocabularies"
+      "group": "Concepts, datasets & media"
     },
     "https://schema.ld.admin.ch/CantonalLakePortion": {
-      "group": "schema.ld.admin.ch"
+      "group": "Municipalities & administrative geography"
     },
     "https://agriculture.ld.admin.ch/plant-protection/BNA": {
       "group": "agriculture / plant-protection"
@@ -130347,7 +130347,7 @@
       "group": "lod.opentransportdata.swiss / vocab"
     },
     "http://www.w3.org/2002/07/owl#Ontology": {
-      "group": "Ontology"
+      "group": "Concepts, datasets & media"
     },
     "https://agriculture.ld.admin.ch/plant-protection/STP": {
       "group": "agriculture / plant-protection"
@@ -130359,16 +130359,16 @@
       "group": "Ontology"
     },
     "http://schema.org/ParliamentaryGroup": {
-      "group": "schema.org"
+      "group": "Organizations, addresses & agents"
     },
     "https://agriculture.ld.admin.ch/foag/DataMethod": {
-      "group": "agriculture / foag"
+      "group": "Data catalog & agri master-data"
     },
     "https://agriculture.ld.admin.ch/plant-protection/BMA": {
       "group": "agriculture / plant-protection"
     },
     "https://agriculture.ld.admin.ch/foag/Unit": {
-      "group": "agriculture / foag"
+      "group": "Data catalog & agri master-data"
     },
     "https://environment.ld.admin.ch/foen/nfi/UnitOfReference/366": {
       "group": "environment / foen / nfi / UnitOfReference"
@@ -130377,14 +130377,14 @@
       "group": "schema.org"
     },
     "http://www.w3.org/shacl#NodeShape": {
-      "group": "DCAT"
+      "group": "Data catalog & agri master-data"
     },
     "http://schema.org/GeoCoordinates": {
       "group": "schema.org",
       "render": "embed"
     },
     "https://agriculture.ld.admin.ch/foag/ProductOrigin": {
-      "group": "agriculture / foag"
+      "group": "Data catalog & agri master-data"
     },
     "https://environment.ld.admin.ch/foen/nfi/UnitOfReference/827": {
       "group": "environment / foen / nfi / UnitOfReference"
@@ -130393,22 +130393,22 @@
       "group": "agriculture / plant-protection"
     },
     "https://schema.ld.admin.ch/Canton": {
-      "group": "schema.ld.admin.ch"
+      "group": "Municipalities & administrative geography"
     },
     "http://schema.org/State": {
-      "group": "schema.org"
+      "group": "Municipalities & administrative geography"
     },
     "https://ld.admin.ch/ech/71/Canton": {
-      "group": "ld.admin.ch / ech / 71"
+      "group": "Municipalities & administrative geography"
     },
     "https://register.ld.admin.ch/termdat/52451": {
-      "group": "agriculture / system-map"
+      "group": "Datasets & data classification"
     },
     "https://agriculture.ld.admin.ch/foag/SalesRegion": {
-      "group": "agriculture / foag"
+      "group": "Data catalog & agri master-data"
     },
     "https://agriculture.ld.admin.ch/foag/ValueChain_Detail": {
-      "group": "agriculture / foag"
+      "group": "Data catalog & agri master-data"
     },
     "http://qudt.org/schema/qudt/DecimalPrefix": {
       "group": "QUDT"
@@ -130417,10 +130417,10 @@
       "group": "lod.opentransportdata.swiss / vocab"
     },
     "http://example.org/Genre": {
-      "group": "example.org"
+      "group": "Concepts, datasets & media"
     },
     "https://agriculture.ld.admin.ch/foag/ProductionSystem": {
-      "group": "agriculture / foag"
+      "group": "Data catalog & agri master-data"
     },
     "https://environment.ld.admin.ch/foen/nfi/ClassificationUnit/2360": {
       "group": "environment / foen / nfi / ClassificationUnit"
@@ -130429,10 +130429,10 @@
       "group": "environment / foen / nfi / ClassificationUnit"
     },
     "https://cube-creator.zazuko.com/shared-dimensions/vocab#SharedDimension": {
-      "group": "Shared Dimensions"
+      "group": "Data catalog & agri master-data"
     },
     "https://agriculture.ld.admin.ch/foag/Usage": {
-      "group": "agriculture / foag"
+      "group": "Data catalog & agri master-data"
     },
     "https://environment.ld.admin.ch/foen/nfi/ClassificationUnit/1002": {
       "group": "environment / foen / nfi / ClassificationUnit"
@@ -130453,7 +130453,7 @@
       "group": "environment / foen / nfi / ClassificationUnit"
     },
     "http://schema.org/Legislation": {
-      "group": "schema.org"
+      "group": "Data catalog & agri master-data"
     },
     "https://environment.ld.admin.ch/foen/nfi/ClassificationUnit/2619": {
       "group": "environment / foen / nfi / ClassificationUnit"
@@ -130462,7 +130462,7 @@
       "group": "environment / foen / nfi / ClassificationUnit"
     },
     "http://schema.org/MusicPlaylist": {
-      "group": "schema.org"
+      "group": "Concepts, datasets & media"
     },
     "https://environment.ld.admin.ch/foen/nfi/ClassificationUnit/90": {
       "group": "environment / foen / nfi / ClassificationUnit"
@@ -130477,22 +130477,22 @@
       "group": "Ontology"
     },
     "https://schema.ld.admin.ch/LegislaturePeriod": {
-      "group": "schema.ld.admin.ch"
+      "group": "Organizations, addresses & agents"
     },
     "https://environment.ld.admin.ch/foen/nfi/ClassificationUnit/2004": {
       "group": "environment / foen / nfi / ClassificationUnit"
     },
     "http://www.w3.org/2002/07/owl#DeprecatedClass": {
-      "group": "Ontology"
+      "group": "Deprecated types"
     },
     "https://cube-creator.zazuko.com/shared-dimensions/vocab#Hierarchy": {
-      "group": "Shared Dimensions"
+      "group": "Data catalog & agri master-data"
     },
     "http://schema.org/UpdateAction": {
       "group": "schema.org"
     },
     "https://agriculture.ld.admin.ch/foag/ProductProperties": {
-      "group": "agriculture / foag"
+      "group": "Data catalog & agri master-data"
     },
     "https://environment.ld.admin.ch/foen/nfi/ClassificationUnit/2625": {
       "group": "environment / foen / nfi / ClassificationUnit"
@@ -130504,7 +130504,7 @@
       "group": "environment / foen / nfi / ClassificationUnit"
     },
     "http://publications.europa.eu/ontology/euvoc#DataTheme": {
-      "group": "EU Vocabularies"
+      "group": "Concepts, datasets & media"
     },
     "https://environment.ld.admin.ch/foen/nfi/UnitOfReference/829": {
       "group": "environment / foen / nfi / UnitOfReference"
@@ -130540,7 +130540,7 @@
       "group": "schema.org"
     },
     "https://agriculture.ld.admin.ch/crops/DeprecatedCultivationType": {
-      "group": "agriculture / crops"
+      "group": "Deprecated types"
     },
     "https://agriculture.ld.admin.ch/plant-protection/FBA": {
       "group": "agriculture / plant-protection"
@@ -130549,7 +130549,7 @@
       "group": "agriculture / plant-protection"
     },
     "http://schema.org/DataCatalog": {
-      "group": "schema.org"
+      "group": "Data catalog & agri master-data"
     },
     "https://environment.ld.admin.ch/foen/nfi/ClassificationUnit/582": {
       "group": "environment / foen / nfi / ClassificationUnit"
@@ -130564,16 +130564,16 @@
       "group": "schema.org"
     },
     "http://purl.org/linked-data/cube#DataSet": {
-      "group": "RDF Data Cube"
+      "group": "Organizations, addresses & agents"
     },
     "http://purl.org/linked-data/cube#DataStructureDefinition": {
       "group": "RDF Data Cube"
     },
     "https://www.ica.org/standards/RiC/ontology#RecordSetType": {
-      "group": "Records in Contexts (RiC)"
+      "group": "Concepts, datasets & media"
     },
     "http://rdfs.org/ns/void#DatasetDescription": {
-      "group": "VoID"
+      "group": "Data catalog & agri master-data"
     },
     "https://environment.ld.admin.ch/foen/nfi/UnitOfReference/49": {
       "group": "environment / foen / nfi / UnitOfReference"
@@ -130615,10 +130615,10 @@
       "group": "environment / foen / nfi / ClassificationUnit"
     },
     "http://schema.org/City": {
-      "group": "schema.org"
+      "group": "Municipalities & administrative geography"
     },
     "https://schema.ld.admin.ch/ForeignMunicipality": {
-      "group": "schema.ld.admin.ch"
+      "group": "Municipalities & administrative geography"
     },
     "http://schema.org/RestrictedDiet": {
       "group": "schema.org"
@@ -130669,34 +130669,34 @@
       "group": "lod.opentransportdata.swiss / vocab"
     },
     "https://agriculture.ld.admin.ch/system-map/FMIS": {
-      "group": "agriculture / system-map"
+      "group": "Organizations, addresses & agents"
     },
     "http://purl.org/ontology/service#Service": {
-      "group": "purl.org / dc / dcmitype"
+      "group": "Organizations, addresses & agents"
     },
     "https://agriculture.ld.admin.ch/plant-protection/ApplicationArea": {
       "group": "agriculture / plant-protection"
     },
     "https://environment.ld.admin.ch/foen/nfi/ClassificationUnit/96": {
-      "group": "environment / foen / nfi / ClassificationUnit"
+      "group": "Data catalog & agri master-data"
     },
     "https://agriculture.ld.admin.ch/foag/CostComponent": {
-      "group": "agriculture / foag"
+      "group": "Data catalog & agri master-data"
     },
     "https://agriculture.ld.admin.ch/foag/KeyIndicatorType": {
-      "group": "agriculture / foag"
+      "group": "Data catalog & agri master-data"
     },
     "https://agriculture.ld.admin.ch/foag/Market": {
-      "group": "agriculture / foag"
+      "group": "Data catalog & agri master-data"
     },
     "https://agriculture.ld.admin.ch/foag/ValueChain": {
-      "group": "agriculture / foag"
+      "group": "Data catalog & agri master-data"
     },
     "https://environment.ld.admin.ch/foen/nfi/Inventory": {
       "group": "environment / foen / nfi"
     },
     "http://www.w3.org/2006/time#TemporalEntity": {
-      "group": "Time"
+      "group": "Time intervals & inventory"
     },
     "https://environment.ld.admin.ch/foen/nfi/ClassificationUnit/1256": {
       "group": "environment / foen / nfi / ClassificationUnit"
@@ -130747,7 +130747,7 @@
       "group": "QUDT"
     },
     "http://www.linkedmodel.org/schema/vaem#GraphMetaData": {
-      "group": "VAEM"
+      "group": "OWL/RDFS terms"
     },
     "http://schema.org/MusicAlbumProductionType": {
       "group": "schema.org"
@@ -130840,14 +130840,14 @@
       "group": "agriculture / plant-protection"
     },
     "http://www.w3.org/2002/07/owl#Axiom": {
-      "group": "Ontology"
+      "group": "OWL/RDFS terms"
     },
     "http://www.w3.org/2006/time#TemporalUnit": {
       "group": "Time",
       "render": "label"
     },
     "https://agriculture.ld.admin.ch/foag/Currency": {
-      "group": "agriculture / foag"
+      "group": "Data catalog & agri master-data"
     },
     "https://environment.ld.admin.ch/foen/nfi/ClassificationUnit/963": {
       "group": "environment / foen / nfi / ClassificationUnit"
@@ -130934,7 +130934,7 @@
       "group": "schema.org"
     },
     "http://schema.org/DataType": {
-      "group": "schema.org"
+      "group": "OWL/RDFS terms"
     },
     "http://schema.org/PhysicalActivityCategory": {
       "group": "schema.org"
@@ -130943,10 +130943,10 @@
       "group": "schema.org"
     },
     "http://www.w3.org/2006/time#DayOfWeek": {
-      "group": "Time"
+      "group": "Concepts, datasets & media"
     },
     "http://publications.europa.eu/ontology/euvoc#Continent": {
-      "group": "EU Vocabularies"
+      "group": "Concepts, datasets & media"
     },
     "http://schema.org/DENonprofitType": {
       "group": "schema.org"
@@ -130958,13 +130958,13 @@
       "group": "DCAT"
     },
     "https://environment.ld.admin.ch/foen/nfi/ClassificationUnit/94": {
-      "group": "environment / foen / nfi / ClassificationUnit"
+      "group": "Data catalog & agri master-data"
     },
     "https://schema.ld.admin.ch/TerminologyOffice": {
       "group": "schema.ld.admin.ch"
     },
     "https://schema.ld.admin.ch/MunicipalityFreeArea": {
-      "group": "schema.ld.admin.ch"
+      "group": "Municipalities & administrative geography"
     },
     "https://environment.ld.admin.ch/foen/nfi/ClassificationUnit/22": {
       "group": "environment / foen / nfi / ClassificationUnit"
@@ -131072,10 +131072,10 @@
       "group": "schema.org"
     },
     "http://schema.org/Continent": {
-      "group": "schema.org"
+      "group": "Municipalities & administrative geography"
     },
     "https://agriculture.ld.admin.ch/system-map/MasterData": {
-      "group": "agriculture / system-map"
+      "group": "Datasets & data classification"
     },
     "http://schema.org/ITNonprofitType": {
       "group": "schema.org"
@@ -131090,7 +131090,7 @@
       "group": "agriculture / plant-protection"
     },
     "http://www.w3.org/2002/07/owl#TransitiveProperty": {
-      "group": "Ontology"
+      "group": "OWL/RDFS terms"
     },
     "https://ch.paf.link/ProceduralRequestReportActivity": {
       "group": "paf.link"
@@ -131099,7 +131099,7 @@
       "group": "paf.link"
     },
     "https://agriculture.ld.admin.ch/foag/ForeignTrade": {
-      "group": "agriculture / foag"
+      "group": "Data catalog & agri master-data"
     },
     "https://environment.ld.admin.ch/foen/nfi/ClassificationUnit/1084": {
       "group": "environment / foen / nfi / ClassificationUnit"
@@ -131189,7 +131189,7 @@
       "group": "environment / foen / nfi / ClassificationUnit"
     },
     "http://www.w3.org/2006/time#DurationDescription": {
-      "group": "Time",
+      "group": "Time intervals & inventory",
       "render": "embed"
     },
     "http://schema.org/EventStatusType": {
@@ -131202,16 +131202,16 @@
       "group": "schema.org"
     },
     "http://www.linkedmodel.org/schema/vaem#CatalogEntry": {
-      "group": "VAEM"
+      "group": "OWL/RDFS terms"
     },
     "http://qudt.org/schema/qudt/LogarithmicUnit": {
       "group": "QUDT"
     },
     "http://qudt.org/schema/qudt/List": {
-      "group": "QUDT"
+      "group": "OWL restriction terms"
     },
     "http://publications.europa.eu/ontology/euvoc#PlannedAvailability": {
-      "group": "EU Vocabularies"
+      "group": "Concepts, datasets & media"
     },
     "http://schema.org/DigitalPlatformEnumeration": {
       "group": "schema.org"
@@ -131223,16 +131223,16 @@
       "group": "schema.org"
     },
     "http://purl.org/dc/dcmitype/Collection": {
-      "group": "agriculture / system-map"
+      "group": "Organizations, addresses & agents"
     },
     "http://purl.org/dc/terms/LicenseDocument": {
-      "group": "Dublin Core"
+      "group": "Data catalog & agri master-data"
     },
     "http://schema.org/Corporation": {
-      "group": "schema.org"
+      "group": "Organizations, addresses & agents"
     },
     "https://schema.ld.admin.ch/LindasDataset": {
-      "group": "schema.ld.admin.ch"
+      "group": "Organizations, addresses & agents"
     },
     "https://environment.ld.admin.ch/foen/nfi/ClassificationUnit/2635": {
       "group": "environment / foen / nfi / ClassificationUnit"
@@ -131478,7 +131478,7 @@
       "group": "environment / foen / nfi"
     },
     "http://schema.org/Consortium": {
-      "group": "schema.org"
+      "group": "Organizations, addresses & agents"
     },
     "http://schema.org/ActionStatusType": {
       "group": "schema.org"
@@ -131574,10 +131574,10 @@
       "group": "schema.org"
     },
     "https://www.ica.org/standards/RiC/ontology#Rule": {
-      "group": "Records in Contexts (RiC)"
+      "group": "Concepts, datasets & media"
     },
     "https://agriculture.ld.admin.ch/system-map/CantonalVeterinaryService": {
-      "group": "agriculture / system-map"
+      "group": "Organizations, addresses & agents"
     },
     "http://qudt.org/schema/qudt/DigitalCurrencyUnit": {
       "group": "QUDT"
@@ -131586,10 +131586,10 @@
       "group": "Cube"
     },
     "https://www.ica.org/standards/RiC/ontology#DocumentaryFormType": {
-      "group": "Records in Contexts (RiC)"
+      "group": "Concepts, datasets & media"
     },
     "http://schema.org/GenderType": {
-      "group": "schema.org"
+      "group": "Organizations, addresses & agents"
     },
     "https://ch.paf.link/ProceduralRequestType": {
       "group": "paf.link"
@@ -131604,7 +131604,7 @@
       "group": "environment / foen / nfi"
     },
     "http://qudt.org/schema/qudt/AspectClass": {
-      "group": "QUDT"
+      "group": "OWL/RDFS terms"
     },
     "http://schema.org/MedicalAudienceType": {
       "group": "schema.org"
@@ -131646,7 +131646,7 @@
       "group": "schema.org"
     },
     "https://register.ld.admin.ch/termdat/52453": {
-      "group": "agriculture / system-map"
+      "group": "Datasets & data classification"
     },
     "https://agriculture.ld.admin.ch/plant-protection/VIR": {
       "group": "agriculture / plant-protection"
@@ -131694,19 +131694,19 @@
       "group": "Ontology"
     },
     "https://schema.org/Consortium": {
-      "group": "schema.org"
+      "group": "Data catalog & agri master-data"
     },
     "http://schema.org/NGO": {
-      "group": "schema.org"
+      "group": "Organizations, addresses & agents"
     },
     "http://schema.org/EnergyStarEnergyEfficiencyEnumeration": {
       "group": "schema.org"
     },
     "http://www.linkedmodel.org/schema/vaem#Party": {
-      "group": "VAEM"
+      "group": "OWL/RDFS terms"
     },
     "http://qudt.org/schema/qudt/SymmetricRelation": {
-      "group": "QUDT"
+      "group": "OWL/RDFS terms"
     },
     "http://www.w3.org/2002/07/owl#InverseFunctionalProperty": {
       "group": "Ontology"
@@ -131718,16 +131718,16 @@
       "group": "schema.org"
     },
     "https://www.ica.org/standards/RiC/ontology#ActivityType": {
-      "group": "Records in Contexts (RiC)"
+      "group": "Concepts, datasets & media"
     },
     "https://agriculture.ld.admin.ch/system-map/CantonalAgriculturalAdvisor": {
-      "group": "agriculture / system-map"
+      "group": "Organizations, addresses & agents"
     },
     "https://described.at/spex/DefaultShapes": {
       "group": "described.at / spex"
     },
     "http://schema.org/Organisation": {
-      "group": "schema.org"
+      "group": "Time intervals & inventory"
     },
     "http://www.w3.org/ns/shacl#SPARQLConstraint": {
       "group": "SHACL"
