@@ -129673,7 +129673,7 @@
         "http://rs.tdwg.org/dwc/terms/typeStatus",
         "http://rs.tdwg.org/dwc/terms/locality"
       ],
-      "group": "Darwin Core"
+      "group": "Biological taxa & treatments"
     },
     "http://schema.org/DefinedTerm": {
       "group": "environment / foen / nfi / ClassificationUnit"
