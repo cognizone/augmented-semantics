@@ -733,15 +733,23 @@ export function buildTypeQuery(uris: string[]): string {
 }
 
 /**
- * Subclass edges (?sub rdfs:subClassOf+ ?super) among a KNOWN set of types — the
- * VALUES list bounds the transitive start, so the `+` closure is cheap where an
+ * Subclass edges (?sub rdfs:subClassOf+ ?super) starting from a KNOWN set of types —
+ * the VALUES list bounds the transitive start, so the `+` closure is cheap where an
  * unbounded one blows up. resolveLabels feeds it the types buildTypeQuery found and
  * drops any type that is a supertype of another asserted type. Empty when none safe.
+ *
+ * The VALUES start is wrapped in a subquery: Virtuoso's transitive engine rejects a
+ * VALUES-bound `+` start outright ("transitive start not given", TR error — even with
+ * both ends in VALUES), but accepts one materialized by an inner SELECT. GraphDB is
+ * fine either way. `?super` is left unbound (same result set as before) because callers
+ * chunk this query (SUBJECT_BATCH) and filter `?super` to the type set client-side —
+ * bounding it here to the per-chunk VALUES would drop cross-chunk supertype edges.
+ * Verified on Virtuoso (CORDIS) and GraphDB (LINDAS).
  */
 export function buildTypeSubclassQuery(typeUris: string[]): string {
   const values = iriValues(typeUris, 256)
   if (!values) return ''
-  return `SELECT DISTINCT ?sub ?super WHERE { VALUES ?sub { ${values} } ?sub <${SUBCLASS_OF}>+ ?super . FILTER(?sub != ?super) }`
+  return `SELECT DISTINCT ?sub ?super WHERE { { SELECT ?sub WHERE { VALUES ?sub { ${values} } } } ?sub <${SUBCLASS_OF}>+ ?super . FILTER(?sub != ?super) }`
 }
 
 /**

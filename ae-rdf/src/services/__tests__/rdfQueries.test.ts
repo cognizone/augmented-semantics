@@ -694,6 +694,8 @@ describe('buildTypeSubclassQuery', () => {
   it('emits DISTINCT (?sub ?super) transitive subclass edges bounded by VALUES', () => {
     const q = buildTypeSubclassQuery([RES, TYPE])
     expect(q).toContain(`VALUES ?sub { <${RES}> <${TYPE}> }`)
+    // start materialized in a subquery: Virtuoso rejects a bare VALUES transitive start
+    expect(q).toContain('{ SELECT ?sub WHERE { VALUES ?sub')
     expect(q).toContain('subClassOf>+ ?super') // bounded transitive → cheap
     expect(q).toContain('DISTINCT')
     expect(q).toContain('FILTER(?sub != ?super)')
