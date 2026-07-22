@@ -129679,9 +129679,19 @@
       "group": "environment / foen / nfi / ClassificationUnit"
     },
     "http://filteredpush.org/ontologies/oa/dwcFP#TaxonConcept": {
+      "label": [
+        "http://rs.tdwg.org/dwc/terms/family",
+        "http://rs.tdwg.org/dwc/terms/rank",
+        "http://rs.tdwg.org/dwc/terms/authority"
+      ],
       "group": "Biological taxa & treatments"
     },
     "http://filteredpush.org/ontologies/oa/dwcFP#TaxonName": {
+      "label": [
+        "http://rs.tdwg.org/dwc/terms/family",
+        "http://rs.tdwg.org/dwc/terms/genus",
+        "http://rs.tdwg.org/dwc/terms/rank"
+      ],
       "group": "Biological taxa & treatments"
     },
     "http://plazi.org/vocab/treatment#Treatment": {
@@ -129710,6 +129720,9 @@
       "group": "Concepts, datasets & media"
     },
     "http://purl.org/spar/fabio/Figure": {
+      "label": [
+        "http://purl.org/dc/elements/1.1/description"
+      ],
       "group": "FaBiO"
     },
     "https://www.w3.org/ns/oa#Annotation": {
@@ -129764,6 +129777,11 @@
       "group": "schema.ld.admin.ch"
     },
     "https://lod.opentransportdata.swiss/vocab/ZoningPriceCharacteristic": {
+      "label": [
+        "https://lod.opentransportdata.swiss/vocab/class",
+        "http://schema.org/price",
+        "http://schema.org/currency"
+      ],
       "group": "lod.opentransportdata.swiss / vocab"
     },
     "http://xmlns.com/foaf/0.1/Agent": {
@@ -129820,12 +129838,20 @@
       "group": "lod.opentransportdata.swiss / vocab"
     },
     "https://version.link/ChangeEvent": {
+      "label": [
+        "https://ld.admin.ch/ech/71/municipalityAdmissionNumber",
+        "http://schema.org/validFrom"
+      ],
       "group": "Municipality change events"
     },
     "https://ld.admin.ch/ech/71/MunicipalityVersion": {
       "group": "Municipalities & administrative geography"
     },
     "https://schema.ld.admin.ch/MunicipalityChangeEvent": {
+      "label": [
+        "https://ld.admin.ch/ech/71/municipalityAdmissionNumber",
+        "http://schema.org/validFrom"
+      ],
       "group": "Municipality change events"
     },
     "http://www.w3.org/2006/time#ProperInterval": {
@@ -131740,7 +131766,10 @@
   },
   "extraLabelPredicates": [
     "http://xmlns.com/foaf/0.1/name",
-    "http://schema.org/name"
+    "http://schema.org/name",
+    "https://www.ica.org/standards/RiC/ontology#title",
+    "https://www.ica.org/standards/RiC/ontology#name",
+    "https://www.ica.org/standards/RiC/ontology#expressedDate"
   ],
   "prefixes": {
     "71": "https://ld.admin.ch/ech/71/",
