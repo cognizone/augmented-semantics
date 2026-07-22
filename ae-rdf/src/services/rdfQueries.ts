@@ -538,7 +538,9 @@ export function buildFacetRangesQuery(
       if (Number.isFinite(b.max)) c.push(`?y < ${Math.trunc(b.max!)}`)
       return `(SUM(IF(BOUND(?y)${c.length ? ` && ${c.join(' && ')}` : ''}, ?n, 0)) AS ?b${i})`
     }).join(' ')
-    return `SELECT ${aggs} WHERE { { SELECT ?y (COUNT(*) AS ?n) WHERE { ${core} } GROUP BY (YEAR(?v) AS ?y) } }`
+    // ponytail: BIND year then GROUP BY ?y — Virtuoso rejects `GROUP BY (YEAR(?v) AS ?y)`
+    // when ?y is also projected ("Alias ?y is defined twice"); other engines accept both.
+    return `SELECT ${aggs} WHERE { { SELECT ?y (COUNT(*) AS ?n) WHERE { ${core} BIND(YEAR(?v) AS ?y) } GROUP BY ?y } }`
   }
 
   const subs = buckets.map((b, i) =>

@@ -464,7 +464,8 @@ describe('buildFacetRangesQuery', () => {
     expect(q).not.toContain('OPTIONAL')
     expect(q).toContain(`?s <${DATE}> ?v`)
     // inner scan groups by year ONCE…
-    expect(q).toContain('GROUP BY (YEAR(?v) AS ?y)')
+    expect(q).toContain('BIND(YEAR(?v) AS ?y)')
+    expect(q).toContain('GROUP BY ?y')
     // …outer aggregate folds year rows into the config bands (BOUND-guarded).
     expect(q).toContain('(SUM(IF(BOUND(?y) && ?y >= 2022 && ?y < 2023, ?n, 0)) AS ?b0)')
     expect(q).toContain('(SUM(IF(BOUND(?y) && ?y < 2000, ?n, 0)) AS ?b1)')
@@ -591,7 +592,7 @@ describe('facet 2-hop (via) + date ranges', () => {
     expect(q).toContain(`FILTER(${DEC}(?v) >= 1000000)`)
     const qd = buildFacetRangesQuery(TYPE, DATE, [{ max: 2015 }], '', DEFAULT, undefined, 'date')
     expect(qd).toContain('?y < 2015')
-    expect(qd).toContain('GROUP BY (YEAR(?v) AS ?y)')
+    expect(qd).toContain('GROUP BY ?y')
   })
 
   it('buildFacetValuesQuery threads via (2-hop value listing)', () => {
