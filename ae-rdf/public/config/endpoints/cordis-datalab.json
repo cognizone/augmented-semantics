@@ -698,6 +698,7 @@
       ]
     },
     "http://data.europa.eu/s66#FundingScheme": {
+      "sidebar": "pin",
       "capWidth": [
         "http://data.europa.eu/s66#description"
       ],
@@ -1074,6 +1075,10 @@
   },
   "typeInventory": [
     {
+      "uri": "http://data.europa.eu/s66#FundingScheme",
+      "count": 13278
+    },
+    {
       "uri": "http://data.europa.eu/s66#Project",
       "count": 80208
     },
@@ -1148,10 +1153,6 @@
     {
       "uri": "http://data.europa.eu/s66#SME",
       "count": 22499
-    },
-    {
-      "uri": "http://data.europa.eu/s66#FundingScheme",
-      "count": 13278
     },
     {
       "uri": "http://www.w3.org/2008/05/skos-xl#Label",
@@ -6655,6 +6656,7 @@
     ],
     "http://data.europa.eu/s66#ProjectPublication": [
       "http://data.europa.eu/s66#Book",
+      "http://data.europa.eu/s66#BookChapter",
       "http://data.europa.eu/s66#JournalPaper",
       "http://data.europa.eu/s66#ProceedingsPaper",
       "http://data.europa.eu/s66#ThesisDissertation"
