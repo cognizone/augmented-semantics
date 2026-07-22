@@ -81,6 +81,7 @@ const DEFAULT_CONFIG: Required<Omit<SPARQLRequestConfig, 'signal'>> = {
   timeout: SPARQL_TIMEOUT_MS,
   retries: 3,
   retryDelay: 1000,
+  background: false,
 }
 
 // Standard prefixes
