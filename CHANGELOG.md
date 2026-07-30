@@ -2,7 +2,32 @@
 
 Notable changes to the RDF browser (the **ERA RDF Browser** standalone and the AE RDF
 web app). Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
-standalone releases are tagged `rdf-vX.Y.Z`.
+standalone releases are tagged per app: `rdf-era-vX.Y.Z` (ERA RDF Browser) and
+`rdf-cordis-vX.Y.Z` (CORDIS RDF Browser). Releases up to 0.3.0 used `rdf-vX.Y.Z`.
+
+## [0.5.0] — 2026-07-30
+
+### Added
+- **SPARQL panel runs `CONSTRUCT` / `DESCRIBE`** and lets you **download the resulting RDF**.
+- **Configurable SPARQL concurrency** per endpoint (`maxConcurrency`), on top of a default cap of 4 in-flight requests — slow public endpoints no longer get flooded.
+- **Blank nodes nested inside blank nodes** now render (previously only one level deep).
+- **Facet "no value" band** — filter to the instances that lack the faceted property.
+- The **selected-type heading links to the class's own resource page**.
+
+### Changed
+- **Facet counts are lazy, cached across types, and abortable** — they load progressively instead of blocking the Filters rail, and switching type/endpoint cancels the outstanding count queries.
+- **Range-facet queries reshaped** around what the store can actually index (typed constants matching the data's datatype), so year and numeric bands stop falling back to full scans.
+- **Hardened SPARQL request gate** — priority lanes so interactive queries jump ahead of background counts, queue abort on navigation, and honest timeouts.
+- **Classes show human labels** instead of printing the URI twice.
+- **A facet interaction while a resource is open** now returns you to the filtered list rather than leaving a stale resource on screen.
+- Dataset curation: LINDAS type groups reclustered by link topology (the "Cube observations & crops" catch-all is gone), schema.org / RiC labels resolved for previously unlabeled instances, composed label for `dwc:MaterialCitation`; CORDIS `BookChapter` nested under `ProjectPublication` and `FundingScheme` pinned; ERA gains a *Created* date facet on `VehicleRegistrationApplication` and consistent endpoint names in the picker.
+
+### Fixed
+- **`?filters` deep links** restored reliably — the restore race (two bugs behind one symptom) is fixed.
+- **Dead SPARQL button after a redeploy** — the app now self-heals a stale lazy-loaded chunk.
+- **Virtuoso (CORDIS) year/date facets** — `YEAR()` on an `xsd:date` inside a `GROUP BY` throws SR586 *"Incomplete RDF box"*; the year is now taken from the lexical form and cast to `xsd:integer`.
+- **Virtuoso (CORDIS) subclass closure** — the transitive start is materialized so the class hierarchy resolves.
+- Broken build from a `DEFAULT_CONFIG` missing its required `background` field.
 
 ## [0.4.0] — 2026-07-19
 
