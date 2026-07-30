@@ -302,6 +302,7 @@ export function buildInstanceColumnsQuery(
 const XSD_DECIMAL = '<http://www.w3.org/2001/XMLSchema#decimal>'
 const XSD_DATE = '<http://www.w3.org/2001/XMLSchema#date>'
 const XSD_DATETIME = '<http://www.w3.org/2001/XMLSchema#dateTime>'
+const XSD_INTEGER = '<http://www.w3.org/2001/XMLSchema#integer>'
 
 /** How a range facet's YEAR bands compare against the stored value — must match the
  *  DATA's datatype (see FacetConfig.datatype): a matching typed constant lets GraphDB
@@ -538,9 +539,11 @@ export function buildFacetRangesQuery(
       if (Number.isFinite(b.max)) c.push(`?y < ${Math.trunc(b.max!)}`)
       return `(SUM(IF(BOUND(?y)${c.length ? ` && ${c.join(' && ')}` : ''}, ?n, 0)) AS ?b${i})`
     }).join(' ')
-    // ponytail: BIND year then GROUP BY ?y — Virtuoso rejects `GROUP BY (YEAR(?v) AS ?y)`
-    // when ?y is also projected ("Alias ?y is defined twice"); other engines accept both.
-    return `SELECT ${aggs} WHERE { { SELECT ?y (COUNT(*) AS ?n) WHERE { ${core} BIND(YEAR(?v) AS ?y) } GROUP BY ?y } }`
+    // ponytail: extract the year from the lexical form (YYYY-…) instead of YEAR(?v).
+    // Virtuoso's YEAR() throws SR586 "Incomplete RDF box" on an xsd:date box inside a
+    // GROUP BY (works per-row, fails grouped); SUBSTR(STR)+integer cast sidesteps it and
+    // GraphDB plans it the same. Cast keeps ?y numeric for the band comparisons above.
+    return `SELECT ${aggs} WHERE { { SELECT ?y (COUNT(*) AS ?n) WHERE { ${core} BIND(${XSD_INTEGER}(SUBSTR(STR(?v), 1, 4)) AS ?y) } GROUP BY ?y } }`
   }
 
   const subs = buckets.map((b, i) =>

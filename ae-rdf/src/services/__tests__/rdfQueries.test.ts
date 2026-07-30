@@ -463,8 +463,10 @@ describe('buildFacetRangesQuery', () => {
     const q = buildFacetRangesQuery(TYPE, DATE, [{ min: 2022, max: 2023 }, { max: 2000 }], '', DEFAULT, undefined, 'date')
     expect(q).not.toContain('OPTIONAL')
     expect(q).toContain(`?s <${DATE}> ?v`)
-    // inner scan groups by year ONCE…
-    expect(q).toContain('BIND(YEAR(?v) AS ?y)')
+    // inner scan groups by year ONCE — year from the lexical form, not YEAR()
+    // (Virtuoso's YEAR() throws SR586 on an xsd:date box inside GROUP BY).
+    expect(q).toContain('BIND(<http://www.w3.org/2001/XMLSchema#integer>(SUBSTR(STR(?v), 1, 4)) AS ?y)')
+    expect(q).not.toContain('YEAR(?v)')
     expect(q).toContain('GROUP BY ?y')
     // …outer aggregate folds year rows into the config bands (BOUND-guarded).
     expect(q).toContain('(SUM(IF(BOUND(?y) && ?y >= 2022 && ?y < 2023, ?n, 0)) AS ?b0)')

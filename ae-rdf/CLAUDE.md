@@ -1,5 +1,8 @@
 # AE RDF — gotchas
 
+> Open, unresolved bugs (e.g. the unreproduced CORDIS scroll-flicker → tab-freeze)
+> are tracked in `KNOWN_ISSUES.md`. Check there before re-diagnosing a live bug.
+
 ## Two config objects in `endpoints/*.json` — don't confuse them
 
 An endpoint config has **two** type-keyed maps, and code reads different keys from each:
