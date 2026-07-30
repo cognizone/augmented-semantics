@@ -36,13 +36,13 @@ Download native desktop applications built with Tauri. Desktop apps provide:
 
 The RDF/SPARQL browser pre-configured for the ERA knowledge graphs (EVR, OCR, ERADIS, VKM, RINF).
 
-- **[Download the latest release](https://github.com/cognizone/augmented-semantics/releases/tag/rdf-era-v0.4.0)** — Windows (.msi / .exe), macOS (.dmg, universal), Linux (.deb / .rpm / .AppImage).
+- **[Download 0.5.0](https://github.com/cognizone/augmented-semantics/releases/tag/rdf-era-v0.5.0)** — Windows (.msi / .exe), macOS (.dmg, universal), Linux (.deb / .rpm / .AppImage).
 
 ### CORDIS RDF Browser
 
 The RDF/SPARQL browser pre-configured for the CORDIS Datalab (EU research projects, results, organisations).
 
-- **[Download the latest release](https://github.com/cognizone/augmented-semantics/releases/tag/rdf-cordis-v0.4.0)** — Windows (.msi / .exe), macOS (.dmg, universal), Linux (.deb / .rpm / .AppImage).
+- **[Download 0.5.0](https://github.com/cognizone/augmented-semantics/releases/tag/rdf-cordis-v0.5.0)** — Windows (.msi / .exe), macOS (.dmg, universal), Linux (.deb / .rpm / .AppImage).
 
 ::: tip
 Visit the [GitHub Releases](https://github.com/cognizone/augmented-semantics/releases) page for all versions and release notes. The RDF browsers are tagged `rdf-era-v*` and `rdf-cordis-v*`.
