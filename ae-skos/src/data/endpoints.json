@@ -1730,306 +1730,309 @@
     ]
   },
   {
-    "name": "ERA Data Interop",
-    "url": "https://data-interop.era.europa.eu/api/sparql",
-    "description": "European Union Agency for Railways data interoperability platform. Contains SKOS vocabularies for railway infrastructure, vehicle types, and operational concepts.",
+    "name": "ERA SKOS Vocabularies",
+    "url": "https://graph.data.era.europa.eu/repositories/ERA-Onto",
+    "description": "European Union Agency for Railways ontology repository (ERA-Onto): latest OWL, SKOS and SHACL for railway infrastructure, vehicle types, and operational concepts.",
     "analysis": {
       "hasSkosContent": true,
       "cors": true,
       "supportsJsonResults": true,
       "supportsNamedGraphs": true,
-      "skosGraphCount": 4,
+      "skosGraphCount": 2,
       "schemeUris": [
-        "http://publications.europa.eu/resource/authority/country",
-        "http://data.europa.eu/949/concepts/restrictions/Restrictions",
-        "http://data.europa.eu/949/concepts/nominal-track-gauges/NominalTrackGauges",
-        "http://data.europa.eu/949/concepts/sol-natures/SoLNatures",
-        "http://data.europa.eu/949/concepts/etcs-m-versions/ETCSMVersions",
-        "http://data.europa.eu/949/concepts/gsmr-networks/GSMRNetworks",
-        "http://data.europa.eu/949/concepts/company-code-categories/CompanyCodeCategories",
-        "http://data.europa.eu/949/concepts/train-detection-numbers/FrenchTrainDetectionSystemLimitationNumbers",
-        "http://data.europa.eu/949/concepts/min-axle-load-vehicle-categories/MinAxleLoadVehicleCategories",
-        "http://data.europa.eu/949/concepts/contact-line-systems/ContactLineSystems",
-        "http://data.europa.eu/949/concepts/op-types/OperationalPointTypes",
-        "http://data.europa.eu/949/concepts/freight-corridor/FreightCorridors",
-        "http://data.europa.eu/949/concepts/contact-strip-materials/ContactStripMaterials",
-        "http://data.europa.eu/949/concepts/etcs-system-compatibilities/ETCSSystemCompatibilities",
-        "http://data.europa.eu/949/concepts/other-pantograph-heads/OtherPantographHeads",
-        "http://data.europa.eu/949/concepts/train-detection-specific-checks/TrainDetectionSystemsSpecificChecks",
-        "http://data.europa.eu/949/concepts/states/States",
-        "http://data.europa.eu/949/concepts/rolling-stock-fire/Categories",
-        "http://data.europa.eu/949/concepts/gsmr-number-active-mobiles/NumberActiveMobiles",
-        "http://data.europa.eu/949/concepts/tsi-compliances/TSICompliances",
-        "http://data.europa.eu/949/concepts/radio-system-compatibilities-data/RadioSystemCompatibilitiesData",
-        "http://data.europa.eu/949/concepts/relation-positions/RelationPositions",
-        "http://data.europa.eu/949/concepts/radio-system-compatibilities-voice/RadioSystemCompatibilitiesVoice",
-        "http://data.europa.eu/949/concepts/axle-monitoring/AxleBearingMonitoring",
-        "http://data.europa.eu/949/concepts/etcs-baselines/ETCSBaselines",
         "http://data.europa.eu/949/concepts/tsi-existence-and-compliances/TSIExistenceAndCompliances",
-        "http://data.europa.eu/949/concepts/load-capability-line-categories/LoadCapabilityLineCategories",
-        "http://data.europa.eu/949/concepts/end-coupling-type/EndCouplingType",
-        "http://data.europa.eu/949/concepts/gauge-changeover-facilities/GaugeChangeoverFacilities",
-        "http://data.europa.eu/949/concepts/profile-num-semi-trailers/ProfileNumbersSemiTrailers",
-        "http://data.europa.eu/949/concepts/gaugings/GaugingProfiles",
-        "http://data.europa.eu/949/concepts/vehicle-types/Categories",
-        "http://data.europa.eu/949/concepts/platform-heights/PlatformHeights",
-        "http://data.europa.eu/949/concepts/compliant-pantograph-heads/CompliantPantographHeads",
-        "http://data.europa.eu/949/concepts/magnetic-braking/MagneticBraking",
-        "http://data.europa.eu/949/concepts/train-detection/TrainDetectionSystems",
-        "http://data.europa.eu/949/concepts/line-category/LineCategories",
-        "http://data.europa.eu/949/concepts/eddy-current-braking/EddyCurrentBraking",
-        "http://data.europa.eu/949/concepts/ice-conditions/IceConditions",
-        "http://data.europa.eu/949/concepts/thermal-capacity/ThermalCapacityTSIReferences",
-        "http://data.europa.eu/949/concepts/train-protection-legacy-systems/TrainProtectionLegacySystems",
-        "http://data.europa.eu/949/concepts/energy-supply-systems/EnergySupplySystems",
-        "http://data.europa.eu/949/concepts/legacy-radio-systems/LegacyRadioSystems",
-        "http://data.europa.eu/949/concepts/gsmr-optional-functions/OptionalFunctions",
-        "http://data.europa.eu/949/concepts/rail-inclinations/RailInclinations",
-        "http://data.europa.eu/949/concepts/track-running-directions/TrackRunningDirections",
-        "http://data.europa.eu/949/concepts/load-capabilities/LoadCapabilities",
-        "http://data.europa.eu/949/concepts/ten-classifications/TENClassifications",
-        "http://data.europa.eu/949/concepts/temperature-ranges/TemperatureRanges",
-        "http://data.europa.eu/949/concepts/max-amount-sandings/MaxAmountSandings",
-        "http://data.europa.eu/949/concepts/brake-parking-type/BrakeParkingType",
-        "http://data.europa.eu/949/concepts/gsmr-versions/GSMRVersions",
-        "http://data.europa.eu/949/concepts/navigabilities/Navigabilities",
-        "http://data.europa.eu/949/concepts/gsm-r-radio-data-communication/GSMRRadioDataCommunications",
-        "http://data.europa.eu/949/concepts/train-detection/FrenchTrainDetectionSystemLimitations",
-        "http://data.europa.eu/949/concepts/profile-num-swap-bodies/ProfileNumbersSwapBodies",
-        "http://data.europa.eu/949/concepts/etcs-levels/ETCSLevels",
-        "http://data.europa.eu/949/concepts/etcs-infills/ETCSInfills",
-        "http://data.europa.eu/949/concepts/other-protection-control-warning/OtherProtectionControlWarnings",
-        "http://data.europa.eu/949/concepts/etcs-situation/ETCSSituations",
-        "http://data.europa.eu/949/concepts/national-rule-classifications/national-rule-classifications",
-        "http://data.europa.eu/949/concepts/error-corrections/OnboardErrorCorrections",
-        "http://data.europa.eu/949/concepts/etcs-rbc-reject-reasons/ETCSRBCRejectionReasons",
-        "http://data.europa.eu/949/concepts/regenerative-braking/RegenerativeBraking",
-        "http://data.europa.eu/949/concepts/signal-types/SignalTypes",
-        "http://data.europa.eu/949/concepts/standard-combined-transport-containers/StandardCombinedTransportContainers",
-        "http://data.europa.eu/949/concepts/ato-s-versions/ATOSystemVersions",
-        "http://data.europa.eu/949/concepts/organisation-roles/OrgRoles",
-        "http://data.europa.eu/949/concepts/ebr-qualifier/EBReleaseQualifier",
-        "http://data.europa.eu/949/concepts/train-detection/FrequencyBandsForDetection",
-        "http://data.europa.eu/949/concepts/operational-regime-types/OperationalRegimeTypes",
-        "http://data.europa.eu/949/concepts/gsmr-cs-constraints/GSMRConstraints",
-        "http://data.europa.eu/949/concepts/cant-deficiencies/CantDeficiencies",
-        "http://data.europa.eu/949/concepts/adhf-qualifier/AdhesionFactorChange",
-        "http://data.europa.eu/949/concepts/ato-grades-automation/ATOGradeOfAutomation",
-        "http://data.europa.eu/949/concepts/gsm-r-equipment-version/GSMREquipmentVersion",
-        "http://data.europa.eu/949/concepts/safe-consist-length/SafeConsistLengthNecessary",
-        "http://data.europa.eu/949/concepts/subsidiary-location-types/SubsidiaryLocationTypes",
-        "http://data.europa.eu/949/concepts/transmitted-tcs/TransmittedTrackConditions",
-        "http://data.europa.eu/949/concepts/special-area-types/SpecialAreaTypes",
-        "http://data.europa.eu/949/concepts/etcs-equipment-on-board-level/eratv/ETCSEquipmentLevels",
-        "http://data.europa.eu/949/concepts/parameterApplicability/ValueTypes",
-        "http://data.europa.eu/949/concepts/standard-combined-transport-roller-units/StandardCombinedTransportRollerUnits",
-        "http://data.europa.eu/949/concepts/vehicle-types/SubCategories",
-        "http://data.europa.eu/949/concepts/va-authcases/VehicleAuthorisationCase",
-        "http://data.europa.eu/949/concepts/min-axle-loads-per-vehicle-category/MinAxleLoadVehicleCategories",
-        "http://data.europa.eu/949/concepts/orientations/Sides",
-        "http://data.europa.eu/949/concepts/type-version-ids/TypeVersionIds",
-        "http://data.europa.eu/949/concepts/etcs-national-packet-44-functions/ETCSNationalPacket44Functions",
-        "http://data.europa.eu/949/concepts/hot-axle-box-detector-direction/HotAxleBoxDetectorDirections",
-        "http://data.europa.eu/949/concepts/lines/ReferenceSystems",
-        "http://data.europa.eu/949/concepts/min-axle-loads-per-vehicle-category/MinAxleLoadsPerVehicleCategory",
-        "http://data.europa.eu/949/concepts/osm-classes/OSMClasses",
-        "http://data.europa.eu/949/concepts/contact-strip-materials/ContactLineSystems",
+        "http://data.europa.eu/949/concepts/tsi-compliances/TSICompliances",
         "http://data.europa.eu/949/concepts/orientations/OrientationDirections",
         "http://data.europa.eu/949/concepts/ato-commsys/ATOCommSystem",
-        "http://data.europa.eu/949/concepts/etcs-reactions-contact/ETCSReactionsNVContact",
+        "http://data.europa.eu/949/concepts/ato-grades-automation/ATOGradeOfAutomation",
+        "http://data.europa.eu/949/concepts/ato-s-versions/ATOSystemVersions",
+        "http://data.europa.eu/949/concepts/axle-monitoring/AxleBearingMonitoring",
+        "http://data.europa.eu/949/concepts/cant-deficiencies/CantDeficiencies",
+        "http://data.europa.eu/949/concepts/vehicle-types/Categories",
+        "http://data.europa.eu/949/concepts/company-code-categories/CompanyCodeCategories",
+        "http://data.europa.eu/949/concepts/regenerative-braking/RegenerativeBraking",
         "http://data.europa.eu/949/concepts/conditions-use-reflective-plates/ConditionsUseReflectivePlates",
+        "http://data.europa.eu/949/concepts/contact-line-systems/ContactLineSystems",
+        "http://data.europa.eu/949/concepts/contact-strip-materials/ContactStripMaterials",
+        "http://data.europa.eu/949/concepts/gsmr-networks/GSMRNetworks",
+        "http://data.europa.eu/949/concepts/radio-system-compatibilities-data/RadioSystemCompatibilitiesData",
+        "http://data.europa.eu/949/concepts/eddy-current-braking/EddyCurrentBraking",
+        "http://data.europa.eu/949/concepts/end-coupling-type/EndCouplingType",
+        "http://data.europa.eu/949/concepts/energy-supply-systems/EnergySupplySystems",
+        "http://data.europa.eu/949/concepts/error-corrections/OnboardErrorCorrections",
+        "http://data.europa.eu/949/concepts/etcs-baselines/ETCSBaselines",
+        "http://data.europa.eu/949/concepts/etcs-situation/ETCSSituations",
+        "http://data.europa.eu/949/concepts/etcs-infills/ETCSInfills",
+        "http://data.europa.eu/949/concepts/etcs-levels/ETCSLevels",
+        "http://data.europa.eu/949/concepts/etcs-m-versions/ETCSMVersions",
+        "http://data.europa.eu/949/concepts/etcs-national-packet-44-functions/ETCSNationalPacket44Functions",
+        "http://data.europa.eu/949/concepts/etcs-system-compatibilities/ETCSSystemCompatibilities",
+        "http://data.europa.eu/949/concepts/etcs-transmitted-tcs/TransmittedTrackConditions",
+        "http://data.europa.eu/949/concepts/european-transport-corridors/EuropeanTransportCorridors",
+        "http://data.europa.eu/949/concepts/rolling-stock-fire/Categories",
+        "http://data.europa.eu/949/concepts/freight-corridor/FreightCorridors",
+        "http://data.europa.eu/949/concepts/train-detection/FrenchTrainDetectionSystemLimitations",
+        "http://data.europa.eu/949/concepts/train-detection-numbers/FrenchTrainDetectionSystemLimitationNumbers",
+        "http://data.europa.eu/949/concepts/train-detection/FrequencyBandsForDetection",
+        "http://data.europa.eu/949/concepts/gaugings/GaugingProfiles",
+        "http://data.europa.eu/949/concepts/gsmr-number-active-mobiles/NumberActiveMobiles",
+        "http://data.europa.eu/949/concepts/gsmr-optional-functions/OptionalFunctions",
+        "http://data.europa.eu/949/concepts/gsm-r-radio-data-communication/GSMRRadioDataCommunications",
+        "http://data.europa.eu/949/concepts/gsmr-versions/GSMRVersions",
+        "http://data.europa.eu/949/concepts/gsmr-cs-constraints/GSMRConstraints",
+        "http://data.europa.eu/949/concepts/organisation-roles/OrgRoles",
+        "http://data.europa.eu/949/concepts/hot-axle-box-detector-direction/HotAxleBoxDetectorDirections",
+        "http://data.europa.eu/949/concepts/legacy-radio-systems/LegacyRadioSystems",
+        "http://data.europa.eu/949/concepts/line-category/LineCategories",
         "http://data.europa.eu/949/concepts/lineside-distance-indication-appearance/LinesideDistanceIndicationAppearance",
+        "http://data.europa.eu/949/concepts/lineside-distance-indication-positioning/LinesideDistanceIndicationPositioning",
+        "http://data.europa.eu/949/concepts/load-capabilities/LoadCapabilities",
+        "http://data.europa.eu/949/concepts/load-capability-line-categories/LoadCapabilityLineCategories",
+        "http://data.europa.eu/949/concepts/lines/ReferenceSystems",
+        "http://data.europa.eu/949/concepts/etcs-reactions-contact/ETCSReactionsNVContact",
+        "http://data.europa.eu/949/concepts/magnetic-braking/MagneticBraking",
+        "http://data.europa.eu/949/concepts/max-amount-sandings/MaxAmountSandings",
+        "http://data.europa.eu/949/concepts/min-axle-load-vehicle-categories/MinAxleLoadVehicleCategories",
+        "http://data.europa.eu/949/concepts/navigabilities/Navigabilities",
+        "http://data.europa.eu/949/concepts/op-types/OperationalPointTypes",
         "http://publications.europa.eu/resource/authority/language",
-        "http://data.europa.eu/949/concepts/min-axle-load-vehicle-categories/MinAxleLoadsPerVehicleCategory"
+        "http://data.europa.eu/949/concepts/operational-regime-types/OperationalRegimeTypes",
+        "http://data.europa.eu/949/concepts/restrictions/Restrictions",
+        "http://data.europa.eu/949/concepts/osm-classes/OSMClasses",
+        "http://data.europa.eu/949/concepts/other-pantograph-heads/OtherPantographHeads",
+        "http://data.europa.eu/949/concepts/other-protection-control-warning/OtherProtectionControlWarnings",
+        "http://data.europa.eu/949/concepts/parameterApplicability/ValueTypes",
+        "http://data.europa.eu/949/concepts/brake-parking-type/BrakeParkingType",
+        "http://data.europa.eu/949/concepts/platform-heights/PlatformHeights",
+        "http://data.europa.eu/949/concepts/relation-positions/RelationPositions",
+        "http://data.europa.eu/949/concepts/profile-num-semi-trailers/ProfileNumbersSemiTrailers",
+        "http://data.europa.eu/949/concepts/profile-num-swap-bodies/ProfileNumbersSwapBodies",
+        "http://data.europa.eu/949/concepts/adhf-qualifier/AdhesionFactorChange",
+        "http://data.europa.eu/949/concepts/ebr-qualifier/EBReleaseQualifier",
+        "http://data.europa.eu/949/concepts/rail-inclinations/RailInclinations",
+        "http://data.europa.eu/949/concepts/etcs-rbc-reject-reasons/ETCSRBCRejectionReasons",
+        "http://data.europa.eu/949/concepts/safe-consist-length/SafeConsistLengthNecessary",
+        "http://data.europa.eu/949/concepts/orientations/Sides",
+        "http://data.europa.eu/949/concepts/signal-types/SignalTypes",
+        "http://data.europa.eu/949/concepts/ice-conditions/IceConditions",
+        "http://data.europa.eu/949/concepts/sol-natures/SoLNatures",
+        "http://data.europa.eu/949/concepts/special-area-types/SpecialAreaTypes",
+        "http://data.europa.eu/949/concepts/standard-combined-transport-containers/StandardCombinedTransportContainers",
+        "http://data.europa.eu/949/concepts/standard-combined-transport-roller-units/StandardCombinedTransportRollerUnits",
+        "http://data.europa.eu/949/concepts/states/States",
+        "http://data.europa.eu/949/concepts/subsidiary-location-types/SubsidiaryLocationTypes",
+        "http://data.europa.eu/949/concepts/temperature-ranges/TemperatureRanges",
+        "http://data.europa.eu/949/concepts/ten-classifications/TENClassifications",
+        "http://data.europa.eu/949/concepts/ten-t-network-levels/TENTNetworkLevels",
+        "http://data.europa.eu/949/concepts/thermal-capacity/ThermalCapacityTSIReferences",
+        "http://data.europa.eu/949/concepts/track-running-directions/TrackRunningDirections",
+        "http://data.europa.eu/949/concepts/train-detection-specific-checks/TrainDetectionSystemsSpecificChecks",
+        "http://data.europa.eu/949/concepts/train-detection/TrainDetectionSystems",
+        "http://data.europa.eu/949/concepts/compliant-pantograph-heads/CompliantPantographHeads",
+        "http://data.europa.eu/949/concepts/traffic-types/TrafficTypes",
+        "http://data.europa.eu/949/concepts/type-version-ids/TypeVersionIds",
+        "http://data.europa.eu/949/concepts/radio-system-compatibilities-voice/RadioSystemCompatibilitiesVoice",
+        "http://data.europa.eu/949/concepts/nominal-track-gauges/NominalTrackGauges",
+        "http://data.europa.eu/949/concepts/gauge-changeover-facilities/GaugeChangeoverFacilities",
+        "http://data.europa.eu/949/concepts/etcs-equipment-on-board-level/ETCSEquipmentLevels",
+        "http://data.europa.eu/949/concepts/min-axle-loads-per-vehicle-category/MinAxleLoadsPerVehicleCategory",
+        "http://data.europa.eu/949/concepts/national-rule-classifications/national-rule-classifications",
+        "http://data.europa.eu/949/concepts/vehicle-types/SubCategories",
+        "http://data.europa.eu/949/concepts/subsystems/Subsystems",
+        "http://data.europa.eu/949/concepts/train-protection-legacy-systems/TrainProtectionLegacySystems",
+        "http://data.europa.eu/949/concepts/transmitted-tcs/TransmittedTrackConditions",
+        "http://data.europa.eu/949/concepts/vkm-status/VKMStatus",
+        "http://data.europa.eu/949/concepts/va-authcases/VehicleAuthorisationCase",
+        "http://data.europa.eu/nuts",
+        "http://data.europa.eu/nuts/scheme/2010",
+        "http://data.europa.eu/nuts/scheme/2013",
+        "http://data.europa.eu/nuts/scheme/2016",
+        "http://data.europa.eu/nuts/scheme/2021",
+        "http://data.europa.eu/nuts/scheme/2024",
+        "http://data.europa.eu/nuts/scheme/1999",
+        "http://data.europa.eu/nuts/scheme/2003",
+        "http://data.europa.eu/nuts/scheme/2006",
+        "http://data.europa.eu/nuts/scheme/sr",
+        "http://data.europa.eu/nuts/scheme/sr2013",
+        "http://data.europa.eu/nuts/scheme/sr2016",
+        "http://data.europa.eu/nuts/scheme/sr2021",
+        "http://data.europa.eu/nuts/scheme/sr2024",
+        "http://data.europa.eu/nuts/scheme/sr2003",
+        "http://data.europa.eu/nuts/scheme/sr2006",
+        "http://data.europa.eu/nuts/scheme/sr2010",
+        "http://data.europa.eu/949/concepts/activities/Activities",
+        "http://data.europa.eu/949/concepts/boarding-aids/BoardingAids",
+        "http://data.europa.eu/949/concepts/cld-types/CLDTypes",
+        "http://data.europa.eu/949/concepts/cld-modules/CLDModules",
+        "http://data.europa.eu/949/concepts/evidence-document-states/DocStates",
+        "http://data.europa.eu/949/concepts/etcs-degraded-situation/ETCSFallbackLevel",
+        "http://data.europa.eu/949/concepts/noise-categories/NoiseCategories/NoiseCategories",
+        "http://data.europa.eu/949/concepts/onboard-recording-devices/OnboardRecording",
+        "http://data.europa.eu/949/concepts/other-ccs-radio-system/OtherCCSRadioSystem",
+        "http://data.europa.eu/949/concepts/other-ccs-signalling-system/OtherCCSSignallingSystem",
+        "http://data.europa.eu/949/concepts/rmr-baselines/RMRBaselines",
+        "http://data.europa.eu/949/concepts/tsi-sections/TSISections",
+        "http://data.europa.eu/949/concepts/vehicle-type-configurations/VehicleTypeConfigurations",
+        "http://data.europa.eu/949/concepts/vehicle-type-registration-methods/VehicleTypeRegistrationMethods",
+        "http://data.europa.eu/949/concepts/wagon-derailment-function/WagonDerailmentFunction",
+        "http://data.europa.eu/949/concepts/vr-regcases/VehicleRegistrationCase",
+        "http://data.europa.eu/949/concepts/vr-regstatus/VehicleRegistrationStatus",
+        "http://data.europa.eu/949/concepts/evidence-types/EvidenceDocumentTypes",
+        "http://data.europa.eu/949/concepts/org-size/OrgSizes",
+        "http://data.europa.eu/949/concepts/national-reg-props/NationalRegistrationProperties",
+        "http://data.europa.eu/949/concepts/permission-types/PermissionTypes",
+        "http://data.europa.eu/949/concepts/edp-activity-types/EDPActivityTypes",
+        "http://data.europa.eu/949/concepts/vehicle-authorisation-status/VehicleAuthorisationStatus",
+        "http://data.europa.eu/949/concepts/international-vehicle-agreements/InternationalVehicleAgreements",
+        "http://data.europa.eu/949/concepts/ecd-types/ECDTypes",
+        "http://data.europa.eu/949/concepts/compliance-check-result/ComplianceCheckResult",
+        "http://data.europa.eu/949/concepts/pub-activity-types/ActivityTypes",
+        "http://data.europa.eu/949/concepts/maintenance-functions/MaintenanceFunctions"
       ],
-      "schemeCount": 101,
+      "schemeCount": 148,
       "schemesLimited": false,
       "schemeUriSlashMismatch": false,
       "schemeUriSlashMismatchPairs": [],
       "languages": [
         {
           "lang": "en",
-          "count": 4949
+          "count": 14881
         },
         {
           "lang": "es",
-          "count": 429
-        },
-        {
-          "lang": "cs",
-          "count": 359
-        },
-        {
-          "lang": "de",
-          "count": 359
-        },
-        {
-          "lang": "el",
-          "count": 359
-        },
-        {
-          "lang": "ro",
-          "count": 359
-        },
-        {
-          "lang": "pl",
-          "count": 359
-        },
-        {
-          "lang": "lt",
-          "count": 359
-        },
-        {
-          "lang": "lv",
-          "count": 359
+          "count": 47
         },
         {
           "lang": "fr",
-          "count": 359
+          "count": 42
         },
         {
-          "lang": "mt",
-          "count": 359
+          "lang": "cs",
+          "count": 39
         },
         {
-          "lang": "pt",
-          "count": 359
+          "lang": "de",
+          "count": 38
         },
         {
           "lang": "sk",
-          "count": 359
-        },
-        {
-          "lang": "da",
-          "count": 359
-        },
-        {
-          "lang": "sv",
-          "count": 359
-        },
-        {
-          "lang": "ga",
-          "count": 359
+          "count": 29
         },
         {
           "lang": "it",
-          "count": 359
-        },
-        {
-          "lang": "et",
-          "count": 359
-        },
-        {
-          "lang": "hr",
-          "count": 359
-        },
-        {
-          "lang": "hu",
-          "count": 359
-        },
-        {
-          "lang": "bg",
-          "count": 359
-        },
-        {
-          "lang": "sl",
-          "count": 359
+          "count": 27
         },
         {
           "lang": "nl",
-          "count": 359
+          "count": 27
+        },
+        {
+          "lang": "bg",
+          "count": 26
+        },
+        {
+          "lang": "da",
+          "count": 26
+        },
+        {
+          "lang": "el",
+          "count": 26
+        },
+        {
+          "lang": "et",
+          "count": 26
         },
         {
           "lang": "fi",
-          "count": 359
+          "count": 26
         },
         {
-          "lang": "no",
-          "count": 333
-        },
-        {
-          "lang": "is",
-          "count": 333
-        },
-        {
-          "lang": "tr",
-          "count": 333
-        },
-        {
-          "lang": "uk",
-          "count": 333
-        },
-        {
-          "lang": "ru",
-          "count": 333
-        },
-        {
-          "lang": "ca",
-          "count": 258
-        },
-        {
-          "lang": "zh",
-          "count": 252
-        },
-        {
-          "lang": "ar",
-          "count": 252
-        },
-        {
-          "lang": "lb",
-          "count": 252
-        },
-        {
-          "lang": "ja",
-          "count": 252
-        },
-        {
-          "lang": "mk",
-          "count": 133
-        },
-        {
-          "lang": "sr",
-          "count": 133
+          "lang": "ga",
+          "count": 26
         },
         {
           "lang": "sh",
-          "count": 75
+          "count": 26
+        },
+        {
+          "lang": "hr",
+          "count": 26
         },
         {
           "lang": "hsb",
-          "count": 75
+          "count": 26
         },
         {
-          "lang": "be",
-          "count": 58
+          "lang": "hu",
+          "count": 26
         },
         {
-          "lang": "gl",
-          "count": 58
+          "lang": "is",
+          "count": 26
         },
         {
-          "lang": "bs",
-          "count": 58
+          "lang": "lv",
+          "count": 26
         },
         {
-          "lang": "eu",
-          "count": 57
+          "lang": "lt",
+          "count": 26
         },
         {
-          "lang": "fo",
-          "count": 57
+          "lang": "mk",
+          "count": 26
         },
         {
-          "lang": "sq",
-          "count": 57
+          "lang": "mt",
+          "count": 26
         },
         {
-          "lang": "rm",
-          "count": 52
+          "lang": "no",
+          "count": 26
+        },
+        {
+          "lang": "pl",
+          "count": 26
+        },
+        {
+          "lang": "pt",
+          "count": 26
+        },
+        {
+          "lang": "ro",
+          "count": 26
+        },
+        {
+          "lang": "ru",
+          "count": 26
+        },
+        {
+          "lang": "sl",
+          "count": 26
+        },
+        {
+          "lang": "sr",
+          "count": 26
+        },
+        {
+          "lang": "sv",
+          "count": 26
+        },
+        {
+          "lang": "tr",
+          "count": 26
+        },
+        {
+          "lang": "uk",
+          "count": 26
+        },
+        {
+          "lang": "dk",
+          "count": 2
         }
       ],
-      "totalConcepts": 3439,
-      "totalCollections": 9,
+      "totalConcepts": 19547,
+      "totalCollections": 41,
       "totalOrderedCollections": 0,
       "relationships": {
         "hasInScheme": true,
@@ -2043,66 +2046,60 @@
       "labelPredicates": {
         "concept": {
           "prefLabel": true,
+          "xlPrefLabel": true,
           "dctTitle": true,
           "rdfsLabel": true
         },
         "scheme": {
           "prefLabel": true,
+          "xlPrefLabel": true,
           "dctTitle": true,
           "rdfsLabel": true
         },
         "collection": {
-          "prefLabel": true
+          "prefLabel": true,
+          "xlPrefLabel": true,
+          "dctTitle": true,
+          "rdfsLabel": true
         }
       },
-      "analyzedAt": "2026-01-27T09:20:54.670Z"
+      "analyzedAt": "2026-09-18T10:09:14.311Z"
     },
     "suggestedLanguagePriorities": [
       "en",
       "es",
+      "fr",
       "cs",
       "de",
-      "el",
-      "ro",
-      "pl",
-      "lt",
-      "lv",
-      "fr",
-      "mt",
-      "pt",
       "sk",
-      "da",
-      "sv",
-      "ga",
       "it",
-      "et",
-      "hr",
-      "hu",
-      "bg",
-      "sl",
       "nl",
+      "bg",
+      "da",
+      "el",
+      "et",
       "fi",
-      "no",
+      "ga",
+      "sh",
+      "hr",
+      "hsb",
+      "hu",
       "is",
+      "lv",
+      "lt",
+      "mk",
+      "mt",
+      "no",
+      "pl",
+      "pt",
+      "ro",
+      "ru",
+      "sl",
+      "sr",
+      "sv",
       "tr",
       "uk",
-      "ru",
-      "ca",
-      "zh",
-      "ar",
-      "lb",
-      "ja",
-      "mk",
-      "sr",
-      "sh",
-      "hsb",
-      "be",
-      "gl",
-      "bs",
-      "eu",
-      "fo",
-      "sq",
-      "rm"
+      "dk"
     ]
   },
   {

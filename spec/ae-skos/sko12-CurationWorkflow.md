@@ -32,8 +32,8 @@ Each endpoint has a minimal `input/config.json`:
 
 ```json
 {
-  "name": "ERA Data Interop",
-  "url": "https://data-interop.era.europa.eu/api/sparql",
+  "name": "ERA SKOS Vocabularies",
+  "url": "https://graph.data.era.europa.eu/repositories/ERA-Onto",
   "description": "European Union Agency for Railways..."
 }
 ```
@@ -50,8 +50,8 @@ The curation script generates `output/endpoint.json`:
 
 ```json
 {
-  "name": "ERA Data Interop",
-  "url": "https://data-interop.era.europa.eu/api/sparql",
+  "name": "ERA SKOS Vocabularies",
+  "url": "https://graph.data.era.europa.eu/repositories/ERA-Onto",
   "description": "...",
   "analysis": {
     "hasSkosContent": true,
@@ -361,7 +361,7 @@ This curates all endpoints sequentially and automatically runs the merge script 
 | `cordis` | Cordis Datalab | cordis.europa.eu |
 | `data-europa-eu` | data.europa.eu | data.europa.eu |
 | `dbpedia` | DBpedia | dbpedia.org |
-| `era` | ERA Data Interop | data-interop.era.europa.eu |
+| `era` | ERA SKOS Vocabularies | graph.data.era.europa.eu |
 | `eu-publications` | EU Publications Office | publications.europa.eu |
 | `fedlex` | Fedlex | fedlex.data.admin.ch |
 | `finto` | Finto - Finnish Thesaurus and Ontology Service | api.finto.fi |

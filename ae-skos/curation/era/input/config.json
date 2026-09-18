@@ -1,5 +1,5 @@
 {
-  "name": "ERA Data Interop",
-  "url": "https://data-interop.era.europa.eu/api/sparql",
-  "description": "European Union Agency for Railways data interoperability platform. Contains SKOS vocabularies for railway infrastructure, vehicle types, and operational concepts."
+  "name": "ERA SKOS Vocabularies",
+  "url": "https://graph.data.era.europa.eu/repositories/ERA-Onto",
+  "description": "European Union Agency for Railways ontology repository (ERA-Onto): latest OWL, SKOS and SHACL for railway infrastructure, vehicle types, and operational concepts."
 }

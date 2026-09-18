@@ -2,24 +2,26 @@
 
 ## Working Endpoints
 
-| Endpoint | URL                                              | Concepts | Schemes | Notes |
-|----------|--------------------------------------------------|----------|---------|-------|
-| AgroPortal | https://sparql.agroportal.lirmm.fr/sparql        | 1M+ | 194 | Agronomy ontology repository |
-| AGROVOC | https://agrovoc.fao.org/sparql                   | 44k+ | 1 | FAO agricultural vocabulary |
-| BnF | https://data.bnf.fr/sparql                       | 21M+ | 1 | Bibliothèque nationale de France |
-| Cordis Datalab | https://cordis.europa.eu/datalab/sparql          | 208k | 2 | EU research projects |
-| data.europa.eu | https://data.europa.eu/sparql                    | 26k | 179 | EU open data portal (custom curation) |
-| DBpedia | https://dbpedia.org/sparql                       | 2.5M | 0 | Wikipedia structured data |
-| ERA Data Interop | https://data-interop.era.europa.eu/api/sparql    | 3k | 3 | EU railway agency |
-| EU Publications Office | https://publications.europa.eu/webapi/rdf/sparql | 129k | 79 | EU official publications |
-| Fedlex | https://fedlex.data.admin.ch/sparql              | 3k | 3 | Swiss federal law |
-| Finto | https://api.finto.fi/sparql                      | 892k | 102 | Finnish thesauri and ontologies |
-| Getty Vocabularies | https://vocab.getty.edu/sparql                   | 3.4M+ | 9 | AAT, TGN, ULAN (custom curation) |
-| Legilux | https://data.legilux.public.lu/sparql            | 2k | 9 | Luxembourg legislation |
-| Linked Open Vocabularies | https://lov.linkeddata.es/dataset/lov/sparql     | 5k | 200+ | Vocabulary registry |
-| NERC Vocabulary Server | https://vocab.nerc.ac.uk/sparql/                 | 362k | 22 | Oceanography vocabularies |
-| STW Economics | https://zbw.eu/beta/sparql/stw/query             | 8k | 1 | Economics thesaurus (ZBW) |
-| UNESCO Thesaurus | https://vocabularies.unesco.org/sparql           | - | 1 | Education, culture, sciences (GET only) |
+Counts regenerated from `curation/*/output/endpoint.json` on 2026-09-18.
+
+| Endpoint | URL | Concepts | Schemes | Notes |
+|----------|-----|----------|---------|-------|
+| AgroPortal | https://sparql.agroportal.lirmm.fr/sparql | 1M | 193+ | Agronomy ontology repository |
+| AGROVOC | https://agrovoc.fao.org/sparql | 42k | 1 | FAO agricultural vocabulary |
+| BnF | https://data.bnf.fr/sparql | 21.2M | 1 | Bibliothèque nationale de France |
+| Cordis Datalab | https://cordis.europa.eu/datalab/sparql | 208k | 2 | EU research projects |
+| data.europa.eu | https://data.europa.eu/sparql | 26k | 179 | EU open data portal (custom curation) |
+| DBpedia | https://dbpedia.org/sparql | 2.6M | 0 | Wikipedia structured data |
+| ERA SKOS Vocabularies | https://graph.data.era.europa.eu/repositories/ERA-Onto | 20k | 148 | EU railway agency (replaced data-interop, now offline) |
+| EU Publications Office | https://publications.europa.eu/webapi/rdf/sparql | 323k | 200+ | EU official publications |
+| Fedlex | https://fedlex.data.admin.ch/sparqlendpoint | 49k | 65 | Swiss federal law |
+| Finto | https://api.finto.fi/sparql | 892k | 102 | Finnish thesauri and ontologies |
+| Getty Vocabularies | https://vocab.getty.edu/sparql | 3.5M | 9 | AAT, TGN, ULAN (custom curation) |
+| Legilux | https://data.legilux.public.lu/sparqlendpoint | 14k | 69 | Luxembourg legislation |
+| Linked Open Vocabularies | https://lov.linkeddata.es/dataset/lov/sparql | 5k | 200 | Vocabulary registry |
+| NERC Vocabulary Server | https://vocab.nerc.ac.uk/sparql/ | 362k | 22 | Oceanography vocabularies |
+| STW Economics | https://zbw.eu/beta/sparql/stw/query | 8k | 1 | Economics thesaurus (ZBW) |
+| UNESCO Thesaurus | https://vocabularies.unesco.org/sparql | 4k | 1 | Education, culture, sciences (GET only) |
 
 ## Failed Endpoints
 

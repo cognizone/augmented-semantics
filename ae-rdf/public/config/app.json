@@ -22,8 +22,8 @@
       "url": "https://dbpedia.org/sparql"
     },
     {
-      "name": "ERA Data Interop (prod)",
-      "url": "https://data-interop.era.europa.eu/api/sparql"
+      "name": "ERA Ontology (prod)",
+      "url": "https://graph.data.era.europa.eu/repositories/ERA-Onto"
     },
     "rinf",
     "era-evr-kg-dev",
